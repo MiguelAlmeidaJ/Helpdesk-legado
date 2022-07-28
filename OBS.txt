@@ -1,0 +1,59 @@
+
+
+#################
+ÍCONES UTILIZADOS
+
+Pessoa de Contato no Cliente:
+<i class="fas fa-user-tie"></i>
+
+Pessoa Usuário / Técnico
+<i class="far fa-id-badge"></i>
+
+Local de Atendimento
+<i class="fas fa-map-marked-alt"></i>
+
+Comentário
+<i class="far fa-comment"></i>
+
+Ativo
+<i class="fas fa-toggle-on"></i>
+
+Inativo
+<i class="fas fa-toggle-off"></i>
+
+Excluir
+<i class="far fa-trash-alt"></i>
+
+Lista TArefas
+<i class="fas fa-tasks"></i>
+
+Ordenar AZ
+<i class="fas fa-sort-amount-down-alt"></i>
+
+Ordenar ZA
+<i class="fas fa-sort-amount-down"></i>
+
+Configuração
+<i class="fas fa-sliders-h"></i>
+
+Sino
+<i class="far fa-bell"></i>
+
+Celular
+<i class="fas fa-mobile-alt"></i>
+
+Anexo
+<i class="fas fa-paperclip"></i>
+
+Tag
+<i class="fas fa-tag"></i>
+
+Editar
+<i class="far fa-edit"></i>
+
+Abrir
+<i class="far fa-folder-open"></i>
+
+Procurar
+<i class="fas fa-search"></i>
+

@@ -1,0 +1,76 @@
+.progress-title{
+    font-size: 10px;
+    font-weight: 500;
+    color: #333;
+    text-transform: uppercase;
+    margin: 0 0 25px;
+}
+.progress{
+    height: 5px;
+    background: #e9e9ea;
+    border-radius: 15px;
+    margin-top: 10px;
+    margin-bottom: 0px;
+    overflow: visible;
+    position: relative;
+}
+.progress:before,
+.progress:after{
+    content: "";
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #fff;
+    position: absolute;
+    top: -3px;
+    left: 0;
+    z-index: 1;
+}
+.progress:after{
+    border: 3px solid #e9e9ea;
+    left: auto;
+    right: 0;
+}
+.progress .progress-bar{
+    box-shadow: none;
+    border: none;
+    border-radius: 10px;
+    position: relative;
+    -webkit-animation: animate-positive 2s;
+    animation: animate-positive 2s;
+}
+.progress .progress-value{
+    width: 48px;
+    height: 22px;
+    line-height: 17px;
+    border-radius: 7px;
+    background: #fff;
+    font-size: 11px;
+    font-weight: 500;
+    position: absolute;
+    top: -8px;
+    right: 0px;
+    z-index: 2;
+}
+.progress.orange:before{ border: 3px solid #fe3b3b; }
+.progress.orange .progress-value{border: 3px solid #fe3b3b; color: #fe3b3b;}
+.progress.orange .progress-bar{background: #fe3b3b;}
+
+.progress.blue:before{ border: 3px solid #1a4966; }
+.progress.blue .progress-value{border: 3px solid #1a4966; color: #1a4966;}
+.progress.blue .progress-bar{background: #1a4966; }
+
+.progress.green:before{ border: 3px solid #53aa2c; }
+.progress.green .progress-value{border: 3px solid #53aa2c; color: #53aa2c;}
+.progress.green .progress-bar{background: #53aa2c;}
+
+.progress.purple:before{ border: 3px solid #66406f; }
+.progress.purple .progress-value{border: 3px solid #66406f; color: #66406f;}
+.progress.purple .progress-bar{background: #66406f;}
+
+@-webkit-keyframes animate-positive{
+    0%{ width: 0; }
+}
+@keyframes animate-positive{
+    0%{ width: 0; }
+}

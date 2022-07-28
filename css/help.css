@@ -1,0 +1,104 @@
+	.modal.left .modal-dialog,
+	.modal.right .modal-dialog {
+		position: fixed;
+		margin: auto;
+		width: 400px;
+		height: 100%;
+		-webkit-transform: translate3d(0%, 0, 0);
+		    -ms-transform: translate3d(0%, 0, 0);
+		     -o-transform: translate3d(0%, 0, 0);
+		        transform: translate3d(0%, 0, 0);
+	}
+
+	.modal.left .modal-content,
+	.modal.right .modal-content {
+		height: 100%;
+		overflow-y: auto;
+	}
+	
+	.modal.left .modal-body,
+	.modal.right .modal-body {
+		padding: 15px 15px 80px;
+	}
+
+/*Left*/
+	.modal.left.fade .modal-dialog{
+		left: -320px;
+		-webkit-transition: opacity 0.3s linear, left 0.3s ease-out;
+		   -moz-transition: opacity 0.3s linear, left 0.3s ease-out;
+		     -o-transition: opacity 0.3s linear, left 0.3s ease-out;
+		        transition: opacity 0.3s linear, left 0.3s ease-out;
+	}
+	
+	.modal.left.fade.in .modal-dialog{
+		left: 0;
+	}
+        
+/*Right*/
+	.modal.right.fade .modal-dialog {
+		right: 0px;
+		-webkit-transition: opacity 0.3s linear, right 0.3s ease-out;
+		   -moz-transition: opacity 0.3s linear, right 0.3s ease-out;
+		     -o-transition: opacity 0.3s linear, right 0.3s ease-out;
+		        transition: opacity 0.3s linear, right 0.3s ease-out;
+	}
+	
+	.modal.right.fade.in .modal-dialog {
+		right: 0;
+	}
+
+/* ----- MODAL STYLE ----- */
+	.modal-content {
+		border-radius: 0;
+		border: none;
+	}
+
+	.modal-header {
+		border-bottom-color: #EEEEEE;
+		background-color: #FAFAFA;
+	}
+
+/* .modal.fade .modal-bottom,
+ .modal.fade .modal-left,
+ .modal.fade .modal-right,
+ .modal.fade .modal-top {
+     position: fixed;
+     z-index: 1055;
+     top: 0;
+     left: 0;
+     right: 0;
+     bottom: 0;
+     margin: 0;
+     max-width: 100%
+ }
+
+ .modal.fade .modal-right {
+     left: auto !important;
+     transform: translate3d(100%, 0, 0);
+     transition: transform .3s cubic-bezier(.25, .8, .25, 1)
+ }
+
+ .modal.fade.show .modal-bottom,
+ .modal.fade.show .modal-left,
+ .modal.fade.show .modal-right,
+ .modal.fade.show .modal-top {
+     transform: translate3d(0, 0, 0)
+ }
+
+ .w-xl {
+     width: 320px
+ }
+
+ .modal-content,
+ .modal-footer,
+ .modal-header {
+     border: none
+ }
+
+ .h-100 {
+     height: 100% !important
+ }
+
+ .list-group.no-radius .list-group-item {
+     border-radius: 0 !important
+ }*/

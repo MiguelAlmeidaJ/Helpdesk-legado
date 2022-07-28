@@ -1,0 +1,58 @@
+```
+################################
+####  ALLTERUS   NIVEL3 TI  ####
+#### PACOTE DE ATUALIZAÇÃO  ####
+#### 20 DE DEZEMBRO DE 2021 ####
+
+#01: Ajuste na tela de permissões do usuário para criar as permissões de acesso ao módulo de Configurações.
+
+#02: Ajuste na tabela de Usuários para gravar a permissão de acesso ao módulo Configuração:
+      ALTER TABLE `usuarios` ADD COLUMN `user_modulo_04` CHAR(10) NOT NULL DEFAULT '0000000000' COMMENT 'CONFIGURACAO' AFTER `user_modulo_03`;
+
+#03: Criação de nova Tabela para gravar os dados do módulo Configurações
+      CREATE TABLE `configuracao` (
+	`id` INT(11) NOT NULL AUTO_INCREMENT,
+	`tempo_alerta` INT(11) NOT NULL DEFAULT '40' COMMENT 'Tempo para alerta de atraso nos chamados',
+	`sla_n1` INT(11) NOT NULL DEFAULT '60' COMMENT 'SLA Nível 1',
+	`sla_n2` INT(11) NOT NULL DEFAULT '120' COMMENT 'SLA Nível 2',
+	`sla_n3` INT(11) NOT NULL DEFAULT '180' COMMENT 'SLA Nível 3',
+	PRIMARY KEY (`id`) USING BTREE
+      )
+      COLLATE='utf8_general_ci'
+      ENGINE=InnoDB
+      ;
+
+#04: Criação de tela de edição de Configurações
+
+#05: Liberação do módulo Configurações no Menu principal
+
+#06: Atualização da tela de Atendimentos para buscar as informações de prazo na tabela de configuração
+
+```
+################################
+####  ALLTERUS   NIVEL3 TI  ####
+#### PACOTE DE ATUALIZAÇÃO  ####
+#### 03 DE DEZEMBRO DE 2021 ####
+
+#01: Correção no "alerta" de tempo sem interação com o atendimento
+    Problema: O "alerta" de 20 minutos sem interação estava sendo exibido para atendimentos em espera.
+    Solução: foi acrescentado um condição para que o alerta não seja exibido para atendimentos agendados, em espera ou concluído.
+    Arquivo atualizado: allterus/nivel3ti/atd/home.php [linha 473]
+
+#02: Ajuste no layout da tela de cliente cadastrados
+  Problema: Clientes com Razão Social extensas obrigavam o navegador a aumentar o tamanho da coluna "Razão Social" gerando distorções no layout da página.
+  Solução: Limitamos a exibição da Razão Social a um máximo de 35 caracteres
+  Arquivos atualizaods: allterus/nivel3ti/cads/clientes.php [linha 272]
+
+#03: Ajuste no layout da tela de lista de atendimentos
+    Problema: Clientes com Razão Social extensas obrigavam o navegador a aumentar o tamanho da coluna "Razão Social" gerando distorções no layout da página.
+    Solução: Limitamos a exibição da Razão Social a um máximo de 35 caracteres
+    Arquivo atualizado: allterus/nivel3ti/atd/home.php [linha 441]
+
+#04: Ajuste no gráfico de atendimentos abertos por semana
+    Problema: O sistema estava considerando a semana como o período de Hoje até Hoje - 7 dias. 
+    Solução: Foi atualizado para considerar a semana como o período de Sábado até Sábado - 7 dias.
+    Arquivo atualizado: allterus/nivel3ti/home.php [linha 245 a 248]
+
+
+```

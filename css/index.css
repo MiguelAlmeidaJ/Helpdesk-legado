@@ -1,0 +1,10 @@
+img.opacity { background-color: rgb(252, 252, 252); }
+.light {
+  opacity: 0.2; /* Mal consegue ver o texto acima do background */
+}
+.medium {
+  opacity: 0.5; /* Vê o texto mais claramente acima do background */
+}
+.heavy {
+  opacity: 0.8; /* Vê o texto muito claramente acima do background */
+}

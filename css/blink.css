@@ -1,0 +1,15 @@
+.blink {
+    animation: blink .7s infinite;
+    margin :0 auto;
+}
+@keyframes blink {
+    0% {
+        color: #ffffff;
+    }
+    50% {
+        color: #f96900;
+    }
+    100% {
+        color: #ffffff;
+    }
+}
