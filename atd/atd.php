@@ -35,7 +35,7 @@ if($m3_00==0){header("Location: ../index.php");}
     <title>Allterus</title>
 
     <style type="text/css">
-      /* usado apenas para formatar a mensagem de espera para os selectbox dependentes */
+      /* usado apenas para formatar a mensagem de espera para os selectbox dependentes - Comentário*/
       .carregando{
         color:#ff0000;
         display:none;
