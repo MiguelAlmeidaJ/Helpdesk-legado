@@ -665,7 +665,7 @@ if ($m3_00 == 0) {
               $tecnicoNome = isset($infos['user_nome']) ? $infos['user_nome'] : '';
               $pessoaNome = isset($infos['pessoa_nom']) ? $infos['pessoa_nom'] : '';
 
-              $body = "Chamado solicitado por: " . $clienteNome . "\nConteúdo do chamado: " . $concluido_desc . "\nSendo executado pelo técnico: " . $tecnicoNome . " / " . $pessoaNome;
+              $body = "CHAMADO CONCLUIDO! \n solicitado por: " . $clienteNome . "\nDescrição da conclusão do chamado: " . $concluido_desc . "\nFoi executado pelo técnico: " . $tecnicoNome . " / " . $pessoaNome;
 
               $headers = 'From: allterus@nivel3ti.com.br' . "\r\n";
 
