@@ -138,9 +138,6 @@ if ($m3_00 == 0) {
         //}
 
 
-
-
-
         if ($adc->execute()) {
           $atd = $pdo->lastInsertId();
           $mensagem = "<i class=\"fas fa-check\"></i> Atendimento cadastrado!";
@@ -162,14 +159,14 @@ if ($m3_00 == 0) {
           $pessoa = $show_pessoa->fetch(PDO::FETCH_ASSOC);
 
 
-          $to_email = "dhiogoamz@gmail.com";
+          $to_email = "dhiogoamz@gmail.com,clerio.junior@gmail.com";
           $subject = "Chamado aberto com sucesso";
 
           $clienteNome = $cliente['clt_nomef'];
           $pessoaNome = $pessoa['pessoa_nom'];
           $tecnicoNome = $showTecnico['user_nome'];
 
-          $body = "Chamado feito pela empresa: <strong>" . $clienteNome . "</strong> // solicitado por: " . $pessoaNome . "\nConteúdo do chamado: " . $desc_abertura . "\n Sendo executado pelo técnico: " . $tecnicoNome;
+          $body = "<strong>CHAMADO ABERTO</strong><br> pela empresa: <strong>" . $clienteNome . "</strong> <strong>//</strong> solicitado por: <strong>" . $pessoaNome . "</strong><br>Conteúdo do chamado: " . $desc_abertura . "<br>Sendo executado pelo técnico: <strong>" . $tecnicoNome. "</strong>";
           $headers = 'From: allterus@nivel3ti.com.br' . "\r\n";
           $headers .= "MIME-Version: 1.0\r\n";
           $headers .= "Content-Type: text/html; charset=UTF-8\r\n";
@@ -657,7 +654,7 @@ if ($m3_00 == 0) {
               $show_atendimento->execute();
               $infos = $show_atendimento->fetch(PDO::FETCH_ASSOC);
 
-              $to_email = "dhiogoamz@gmail.com";
+              $to_email = "dhiogoamz@gmail.com,clerio.junior@gmail.com";
               $subject = "Chamado aberto com sucesso";
 
 
@@ -665,9 +662,11 @@ if ($m3_00 == 0) {
               $tecnicoNome = isset($infos['user_nome']) ? $infos['user_nome'] : '';
               $pessoaNome = isset($infos['pessoa_nom']) ? $infos['pessoa_nom'] : '';
 
-              $body = "CHAMADO CONCLUIDO! \n solicitado por: " . $clienteNome . "\nDescrição da conclusão do chamado: " . $concluido_desc . "\nFoi executado pelo técnico: " . $tecnicoNome . " / " . $pessoaNome;
+              $body = "<strong>CHAMADO CONCLUIDO!</strong> <br>Chamado da empresa: ". $clienteNome ." <strong>//</strong> Solicitado por: ". $pessoaNome ."<br>Descrição da conclusão do chamado: " . $concluido_desc . "<br>Foi executado pelo técnico: " . $tecnicoNome;
 
               $headers = 'From: allterus@nivel3ti.com.br' . "\r\n";
+              $headers .= "MIME-Version: 1.0\r\n";
+              $headers .= "Content-Type: text/html; charset=UTF-8\r\n";
 
               $isMailSent = mail($to_email, $subject, $body, $headers);
 
