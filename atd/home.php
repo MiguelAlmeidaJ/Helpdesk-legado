@@ -949,7 +949,7 @@ while($row=$show_atd->fetch(PDO::FETCH_ASSOC)){
 
   $exibe_inter=$show_inter->fetch(PDO::FETCH_ASSOC);
 
-  $last_inter_data=$exibe_inter["inter_data"];
+  $last_inter_data= isset($exibe_inter["inter_data"]) ? $exibe_inter["inter_data"] : '';
 
   $end_date = new DateTime($time_now);
 
