@@ -138,14 +138,19 @@ if ($m3_00 == 0) {
         //}
 
 
+
+
+
         if ($adc->execute()) {
           $atd = $pdo->lastInsertId();
           $mensagem = "<i class=\"fas fa-check\"></i> Atendimento cadastrado!";
           $mensagem_cor = "alert-success";
           $log = "true";
 
+//=====================================================================email=============================================================================================================================================================
 
-          $pdo = ConnectionN3();
+
+          /*$pdo = ConnectionN3();
           $show_clt = $pdo->prepare("SELECT clientes.clt_mail, clientes.clt_nomef FROM clientes WHERE clientes.clt_id = $cliente limit 1");
           $show_clt->execute();
           $cliente = $show_clt->fetch(PDO::FETCH_ASSOC);
@@ -156,22 +161,39 @@ if ($m3_00 == 0) {
 
           $show_pessoa = $pdo->prepare("SELECT pessoas.pessoa_nom FROM pessoas WHERE pessoas.pessoa_id = $pessoa limit 1");
           $show_pessoa->execute();
-          $pessoa = $show_pessoa->fetch(PDO::FETCH_ASSOC);
+          $pessoa = $show_pessoa->fetch(PDO::FETCH_ASSOC); */
 
+          $show_atendimento = $pdo->prepare("SELECT c.clt_nomef, p.pessoa_nom, u.user_nome, a.id
+          FROM atendimentos a 
+          INNER JOIN clientes c ON c.clt_id = a.cliente
+          INNER JOIN pessoas p ON p.pessoa_id = a.pessoa
+          INNER JOIN usuarios u ON u.user_id = a.tecnico
+          WHERE a.id = '$atd' LIMIT 0,1");
+
+          $show_atendimento->execute();
+          $infos = $show_atendimento->fetch(PDO::FETCH_ASSOC);
+
+          $clienteid = isset($infos['id']) ? $infos['id'] : '';
 
           $to_email = "dhiogoamz@gmail.com,clerio.junior@gmail.com";
-          $subject = "Chamado aberto com sucesso";
+          $subject = "Nivel 3 TI Atendimento: #".$atd. " ";
 
-          $clienteNome = $cliente['clt_nomef'];
+          /*$clienteNome = $cliente['clt_nomef'];
           $pessoaNome = $pessoa['pessoa_nom'];
-          $tecnicoNome = $showTecnico['user_nome'];
+          $tecnicoNome = $showTecnico['user_nome'];*/
 
-          $body = "<strong>CHAMADO ABERTO</strong><br> pela empresa: <strong>" . $clienteNome . "</strong> <strong>//</strong> solicitado por: <strong>" . $pessoaNome . "</strong><br>Conteúdo do chamado: " . $desc_abertura . "<br>Sendo executado pelo técnico: <strong>" . $tecnicoNome. "</strong>";
+          $clienteNome = isset($infos['clt_nomef']) ? $infos['clt_nomef'] : '';
+          $tecnicoNome = isset($infos['user_nome']) ? $infos['user_nome'] : '';
+          $pessoaNome = isset($infos['pessoa_nom']) ? $infos['pessoa_nom'] : '';
+
+          $body = "<strong>CHAMADO ABERTO</strong><br>Empresa: <strong>" . $clienteNome . "</strong> <strong>//</strong> solicitado por: <strong>" . $pessoaNome . "</strong><br>Conteúdo do chamado: <strong>" . $desc_abertura . "</strong><br>Sendo executado pelo técnico: <strong>" . $tecnicoNome. "</strong>";
           $headers = 'From: allterus@nivel3ti.com.br' . "\r\n";
           $headers .= "MIME-Version: 1.0\r\n";
           $headers .= "Content-Type: text/html; charset=UTF-8\r\n";
           
           $isMailSent = mail($to_email, $subject, $body, $headers);
+
+//===========================================================================email=======================================================================================================================================================
 
 
           //cadastra abertura do atendimento na tabela de interatividade
@@ -644,7 +666,7 @@ if ($m3_00 == 0) {
               //============================================================================================== EMAIL
 
               //cliente, pessoa, tecnico, desc_fechamento
-              $show_atendimento = $pdo->prepare("SELECT c.clt_nomer, p.pessoa_nom, u.user_nome
+              $show_atendimento = $pdo->prepare("SELECT c.clt_nomef, p.pessoa_nom, u.user_nome, a.id
               FROM atendimentos a 
               INNER JOIN clientes c ON c.clt_id = a.cliente
               INNER JOIN pessoas p ON p.pessoa_id = a.pessoa
@@ -654,15 +676,17 @@ if ($m3_00 == 0) {
               $show_atendimento->execute();
               $infos = $show_atendimento->fetch(PDO::FETCH_ASSOC);
 
+              $clienteid = isset($infos['id']) ? $infos['id'] : '';
+
               $to_email = "dhiogoamz@gmail.com,clerio.junior@gmail.com";
-              $subject = "Chamado aberto com sucesso";
+              $subject = "Nivel 3 TI Atendimento: #".$atd. " ";
 
 
-              $clienteNome = isset($infos['clt_nomer']) ? $infos['clt_nomer'] : '';
+              $clienteNome = isset($infos['clt_nomef']) ? $infos['clt_nomef'] : '';
               $tecnicoNome = isset($infos['user_nome']) ? $infos['user_nome'] : '';
               $pessoaNome = isset($infos['pessoa_nom']) ? $infos['pessoa_nom'] : '';
 
-              $body = "<strong>CHAMADO CONCLUIDO!</strong> <br>Chamado da empresa: ". $clienteNome ." <strong>//</strong> Solicitado por: ". $pessoaNome ."<br>Descrição da conclusão do chamado: " . $concluido_desc . "<br>Foi executado pelo técnico: " . $tecnicoNome;
+              $body = "<strong>CHAMADO CONCLUIDO!</strong> <br>Empresa: <strong>". $clienteNome ." </strong><strong>//</strong> Solicitado por: <strong>". $pessoaNome ."</strong><br>Descrição da conclusão do chamado: <strong>" . $concluido_desc . "</strong><br>Foi executado pelo técnico: <strong>" . $tecnicoNome."</strong>";
 
               $headers = 'From: allterus@nivel3ti.com.br' . "\r\n";
               $headers .= "MIME-Version: 1.0\r\n";
