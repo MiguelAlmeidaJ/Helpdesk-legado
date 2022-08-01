@@ -5,7 +5,7 @@ function ConnectionN3(){
   $pass = '';
 //  $dsn ='mysql:host=nivel3.mysql.dbaas.com.br;dbname=nivel3;charset=utf8';
 //  $user ='nivel3';
-//  $pass = 'N3ti+Allterus@';
+//  $pass = '**********';
   try {
     $pdo = new PDO($dsn, $user, $pass);
     return $pdo;
