@@ -16,6 +16,8 @@ $exibe_bt_atd_espera = false;
 $exibe_bt_atd_concluido = false;
 $exibe_bt_atd_finalizar = false;
 $exibe_bt_atd_retomar = false;
+$exibe_bt_atd_search = false;
+
 
 if ($m3_00 == 0) {
   header("Location: ../index.php");
@@ -147,7 +149,7 @@ if ($m3_00 == 0) {
           $mensagem_cor = "alert-success";
           $log = "true";
 
-//=====================================================================email=============================================================================================================================================================
+          //=====================================================================email=============================================================================================================================================================
 
 
           /*$pdo = ConnectionN3();
@@ -176,7 +178,7 @@ if ($m3_00 == 0) {
           $clienteid = isset($infos['id']) ? $infos['id'] : '';
 
           $to_email = "dhiogoamz@gmail.com,clerio.junior@gmail.com";
-          $subject = "Nivel 3 TI Atendimento: #".$atd. " ";
+          $subject = "Nivel 3 TI Atendimento: #" . $atd . " ";
 
           /*$clienteNome = $cliente['clt_nomef'];
           $pessoaNome = $pessoa['pessoa_nom'];
@@ -186,14 +188,14 @@ if ($m3_00 == 0) {
           $tecnicoNome = isset($infos['user_nome']) ? $infos['user_nome'] : '';
           $pessoaNome = isset($infos['pessoa_nom']) ? $infos['pessoa_nom'] : '';
 
-          $body = "<strong>CHAMADO ABERTO</strong><br>Empresa: <strong>" . $clienteNome . "</strong> <strong>//</strong> solicitado por: <strong>" . $pessoaNome . "</strong><br>Conteúdo do chamado: <strong>" . $desc_abertura . "</strong><br>Sendo executado pelo técnico: <strong>" . $tecnicoNome. "</strong>";
+          $body = "<strong>CHAMADO ABERTO</strong><br>Empresa: <strong>" . $clienteNome . "</strong> <strong>//</strong> solicitado por: <strong>" . $pessoaNome . "</strong><br>Conteúdo do chamado: <strong>" . $desc_abertura . "</strong><br>Sendo executado pelo técnico: <strong>" . $tecnicoNome . "</strong>";
           $headers = 'From: allterus@nivel3ti.com.br' . "\r\n";
           $headers .= "MIME-Version: 1.0\r\n";
           $headers .= "Content-Type: text/html; charset=UTF-8\r\n";
-          
+
           $isMailSent = mail($to_email, $subject, $body, $headers);
 
-//===========================================================================email=======================================================================================================================================================
+          //===========================================================================email=======================================================================================================================================================
 
 
           //cadastra abertura do atendimento na tabela de interatividade
@@ -411,7 +413,7 @@ if ($m3_00 == 0) {
           $adc = $pdo->prepare("UPDATE `atendimentos` SET `subcategoria`='$subcategoria' WHERE `id`='$atd';");
           if ($adc->execute()) {
             //CRIA NOVO REGISTRO NA TABELA DE INTERAÇÃO INFORMANDO A ALTERAÇÃO          
-            $adc = $pdo->prepare("INSERT INTO `interatividade` (`inter_tipo`, `inter_atd`, `inter_user`, `inter_data`, `inter_desc`) VALUES ('9', '$atd', '$user_id', '$agora', 'Editou a Sub Categoria: <s>De: $atd_scat_original_nome</s> para $atd_scat_nome.')");
+            $adc = $pdo->prepare("INSERT INTO `interatividade` (`inter_tipo`, `inter_atd`, `inter_user`, `inter_data`, `inter_desc`) VALUES ('9', '$atd', '$user_id', '$agora', 'Editou a SubCategoria: <s>De: $atd_scat_original_nome</s> para $atd_scat_nome.')");
             if ($adc->execute()) {
               $mensagem = "<i class=\"fas fa-check\"></i> OK! <br> Classificação do Atendimento alterada!";
               $mensagem_cor = "alert-success";
@@ -482,6 +484,25 @@ if ($m3_00 == 0) {
           $mensagem_cor = "alert-danger";
         }
       }
+
+      /* if ($action == "atd_search") {
+        $categoria = filter_input(INPUT_POST, 'categoria', FILTER_SANITIZE_STRING);
+        $pdo = ConnectionN3();
+        $show_cat = $pdo->prepare("SELECT categorias.cat_nome FROM categorias WHERE categorias.cat_id = '$categoria'");
+        $show_cat->execute();
+        $row = $show_cat->fetch(PDO::FETCH_ASSOC);
+        $atd_cat_nome = $row["cat_nome"];
+
+        $subcategoria = filter_input(INPUT_POST, 'subcategoria', FILTER_SANITIZE_STRING);
+        $pdo = ConnectionN3();
+        $show_scat = $pdo->prepare("SELECT subcategorias.scat_nome FROM subcategorias WHERE subcategorias.scat_id = '$subcategoria'");
+        $show_scat->execute();
+        $row = $show_scat->fetch(PDO::FETCH_ASSOC);
+        $atd_scat_nome = $row["scat_nome"];
+
+      }
+ */
+
 
       //USUÁRIO ACEITA INICIAR UM ATENDIMENTO
       if ($action == "atd_aceitar") {
@@ -679,14 +700,14 @@ if ($m3_00 == 0) {
               $clienteid = isset($infos['id']) ? $infos['id'] : '';
 
               $to_email = "dhiogoamz@gmail.com,clerio.junior@gmail.com";
-              $subject = "Nivel 3 TI Atendimento: #".$atd. " ";
+              $subject = "Nivel 3 TI Atendimento: #" . $atd . " ";
 
 
               $clienteNome = isset($infos['clt_nomef']) ? $infos['clt_nomef'] : '';
               $tecnicoNome = isset($infos['user_nome']) ? $infos['user_nome'] : '';
               $pessoaNome = isset($infos['pessoa_nom']) ? $infos['pessoa_nom'] : '';
 
-              $body = "<strong>CHAMADO CONCLUIDO!</strong> <br>Empresa: <strong>". $clienteNome ." </strong><strong>//</strong> Solicitado por: <strong>". $pessoaNome ."</strong><br>Descrição da conclusão do chamado: <strong>" . $concluido_desc . "</strong><br>Foi executado pelo técnico: <strong>" . $tecnicoNome."</strong>";
+              $body = "<strong>CHAMADO CONCLUIDO!</strong> <br>Empresa: <strong>" . $clienteNome . " </strong><strong>//</strong> Solicitado por: <strong>" . $pessoaNome . "</strong><br>Descrição da conclusão do chamado: <strong>" . $concluido_desc . "</strong><br>Foi executado pelo técnico: <strong>" . $tecnicoNome . "</strong>";
 
               $headers = 'From: allterus@nivel3ti.com.br' . "\r\n";
               $headers .= "MIME-Version: 1.0\r\n";
@@ -824,7 +845,7 @@ if ($m3_00 == 0) {
 
                   <!-- Este select será populado per um Java Script, de acordo com o valor escolhido no select 'cliente'-->
                   <div class="form-group col-sm-6 col-md-2">
-                    <label class="my-0 small">Sub Categoria:</label>
+                    <label class="my-0 small">SubCategoria:</label>
                     <span class="carregando3 small">Aguarde, carregando...</span>
                     <select name="subcategoria" id="subcategoria" class="form-control form-control-sm" required="required" tabindex="6">
                       <option></option>
@@ -1199,6 +1220,9 @@ WHERE atendimentos.id = '$atd'");
                 if ($m3_05 == 0) {
                   $exibe_bt_atd_finalizar = false;
                 }
+                if ($m3_05 == 0) {
+                  $exibe_bt_atd_search = false;
+                }
 
 
                 if ($m3_05 == 2) { //se usuário com permissão para editar atendimentos de terceiros
@@ -1269,6 +1293,10 @@ WHERE atendimentos.id = '$atd'");
               <i class="fas fa-list-ol"></i> Histórico do atendimento #<?php echo str_pad($atd, 5, '0', STR_PAD_LEFT); ?>
             </div>
             <div class="card-body">
+              <div class="col-md-9 px-0">
+                <button type="button" class="btn btn-outline-primary btn-sm btn-block text-center text-dark" data-toggle="modal" data-target="#atd_search">
+                  <i class="fas fa-filter"></i> Registros de Atendimentos </button>
+              </div>
 
               <div class="timeline">
                 <?php
@@ -1370,6 +1398,90 @@ WHERE atendimentos.id = '$atd'");
       </div>
     </div>
 
+    <div class="modal fade" id="atd_search" tabindex="1" role="dialog">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <form action="#" method="POST">
+            <div class="modal-header">
+              <h6 class="modal-title"> <i class="fas fa-filter text-primary"></i> Registros de Atendimentos</h6>
+              <button type="button" class="close" data-dismiss="modal" aria-label="Fechar">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+            <div class="modal-body py-1">
+              <div class="form-row">
+
+                <?php
+                $pdo = ConnectionN3();
+                $show_clt = $pdo->prepare("SELECT cliente, categoria, subcategoria, item, id FROM atendimentos a WHERE a.id = " . $atd);
+                $show_clt->execute();
+                $exibe = $show_clt->fetch(PDO::FETCH_ASSOC);
+                $clienteId = $exibe["cliente"];
+                $categoriaId = $exibe["categoria"];
+                $subcategoriaId = $exibe["subcategoria"];
+                $itemId = $exibe["item"];
+                $idId = $exibe["id"];
+
+
+                $showInsightsInfo = $pdo->prepare("SELECT 
+                atendimentos.id,
+                categorias.cat_nome AS categoria,
+                subcategorias.scat_nome AS subcategoria,
+                itens.itens_nome AS item,
+                COUNT(atendimentos.id) AS total_atendimentos,
+                clientes.clt_nomer AS cliente_nome
+                FROM atendimentos
+                INNER JOIN clientes ON clientes.clt_id = atendimentos.cliente
+                INNER JOIN categorias ON categorias.cat_id = atendimentos.categoria
+                INNER JOIN subcategorias ON subcategorias.scat_id = atendimentos.subcategoria
+                LEFT JOIN itens ON itens.itens_id = atendimentos.item
+                WHERE clientes.clt_id = " . $clienteId . "
+                AND atendimentos.abertura > NOW() - INTERVAL 3 MONTH
+                GROUP BY clientes.clt_id, categorias.cat_id, subcategorias.scat_id, itens.itens_id
+                ORDER BY total_atendimentos DESC");
+
+                $showInsightsInfo->execute();
+
+                $exibeInsights = $showInsightsInfo->fetch(PDO::FETCH_ASSOC);
+                ?>
+
+                <div class="form-group col-sm-12">
+                  <h4>Informações atendimento #<?php echo $atd; ?></h4>
+                  <p><b>Categoria: </b><?php echo $exibeInsights['categoria']; ?></p>
+                  <p><b>SubCategoria:</b> <?php echo $exibeInsights['subcategoria']; ?> </p>
+                  <p><b>Item:</b> <?php echo $exibeInsights['item'] ?? '-' ?> </p>
+                  <p><b>Total de atendimentos</b> <small>(últimos 3 meses)</small>: <b><?php echo $exibeInsights['total_atendimentos']; ?></b></p>
+                  <hr />
+
+                  <h6>Atendimentos: </h6>
+
+                  <?php
+                  $pdo = ConnectionN3();
+                  $item = isset($itemId) ? " item = " . $itemId : " item IS NULL";
+                  $show_atd = $pdo->prepare("SELECT * FROM atendimentos a WHERE a.cliente = " . $clienteId . " AND a.categoria = " . $categoriaId . " AND a.subcategoria =  " . $subcategoriaId . " AND " . $item . " AND a.abertura > NOW() - INTERVAL 3 MONTH LIMIT 10 ");
+                  $show_atd->execute();
+
+                  while ($atendimento = $show_atd->fetch(PDO::FETCH_ASSOC)) { ?>
+        
+                    <button type="submit" class="btn btn-sm btn-primary" name="atd" value=<?php echo $atendimento['id']?>>Ir para</button>
+                    <?php echo "<i>Chamado</i> <b>#" . $atendimento['id'] . "</b> | <br/><b>Mensagem de conclusão:</b> " . $atendimento['desc_fechamento']; ?>
+                    <?php echo "<hr/><br/>"; ?>
+                    
+                  <?php } ?>
+
+                </div>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <input type="hidden" name="cat_nome" value="<?php echo $cat_nome; ?>">
+              <input type="hidden" name="scat_nome" value="<?php echo $scat_nome; ?>">
+              <input type="hidden" name="token" value="<?php echo $token; ?>">
+              <input type="hidden" name="action" value="atd_search">
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
 
     <!-- MODAL EDIÇÃO DA CLASSIFICAÇÃO DO ATENDIMENTO-->
     <div class="modal fade" id="atd_edt" tabindex="-1" role="dialog">
@@ -1427,7 +1539,7 @@ WHERE atendimentos.id = '$atd'");
 
                 <!-- Este select será populado per um Java Script, de acordo com o valor escolhido no select 'cliente'-->
                 <div class="form-group col-sm-6 col-md-3">
-                  <label class="my-0 small">Sub Categoria:</label>
+                  <label class="my-0 small">SubCategoria:</label>
                   <span class="carregando3 small">Aguarde, carregando...</span>
                   <select name="subcategoria" id="subcategoria" class="form-control form-control-sm" required="required" tabindex="6">
                     <option value="<?php echo $atd_scat; ?>"><?php echo $scat_nome; ?></option>
