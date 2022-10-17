@@ -224,7 +224,7 @@ while($exibe=$show_atd->fetch(PDO::FETCH_ASSOC)){
 
                     <label class="my-0"> Cliente:</label>
 
-                    <select name="f_clt" class="form-control form-control-sm selectpicker" data-live-search="true" required="required" tabindex="1">
+                    <select name="f_clt" class="form-control form-control-sm " data-live-search="true" required="required" tabindex="1">
 
                       <option value="0">Todos os Clientes</option>
 
@@ -260,7 +260,7 @@ if($f_clt>0){ ?>
 
                     <label class="my-0"> Solicitante:</label>
 
-                    <select name="f_sol" class="form-control form-control-sm selectpicker" data-live-search="true" required="required" tabindex="1">
+                    <select name="f_sol" class="form-control form-control-sm " data-live-search="true" required="required" tabindex="1">
 
                       <option value="0">Todos os Solicitantes</option>
 
@@ -320,7 +320,7 @@ while($exibe=$show_clt->fetch(PDO::FETCH_ASSOC)){
 
                     <label class="my-0"> Técnico:</label>
 
-                    <select name="f_tec" class="form-control form-control-sm selectpicker" data-live-search="true" required="required" tabindex="3">
+                    <select name="f_tec" class="form-control form-control-sm " data-live-search="true" required="required" tabindex="3">
 
                       <option value="all"<?php if ("all" == $f_sts){echo " selected";} ?>>Todos</option>
 
@@ -353,7 +353,7 @@ while($exibe=$show_clt->fetch(PDO::FETCH_ASSOC)){
                   </div> 
                   <div class="col-auto col-form-label-sm"> 
                     <label class="my-0"> ID:</label> 
-                    <select name="f_id" class="form-control form-control-sm selectpicker" data-live-search="true" required="required" tabindex="3"> 
+                    <select name="f_id" class="form-control form-control-sm " data-live-search="true" required="required" tabindex="3"> 
                       <option value="all"<?php if ("all" == $f_sts){echo " selected";} ?>>Todos</option>
                       <option value="0"<?php if (0 == $f_sts){echo " selected";} ?>>Não determinado</option> 
 <?php
@@ -971,8 +971,8 @@ while($row=$show_atd->fetch(PDO::FETCH_ASSOC)){
 
                       #<?php echo str_pad($atd , 5 , '0' , STR_PAD_LEFT); ?>
 
-                    <button type="button" class="btn btn-outline-light btn-sm" data-container="body" data-toggle="popover" data-trigger="focus" data-placement="right" data-content="<?php echo $atd_desc_abertura; ?>"><i class="fas fa-comment-alt text-warning"></i></button>
-
+                    <!-- <button type="button" class="btn btn-outline-light btn-sm" data-container="body" data-toggle="popover" data-trigger="focus" data-placement="right" data-content=""><i class="fas fa-comment-alt text-warning"></i></button> -->
+                   <!-- echo $atd_desc_abertura; -->
                     <?php if($atd_reincidente==1){ ?> 
 
                     <i class="fas fa-exclamation-triangle text-danger" title="Reincidente"></i>
@@ -989,18 +989,17 @@ while($row=$show_atd->fetch(PDO::FETCH_ASSOC)){
 
                     </td>
 
-                    <td class="align-middle text-center">
-
-                      <?php echo $dt1 = date('d/m/y', strtotime($atd_hora_abertura));?>
-
+                    <td class="align-middle text-left"  style="width: 20%">
+                      <?php echo $dt2 = date('H:i', strtotime($atd_hora_abertura));?> h
+                      <?php echo $dt1 = date('d/m/y', strtotime($atd_hora_abertura)) . " às ". $dt2;?>
                       <br>
 
-                      <?php echo $dt1 = date('H:i', strtotime($atd_hora_abertura));?> h
+                    <?php echo $atd_desc_abertura; ?>
+
 
                     </td>
 
-                    <td>
-
+                    <td class="align-middle text-center"  style="width: 20%">
                       <?php echo $cat_nome;?> <br/> <?php echo $scat_nome;?> <br/> <?php echo $itens_nome;?>
 
                     </td>

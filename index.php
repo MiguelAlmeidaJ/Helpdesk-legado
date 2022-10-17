@@ -110,21 +110,21 @@ if(isset($_SESSION['loginErro'])){ ?>
 
           <div class="input-group">
             <div class="input-group-prepend">
-              <div class="input-group-text"><i class="fas fa-user text-danger"></i></div>
+              <div class="input-group-text"><i class="fas fa-user text-primary"></i></div>
             </div>
             <input type="text" name="usuario" class="form-control" placeholder="Usuário" required autofocus>
           </div>
           
           <div class="input-group mt-2">
             <div class="input-group-prepend">
-              <div class="input-group-text"><i class="fas fa-unlock-alt text-danger"></i></div>
+              <div class="input-group-text"><i class="fas fa-unlock-alt text-primary"></i></div>
             </div>
             <input type="password" name="senha" class="form-control" placeholder="Senha" required>
           </div>
           
           <div class="input-group mt-2">
             <input type="hidden" name="action" value="logar">
-            <button class="btn btn-lg btn-danger btn-block" type="submit">Acessar</button>
+            <button class="btn btn-lg btn-primary btn-block" type="submit">Acessar</button>
           </div>
         </fieldset>
       </form>
