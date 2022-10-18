@@ -1,5 +1,4 @@
 ﻿<?php
-
 session_start();
 include_once("../all/seguranca.php");
 include_once("../all/conect.php");
@@ -1401,7 +1400,7 @@ WHERE atendimentos.id = '$atd'");
     <div class="modal fade" id="atd_search" tabindex="1" role="dialog">
       <div class="modal-dialog" role="document">
         <div class="modal-content">
-          <form action="#" method="POST">
+          <form action="#" method="POST" onSubmit="window.location.reload()">
             <div class="modal-header">
               <h6 class="modal-title"> <i class="fas fa-filter text-primary"></i> Registros de Atendimentos</h6>
               <button type="button" class="close" data-dismiss="modal" aria-label="Fechar">
@@ -1413,13 +1412,25 @@ WHERE atendimentos.id = '$atd'");
 
                 <?php
                 $pdo = ConnectionN3();
-                $show_clt = $pdo->prepare("SELECT cliente, categoria, subcategoria, item, id FROM atendimentos a WHERE a.id = " . $atd);
+                $show_clt = $pdo->prepare("SELECT cliente, categoria, subcategoria, item, id, cat_nome, scat_nome, itens_nome FROM atendimentos a 
+                LEFT JOIN categorias ON categorias.cat_id = a.categoria
+                LEFT JOIN subcategorias ON subcategorias.scat_id = a.subcategoria
+                LEFT JOIN itens ON itens.itens_id = a.item
+                WHERE a.id = " . $atd);
                 $show_clt->execute();
                 $exibe = $show_clt->fetch(PDO::FETCH_ASSOC);
                 $clienteId = $exibe["cliente"];
+                $clienteId = $exibe["cliente"];
+
                 $categoriaId = $exibe["categoria"];
+                $categoria = $exibe["cat_nome"];
+
                 $subcategoriaId = $exibe["subcategoria"];
+                $subcategoria = $exibe["scat_nome"];
+                
                 $itemId = $exibe["item"];
+                $item = $exibe["itens_nome"];
+
                 $idId = $exibe["id"];
 
 
@@ -1432,10 +1443,10 @@ WHERE atendimentos.id = '$atd'");
                 clientes.clt_nomer AS cliente_nome
                 FROM atendimentos
                 INNER JOIN clientes ON clientes.clt_id = atendimentos.cliente
-                INNER JOIN categorias ON categorias.cat_id = atendimentos.categoria
-                INNER JOIN subcategorias ON subcategorias.scat_id = atendimentos.subcategoria
+                LEFT JOIN categorias ON categorias.cat_id = atendimentos.categoria
+                LEFT JOIN subcategorias ON subcategorias.scat_id = atendimentos.subcategoria
                 LEFT JOIN itens ON itens.itens_id = atendimentos.item
-                WHERE clientes.clt_id = " . $clienteId . "
+                WHERE atendimentos.cliente = " . $clienteId . "
                 AND atendimentos.abertura > NOW() - INTERVAL 3 MONTH
                 GROUP BY clientes.clt_id, categorias.cat_id, subcategorias.scat_id, itens.itens_id
                 ORDER BY total_atendimentos DESC");
@@ -1447,9 +1458,9 @@ WHERE atendimentos.id = '$atd'");
 
                 <div class="form-group col-sm-12">
                   <h4>Informações atendimento #<?php echo $atd; ?></h4>
-                  <p><b>Categoria: </b><?php echo $exibeInsights['categoria']; ?></p>
-                  <p><b>SubCategoria:</b> <?php echo $exibeInsights['subcategoria']; ?> </p>
-                  <p><b>Item:</b> <?php echo $exibeInsights['item'] ?? '-' ?> </p>
+                  <p><b>Categoria: </b><?php echo $categoria; ?></p>
+                  <p><b>SubCategoria:</b> <?php echo $subcategoria; ?> </p>
+                  <p><b>Item:</b> <?php echo $item ?? '-' ?> </p>
                   <p><b>Total de atendimentos</b> <small>(últimos 3 meses)</small>: <b><?php echo $exibeInsights['total_atendimentos']; ?></b></p>
                   <hr />
 
@@ -1471,12 +1482,6 @@ WHERE atendimentos.id = '$atd'");
 
                 </div>
               </div>
-            </div>
-            <div class="modal-footer">
-              <input type="hidden" name="cat_nome" value="<?php echo $cat_nome; ?>">
-              <input type="hidden" name="scat_nome" value="<?php echo $scat_nome; ?>">
-              <input type="hidden" name="token" value="<?php echo $token; ?>">
-              <input type="hidden" name="action" value="atd_search">
             </div>
           </form>
         </div>
