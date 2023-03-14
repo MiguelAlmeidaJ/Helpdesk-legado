@@ -336,7 +336,7 @@ $pdo = ConnectionN3();
                   <label class="col-3 col-form-label text-right">Empresas:</label>
                   <div class="col-9 col-sm-8">
                     <div class="input-group">
-                      <select required="required" class="companies" name="companies[]" multiple="multiple" style="width: 100%">
+                      <select class="companies" name="companies[]" multiple="multiple" style="width: 100%">
                         <option></option>
                         <?php
                         $pdo = ConnectionN3();

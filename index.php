@@ -45,7 +45,18 @@ if($action=="logar"){
     $_SESSION['allterusN3Modulo6'] = $resultado['user_modulo_06'];
     $_SESSION['allterusN3Modulo7'] = $resultado['user_modulo_07'];
     $_SESSION['allterusN3Modulo8'] = $resultado['user_modulo_08'];
-    
+
+
+
+    $sqlEmpresasUsuario = "SELECT cliente_id FROM clientes_usuarios WHERE usuario_id = " . $resultado['user_id'];
+    $empresas_usuario = $pdo->prepare($sqlEmpresasUsuario);
+    $empresas_usuario->execute();
+
+    $exibe = $empresas_usuario->fetchAll(PDO::FETCH_ASSOC);
+
+    $_SESSION['empresas'] = array_column($exibe, 'cliente_id');
+    $_SESSION['tipo'] = $resultado['tipo_usuario'];
+
     $user_id = $resultado['user_id'];
     $today = date("Y-m-d H:i:s");
     $acao = "Logou.";
