@@ -779,10 +779,25 @@ if ($m3_00 == 0) {
                   <div class="form-group col-sm-12 col-md-4">
                     <label class="my-0 small">Cliente:</label>
                     <select name="cliente" id="cliente" class="form-control form-control-sm selectpicker" data-live-search="true" required="required" tabindex="1">
+                      <!-- filtrar -->
                       <option></option>
                       <?php
+                      $filterEmpresas = null;
+
+                      if(isset($_SESSION['tipo']) && $_SESSION['tipo'] == 2 && isset($_SESSION['empresas']) && count($_SESSION['empresas']) > 0) {
+                        $filterEmpresas.= " AND clientes.clt_id IN (" . implode(',', $_SESSION['empresas']) . ")";
+                      }
+
+                      $sql = "SELECT clientes.clt_id, clientes.clt_nomef FROM clientes WHERE clientes.clt_sts = '1'";
+
+                      if($filterEmpresas) {
+                        $sql.= $filterEmpresas;
+                      }
+
+                      $sql.= " ORDER BY clientes.clt_nomef ASC";
+
                       $pdo = ConnectionN3();
-                      $show_clt = $pdo->prepare("SELECT clientes.clt_id, clientes.clt_nomef FROM clientes WHERE clientes.clt_sts = '1' ORDER BY clientes.clt_nomef ASC");
+                      $show_clt = $pdo->prepare($sql);
                       $show_clt->execute();
                       while ($exibe = $show_clt->fetch(PDO::FETCH_ASSOC)) {
                         $clt_id = $exibe["clt_id"];
