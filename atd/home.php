@@ -231,8 +231,19 @@ while($exibe=$show_atd->fetch(PDO::FETCH_ASSOC)){
 <?php
 
 $pdo = ConnectionN3();
+$filterEmpresas = null;
 
-$show_clt = $pdo->prepare("SELECT clientes.clt_id, clientes.clt_nomef FROM clientes WHERE clientes.clt_sts = '1' ORDER BY clientes.clt_nomef ASC");
+if(isset($_SESSION['tipo']) && $_SESSION['tipo'] == 2 && isset($_SESSION['empresas']) && count($_SESSION['empresas']) > 0) {
+  $filterEmpresas.= " AND clientes.clt_id IN (" . implode(',', $_SESSION['empresas']) . ")";
+}
+
+$sql = "SELECT clientes.clt_id, clientes.clt_nomef FROM clientes WHERE clientes.clt_sts = '1'";
+if($filterEmpresas) {
+  $sql.= $filterEmpresas;
+}
+
+$sql.= "ORDER BY clientes.clt_nomef ASC";
+$show_clt = $pdo->prepare($sql);
 
 $show_clt->execute();
 
@@ -357,8 +368,23 @@ while($exibe=$show_clt->fetch(PDO::FETCH_ASSOC)){
                       <option value="all"<?php if ("all" == $f_sts){echo " selected";} ?>>Todos</option>
                       <option value="0"<?php if (0 == $f_sts){echo " selected";} ?>>Não determinado</option> 
 <?php
+$filterEmpresas = null;
+
+if(isset($_SESSION['tipo']) && $_SESSION['tipo'] == 2 && isset($_SESSION['empresas']) && count($_SESSION['empresas']) > 0) {
+  $filterEmpresas.= " WHERE atendimentos.cliente IN (" . implode(',', $_SESSION['empresas']) . ")";
+}
+
 $pdo = ConnectionN3();
-$show_clt = $pdo->prepare("SELECT atendimentos.id FROM atendimentos ORDER BY atendimentos.id ASC"); //Moa
+$sql = "SELECT atendimentos.id FROM atendimentos";
+
+if($filterEmpresas) {
+  $sql.= $filterEmpresas;
+}
+
+$sql.= " ORDER BY atendimentos.id ASC";
+
+$show_clt = $pdo->prepare($sql);
+// aqui vamos filtrar pelo usuario logado
 $show_clt->execute();
 while($exibe=$show_clt->fetch(PDO::FETCH_ASSOC)){ 
   $id = $exibe["id"];  
@@ -583,7 +609,14 @@ while($exibe=$show_clt->fetch(PDO::FETCH_ASSOC)){
 
 $pdo = ConnectionN3();
 
-$show_atd = $pdo->prepare("SELECT atendimentos.id, atendimentos.cliente, atendimentos.`area`, atendimentos.`tipo`, atendimentos.`local`, atendimentos.nivel, atendimentos.forma, atendimentos.desc_abertura, atendimentos.desc_fechamento, atendimentos.abertura, atendimentos.fechamento, atendimentos.tecnico, atendimentos.reincidente, atendimentos.`status`,
+
+$filterEmpresas = null;
+
+if(isset($_SESSION['tipo']) && $_SESSION['tipo'] == 2 && isset($_SESSION['empresas']) && count($_SESSION['empresas']) > 0) {
+  $filterEmpresas.= " AND atendimentos.cliente IN (" . implode(',', $_SESSION['empresas']) . ")";
+}
+
+$sql = "SELECT atendimentos.id, atendimentos.cliente, atendimentos.`area`, atendimentos.`tipo`, atendimentos.`local`, atendimentos.nivel, atendimentos.forma, atendimentos.desc_abertura, atendimentos.desc_fechamento, atendimentos.abertura, atendimentos.fechamento, atendimentos.tecnico, atendimentos.reincidente, atendimentos.`status`,
 
 clientes.clt_id, clientes.clt_nomer, clientes.clt_nomef, clientes.clt_cnpj,
 
@@ -625,9 +658,16 @@ AND atendimentos.pessoa LIKE '$p_sol'
 
 AND atendimentos.id LIKE '$p_id'
 
-ORDER BY $order_by
+";
+if($filterEmpresas) {
+  $sql.= $filterEmpresas;
+}
 
-");
+
+
+$sql.= "ORDER BY $order_by";
+
+$show_atd = $pdo->prepare($sql);
 
 $show_atd->execute();
 

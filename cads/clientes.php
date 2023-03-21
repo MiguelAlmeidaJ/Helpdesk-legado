@@ -243,7 +243,22 @@ if ($usar_token=="true") {
                   <tbody>
 <?php
 $pdo = ConnectionN3();
-$show_eqp = $pdo->prepare("SELECT clientes.* FROM clientes ORDER BY clientes.clt_nomer ASC");
+
+$filterEmpresas = null;
+
+if(isset($_SESSION['tipo']) && $_SESSION['tipo'] == 2 && isset($_SESSION['empresas']) && count($_SESSION['empresas']) > 0) {
+  $filterEmpresas.= " clientes.clt_id IN (" . implode(',', $_SESSION['empresas']) . ")";
+}
+
+$sql = "SELECT clientes.* FROM clientes ";
+
+if($filterEmpresas){
+  $sql.= "WHERE " . $filterEmpresas;
+}
+
+$sql.= "ORDER BY clientes.clt_nomer ASC";
+$show_eqp = $pdo->prepare($sql);
+
 $show_eqp->execute();
 while($row=$show_eqp->fetch(PDO::FETCH_ASSOC)){
   $clt_id=$row["clt_id"];
