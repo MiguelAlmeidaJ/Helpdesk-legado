@@ -176,7 +176,7 @@ if ($m3_00 == 0) {
 
           $clienteid = isset($infos['id']) ? $infos['id'] : '';
 
-          $to_email = "dhiogoamz@gmail.com,clerio.junior@gmail.com";
+          $to_email = "clerio.junior@gmail.com";
           $subject = "Nivel 3 TI Atendimento: #" . $atd . " ";
 
           /*$clienteNome = $cliente['clt_nomef'];

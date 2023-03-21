@@ -64,11 +64,25 @@ if (isset($_POST["user_id"])) {
     $clientesSelecionados->execute();
     $rowClientesSelecionados = $clientesSelecionados->fetchAll(PDO::FETCH_ASSOC);
     $idsClientesSelecionados = array_column($rowClientesSelecionados, 'cliente_id');
+    // 
+
+    $filterEmpresas = null;
+
+    $sql =  "SELECT *
+    FROM clientes c
+    WHERE c.clt_sts = 1";
+
+    if(isset($_SESSION['tipo']) && $_SESSION['tipo'] == 2 && isset($_SESSION['empresas']) && count($_SESSION['empresas']) > 0) {
+      $filterEmpresas.= " AND c.clt_id IN (" . implode(',', $_SESSION['empresas']) . ")";
+    }
+
+    if($filterEmpresas) {
+      $sql.= $filterEmpresas;
+    }
+
     $todosClientes = $pdo->prepare(
-      "SELECT *
-      FROM clientes c
-      WHERE c.clt_sts = 1"
-    );
+     $sql
+    );  
 
     $todosClientes->execute();
   }

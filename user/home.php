@@ -32,6 +32,9 @@ if ($usar_token=="true") {
       $adc_user->bindParam(':user_pass', $user_pass);
       if ($adc_user->execute()) {
         $userId = $pdo->lastInsertId();
+
+        $_SESSION['usuarios'][] = $userId;
+
         foreach($companies as $companyId){
           $adc_clientes_usuarios = $pdo->prepare("INSERT INTO `clientes_usuarios` (`cliente_id`, `usuario_id`) VALUES (:companyId, :userId);");
           $adc_clientes_usuarios->bindParam(':companyId', $companyId);
@@ -216,11 +219,20 @@ if ($usar_token=="true") {
                   </thead>
                   <tbody>
 <?php
+// só usuários relacionados aos clientes
+$filterUsuariosEmpresas = "";
+
+//get usuarios relacionados as empresas que esse cliente está conectado
+
+if(isset($_SESSION['tipo']) && $_SESSION['tipo'] == 2 && isset($_SESSION['usuarios']) && count($_SESSION['usuarios']) > 0) {
+  $filterUsuariosEmpresas.= " AND usuarios.user_id IN (" . implode(',', $_SESSION['usuarios']) . ") ";
+}
+
 $pdo = ConnectionN3();
 $show_eqp = $pdo->prepare("SELECT usuarios.user_id, usuarios.user_nome, usuarios.user_sts, usuarios.user_funcao, cargos_n3.cargo_nome
 FROM usuarios 
 LEFT JOIN cargos_n3 ON cargos_n3.cargo_id = usuarios.user_funcao
-WHERE usuarios.user_id > '1'
+WHERE usuarios.user_id > '1' " . $filterUsuariosEmpresas . "
 ORDER BY usuarios.user_sts ASC, usuarios.user_nome ASC");
 $show_eqp->execute();
 while($row=$show_eqp->fetch(PDO::FETCH_ASSOC)){
@@ -323,15 +335,21 @@ $pdo = ConnectionN3();
                   <div class="col-9 col-sm-8">
                     <div class="input-group">
                       <div style="padding-top: 10px">
-                        <input type="radio" id="nivel3" name="tipo_usuario" value="1" checked="checked">
-                        <label for="nivel3">Nivel3</label>
-                        <input type="radio" id="cliente" name="tipo_usuario" value="2">
-                        <label for="cliente">Cliente</label>
+                      <?php if(isset($_SESSION['tipo']) && $_SESSION['tipo'] == 1) {
+                        echo '<input type="radio" id="nivel3" name="tipo_usuario" value="1" checked="checked">';
+                        echo '<label for="nivel3">Admin</label>';
+                      } ?>
+
+                        <?php if(isset($_SESSION['tipo']) && $_SESSION['tipo'] == 2 || $_SESSION['tipo'] == 1) {
+                          echo '<input type="radio" id="cliente" name="tipo_usuario" value="2">';
+                          echo '<label for="cliente">Cliente</label>';
+                        } ?>
                       </div>
                     </div>
                   </div>
                 </div>
 
+                <!-- filtrar empresas tipo de usuario -->
                 <div class="form-group row">
                   <label class="col-3 col-form-label text-right">Empresas:</label>
                   <div class="col-9 col-sm-8">
@@ -339,8 +357,19 @@ $pdo = ConnectionN3();
                       <select class="companies" name="companies[]" multiple="multiple" style="width: 100%">
                         <option></option>
                         <?php
+                        $filterEmpresas = null;
                         $pdo = ConnectionN3();
-                        $show_cargo = $pdo->prepare("SELECT clientes.* FROM clientes WHERE clientes.clt_sts = '1'");
+                        $sql = "SELECT clientes.* FROM clientes WHERE clientes.clt_sts = '1'";
+
+                        if(isset($_SESSION['tipo']) && $_SESSION['tipo'] == 2 && isset($_SESSION['empresas']) && count($_SESSION['empresas']) > 0) {
+                          $filterEmpresas.= " AND clientes.clt_id IN (" . implode(',', $_SESSION['empresas']) . ")";
+                        }
+
+                        if($filterEmpresas) {
+                          $sql.= $filterEmpresas;
+                        }
+
+                        $show_cargo = $pdo->prepare($sql);
                         $show_cargo->execute();
                         while ($rowc = $show_cargo->fetch(PDO::FETCH_ASSOC)) {
                           $client_id = $rowc["clt_id"];

@@ -55,6 +55,20 @@ if($action=="logar"){
     $exibe = $empresas_usuario->fetchAll(PDO::FETCH_ASSOC);
 
     $_SESSION['empresas'] = array_column($exibe, 'cliente_id');
+
+    if(array_column($exibe, 'cliente_id')){
+      $sqlUsuariosEmpresa = "SELECT DISTINCT usuario_id FROM clientes_usuarios WHERE cliente_id IN (" . implode(',', array_column($exibe, 'cliente_id')) . ")";
+      $usuarios_empresas = $pdo->prepare($sqlUsuariosEmpresa);
+      $usuarios_empresas->execute();
+  
+      $exibeUsuariosEmpresas = $usuarios_empresas->fetchAll(PDO::FETCH_ASSOC);
+  
+  
+      //pega os users relacionados as empresas que o usuario está relacionado
+      $_SESSION['usuarios'] = array_column($exibeUsuariosEmpresas, 'usuario_id');
+    }
+    
+
     $_SESSION['tipo'] = $resultado['tipo_usuario'];
 
     $user_id = $resultado['user_id'];
