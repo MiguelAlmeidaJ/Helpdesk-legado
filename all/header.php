@@ -144,7 +144,7 @@ if ($m1_00==1) { ?>
         <div class="dropdown-menu">
           <a class="dropdown-item" href="../rel/atd_abertos_por_tecnico.php"><i class="fas fa-user-tie text-info"></i><small> Atd abertos por tecnico</small></a>
           <div class="dropdown-divider"></div>
-          <a class="dropdown-item" href="../rel/atd_total_por_cliente.php"><i class="fas fa-headset text-info"></i><small> Atd total por cliente</small></a>
+          <a class="dropdown-item" href="../rel/atd_total_por_cliente.php"><i class="fas fa-headset text-info"></i><small> Atd total Por Cliente</small></a>
           <div class="dropdown-divider"></div>
           <a class="dropdown-item" href="../rel/atd_total_por_tecnico.php"><i class="fas fa-user-tie text-info"></i><small> Atd total por técnico</small></a>
           <div class="dropdown-divider"></div>
@@ -152,7 +152,7 @@ if ($m1_00==1) { ?>
           <div class="dropdown-divider"></div>
           <a class="dropdown-item" href="../rel/atd_tempo_por_tecnico.php"><i class="far fa-clock text-warning"></i><small> Tempo médio para atendmento</small></a>
           <div class="dropdown-divider"></div>
-          <a class="dropdown-item" href="../rel/atd_analitico_por_cliente.php"><i class="fas fa-align-justify text-info"></i><small> Atd analítico por cliente</small></a>
+          <a class="dropdown-item" href="../rel/atd_analitico_por_cliente.php"><i class="fas fa-align-justify text-info"></i><small> Atd analítico Por Cliente</small></a>
         </div>
       </li>
 

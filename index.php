@@ -153,7 +153,7 @@ if(isset($_SESSION['loginErro'])){ ?>
           </div>
         </fieldset>
       </form>
-      <p class="text-center text-muted text-small mt-2">ALLTERUS - Gestão inteligente</p>
+      <p class="text-center text-muted text-small mt-2">Allterus - Gestão Inteligente</p>
     </div>
   </body>
   <div>

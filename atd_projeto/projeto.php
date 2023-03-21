@@ -702,12 +702,6 @@ while($exibe=$show_clt->fetch(PDO::FETCH_ASSOC)){
   </div>
 </div> 
 
-
-
-
-
-
-
     
 <?php } ?>
 

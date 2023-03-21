@@ -249,7 +249,7 @@ $data_d7 =  date('Y-m-d', strtotime($data . ' -7 days'));
       <div class="col-sx-12 col-sm-6 col-md-4 mb-1 px-1">
         <div class="card bg-default">
           <h6 class="card-header py-2">
-            <i class="fas fa-chart-bar text-danger"></i> Chamados Abertos <small>(por cliente)</small>
+            <i class="fas fa-chart-bar text-danger"></i> Chamados Abertos <small>(Por Cliente)</small>
           </h6>
           <div class="card-body">
             <?php
@@ -309,7 +309,7 @@ ORDER BY atd_num DESC LIMIT 0,10");
       <div class="col-sx-12 col-sm-6 col-md-4 mb-1 px-1">
         <div class="card bg-default">
           <h6 class="card-header py-2">
-            <i class="fas fa-trophy text-primary"></i> Matadores <small>(últimos 7 dias)</small>
+            <i class="fas fa-trophy text-primary"></i> Matadores <small>(Últimos 7 Dias)</small>
           </h6>
           <div class="card-body">
             <?php

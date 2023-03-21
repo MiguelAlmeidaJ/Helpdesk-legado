@@ -135,7 +135,7 @@ while($exibe=$show_clt->fetch(PDO::FETCH_ASSOC)){
           <div class="card bg-default">
             <div class="card-header py-2 h6">
               <i class="fas fa-chart-pie"></i>
-              Relatório analítico de Atendimentos por cliente
+              Relatório analítico de Atendimentos Por Cliente
             </div>
 <?php 
 $pdo = ConnectionN3();
