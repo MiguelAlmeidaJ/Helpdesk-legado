@@ -162,7 +162,18 @@ $data_d7 =  date('Y-m-d', strtotime($data . ' -7 days'));
           <div class="card-body">
             <?php
             $pdo = ConnectionN3();
-            $show = $pdo->prepare("SELECT count(atendimentos.id) AS atd_num FROM atendimentos WHERE atendimentos.tipo = '1' AND atendimentos.`status` IN (1,2,3,4,5)");
+
+            $filterEmpresas = "";
+
+            if(isset($_SESSION['tipo']) && $_SESSION['tipo'] == 2 && isset($_SESSION['empresas']) && count($_SESSION['empresas']) > 0) {
+              $filterEmpresas.= " AND atendimentos.cliente IN (" . implode(',', $_SESSION['empresas']) . ")";
+            }
+
+            $sql = "SELECT count(atendimentos.id) AS atd_num FROM atendimentos WHERE atendimentos.tipo = '1' AND atendimentos.`status` IN (1,2,3,4,5) ";
+            if($filterEmpresas) {
+              $sql.= $filterEmpresas;
+            }
+            $show = $pdo->prepare($sql);
             $show->execute();
             $exibe = $show->fetch(PDO::FETCH_ASSOC);
             $atd_1 = $exibe["atd_num"];
@@ -170,7 +181,11 @@ $data_d7 =  date('Y-m-d', strtotime($data . ' -7 days'));
               $atd_1 = 0;
             }
 
-            $show = $pdo->prepare("SELECT count(atendimentos.id) AS atd_num FROM atendimentos WHERE atendimentos.tipo = '2' AND atendimentos.`status` IN (1,2,3,4,5)");
+            $sql2 = "SELECT count(atendimentos.id) AS atd_num FROM atendimentos WHERE atendimentos.tipo = '2' AND atendimentos.`status` IN (1,2,3,4,5)";
+            if($filterEmpresas) {
+              $sql2.= $filterEmpresas;
+            }
+            $show = $pdo->prepare($sql2);
             $show->execute();
             $exibe = $show->fetch(PDO::FETCH_ASSOC);
             $atd_2 = $exibe["atd_num"];
@@ -178,7 +193,11 @@ $data_d7 =  date('Y-m-d', strtotime($data . ' -7 days'));
               $atd_2 = 0;
             }
 
-            $show = $pdo->prepare("SELECT count(atendimentos.id) AS atd_num FROM atendimentos WHERE atendimentos.tipo = '3' AND atendimentos.`status` IN (1,2,3,4,5)");
+            $sql3 = "SELECT count(atendimentos.id) AS atd_num FROM atendimentos WHERE atendimentos.tipo = '3' AND atendimentos.`status` IN (1,2,3,4,5)";
+            if($filterEmpresas) {
+              $sql3.= $filterEmpresas;
+            }
+            $show = $pdo->prepare($sql3);
             $show->execute();
             $exibe = $show->fetch(PDO::FETCH_ASSOC);
             $atd_3 = $exibe["atd_num"];
@@ -186,7 +205,11 @@ $data_d7 =  date('Y-m-d', strtotime($data . ' -7 days'));
               $atd_3 = 0;
             }
 
-            $show = $pdo->prepare("SELECT count(atendimentos.id) AS atd_num FROM atendimentos WHERE atendimentos.tipo = '4' AND atendimentos.`status` IN (1,2,3,4,5)");
+            $sql4 = "SELECT count(atendimentos.id) AS atd_num FROM atendimentos WHERE atendimentos.tipo = '4' AND atendimentos.`status` IN (1,2,3,4,5)";
+            if($filterEmpresas) {
+              $sql4.= $filterEmpresas;
+            }
+            $show = $pdo->prepare($sql4);
             $show->execute();
             $exibe = $show->fetch(PDO::FETCH_ASSOC);
             $atd_4 = $exibe["atd_num"];
@@ -194,7 +217,11 @@ $data_d7 =  date('Y-m-d', strtotime($data . ' -7 days'));
               $atd_4 = 0;
             }
 
-            $show = $pdo->prepare("SELECT count(atendimentos.id) AS atd_num FROM atendimentos WHERE atendimentos.tipo = '5' AND atendimentos.`status` IN (1,2,3,4,5)");
+            $sql5 = "SELECT count(atendimentos.id) AS atd_num FROM atendimentos WHERE atendimentos.tipo = '5' AND atendimentos.`status` IN (1,2,3,4,5)";
+            if($filterEmpresas) {
+              $sql5.= $filterEmpresas;
+            }
+            $show = $pdo->prepare($sql5);
             $show->execute();
             $exibe = $show->fetch(PDO::FETCH_ASSOC);
             $atd_5 = $exibe["atd_num"];
@@ -249,15 +276,17 @@ $data_d7 =  date('Y-m-d', strtotime($data . ' -7 days'));
       <div class="col-sx-12 col-sm-6 col-md-4 mb-1 px-1">
         <div class="card bg-default">
           <h6 class="card-header py-2">
+            <!--  -->
             <i class="fas fa-chart-bar text-danger"></i> Chamados Abertos <small>(Por Cliente)</small>
           </h6>
           <div class="card-body">
             <?php
             $pdo = ConnectionN3();
+
             $show_clt = $pdo->prepare("SELECT count(atendimentos.id) AS atd_num, clientes.clt_nomer
 FROM atendimentos
 INNER JOIN clientes ON atendimentos.cliente = clientes.clt_id
-WHERE atendimentos.`status` IN (1,2,3) 
+WHERE atendimentos.`status` IN (1,2,3) " . $filterEmpresas . "
 GROUP BY clientes.clt_id
 ORDER BY atd_num DESC LIMIT 0,10");
             $show_clt->execute();
@@ -315,7 +344,7 @@ ORDER BY atd_num DESC LIMIT 0,10");
             <?php
             //conta o total atendido pelos 3 maiores matadores de chamados
             $pdo = ConnectionN3();
-            $cont_atd = $pdo->prepare("SELECT COUNT(atendimentos.id) AS atd_qnt, usuarios.user_nome FROM atendimentos INNER JOIN usuarios ON usuarios.user_id = atendimentos.tecnico WHERE atendimentos.abertura > '$data_d7' AND atendimentos.`status` = 4 GROUP BY atendimentos.tecnico ORDER BY atd_qnt DESC LIMIT 0,3");
+            $cont_atd = $pdo->prepare("SELECT COUNT(atendimentos.id) AS atd_qnt, usuarios.user_nome FROM atendimentos INNER JOIN usuarios ON usuarios.user_id = atendimentos.tecnico WHERE atendimentos.abertura > '$data_d7' AND atendimentos.`status` = 4 " . $filterEmpresas . " GROUP BY atendimentos.tecnico ORDER BY atd_qnt DESC LIMIT 0,3");
             $cont_atd->execute();
             $n = 1;
             while ($e1 = $cont_atd->fetch(PDO::FETCH_ASSOC)) {
@@ -405,7 +434,7 @@ ORDER BY atd_num DESC LIMIT 0,10");
       <div class="col-sx-12 col-sm-12 col-md-6 mb-1 px-1">
         <div class="card bg-default">
           <h6 class="card-header py-2">
-            <i class="fas fa-chart-line text-primary"></i> Abertura de chamados <small>(úlimas 8 semanas)</small>
+            <i class="fas fa-chart-line text-primary"></i> Abertura de Chamados <small>(Últimas 8 semanas)</small>
           </h6>
           <div class="card-body">
             <?php
@@ -456,56 +485,56 @@ ORDER BY atd_num DESC LIMIT 0,10");
             $dia_7a_n =  date('d/m', strtotime($dia_0 . ' -55 days'));
 
             $pdo = ConnectionN3();
-            $show = $pdo->prepare("SELECT count(atendimentos.id) AS atd_num FROM atendimentos WHERE atendimentos.abertura BETWEEN '$dia_0a' AND '$dia_0' AND atendimentos.`status` > '0' ");
+            $show = $pdo->prepare("SELECT count(atendimentos.id) AS atd_num FROM atendimentos WHERE atendimentos.abertura BETWEEN '$dia_0a' AND '$dia_0' AND atendimentos.`status` > '0' " . $filterEmpresas);
             $show->execute();
             $exibe = $show->fetch(PDO::FETCH_ASSOC);
             $atd_0 = $exibe["atd_num"];
             if ($atd_0 == "") {
               $atd_0 = 0;
             }
-            $show = $pdo->prepare("SELECT count(atendimentos.id) AS atd_num FROM atendimentos WHERE atendimentos.abertura BETWEEN '$dia_1a' AND '$dia_1' AND atendimentos.`status` > '0' ");
+            $show = $pdo->prepare("SELECT count(atendimentos.id) AS atd_num FROM atendimentos WHERE atendimentos.abertura BETWEEN '$dia_1a' AND '$dia_1' AND atendimentos.`status` > '0' " . $filterEmpresas);
             $show->execute();
             $exibe = $show->fetch(PDO::FETCH_ASSOC);
             $atd_1 = $exibe["atd_num"];
             if ($atd_1 == "") {
               $atd_1 = 0;
             }
-            $show = $pdo->prepare("SELECT count(atendimentos.id) AS atd_num FROM atendimentos WHERE atendimentos.abertura BETWEEN '$dia_2a' AND '$dia_2' AND atendimentos.`status` > '0' ");
+            $show = $pdo->prepare("SELECT count(atendimentos.id) AS atd_num FROM atendimentos WHERE atendimentos.abertura BETWEEN '$dia_2a' AND '$dia_2' AND atendimentos.`status` > '0' " . $filterEmpresas);
             $show->execute();
             $exibe = $show->fetch(PDO::FETCH_ASSOC);
             $atd_2 = $exibe["atd_num"];
             if ($atd_2 == "") {
               $atd_2 = 0;
             }
-            $show = $pdo->prepare("SELECT count(atendimentos.id) AS atd_num FROM atendimentos WHERE atendimentos.abertura BETWEEN '$dia_3a' AND '$dia_3' AND atendimentos.`status` > '0' ");
+            $show = $pdo->prepare("SELECT count(atendimentos.id) AS atd_num FROM atendimentos WHERE atendimentos.abertura BETWEEN '$dia_3a' AND '$dia_3' AND atendimentos.`status` > '0' " . $filterEmpresas);
             $show->execute();
             $exibe = $show->fetch(PDO::FETCH_ASSOC);
             $atd_3 = $exibe["atd_num"];
             if ($atd_3 == "") {
               $atd_3 = 0;
             }
-            $show = $pdo->prepare("SELECT count(atendimentos.id) AS atd_num FROM atendimentos WHERE atendimentos.abertura BETWEEN '$dia_4a' AND '$dia_4' AND atendimentos.`status` > '0' ");
+            $show = $pdo->prepare("SELECT count(atendimentos.id) AS atd_num FROM atendimentos WHERE atendimentos.abertura BETWEEN '$dia_4a' AND '$dia_4' AND atendimentos.`status` > '0' " . $filterEmpresas);
             $show->execute();
             $exibe = $show->fetch(PDO::FETCH_ASSOC);
             $atd_4 = $exibe["atd_num"];
             if ($atd_4 == "") {
               $atd_4 = 0;
             }
-            $show = $pdo->prepare("SELECT count(atendimentos.id) AS atd_num FROM atendimentos WHERE atendimentos.abertura BETWEEN '$dia_5a' AND '$dia_5' AND atendimentos.`status` > '0' ");
+            $show = $pdo->prepare("SELECT count(atendimentos.id) AS atd_num FROM atendimentos WHERE atendimentos.abertura BETWEEN '$dia_5a' AND '$dia_5' AND atendimentos.`status` > '0' " . $filterEmpresas);
             $show->execute();
             $exibe = $show->fetch(PDO::FETCH_ASSOC);
             $atd_5 = $exibe["atd_num"];
             if ($atd_5 == "") {
               $atd_5 = 0;
             }
-            $show = $pdo->prepare("SELECT count(atendimentos.id) AS atd_num FROM atendimentos WHERE atendimentos.abertura BETWEEN '$dia_6a' AND '$dia_6' AND atendimentos.`status` > '0' ");
+            $show = $pdo->prepare("SELECT count(atendimentos.id) AS atd_num FROM atendimentos WHERE atendimentos.abertura BETWEEN '$dia_6a' AND '$dia_6' AND atendimentos.`status` > '0' " . $filterEmpresas);
             $show->execute();
             $exibe = $show->fetch(PDO::FETCH_ASSOC);
             $atd_6 = $exibe["atd_num"];
             if ($atd_6 == "") {
               $atd_6 = 0;
             }
-            $show = $pdo->prepare("SELECT count(atendimentos.id) AS atd_num FROM atendimentos WHERE atendimentos.abertura BETWEEN '$dia_7a' AND '$dia_7' AND atendimentos.`status` > '0' ");
+            $show = $pdo->prepare("SELECT count(atendimentos.id) AS atd_num FROM atendimentos WHERE atendimentos.abertura BETWEEN '$dia_7a' AND '$dia_7' AND atendimentos.`status` > '0' " . $filterEmpresas);
             $show->execute();
             $exibe = $show->fetch(PDO::FETCH_ASSOC);
             $atd_7 = $exibe["atd_num"];
@@ -557,61 +586,61 @@ ORDER BY atd_num DESC LIMIT 0,10");
       <div class="col-sx-12 col-sm-12 col-md-6 mb-1 px-1">
         <div class="card bg-default">
           <h6 class="card-header py-2">
-            <i class="fas fa-chart-line text-danger"></i> Chamados reincidentes <small>(úlimas 8 semanas)</small>
+            <i class="fas fa-chart-line text-danger"></i> Chamados Reincidentes <small>(Últimas 8 semanas)</small>
           </h6>
           <div class="card-body">
             <?php
             $pdo = ConnectionN3();
-            $show = $pdo->prepare("SELECT count(atendimentos.id) AS atd_num FROM atendimentos WHERE atendimentos.abertura BETWEEN '$dia_0a' AND '$dia_0' AND atendimentos.`reincidente` = '1' AND atendimentos.`status` > '0' ");
+            $show = $pdo->prepare("SELECT count(atendimentos.id) AS atd_num FROM atendimentos WHERE atendimentos.abertura BETWEEN '$dia_0a' AND '$dia_0' AND atendimentos.`reincidente` = '1' AND atendimentos.`status` > '0' " . $filterEmpresas);
             $show->execute();
             $exibe = $show->fetch(PDO::FETCH_ASSOC);
             $atd_0 = $exibe["atd_num"];
             if ($atd_0 == "") {
               $atd_0 = 0;
             }
-            $show = $pdo->prepare("SELECT count(atendimentos.id) AS atd_num FROM atendimentos WHERE atendimentos.abertura BETWEEN '$dia_1a' AND '$dia_1' AND atendimentos.`reincidente` = '1' AND atendimentos.`status` > '0' ");
+            $show = $pdo->prepare("SELECT count(atendimentos.id) AS atd_num FROM atendimentos WHERE atendimentos.abertura BETWEEN '$dia_1a' AND '$dia_1' AND atendimentos.`reincidente` = '1' AND atendimentos.`status` > '0' " . $filterEmpresas);
             $show->execute();
             $exibe = $show->fetch(PDO::FETCH_ASSOC);
             $atd_1 = $exibe["atd_num"];
             if ($atd_1 == "") {
               $atd_1 = 0;
             }
-            $show = $pdo->prepare("SELECT count(atendimentos.id) AS atd_num FROM atendimentos WHERE atendimentos.abertura BETWEEN '$dia_2a' AND '$dia_2' AND atendimentos.`reincidente` = '1' AND atendimentos.`status` > '0' ");
+            $show = $pdo->prepare("SELECT count(atendimentos.id) AS atd_num FROM atendimentos WHERE atendimentos.abertura BETWEEN '$dia_2a' AND '$dia_2' AND atendimentos.`reincidente` = '1' AND atendimentos.`status` > '0' " . $filterEmpresas);
             $show->execute();
             $exibe = $show->fetch(PDO::FETCH_ASSOC);
             $atd_2 = $exibe["atd_num"];
             if ($atd_2 == "") {
               $atd_2 = 0;
             }
-            $show = $pdo->prepare("SELECT count(atendimentos.id) AS atd_num FROM atendimentos WHERE atendimentos.abertura BETWEEN '$dia_3a' AND '$dia_3' AND atendimentos.`reincidente` = '1' AND atendimentos.`status` > '0' ");
+            $show = $pdo->prepare("SELECT count(atendimentos.id) AS atd_num FROM atendimentos WHERE atendimentos.abertura BETWEEN '$dia_3a' AND '$dia_3' AND atendimentos.`reincidente` = '1' AND atendimentos.`status` > '0' " . $filterEmpresas);
             $show->execute();
             $exibe = $show->fetch(PDO::FETCH_ASSOC);
             $atd_3 = $exibe["atd_num"];
             if ($atd_3 == "") {
               $atd_3 = 0;
             }
-            $show = $pdo->prepare("SELECT count(atendimentos.id) AS atd_num FROM atendimentos WHERE atendimentos.abertura BETWEEN '$dia_4a' AND '$dia_4' AND atendimentos.`reincidente` = '1' AND atendimentos.`status` > '0' ");
+            $show = $pdo->prepare("SELECT count(atendimentos.id) AS atd_num FROM atendimentos WHERE atendimentos.abertura BETWEEN '$dia_4a' AND '$dia_4' AND atendimentos.`reincidente` = '1' AND atendimentos.`status` > '0' " . $filterEmpresas);
             $show->execute();
             $exibe = $show->fetch(PDO::FETCH_ASSOC);
             $atd_4 = $exibe["atd_num"];
             if ($atd_4 == "") {
               $atd_4 = 0;
             }
-            $show = $pdo->prepare("SELECT count(atendimentos.id) AS atd_num FROM atendimentos WHERE atendimentos.abertura BETWEEN '$dia_5a' AND '$dia_5' AND atendimentos.`reincidente` = '1' AND atendimentos.`status` > '0' ");
+            $show = $pdo->prepare("SELECT count(atendimentos.id) AS atd_num FROM atendimentos WHERE atendimentos.abertura BETWEEN '$dia_5a' AND '$dia_5' AND atendimentos.`reincidente` = '1' AND atendimentos.`status` > '0' " . $filterEmpresas);
             $show->execute();
             $exibe = $show->fetch(PDO::FETCH_ASSOC);
             $atd_5 = $exibe["atd_num"];
             if ($atd_5 == "") {
               $atd_5 = 0;
             }
-            $show = $pdo->prepare("SELECT count(atendimentos.id) AS atd_num FROM atendimentos WHERE atendimentos.abertura BETWEEN '$dia_6a' AND '$dia_6' AND atendimentos.`reincidente` = '1' AND atendimentos.`status` > '0' ");
+            $show = $pdo->prepare("SELECT count(atendimentos.id) AS atd_num FROM atendimentos WHERE atendimentos.abertura BETWEEN '$dia_6a' AND '$dia_6' AND atendimentos.`reincidente` = '1' AND atendimentos.`status` > '0' " . $filterEmpresas);
             $show->execute();
             $exibe = $show->fetch(PDO::FETCH_ASSOC);
             $atd_6 = $exibe["atd_num"];
             if ($atd_6 == "") {
               $atd_6 = 0;
             }
-            $show = $pdo->prepare("SELECT count(atendimentos.id) AS atd_num FROM atendimentos WHERE atendimentos.abertura BETWEEN '$dia_7a' AND '$dia_7' AND atendimentos.`reincidente` = '1' AND atendimentos.`status` > '0' ");
+            $show = $pdo->prepare("SELECT count(atendimentos.id) AS atd_num FROM atendimentos WHERE atendimentos.abertura BETWEEN '$dia_7a' AND '$dia_7' AND atendimentos.`reincidente` = '1' AND atendimentos.`status` > '0' " . $filterEmpresas);
             $show->execute();
             $exibe = $show->fetch(PDO::FETCH_ASSOC);
             $atd_7 = $exibe["atd_num"];

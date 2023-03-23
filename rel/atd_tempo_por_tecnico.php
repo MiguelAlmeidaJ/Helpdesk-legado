@@ -52,19 +52,25 @@ header("Refresh:60");
                 <tbody>
 <?php //Buscando lista de usuários//
 $pdo = ConnectionN3();
+$filterEmpresas = "";
+
+if(isset($_SESSION['tipo']) && $_SESSION['tipo'] == 2 && isset($_SESSION['empresas']) && count($_SESSION['empresas']) > 0) {
+  $filterEmpresas.= " AND atendimentos.cliente IN (" . implode(',', $_SESSION['empresas']) . ")";
+}
+
 $show_atd = $pdo->prepare("SELECT usuarios.user_nome,usuarios.user_id FROM usuarios WHERE usuarios.user_sts ='1' AND usuarios.user_id >'1' ORDER BY usuarios.user_nome ASC");
 $show_atd->execute();
 while($row=$show_atd->fetch(PDO::FETCH_ASSOC)){
   $user_name=$row["user_nome"];
   $user_id=$row["user_id"];
   //Contar chamados em aberto para usuário//
-  $cont_atd = $pdo->prepare("SELECT COUNT(atendimentos.id)AS atendimentos_abertos FROM atendimentos WHERE atendimentos.tecnico = '$user_id' AND atendimentos.`status`IN (1,2) ");
+  $cont_atd = $pdo->prepare("SELECT COUNT(atendimentos.id)AS atendimentos_abertos FROM atendimentos WHERE atendimentos.tecnico = '$user_id' AND atendimentos.`status`IN (1,2) " . $filterEmpresas);
   $cont_atd->execute();
   $row2=$cont_atd->fetch(PDO::FETCH_ASSOC);
   $atd_ab=$row2["atendimentos_abertos"];
 
   //Contar chamados em espera para usuário//
-  $cont_atd = $pdo->prepare("SELECT COUNT(atendimentos.id)AS atendimentos_espera FROM atendimentos WHERE atendimentos.tecnico = '$user_id' AND atendimentos.`status`= '3' ");
+  $cont_atd = $pdo->prepare("SELECT COUNT(atendimentos.id)AS atendimentos_espera FROM atendimentos WHERE atendimentos.tecnico = '$user_id' AND atendimentos.`status`= '3' " . $filterEmpresas);
   $cont_atd->execute();
   $row2=$cont_atd->fetch(PDO::FETCH_ASSOC);
   $atd_ep=$row2["atendimentos_espera"];
@@ -72,7 +78,7 @@ while($row=$show_atd->fetch(PDO::FETCH_ASSOC)){
   //Contar chamados vencidos//
   $atd_venc = 0;
   //buscar cada atendimento aberto do usuário
-  $show_atd_user = $pdo->prepare("SELECT atendimentos.id, atendimentos.nivel, atendimentos.abertura FROM atendimentos WHERE atendimentos.tecnico = '$user_id' AND atendimentos.`status` IN (1,2)");
+  $show_atd_user = $pdo->prepare("SELECT atendimentos.id, atendimentos.nivel, atendimentos.abertura FROM atendimentos WHERE atendimentos.tecnico = '$user_id' AND atendimentos.`status` IN (1,2)" . $filterEmpresas);
   $show_atd_user->execute();
   while($row_user=$show_atd_user->fetch(PDO::FETCH_ASSOC)){
   //para cada atendimento aberto, teremos que verificar:

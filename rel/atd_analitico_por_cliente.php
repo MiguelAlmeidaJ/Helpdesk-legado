@@ -139,7 +139,13 @@ while($exibe=$show_clt->fetch(PDO::FETCH_ASSOC)){
             </div>
 <?php 
 $pdo = ConnectionN3();
-$query = "SELECT count(atendimentos.id) as n FROM atendimentos WHERE atendimentos.cliente = '$f_clt' AND atendimentos.abertura BETWEEN '$data_1' AND '$data_2'";
+$filterEmpresas = "";
+
+if(isset($_SESSION['tipo']) && $_SESSION['tipo'] == 2 && isset($_SESSION['empresas']) && count($_SESSION['empresas']) > 0) {
+  $filterEmpresas.= " AND atendimentos.cliente IN (" . implode(',', $_SESSION['empresas']) . ")";
+}
+
+$query = "SELECT count(atendimentos.id) as n FROM atendimentos WHERE atendimentos.cliente = '$f_clt' AND atendimentos.abertura BETWEEN '$data_1' AND '$data_2'" . $filterEmpresas;
 $f_nivel;
 if ($f_nivel != 0){
   $query = $query." and atendimentos.nivel = $f_nivel";
