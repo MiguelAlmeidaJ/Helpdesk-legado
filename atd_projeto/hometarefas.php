@@ -285,7 +285,8 @@ subcategorias.scat_nome,
 itens.itens_nome,
 usuarios.user_nome AS tecnico_nome, usuarios.user_cel AS tecnico_tel, usuarios.user_mail AS tecnico_mail
 FROM tarefas
-INNER JOIN clientes ON clientes.clt_id = tarefas.cliente
+-- LEFT JOIN projetos p ON p.id = tarefas.id_projeto
+LEFT JOIN clientes ON clientes.clt_id = tarefas.cliente
 LEFT JOIN pessoas ON pessoas.pessoa_id = tarefas.pessoa
 LEFT JOIN locais ON locais.local_id = tarefas.`local`
 LEFT JOIN categorias ON categorias.cat_id = tarefas.categoria
@@ -296,6 +297,7 @@ WHERE tarefas.`status` IN ($p_sts)
 AND clientes.clt_id LIKE '$p_clt'
 AND tarefas.tecnico LIKE '$p_tec'  
 AND tarefas.pessoa LIKE '$p_sol'  
+AND tarefas.id_projeto IS NULL
 ORDER BY $order_by
 ");
 $show_tarefas->execute();
@@ -363,7 +365,7 @@ while($row=$show_tarefas->fetch(PDO::FETCH_ASSOC)){
   //TRABALHA O TEMPO DE ESPERA
   //SOMA TEMPO TOTAL EM QUE O ATENDIMENTO FICOU EM ESPERA
   $pdo = ConnectionN3();
-  $show_espera = $pdo->prepare("SELECT SUM(TIMESTAMPDIFF(SECOND, espera_start, espera_end)) AS segundos FROM espera_tarefas WHERE espera.espera_tarefas = '$tarefa'");
+  $show_espera = $pdo->prepare("SELECT SUM(TIMESTAMPDIFF(SECOND, espera_start, espera_end)) AS segundos FROM espera_tarefas et WHERE et.espera_atd = '$tarefa'");
   $show_espera->execute();
   $conta_espera = $show_espera->rowCount();
   $exibe_espera=$show_espera->fetch(PDO::FETCH_ASSOC);

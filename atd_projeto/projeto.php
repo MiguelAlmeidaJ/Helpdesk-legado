@@ -1944,6 +1944,8 @@ while($exibe=$show_clt->fetch(PDO::FETCH_ASSOC)){
                     <label class="my-0 small">Selecione o Projeto:</label>
                     <select name="cliente" id="cliente" class="form-control form-control-sm selectpicker" data-live-search="true" required="required" tabindex="1">
                       <option></option>
+
+
                       <?php
 $pdo = ConnectionN3();
 $show_clt = $pdo->prepare("SELECT projetos.id, projetos.nome_proj, projetos.cliente FROM projetos INNER JOIN CLIENTES ON PROJETOS.CLIENTE = CLIENTEs.clt_ID ORDER BY projetos.nome_proj ASC");                         
@@ -1953,10 +1955,9 @@ while($exibe=$show_clt->fetch(PDO::FETCH_ASSOC)){
   $nome_proj = $exibe["nome_proj"];
   $cliente = $exibe["cliente"];
 ?>
-                      <option value="<?php echo $cliente; ?>"><?php echo $nome_proj;?><?php echo $id?> </option>
+                      <option value="<?php echo $cliente; ?>" ><?php echo $nome_proj;?><?php echo $id?> </option>
                       
 <?php } ?>
-                    
                     </select>
                   </div>
                   
