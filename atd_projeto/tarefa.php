@@ -76,12 +76,11 @@ if ($usar_token=="true") {
       $categoria = filter_input(INPUT_POST, 'categoria', FILTER_SANITIZE_STRING);
       $subcategoria = filter_input(INPUT_POST, 'subcategoria', FILTER_SANITIZE_STRING);
       $item = filter_input(INPUT_POST, 'item', FILTER_SANITIZE_STRING);
-      $dias = filter_input(INPUT_POST, 'dias', FILTER_SANITIZE_STRING);
+      $nivel = filter_input(INPUT_POST, 'nivel', FILTER_SANITIZE_STRING);
       $desc_abertura = filter_input(INPUT_POST, 'desc_abertura', FILTER_SANITIZE_STRING);
       //$abertura = date("Y-m-d H:i:s");
       $abertura = filter_input(INPUT_POST, 'abertura', FILTER_SANITIZE_STRING);
       $tecnico = filter_input(INPUT_POST, 'tecnico', FILTER_SANITIZE_STRING);
-      // $id_projeto = filter_input(INPUT_POST, 'id_projeto', FILTER_SANITIZE_STRING);
 
       //VERIFICA SE DATA HORA ABERTURA É MAIOR DO QUE DATA HORA ATUAL.
       //SE POSITIVO: UM TAREFA AGENDADO
@@ -106,7 +105,7 @@ if ($usar_token=="true") {
 
       //INICIA PROCESSO DE GRAVAÇÃO DO TAREFA NA BASE DE DADOS
       $pdo = ConnectionN3();
-      $adc= $pdo->prepare("INSERT INTO `tarefas` (`cliente`, `nome_tarefa`, `pessoa`, `local`, `tipo`, `categoria`, `subcategoria`, `item`, `dias`, `forma`, `desc_abertura`, `abertura`, `tecnico`, `reincidente`, `status`) VALUES (:cliente, :nome_tarefa,  :pessoa, :local, :tipo, :categoria, :subcategoria, :item, :dias, :forma, :desc_abertura, :abertura, :tecnico, '$reincidente', '$tarefa_sts');");
+      $adc= $pdo->prepare("INSERT INTO `tarefas` (`cliente`, `nome_tarefa`, `pessoa`, `local`, `tipo`, `categoria`, `subcategoria`, `item`, `nivel`, `forma`, `desc_abertura`, `abertura`, `tecnico`, `reincidente`, `status`) VALUES (:cliente, :nome_tarefa,  :pessoa, :local, :tipo, :categoria, :subcategoria, :item, :nivel, :forma, :desc_abertura, :abertura, :tecnico, '$reincidente', '$tarefa_sts');");
       $adc->bindParam(':nome_tarefa', $nome_tarefa);
 
       $adc->bindParam(':cliente', $cliente);
@@ -116,7 +115,7 @@ if ($usar_token=="true") {
       $adc->bindParam(':categoria', $categoria);
       $adc->bindParam(':subcategoria', $subcategoria);
       $adc->bindParam(':item', $item);
-      $adc->bindParam(':dias', $dias);
+      $adc->bindParam(':nivel', $nivel);
       $adc->bindParam(':forma', $forma);
       $adc->bindParam(':desc_abertura', $desc_abertura);
       $adc->bindParam(':abertura', $abertura);
@@ -616,19 +615,16 @@ while($exibe=$show_clt->fetch(PDO::FETCH_ASSOC)){
                   </div>
 
                   <div class="form-group col-sm-6 col-md-2">
-                    <label class="my-0 small">Dias:</label>
-                    <input type="number" id="dias" name="dias" min="1" max="999" class="form-control form-control-sm" required="required" tabindex="8">
-                    <!--<select name="dias" class="form-control form-control-sm" required="required" tabindex="8">
+                    <label class="my-0 small">Nível:</label>
+                    <select name="nivel" class="form-control form-control-sm" required="required" tabindex="8">
                       <option></option>
-                      <option value="5">1 dia</option>
-                      <option value="6">2 dias</option>
-                      <option value="7">5 dias</option>
-                      <option value="8">15 dias</option>
-                      <option value="9">30 dias</option>
-                      <option value="10">60 dias</option>
-                      <option value="11">90 dias</option>
-                      <option value="1">NA</option>
-                    </select> -->
+                      <option value="1">1</option>
+                      <option value="2">2</option>
+                      <option value="3">3</option>
+                      <option value="4">Rotina</option>
+                      <option value="5">Administrativo</option>
+                      <option value="0">NA</option>
+                    </select>
                   </div>
                 </div>
                 
@@ -1104,18 +1100,16 @@ while($exibe=$show_clt->fetch(PDO::FETCH_ASSOC)){
                     </select>
                   </div>
 
-                  <div class="form-group col-sm-6 col-md-3">
-                    <label class="my-0 small">Dias:</label>
-                    <input type="number" id="dias" name="dias" min="1" max="999" class="form-control form-control-sm" required="required" tabindex="7">
-                    <!--<select name="dias" class="form-control form-control-sm" required="required" tabindex="7">
+                  <div class="form-group col-sm-6 col-md-2">
+                    <label class="my-0 small">Nível:</label>
+                    <select name="nivel" class="form-control form-control-sm" required="required" tabindex="8">
                       <option></option>
-                      <option value="5"</?php if($tarefa_nivel==1){ echo" selected";}?>>1 dia</option>
-                      <option value="6"</?php if($tarefa_nivel==2){ echo" selected";}?>>2 dias</option>
-                      <option value="7"</?php if($tarefa_nivel==3){ echo" selected";}?>>5 dias</option>
-                      <option value="8"</?php if($tarefa_nivel==4){ echo" selected";}?>>15 dias</option>
-                      <option value="9"</?php if($tarefa_nivel==0){ echo" selected";}?>>30 dias</option>
-                      <option value="10"</?php if($tarefa_nivel==0){ echo" selected";}?>>60 dias</option>
-                      <option value="11"</?php if($tarefa_nivel==0){ echo" selected";}?>>90 dias</option> -->
+                      <option value="1">1</option>
+                      <option value="2">2</option>
+                      <option value="3">3</option>
+                      <option value="4">Rotina</option>
+                      <option value="5">Administrativo</option>
+                      <option value="0">NA</option>
                     </select>
                   </div>
                 </div>
