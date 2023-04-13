@@ -76,12 +76,11 @@ if ($usar_token=="true") {
       $categoria = filter_input(INPUT_POST, 'categoria', FILTER_SANITIZE_STRING);
       $subcategoria = filter_input(INPUT_POST, 'subcategoria', FILTER_SANITIZE_STRING);
       $item = filter_input(INPUT_POST, 'item', FILTER_SANITIZE_STRING);
-      $dias = filter_input(INPUT_POST, 'dias', FILTER_SANITIZE_STRING);
+      $nivel = filter_input(INPUT_POST, 'nivel', FILTER_SANITIZE_STRING);
       $desc_abertura = filter_input(INPUT_POST, 'desc_abertura', FILTER_SANITIZE_STRING);
       //$abertura = date("Y-m-d H:i:s");
       $abertura = filter_input(INPUT_POST, 'abertura', FILTER_SANITIZE_STRING);
       $tecnico = filter_input(INPUT_POST, 'tecnico', FILTER_SANITIZE_STRING);
-      $id_projeto = filter_input(INPUT_POST, 'id_projeto', FILTER_SANITIZE_STRING);
 
       //VERIFICA SE DATA HORA ABERTURA É MAIOR DO QUE DATA HORA ATUAL.
       //SE POSITIVO: UM TAREFA AGENDADO
@@ -103,17 +102,12 @@ if ($usar_token=="true") {
       $show->execute();
       $conta_tarefa = $show->rowCount();
       if($conta_tarefa>0){$reincidente = 1;}else{$reincidente = 0;}
-      
-      
-      //SELECIONAR TABELA PROJETO PARA `PEGAR` O ID DO PROJETO
-
-
-
 
       //INICIA PROCESSO DE GRAVAÇÃO DO TAREFA NA BASE DE DADOS
       $pdo = ConnectionN3();
-      $adc= $pdo->prepare("INSERT INTO `tarefas` (`nome_tarefa`, `cliente`, `pessoa`, `local`, `tipo`, `categoria`, `subcategoria`, `item`, `dias`, `forma`, `desc_abertura`, `abertura`, `tecnico`, `reincidente`, `status`, `id_projeto`) VALUES (:nome_tarefa, :cliente, :pessoa, :local, :tipo, :categoria, :subcategoria, :item, :dias, :forma, :desc_abertura, :abertura, :tecnico, '$reincidente', '$tarefa_sts', :id_projeto);");
+      $adc= $pdo->prepare("INSERT INTO `tarefas` (`cliente`, `nome_tarefa`, `pessoa`, `local`, `tipo`, `categoria`, `subcategoria`, `item`, `nivel`, `forma`, `desc_abertura`, `abertura`, `tecnico`, `reincidente`, `status`) VALUES (:cliente, :nome_tarefa,  :pessoa, :local, :tipo, :categoria, :subcategoria, :item, :nivel, :forma, :desc_abertura, :abertura, :tecnico, '$reincidente', '$tarefa_sts');");
       $adc->bindParam(':nome_tarefa', $nome_tarefa);
+
       $adc->bindParam(':cliente', $cliente);
       $adc->bindParam(':pessoa', $pessoa);
       $adc->bindParam(':local', $local);
@@ -121,12 +115,11 @@ if ($usar_token=="true") {
       $adc->bindParam(':categoria', $categoria);
       $adc->bindParam(':subcategoria', $subcategoria);
       $adc->bindParam(':item', $item);
-      $adc->bindParam(':dias', $dias);
+      $adc->bindParam(':nivel', $nivel);
       $adc->bindParam(':forma', $forma);
       $adc->bindParam(':desc_abertura', $desc_abertura);
       $adc->bindParam(':abertura', $abertura);
       $adc->bindParam(':tecnico', $tecnico);
-      $adc->bindParam(':id_projeto', $id_projeto);
 
       //SE O TÉCNICO ESCOLHIDO FOR DIFERENTE DO USUÁRIO
       //if($tecnico>0 && $tecnico!= $user_id){
@@ -529,19 +522,20 @@ if($m6_01==0){header("Location: ../index.php");}
               <form action="#" method="POST">
                 <div class="form-row">
                   <div class="form-group col-sm-12 col-md-4">
-                    <label class="my-0 small">Projeto:</label>
-                    <select name="cliente" id="cliente" class="form-control form-control-sm selectpicker" data-live-search="true" required="required" tabindex="1">
+                    <label class="my-0 small">Cliente:</label>
+                    <select name="cliente" id="cliente" class="form-control form-control-sm selectpicker" data-live-search="true" tabindex="1">
                       <option></option>
 <?php
 $pdo = ConnectionN3();
-$show_clt = $pdo->prepare("SELECT projetos.id, projetos.nome_proj, projetos.cliente FROM projetos INNER JOIN CLIENTES ON PROJETOS.CLIENTE = CLIENTEs.clt_ID ORDER BY projetos.nome_proj ASC");                         
+$sql = "SELECT clientes.clt_id, clientes.clt_nomef FROM clientes WHERE clientes.clt_sts = '1' ORDER BY clientes.clt_nomef ASC";
+
+$show_clt = $pdo->prepare($sql);                         
 $show_clt->execute();
 while($exibe=$show_clt->fetch(PDO::FETCH_ASSOC)){
-  $id = $exibe["id"];
-  $nome_proj = $exibe["nome_proj"];
-  $cliente = $exibe["cliente"];
+  $nome_cliente = $exibe["clt_nomef"];
+  $cliente_id = $exibe["clt_id"];
 ?>
-                      <option value="<?php echo $cliente; ?>"><?php echo $nome_proj;?><?php echo $id?> </option>
+                      <option value="<?php echo $cliente_id; ?>"><?php echo $nome_cliente;?><?php echo $cliente_id?> </option>
                       
 <?php } ?>
                     
@@ -621,19 +615,16 @@ while($exibe=$show_clt->fetch(PDO::FETCH_ASSOC)){
                   </div>
 
                   <div class="form-group col-sm-6 col-md-2">
-                    <label class="my-0 small">Dias:</label>
-                    <input type="number" id="dias" name="dias" min="1" max="999" class="form-control form-control-sm" required="required" tabindex="8">
-                    <!--<select name="dias" class="form-control form-control-sm" required="required" tabindex="8">
+                    <label class="my-0 small">Nível:</label>
+                    <select name="nivel" class="form-control form-control-sm" required="required" tabindex="8">
                       <option></option>
-                      <option value="5">1 dia</option>
-                      <option value="6">2 dias</option>
-                      <option value="7">5 dias</option>
-                      <option value="8">15 dias</option>
-                      <option value="9">30 dias</option>
-                      <option value="10">60 dias</option>
-                      <option value="11">90 dias</option>
-                      <option value="1">NA</option>
-                    </select> -->
+                      <option value="1">1</option>
+                      <option value="2">2</option>
+                      <option value="3">3</option>
+                      <option value="4">Rotina</option>
+                      <option value="5">Administrativo</option>
+                      <option value="0">NA</option>
+                    </select>
                   </div>
                 </div>
                 
@@ -745,21 +736,23 @@ LEFT JOIN itens ON itens.itens_id = tarefas.item
 LEFT JOIN usuarios ON usuarios.user_id = tarefas.tecnico
 WHERE tarefas.id = '$tarefa'");
 $show_tarefa->execute();
+
+
 $row=$show_tarefa->fetch(PDO::FETCH_ASSOC);
-  $tarefa_desc_abertura=$row["desc_abertura"];
-  $tarefa_desc_fechamento=$row["desc_fechamento"];
-  $tarefa_hora_abertura=$row["abertura"];
-  $tarefa_hora_fechamento=$row["fechamento"];
-  $tarefa_reincidente=$row["reincidente"];
-  $tarefa_status=$row["status"];
-  $tarefa_tipo=$row["tipo"];
+  $tarefa_desc_abertura=$row["desc_abertura"] ?? '';
+  $tarefa_desc_fechamento=$row["desc_fechamento"] ?? '';
+  $tarefa_hora_abertura=$row["abertura"] ?? '';
+  $tarefa_hora_fechamento=$row["fechamento"] ?? '';
+  $tarefa_reincidente=$row["reincidente"] ?? '';
+  $tarefa_status=$row["status"] ?? '';
+  $tarefa_tipo=$row["tipo"] ?? '';
     if($tarefa_tipo==1){$tarefa_tipo_nome="Falha";}
     if($tarefa_tipo==2){$tarefa_tipo_nome="Relacionamento";}
     if($tarefa_tipo==3){$tarefa_tipo_nome="Requisição de Serviços";}
     if($tarefa_tipo==4){$tarefa_tipo_nome="Requisição de informação";}
     if($tarefa_tipo==5){$tarefa_tipo_nome="Notificação de monitoramento";}
     if($tarefa_tipo==0){$tarefa_tipo_nome="Não informado";}
-  $tarefa_dias=$row["dias"];
+  $tarefa_dias=$row["dias"] ?? '';
     //if($tarefa_nivel==5){$tarefa_nivel_nome="1 dia";}
     //if($tarefa_nivel==6){$tarefa_nivel_nome="2 dias";}
     //if($tarefa_nivel==7){$tarefa_nivel_nome="5 dias";}
@@ -768,33 +761,33 @@ $row=$show_tarefa->fetch(PDO::FETCH_ASSOC);
     //if($tarefa_nivel==10){$tarefa_nivel_nome="60 dias";}
     //if($tarefa_nivel==11){$tarefa_nivel_nome="90 dias";}
 
-  $tarefa_forma=$row["forma"];
+  $tarefa_forma=$row["forma"] ?? '';
   
-  $clt_id=$row["clt_id"];
-  $clt_nomer=$row["clt_nomer"];
-  $clt_nomef=$row["clt_nomef"];
-  $clt_cnpj=$row["clt_cnpj"];
+  $clt_id=$row["clt_id"] ?? '';
+  $clt_nomer=$row["clt_nomer"] ?? '';
+  $clt_nomef=$row["clt_nomef"] ?? '';
+  $clt_cnpj=$row["clt_cnpj"] ?? '';
 
-  $pessoa_nom=$row["pessoa_nom"];
-  $pessoa_cargo=$row["pessoa_cargo"];
-  $pessoa_tel=$row["pessoa_tel"];
-  $pessoa_mail=$row["pessoa_mail"];
+  $pessoa_nom=$row["pessoa_nom"] ?? '';
+  $pessoa_cargo=$row["pessoa_cargo"] ?? '';
+  $pessoa_tel=$row["pessoa_tel"] ?? '';
+  $pessoa_mail=$row["pessoa_mail"] ?? '';
   
-  $local=$row["local"];
-  $local_nom=$row["local_nom"];
+  $local=$row["local"] ?? '';
+  $local_nom=$row["local_nom"] ?? '';
   if($local==0){$local_nom = "Não informado";}
-  $local_end=$row["local_end"];
-  $local_city=$row["local_city"];
-  $local_uf=$row["local_uf"];
-  $tarefa_cat=$row["categoria"];
-  $tarefa_item=$row["item"];
-  $cat_nome=$row["cat_nome"];
-  $tarefa_scat=$row["subcategoria"];
-  $scat_nome=$row["scat_nome"];
-  $itens_nome=$row["itens_nome"];
+  $local_end=$row["local_end"] ?? '';
+  $local_city=$row["local_city"] ?? '';
+  $local_uf=$row["local_uf"] ?? '';
+  $tarefa_cat=$row["categoria"] ?? '';
+  $tarefa_item=$row["item"] ?? '';
+  $cat_nome=$row["cat_nome"] ?? '';
+  $tarefa_scat=$row["subcategoria"] ?? '';
+  $scat_nome=$row["scat_nome"] ?? '';
+  $itens_nome=$row["itens_nome"] ?? '';
   
-  $tecnico_nome=$row["tecnico_nome"];
-  $tecnico_id=$row["tecnico"];
+  $tecnico_nome=$row["tecnico_nome"] ?? '';
+  $tecnico_id=$row["tecnico"] ?? '';
   if($tecnico_id==0){$tecnico_nome = "Não Atribuído";}
 ?>    
     <div class="container-fluid">
@@ -1107,18 +1100,16 @@ while($exibe=$show_clt->fetch(PDO::FETCH_ASSOC)){
                     </select>
                   </div>
 
-                  <div class="form-group col-sm-6 col-md-3">
-                    <label class="my-0 small">Dias:</label>
-                    <input type="number" id="dias" name="dias" min="1" max="999" class="form-control form-control-sm" required="required" tabindex="7">
-                    <!--<select name="dias" class="form-control form-control-sm" required="required" tabindex="7">
+                  <div class="form-group col-sm-6 col-md-2">
+                    <label class="my-0 small">Nível:</label>
+                    <select name="nivel" class="form-control form-control-sm" required="required" tabindex="8">
                       <option></option>
-                      <option value="5"</?php if($tarefa_nivel==1){ echo" selected";}?>>1 dia</option>
-                      <option value="6"</?php if($tarefa_nivel==2){ echo" selected";}?>>2 dias</option>
-                      <option value="7"</?php if($tarefa_nivel==3){ echo" selected";}?>>5 dias</option>
-                      <option value="8"</?php if($tarefa_nivel==4){ echo" selected";}?>>15 dias</option>
-                      <option value="9"</?php if($tarefa_nivel==0){ echo" selected";}?>>30 dias</option>
-                      <option value="10"</?php if($tarefa_nivel==0){ echo" selected";}?>>60 dias</option>
-                      <option value="11"</?php if($tarefa_nivel==0){ echo" selected";}?>>90 dias</option> -->
+                      <option value="1">1</option>
+                      <option value="2">2</option>
+                      <option value="3">3</option>
+                      <option value="4">Rotina</option>
+                      <option value="5">Administrativo</option>
+                      <option value="0">NA</option>
                     </select>
                   </div>
                 </div>
@@ -1453,7 +1444,9 @@ while($exibe=$show_clt->fetch(PDO::FETCH_ASSOC)){
       //pupula os selects solicitante e local de acordo com o cliente escolhido
       $(function(){
         $('#cliente').change(function(){
+          console.log('called');
           if( $(this).val() ) {
+            console.log('called');
             $('#solicitante').hide();
             $('#local').hide();
             $('.carregando').show();
