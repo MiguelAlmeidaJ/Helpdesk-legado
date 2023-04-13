@@ -813,7 +813,7 @@ if ($usar_token=="true") {
       $subcategoria = filter_input(INPUT_POST, 'subcategoria', FILTER_SANITIZE_STRING);
       $item = filter_input(INPUT_POST, 'item', FILTER_SANITIZE_STRING);
       $desc_abertura = filter_input(INPUT_POST, 'desc_abertura', FILTER_SANITIZE_STRING);
-      //$abertura = date("Y-m-d H:i:s");
+      $dias = filter_input(INPUT_POST, 'dias', FILTER_SANITIZE_NUMBER_INT);
       $abertura = filter_input(INPUT_POST, 'abertura', FILTER_SANITIZE_STRING);
       $tecnico = filter_input(INPUT_POST, 'tecnico', FILTER_SANITIZE_STRING);
     
@@ -847,7 +847,7 @@ if ($usar_token=="true") {
 
       //INICIA PROCESSO DE GRAVAÇÃO DO TAREFA NA BASE DE DADOS
       $pdo = ConnectionN3();
-      $adc= $pdo->prepare("INSERT INTO `tarefas` (`id_projeto`,`nome_tarefa`, `cliente`, `pessoa`, `local`, `tipo`, `categoria`, `subcategoria`, `item`,`forma`, `desc_abertura`, `abertura`, `tecnico`, `reincidente`, `status`) VALUES (:id_projeto,:nome_tarefa, :cliente, :pessoa, :local, :tipo, :categoria, :subcategoria, :item, :forma, :desc_abertura, :abertura, :tecnico, '$reincidente', '$tarefa_sts');");
+      $adc= $pdo->prepare("INSERT INTO `tarefas` (`id_projeto`,`nome_tarefa`, `cliente`, `pessoa`, `local`, `tipo`, `categoria`, `subcategoria`, `item`,`forma`, `desc_abertura`, `abertura`, `tecnico`, `reincidente`, `status`, `dias`) VALUES (:id_projeto,:nome_tarefa, :cliente, :pessoa, :local, :tipo, :categoria, :subcategoria, :item, :forma, :desc_abertura, :abertura, :tecnico, '$reincidente', '$tarefa_sts', :dias);");
       $adc->bindParam(':nome_tarefa', $nome_tarefa);
       $adc->bindParam(':cliente', $cliente);
       $adc->bindParam(':pessoa', $pessoa);
@@ -860,6 +860,7 @@ if ($usar_token=="true") {
       $adc->bindParam(':desc_abertura', $desc_abertura);
       $adc->bindParam(':abertura', $abertura);
       $adc->bindParam(':tecnico', $tecnico);
+      $adc->bindParam(':dias', $dias);
       $adc->bindParam(':id_projeto', $projeto);
       
       
