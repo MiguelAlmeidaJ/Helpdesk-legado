@@ -1,4 +1,5 @@
 ﻿<?php
+
 session_start();
 include_once("../all/seguranca.php");
 include_once("../all/conect.php");
@@ -15,6 +16,8 @@ $exibe_bt_atd_espera = false;
 $exibe_bt_atd_concluido = false;
 $exibe_bt_atd_finalizar = false;
 $exibe_bt_atd_retomar = false;
+$exibe_bt_atd_search = false;
+
 $exibe_bt_atd_search = false;
 
 
@@ -164,8 +167,9 @@ if ($m3_00 == 0) {
           $show_pessoa->execute();
           $pessoa = $show_pessoa->fetch(PDO::FETCH_ASSOC); */
 
-          $show_atendimento = $pdo->prepare("SELECT c.clt_nomef, p.pessoa_nom, u.user_nome, a.id
-          FROM atendimentos a 
+          $show_atendimento = $pdo->prepare(
+          "SELECT c.clt_nomef, c.clt_mail, p.pessoa_nom, p.pessoa_mail, u.user_nome, a.id, u.user_mail AS tecnico_mail
+          FROM atendimentos a
           INNER JOIN clientes c ON c.clt_id = a.cliente
           INNER JOIN pessoas p ON p.pessoa_id = a.pessoa
           INNER JOIN usuarios u ON u.user_id = a.tecnico
@@ -175,19 +179,32 @@ if ($m3_00 == 0) {
           $infos = $show_atendimento->fetch(PDO::FETCH_ASSOC);
 
           $clienteid = isset($infos['id']) ? $infos['id'] : '';
+          $tecnico_mail =  isset($infos['tecnico_mail']) ?  $infos['tecnico_mail'] : '';
+          $clienteMail =  isset($infos['clt_mail']) ?  $infos['clt_mail'] : '';
+          $pessoa_mail =  isset($infos['pessoa_mail']) ?  $infos['pessoa_mail'] : '';
 
-          $to_email = "clerio.junior@gmail.com";
+          //Para adicionar um novo e-mail, deve-se concatenar a string ao invés de sobrescrever
+          $to_email = "";
+          $to_email.= "clerio.junior@gmail.com";
+          $to_email.= ",nattan.lima@nivel3ti.com.br";
+          $to_email.= ",".$tecnico_mail;
+          $to_email.= ",".$pessoa_mail;
+          $to_email.= ",".$clienteMail;
+
+          // $to_email = "tecnico_mail";
           $subject = "Nivel 3 TI Atendimento: #" . $atd . " ";
 
-          /*$clienteNome = $cliente['clt_nomef'];
+          /* $clienteNome = $cliente['clt_nomef'];
           $pessoaNome = $pessoa['pessoa_nom'];
-          $tecnicoNome = $showTecnico['user_nome'];*/
+          $tecnicoNome = $showTecnico['user_nome']; */
 
-          $clienteNome = isset($infos['clt_nomef']) ? $infos['clt_nomef'] : '';
-          $tecnicoNome = isset($infos['user_nome']) ? $infos['user_nome'] : '';
-          $pessoaNome = isset($infos['pessoa_nom']) ? $infos['pessoa_nom'] : '';
+          $clienteNome = isset($infos['clt_nomef']) ?  $infos['clt_nomef'] : '';
+          $tecnicoNome = isset($infos['user_nome']) ?  $infos['user_nome'] : '';
+          $pessoaNome =  isset($infos['pessoa_nom']) ? $infos['pessoa_nom'] : '';
 
-          $body = "<strong>CHAMADO ABERTO</strong><br>Empresa: <strong>" . $clienteNome . "</strong> <strong>//</strong> solicitado por: <strong>" . $pessoaNome . "</strong><br>Conteúdo do chamado: <strong>" . $desc_abertura . "</strong><br>Sendo executado pelo técnico: <strong>" . $tecnicoNome . "</strong>";
+
+
+          $body = "<strong>CHAMADO ABERTO - N3TI</strong><br>Empresa: <strong>" . $clienteNome . "</strong> <strong>//</strong> solicitado por: <strong>" . $pessoaNome . "</strong><br>Conteúdo do chamado: <strong>" . $desc_abertura . "</strong><br>Sendo executado pelo técnico: <strong>" . $tecnicoNome . "</strong>";
           $headers = 'From: allterus@nivel3ti.com.br' . "\r\n";
           $headers .= "MIME-Version: 1.0\r\n";
           $headers .= "Content-Type: text/html; charset=UTF-8\r\n";
@@ -195,7 +212,6 @@ if ($m3_00 == 0) {
           $isMailSent = mail($to_email, $subject, $body, $headers);
 
           //===========================================================================email=======================================================================================================================================================
-
 
           //cadastra abertura do atendimento na tabela de interatividade
           $pdo = ConnectionN3();
@@ -225,6 +241,12 @@ if ($m3_00 == 0) {
         $tipo = filter_input(INPUT_POST, 'tipo', FILTER_SANITIZE_STRING);
         if ($tipo == 1) {
           $atd_tipo_nome = "Falha";
+        }
+        if ($tipo == 7) {
+          $atd_tipo_nome = "Tarefa";
+        }
+        if ($tipo == 6) {
+          $atd_tipo_nome = "Melhorias";
         }
         if ($tipo == 2) {
           $atd_tipo_nome = "Relacionamento";
@@ -290,9 +312,11 @@ if ($m3_00 == 0) {
           $atd_forma_nome = "Presencial";
         }
 
+        $desc_abertura = filter_input(INPUT_POST, 'desc_abertura', FILTER_SANITIZE_STRING);
+
         //BUSCA A CLASSIFICAÇÃO ORIGINAL PARA COMPARAR COM A NOVA CLASSIFICAÇÃO
         $pdo = ConnectionN3();
-        $show_atd = $pdo->prepare("SELECT atendimentos.`tipo`, atendimentos.`categoria`, atendimentos.`subcategoria`, atendimentos.`item`, atendimentos.`nivel`, atendimentos.`forma`,
+        $show_atd = $pdo->prepare("SELECT atendimentos.`tipo`, atendimentos.`categoria`, atendimentos.`subcategoria`, atendimentos.`item`, atendimentos.`nivel`, atendimentos.`forma`, atendimentos.`desc_abertura`,
       categorias.cat_nome,
       subcategorias.scat_nome,
       itens.itens_nome
@@ -306,6 +330,12 @@ if ($m3_00 == 0) {
         $atd_tipo_original = $row["tipo"];
         if ($atd_tipo_original == 1) {
           $atd_tipo_original_nome = "Falha";
+        }
+        if ($atd_tipo_original == 7) {
+          $atd_tipo_original_nome = "Tarefa";
+        }
+        if ($atd_tipo_original == 6) {
+          $atd_tipo_original_nome = "Melhorias";
         }
         if ($atd_tipo_original == 2) {
           $atd_tipo_original_nome = "Relacionamento";
@@ -354,6 +384,10 @@ if ($m3_00 == 0) {
         if ($atd_forma_original == 2) {
           $atd_forma_original_nome = "Presencial";
         }
+
+        $atd_desc_abertura_original = $row["desc_abertura"];
+        //$atd_desc_abertura_original_nome = $row["desc_abertura_nome"];
+
 
         //COMPARA O TIPO DO ATENDIMENTO:
         //SE DIFERENTE:
@@ -448,6 +482,22 @@ if ($m3_00 == 0) {
             $adc = $pdo->prepare("INSERT INTO `interatividade` (`inter_tipo`, `inter_atd`, `inter_user`, `inter_data`, `inter_desc`) VALUES ('9', '$atd', '$user_id', '$agora', 'Editou a forma de atendimento: <s>De: $atd_forma_original_nome</s> para $atd_forma_nome.')");
             if ($adc->execute()) {
               $mensagem = "<i class=\"fas fa-check\"></i> OK! <br> Classificação do Atendimento alterada!";
+              $mensagem_cor = "alert-success";
+            }
+          }
+        }
+
+        //COMPARA A Descrição de Abertura :
+        //SE DIFERENTE:
+        if ($desc_abertura != $atd_desc_abertura_original) {
+          //ALTERA O CÓDIGO DA desc_abertura DE ATENDIMENTO NA TABELA DE ATENDIMENTOS
+          $pdo = ConnectionN3();
+          $adc = $pdo->prepare("UPDATE `atendimentos` SET `desc_abertura`='$desc_abertura' WHERE `id`='$atd';");
+          if ($adc->execute()) {
+            //CRIA NOVO REGISTRO NA TABELA DE INTERAÇÃO INFORMANDO A ALTERAÇÃO          
+            $adc = $pdo->prepare("INSERT INTO `interatividade` (`inter_tipo`, `inter_atd`, `inter_user`, `inter_data`, `inter_desc`) VALUES ('9', '$atd', '$user_id', '$agora', 'Editou a Descrição de Abertura: <s>De: $atd_desc_abertura_original</s> para: $desc_abertura.')");
+            if ($adc->execute()) {
+              $mensagem = "<i class=\"fas fa-check\"></i> OK! <br> Descrição de abertura alterada!";
               $mensagem_cor = "alert-success";
             }
           }
@@ -698,7 +748,7 @@ if ($m3_00 == 0) {
 
               $clienteid = isset($infos['id']) ? $infos['id'] : '';
 
-              $to_email = "dhiogoamz@gmail.com,clerio.junior@gmail.com";
+              $to_email = "clerio.junior@gmail.com";
               $subject = "Nivel 3 TI Atendimento: #" . $atd . " ";
 
 
@@ -707,12 +757,139 @@ if ($m3_00 == 0) {
               $pessoaNome = isset($infos['pessoa_nom']) ? $infos['pessoa_nom'] : '';
 
               $body = "<strong>CHAMADO CONCLUIDO!</strong> <br>Empresa: <strong>" . $clienteNome . " </strong><strong>//</strong> Solicitado por: <strong>" . $pessoaNome . "</strong><br>Descrição da conclusão do chamado: <strong>" . $concluido_desc . "</strong><br>Foi executado pelo técnico: <strong>" . $tecnicoNome . "</strong>";
-
               $headers = 'From: allterus@nivel3ti.com.br' . "\r\n";
               $headers .= "MIME-Version: 1.0\r\n";
               $headers .= "Content-Type: text/html; charset=UTF-8\r\n";
 
               $isMailSent = mail($to_email, $subject, $body, $headers);
+
+
+  //=====================Chamado=FINALIZADO================email============================================================================================================================================================
+
+
+          /*$pdo = ConnectionN3();
+          $show_clt = $pdo->prepare("SELECT clientes.clt_mail, clientes.clt_nomef FROM clientes WHERE clientes.clt_id = $cliente limit 1");
+          $show_clt->execute();
+          $cliente = $show_clt->fetch(PDO::FETCH_ASSOC);
+
+          $show_tecnico = $pdo->prepare("SELECT usuarios.user_nome FROM usuarios WHERE usuarios.user_id = $tecnico limit 1");
+          $show_tecnico->execute();
+          $showTecnico = $show_tecnico->fetch(PDO::FETCH_ASSOC);
+
+          $show_pessoa = $pdo->prepare("SELECT pessoas.pessoa_nom FROM pessoas WHERE pessoas.pessoa_id = $pessoa limit 1");
+          $show_pessoa->execute();
+          $pessoa = $show_pessoa->fetch(PDO::FETCH_ASSOC); */
+
+          /* $show_atendimento = $pdo->prepare(
+            "SELECT c.clt_nomef, c.clt_mail, p.pessoa_nom, p.pessoa_mail, u.user_nome, a.id, u.user_mail AS tecnico_mail
+            FROM atendimentos a
+            INNER JOIN clientes c ON c.clt_id = a.cliente
+            INNER JOIN pessoas p ON p.pessoa_id = a.pessoa
+            INNER JOIN usuarios u ON u.user_id = a.tecnico
+            WHERE a.id = '$atd' LIMIT 0,1");
+  
+            $show_atendimento->execute();
+            $infos = $show_atendimento->fetch(PDO::FETCH_ASSOC);
+  
+            $clienteid = isset($infos['id']) ? $infos['id'] : '';
+            //$tecnico_mail = $infos['tecnico_mail'] ?? "";
+            $tecnico_mail =  isset($infos['tecnico_mail']) ?  $infos['tecnico_mail'] : '';
+            $clienteMail =  isset($infos['clt_mail']) ?  $infos['clt_mail'] : '';
+            $pessoa_mail =  isset($infos['pessoa_mail']) ?  $infos['pessoa_mail'] : '';
+  
+            //Para adicionar um novo e-mail, deve-se concatenar a string ao invés de sobrescrever
+            $to_email = "";
+            $to_email.= "clerio.junior@gmail.com";
+            $to_email.= ",nattan.lima@nivel3ti.com.br";
+            $to_email.= ",".$tecnico_mail;
+            $to_email.= ",".$pessoa_mail;
+            $to_email.= ",".$clienteMail;
+  
+            // $to_email = "tecnico_mail";
+            $subject = "Nivel 3 TI Atendimento: #" . $atd . " ";
+  
+            /* $clienteNome = $cliente['clt_nomef'];
+            $pessoaNome = $pessoa['pessoa_nom'];
+            $tecnicoNome = $showTecnico['user_nome']; */
+  
+           /*  $clienteNome = isset($infos['clt_nomef']) ?  $infos['clt_nomef'] : '';
+            $tecnicoNome = isset($infos['user_nome']) ?  $infos['user_nome'] : '';
+            $pessoaNome =  isset($infos['pessoa_nom']) ? $infos['pessoa_nom'] : '';
+  
+  
+  
+            $body = "<strong>CHAMADO ABERTO - N3TI</strong><br>Empresa: <strong>" . $clienteNome . "</strong> <strong>//</strong> solicitado por: <strong>" . $pessoaNome . "</strong><br>Conteúdo do chamado: <strong>" . $desc_abertura . "</strong><br>Sendo executado pelo técnico: <strong>" . $tecnicoNome . "</strong>";
+            $headers = 'From: allterus@nivel3ti.com.br' . "\r\n";
+            $headers .= "MIME-Version: 1.0\r\n";
+            $headers .= "Content-Type: text/html; charset=UTF-8\r\n";
+  
+            $isMailSent = mail($to_email, $subject, $body, $headers);  */
+
+
+
+
+  //=====================Chamado=FINALIZADO================email============================================================================================================================================================
+
+
+          /*$pdo = ConnectionN3();
+          $show_clt = $pdo->prepare("SELECT clientes.clt_mail, clientes.clt_nomef FROM clientes WHERE clientes.clt_id = $cliente limit 1");
+          $show_clt->execute();
+          $cliente = $show_clt->fetch(PDO::FETCH_ASSOC);
+
+          $show_tecnico = $pdo->prepare("SELECT usuarios.user_nome FROM usuarios WHERE usuarios.user_id = $tecnico limit 1");
+          $show_tecnico->execute();
+          $showTecnico = $show_tecnico->fetch(PDO::FETCH_ASSOC);
+
+          $show_pessoa = $pdo->prepare("SELECT pessoas.pessoa_nom FROM pessoas WHERE pessoas.pessoa_id = $pessoa limit 1");
+          $show_pessoa->execute();
+          $pessoa = $show_pessoa->fetch(PDO::FETCH_ASSOC); */
+
+          /* $show_atendimento = $pdo->prepare(
+            "SELECT c.clt_nomef, c.clt_mail, p.pessoa_nom, p.pessoa_mail, u.user_nome, a.id, u.user_mail AS tecnico_mail
+            FROM atendimentos a
+            INNER JOIN clientes c ON c.clt_id = a.cliente
+            INNER JOIN pessoas p ON p.pessoa_id = a.pessoa
+            INNER JOIN usuarios u ON u.user_id = a.tecnico
+            WHERE a.id = '$atd' LIMIT 0,1");
+  
+            $show_atendimento->execute();
+            $infos = $show_atendimento->fetch(PDO::FETCH_ASSOC);
+  
+            $clienteid = isset($infos['id']) ? $infos['id'] : '';
+            //$tecnico_mail = $infos['tecnico_mail'] ?? "";
+            $tecnico_mail =  isset($infos['tecnico_mail']) ?  $infos['tecnico_mail'] : '';
+            $clienteMail =  isset($infos['clt_mail']) ?  $infos['clt_mail'] : '';
+            $pessoa_mail =  isset($infos['pessoa_mail']) ?  $infos['pessoa_mail'] : '';
+  
+            //Para adicionar um novo e-mail, deve-se concatenar a string ao invés de sobrescrever
+            $to_email = "";
+            $to_email.= "clerio.junior@gmail.com";
+            $to_email.= ",nattan.lima@nivel3ti.com.br";
+            $to_email.= ",".$tecnico_mail;
+            $to_email.= ",".$pessoa_mail;
+            $to_email.= ",".$clienteMail;
+  
+            // $to_email = "tecnico_mail";
+            $subject = "Nivel 3 TI Atendimento: #" . $atd . " ";
+  
+            /* $clienteNome = $cliente['clt_nomef'];
+            $pessoaNome = $pessoa['pessoa_nom'];
+            $tecnicoNome = $showTecnico['user_nome']; */
+  
+           /*  $clienteNome = isset($infos['clt_nomef']) ?  $infos['clt_nomef'] : '';
+            $tecnicoNome = isset($infos['user_nome']) ?  $infos['user_nome'] : '';
+            $pessoaNome =  isset($infos['pessoa_nom']) ? $infos['pessoa_nom'] : '';
+  
+  
+  
+            $body = "<strong>CHAMADO ABERTO - N3TI</strong><br>Empresa: <strong>" . $clienteNome . "</strong> <strong>//</strong> solicitado por: <strong>" . $pessoaNome . "</strong><br>Conteúdo do chamado: <strong>" . $desc_abertura . "</strong><br>Sendo executado pelo técnico: <strong>" . $tecnicoNome . "</strong>";
+            $headers = 'From: allterus@nivel3ti.com.br' . "\r\n";
+            $headers .= "MIME-Version: 1.0\r\n";
+            $headers .= "Content-Type: text/html; charset=UTF-8\r\n";
+  
+            $isMailSent = mail($to_email, $subject, $body, $headers);  */
+
+
 
               //============================================================================================================= EMAIL   
 
@@ -833,6 +1010,8 @@ if ($m3_00 == 0) {
                     <select name="tipo" class="form-control form-control-sm" required="required" tabindex="4">
                       <option></option>
                       <option value="1">Falha</option>
+                      <option value="7">Tarefa</option>
+                      <option value="6">Melhorias</option>
                       <option value="2">Relacionamento</option>
                       <option value="3">Requisição de Serviços</option>
                       <option value="4">Requisição de informação</option>
@@ -1003,6 +1182,12 @@ WHERE atendimentos.id = '$atd'");
     $atd_tipo = $row["tipo"];
     if ($atd_tipo == 1) {
       $atd_tipo_nome = "Falha";
+    }
+    if ($atd_tipo == 7) {
+      $atd_tipo_nome = "Tarefa";
+    }
+    if ($atd_tipo == 6) {
+      $atd_tipo_nome = "Melhorias";
     }
     if ($atd_tipo == 2) {
       $atd_tipo_nome = "Relacionamento";
@@ -1502,6 +1687,96 @@ WHERE atendimentos.id = '$atd'");
         </div>
       </div>
     </div>
+    <div class="modal fade" id="atd_search" tabindex="1" role="dialog">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <form action="#" method="POST" onSubmit="window.location.reload()">
+            <div class="modal-header">
+              <h6 class="modal-title"> <i class="fas fa-filter text-primary"></i> Registros de Atendimentos</h6>
+              <button type="button" class="close" data-dismiss="modal" aria-label="Fechar">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+            <div class="modal-body py-1">
+              <div class="form-row">
+
+                <?php
+                $pdo = ConnectionN3();
+                $show_clt = $pdo->prepare("SELECT cliente, categoria, subcategoria, item, id, cat_nome, scat_nome, itens_nome FROM atendimentos a 
+                LEFT JOIN categorias ON categorias.cat_id = a.categoria
+                LEFT JOIN subcategorias ON subcategorias.scat_id = a.subcategoria
+                LEFT JOIN itens ON itens.itens_id = a.item
+                WHERE a.id = " . $atd);
+                $show_clt->execute();
+                $exibe = $show_clt->fetch(PDO::FETCH_ASSOC);
+                $clienteId = $exibe["cliente"];
+                $clienteId = $exibe["cliente"];
+
+                $categoriaId = $exibe["categoria"];
+                $categoria = $exibe["cat_nome"];
+
+                $subcategoriaId = $exibe["subcategoria"];
+                $subcategoria = $exibe["scat_nome"];
+                
+                $itemId = $exibe["item"];
+                $item = $exibe["itens_nome"];
+
+                $idId = $exibe["id"];
+
+
+                $showInsightsInfo = $pdo->prepare("SELECT 
+                atendimentos.id,
+                categorias.cat_nome AS categoria,
+                subcategorias.scat_nome AS subcategoria,
+                itens.itens_nome AS item,
+                COUNT(atendimentos.id) AS total_atendimentos,
+                clientes.clt_nomer AS cliente_nome
+                FROM atendimentos
+                INNER JOIN clientes ON clientes.clt_id = atendimentos.cliente
+                LEFT JOIN categorias ON categorias.cat_id = atendimentos.categoria
+                LEFT JOIN subcategorias ON subcategorias.scat_id = atendimentos.subcategoria
+                LEFT JOIN itens ON itens.itens_id = atendimentos.item
+                WHERE atendimentos.cliente = " . $clienteId . "
+                AND atendimentos.abertura > NOW() - INTERVAL 3 MONTH
+                GROUP BY clientes.clt_id, categorias.cat_id, subcategorias.scat_id, itens.itens_id
+                ORDER BY total_atendimentos DESC");
+
+                $showInsightsInfo->execute();
+
+                $exibeInsights = $showInsightsInfo->fetch(PDO::FETCH_ASSOC);
+                ?>
+
+                <div class="form-group col-sm-12">
+                  <h4>Informações atendimento #<?php echo $atd; ?></h4>
+                  <p><b>Categoria: </b><?php echo $categoria; ?></p>
+                  <p><b>SubCategoria:</b> <?php echo $subcategoria; ?> </p>
+                  <p><b>Item:</b> <?php echo $item ?? '-' ?> </p>
+                  <p><b>Total de atendimentos</b> <small>(últimos 3 meses)</small>: <b><?php echo $exibeInsights['total_atendimentos']; ?></b></p>
+                  <hr />
+
+                  <h6>Atendimentos: </h6>
+
+                  <?php
+                  $pdo = ConnectionN3();
+                  $item = isset($itemId) ? " item = " . $itemId : " item IS NULL";
+                  $show_atd = $pdo->prepare("SELECT * FROM atendimentos a WHERE a.cliente = " . $clienteId . " AND a.categoria = " . $categoriaId . " AND a.subcategoria =  " . $subcategoriaId . " AND " . $item . " AND a.abertura > NOW() - INTERVAL 3 MONTH LIMIT 10 ");
+                  $show_atd->execute();
+
+                  while ($atendimento = $show_atd->fetch(PDO::FETCH_ASSOC)) { ?>
+        
+                    <button type="submit" class="btn btn-sm btn-primary" name="atd" value=<?php echo $atendimento['id']?>>Ir para</button>
+                    <?php echo "<i>Chamado</i> <b>#" . $atendimento['id'] . "</b> | <br/><b>Mensagem de conclusão:</b> " . $atendimento['desc_fechamento']; ?>
+                    <?php echo "<hr/><br/>"; ?>
+                    
+                  <?php } ?>
+
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
 
     <!-- MODAL EDIÇÃO DA CLASSIFICAÇÃO DO ATENDIMENTO-->
     <div class="modal fade" id="atd_edt" tabindex="-1" role="dialog">
@@ -1516,13 +1791,19 @@ WHERE atendimentos.id = '$atd'");
             </div>
             <div class="modal-body py-1">
               <div class="form-row pt-2">
-                <div class="form-group col-sm-6 col-md-3">
+                <div class="form-group col-sm-6 col-md-4">
                   <label class="my-0 small">Tipo de atendimento:</label>
                   <select name="tipo" class="form-control form-control-sm" required="required" tabindex="4">
                     <option></option>
                     <option value="1" <?php if ($atd_tipo == 1) {
                                         echo " selected";
                                       } ?>>Falha</option>
+                    <option value="7" <?php if ($atd_tipo == 6) {
+                                        echo " selected";
+                                      } ?>>Tarefa</option>
+                    <option value="6" <?php if ($atd_tipo == 6) {
+                                        echo " selected";
+                                      } ?>>Melhorias</option>
                     <option value="2" <?php if ($atd_tipo == 2) {
                                         echo " selected";
                                       } ?>>Relacionamento</option>
@@ -1566,7 +1847,7 @@ WHERE atendimentos.id = '$atd'");
                   </select>
                 </div>
 
-                <div class="form-group col-sm-6 col-md-3">
+                <div class="form-group col-sm-6 col-md-4">
                   <label class="my-0 small">Item:</label>
                   <span class="carregando4 small">Aguarde, carregando...</span>
                   <select name="item" id="item" class="form-control form-control-sm" required="required" tabindex="6">
@@ -1611,6 +1892,13 @@ WHERE atendimentos.id = '$atd'");
                                       } ?>>Presencial</option>
                   </select>
                 </div>
+
+
+                  <div class="form-group col-sm-6 col-md-10">
+                    <label class="my-0 small">Descrição de abertura:</label>
+                    <textarea name="desc_abertura" placeholder="<?php echo $atd_desc_abertura;?>" class="form-control form-control-sm" rows="5" required="required" tabindex="9"></textarea>
+                  </div>
+
               </div>
             </div>
             <div class="modal-footer">
@@ -1639,14 +1927,20 @@ WHERE atendimentos.id = '$atd'");
               </div>
               <div class="modal-body">
                 <label class="small"><strong>Iniciar o atendimento:</strong></label>
-                <label class="small">Se o técnico informado for o próprio usuário: a) este atendimento ficará sob sua responsabilidade; b) o status do atendimento será alterado para "Em execução".</label>
+                <label class="small">Se o técnico informado for o próprio usuário:<br>  
+                  <i><strong>a)</strong></i> Este atendimento ficará sob sua responsabilidade;<br> 
+                  <i><strong>b)</strong></i> O status do atendimento será alterado para <span style="color: #f00;">''Em execução''.</span></label>
                 <label class="small pt-1"><strong>Direcionar a outro técnico:</strong></label>
-                <label class="small">Se o técnico informado NÃO for o próprio usuário: a) este atendimento será redirecionado para a fila de atendimentos do técnico informado; b) este atendimento contuará com o status "Aguardando atendimento" até que o técnico responsável confirme o início da execução.</label>
-                <label class="small pt-1">Não esqueça de informar todas as interação com o cliente.</label>
+                <label class="small">Se o técnico informado <span style="color: #f00;">''NÃO''</span> for o próprio usuário:<br> 
+                  <i><strong>a)</strong></i> Este atendimento será redirecionado para a fila de atendimentos do técnico informado;<br> 
+                  <i><strong>b)</strong></i> Este atendimento continuará com o status <span style="color: #f00;">''Aguardando Atendimento''</span> até que o técnico responsável confirme o início da execução.</label><br>
+                <label class="small pt-1"><strong>Não esqueça de informar todas as interações com o cliente.</strong></label>
                 <div class="form-row">
+
                   <div class="form-group col-sm-12">
                     <label class="my-0 small">Técnico responsável:</label>
                     <select name="tecnico" class="form-control form-control-sm selectpicker" data-live-search="true" required="required" tabindex="9">
+
                       <?php
                       $pdo = ConnectionN3();
                       $show_clt = $pdo->prepare("SELECT usuarios.user_id, usuarios.user_nome FROM usuarios WHERE usuarios.user_sts = '1' ORDER BY usuarios.user_nome ASC");
@@ -1799,12 +2093,12 @@ WHERE atendimentos.id = '$atd'");
               </div>
               <div class="modal-body">
                 <div class="form-row">
-                  <label class="small"><strong>Recusar atendimento:</strong></label>
-                  <label class="small">Ao confirmar esta tela SEM informar um técnico: a) o atendimento voltará para a fila de atendimento sem um responsável; b) este atendimento contuará com o status "Aguardando atendimento" até que um técnico o aceite.</label>
+                 <label class="small"><strong>Recusar atendimento:</strong></label>
+                  <label class="small">Ao confirmar esta tela SEM informar um técnico: <br><i>a)</i> O atendimento voltará para a fila de atendimento sem um responsável; <br> <i>b)</i> Este atendimento continuará com o status <span style="color: #f00;">''Aguardando Atendimento''</span> até que um técnico o aceite.</label>
                   <label class="small pt-1"><strong>Direcionar atendimento:</strong></label>
-                  <label class="small">Ao confirmar esta tela informando um técnico responsável: a) este atendimento será redirecionado para a fila de atendimentos do técnico informado; b) este atendimento contuará com o status "Aguardando atendimento" até que o técnico responsável confirme o início da execução.</label>
-                  <label class="small pt-1">Não esqueça de informar todas as interação com o cliente.</label>
-                </div>
+                  <label class="small">Ao confirmar esta tela informando um técnico responsável: <br><i>a)</i> Este atendimento será redirecionado para a fila de atendimentos do técnico informado; <br> <i>b)</i> Este atendimento continuará com o status <span style="color: #f00;">''Aguardando Atendimento''</span> até que o técnico responsável confirme o início da execução.</label>
+                  <label class="small pt-1"><strong>Não esqueça de informar todas as interações com o cliente</strong></label>
+               </div>
                 <div class="form-row">
                   <div class="form-group col-sm-12">
                     <label class="my-0 small">Técnico responsável:</label>

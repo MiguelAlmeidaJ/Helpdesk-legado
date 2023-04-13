@@ -64,11 +64,11 @@ if ($f_id == "all") {$p_id = "%";}
 
 if (isset($_POST['ord'])) {$ord = $_POST['ord'];} else {$ord = "status";}
 
-if ($ord == "id"){$order_by = "atendimentos.id ASC";}
+if ($ord == "id"){$order_by = "atendimentos.id DESC";}
 
 if ($ord == "cliente"){$order_by = "clientes.clt_nomer ASC";}
 
-if ($ord == "abertura"){$order_by = "atendimentos.abertura ASC";}
+if ($ord == "abertura"){$order_by = "atendimentos.abertura DESC";}
 
 if ($ord == "tecnico"){$order_by = "tecnico_nome ASC";}
 
@@ -411,7 +411,7 @@ while($exibe=$show_clt->fetch(PDO::FETCH_ASSOC)){
 
                   <div class="col-auto pt-3">
 
-                    <button type="submit" class="btn btn-sm btn-outline-info" tabindex="4">Filtrar</button>
+                    <button type="submit" class="btn btn-sm btn-primary" tabindex="4">Filtrar</button>
 
                   </div>
 

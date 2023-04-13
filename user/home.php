@@ -16,7 +16,7 @@ if ($usar_token=="true") {
       $user_login = filter_input(INPUT_POST, 'user_login', FILTER_SANITIZE_STRING);
       $user_pass = filter_input(INPUT_POST, 'user_pass', FILTER_SANITIZE_STRING);
       $userType = filter_input(INPUT_POST, 'tipo_usuario', FILTER_SANITIZE_STRING);
-      $companies = $_POST['companies'];
+      $companies = $_POST['companies'] ?? [];
 
       $pdo = ConnectionN3();
       $adc_user = $pdo->prepare("INSERT INTO `usuarios` (`user_sts`, `user_nome`, `user_mail`, `user_cel`, `user_funcao`, `user_login`, `user_pass`, `tipo_usuario`) 
@@ -63,6 +63,7 @@ if ($usar_token=="true") {
       $user_cel = filter_input(INPUT_POST, 'user_cel', FILTER_SANITIZE_STRING);
       $user_funcao = filter_input(INPUT_POST, 'user_funcao', FILTER_SANITIZE_STRING);
       $user_login = filter_input(INPUT_POST, 'user_login', FILTER_SANITIZE_STRING);
+      $tipo_usuario = filter_input(INPUT_POST, 'tipo_usuario', FILTER_SANITIZE_STRING);
 
       $clientesSelecionadosNovos = $_POST['companiesEdit'] ?? [];
 
@@ -156,7 +157,7 @@ if ($usar_token=="true") {
       }else{ $m4 = "0000000000"; }
 
       $pdo = ConnectionN3();
-      $edt_user = $pdo->prepare("UPDATE `usuarios` SET `user_sts`=:user_sts, `user_nome`=:user_nome, `user_mail`=:user_mail, `user_cel`=:user_cel, `user_funcao`=:user_funcao, `user_login`=:user_login, `user_modulo_01`=:m1, `user_modulo_02`=:m2, `user_modulo_03`=:m3, `user_modulo_04`=:m4  WHERE `user_id`=:user_id;");
+      $edt_user = $pdo->prepare("UPDATE `usuarios` SET `user_sts`=:user_sts, `user_nome`=:user_nome, `user_mail`=:user_mail, `user_cel`=:user_cel, `user_funcao`=:user_funcao, `user_login`=:user_login, `user_modulo_01`=:m1, `user_modulo_02`=:m2, `user_modulo_03`=:m3, `user_modulo_04`=:m4, `tipo_usuario`=:tipo_usuario  WHERE `user_id`=:user_id;");
       $edt_user->bindParam(':user_sts', $user_sts);
       $edt_user->bindParam(':user_nome', $user_nome);
       $edt_user->bindParam(':user_mail', $user_mail);
@@ -167,6 +168,7 @@ if ($usar_token=="true") {
       $edt_user->bindParam(':m2', $m2);
       $edt_user->bindParam(':m3', $m3);
       $edt_user->bindParam(':m4', $m4);
+      $edt_user->bindParam(':tipo_usuario', $tipo_usuario);
       $edt_user->bindParam(':user_id', $user_id);
       if($edt_user->execute()){
         $mensagem = "<i class=\"fas fa-check\"></i> Usuário editado com sucesso!";

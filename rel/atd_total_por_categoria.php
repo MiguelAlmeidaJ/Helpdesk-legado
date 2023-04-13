@@ -99,6 +99,13 @@ if($f_nivel==0){$p_nivel = "1,2,3";}
 <?php 
 $matriz = "['Categoria', 'Nível 1', 'Nível 2', 'Nível 3']";
 $pdo = ConnectionN3();
+
+$filterEmpresas = "";
+
+if(isset($_SESSION['tipo']) && $_SESSION['tipo'] == 2 && isset($_SESSION['empresas']) && count($_SESSION['empresas']) > 0) {
+  $filterEmpresas.= " AND atendimentos.cliente IN (" . implode(',', $_SESSION['empresas']) . ")";
+}
+
 $show = $pdo->prepare("SELECT categorias.cat_id, categorias.cat_nome,
 COUNT(atendimentos.id) AS atendimentos,
 count(case when nivel = '1' then 1 else null end) AS n1,
@@ -109,6 +116,7 @@ INNER JOIN categorias ON categorias.cat_id = atendimentos.categoria
 WHERE atendimentos.`status` > '0'  
 AND atendimentos.abertura BETWEEN '$data_1' AND '$data_2' 
 AND atendimentos.nivel IN ($p_nivel)
+" . $filterEmpresas . "
 GROUP BY categorias.cat_id ORDER BY atendimentos DESC"); 
 $show->execute();
 while($row=$show->fetch(PDO::FETCH_ASSOC)){

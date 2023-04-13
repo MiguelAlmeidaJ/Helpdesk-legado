@@ -16,6 +16,7 @@ if (isset($_POST["user_id"])) {
   $user_cel = $row["user_cel"];
   $user_mail = $row["user_mail"];
   $user_sts = $row["user_sts"];
+  $tipo = $row["tipo_usuario"];
   $user_mod_01 = $row["user_modulo_01"];
   $user_mod_02 = $row["user_modulo_02"];
   $user_mod_03 = $row["user_modulo_03"];
@@ -190,7 +191,7 @@ if (isset($_POST["user_id"])) {
             <div class="col-12 col-sm-6 col-md-4 col-lg-3 ">
               <span class="form-text text-muted">Empresas:</span>
               <div class="input-group">
-                <select required="required" class="companiesEdit" name="companiesEdit[]" multiple="multiple" style="width: 100%">
+                <select class="companiesEdit" name="companiesEdit[]" multiple="multiple" style="width: 100%">
                   <option></option>
                   <?php
                   while ($rowc = $todosClientes->fetch(PDO::FETCH_ASSOC)) {
@@ -200,6 +201,21 @@ if (isset($_POST["user_id"])) {
                     <option value="<?php echo $client_id; ?>"><?php echo $empresa; ?></option>
                   <?php } ?>
                 </select>
+              </div>
+            </div>
+
+            <div class="col-12 col-sm-6 col-md-4 col-lg-3 ">
+              <span class="form-text text-muted">Tipo de usuário:</span>
+              <div class="input-group" >
+                <?php if(isset($_SESSION['tipo']) && $_SESSION['tipo'] == 1) { ?>
+                <input type="radio" id="nivel3" name="tipo_usuario" value="1" <?php if ($tipo == 1){echo " checked";} ?>>
+                <label for="nivel3" style="padding-right: 10px">Admin</label>
+                <?php } ?>
+
+                <?php if(isset($_SESSION['tipo']) && $_SESSION['tipo'] == 2 || $_SESSION['tipo'] == 1) { ?>
+                  <input type="radio" id="cliente" name="tipo_usuario" value="2" <?php if ($tipo == 2){echo " checked";} ?>>
+                  <label for="cliente">Cliente</label>
+                <?php } ?>
               </div>
             </div>
 

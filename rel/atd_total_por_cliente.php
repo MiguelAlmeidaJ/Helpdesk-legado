@@ -47,7 +47,7 @@ if($f_nivel==0){$p_nivel = "1,2,3";}
               <div class="card py-0 my-0">
                 <div class="card-header my-0 bg-light py-0 h6" id="headingOne">
                   <button class="btn" data-toggle="collapse" data-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
-                      <i class="fas fa-chart-bar"></i> Relatório de atendimentos por Cliente
+                      <i class="fas fa-chart-bar"></i> Relatório de atendimentos Por Cliente
                   </button>
                 </div>
                 <div id="collapseOne" class="collapse show" aria-labelledby="headingOne" data-parent="#accordion">
@@ -93,12 +93,19 @@ if($f_nivel==0){$p_nivel = "1,2,3";}
           <div class="card bg-default">
             <div class="card-header py-2 h6">
               <i class="fas fa-chart-pie"></i>
-              Atendimentos por Cliente
+              Atendimentos Por Cliente
             </div>
             <div class="card-body small text-danger text-justify">
 <?php 
 $matriz = "['Cliente', 'Nível 1', 'Nível 2', 'Nível 3']";
 $pdo = ConnectionN3();
+
+$filterEmpresas = "";
+
+if(isset($_SESSION['tipo']) && $_SESSION['tipo'] == 2 && isset($_SESSION['empresas']) && count($_SESSION['empresas']) > 0) {
+  $filterEmpresas.= " AND atendimentos.cliente IN (" . implode(',', $_SESSION['empresas']) . ")";
+}
+
 $show = $pdo->prepare("SELECT clientes.clt_id, clientes.clt_nomer, 
 count(nivel) as atendimentos,
 count(case when nivel = '1' then 1 else null end) AS n1,
@@ -109,6 +116,7 @@ INNER JOIN clientes ON clientes.clt_id = atendimentos.cliente
 WHERE atendimentos.`status` > '0'
 AND atendimentos.abertura BETWEEN '$data_1' AND '$data_2'
 AND atendimentos.nivel IN ($p_nivel)
+" . $filterEmpresas . "
 GROUP BY clientes.clt_id
 ORDER BY atendimentos DESC"); 
 $show->execute();
@@ -159,7 +167,7 @@ function drawStacked() {
       </div>
 
       <div class="modal-body">
-        <p><strong>Relatório de atendimentos totais por cliente:</strong></p>
+        <p><strong>Relatório de atendimentos totais Por Cliente:</strong></p>
         <p>Este relatório conta o total de atendimentos que foram abertos no período indicado para cada um dos cliente cadastrados e plota um gráfico de colunas.</p>
         <p>São considerados os atendimentos com os seguintes status:</p>
         <ul class="list">
