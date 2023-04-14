@@ -126,6 +126,25 @@ $data_d7 =  date('Y-m-d', strtotime($data . ' -7 days'));
           </div>
         </li>
 
+        <li class="dropdown px-1 pt-1">
+        <a class="dropdown-item dropdown-toggle m-0 pt-1 text-danger" href="#" data-toggle="dropdown" role="button" aria-expanded="false" aria-haspopup="true" tabindex="-1"><i class="fas fa-server text-danger"></i><small> Projetos</small></a>
+        <div class="dropdown-menu">
+          <a class="dropdown-item" href="./atd_projeto/home.php"><i class="fas fa-list-ul text-primary"></i><small> Lista de Projetos</small></a>
+          <div class="dropdown-divider"></div>
+          <a class="dropdown-item" href="./atd_projeto/hometarefas.php"><i class="fas fa-list-ul text-primary"></i><small> Lista de Tarefas</small></a>
+          <div class="dropdown-divider"></div>
+          <a class="dropdown-item" href="./atd_projeto/dash_pro.php"><i class="fas fa-poll-h text-primary"></i><small> Dash Projetos</small></a>
+          <div class="dropdown-divider"></div>
+          <div class="dropdown-divider"></div>          
+          <a class="dropdown-item text-danger" href="./atd_projeto/projeto.php"><i class="fas fa-plus"></i><small> Novo Projeto</small></a>
+          <div class="dropdown-divider"></div>
+          <a class="dropdown-item text-danger" href="./atd_projeto/tarefa.php"><i class="fas fa-plus text-danger"></i><small> Nova Tarefa</small></a>
+
+        </div>
+      </li>
+
+        
+
         <?php if ($m4_00 == 1) { ?>
           <li class="nav-item text-left px-1 pt-1">
             <a class="dropdown-item m-0 pt-1" href="./config/home.php"><i class="fas fa-cogs"></i><small> Cofigurações</small></a>

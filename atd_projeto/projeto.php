@@ -2439,7 +2439,9 @@ ORDER BY $order_by
         if ($(this).val()) {
           console.log('tem?');
           $('#solicitante').hide();
+          $('#solicitante2').hide();
           $('#local').hide();
+          $('#local2').hide();
           $('.carregando').show();
           $('.carregando2').show();
           $.getJSON('busca_solicitantes.php?search=', {
@@ -2452,6 +2454,7 @@ ORDER BY $order_by
             }
             console.log(options)
             $('#solicitante2').html(options).show();
+            $('#solicitante').html(options).show();
             $('.carregando').hide();
           });
           $.getJSON('busca_locais.php?search=', {
@@ -2463,6 +2466,7 @@ ORDER BY $order_by
               options += '<option value="' + j[i].id + '">' + j[i].nome + '</option>';
             }
             $('#local2').html(options).show();
+            $('#local').html(options).show();
             $('.carregando2').hide();
           });
         } else {

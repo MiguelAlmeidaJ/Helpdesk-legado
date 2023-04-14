@@ -177,7 +177,7 @@ if ($usar_token=="true") {
         $row=$show_scat->fetch(PDO::FETCH_ASSOC);
         $tarefa_scat_nome=$row["scat_nome"];
         
-      $tarefa_dias=$row["dias"];
+        $nivel = filter_input(INPUT_POST, 'nivel', FILTER_SANITIZE_STRING);
         //if($tarefa_nivel==0){$tarefa_niveln="Não informado"; $sla = $sla_n1;}
         //if($tarefa_nivel==5){$tarefa_niveln="1 dia"; $sla = $sla_n5;}
         //if($tarefa_nivel==6){$tarefa_niveln="2 dias"; $sla = $sla_n6;}
@@ -189,7 +189,7 @@ if ($usar_token=="true") {
       
       //BUSCA A CLASSIFICAÇÃO ORIGINAL PARA COMPARAR COM A NOVA CLASSIFICAÇÃO
       $pdo = ConnectionN3();
-      $show_tarefa = $pdo->prepare("SELECT tarefas.`tipo`, tarefas.`categoria`, tarefas.`subcategoria`, tarefas.`dias`,
+      $show_tarefa = $pdo->prepare("SELECT tarefas.`tipo`, tarefas.`nivel`, tarefas.`categoria`, tarefas.`subcategoria`, tarefas.`dias`,
       categorias.cat_nome,
       subcategorias.scat_nome
       FROM tarefas 
@@ -209,7 +209,7 @@ if ($usar_token=="true") {
         $tarefa_cat_original_nome=$row["cat_nome"];
       $tarefa_scat_original=$row["subcategoria"];
         $tarefa_scat_original_nome=$row["scat_nome"];
-      $tarefa_dias=$row["dias"];
+      $tarefa_nivel_original=$row["nivel"];
         //if($tarefa_nivel_original==1){$tarefa_nivel_original_nome="Não informado";}
         //if($tarefa_nivel_original==5){$tarefa_nivel_original_nome="1 dia";}
         //if($tarefa_nivel_original==6){$tarefa_nivel_original_nome="2 dias";}
@@ -237,13 +237,13 @@ if ($usar_token=="true") {
       
       //COMPARA O DIA(S) DA TAREFA:
       //SE DIFERENTE:
-      if($dias!=$tarefa_dias_original){
+      if($nivel!=$tarefa_nivel_original){
         //ALTERA O CÓDIGO DO NÍVEL NA TABELA DE tarefas
         $pdo = ConnectionN3();
-        $adc= $pdo->prepare("UPDATE `tarefas` SET `dias`='$dias' WHERE `id`='$tarefa';");
+        $adc= $pdo->prepare("UPDATE `tarefas` SET `nivel`='$nivel' WHERE `id`='$tarefa';");
         if($adc->execute()){
           //CRIA NOVO REGISTRO NA TABELA DE INTERAÇÃO INFORMANDO A ALTERAÇÃO          
-          $adc= $pdo->prepare("INSERT INTO `inter_tarefa` (`inter_tipo`, `inter_tarefa`, `inter_user`, `inter_data`, `inter_desc`) VALUES ('9', '$tarefa', '$user_id', '$agora', 'Editou o Nível: <s>De: $tarefa_dias_original_nome</s> para $tarefa_dias_nome.')");
+          $adc= $pdo->prepare("INSERT INTO `inter_tarefa` (`inter_tipo`, `inter_tarefa`, `inter_user`, `inter_data`, `inter_desc`) VALUES ('9', '$tarefa', '$user_id', '$agora', 'Editou o Nível: <s>De: $tarefa_nivel_original</s> para $nivel.')");
           if($adc->execute()){
             $mensagem = "<i class=\"fas fa-check\"></i> OK! <br> Classificação da tarefa alterada!";
             $mensagem_cor = "alert-success";

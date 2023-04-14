@@ -476,7 +476,6 @@ ORDER BY $order_by
                   //TIME TO CLOSE
                   //calcula hora limite para o fechamento do atendimento: Abertura + SLA
                   $time_limit_to_close = date("Y-m-d H:i:s", strtotime($tarefas_hora_abertura . " +$sla minutes"));
-                  // var_dump($time_limit_to_close, 'toclose');
                   //hora atual
                   $time_now = date("Y-m-d H:i:s");
                   $start_date = new DateTime($time_now);
@@ -552,7 +551,6 @@ ORDER BY $order_by
                     }
                   }
 
-
                   //verifica se ainda existe prazo para atendimento
                   if ($start_date > $end_date) {
 
@@ -569,7 +567,6 @@ ORDER BY $order_by
                       $progress_color = "orange";
                     }
                   } else {
-
                     $progress_color = "orange";
                     $progress_width = "100";
                     $tag = "Vencido";
