@@ -5,7 +5,7 @@ include_once("../all/conect.php");
 include_once("../all/permissoes.php");
 $data = date("Y-m-d");
 
-//VERIFICA SE HÁ REQUISICAO PARA SER EXECUTADA
+//VERIFICA SE Há REQUISICAO PARA SER EXECUTADA
 if (isset($_POST['action'])) { $action  = $_POST['action'];
   //SE A REQUISIÇÃO FOR PARA ALTERAR SENHA
   if ($action == "alterar_senha") {include_once("..all/update_senha.php");}
@@ -28,65 +28,7 @@ $data_d7 =  date('Y-m-d', strtotime($data. ' -7 days'));
   </head>
   <body>
 <?php include_once("../all/loading_home.php"); ?>
-    <nav class="navbar navbar-expand-lg navbar-light bg-light">
-      <a class="navbar-brand" href="http://localhost/N3TI/home.php">
-        <img src="../img/logo_allterus_001.png"  height="30" class="d-inline-block align-top pr-1" alt="">ALLTERUS
-      </a>
-      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavDropdown" aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
-        <span class="navbar-toggler-icon"></span>
-      </button>
-      <div class="collapse navbar-collapse" id="navbarNavDropdown">
-        
-        <ul class="navbar-nav mr-1">
-
-<?php if ($m1_00==1) {?>
-          <li class="nav-item text-left p-1">
-            <a class="dropdown-item m-0 p-1" href="../user/home.php"><i class="text-info fas fa-users"></i><small> Usuários</small></a>
-          </li>
-<?php } ?>
-<?php if ($m2_00==1) {?>
-          <li class="nav-item text-left p-1">
-            <a class="dropdown-item m-0 p-1" href="../cads/home.php"><i class="fas fa-file-medical"></i><small> Cadastros</small></a>
-          </li>
-<?php } ?>
-<?php if ($m3_00==1) {?>
-          <li class="nav-item text-left p-1">
-            <a class="dropdown-item m-0 p-1" href="../atd/home.php"><i class="fas fa-headset text-danger"></i><small> Atendimentos</small></a>
-          </li>
-<?php } ?>
-<?php if ($m5_00==1) {?>
-          <li class="nav-item text-left p-1">
-            <a class="dropdown-item m-0 p-1" href="../atd_projeto/home.php"><i class="fas fas fa-server text-danger"></i><small> Projetos</small></a>
-          </li>
-<?php } ?> 
-          <li class="nav-item text-left p-1">
-            <a class="dropdown-item m-0 p-1" href="../rel/atd_abertos_por_tecnico.php"><i class="fas fa-clipboard-list text-info"></i><small> Relatórios</small></a>
-          </li>
-<?php if ($m6_00==1) {?>
-          <li class="nav-item text-left p-1">
-             <a class="dropdown-item m-0 p-1" href="./atd_projetos/home.php"><i class="fab fa-medapps text-danger"></i><small> projetos</small></a>
-          </li>
-<?php } ?>          
-<?php if ($m4_00==1) {?>
-          <li class="nav-item text-left p-1">
-            <a class="dropdown-item m-0 p-1" href="../config/home.php"><i class="fas fa-cogs"></i><small> Cofigurações</small></a>
-          </li>
-<?php } ?> 
-
-        
-        </ul>
-        <ul class="navbar-nav ml-auto">
-          <li class="nav-item dropdown">
-              <a class="nav-link dropdown-toggle" id="navbarDropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="fas fa-user"></i> </a>
-              <div class="dropdown-menu dropdown-menu-right dropdown-unique" aria-labelledby="navbarDropdownMenuLink">
-                <a class="dropdown-item disabled" href="#"><i class="text-dark fas fa-address-book"></i> <?php echo $user_nome;?></a>
-                <a class="dropdown-item" href="#" data-toggle="modal" data-target="#modalSenha"><i class="fas fa-user-cog"></i> Senha</a>
-                <a class="dropdown-item" href="index.php"><i class="fas fa-sign-out-alt"></i> Sair</a>
-              </div>
-          </li>
-        </ul>
-      </div>
-    </nav>
+    <?php include_once("../all/sidebar.php"); ?>
     <div class="container-fluid mt-2">
 
         <div class="row">
@@ -197,7 +139,7 @@ while($exibe=$show_clt->fetch(PDO::FETCH_ASSOC)){
             <div class="col-sx-12 col-sm-6 col-md-4 mb-1 px-1">
               <div class="card bg-default">
                 <h6 class="card-header py-2">
-                  <i class="fas fa-trophy text-primary"></i> Matadores <small>(Últimos 7 Dias)</small>
+                  <i class="fas fa-trophy text-primary"></i> Ranking <small>(últimos 7 Dias)</small>
                 </h6>
                 <div class="card-body">
 <?php

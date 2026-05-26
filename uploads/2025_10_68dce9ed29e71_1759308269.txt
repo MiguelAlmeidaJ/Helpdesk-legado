@@ -1,0 +1,93 @@
+SELECT
+    nt.desc_nat_oper AS [NATUREZA_OP],
+    nt.nu_nf_emp_fat AS [NU_NF],
+    CASE
+        WHEN it.qtde_dev < it.qtde THEN 'DP'
+        WHEN nt.situacao = 'DP' THEN 'AB'
+        ELSE nt.situacao
+    END AS [ST_NOTA],
+    dp.cd_depto AS [COD DEP],
+    nt.tipo_nf AS [TP_NOTA],
+    tp.tp_ped AS [TIPO DE PEDIDO],
+    nt.nu_ped AS [PEDIDO],
+    nt.origem_pedido AS [ORIGEM_PEDIDO],
+    nt.cond_pagto AS [COND_PGTO],
+    nt.cd_vend AS [VENDEDOR],
+    vd.nome AS [NOME_VENDEDOR],
+    eq.descricao AS [EQUIPE],
+    ge.descricao AS [GERENCIA],
+    nt.nome + ' (' + CONVERT(VARCHAR, nt.cd_clien) + ')' AS [CLIENTE],
+    nt.cd_clien [Cd Cliente],
+    nt.municipio COLLATE SQL_Latin1_General_CP1251_CS_AS AS [CIDADE],
+    nt.dt_emis AS [DT_FATURAMENTO],
+    DATEFROMPARTS(YEAR(nt.dt_emis), MONTH(nt.dt_emis), 1) AS [COMP_FATURAMENTO],
+    it.descricao + ' (' + CONVERT(VARCHAR, it.cd_prod) + ')' AS [PRODUTO],
+    CASE
+        WHEN pr.cd_grupo_prd = 'REF' THEN 'REFRIGERADO'
+        ELSE 'SECA'
+    END AS [TP_CARGA],
+    fb.descricao AS [FABRICANTE],
+    it.qtde AS [QUANTIDADE],
+    it.vl_unit_unid AS [VALOR_UNIT],
+    nt.nome_trans AS [TRANSPORTADORA],
+    (it.vl_tot - ISNULL(it.vl_desc_geral, 0) + ISNULL(it.vl_icm_subst, 0) + ISNULL(it.ValorFCPST, 0)) AS [VALOR_VENDA_+_ST],
+    ISNULL(it.vl_icm_subst, 0) + ISNULL(it.ValorFCPST, 0) AS [ICMS_ST],
+    (ISNULL(it.vl_icm_subst, 0) + ISNULL(it.ValorFCPST, 0)) / (it.vl_tot - ISNULL(it.vl_desc_geral, 0)) AS [(%)ICMS_ST],
+    ISNULL(it.VlBoleto, 0) AS [VALOR_BOLETO],
+    it.vl_tot - ISNULL(it.vl_desc_geral, 0) AS [VALOR_VENDA],
+    ISNULL(it.vl_icm, 0) + ISNULL(it.ValorFCP, 0) AS [(-)ICMS],
+    ISNULL(it.vl_pis, 0) AS [(-)PIS],
+    ISNULL(it.vl_cofins, 0) AS [(-)COFINS],
+    tmv.vl_custo_capado_cmp * it.qtde_est AS [(-)CUSTO_CAPADO],
+    itp.vl_mg_brt_cmp AS [Margem_Bruta],
+    itp.vl_mg_brt_cmp / (it.vl_tot - ISNULL(it.vl_desc_geral, 0)) AS [(%)Margem_Bruta],
+    ISNULL(itp.vl_comis / itp.qtde * it.qtde_est, 0) AS [(-)VALOR_COMISSAO],
+    ISNULL(itp.vl_verba_fabr / itp.qtde * it.qtde_est, 0) + ISNULL(itp.vl_verba_fabr_adic / itp.qtde * it.qtde_est, 0) AS [(+)VERBA_FABRIC],
+    ISNULL(it.vl_tot - ISNULL(it.vl_desc_geral, 0), 0) * ISNULL(tmv.perc_desp, 0) AS [(-)FOT],
+    ISNULL(it.vl_tot - ISNULL(it.vl_desc_geral, 0), 0) * ISNULL(tmv.perc_desp, 0) / (it.vl_tot - ISNULL(it.vl_desc_geral, 0)) AS [(%)FOT],
+    ISNULL(it.vl_tot - ISNULL(it.vl_desc_geral, 0), 0) * (tmv.vl_ind_cpmf / 100) AS [(-)DESP_COMERCIAL],
+    (ISNULL(it.vl_tot - ISNULL(it.vl_desc_geral, 0), 0) * (tmv.vl_ind_cpmf / 100)) / (it.vl_tot - ISNULL(it.vl_desc_geral, 0)) AS [(%)DESP_COMERCIAL],
+    ISNULL(it.vl_tot - ISNULL(it.vl_desc_geral, 0), 0) * (tmv.vl_ind_frete / 100) AS [(-)DESP_LOGÍSTICO],
+    (ISNULL(it.vl_tot - ISNULL(it.vl_desc_geral, 0), 0) * (tmv.vl_ind_frete / 100)) / (it.vl_tot - ISNULL(it.vl_desc_geral, 0)) AS [(%)DESP_LOGÍSTICO],
+    (it.vl_tot - ISNULL(it.vl_desc_geral, 0) - (ISNULL(it.vl_icm, 0) + ISNULL(it.ValorFCP, 0)) - ISNULL(it.vl_pis, 0) - ISNULL(it.vl_cofins, 0) - (tmv.vl_custo_capado_cmp * it.qtde_est)
+        - (ISNULL(it.vl_tot - ISNULL(it.vl_desc_geral, 0), 0) * ISNULL(tmv.perc_desp, 0))
+        - (ISNULL(it.vl_tot - ISNULL(it.vl_desc_geral, 0), 0) * (ISNULL(tmv.vl_ind_cpmf, 0) / 100))
+        - (ISNULL(it.vl_tot - ISNULL(it.vl_desc_geral, 0), 0) * (ISNULL(tmv.vl_ind_frete, 0) / 100))
+        - ISNULL(itp.vl_comis / itp.qtde * it.qtde_est, 0)
+        + ISNULL(itp.vl_verba_fabr / itp.qtde * it.qtde_est, 0)
+        + ISNULL(itp.vl_verba_fabr_adic / itp.qtde * it.qtde_est, 0)
+        - ISNULL(itp.vl_desc_fin / itp.qtde * it.qtde_est, 0)) AS [Margem_Contrib],
+    ISNULL(itp.vl_desc_fin, 0) AS [DESCONTO_FINANCEIRO],
+    ISNULL(it.vl_desc_geral, 0) AS [DESCONTO_GERAL],
+    (it.vl_tot - ISNULL(it.vl_desc_geral, 0) - (ISNULL(it.vl_icm, 0) + ISNULL(it.ValorFCP, 0))
+        - ISNULL(it.vl_pis, 0) - ISNULL(it.vl_cofins, 0) - (tmv.vl_custo_capado_cmp * it.qtde_est)
+        - (ISNULL(it.vl_tot - ISNULL(it.vl_desc_geral, 0), 0) * ISNULL(tmv.perc_desp, 0))
+        - (ISNULL(it.vl_tot - ISNULL(it.vl_desc_geral, 0), 0) * (ISNULL(tmv.vl_ind_cpmf, 0) / 100))
+        - (ISNULL(it.vl_tot - ISNULL(it.vl_desc_geral, 0), 0) * (ISNULL(tmv.vl_ind_frete, 0) / 100))
+        - ISNULL(itp.vl_comis / itp.qtde * it.qtde_est, 0)
+        + ISNULL(itp.vl_verba_fabr / itp.qtde * it.qtde_est, 0)
+        + ISNULL(itp.vl_verba_fabr_adic / itp.qtde * it.qtde_est, 0)
+        - ISNULL(itp.vl_desc_fin / itp.qtde * it.qtde_est, 0)) /
+    (it.vl_tot - ISNULL(it.vl_desc_geral, 0) + ISNULL(it.vl_icm_subst, 0) + ISNULL(it.ValorFCPST, 0)) AS [(%)MgCtb_VENDA_LIQ],
+    it.qtde_dev AS [QTDE_DEV]
+FROM
+    nota nt
+JOIN it_nota it ON it.nu_nf = nt.nu_nf
+JOIN it_pedv itp ON itp.nu_nf = it.nu_nf AND itp.seq = it.seq_it_pedv
+JOIN produto pr ON pr.cd_prod = it.cd_prod
+JOIN linha li ON li.cd_linha = pr.cd_linha
+JOIN secao sc ON sc.cd_secao = li.cd_secao
+JOIN depto dp ON dp.cd_depto = sc.cd_depto
+JOIN ProdCustoHist pch ON pch.ProdCustoHistID = it.ProdCustoHistID
+JOIN fabric fb ON fb.cd_fabric = it.cd_fabric
+JOIN vendedor vd ON vd.cd_vend = nt.cd_vend
+JOIN equipe eq ON eq.cd_equipe = vd.cd_equipe AND eq.cd_emp = 2
+JOIN gerencia ge ON ge.cd_gerencia = eq.cd_gerencia AND ge.cd_emp = 2
+LEFT JOIN tb_margem_valores tmv ON tmv.nu_ped = nt.nu_ped AND tmv.seq_it_pedv = it.seq_it_pedv
+JOIN ped_vda pv ON pv.nu_ped = nt.nu_ped
+JOIN tp_ped tp ON tp.tp_ped = pv.tp_ped
+WHERE
+    DATEPART(YEAR, nt.dt_emis) IN (2024, 2025)
+    AND (tp.estat_com = 1 OR tp.tp_ped = 'RV')
+    ORDER BY
+    nt.nu_ped;

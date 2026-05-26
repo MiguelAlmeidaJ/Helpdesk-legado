@@ -53,10 +53,10 @@ if($m8_00==0){header("Location: ../index.php");}
   </head>
   <body>
 <?php include_once("../all/loading.php"); ?>
-<?php include_once("../all/header.php"); ?>
+<?php include_once("../all/sidebar.php"); ?>
 <?php 
 //verifico se existe alguma requisição POST chamada action
-$action = filter_input(INPUT_POST, 'action', FILTER_SANITIZE_STRING);
+$action = filter_input(INPUT_POST, 'action', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
 //verifico se existe alguma requisição via post cahamda tarefa
 $tarefa = filter_input(INPUT_POST, 'tarefa', FILTER_SANITIZE_NUMBER_INT);
@@ -66,21 +66,21 @@ if ($action == "alterar_senha") {include_once("../all/update_senha.php");}
 if ($usar_token=="true") {
   if($action){
     if ($action == "tarefa_adc") {
-      $nome_tarefa = filter_input(INPUT_POST, 'nome_tarefa', FILTER_SANITIZE_STRING);
-      $cliente = filter_input(INPUT_POST, 'cliente', FILTER_SANITIZE_STRING);
-      $pessoa = filter_input(INPUT_POST, 'solicitante', FILTER_SANITIZE_STRING);
-      $local = filter_input(INPUT_POST, 'local', FILTER_SANITIZE_STRING);
-      $tipo = filter_input(INPUT_POST, 'tipo', FILTER_SANITIZE_STRING);
+      $nome_tarefa = filter_input(INPUT_POST, 'nome_tarefa', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+      $cliente = filter_input(INPUT_POST, 'cliente', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+      $pessoa = filter_input(INPUT_POST, 'solicitante', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+      $local = filter_input(INPUT_POST, 'local', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+      $tipo = filter_input(INPUT_POST, 'tipo', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
       $forma = filter_input(INPUT_POST, 'forma', FILTER_SANITIZE_NUMBER_INT);
-      $categoria = filter_input(INPUT_POST, 'categoria', FILTER_SANITIZE_STRING);
-      $subcategoria = filter_input(INPUT_POST, 'subcategoria', FILTER_SANITIZE_STRING);
-      $item = filter_input(INPUT_POST, 'item', FILTER_SANITIZE_STRING);
-      $dias = filter_input(INPUT_POST, 'dias', FILTER_SANITIZE_STRING);
-      $desc_abertura = filter_input(INPUT_POST, 'desc_abertura', FILTER_SANITIZE_STRING);
+      $categoria = filter_input(INPUT_POST, 'categoria', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+      $subcategoria = filter_input(INPUT_POST, 'subcategoria', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+      $item = filter_input(INPUT_POST, 'item', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+      $dias = filter_input(INPUT_POST, 'dias', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+      $desc_abertura = filter_input(INPUT_POST, 'desc_abertura', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
       //$abertura = date("Y-m-d H:i:s");
-      $abertura = filter_input(INPUT_POST, 'abertura', FILTER_SANITIZE_STRING);
-      $tecnico = filter_input(INPUT_POST, 'tecnico', FILTER_SANITIZE_STRING);
-      $id_projeto = filter_input(INPUT_POST, 'id_projeto', FILTER_SANITIZE_STRING);
+      $abertura = filter_input(INPUT_POST, 'abertura', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+      $tecnico = filter_input(INPUT_POST, 'tecnico', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+      $id_projeto = filter_input(INPUT_POST, 'id_projeto', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
       //VERIFICA SE DATA HORA ABERTURA É MAIOR DO QUE DATA HORA ATUAL.
       //SE POSITIVO: UM TAREFA AGENDADO
@@ -162,21 +162,21 @@ if ($usar_token=="true") {
 
     //EDITA A CATEGORIZAÇÃO DA TAREFA
     if ($action == "tarefa_edt") {   
-      $tipo = filter_input(INPUT_POST, 'tipo', FILTER_SANITIZE_STRING);
+      $tipo = filter_input(INPUT_POST, 'tipo', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         if($tipo==1){$tarefa_tipo_nome="Falha";}
         if($tipo==2){$tarefa_tipo_nome="Relacionamento";}
         if($tipo==3){$tarefa_tipo_nome="Requisição de Serviços";}
         if($tipo==4){$tarefa_tipo_nome="Requisição de informação";}
         if($tipo==5){$tarefa_tipo_nome="Notificação de monitoramento";}
         if($tipo==0){$tarefa_tipo_nome="Não informado";}          
-      $categoria = filter_input(INPUT_POST, 'categoria', FILTER_SANITIZE_STRING);
+      $categoria = filter_input(INPUT_POST, 'categoria', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         $pdo = ConnectionN3();
         $show_cat = $pdo->prepare("SELECT categorias.cat_nome FROM categorias WHERE categorias.cat_id = '$categoria'");
         $show_cat->execute();
         $row=$show_cat->fetch(PDO::FETCH_ASSOC);
         $tarefa_cat_nome=$row["cat_nome"];
         
-      $subcategoria = filter_input(INPUT_POST, 'subcategoria', FILTER_SANITIZE_STRING);
+      $subcategoria = filter_input(INPUT_POST, 'subcategoria', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         $pdo = ConnectionN3();
         $show_scat = $pdo->prepare("SELECT subcategorias.scat_nome FROM subcategorias WHERE subcategorias.scat_id = '$subcategoria'");
         $show_scat->execute();
@@ -257,7 +257,7 @@ if ($usar_token=="true") {
       //COMPARA O DIA(S) DA TAREFA:
       //SE DIFERENTE:
       if($dias!=$tarefa_dias_original){
-        //ALTERA O CÓDIGO DO NÍVEL NA TABELA DE tarefas_mkt
+        //ALTERA O CÓDIGO DO NºVEL NA TABELA DE tarefas_mkt
         $pdo = ConnectionN3();
         $adc= $pdo->prepare("UPDATE `tarefas_mkt` SET `dias`='$dias' WHERE `id`='$tarefa';");
         if($adc->execute()){
@@ -322,7 +322,7 @@ if ($usar_token=="true") {
 
     //REGISTRAR NOVA INTERAÇÃO
     if ($action == "tarefa_new_inter") {
-      $inter_desc = filter_input(INPUT_POST, 'inter_desc', FILTER_SANITIZE_STRING);
+      $inter_desc = filter_input(INPUT_POST, 'inter_desc', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
       $pdo = ConnectionN3();
       $adc= $pdo->prepare("INSERT INTO `inter_tarefa_mkt` (`inter_tipo`, `inter_tarefa`, `inter_user`, `inter_data`, `inter_desc`) VALUES ('7', :tarefa, '$user_id', '$agora', :inter_desc);");
       $adc->bindParam(':inter_desc', $inter_desc);
@@ -339,7 +339,7 @@ if ($usar_token=="true") {
     //USUÁRIO ACEITA INICIAR UM ATENDIMENTO
     if ($action == "tarefa_aceitar") {
       $tecnico = filter_input(INPUT_POST, 'tecnico', FILTER_SANITIZE_NUMBER_INT);
-    //VERIFICA SE TECNICO ATRIBUÍDO É O PRÓPRIO USUÁRIO
+    //VERIFICA SE TECNICO ATRIBUÍDO é O PRÓPRIO USUÁRIO
       //SE VERDADEIRO:
       //1 - muda o status da tarefa para 2 (ATENDIMENTO EM EXECUÇÃO)
       //2 - registra na tabela de interatividade que o usuário iniciou o atendimento.
@@ -349,15 +349,15 @@ if ($usar_token=="true") {
         if($adc->execute()){
           $adc= $pdo->prepare("INSERT INTO `inter_tarefa_mkt` (`inter_tipo`, `inter_tarefa`, `inter_user`, `inter_data`, `inter_desc`) VALUES ('2', '$tarefa', '$user_id', '$agora', 'Iniciou a tarefa.')");
           if($adc->execute()){
-            $mensagem = "<i class=\"fas fa-check\"></i> Ótimo! <br> O status da tarefa foi alterado para 'Em Execução'!";
+            $mensagem = "<i class=\"fas fa-check\"></i> ótimo! <br> O status da tarefa foi alterado para 'Em Execução'!";
             $mensagem_cor = "alert-success";
           }        
         }
       }
       //SE FALSO:
       //1 - mantem status da tarefa como 1 (ATENDIMENTO AGUARDANDO EXECUÇÃO)
-      //1 - registra na tabela de atendimento o novo técnico responsável 
-      //2 - busca o NOME do técnico responsável
+      //1 - registra na tabela de atendimento o novo técnico responsóvel 
+      //2 - busca o NOME do técnico responsóvel
       //3 - registra na tabela de interatividade a atribuição do chamando
       if($tecnico!=$user_id){
         $pdo = ConnectionN3();
@@ -403,7 +403,7 @@ if ($usar_token=="true") {
           //insere o registro de uma nova interação 
           $adc= $pdo->prepare("INSERT INTO `inter_tarefa_mkt` (`inter_tipo`, `inter_tarefa`, `inter_user`, `inter_data`, `inter_desc`) VALUES ('6', '$tarefa', '$user_id', '$agora', 'Retomou a tarefa.');");
           if($adc->execute()){
-            $mensagem = "<i class=\"fas fa-check\"></i> Beleza! <br> Agora vamos descrever as interações com o cliente!";
+            $mensagem = "<i class=\"fas fa-check\"></i> Beleza! <br> Agora vamos descrever as interaçães com o cliente!";
             $mensagem_cor = "alert-success";
           }else{
             $mensagem = "<i class=\"fas fa-exclamation-triangle\"></i> Falha ao adicionar registro na tabela de interação!";
@@ -422,12 +422,12 @@ if ($usar_token=="true") {
     //USUÁRIO RECUSA UM ATENDIMENTO
     if ($action == "tarefa_recusar") {
       $tecnico = filter_input(INPUT_POST, 'tecnico', FILTER_SANITIZE_NUMBER_INT);
-      $inter_desc = filter_input(INPUT_POST, 'inter_desc', FILTER_SANITIZE_STRING);
+      $inter_desc = filter_input(INPUT_POST, 'inter_desc', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
     //VERIFICA SE O ATENDIMENTO FOI DIRECIONADO PARA OUTRO TÉCNICO
       //SE VERDADEIRO:
       //1 - muda o status da tarefa para 1 (aguardando atendimento)
-      //1 - registra na tabela de atendimento o novo técnico responsável 
-      //2 - busca o NOME do técnico responsável
+      //1 - registra na tabela de atendimento o novo técnico responsóvel 
+      //2 - busca o NOME do técnico responsóvel
       //2 - registra na tabela de interatividade que o usuário direcionou o atendimento.      
       if($tecnico!=0){
         $pdo = ConnectionN3();
@@ -451,7 +451,7 @@ if ($usar_token=="true") {
       }
       //SE FALSO:
       //1 - muda o status da tarefa para 1 (aguardando atendimento)
-      //1 - remove o técnico como responsável pelo atendimento
+      //1 - remove o técnico como responsóvel pelo atendimento
       //2 - registra na tabela de interatividade que o usuário recusou o atendimento.     
       if($tecnico==0){
         $pdo = ConnectionN3();
@@ -473,8 +473,8 @@ if ($usar_token=="true") {
     
     //COLOCAR ATENDIMENTO EM ESPERA
     if ($action == "tarefa_espera") {
-      $espera_desc = filter_input(INPUT_POST, 'espera_desc', FILTER_SANITIZE_STRING);
-      $espera_prev = filter_input(INPUT_POST, 'espera_prev', FILTER_SANITIZE_STRING);
+      $espera_desc = filter_input(INPUT_POST, 'espera_desc', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+      $espera_prev = filter_input(INPUT_POST, 'espera_prev', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
       $espera_prev_br = date('d/m/Y H:i', strtotime($espera_prev));
       $pdo = ConnectionN3();
       //altera status da tarefa para 3 (Em espera)
@@ -504,7 +504,7 @@ if ($usar_token=="true") {
     
     //USUÁRIO FINALIZA UM ATENDIMENTO
     if ($action == "tarefa_finalizar") {
-      $desc_fechamento = filter_input(INPUT_POST, 'desc_fechamento', FILTER_SANITIZE_STRING);
+      $desc_fechamento = filter_input(INPUT_POST, 'desc_fechamento', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
       $pdo = ConnectionN3();
       $adc= $pdo->prepare("UPDATE `tarefas_mkt` SET `desc_fechamento`=:desc_fechamento, `fechamento`=:fechamento, `status`='4' WHERE  `id`='$tarefa';");
       $adc->bindParam(':desc_fechamento', $desc_fechamento);
@@ -513,7 +513,7 @@ if ($usar_token=="true") {
         $pdo = ConnectionN3();
         $adc= $pdo->prepare("INSERT INTO `inter_tarefa_mkt` (`inter_tipo`, `inter_tarefa`, `inter_user`, `inter_data`, `inter_desc`) VALUES ('8', '$tarefa', '$user_id', '$agora', 'Finalizou o atendimento. <br> Descrição: $desc_fechamento');");
         if($adc->execute()){
-           $mensagem = "<i class=\"fas fa-check\"></i> Ótimo! <br> O que mais temos para hoje?!";
+           $mensagem = "<i class=\"fas fa-check\"></i> ótimo! <br> O que mais temos para hoje?!";
            $mensagem_cor = "alert-success";
         }        
       }else{
@@ -664,7 +664,7 @@ while($exibe=$show_clt->fetch(PDO::FETCH_ASSOC)){
                     <div class="form-row">
                       
                   <div class="form-group col-sm-12 col-md-6">
-                    <label class="my-0 small">Técnico:</label>
+                    <label class="my-0 small">Tecnico:</label>
                     <select name="tecnico" id="tecnico"  class="form-control form-control-sm selectpicker" data-live-search="true" required="required" tabindex="10">
                       <option></option>
                       <option value="0">Não determinado</option>
@@ -686,6 +686,8 @@ while($exibe=$show_clt->fetch(PDO::FETCH_ASSOC)){
                     <select name="forma" class="form-control form-control-sm" required="required" tabindex="11">
                       <option value="1">Remoto</option>
                       <option value="2">Presencial</option>
+                      <option value="3">Remoto - Plantão</option>
+                      <option value="4">Presencial - Plantão</option>
                     </select>
                   </div>
                   
@@ -734,7 +736,7 @@ while($exibe=$show_clt->fetch(PDO::FETCH_ASSOC)){
 <?php
 //GED NOVA PASTA
     if ($action == "ged_new_folder") {
-      $ged_fd_folder = filter_input(INPUT_POST, 'ged_fd_folder', FILTER_SANITIZE_STRING);
+      $ged_fd_folder = filter_input(INPUT_POST, 'ged_fd_folder', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
       
       $pdo = ConnectionN3();      
       $adc= $pdo->prepare("INSERT INTO `ged_folder_mkt` (`ged_fd_cont`, `ged_fd_folder`, `ged_fd_dt`, `ged_fd_user`) VALUES (:inter_mkt, :ged_fd_folder, '$agora', '$user_id');");
@@ -752,7 +754,7 @@ while($exibe=$show_clt->fetch(PDO::FETCH_ASSOC)){
 
     //GED EDITAR PASTA
     if ($action == "ged_edt_folder") {
-      $ged_fd_folder = filter_input(INPUT_POST, 'ged_fd_folder', FILTER_SANITIZE_STRING);
+      $ged_fd_folder = filter_input(INPUT_POST, 'ged_fd_folder', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
       $ged_fd_id = filter_input(INPUT_POST, 'ged_fd_id', FILTER_SANITIZE_NUMBER_INT);
  
       $pdo = ConnectionN3();      
@@ -786,7 +788,7 @@ while($exibe=$show_clt->fetch(PDO::FETCH_ASSOC)){
   
     //GED NOVO ARQUIVO
     if ($action == "ged_new_file") {
-      $ged_fl_name = filter_input(INPUT_POST, 'ged_fl_name', FILTER_SANITIZE_STRING);
+      $ged_fl_name = filter_input(INPUT_POST, 'ged_fl_name', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
       $ged_fd_id = $ged_fl_folder = filter_input(INPUT_POST, 'ged_fl_folder', FILTER_SANITIZE_NUMBER_INT);
       
       $arquivo_tmp = $_FILES['arquivo']['tmp_name'];
@@ -822,8 +824,8 @@ while($exibe=$show_clt->fetch(PDO::FETCH_ASSOC)){
     
     //GED EDITAR arquivo
     if ($action == "ged_edt_file") {
-      $ged_fl_folder = filter_input(INPUT_POST, 'ged_fl_folder', FILTER_SANITIZE_STRING);
-      $ged_fl_name = filter_input(INPUT_POST, 'ged_fl_name', FILTER_SANITIZE_STRING);
+      $ged_fl_folder = filter_input(INPUT_POST, 'ged_fl_folder', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+      $ged_fl_name = filter_input(INPUT_POST, 'ged_fl_name', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
       $ged_fl_id = filter_input(INPUT_POST, 'ged_fl_id', FILTER_SANITIZE_NUMBER_INT);
  
       $pdo = ConnectionN3();      
@@ -905,7 +907,7 @@ subcategorias.scat_nome,
 itens.itens_nome,
 usuarios.user_nome AS tecnico_nome, usuarios.user_cel AS tecnico_tel, usuarios.user_mail AS tecnico_mail
 FROM tarefas_mkt 
-INNER JOIN clientes ON clientes.clt_id = tarefas_mkt.cliente
+LEFT JOIN clientes ON clientes.clt_id = tarefas_mkt.cliente
 LEFT JOIN pessoas ON pessoas.pessoa_id = tarefas_mkt.pessoa
 LEFT JOIN locais ON locais.local_id = tarefas_mkt.`local`
 LEFT JOIN categorias ON categorias.cat_id = tarefas_mkt.categoria
@@ -1035,7 +1037,7 @@ $row=$show_tarefa->fetch(PDO::FETCH_ASSOC);
             <div class="h6 card-header py-1">
               <div class="row">
                 <div class="col-6 h6 pt-2 mb-0">
-                  <i class="fas fa-check"></i> Ações
+                  <i class="fas fa-check"></i> Açães
                 </div>
                 <div class="col-6 text-right px-0">
 <?php if($tarefa_status==0){ ?>
@@ -1070,7 +1072,7 @@ $row=$show_tarefa->fetch(PDO::FETCH_ASSOC);
                 </div>
 
                 <div class="form-group col-sm-4 col-md-4">
-                  <label class="my-0 small">Técnico:</label>
+                  <label class="my-0 small">Tecnico:</label>
                   <input class="form-control form-control-sm" value="<?php echo $tecnico_nome; ?>" disabled="">
                 </div>
               </div>
@@ -1093,7 +1095,7 @@ $row=$show_tarefa->fetch(PDO::FETCH_ASSOC);
 <?php 
 //ANALISA E ALTERA REGRAS PARA EXIBIÇÃO DE BOTÕES, MODAIS, ETC DE ACORDO COM O STATUS DO CHAMADO
 
-//SE NÃO HOUVER TÉCNICO ATRIBUÍDO PARA O ATENDIMENTO
+//SE NºO HOUVER TÉCNICO ATRIBUÍDO PARA O ATENDIMENTO
 if($tecnico_id==0){ $exibe_bt_tarefa_aceitar=true; }
 
 //SE O ATENDIMENTO ESTIVER AGUARDANDO E O USUÁRIO FOR O TÉCNICO
@@ -1164,7 +1166,7 @@ if($m3_05==2){ //se usuário com permissão para editar tarefas de terceiros
             <!-- MODAL GED NOVA PASTA-->
 
 <?php
-//VERIFICA SE HÁ ALGUMA PASTA ABERTA
+//VERIFICA SE Há ALGUMA PASTA ABERTA
 $ged_open_folder = filter_input(INPUT_POST, 'ged_open_folder', FILTER_SANITIZE_NUMBER_INT);
 //SE ESTVER HAVENDO ALGUMA MANIPULAÇÃO EM UMA PASTA, DEFINE ELA COMO PADRÃO
 if(isset($ged_fd_id)){$ged_open_folder = $ged_fd_id;}
@@ -1297,7 +1299,7 @@ if($conta_folder>0){
                               <div class="row py-1">
 <?php
 //VERIFICA AS PREFERENCIAS DE EXIBIÇÃO DE ARQUIVOS 
-$ged_exibir = filter_input(INPUT_POST, 'ged_exibir', FILTER_SANITIZE_STRING);
+$ged_exibir = filter_input(INPUT_POST, 'ged_exibir', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 if(empty($ged_exibir)){$ged_exibir="ativos";}
 if($ged_exibir=="ativos"){$ged_fl_sts="2";}
 if($ged_exibir=="arquivados"){$ged_fl_sts="1";}
@@ -1305,7 +1307,7 @@ if($ged_exibir=="excluidos"){$ged_fl_sts="0";}
 if($ged_exibir=="todos"){$ged_fl_sts="0,1,2";}
 
 //VERIFICA AS PREFERENCIAS ORDENAÇÃO DE ARQUIVOS 
-$ged_ordenar = filter_input(INPUT_POST, 'ged_ordenar', FILTER_SANITIZE_STRING);
+$ged_ordenar = filter_input(INPUT_POST, 'ged_ordenar', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 if(empty($ged_ordenar)){$ged_ordenar="name_asc";}
 if($ged_ordenar=="name_asc"){$ged_order_by="ged_fl_name ASC";}
 if($ged_ordenar=="name_desc"){$ged_order_by="ged_fl_name DESC";}
@@ -1643,7 +1645,7 @@ while($exibe=$show_clt->fetch(PDO::FETCH_ASSOC)){
     <div class="modal-content">
       <form action="#" method="POST">
         <div class="modal-header">
-          <h6 class="modal-title"><i class="far fa-arrow-alt-circle-down text-success"></i> Iniciar atendimento ou direcionar para outro Técnico</h6>
+          <h6 class="modal-title"><i class="far fa-arrow-alt-circle-down text-success"></i> Iniciar atendimento ou direcionar para outro Tecnico</h6>
           <button type="button" class="close" data-dismiss="modal" aria-label="Fechar">
             <span aria-hidden="true">&times;</span>
           </button>
@@ -1652,11 +1654,11 @@ while($exibe=$show_clt->fetch(PDO::FETCH_ASSOC)){
           <label class="small"><strong>Iniciar o atendimento:</strong></label>
           <label class="small">Se o técnico informado for o próprio usuário: a) este atendimento ficará sob sua responsabilidade; b) o status da tarefa será alterado para "Em execução".</label>
           <label class="small pt-1"><strong>Direcionar a outro técnico:</strong></label>
-          <label class="small">Se o técnico informado NÃO for o próprio usuário: a) este atendimento será redirecionado para a fila de tarefas do técnico informado; b) este atendimento contuará com o status "Aguardando atendimento" até que o técnico responsável confirme o início da execução.</label>
+          <label class="small">Se o técnico informado NºO for o próprio usuário: a) este atendimento será redirecionado para a fila de tarefas do técnico informado; b) este atendimento contuará com o status "Aguardando atendimento" até que o técnico responsóvel confirme o início da execução.</label>
           <label class="small pt-1">Não esqueça de informar todas as interação com o cliente.</label>
           <div class="form-row">        
             <div class="form-group col-sm-12">
-              <label class="my-0 small">Técnico responsável:</label>
+              <label class="my-0 small">Tecnico responsóvel:</label>
               <select name="tecnico" class="form-control form-control-sm selectpicker" data-live-search="true" required="required" tabindex="9">
 <?php
 $pdo = ConnectionN3();
@@ -1770,14 +1772,14 @@ while($exibe=$show_clt->fetch(PDO::FETCH_ASSOC)){
         <div class="modal-body">
           <div class="form-row">        
             <label class="small"><strong>Recusar atendimento:</strong></label>
-            <label class="small">Ao confirmar esta tela SEM informar um técnico: a) o atendimento voltará para a fila de atendimento sem um responsável; b) este atendimento contuará com o status "Aguardando atendimento" até que um técnico o aceite.</label>
+            <label class="small">Ao confirmar esta tela SEM informar um técnico: a) o atendimento voltará para a fila de atendimento sem um responsóvel; b) este atendimento contuará com o status "Aguardando atendimento" até que um técnico o aceite.</label>
             <label class="small pt-1"><strong>Direcionar atendimento:</strong></label>
-            <label class="small">Ao confirmar esta tela informando um técnico responsável: a) este atendimento será redirecionado para a fila de tarefas do técnico informado; b) este atendimento contuará com o status "Aguardando atendimento" até que o técnico responsável confirme o início da execução.</label>
+            <label class="small">Ao confirmar esta tela informando um técnico responsóvel: a) este atendimento será redirecionado para a fila de tarefas do técnico informado; b) este atendimento contuará com o status "Aguardando atendimento" até que o técnico responsóvel confirme o início da execução.</label>
             <label class="small pt-1">Não esqueça de informar todas as interação com o cliente.</label>
           </div>
           <div class="form-row">        
             <div class="form-group col-sm-12">
-              <label class="my-0 small">Técnico responsável:</label>
+              <label class="my-0 small">Tecnico responsóvel:</label>
               <select name="tecnico" class="form-control form-control-sm selectpicker" data-live-search="true" required="required" tabindex="9">
                 <option value="0">Não atribuído</option>                
 <?php
@@ -1967,8 +1969,8 @@ $show_folder = $pdo->prepare("SELECT ged_folder_mkt.* FROM ged_folder_mkt WHERE 
           </li>
           <li class="pt-1">Iniciei a execução da tarefa através do <span class="badge badge-light"><i class="far fa-arrow-alt-circle-down"></i> Iniciar ou Direcionar</span>
             <ul>
-              <li class="small">Se você for o técnico que executará o atendimento, apenas confirme o seu nome como <em>Técnico Resposável</em>.</li>
-              <li class="small">Quando você confirmar seu nome como <em>Técnico Resposável</em> pelo atendimento outras opções de gestão da tarefa aparecerão na sua tela.</li>
+              <li class="small">Se você for o técnico que executará o atendimento, apenas confirme o seu nome como <em>Tecnico Resposável</em>.</li>
+              <li class="small">Quando você confirmar seu nome como <em>Tecnico Resposável</em> pelo atendimento outras opçães de gestão da tarefa aparecerão na sua tela.</li>
               <li class="small">Se não for você quem executará o atendimento, você pode também informar quem será o técnico que deverá executar o atendimento.</li>
               <li class="small">Cada ação que você fizer será exibida no <span class="badge badge-light"><i class="fas fa-list-ol"></i> Histórico da tarefa</span> com a data/hora e o seu nome.</li>
             </ul>
@@ -2077,8 +2079,8 @@ $show_folder = $pdo->prepare("SELECT ged_folder_mkt.* FROM ged_folder_mkt WHERE 
               $('.carregando2').hide();
             });
           } else {
-            $('#solicitante').html('<option value="">– Escolha o Solicitante –</option>');
-            $('#local').html('<option value="">– Escolha o Local –</option>');
+            $('#solicitante').html('<option value="">Escolha o Solicitante</option>');
+            $('#local').html('<option value="">Escolha o Local</option>');
           }
         });
       });
@@ -2101,7 +2103,7 @@ $show_folder = $pdo->prepare("SELECT ged_folder_mkt.* FROM ged_folder_mkt WHERE 
             });
             
           } else {
-            $('#subcategoria').html('<option value="">– Escolha a Subcategoria –</option>');
+            $('#subcategoria').html('<option value="">Escolha a Subcategoria</option>');
           }
         });
       });
@@ -2122,7 +2124,7 @@ $show_folder = $pdo->prepare("SELECT ged_folder_mkt.* FROM ged_folder_mkt WHERE 
               $('.carregando4').hide();
             });
           } else {
-            $('#item').html('<option value="">– Escolha o Item –</option>');
+            $('#item').html('<option value="">Escolha o Item</option>');
           }
         });
       });

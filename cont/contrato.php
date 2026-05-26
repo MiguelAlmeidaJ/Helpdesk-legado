@@ -1,6 +1,6 @@
 <?php
 session_start();
-//include_once("../all/seguranca.php");
+include_once("../all/seguranca.php");
 include_once("../all/conect.php");
 include_once("../all/permissoes.php");
 include_once("../all/token.php");
@@ -41,10 +41,10 @@ if ($ord == "status") {$orderby = "custos.status DESC";}
   </head>
   <body>
 <?php // include_once("../all/loading.php"); ?>
-<?php include_once("../all/header.php"); ?>
+<?php include_once("../all/sidebar.php"); ?>
 <?php 
 //verifico se existe alguma requisição POST chamada action
-$action = filter_input(INPUT_POST, 'action', FILTER_SANITIZE_STRING);
+$action = filter_input(INPUT_POST, 'action', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
 //verifico se existe alguma requisição via post cahamda atd
 $contrato_id = filter_input(INPUT_POST, 'contrato', FILTER_SANITIZE_NUMBER_INT);
@@ -55,18 +55,18 @@ if ($usar_token=="true") {
   if($action){
     if ($action == "contrato_adc") {
       $cliente= filter_input(INPUT_POST, 'cliente', FILTER_SANITIZE_NUMBER_INT);
-      $data_inicio = filter_input(INPUT_POST, 'data_inicio', FILTER_SANITIZE_STRING);
-      $data_termino = filter_input(INPUT_POST, 'data_termino', FILTER_SANITIZE_STRING);
+      $data_inicio = filter_input(INPUT_POST, 'data_inicio', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+      $data_termino = filter_input(INPUT_POST, 'data_termino', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
       $dia_pagamento = filter_input(INPUT_POST, 'dia_pagamento', FILTER_SANITIZE_NUMBER_INT);
       $valor_inicial = filter_input(INPUT_POST, 'valor_inicial', FILTER_SANITIZE_NUMBER_FLOAT);
       $forma_pag = filter_input(INPUT_POST, 'forma_pag', FILTER_SANITIZE_NUMBER_INT);
       $indice_reajuste = filter_input(INPUT_POST, 'indice_reajuste', FILTER_SANITIZE_NUMBER_INT);
       $c_cst = filter_input(INPUT_POST, 'centro_custo', FILTER_SANITIZE_NUMBER_INT);
       $class_contabil = filter_input(INPUT_POST, 'class_contabil', FILTER_SANITIZE_NUMBER_INT);
-      $observacoes = filter_input(INPUT_POST, 'observacoes', FILTER_SANITIZE_STRING);
-      $bancos = filter_input(INPUT_POST, 'bancos', FILTER_SANITIZE_STRING);
-      $agencia= filter_input(INPUT_POST, 'agencia', FILTER_SANITIZE_STRING);
-      $conta = filter_input(INPUT_POST, 'conta', FILTER_SANITIZE_STRING);
+      $observacoes = filter_input(INPUT_POST, 'observacoes', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+      $bancos = filter_input(INPUT_POST, 'bancos', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+      $agencia= filter_input(INPUT_POST, 'agencia', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+      $conta = filter_input(INPUT_POST, 'conta', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
       //INICIA PROCESSO DE GRAVAÇÃO DO CONTRATO NA BASE DE DADOS
       $pdo = ConnectionN3();
@@ -108,7 +108,7 @@ if ($usar_token=="true") {
 
     //REGISTRAR NOVA INTERAÇÃO
     if ($action == "cont_new_inter") {
-      $inter_desc = filter_input(INPUT_POST, 'inter_desc', FILTER_SANITIZE_STRING);
+      $inter_desc = filter_input(INPUT_POST, 'inter_desc', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
       $pdo = ConnectionN3();
       $adc= $pdo->prepare("INSERT INTO `inter_contrato` (`inter_tipo`, `inter_contrato`, `inter_user`, `inter_data`, `inter_desc`) VALUES ('3', :inter_contrato, '$user_id', '$agora', :inter_desc);");
       $adc->bindParam(':inter_desc', $inter_desc);
@@ -124,7 +124,7 @@ if ($usar_token=="true") {
 
     //ENCERRAMENTO DO CONTRATO
     if ($action == "cont_encerrar") {
-      $inter_desc = filter_input(INPUT_POST, 'inter_desc', FILTER_SANITIZE_STRING);
+      $inter_desc = filter_input(INPUT_POST, 'inter_desc', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
       $inter_desc = "Contrato encerrado. <br> $inter_desc";
       $pdo = ConnectionN3();
       $edt= $pdo->prepare("UPDATE `contratos` SET `status`='2' WHERE `id`='$contrato_id';");
@@ -147,12 +147,12 @@ if ($usar_token=="true") {
 
     //RENOVAÇÃO DO CONTRATO
     if ($action == "cont_new_renovacao") {
-      $data_termino = filter_input(INPUT_POST, 'data_termino', FILTER_SANITIZE_STRING);
-      $valor_atual = filter_input(INPUT_POST, 'valor_atual', FILTER_SANITIZE_STRING);
+      $data_termino = filter_input(INPUT_POST, 'data_termino', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+      $valor_atual = filter_input(INPUT_POST, 'valor_atual', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
       $pdo = ConnectionN3();
       $adc= $pdo->prepare("UPDATE `contratos` SET `data_termino`='$data_termino', `valor_atual`='$valor_atual' WHERE `id`='$contrato_id';");
       if($adc->execute()){
-        //CRIA NOVO REGISTRO NA TABELA DE INTERAÇÃO INFORMANDO A ALTERAÇÃ
+        //CRIA NOVO REGISTRO NA TABELA DE INTERAÇÃO INFORMANDO A ALTERAÇÃO
         $valor_atual_br = number_format($valor_atual, 2, ',', '.');
         $inter_desc = "Renovou o Contrato: Valor: R$ $valor_atual_br. Término: ".date('d/m/Y', strtotime($data_termino));".";
         $adc= $pdo->prepare("INSERT INTO `inter_contrato` (`inter_tipo`, `inter_contrato`, `inter_user`, `inter_data`, `inter_desc`) VALUES ('4', :inter_contrato, '$user_id', '$agora', '$inter_desc');");
@@ -200,7 +200,7 @@ if ($usar_token=="true") {
         //EDITA NA TABELA DO CONTRATO
         $adc= $pdo->prepare("UPDATE `contratos` SET `centro_custo`='$c_cst' WHERE `id`='$contrato_id';");
         if($adc->execute()){
-          //CRIA NOVO REGISTRO NA TABELA DE INTERAÇÃO INFORMANDO A ALTERAÇÃ
+          //CRIA NOVO REGISTRO NA TABELA DE INTERAÇÃO INFORMANDO A ALTERAÇÃO
           $inter_desc = "Centro de Custo editado para: $c_cst_novo_nome <s>$c_cst_orig_nome</s>";
           $adc= $pdo->prepare("INSERT INTO `inter_contrato` (`inter_tipo`, `inter_contrato`, `inter_user`, `inter_data`, `inter_desc`) VALUES ('2', :inter_contrato, '$user_id', '$agora', '$inter_desc');");
           $adc->bindParam(':inter_contrato', $contrato_id);
@@ -272,7 +272,7 @@ if ($usar_token=="true") {
         //EDITA NA TABELA DO CONTRATO
         $adc= $pdo->prepare("UPDATE `contratos` SET `dia_pagamento`='$dia_pagamento' WHERE `id`='$contrato_id';");
         if($adc->execute()){
-          //CRIA NOVO REGISTRO NA TABELA DE INTERAÇÃO INFORMANDO A ALTERAÇÃ
+          //CRIA NOVO REGISTRO NA TABELA DE INTERAÇÃO INFORMANDO A ALTERAÇÃO
           $inter_desc = "Dia de Pagamento editado para: $dia_pagamento <s>$dia_pagamento_orig</s>";
           $adc= $pdo->prepare("INSERT INTO `inter_contrato` (`inter_tipo`, `inter_contrato`, `inter_user`, `inter_data`, `inter_desc`) VALUES ('2', :inter_contrato, '$user_id', '$agora', '$inter_desc');");
           $adc->bindParam(':inter_contrato', $contrato_id);
@@ -299,7 +299,7 @@ if ($usar_token=="true") {
         //EDITA NA TABELA DO CONTRATO
         $adc= $pdo->prepare("UPDATE `contratos` SET `forma_pag`='$forma_pag' WHERE `id`='$contrato_id';");
         if($adc->execute()){
-          //CRIA NOVO REGISTRO NA TABELA DE INTERAÇÃO INFORMANDO A ALTERAÇÃ
+          //CRIA NOVO REGISTRO NA TABELA DE INTERAÇÃO INFORMANDO A ALTERAÇÃO
           $inter_desc = "Forma de Pagamento editado para: $forma_novo_nome <s>$forma_orig_nome</s>";
           $adc= $pdo->prepare("INSERT INTO `inter_contrato` (`inter_tipo`, `inter_contrato`, `inter_user`, `inter_data`, `inter_desc`) VALUES ('2', :inter_contrato, '$user_id', '$agora', '$inter_desc');");
           $adc->bindParam(':inter_contrato', $contrato_id);
@@ -326,12 +326,12 @@ if ($usar_token=="true") {
         //EDITA NA TABELA DO CONTRATO
         $adc= $pdo->prepare("UPDATE `contratos` SET `indice_reajuste`='$indice_reajuste' WHERE `id`='$contrato_id';");
         if($adc->execute()){
-          //CRIA NOVO REGISTRO NA TABELA DE INTERAÇÃO INFORMANDO A ALTERAÇÃ
+          //CRIA NOVO REGISTRO NA TABELA DE INTERAÇÃO INFORMANDO A ALTERAÇÃO
           $inter_desc = "Índice de Reajuste editado para: $indice_novo_nome <s>$indice_orig_nome</s>";
           $adc= $pdo->prepare("INSERT INTO `inter_contrato` (`inter_tipo`, `inter_contrato`, `inter_user`, `inter_data`, `inter_desc`) VALUES ('2', :inter_contrato, '$user_id', '$agora', '$inter_desc');");
           $adc->bindParam(':inter_contrato', $contrato_id);
           if($adc->execute()){
-            $mensagem = "<i class=\"fas fa-check\"></i> Edição do índice de reajuste realizada!";
+            $mensagem = "<i class=\"fas fa-check\"></i> Edição do Índice de reajuste realizada!";
             $mensagem_cor = "alert-success";
           }else{
             $mensagem = "<i class=\"fas fa-exclamation-triangle\"></i> Falha ao editar!";
@@ -350,13 +350,13 @@ if ($usar_token=="true") {
       $c_cst = filter_input(INPUT_POST, 'centro_custo', FILTER_SANITIZE_NUMBER_INT);
       $custo = filter_input(INPUT_POST, 'custo', FILTER_SANITIZE_NUMBER_INT);
       $tipo = filter_input(INPUT_POST, 'tipo', FILTER_SANITIZE_NUMBER_INT);
-      $data_comp = filter_input(INPUT_POST, 'data_competencia', FILTER_SANITIZE_STRING);
+      $data_comp = filter_input(INPUT_POST, 'data_competencia', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
       $data_comp="$data_comp-01";
-      $data_venc = filter_input(INPUT_POST, 'data_vencimento', FILTER_SANITIZE_STRING);
-      $valor = filter_input(INPUT_POST, 'valor', FILTER_SANITIZE_STRING);
-      $info_consumo = filter_input(INPUT_POST, 'info_consumo', FILTER_SANITIZE_STRING);
+      $data_venc = filter_input(INPUT_POST, 'data_vencimento', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+      $valor = filter_input(INPUT_POST, 'valor', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+      $info_consumo = filter_input(INPUT_POST, 'info_consumo', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
       $nf = filter_input(INPUT_POST, 'nf', FILTER_SANITIZE_NUMBER_INT);
-      $descricao = filter_input(INPUT_POST, 'descricao', FILTER_SANITIZE_STRING);
+      $descricao = filter_input(INPUT_POST, 'descricao', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
       //INICIA PROCESSO DE GRAVAÇÃO DO CUSTO NA BASE DE DADOS
       $pdo = ConnectionN3();
@@ -397,21 +397,21 @@ if ($usar_token=="true") {
       $c_cst = filter_input(INPUT_POST, 'centro_custo', FILTER_SANITIZE_NUMBER_INT);
       $custo_tipo = filter_input(INPUT_POST, 'custo_tipo', FILTER_SANITIZE_NUMBER_INT);
       $custo = filter_input(INPUT_POST, 'custo_edt', FILTER_SANITIZE_NUMBER_INT);
-      $data_comp = filter_input(INPUT_POST, 'data_competencia', FILTER_SANITIZE_STRING);
+      $data_comp = filter_input(INPUT_POST, 'data_competencia', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
       $data_comp= "$data_comp-01";
       $data_comp_br = date('m/Y', strtotime($data_comp));
-      $data_venc = filter_input(INPUT_POST, 'data_vencimento', FILTER_SANITIZE_STRING);
+      $data_venc = filter_input(INPUT_POST, 'data_vencimento', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
       $data_venc_br = date('d/m/Y', strtotime($data_venc));
-      $valor = filter_input(INPUT_POST, 'valor', FILTER_SANITIZE_STRING);
+      $valor = filter_input(INPUT_POST, 'valor', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
       $valor_br = number_format($valor,2,",",".");
-      $info_consumo = filter_input(INPUT_POST, 'info_consumo', FILTER_SANITIZE_STRING);
+      $info_consumo = filter_input(INPUT_POST, 'info_consumo', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
       $nf = filter_input(INPUT_POST, 'nf', FILTER_SANITIZE_NUMBER_INT);
       $status = filter_input(INPUT_POST, 'status', FILTER_SANITIZE_NUMBER_INT);
       if($status==0){$status_nome = "Excluído";}
       if($status==1){$status_nome = "Executado";}
       if($status==2){$status_nome = "Planejado";}
       
-      $descricao = filter_input(INPUT_POST, 'descricao', FILTER_SANITIZE_STRING);
+      $descricao = filter_input(INPUT_POST, 'descricao', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
       if($custo_tipo==1){$sql="SELECT cads_tipo_despe.despesa as custo FROM cads_tipo_despe WHERE cads_tipo_despe.`id` = '$custo'";}
       if($custo_tipo==2){$sql="SELECT cads_tipo_servi.servico as custo FROM cads_tipo_servi WHERE cads_tipo_servi.`id` = '$custo'";}
@@ -516,7 +516,7 @@ if ($usar_token=="true") {
         
         if($edt->execute()){
           
-          //CRIA NOVO REGISTRO NA TABELA DE INTERAÇÃO INFORMANDO A ALTERAÇÃ
+          //CRIA NOVO REGISTRO NA TABELA DE INTERAÇÃO INFORMANDO A ALTERAÇÃO
           $inter_desc = "Editou dados do custo: $msg_custo_nome $msg_data_vencimento $msg_data_competencia $msg_valor $msg_descricao $msg_info_consumo $msg_nf $msg_centro_custo $msg_custo_sts";
           $adc= $pdo->prepare("INSERT INTO `inter_contrato` (`inter_tipo`, `inter_contrato`, `inter_user`, `inter_data`, `inter_desc`) VALUES ('6', :inter_contrato, '$user_id', '$agora', '$inter_desc');");
           $adc->bindParam(':inter_contrato', $contrato_id);
@@ -537,7 +537,7 @@ if ($usar_token=="true") {
   
     //GED NOVA PASTA
     if ($action == "ged_new_folder") {
-      $ged_fd_folder = filter_input(INPUT_POST, 'ged_fd_folder', FILTER_SANITIZE_STRING);
+      $ged_fd_folder = filter_input(INPUT_POST, 'ged_fd_folder', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
       
       $pdo = ConnectionN3();      
       $adc= $pdo->prepare("INSERT INTO `ged_folder` (`ged_fd_cont`, `ged_fd_folder`, `ged_fd_dt`, `ged_fd_user`) VALUES (:inter_contrato, :ged_fd_folder, '$agora', '$user_id');");
@@ -555,7 +555,7 @@ if ($usar_token=="true") {
 
     //GED EDITAR PASTA
     if ($action == "ged_edt_folder") {
-      $ged_fd_folder = filter_input(INPUT_POST, 'ged_fd_folder', FILTER_SANITIZE_STRING);
+      $ged_fd_folder = filter_input(INPUT_POST, 'ged_fd_folder', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
       $ged_fd_id = filter_input(INPUT_POST, 'ged_fd_id', FILTER_SANITIZE_NUMBER_INT);
  
       $pdo = ConnectionN3();      
@@ -589,7 +589,7 @@ if ($usar_token=="true") {
   
     //GED NOVO ARQUIVO
     if ($action == "ged_new_file") {
-      $ged_fl_name = filter_input(INPUT_POST, 'ged_fl_name', FILTER_SANITIZE_STRING);
+      $ged_fl_name = filter_input(INPUT_POST, 'ged_fl_name', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
       $ged_fd_id = $ged_fl_folder = filter_input(INPUT_POST, 'ged_fl_folder', FILTER_SANITIZE_NUMBER_INT);
       
       $arquivo_tmp = $_FILES['arquivo']['tmp_name'];
@@ -625,8 +625,8 @@ if ($usar_token=="true") {
     
     //GED EDITAR arquivo
     if ($action == "ged_edt_file") {
-      $ged_fl_folder = filter_input(INPUT_POST, 'ged_fl_folder', FILTER_SANITIZE_STRING);
-      $ged_fl_name = filter_input(INPUT_POST, 'ged_fl_name', FILTER_SANITIZE_STRING);
+      $ged_fl_folder = filter_input(INPUT_POST, 'ged_fl_folder', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+      $ged_fl_name = filter_input(INPUT_POST, 'ged_fl_name', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
       $ged_fl_id = filter_input(INPUT_POST, 'ged_fl_id', FILTER_SANITIZE_NUMBER_INT);
  
       $pdo = ConnectionN3();      
@@ -1242,10 +1242,10 @@ if(strtotime($hoje) < strtotime($data_termino) && strtotime($data_30) > strtotim
 
 
 //VERIFICA AS PREFERENCIAS DE EXIBIÇÃO DE ARQUIVOS 
-$cst_exibir_ccusto = filter_input(INPUT_POST, 'cst_exibir_ccusto', FILTER_SANITIZE_STRING);
+$cst_exibir_ccusto = filter_input(INPUT_POST, 'cst_exibir_ccusto', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 if(empty($cst_exibir_ccusto)){$cst_exibir_ccusto=0; $cst_pesquisar_ccusto=""; $show_card_cst = false; }else{$show_card_cst = true; $cst_pesquisar_ccusto = "AND custos.centro_custo = '$cst_exibir_ccusto'";}
 
-$cst_exibir_tipo = filter_input(INPUT_POST, 'cst_exibir_tipo', FILTER_SANITIZE_STRING);
+$cst_exibir_tipo = filter_input(INPUT_POST, 'cst_exibir_tipo', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 if(empty($cst_exibir_tipo)){$cst_exibir_tipo="todos"; $show_card_cst = false; }else{$show_card_cst = true;}
 if($cst_exibir_tipo=="despesas"){$cst_tipo="1";}
 if($cst_exibir_tipo=="servicos"){$cst_tipo="2";}
@@ -1253,7 +1253,7 @@ if($cst_exibir_tipo=="taxas"){$cst_tipo="3";}
 if($cst_exibir_tipo=="todos"){$cst_tipo="1,2,3";}
 
 
-$cst_exibir_inicio_br = filter_input(INPUT_POST, 'cst_exibir_inicio', FILTER_SANITIZE_STRING);
+$cst_exibir_inicio_br = filter_input(INPUT_POST, 'cst_exibir_inicio', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 if(empty($cst_exibir_inicio_br)){  
   $cst_exibir_inicio_br = date('d/m/y', strtotime($hoje. ' -91 days'));
   $cst_exibir_inicio_usa = date('Y-m-d', strtotime($hoje. ' -91 days'));
@@ -1263,7 +1263,7 @@ if(empty($cst_exibir_inicio_br)){
     $cst_exibir_inicio_usa = implode('-', array_reverse(explode('/', "$cst_exibir_inicio_br")));
 }
 
-$cst_exibir_fim_br = filter_input(INPUT_POST, 'cst_exibir_fim', FILTER_SANITIZE_STRING);
+$cst_exibir_fim_br = filter_input(INPUT_POST, 'cst_exibir_fim', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 if(empty($cst_exibir_fim_br)){
   $cst_exibir_fim_br = date("d/m/y");
   $cst_exibir_fim_usa = date("Y-m-d");
@@ -1590,7 +1590,7 @@ $custo_clas_cont = $row_class["categoria"];
               </a>
             </div>
 <?php
-//VERIFICA SE HÁ ALGUMA PASTA ABERTA
+//VERIFICA SE Há ALGUMA PASTA ABERTA
 $ged_open_folder = filter_input(INPUT_POST, 'ged_open_folder', FILTER_SANITIZE_NUMBER_INT);
 //SE ESTVER HAVENDO ALGUMA MANIPULAÇÃO EM UMA PASTA, DEFINE ELA COMO PADRÃO
 if(isset($ged_fd_id)){$ged_open_folder = $ged_fd_id;}
@@ -1723,7 +1723,7 @@ if($conta_folder>0){
                               <div class="row py-1">
 <?php
 //VERIFICA AS PREFERENCIAS DE EXIBIÇÃO DE ARQUIVOS 
-$ged_exibir = filter_input(INPUT_POST, 'ged_exibir', FILTER_SANITIZE_STRING);
+$ged_exibir = filter_input(INPUT_POST, 'ged_exibir', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 if(empty($ged_exibir)){$ged_exibir="ativos";}
 if($ged_exibir=="ativos"){$ged_fl_sts="2";}
 if($ged_exibir=="arquivados"){$ged_fl_sts="1";}
@@ -1731,7 +1731,7 @@ if($ged_exibir=="excluidos"){$ged_fl_sts="0";}
 if($ged_exibir=="todos"){$ged_fl_sts="0,1,2";}
 
 //VERIFICA AS PREFERENCIAS ORDENAÇÃO DE ARQUIVOS 
-$ged_ordenar = filter_input(INPUT_POST, 'ged_ordenar', FILTER_SANITIZE_STRING);
+$ged_ordenar = filter_input(INPUT_POST, 'ged_ordenar', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 if(empty($ged_ordenar)){$ged_ordenar="name_asc";}
 if($ged_ordenar=="name_asc"){$ged_order_by="ged_fl_name ASC";}
 if($ged_ordenar=="name_desc"){$ged_order_by="ged_fl_name DESC";}
@@ -1922,7 +1922,7 @@ if (isset($_POST['pagina'])){$pg = $_POST['pagina'];} else {$pg = "1";}
 $inicio = $pg - 1;
 $inicio = $inicio * $total_reg;
 
-// atribui valor aos botões "Anterior e próximo"
+// atribui valor aos botões "Anterior e préximo"
 $anterior = $pg -1;
 $proximo = $pg +1;
 
@@ -2653,7 +2653,7 @@ $show_folder = $pdo->prepare("SELECT ged_folder.* FROM ged_folder WHERE ged_fold
               $('.carregando1').hide();
             });
           } else {
-            $('#custo').html('<option value="">– Escolha um tipo de custo –</option>');
+            $('#custo').html('<option value="">Escolha um tipo de custo</option>');
           }
         });
       });

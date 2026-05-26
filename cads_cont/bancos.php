@@ -1,6 +1,6 @@
 <?php
 session_start();
-//include_once("../all/seguranca.php");
+include_once("../all/seguranca.php");
 include_once("../all/conect.php");
 include_once("../all/permissoes.php");
 include_once("../all/token.php");
@@ -8,14 +8,14 @@ $hoje = date("Y-m-d");
 
 //($m2_01==0){header("Location: ../index.php");}
 
-$action = filter_input(INPUT_POST, 'action', FILTER_SANITIZE_STRING);
+$action = filter_input(INPUT_POST, 'action', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 if ($usar_token=="true") {
   if($action){
     if ($action == "alterar_senha") {include_once("../all/update_senha.php");}
     
     if ($action == "new_banco") {
-      $bancos = filter_input(INPUT_POST, 'bancos', FILTER_SANITIZE_STRING);
-      $status = filter_input(INPUT_POST, 'status', FILTER_SANITIZE_STRING);
+      $bancos = filter_input(INPUT_POST, 'bancos', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+      $status = filter_input(INPUT_POST, 'status', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
       $pdo = ConnectionN3();
       $adc= $pdo->prepare("INSERT INTO `cads_bancos` (`bancos`, `status`) VALUES (:bancos, :status);");
@@ -34,8 +34,8 @@ if ($usar_token=="true") {
     
     if ($action == "edt_bancos") {
       $id = filter_input(INPUT_POST, 'id', FILTER_SANITIZE_NUMBER_INT);
-      $bancos = filter_input(INPUT_POST, 'bancos', FILTER_SANITIZE_STRING);
-      $status = filter_input(INPUT_POST, 'status', FILTER_SANITIZE_STRING);
+      $bancos = filter_input(INPUT_POST, 'bancos', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+      $status = filter_input(INPUT_POST, 'status', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
       $pdo = ConnectionN3();
       $edt= $pdo->prepare("UPDATE `cads_bancos` SET `bancos`=:bancos, `status`=:status WHERE  `id`=:id;");
       $edt->bindParam(': bancos', $bancos);
@@ -68,7 +68,7 @@ if ($usar_token=="true") {
   </head>
   <body>
 <?php include_once("../all/loading.php"); ?>
-<?php include_once("../all/header.php"); ?>
+<?php include_once("../all/sidebar.php"); ?>
     <div class="container-fluid">
       <div class="row">
         <div class="col-md-12 mt-2">

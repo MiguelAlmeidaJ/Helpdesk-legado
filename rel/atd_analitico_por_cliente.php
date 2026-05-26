@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 session_start();
 include_once("../all/seguranca.php");
 include_once("../all/conect.php");
@@ -7,14 +7,14 @@ include_once("../all/permissoes.php");
 $hoje = date("Y-m-d");
 $agora = date("Y-m-d H:i:s");
 
-//verifico se existe alguma requisição POST chamada action
-$action = filter_input(INPUT_POST, 'action', FILTER_SANITIZE_STRING);
+//verifico se existe alguma requisi??o POST chamada action
+$action = filter_input(INPUT_POST, 'action', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
 if ($action == "alterar_senha") {include_once("../all/update_senha.php");}
 
 $ano = date('Y', strtotime('-0 months', strtotime(date('Y-m-d'))));
 $mes = date('m', strtotime('-0 months', strtotime(date('Y-m-d'))));
-//RECEBE INFORMAÇÕES PARA FILTRO
+//RECEBE INFORMA??ES PARA FILTRO
 if (isset($_POST['f_clt'])){$f_clt = $_POST['f_clt'];} else {$f_clt = 0;}
 if (isset($_POST['f_local'])){$f_local = $p_local =$_POST['f_local'];} else {$f_local = 0;}
 if($f_local==0){$p_local = "%";}
@@ -40,8 +40,16 @@ if($f_nivel==0){$p_nivel = "1,2,3,4,5";}
     <script type="text/javascript" src="../js/loader.js"></script>
     <title>Allterus</title>
   </head>
+  <style>
+            body {
+            zoom: 0.9;
+            width: 100%;
+            overflow-x: hidden;
+        }
+
+  </style>
   <body>
-<?php include_once("../all/header.php"); ?>
+<?php include_once("../all/sidebar.php"); ?>
 
     <div class="container-fluid">
       <div class="row">
@@ -51,7 +59,7 @@ if($f_nivel==0){$p_nivel = "1,2,3,4,5";}
               <div class="card py-0 my-0">
                 <div class="card-header my-0 bg-light py-0 h6" id="headingOne">
                   <button class="btn" data-toggle="collapse" data-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
-                      <i class="fas fa-chart-bar"></i> Relatório de atendimentos por Técnico
+                      <i class="fas fa-chart-bar"></i> Relat?rio de atendimentos por T?cnico
                   </button>
                 </div>
                 <div id="collapseOne" class="collapse show" aria-labelledby="headingOne" data-parent="#accordion">
@@ -62,18 +70,24 @@ if($f_nivel==0){$p_nivel = "1,2,3,4,5";}
                           <div class="form-row align-items-center">                         
                             <div class="col-auto col-form-label-sm">
                               <label>Cliente:</label>
-                              <select name="f_clt" id="f_clt"  class="form-control form-control-sm mb-2 mt-n2 selectpicker" data-live-search="true" required="required" tabindex="1">
+                              <select name="f_clt" id="f_clt"  class="form-control form-control-sm mb-2 mt-n2 selectpicker"  data-live-search="true" required="required" tabindex="1">
                                 <option></option>
-<?php
-$pdo = ConnectionN3();
-$show_clt = $pdo->prepare("SELECT clientes.clt_id, clientes.clt_nomef FROM clientes WHERE clientes.clt_sts = '1' ORDER BY clientes.clt_nomef ASC");
-$show_clt->execute();
-while($exibe=$show_clt->fetch(PDO::FETCH_ASSOC)){
-  $clt_id = $exibe["clt_id"];
-  $clt_nome = $exibe["clt_nomef"];
-?>
+                                <?php
+                                $filterEmpresas = null;
+                               if (isset($_SESSION['tipo']) && $_SESSION['tipo'] == 2 && isset($_SESSION['empresas']) && count($_SESSION['empresas']) > 0) {
+                                  $filterEmpresas .= " AND clientes.clt_id IN (" . implode(',', $_SESSION['empresas']) . ")";}
+                                $sql = "SELECT clientes.clt_id, clientes.clt_nomef FROM clientes WHERE clientes.clt_sts = '1'";;
+                                if ($filterEmpresas) {$sql .= $filterEmpresas;};
+                                $sql .= " ORDER BY clientes.clt_nomef ASC";
+                                $pdo = ConnectionN3();
+                                $show_clt = $pdo->prepare($sql);
+                                $show_clt->execute();
+                                while($exibe=$show_clt->fetch(PDO::FETCH_ASSOC)){
+                                  $clt_id = $exibe["clt_id"];
+                                  $clt_nome = $exibe["clt_nomef"];
+                                ?>
                                 <option value="<?php echo $clt_id; ?>" <?php if($f_clt == $clt_id){echo " selected ";}?>><?php echo $clt_nome;?></option>
-<?php } ?>
+                            <?php } ?>
                               </select>
                               
                             </div>
@@ -104,12 +118,12 @@ while($exibe=$show_clt->fetch(PDO::FETCH_ASSOC)){
                               </select>
                             </div>
                             <div class="col-auto col-form-label-sm">
-                              <label>Nível:</label>
+                              <label>N?vel:</label>
                               <select name="f_nivel" class="form-control mb-2 mt-n2 form-control-sm">
                                 <option value="0"<?php if(0 == $f_nivel){echo " selected";} ?>>Todos</option>
-                                <option value="1"<?php if(1 == $f_nivel){echo " selected";} ?>>Nível 1</option>
-                                <option value="2"<?php if(2 == $f_nivel){echo " selected";} ?>>Nível 2</option>
-                                <option value="3"<?php if(3 == $f_nivel){echo " selected";} ?>>Nível 3</option>
+                                <option value="1"<?php if(1 == $f_nivel){echo " selected";} ?>>N?vel 1</option>
+                                <option value="2"<?php if(2 == $f_nivel){echo " selected";} ?>>N?vel 2</option>
+                                <option value="3"<?php if(3 == $f_nivel){echo " selected";} ?>>N?vel 3</option>
                                 <option value="4"<?php if(4 == $f_nivel){echo " selected";} ?>>Rotina</option>
                                 <option value="5"<?php if(5 == $f_nivel){echo " selected";} ?>>Administrativo</option>
                               </select>
@@ -135,7 +149,7 @@ while($exibe=$show_clt->fetch(PDO::FETCH_ASSOC)){
           <div class="card bg-default">
             <div class="card-header py-2 h6">
               <i class="fas fa-chart-pie"></i>
-              Relatório analítico de Atendimentos Por Cliente
+              Relat?rio anal?tico de Atendimentos Por Cliente
             </div>
 <?php 
 $pdo = ConnectionN3();
@@ -145,7 +159,7 @@ if(isset($_SESSION['tipo']) && $_SESSION['tipo'] == 2 && isset($_SESSION['empres
   $filterEmpresas.= " AND atendimentos.cliente IN (" . implode(',', $_SESSION['empresas']) . ")";
 }
 
-$query = "SELECT count(atendimentos.id) as n FROM atendimentos WHERE atendimentos.cliente = '$f_clt' AND atendimentos.abertura BETWEEN '$data_1' AND '$data_2'" . $filterEmpresas;
+$query = "SELECT count(atendimentos.id) as n FROM atendimentos WHERE atendimentos.cliente = '$f_clt' AND atendimentos.abertura BETWEEN '$data_1' AND DATE_ADD('$data_2', INTERVAL 1 DAY)" . $filterEmpresas;
 $f_nivel;
 if ($f_nivel != 0){
   $query = $query." and atendimentos.nivel = $f_nivel";
@@ -182,7 +196,7 @@ LEFT JOIN usuarios ON usuarios.user_id = atendimentos.tecnico
 WHERE atendimentos.`status` > '0'
 AND atendimentos.cliente = '$f_clt'
 AND atendimentos.local LIKE '$p_local'
-AND atendimentos.abertura BETWEEN '$data_1' AND '$data_2'
+AND atendimentos.abertura BETWEEN '$data_1' AND DATE_ADD('$data_2', INTERVAL 1 DAY)
 AND atendimentos.nivel IN ($p_nivel)
 ORDER BY atendimentos.abertura ASC"); 
 $show->execute();
@@ -227,16 +241,18 @@ while($row=$show->fetch(PDO::FETCH_ASSOC)){
           <span class="badge badge-secondary mx-1">
           <?php if($atd_forma==1){ ?> <i class="fas fa-laptop-house mx-1"></i> Atendimento Remoto <?php } ?>
           <?php if($atd_forma==2){ ?> <i class="fas fa-briefcase mx-1"></i> Atendimento Presencial <?php } ?>
+          <?php if($atd_forma==3){ ?> <i class="fas fa-laptop-house mx-1"></i> Atendimento Remoto - Plant?o <?php } ?>
+          <?php if($atd_forma==4){ ?> <i class="fas fa-briefcase mx-1"></i> Atendimento Presencial - Plant?o <?php } ?>
           </span>
-          <span class="badge badge-secondary mx-1"> <i class="fas fa-archive ml-1 mr-1"></i> Nível <?php echo $atd_nivel; ?> </span>
+          <span class="badge badge-secondary mx-1"> <i class="fas fa-archive ml-1 mr-1"></i> N?vel <?php echo $atd_nivel; ?> </span>
           </div>
           <div class="row py-1">
           <span class="badge badge-secondary mx-1">
           <?php if($atd_tipo==1){ ?> <i class="fas fa-laptop-house mx-1"></i> Falha <?php } ?>
           <?php if($atd_tipo==2){ ?> <i class="fas fa-laptop-house mx-1"></i> Relacionamento <?php } ?>
-          <?php if($atd_tipo==3){ ?> <i class="fas fa-laptop-house mx-1"></i> Requisição de Serviços <?php } ?>
-          <?php if($atd_tipo==4){ ?> <i class="fas fa-laptop-house mx-1"></i> Requisição de informação <?php } ?>
-          <?php if($atd_tipo==5){ ?> <i class="fas fa-laptop-house mx-1"></i> Notificação de monitoramento <?php } ?> 
+          <?php if($atd_tipo==3){ ?> <i class="fas fa-laptop-house mx-1"></i> Requisi??o de Servi?os <?php } ?>
+          <?php if($atd_tipo==4){ ?> <i class="fas fa-laptop-house mx-1"></i> Requisi??o de informa??o <?php } ?>
+          <?php if($atd_tipo==5){ ?> <i class="fas fa-laptop-house mx-1"></i> Notifica??o de monitoramento <?php } ?> 
           </span>
         </div>
         <div class="row py-1">
@@ -247,10 +263,10 @@ while($row=$show->fetch(PDO::FETCH_ASSOC)){
       </div>
       <div class="col-md-4 mb-3 px-4">
         <div class="row py-1 ">
-           <span class="badge badge-light mx-1"> <i class="fas fa-user-tie mr-1"></i> Técnico: <?php echo $user_nome; ?> </span>
+           <span class="badge badge-light mx-1"> <i class="fas fa-user-tie mr-1"></i> T?cnico: <?php echo $user_nome; ?> </span>
         </div>
         <div class="row py-1">
-        <p>Descrição de abertura: <?php echo $atd_desc_abertura; ?></p>
+        <p>Descri??o de abertura: <?php echo $atd_desc_abertura; ?></p>
         </div>
       </div>
       <div class="col-md-4 mb-3 px-4">
@@ -261,16 +277,16 @@ while($row=$show->fetch(PDO::FETCH_ASSOC)){
           </span>
         </div>
         <div class="row py-1">
-          <p>Descrição de fechamento: <?php echo $atd_desc_fechamento; ?></p>
+          <p>Descri??o de fechamento: <?php echo $atd_desc_fechamento; ?></p>
         </div>
 <?php } else { ?>
         <div class="row py-1">
           <span class="badge badge-light mx-1">
 <?php if($atd_status==1){ ?>
-            <i class="fas fa-hourglass-half"></i> Aguardando Execução
+            <i class="fas fa-hourglass-half"></i> Aguardando Execu??o
 <?php } ?>
 <?php if($atd_status==2){ ?>
-          <i class="fas fa-magic"></i> Em Execução
+          <i class="fas fa-magic"></i> Em Execu??o
 <?php } ?>
 <?php if($atd_status==3){ ?>
           <i class="far fa-pause-circle"></i> Em Espera
@@ -285,7 +301,7 @@ while($row=$show->fetch(PDO::FETCH_ASSOC)){
   
 <?php } ?>
 <?php } else { ?>
-              Não há informações para exibir com os filtros selecionado.
+              N?o h? informa??es para exibir com os filtros selecionado.
 <?php } ?>
             </div>
           </div>
@@ -294,31 +310,31 @@ while($row=$show->fetch(PDO::FETCH_ASSOC)){
       
     </div>
 
-<!-- MODAL DE AJUDA PARA A GESTÃO DE UM ATENDIMENTO -->    
+<!-- MODAL DE AJUDA PARA A GEST?O DE UM ATENDIMENTO -->    
 <div class="modal right fade" id="Help" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
   <div class="modal-dialog" role="document">
     <div class="modal-content">
 
       <div class="modal-header">
-        <h6 class="modal-title" id="myModalLabel"><i class="far fa-question-circle text-danger"></i> Ajuda com relatórios</h6>
+        <h6 class="modal-title" id="myModalLabel"><i class="far fa-question-circle text-danger"></i> Ajuda com relat?rios</h6>
         <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
       </div>
 
       <div class="modal-body">
-        <p><strong>Relatório analítico de atendimentos por cliente:</strong></p>
-        <p>Este relatório exibe de forma analítica os atendimentos para um determinado cliente em um determinado período de tempo.</p>
-        <p>São considerados os atendimentos com os seguintes status:</p>
+        <p><strong>Relat?rio anal?tico de atendimentos por cliente:</strong></p>
+        <p>Este relat?rio exibe de forma anal?tica os atendimentos para um determinado cliente em um determinado per?odo de tempo.</p>
+        <p>S?o considerados os atendimentos com os seguintes status:</p>
         <ul class="list">
-          <li><i class="fas fa-hourglass-half"></i> Aguardando Execução</li>
-          <li><i class="fas fa-magic"></i> Em Execução</li>
+          <li><i class="fas fa-hourglass-half"></i> Aguardando Execu??o</li>
+          <li><i class="fas fa-magic"></i> Em Execu??o</li>
           <li class="pt-1"><i class="far fa-pause-circle"></i> Em Espera</li>
           <li class="pt-1"><i class="fas fa-check"></i> Finalizada</li>
         </ul>
-        <p>Não são considerados os atendimentos com o status:</p>
+        <p>N?o s?o considerados os atendimentos com o status:</p>
         <ul class="list">
           <li><i class="far fa-clock"></i> Agendado </li>
         </ul>
-        <p>Adicionalmente, existe ainda a possibilidade de espeficiar o local para onde o atendimento foi prestado e o nível do atendimento.</p>
+        <p>Adicionalmente, existe ainda a possibilidade de espeficiar o local para onde o atendimento foi prestado e o n?vel do atendimento.</p>
       </div>
       
     </div>

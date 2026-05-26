@@ -1,6 +1,6 @@
 <?php
 session_start();
-//include_once("../all/seguranca.php");
+include_once("../all/seguranca.php");
 include_once("../all/conect.php");
 include_once("../all/permissoes.php");
 include_once("../all/token.php");
@@ -8,14 +8,14 @@ $hoje = date("Y-m-d");
 
 // if($m2_01==0){header("Location: ../index.php");}
 
-$action = filter_input(INPUT_POST, 'action', FILTER_SANITIZE_STRING);
+$action = filter_input(INPUT_POST, 'action', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 if ($usar_token=="true") {
   if($action){
     if ($action == "alterar_senha") {include_once("../all/update_senha.php");}
     
     if ($action == "new_centro_custos") {
-      $centro_custo = filter_input(INPUT_POST, 'centro_custo', FILTER_SANITIZE_STRING);
-      $status = filter_input(INPUT_POST, 'status', FILTER_SANITIZE_STRING);
+      $centro_custo = filter_input(INPUT_POST, 'centro_custo', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+      $status = filter_input(INPUT_POST, 'status', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
       $pdo = ConnectionN3();
       $adc= $pdo->prepare("INSERT INTO `cads_centro_custo` (`centro_custo`, `status`) VALUES (:centro_custo, :status);");
@@ -34,8 +34,8 @@ if ($usar_token=="true") {
     
     if ($action == "edt_centro_custos") {
       $id = filter_input(INPUT_POST, 'id', FILTER_SANITIZE_NUMBER_INT);
-      $centro_custo = filter_input(INPUT_POST, 'centro_custo', FILTER_SANITIZE_STRING);
-      $status = filter_input(INPUT_POST, 'status', FILTER_SANITIZE_STRING);
+      $centro_custo = filter_input(INPUT_POST, 'centro_custo', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+      $status = filter_input(INPUT_POST, 'status', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
       $pdo = ConnectionN3();
       $edt= $pdo->prepare("UPDATE `cads_centro_custo` SET `centro_custo`=:centro_custo, `status`=:status WHERE  `id`=:id;");
       $edt->bindParam(':centro_custo', $centro_custo);
@@ -68,7 +68,7 @@ if ($usar_token=="true") {
   </head>
   <body>
 <?php include_once("../all/loading.php"); ?>
-<?php include_once("../all/header.php"); ?>
+<?php include_once("../all/sidebar.php"); ?>
     <div class="container-fluid">
       <div class="row">
         <div class="col-md-12 mt-2">

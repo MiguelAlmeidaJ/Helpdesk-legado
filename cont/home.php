@@ -1,6 +1,6 @@
 <?php
 session_start();
-//include_once("../all/seguranca.php");
+include_once("../all/seguranca.php");
 include_once("../all/conect.php");
 include_once("../all/permissoes.php");
 $hoje = date("Y-m-d");
@@ -11,7 +11,7 @@ $hoje = date("Y-m-d");
  
 // if($m3_00==0){header("Location: ../index.php");}
 
-$action = filter_input(INPUT_POST, 'action', FILTER_SANITIZE_STRING);
+$action = filter_input(INPUT_POST, 'action', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
 if ($action == "alterar_senha") {include_once("../all/update_senha.php");}
 
@@ -53,7 +53,7 @@ if ($ord == "valor"){$order_by = "contratos.valor_atual DESC";}
   </head>
   <body>
 <?php include_once("../all/loading.php"); ?>
-<?php include("../all/header.php"); ?>
+<?php include("../all/sidebar.php"); ?>
     <div class="container-fluid">
       <div class="row">
         <div class="col-md-12 mt-2">

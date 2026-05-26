@@ -1,4 +1,7 @@
 <?php
+
+include_once("../all/permissoes.php");
+
 //VERIFICO SE HÁ TOKEN SETADO PARA A PÁGINA
 if (isset($_POST['token'])) {
   $token = $_POST['token'];

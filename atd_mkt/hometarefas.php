@@ -7,9 +7,9 @@ include_once("../all/permissoes.php");
 if($m6_00==0){header("Location: ../index.php");}
 
 $hoje = date("Y-m-d");
-$mensagem = filter_input(INPUT_POST, 'mensagem', FILTER_SANITIZE_STRING);
+$mensagem = filter_input(INPUT_POST, 'mensagem', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
-$action = filter_input(INPUT_POST, 'action', FILTER_SANITIZE_STRING);
+$action = filter_input(INPUT_POST, 'action', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 if ($action == "alterar_senha") {include_once("../all/update_senha.php");}
 
 if (isset($_POST['f_sts'])) {$p_sts = $f_sts = $_POST['f_sts'];} else {$f_sts = 11;}
@@ -98,7 +98,7 @@ while($exibe=$show_tarefas->fetch(PDO::FETCH_ASSOC)){
   </head>
   <body>
 <//?php include_once("../all/loading.php"); ?>
-<?php include("../all/header.php"); ?>
+<?php include("../all/sidebar.php"); ?>
     <div class="container-fluid">
       <div class="row">
         <div class="col-md-12 mt-2">
@@ -154,7 +154,7 @@ while($exibe=$show_clt->fetch(PDO::FETCH_ASSOC)){
                     </select>
                   </div>
                   <div class="col-auto col-form-label-sm">
-                    <label class="my-0"> Técnico:</label>
+                    <label class="my-0"> Tecnico:</label>
                     <select name="f_tec" class="form-control form-control-sm selectpicker" data-live-search="true" required="required" tabindex="3">
                       <option value="all"<?php if ("all" == $f_sts){echo " selected";} ?>>Todos</option>
                       <option value="0"<?php if (0 == $f_sts){echo " selected";} ?>>Não determinado</option>
@@ -257,7 +257,7 @@ while($exibe=$show_projetos->fetch(PDO::FETCH_ASSOC)){
                         <input type="hidden" name="f_tec" value="<?php echo $f_tec; ?>">
                         <input type="hidden" name="f_sol" value="<?php echo $f_sol; ?>">
                         <input type="hidden" name="ord" value="tecnico">
-                        <button type="submit" class="btn btn-light btn-sm btn-block"><i class="fas fa-sort-amount-down-alt"></i> Técnico</button>
+                        <button type="submit" class="btn btn-light btn-sm btn-block"><i class="fas fa-sort-amount-down-alt"></i> Tecnico</button>
                       </form>                    
                     </th>
                     <th class="p-1">
@@ -368,7 +368,7 @@ while($row=$show_tarefas->fetch(PDO::FETCH_ASSOC)){
   $conta_espera = $show_espera->rowCount();
   $exibe_espera=$show_espera->fetch(PDO::FETCH_ASSOC);
   //$espera_tempo_total=$exibe_espera["segundos"];
-  //SE NÃO TIVER RETORNO, ATRIBUI 0 SEGUNDOS AO TEMPO DE ESPERA
+  //SE NºO TIVER RETORNO, ATRIBUI 0 SEGUNDOS AO TEMPO DE ESPERA
   //if($espera_tempo_total==""){$espera_tempo_total=0;}
   //SOMA O TEMPO TOTAL DE ESPERA AO PRAZO PARA O FECHAMENTO DO ATENDIMENTO
   //$end_date0 = date("Y-m-d H:i:s",strtotime($time_limit_to_close." +$espera_tempo_total SECOND"));
@@ -551,13 +551,13 @@ if($tarefas_status>0 && $tarefas_status<3){ ?>
           <li><i class="far fa-clock"></i> Agendado 
             <ul>
               <li class="small">São tarefas cadastrados com Data/Hora futura.</li>
-              <li class="small">Eles podem ser listados na tela através das opções do filtro.</li>
+              <li class="small">Eles podem ser listados na tela através das opçães do filtro.</li>
               <li class="small">Quando for a Data/Hora do agendamento o Atendimento terá seu status alterado automaticamente para <span class="badge badge-light"><i class="fas fa-hourglass-half"></i> Aguardando Execução</span>.</li>
             </ul>
           </li>
           <li class="pt-1"><i class="fas fa-hourglass-half"></i> Aguardando Execução
             <ul>
-              <li class="small">São tarefas que devem ser executados pelos técnicos.</li>
+              <li class="small">São tarefas que devem ser executados pelos tecnicos.</li>
               <li class="small">Cada atendimento tem um prazo para ser atendido.</li>
               <li class="small">Caso o atendimento fique por mais de 20 minutos sem uma interação, será exibido o seguinte alerta: <i class="fas fa-bell blink"></i>.</li>
               <li class="small">Quando um técnico iniciar o Atendimento, terá seu status alterado automaticamente para <span class="badge badge-light"><i class="fas fa-magic"></i> Em Execução</span>.</li>
@@ -566,7 +566,7 @@ if($tarefas_status>0 && $tarefas_status<3){ ?>
           <li class="pt-1"><i class="fas fa-magic"></i> Em Execução
             <ul>
               <li class="small">São tarefas que estão sob responsabilidade de um técnico.</li>
-              <li class="small">O técnico responsável tem autonomia para transferir, colocar em espera e finalizar o atendimento.</li>
+              <li class="small">O técnico responsóvel tem autonomia para transferir, colocar em espera e finalizar o atendimento.</li>
             </ul>
           </li>            
           <li class="pt-1"><i class="far fa-pause-circle"></i> Em Espera

@@ -1,0 +1,51 @@
+Deverá instalar >>
+
+
+PCSERVER ( docfiscal ou servidor NFE )
+----  cessar  http://servicos.pcinformatica.com.br/instaladornfe_v40/
+
+usar as duas opções (primeiro o N depois o S) -- 
+opção NAO -- tem o setup fuill
+opção SIM -- somente a atualização
+
+
+--------------------------------
+
+
+CCW 
+servidor de faturamento 
+https://centraldeatendimento.totvs.com/hc/pt-br/articles/360028342252-WINT-Como-instalar-o-Servidor-de-Faturamento
+( duvidas abrir chamado o varejo / pdv )
+
+
+-------------------------------------------------------
+ 
+WINTHOR ( esse ja inclui o instant client que substitui o Oracle) ----
+
+https://centraldeatendimento.totvs.com/hc/pt-br/articles/360024700371-WINT-Como-instalar-o-Winthor
+
+antes de instalar --- copiar as DLLS da pasta  P:\Lib para as pastas   
+
+Copie primeiro para uma pasta na area de trabalho, pra depois copar pras pastas abaixo:
+
+C:\Windows\System32
+C:\Windows\SysWOW64
+
+C:\Windows\System
+
+
+OBS: suporte comunicou que esse Winthor já substitui o Oracle, já esta incluso, necessário apenas migrar o db
+
+--------------------------------------------
+
+CCW AGENTE
+
+https://centraldeatendimento.totvs.com/hc/pt-br/articles/360024405651-WINT-Como-baixar-e-instalar-o-CCW-Central-de-Controle-do-Winthor
+
+crie o diretorio de pastas C:\pcsist\produtos\ccwagente\etc
+
+e pegue o arquivo propeerties que esta no p:\\ backup etc ccw e copie pro mesmo p:\\ backup etc ccw. 
+]depois coemce a instalacao 
+
+
+-------------------------------------------------------------------------

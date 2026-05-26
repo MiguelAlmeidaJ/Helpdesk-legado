@@ -1,5 +1,6 @@
 <?php
 session_start();
+include_once("../all/seguranca.php");
 include_once("../all/permissoes.php");
 if (isset($_POST["user_id"])) {
   include_once("../all/conect.php");
@@ -15,12 +16,35 @@ if (isset($_POST["user_id"])) {
   $user_login = $row["user_login"];
   $user_cel = $row["user_cel"];
   $user_mail = $row["user_mail"];
-  $user_sts = $row["user_sts"];
   $tipo = $row["tipo_usuario"];
+  $link = $row["link"];
+  $pix_type = $row["pix_type"];
+  $chavepix = $row["chavepix"];
   $user_mod_01 = $row["user_modulo_01"];
   $user_mod_02 = $row["user_modulo_02"];
   $user_mod_03 = $row["user_modulo_03"];
   $user_mod_04 = $row["user_modulo_04"];
+  $user_mod_05 = $row["user_modulo_05"];
+  $user_mod_06 = $row["user_modulo_06"];
+  $user_mod_07 = $row["user_modulo_07"];
+  $user_mod_08 = $row["user_modulo_08"];
+  $user_mod_09 = $row["user_modulo_09"];
+
+  $modulos = [
+    'user_mod_01' => $row["user_modulo_01"],
+    'user_mod_02' => $row["user_modulo_02"],
+    'user_mod_03' => $row["user_modulo_03"],
+    'user_mod_04' => $row["user_modulo_04"],
+    'user_mod_05' => $row["user_modulo_05"],
+    'user_mod_06' => $row["user_modulo_06"],
+    'user_mod_07' => $row["user_modulo_07"],
+    'user_mod_08' => $row["user_modulo_08"],
+    'user_mod_09' => $row["user_modulo_09"],
+  ];
+
+  foreach ($modulos as $key => $value) {
+    echo "<input type='hidden' name='{$key}' value='{$value}'>";
+  }
 
   //GESTÃO DE USUÁRIO
   $user_m1_00 = $user_mod_01[0]; //ACESSAR MÓDULO USUÁRIOS (0: Desabilitado; 1:Habilitado)
@@ -45,14 +69,40 @@ if (isset($_POST["user_id"])) {
   $user_m3_03 = $user_mod_03[3]; //Colocar atendimento em espera
   $user_m3_04 = $user_mod_03[4]; //Recusar atendimento
   $user_m3_05 = $user_mod_03[5]; //Gerir atendimento de terceiro
+  $user_m3_06 = $user_mod_03[6]; //Acesso a Radio
 
   //CONFIGURAÇÕES 
   $user_m4_00 = $user_mod_04[0]; //Ver configurações
   $user_m4_01 = $user_mod_04[1]; //Tempo para exibição de alerta no chamado
   $user_m4_02 = $user_mod_04[2]; //SLA de atendimento
 
+  $user_m5_00 = $user_mod_05[0]; //
+  $user_m5_01 = $user_mod_05[1]; //
+  $user_m5_02 = $user_mod_05[2]; //
 
-  // dd
+  $user_m6_00 = $user_mod_06[0]; //
+  $user_m6_01 = $user_mod_06[1]; //
+  $user_m6_02 = $user_mod_06[2]; //
+
+  $user_m7_00 = $user_mod_07[0]; //
+  $user_m7_01 = $user_mod_07[1]; //
+  $user_m7_02 = $user_mod_07[2]; //
+
+  //DISPONIBILIDADE TECNICA
+  $user_m8_00 = $user_mod_08[0]; //Ver disponibilidade tecnica (0: Desabilitado; 1:Habilitado)
+  $user_m8_01 = $user_mod_08[1]; //Relatório de disponibilidade tecnica (0: Desabilitado; 1:Habilitado relatorio para clientes, 2:Habilitado todos os relatorios da nivel3)
+  $user_m8_02 = $user_mod_08[2]; //Relatório de indisponibilidade tecnica (0: Desabilitado; 1:Habilitado relatorio para clientes, 2:Habilitado todos os relatorios da nivel3)
+  $user_m8_03 = $user_mod_08[3]; //Relatório de indisponibilidade tecnica (0: Desabilitado; 1:Habilitado relatorio para clientes, 2:Habilitado todos os relatorios da nivel3)
+  $user_m8_04 = $user_mod_08[4]; //Ver Catálogos de clientes (0: Desabilitado; 1:Habilitado visualizar catálogos, 2:Habilitado visualizar e editar catálogos)
+
+  //VEICULOS
+  $user_m9_00 = $user_mod_09[0]; //VEICULOS - ACESSAR PAINEL DE RDS
+  $user_m9_01 = $user_mod_09[1]; //AGENDA DE VEICULOS (0: Desabilitado; 1:leitura; 2:Leitura, cadastro e edição)
+  $user_m9_02 = $user_mod_09[2]; // FINANCEIRO
+  $user_m9_03 = $user_mod_09[3]; //
+  $user_m9_04 = $user_mod_09[4]; //
+  $user_m9_05 = $user_mod_09[5]; //
+
 
   if (isset($id)) {
 
@@ -73,125 +123,175 @@ if (isset($_POST["user_id"])) {
     FROM clientes c
     WHERE c.clt_sts = 1";
 
-    if(isset($_SESSION['tipo']) && $_SESSION['tipo'] == 2 && isset($_SESSION['empresas']) && count($_SESSION['empresas']) > 0) {
-      $filterEmpresas.= " AND c.clt_id IN (" . implode(',', $_SESSION['empresas']) . ")";
+    if (isset($_SESSION['tipo']) && $_SESSION['tipo'] == 2 && isset($_SESSION['empresas']) && count($_SESSION['empresas']) > 0) {
+      $filterEmpresas .= " AND c.clt_id IN (" . implode(',', $_SESSION['empresas']) . ")";
     }
 
-    if($filterEmpresas) {
-      $sql.= $filterEmpresas;
+    if ($filterEmpresas) {
+      $sql .= $filterEmpresas;
     }
 
     $todosClientes = $pdo->prepare(
-     $sql
-    );  
+      $sql
+    );
 
     $todosClientes->execute();
   }
 ?>
   <div class="accordion" id="accordionExample">
     <input name="user_id" value="<?php echo $id; ?>" type="hidden">
+
     <div class="card">
       <div class="card-header pb-1 pt-2" id="headingOne">
-        <h5 class="mb-0">
-          <button class="btn pt-0 pb-0" type="button" data-toggle="collapse" data-target="#collapse1" aria-expanded="true" aria-controls="collapse1">
-            <h6><i class="fas fa-address-card"></i> Informações Cadastrais</h6>
-          </button>
-        </h5>
+        <!-- <h5 class="mb-0"> -->
+        <button class="btn pt-0 pb-0" type="button" data-toggle="collapse" data-target="#collapse1" aria-expanded="true" aria-controls="collapse1">
+          <h6><i class="fas fa-address-card"></i> Informações Cadastrais</h6>
+        </button>
+        <!-- </h5> -->
       </div>
-      <div id="collapse1" class="collapse show" aria-labelledby="heading1" data-parent="#accordionExample">
+      <div id="collapse1" class="collapse show" aria-labelledby="headingOne" data-parent="#accordionExample">
         <div class="card-body">
           <div class="form-group row">
+
+            <!-- Nome -->
             <div class="col-12 col-sm-6 col-md-4 col-lg-3">
-              <span class="form-text text-muted">Nome Completo:</span>
+              <label class="small mb-1 text-left">Nome Completo:</label>
               <div class="input-group">
                 <div class="input-group-prepend">
-                  <div class="input-group-text">
-                    <i class="fas fa-address-card"></i>
-                  </div>
+                  <div class="input-group-text"><i class="fas fa-address-card"></i></div>
                 </div>
-                <input id="nome" name="user_nome" value="<?php echo $user_nom; ?>" type="text" required="" class="form-control">
+                <input id="nome" name="user_nome" value="<?php echo $user_nom; ?>" type="text" required class="form-control form-control-sm">
               </div>
             </div>
-            <div class="col-12 col-sm-6 col-md-4 col-lg-3 ">
-              <span class="form-text text-muted">Login:</span>
+
+            <!-- Login -->
+            <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+              <label class="small mb-1 text-left">Login:</label>
               <div class="input-group">
                 <div class="input-group-prepend">
-                  <div class="input-group-text">
-                    <i class="fas fa-user"></i>
-                  </div>
+                  <div class="input-group-text"><i class="fas fa-user"></i></div>
                 </div>
-                <input id="login" name="user_login" value="<?php echo $user_login; ?>" type="text" required="" class="form-control">
+                <input id="login" name="user_login" value="<?php echo $user_login; ?>" type="text" required class="form-control form-control-sm">
               </div>
             </div>
-            <div class="col-12 col-sm-6 col-md-4 col-lg-3 ">
-              <span class="form-text text-muted">Função:</span>
+
+            <!-- Função -->
+            <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+              <label class="small mb-1 text-left">Função:</label>
               <div class="input-group">
                 <div class="input-group-prepend">
-                  <div class="input-group-text">
-                    <i class="fas fa-sitemap"></i>
-                  </div>
+                  <div class="input-group-text"><i class="fas fa-sitemap"></i></div>
                 </div>
-                <select name="user_funcao" required="required" class="custom-select">
+                <select name="user_funcao" required class="custom-select custom-select-sm">
                   <?php
                   $pdo = ConnectionN3();
-                  $show_cargo = $pdo->prepare("SELECT cargos_n3.* FROM cargos_n3 WHERE cargos_n3.cargo_sts = '1' ORDER BY cargos_n3.cargo_nome ASC");
+                  $show_cargo = $pdo->prepare("SELECT * FROM cargos_n3 WHERE cargo_sts = '1' ORDER BY cargo_nome ASC");
                   $show_cargo->execute();
                   while ($rowc = $show_cargo->fetch(PDO::FETCH_ASSOC)) {
                     $cargo_id = $rowc["cargo_id"];
                     $cargo_nome = $rowc["cargo_nome"];
                   ?>
-                    <option value="<?php echo $cargo_id; ?>" <?php if ($user_funcao == $cargo_id) {
-                                                                echo " selected";
-                                                              } ?>><?php echo $cargo_nome; ?></option>
+                    <option value="<?php echo $cargo_id; ?>" <?php if ($user_funcao == $cargo_id) echo "selected"; ?>><?php echo $cargo_nome; ?></option>
                   <?php } ?>
                 </select>
               </div>
             </div>
-            <div class="col-12 col-sm-6 col-md-4 col-lg-3 ">
-              <span class="form-text text-muted">Status:</span>
+
+            <!-- Status -->
+            <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+              <label class="small mb-1 text-left">Status:</label>
               <div class="input-group">
                 <div class="input-group-prepend">
-                  <div class="input-group-text">
-                    <i class="fas fa-info"></i>
-                  </div>
+                  <div class="input-group-text"><i class="fas fa-info"></i></div>
                 </div>
-                <select name="user_sts" required="required" class="custom-select">
-                  <option value="1" <?php if ($user_sts == 1) {
-                                      echo " selected";
-                                    } ?>>Ativo</option>
-                  <option value="2" <?php if ($user_sts == 2) {
-                                      echo " selected";
-                                    } ?>>Inativo</option>
+                <select name="user_sts" required class="custom-select custom-select-sm">
+                  <option value="1" <?php if ($user_sts == 1) echo "selected"; ?>>Ativo</option>
+                  <option value="2" <?php if ($user_sts == 2) echo "selected"; ?>>Inativo</option>
                 </select>
               </div>
             </div>
-            <div class="col-12 col-sm-6 col-md-4 col-lg-3 ">
-              <span class="form-text text-muted">E-mail:</span>
+
+            <!-- E-mail -->
+            <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+              <label class="small mb-1 text-left">E-mail:</label>
               <div class="input-group">
                 <div class="input-group-prepend">
-                  <div class="input-group-text">
-                    <i class="fas fa-at"></i>
-                  </div>
+                  <div class="input-group-text"><i class="fas fa-at"></i></div>
                 </div>
-                <input name="user_mail" value="<?php echo $user_mail; ?>" type="text" required="" class="form-control">
-              </div>
-            </div>
-            <div class="col-12 col-sm-6 col-md-4 col-lg-3 ">
-              <span class="form-text text-muted">Celular:</span>
-              <div class="input-group">
-                <div class="input-group-prepend">
-                  <div class="input-group-text">
-                    <i class="fas fa-mobile-alt"></i>
-                  </div>
-                </div>
-                <input name="user_cel" value="<?php echo $user_cel; ?>" type="text" required="" class="form-control">
+                <input name="user_mail" value="<?php echo $user_mail; ?>" type="text" required class="form-control form-control-sm">
               </div>
             </div>
 
-            <div class="col-12 col-sm-6 col-md-4 col-lg-3 ">
-              <span class="form-text text-muted">Empresas:</span>
+            <!-- Celular -->
+            <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+              <label class="small mb-1 text-left">Celular:</label>
               <div class="input-group">
-                <select class="companiesEdit" name="companiesEdit[]" multiple="multiple" style="width: 100%">
+                <div class="input-group-prepend">
+                  <div class="input-group-text"><i class="fas fa-mobile-alt"></i></div>
+                </div>
+                <input name="user_cel" value="<?php echo $user_cel; ?>" type="text" required class="form-control form-control-sm">
+              </div>
+            </div>
+
+            <!-- Link -->
+            <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+              <label class="small mb-1 text-left">Link:</label>
+              <div class="input-group">
+                <div class="input-group-prepend">
+                  <div class="input-group-text"><i class="fas fa-link"></i></div>
+                </div>
+                <input name="link" value="<?php echo $link; ?>" type="text" class="form-control form-control-sm">
+              </div>
+            </div>
+
+            <!-- Tipo de usuário -->
+            <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+              <label class="small mb-1 text-left">Tipo de usuário:</label>
+              <div class="input-group">
+                <input type="radio" id="admin" name="tipo_usuario" value="1" <?php echo ($tipo == 1) ? 'checked' : ''; ?>>
+                <label for="admin" style="padding-right: 5px"> Colaborador</label>
+
+                <input type="radio" id="cliente" name="tipo_usuario" value="2" <?php echo ($tipo == 2) ? 'checked' : ''; ?>>
+                <label for="cliente"> Cliente</label>
+              </div>
+            </div>
+
+            <!-- Tipo Pix -->
+            <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+              <label class="small mb-1 text-left">Tipo Pix:</label>
+              <div class="input-group">
+                <div class="input-group-prepend">
+                  <div class="input-group-text"><i class="fas fa-key"></i></div>
+                </div>
+                <select name="pix_type" id="pix_type_edit" class="custom-select custom-select-sm">
+                  <option value="">Selecione...</option>
+                  <?php
+                  $stmtTipos = $pdo->query("SELECT id, name_type FROM type_keys ORDER BY id");
+                  while ($tipo = $stmtTipos->fetch(PDO::FETCH_ASSOC)) {
+                    $selected = ($tipo['id'] == $row['pix_type']) ? "selected" : "";
+                    echo "<option value='{$tipo['id']}' $selected>{$tipo['name_type']}</option>";
+                  }
+                  ?>
+                </select>
+              </div>
+            </div>
+
+            <!-- Chave Pix -->
+            <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+              <label class="small mb-1 text-left">Chave Pix:</label>
+              <div class="input-group">
+                <div class="input-group-prepend">
+                  <div class="input-group-text"><i class="fas fa-dollar-sign"></i></div>
+                </div>
+                <input type="text" id="chavepix_edit" name="chavepix" value="<?php echo htmlspecialchars($row['chavepix']); ?>" class="form-control form-control-sm">
+              </div>
+            </div>
+
+            <!-- Empresas -->
+            <div class="col-12 col-sm-6 col-md-4 col-lg-6">
+              <label class="small mb-1 text-left">Empresas:</label>
+              <div class="input-group">
+                <select class="companiesEdit" name="companiesEdit" multiple="multiple" style="width: 100%; height: 50px" class="form-control form-control-sm">
                   <option></option>
                   <?php
                   while ($rowc = $todosClientes->fetch(PDO::FETCH_ASSOC)) {
@@ -204,35 +304,22 @@ if (isset($_POST["user_id"])) {
               </div>
             </div>
 
-            <div class="col-12 col-sm-6 col-md-4 col-lg-3 ">
-              <span class="form-text text-muted">Tipo de usuário:</span>
-              <div class="input-group" >
-                <?php if(isset($_SESSION['tipo']) && $_SESSION['tipo'] == 1) { ?>
-                <input type="radio" id="nivel3" name="tipo_usuario" value="1" <?php if ($tipo == 1){echo " checked";} ?>>
-                <label for="nivel3" style="padding-right: 10px">Admin</label>
-                <?php } ?>
-
-                <?php if(isset($_SESSION['tipo']) && $_SESSION['tipo'] == 2 || $_SESSION['tipo'] == 1) { ?>
-                  <input type="radio" id="cliente" name="tipo_usuario" value="2" <?php if ($tipo == 2){echo " checked";} ?>>
-                  <label for="cliente">Cliente</label>
-                <?php } ?>
-              </div>
-            </div>
-
-
           </div>
         </div>
       </div>
     </div>
 
+
+
+    <!--  Módulo Usuários -->
     <?php if ($m1_04 == 1) { ?>
       <div class="card">
         <div class="card-header pb-1 pt-2" id="headingOne">
-          <h5 class="mb-0">
-            <button class="btn pt-0 pb-0" type="button" data-toggle="collapse" data-target="#collapse2" aria-expanded="true" aria-controls="collapse2">
-              <h6><i class="text-info fas fa-users"></i> Módulo Usuários</h6>
-            </button>
-          </h5>
+          <!-- <h5 class="mb-0"> -->
+          <button class="btn pt-0 pb-0" type="button" data-toggle="collapse" data-target="#collapse2" aria-expanded="true" aria-controls="collapse2">
+            <h6><i class="text-info fas fa-users"></i> Módulo Usuários</h6>
+          </button>
+          <!-- </h5> -->
         </div>
         <div id="collapse2" class="collapse" aria-labelledby="heading2" data-parent="#accordionExample">
           <div class="card-body">
@@ -328,18 +415,78 @@ if (isset($_POST["user_id"])) {
                 </div>
               </div>
 
+              <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+                <span class="form-text text-muted">Disponibilidade Técnica:</span>
+                <div class="input-group">
+                  <div class="input-group-prepend">
+                    <div class="input-group-text">
+                      <i class="text-info fas fa-users"></i>
+                    </div>
+                  </div>
+                  <select name="m8_01" required="required" class="custom-select">
+                    <option value="0" <?php if ($user_m8_01 == 0) {
+                                        echo "selected";
+                                      } ?>>Desabilitado</option>
+                    <option value="1" <?php if ($user_m8_01 == 1) {
+                                        echo "selected";
+                                      } ?>>Habilitado</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+                <span class="form-text text-muted">Relatorios:</span>
+                <div class="input-group">
+                  <div class="input-group-prepend">
+                    <div class="input-group-text">
+                      <i class="text-info fas fa-users"></i>
+                    </div>
+                  </div>
+                  <select name="m8_00" required="required" class="custom-select">
+                    <option value="1" <?php if ($user_m8_00 == 1) {
+                                        echo "selected";
+                                      } ?>>Habilitado Cliente</option>
+                    <option value="2" <?php if ($user_m8_00 == 2) {
+                                        echo "selected";
+                                      } ?>>Habilitado Nivel3</option>
+                  </select>
+                </div>
+              </div>
+
+
+              <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+                <span class="form-text text-muted">Patrimônios:</span>
+                <div class="input-group">
+                  <div class="input-group-prepend">
+                    <div class="input-group-text">
+                      <i class="text-info fas fa-users"></i>
+                    </div>
+                  </div>
+                  <select name="m8_02" required="required" class="custom-select">
+                    <option value="0" <?php if ($user_m8_02 == 0) {
+                                        echo "selected";
+                                      } ?>>Desabilitado</option>
+                    <option value="1" <?php if ($user_m8_02 == 1) {
+                                        echo "selected";
+                                      } ?>>Habilitado</option>
+                  </select>
+                </div>
+              </div>
+
+
             </div>
           </div>
         </div>
       </div>
 
+      <!-- Cadastro -->
       <div class="card">
         <div class="card-header pb-1 pt-2" id="headingOne">
-          <h5 class="mb-0">
-            <button class="btn pt-0 pb-0" type="button" data-toggle="collapse" data-target="#collapse3" aria-expanded="true" aria-controls="collapse3">
-              <h6><i class="fas fa-file-medical"></i> Cadastro</h6>
-            </button>
-          </h5>
+          <!-- <h5 class="mb-0"> -->
+          <button class="btn pt-0 pb-0" type="button" data-toggle="collapse" data-target="#collapse3" aria-expanded="true" aria-controls="collapse3">
+            <h6><i class="fas fa-file-medical"></i> Cadastro</h6>
+          </button>
+          <!-- </h5> -->
         </div>
         <div id="collapse3" class="collapse" aria-labelledby="heading3" data-parent="#accordionExample">
           <div class="card-body">
@@ -507,19 +654,73 @@ if (isset($_POST["user_id"])) {
                 </div>
               </div>
 
+              <!-- Catálogo -->
+              <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+                <span class="form-text text-muted">Catálogo:</span>
+                <div class="input-group">
+                  <div class="input-group-prepend">
+                    <div class="input-group-text">
+                      <i class="fas fa-book"></i>
+                    </div>
+                  </div>
+                  <!-- <select name="m8_04" required="required" class="custom-select">
+                    <option value="0" <?php if ($user_m8_04 == 0) {
+                                        echo " selected";
+                                      } ?>>Sem Acesso</option>
+                    <option value="1" <?php if ($user_m8_04 == 1) {
+                                        echo " selected";
+                                      } ?>>Apenas visualizar</option>
+                    <option value="2" <?php if ($user_m8_04 == 2) {
+                                        echo " selected";
+                                      } ?>>Visualizar + Editar</option>
+                  </select> -->
+                  <select name="m8_04" required="required" class="custom-select">
+                    <option value="0" <?php if ($user_m8_04 == 0) {
+                                        echo " selected";
+                                      } ?>>Sem Acesso</option>
+
+                    <option value="1" <?php if ($user_m8_04 == 1) {
+                                        echo " selected";
+                                      } ?>>TI - Apenas visualizar</option>
+
+                    <option value="2" <?php if ($user_m8_04 == 2) {
+                                        echo " selected";
+                                      } ?>>TI - Visualizar + Editar</option>
+
+                    <option value="3" <?php if ($user_m8_04 == 3) {
+                                        echo " selected";
+                                      } ?>>DevOps - Apenas visualizar</option>
+
+                    <option value="4" <?php if ($user_m8_04 == 4) {
+                                        echo " selected";
+                                      } ?>>DevOps - Visualizar + Editar</option>
+
+                    <option value="5" <?php if ($user_m8_04 == 5) {
+                                        echo " selected";
+                                      } ?>>Todos - Apenas visualizar</option>
+
+                    <option value="6" <?php if ($user_m8_04 == 6) {
+                                        echo " selected";
+                                      } ?>>Todos - Visualizar + Editar</option>
+                  </select>
+                </div>
+              </div>
+
 
             </div>
           </div>
         </div>
       </div>
 
+
+      <!-- Atendimentos -->
       <div class="card">
         <div class="card-header pb-1 pt-2" id="headingOne">
-          <h5 class="mb-0">
-            <button class="btn pt-0 pb-0" type="button" data-toggle="collapse" data-target="#collapse4" aria-expanded="true" aria-controls="collapse4">
-              <h6><i class="fas fa-headset text-danger"></i> Atendimentos</h6>
-            </button>
-          </h5>
+          <!-- <h5 class="mb-0"> -->
+          <button class="btn pt-0 pb-0" type="button" data-toggle="collapse" data-target="#collapse4" aria-expanded="true" aria-controls="collapse4">
+            <h6><i class="fas fa-headset text-danger"></i> Atendimentos</h6>
+          </button>
+          <!-- </h5> -->
         </div>
         <div id="collapse4" class="collapse" aria-labelledby="heading4" data-parent="#accordionExample">
           <div class="card-body">
@@ -642,15 +843,186 @@ if (isset($_POST["user_id"])) {
         </div>
       </div>
 
+      <!-- Atendimentos DevOps -->
       <div class="card">
         <div class="card-header pb-1 pt-2" id="headingOne">
-          <h5 class="mb-0">
-            <button class="btn pt-0 pb-0" type="button" data-toggle="collapse" data-target="#collapse5" aria-expanded="true" aria-controls="collapse5">
-              <h6><i class="fas fa-cogs"></i> Configuração</h6>
-            </button>
-          </h5>
+          <!-- <h5 class="mb-0"> -->
+          <button class="btn pt-0 pb-0" type="button" data-toggle="collapse" data-target="#collapse5" aria-expanded="true" aria-controls="collapse5">
+            <h6><i class="fas fa-code text-danger"></i> Atendimentos DevOps</h6>
+          </button>
+          <!-- </h5> -->
         </div>
-        <div id="collapse5" class="collapse" aria-labelledby="heading5" data-parent="#accordionExample">
+        <div id="collapse5" class="collapse" aria-labelledby="heading4" data-parent="#accordionExample">
+          <div class="card-body">
+            <div class="form-group row">
+              <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+                <span class="form-text text-muted">Acesso a Tarefas:</span>
+                <div class="input-group">
+                  <div class="input-group-prepend">
+                    <div class="input-group-text">
+                      <i class="fas fa-key"></i>
+                    </div>
+                  </div>
+                  <select name="m5_00" required="required" class="custom-select">
+                    <option value="0" <?php if ($user_m5_00 == 0) {
+                                        echo " selected";
+                                      } ?>>Desabilitado</option>
+                    <option value="1" <?php if ($user_m5_00 == 1) {
+                                        echo " selected";
+                                      } ?>>Visualizar</option>
+                    <option value="2" <?php if ($user_m5_00 == 2) {
+                                        echo " selected";
+                                      } ?>>Visualizar + Cadastrar + Editar</option>
+                  </select>
+                </div>
+              </div>
+
+
+
+
+              <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+                <span class="form-text text-muted">Acessao a Projetos:</span>
+                <div class="input-group">
+                  <div class="input-group-prepend">
+                    <div class="input-group-text">
+                      <i class="fas fa-headset"></i>
+                    </div>
+                  </div>
+                  <select name="m5_01" required="required" class="custom-select">
+                    <option value="0" <?php if ($user_m5_01 == 0) {
+                                        echo " selected";
+                                      } ?>>Desabilitado</option>
+                    <option value="1" <?php if ($user_m5_01 == 1) {
+                                        echo " selected";
+                                      } ?>>Visualizar</option>
+                    <option value="2" <?php if ($user_m5_01 == 2) {
+                                        echo " selected";
+                                      } ?>>Visualizar + Cadastrar + Editar</option>
+                  </select>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Logistica -->
+      <div class="card">
+        <div class="card-header pb-1 pt-2" id="headingOne">
+          <!-- <h5 class="mb-0"> -->
+          <button class="btn pt-0 pb-0" type="button" data-toggle="collapse" data-target="#collapse6" aria-expanded="true" aria-controls="collapse6">
+            <h6><i class="fas fa-car"></i> Logística</h6>
+          </button>
+          <!-- </h5> -->
+        </div>
+        <div id="collapse6" class="collapse" aria-labelledby="heading4" data-parent="#accordionExample">
+          <div class="card-body">
+            <div class="form-group row">
+              <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+                <span class="form-text text-muted">Acesso:</span>
+                <div class="input-group">
+                  <div class="input-group-prepend">
+                    <div class="input-group-text">
+                      <i class="fas fa-key"></i>
+                    </div>
+                  </div>
+                  <select name="m9_00" required="required" class="custom-select">
+                    <option value="0" <?php if ($user_m9_00 == 0) {
+                                        echo " selected";
+                                      } ?>>Desabilitado</option>
+                    <option value="1" <?php if ($user_m9_00 == 1) {
+                                        echo " selected";
+                                      } ?>>Habilitado</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+                <span class="form-text text-muted"> Agenda Veiculos:</span>
+                <div class="input-group">
+                  <div class="input-group-prepend">
+                    <div class="input-group-text">
+                      <i class="fas fa-calendar-alt"></i>
+                    </div>
+                  </div>
+                  <select name="m9_01" required="required" class="custom-select">
+                    <option value="0" <?php if ($user_m9_01 == 0) {
+                                        echo " selected";
+                                      } ?>>Sem Acesso</option>
+                    <option value="1" <?php if ($user_m9_01 == 1) {
+                                        echo " selected";
+                                      } ?>>Visualizar</option>
+                    <option value="2" <?php if ($user_m9_01 == 2) {
+                                        echo " selected";
+                                      } ?>>Visualizar + Cadastrar + Editar</option>
+                  </select>
+                </div>
+              </div>
+
+
+              <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+                <span class="form-text text-muted"> Acesso a RD:</span>
+                <div class="input-group">
+                  <div class="input-group-prepend">
+                    <div class="input-group-text">
+                      <i class="fas fa-calendar-alt"></i>
+                    </div>
+                  </div>
+                  <select name="m9_00" required="required" class="custom-select">
+                    <option value="0" <?php if ($user_m9_00 == 0) {
+                                        echo " selected";
+                                      } ?>>Desabilitado</option>
+                    <option value="1" <?php if ($user_m9_00 == 1) {
+                                        echo " selected";
+                                      } ?>>Habilitado</option>
+                  </select>
+                </div>
+              </div>
+
+              <?php if ($m9_02 > 0) { ?>
+                <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+                  <span class="form-text text-muted"> Acesso Painel Financeiro:</span>
+                  <div class="input-group">
+                    <div class="input-group-prepend">
+                      <div class="input-group-text">
+                        <i class="fas fa-calendar-alt"></i>
+                      </div>
+                    </div>
+                    <select name="m9_02" required="required" class="custom-select">
+                      <option value="0" <?php if ($user_m9_02 == 0) {
+                                          echo " selected";
+                                        } ?>>Desabilitado</option>
+                      <option value="1" <?php if ($user_m9_02 == 1) {
+                                          echo " selected";
+                                        } ?>>Contas Pagar/Receber</option>
+                      <option value="2" <?php if ($user_m9_02 == 2) {
+                                          echo " selected";
+                                        } ?>>Gestão Contas + Aprovar</option>
+                      <option value="3" <?php if ($user_m9_02 == 3) {
+                                          echo " selected";
+                                        } ?>>Gestão Contas + Pagar</option>
+                    </select>
+                  </div>
+                </div>
+
+              <?php } ?>
+
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Configuração -->
+      <div class="card">
+        <div class="card-header pb-1 pt-2" id="headingOne">
+          <!-- <h5 class="mb-0"> -->
+          <button class="btn pt-0 pb-0" type="button" data-toggle="collapse" data-target="#collapse7" aria-expanded="true" aria-controls="collapse7">
+            <h6><i class="fas fa-cogs"></i> Configuração</h6>
+          </button>
+          <!-- </h5> -->
+        </div>
+        <div id="collapse7" class="collapse" aria-labelledby="heading5" data-parent="#accordionExample">
           <div class="card-body">
             <div class="form-group row">
               <div class="col-12 col-sm-6 col-md-4 col-lg-3">
@@ -719,17 +1091,44 @@ if (isset($_POST["user_id"])) {
 
 <?php } ?>
 
-<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<!-- <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
 <script>
   $(document).ready(function() {
-    $('.companiesEdit').select2();
+    $('.companiesEdit').select2({
+      dropdownParent: $('#modalEdtUser .modal-content'),
+      placeholder: 'Selecione as empresas'
+    });
 
 
-  const idsClientesSelecionados = <?php echo isset($idsClientesSelecionados) ? json_encode($idsClientesSelecionados) : []; ?> || [];
-      $('.companiesEdit').val(idsClientesSelecionados);
-      $('.companiesEdit').trigger('change');
+    const idsClientesSelecionados = <?php echo isset($idsClientesSelecionados) ? json_encode($idsClientesSelecionados) : []; ?> || [];
+    $('.companiesEdit').val(idsClientesSelecionados);
+    $('.companiesEdit').trigger('change');
   });
+</script> -->
 
-  </script>
+<!-- <script>
+$(document).ready(function() {
+  $('form').on('submit', function(event) {
+    event.preventDefault(); // Impede o envio automático
+
+    // Pega os dados do formulário, incluindo campos ocultos
+    var formData = $(this).serializeArray();
+    var dataObject = {};
+
+    // Converte os dados para objeto JSON
+    $.each(formData, function(_, field) {
+      dataObject[field.name] = field.value;
+    });
+
+    // Confirma se os módulos estão sendo capturados
+    console.log("🔍 Dados prontos para o UPDATE:", JSON.stringify(dataObject, null, 2));
+
+    alert("⚠️ Confira os dados no console (F12) antes de enviar!");
+
+    this.submit(); // Descomente após a validação
+  });
+});
+
+</script> -->

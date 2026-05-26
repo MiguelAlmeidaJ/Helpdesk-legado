@@ -1,5 +1,6 @@
 <?php
 session_start();
+include_once("../all/seguranca.php");
 include_once("../all/permissoes.php");
 if(isset($_POST["id"])){
   include_once("../all/conect.php");

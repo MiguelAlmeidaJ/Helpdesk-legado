@@ -1,616 +1,453 @@
 <?php
+
 session_start();
 include_once("../all/seguranca.php");
 include_once("../all/conect.php");
 include_once("../all/permissoes.php");
 
-if($m8_00==0){header("Location: ../index.php");}
-
-$hoje = date("Y-m-d");
-$mensagem = filter_input(INPUT_POST, 'mensagem', FILTER_SANITIZE_STRING);
-
-$action = filter_input(INPUT_POST, 'action', FILTER_SANITIZE_STRING);
-if ($action == "alterar_senha") {include_once("../all/update_senha.php");}
-
-if (isset($_POST['f_sts'])) {$p_sts = $f_sts = $_POST['f_sts'];} else {$f_sts = 11;}
-if ($f_sts == 10) {$p_sts = "0,1,2,3,4";}
-if ($f_sts == 11) {$p_sts = "1,2,3";}
-
-if (isset($_POST['f_sol'])) {$f_sol = $p_sol = $_POST['f_sol'];} else {$f_sol = $p_sol = 0;}
-if ($f_sol == 0) {$p_sol = "%";}
-
-if (isset($_POST['f_clt'])) {$f_clt = $p_clt = $_POST['f_clt'];} else {$f_clt = $p_clt = 0;}
-if ($f_clt == 0) {$p_clt = "%"; $p_sol = "%";}
-
-if (isset($_POST['f_tec'])) {$f_tec = $p_tec = $_POST['f_tec'];} else {$f_tec = $p_tec = "all";}
-if ($f_tec == "all") {$p_tec = "%";}
-
-if (isset($_POST['ord'])) {$ord = $_POST['ord'];} else {$ord = "cliente";}
-if ($ord == "id"){$order_by = "proj_mkt.id ASC";}
-if ($ord == "cliente"){$order_by = "clientes.clt_nomer ASC";}
-if ($ord == "abertura"){$order_by = "proj_mkt.abertura ASC";}
-if ($ord == "tecnico"){$order_by = "tecnico_nome ASC";}
-if ($ord == "status"){$order_by = "proj_mkt.`status` ASC";}
-if ($ord == "nivel"){$order_by = "proj_mkt.`nivel` DESC";}
-if ($ord == "forma"){$order_by = "proj_mkt.`forma` DESC";}
-
-//BUSCA INFORMAÇÕES DE CONFIGURAÇÃO DE TEMPO DE PROJETO
-$pdo = ConnectionN3();
-$show = $pdo->prepare("SELECT configuracao.* FROM configuracao");
-$show->execute();
-$row=$show->fetch(PDO::FETCH_ASSOC);
-
-//$tempo_alerta=$row["tempo_alerta"];
-//$sla_n1=$row["sla_n1"];
-//$sla_n5=$row["sla_n5"];
-//$sla_n6=$row["sla_n6"];
-//$sla_n7=$row["sla_n7"];
-//$sla_n8=$row["sla_n8"];
-//$sla_n9=$row["sla_n9"];
-//$sla_n10=$row["sla_n10"];
-//$sla_n11=$row["sla_n11"];
-
-
-?>
-<?php
-header("Refresh:60");
-?>
-<?php
-//BUSCA TODOS OS projetos QUE ESTÃO AGENDADOS (STATUS = 0)
-//COMPARA DATA HORA DO AGENDAMENTO COM DATA HORA ATUAL
-//SE DATA HORA ATUAL MAIOR QUE DATA HORA DE AGENDAMENTO
-//ALTERA O STATUS DO PROJETO PARA 1 (AGUARDANDO EXECUÇÃO)
-//REGISTRA ALTERAÇÃO NA TABELA DE inter_proj_mkt
-$time_now = date("Y-m-d H:i:s");
-$pdo = ConnectionN3();
-$show_projeto = $pdo->prepare("SELECT proj_mkt.id, proj_mkt.abertura FROM proj_mkt WHERE proj_mkt.`status` = '0'");
-$show_projeto->execute();
-while($exibe=$show_projeto->fetch(PDO::FETCH_ASSOC)){
-  $projs_mkt = $exibe["id"];
-  $projeto_agendamento = $exibe["abertura"];
-  if(strtotime($time_now) > strtotime($projeto_agendamento)){
-    //altera o status do projeto para 1 (Aguardando execução)
-    $edt= $pdo->prepare("UPDATE `proj_mkt` SET `status`='1' WHERE  `id`='$projs_mkt';");
-    if($edt->execute()){
-      //insere o registro de uma nova interação 
-      $adc= $pdo->prepare("INSERT INTO `inter_proj_mkt` (`inter_tipo`, `inter_projeto`, `inter_user`, `inter_data`, `inter_desc`) VALUES ('1', '$projs_mkt', '1', '$time_now', 'Status do projeto alterado automaticamente para Aguardando Execução.');");
-      if($adc->execute()){
-      }else{
-        $mensagem = "<i class=\"fas fa-exclamation-triangle\"></i> Falha ao adicionar registro na tabela de interação!";
-        $mensagem_cor = "alert-danger"; 
-      }
-    }
-  }
+// Verificar permissões
+if ($m7_00 == 0) {
+    header("Location: ../home.php");
+    exit;
 }
+
+// Criar conexão com o banco MKT
+$pdoMkt = ConnectionMkt();
+if (!$pdoMkt) {
+    exit("Erro ao conectar ao banco de dados.");
+}
+
+// Mapeamento dos status
+$statusMap = [
+    1  => "Não Iniciado",
+    4  => "Em Progresso",
+    3  => "Em Alteração",
+    2  => "Aprovação Interna",
+    50 => "Enviar Time Design",
+    53 => "Aprovação Cliente",
+    51 => "Aguardando Publicação",
+    54 => "Standby",
+    52 => "Atenção",
+    5  => "Completo",
+    55 => "Aprovação DOC"
+];
+
+// Receber filtros enviados via POST
+$idFiltro = $_POST['id'] ?? '';
+$tituloFiltro = $_POST['titulo'] ?? '';
+$clienteFiltro = $_POST['cliente'] ?? '';
+$statusFiltro = $_POST['status'] ?? '';
+$prioridadeFiltro = $_POST['prioridade'] ?? '';
+$dataFiltro = $_POST['data_1'] ?? '';
+$tecnicoFiltro = $_POST['tecnico'] ?? '';
+$typeDataFiltro = $_POST['typeDataFiltro'] ?? 1;
+
+// Converter data do formato dd/mm/aaaa para yyyy-mm-dd
+if (!empty($dataFiltro)) {
+    $dataFiltro = DateTime::createFromFormat('d/m/Y', $dataFiltro)->format('Y-m-d');
+}
+
+// Montar a cláusula WHERE dinamicamente
+$whereClauses = [];
+$params = [];
+
+if (!empty($idFiltro)) {
+    $whereClauses[] = "t.id = :id";
+    $params[':id'] = $idFiltro;
+}
+if (!empty($tituloFiltro)) {
+    $whereClauses[] = "t.name LIKE :titulo";
+    $params[':titulo'] = "%$tituloFiltro%";
+}
+if (!empty($clienteFiltro)) {
+    $whereClauses[] = "c.userid = :cliente";
+    $params[':cliente'] = $clienteFiltro;
+}
+if (!empty($statusFiltro)) {
+    if (is_array($statusFiltro)) {
+        $placeholders = [];
+        foreach ($statusFiltro as $index => $status) {
+            $placeholder = ":status$index";
+            $placeholders[] = $placeholder;
+            $params[$placeholder] = $status;
+        }
+        $whereClauses[] = "t.status IN (" . implode(", ", $placeholders) . ")";
+    } else {
+        $whereClauses[] = "t.status = :status";
+        $params[':status'] = $statusFiltro;
+    }
+}
+if (!empty($prioridadeFiltro)) {
+    $whereClauses[] = "t.priority = :prioridade";
+    $params[':prioridade'] = $prioridadeFiltro;
+}
+if (!empty($dataFiltro)) {
+    $whereClauses[] = "DATE(t.dateadded) = :data";
+    $params[':data'] = $dataFiltro;
+}
+if (!empty($tecnicoFiltro)) {
+    $whereClauses[] = "ta.staffid = :tecnico";
+    $params[':tecnico'] = $tecnicoFiltro;
+}
+
+$whereSql = (count($whereClauses) > 0) ? "WHERE " . implode(' AND ', $whereClauses) : "";
+
+// Definir ordenação com aliases corretos
+$ord = $_POST['ord'] ?? 'id';
+$order_dir = $_POST['order_dir'] ?? 'DESC';
+
+$colunas_validas = [
+    'id' => 't.id',
+    'name' => 't.name',
+    'nome_cliente' => 'c.company',
+    'priority' => 't.priority',
+    'total_artes' => 'cfv.value',
+    'nome_tecnico' => 's.firstname',
+    'nome_direcionador' => 'd.firstname',
+    'status' => 'ts.name',
+    'inicio' => 't.dateadded',
+    'prazo' => 't.duedate',
+    'finalizado' => 't.datefinished'
+];
+
+$order_dir_validas = ['ASC', 'DESC'];
+
+if (!array_key_exists($ord, $colunas_validas)) {
+    $ord = 'id';
+}
+if (!in_array($order_dir, $order_dir_validas)) {
+    $order_dir = 'DESC';
+}
+
+$orderColumn = $colunas_validas[$ord];
+
+$query = "
+    SELECT t.id, t.name, t.description, c.userid AS id_cliente, c.company AS nome_cliente,
+           t.priority, t.status, ts.name AS status, 
+           cfv.value AS total_artes,
+           t.addedfrom AS direcionado_por_ID, d.firstname AS nome_direcionador, d.lastname AS sobrenome_direcionador,
+           ta.staffid AS id_tecnico, s.firstname AS nome_tecnico, s.lastname AS sobrenome_tecnico,
+           DATE_FORMAT(t.dateadded, '%d/%m/%Y %H:%i:%s') AS inicio,
+           DATE_FORMAT(t.duedate, '%d/%m/%Y %H:%i:%s') AS prazo,
+           IF(t.datefinished IS NULL, 'Não finalizado', DATE_FORMAT(t.datefinished, '%d/%m/%Y %H:%i:%s')) AS finalizado
+    FROM tbltasks t
+    LEFT JOIN tbltask_assigned ta ON t.id = ta.taskid
+    LEFT JOIN tbltask_statuses ts ON t.status = ts.id
+    LEFT JOIN tblcustomfieldsvalues cfv ON t.id = cfv.relid AND cfv.fieldid = 8
+    LEFT JOIN tblstaff s ON ta.staffid = s.staffid
+    LEFT JOIN tblclients c ON t.rel_id = c.userid
+    LEFT JOIN tblstaff d ON t.addedfrom = d.staffid
+    $whereSql
+    ORDER BY $orderColumn $order_dir
+";
+
+$stmt = $pdoMkt->prepare($query);
+$stmt->execute($params);
+
+$count_atendimentos = $stmt->rowCount();
+$todosAtendimentos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+// Carregar opçães para filtros
+$stmtTodosClientes = $pdoMkt->prepare("SELECT userid, company FROM tblclients ORDER BY company ASC");
+$stmtTodosClientes->execute();
+$todosClientes = $stmtTodosClientes->fetchAll(PDO::FETCH_ASSOC);
+
+$stmtTodosTecnicos = $pdoMkt->prepare("SELECT staffid, firstname, lastname FROM tblstaff WHERE active = 1 ORDER BY firstname ASC");
+$stmtTodosTecnicos->execute();
+$todosTecnicos = $stmtTodosTecnicos->fetchAll(PDO::FETCH_ASSOC);
+
+$stmtTodosStatus = $pdoMkt->prepare("SELECT id, name FROM tbltask_statuses ORDER BY name ASC");
+$stmtTodosStatus->execute();
+$todosStatus = $stmtTodosStatus->fetchAll(PDO::FETCH_ASSOC);
+
 ?>
-<!doctype html>
-<html lang="pt-BR">
-  <head>
+
+<head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <link rel="icon" href="../img/favicon.ico"> 
+    <meta name="viewport" content="width=device-width, initial-scale=0.9, shrink-to-fit=no">
+    <link rel="icon" href="../img/favicon.ico">
+    <link rel="stylesheet" href="../css/help.css">
     <link rel="stylesheet" href="../css/bootstrap.min.css">
     <link rel="stylesheet" href="../fontawesome/css/all.css">
     <link rel="stylesheet" href="../css/bootstrap-select.min.css">
-<//link rel="stylesheet" href="../css/progress_bar.css">
-    <link rel="stylesheet" href="../css/blink.css">
-    <link rel="stylesheet" href="../css/help.css">
+    <link rel="stylesheet" href="../css/timeline.css">
+    <link rel="stylesheet" href="../css/bootstrap-datetimepicker.min.css">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+
     <title>Allterus</title>
-  </head>
-  <body>
-<//?php include_once("../all/loading.php"); ?>
-<?php include("../all/header.php"); ?>
+
+    <style>
+        body {
+            zoom: 0.9;
+            width: 100%;
+            overflow-x: hidden;
+        }
+
+        .form-check-label {
+            font-size: 13px;
+            /* Ajuste do texto préximo aos checkboxes */
+            padding: 1px;
+        }
+
+        th form {
+            margin: 0 !important;
+        }
+
+        .table-container {
+            height: 87vh;
+            /* Define um limite de altura para a tabela */
+            overflow-y: auto;
+            /* Habilita o scroll vertical */
+            display: block;
+            border: 1px solid #dee2e6;
+        }
+
+        table {
+            display: auto;
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th,
+        td {
+            max-width: 200px;
+            white-space: normal;
+            word-wrap: break-word;
+        }
+
+        .form-check-label {
+            font-size: 13px;
+            /* Ajuste do texto préximo aos checkboxes */
+            padding: 1px;
+        }
+
+        .-dropdown-toggle-split::after {
+            /*alinha o icone da setinha na direita*/
+            position: absolute;
+            right: 10px;
+            top: 45%;
+        }
+
+        .dropdown-toggle-split::before {
+            content: none;
+            /* Remove a setinha */
+        }
+    </style>
+
+</head>
+
+<body>
+    <?php include("../all/sidebar.php"); ?>
+
     <div class="container-fluid">
-      <div class="row">
-        <div class="col-md-12 mt-2">
-          <div class="card">
-            <div class="card-header py-1">
-              <form action="#" method="POST">
-                <div class="form-row align-items-center">
-                  <div class="col-auto col-form-label-sm">
-                    <label class="my-0"> Cliente:</label>
-                    <select name="f_clt" class="form-control form-control-sm selectpicker" data-live-search="true" required="required" tabindex="1">
-                      <option value="0">Todos os Clientes</option>
-<?php
-$pdo = ConnectionN3();
-$show_clt = $pdo->prepare("SELECT clientes.clt_id, clientes.clt_nomef FROM clientes WHERE clientes.clt_sts = '1' ORDER BY clientes.clt_nomef ASC");
-$show_clt->execute();
-while($exibe=$show_clt->fetch(PDO::FETCH_ASSOC)){
-  $clt_id = $exibe["clt_id"];
-  $clt_nome = $exibe["clt_nomef"];
-?>
-                      <option value="<?php echo $clt_id; ?>"<?php if ($f_clt == $clt_id){echo " selected";} ?>><?php echo $clt_nome;?></option>
-<?php } ?>
-                    </select>
-                  </div>
-<?php //se houver um cliente específico para a pesquisa, mostra a opção de solicitante no filtro
-if($f_clt>0){ ?>
-                  <div class="col-auto col-form-label-sm">
-                    <label class="my-0"> Solicitante:</label>
-                    <select name="f_sol" class="form-control form-control-sm selectpicker" data-live-search="true" required="required" tabindex="1">
-                      <option value="0">Todos os Solicitantes</option>
-<?php
-$pdo = ConnectionN3();
-$show_clt = $pdo->prepare("SELECT pessoas.pessoa_id, pessoas.pessoa_nom FROM pessoas WHERE pessoas.pessoa_clt = '$f_clt' ORDER BY pessoas.pessoa_nom ASC");
-$show_clt->execute();
-while($exibe=$show_clt->fetch(PDO::FETCH_ASSOC)){
-  $pessoa_id = $exibe["pessoa_id"];
-  $pessoa_nom = $exibe["pessoa_nom"];
-?>
-                      <option value="<?php echo $pessoa_id; ?>"<?php if ($f_sol == $pessoa_id){echo " selected";} ?>><?php echo $pessoa_nom;?></option>
-<?php } ?>
-                    </select>
-                  </div>
-<?php } ?>                  
-                  <div class="col-auto col-form-label-sm">
-                    <label class="my-0"> Status:</label>
-                    <select name="f_sts" class="form-control form-control-sm" tabindex="2">
-                      <option value="10"<?php if (10 == $f_sts){echo " selected";} ?>>Todos</option>
-                      <option value="11"<?php if (11 == $f_sts){echo " selected";} ?>>Abertas</option>
-                      <option value="1"<?php  if ( 1 == $f_sts){echo " selected";} ?>>Aguardando</option>
-                      <option value="2"<?php  if ( 2 == $f_sts){echo " selected";} ?>>Em execução</option>
-                      <option value="3"<?php  if ( 3 == $f_sts){echo " selected";} ?>>Em espera</option>
-                      <option value="4"<?php  if ( 4 == $f_sts){echo " selected";} ?>>Concluído</option>
-                      <option value="0"<?php  if ( 0 == $f_sts){echo " selected";} ?>>Agendados</option>
-                    </select>
-                  </div>
-                  <div class="col-auto col-form-label-sm">
-                    <label class="my-0"> Técnico:</label>
-                    <select name="f_tec" class="form-control form-control-sm selectpicker" data-live-search="true" required="required" tabindex="3">
-                      <option value="all"<?php if ("all" == $f_sts){echo " selected";} ?>>Todos</option>
-                      <option value="0"<?php if (0 == $f_sts){echo " selected";} ?>>Não determinado</option>
-<?php
-$pdo = ConnectionN3();
-$show_clt = $pdo->prepare("SELECT usuarios.user_id, usuarios.user_nome FROM usuarios ORDER BY usuarios.user_nome ASC");
-$show_clt->execute();
-while($exibe=$show_clt->fetch(PDO::FETCH_ASSOC)){
-  $user_id = $exibe["user_id"];
-  $user_nome = $exibe["user_nome"];
-?>
-                      <option value="<?php echo $user_id; ?>"<?php  if ( $user_id == $f_tec){echo " selected";} ?>><?php echo $user_nome;?></option>
-<?php } ?>
-                    </select>
-                  </div>
-                  <div class="col-auto pt-3">
-                    <button type="submit" class="btn btn-sm btn-outline-info" tabindex="4">Filtrar</button>
-                  </div>
-                </div>
-              </form>
-            </div>
-            
-            <div class="card-body p-0">
-              <table class="table table-hover small">
-                <thead>
-                  <tr>
-                    <th class="p-1">
-                      <form action="#" method="POST">
-                        <input type="hidden" name="f_clt" value="<?php echo $f_clt; ?>">
-                        <input type="hidden" name="f_sts" value="<?php echo $f_sts; ?>">
-                        <input type="hidden" name="f_tec" value="<?php echo $f_tec; ?>">
-                        <input type="hidden" name="f_sol" value="<?php echo $f_sol; ?>">
-                        <input type="hidden" name="ord" value="id">
-                        <button type="submit" class="btn btn-light btn-sm btn-block"><i class="fas fa-sort-amount-down-alt"></i> ID</button>
-                      </form>
-                    </th>
-                    <th class="p-1">
-                      <form action="#" method="POST">
-                        <input type="hidden" name="f_clt" value="<?php echo $f_clt; ?>">
-                        <input type="hidden" name="f_sts" value="<?php echo $f_sts; ?>">
-                        <input type="hidden" name="f_tec" value="<?php echo $f_tec; ?>">
-                        <input type="hidden" name="f_sol" value="<?php echo $f_sol; ?>">
-                        <input type="hidden" name="ord" value="cliente">
-                        <button type="submit" class="btn btn-light btn-sm btn-block"><i class="fas fa-sort-amount-down-alt"></i> Cliente</button>
-                      </form>
-                    </th>
-                    <th class="p-1">
-                      <form action="#" method="POST">
-                        <input type="hidden" name="f_clt" value="<?php echo $f_clt; ?>">
-                        <input type="hidden" name="f_sts" value="<?php echo $f_sts; ?>">
-                        <input type="hidden" name="f_tec" value="<?php echo $f_tec; ?>">
-                        <input type="hidden" name="f_sol" value="<?php echo $f_sol; ?>">
-                        <input type="hidden" name="ord" value="abertura">
-                        <button type="submit" class="btn btn-light btn-sm btn-block"><i class="fas fa-sort-amount-down-alt"></i> Abertura</button>
-                      </form>
-                    </th>
-                    <th class="p-1">
-                        <button type="submit" class="btn btn-light btn-sm btn-block">Categoria</button>
-                    </th>
+        <div class="row">
+            <div class="col-12 mt-2" style="padding-left: 1px; padding-right: 1px;">
+                <div class="card w-100" style="overflow-x: auto;">
+                    <div class="card-header py-1">
+                        <form action="#" method="POST">
+                            <div class="form-row align-items-center">
+                                <div class="col-auto col-form-label-sm">
+                                    <label class="my-0">ID:</label>
+                                    <input type="text" name="id" class="form-control form-control-sm my-1" value="<?= isset($_POST['id']) ? htmlspecialchars($_POST['id']) : '' ?>">
+                                </div>
 
-                    <th class="p-1">
-                      <form action="#" method="POST">
-                        <input type="hidden" name="f_clt" value="<?php echo $f_clt; ?>">
-                        <input type="hidden" name="f_sts" value="<?php echo $f_sts; ?>">
-                        <input type="hidden" name="f_tec" value="<?php echo $f_tec; ?>">
-                        <input type="hidden" name="f_sol" value="<?php echo $f_sol; ?>">
-                        <input type="hidden" name="ord" value="forma">
-                        <button type="submit" class="btn btn-light btn-sm btn-block"><i class="fas fa-sort-amount-down-alt"></i></button>
-                      </form>
-                    </th>
-                    <th class="p-1">
-                        <input type="hidden" name="f_clt" value="<?php echo $f_clt; ?>">
-                        <input type="hidden" name="f_sts" value="<?php echo $f_sts; ?>">
-                        <input type="hidden" name="f_tec" value="<?php echo $f_tec; ?>">
-                        <input type="hidden" name="f_sol" value="<?php echo $f_sol; ?>">
-                    </th>
-                    <th class="p-1">
-                      <form action="#" method="POST">
-                        <input type="hidden" name="f_clt" value="<?php echo $f_clt; ?>">
-                        <input type="hidden" name="f_sts" value="<?php echo $f_sts; ?>">
-                        <input type="hidden" name="f_tec" value="<?php echo $f_tec; ?>">
-                        <input type="hidden" name="f_sol" value="<?php echo $f_sol; ?>">
-                        <input type="hidden" name="ord" value="tecnico">
-                        <button type="submit" class="btn btn-light btn-sm btn-block"><i class="fas fa-sort-amount-down-alt"></i> Técnico</button>
-                      </form>                    
-                    </th>
-                    <th class="p-1">
-                      <form action="#" method="POST">
-                        <input type="hidden" name="f_clt" value="<?php echo $f_clt; ?>">
-                        <input type="hidden" name="f_sts" value="<?php echo $f_sts; ?>">
-                        <input type="hidden" name="f_tec" value="<?php echo $f_tec; ?>">
-                        <input type="hidden" name="f_sol" value="<?php echo $f_sol; ?>">
-                        <input type="hidden" name="ord" value="status">
-                        <button type="submit" class="btn btn-light btn-sm btn-block"><i class="fas fa-sort-amount-down-alt"></i> Status</button>
-                      </form>
-                    </th>
-                    <th class="p-1"></th>
-                  </tr>
-                </thead>
-                <tbody>
-<?php 
-$pdo = ConnectionN3();
-$show_projeto = $pdo->prepare("SELECT proj_mkt.id,proj_mkt.`nome_proj`, proj_mkt.`area`, proj_mkt.`tipo`, proj_mkt.`local`, proj_mkt.dias, proj_mkt.forma, proj_mkt.desc_abertura, proj_mkt.desc_fechamento, proj_mkt.abertura, proj_mkt.fechamento, proj_mkt.tecnico, proj_mkt.reincidente, proj_mkt.`status`,
-clientes.clt_id, clientes.clt_nomer, clientes.clt_nomef, clientes.clt_cnpj,
-pessoas.pessoa_nom, pessoas.pessoa_cargo, pessoas.pessoa_tel, pessoas.pessoa_mail,
-locais.local_nom, locais.local_end, locais.local_city, locais.local_uf,
-categorias.cat_nome,
-subcategorias.scat_nome,
-itens.itens_nome,
-usuarios.user_nome AS tecnico_nome, usuarios.user_cel AS tecnico_tel, usuarios.user_mail AS tecnico_mail
-FROM proj_mkt
-INNER JOIN clientes ON clientes.clt_id = proj_mkt.cliente
-LEFT JOIN pessoas ON pessoas.pessoa_id = proj_mkt.pessoa
-LEFT JOIN locais ON locais.local_id = proj_mkt.`local`
-LEFT JOIN categorias ON categorias.cat_id = proj_mkt.categoria
-LEFT JOIN subcategorias ON subcategorias.scat_id = proj_mkt.subcategoria
-LEFT JOIN itens ON itens.itens_id = proj_mkt.item
-LEFT JOIN usuarios ON usuarios.user_id = proj_mkt.tecnico
-WHERE proj_mkt.`status` IN ($p_sts)
-AND clientes.clt_id LIKE '$p_clt'
-AND proj_mkt.tecnico LIKE '$p_tec'  
-AND proj_mkt.pessoa LIKE '$p_sol'  
-ORDER BY $order_by
-");
-$show_projeto->execute();
-while($row=$show_projeto->fetch(PDO::FETCH_ASSOC)){
-  $projs_mkt=$row["id"];
-  $nome_proj=$row["nome_proj"];
-  $projeto_desc_abertura=$row["desc_abertura"];
-  $projeto_desc_fechamento=$row["desc_fechamento"];
-  $projeto_hora_abertura=$row["abertura"];
-  $projeto_hora_fechamento=$row["fechamento"];
-  $projeto_reincidente=$row["reincidente"];
-  $projeto_status=$row["status"];
-  $projeto_tipo=$row["tipo"];
-    if($projeto_tipo==1){$projeto_tipo="Falha";}
-    if($projeto_tipo==2){$projeto_tipo="Requisição de Serviços";}
-    if($projeto_tipo==3){$projeto_tipo="Requisição de informação";}
-    if($projeto_tipo==4){$projeto_tipo="Notificação de monitoramento";}
-    if($projeto_tipo==0){$projeto_tipo="Não informado";}
-  $projeto_dias=$row["dias"];
-    //if($atd_nivel==0){$atd_niveln="Não informado"; $sla = $sla_n1;}
-    //if($atd_nivel==5){$atd_niveln="1 dia"; $sla = $sla_n5;}
-    //if($atd_nivel==6){$atd_niveln="2 dias"; $sla = $sla_n6;}
-    //if($atd_nivel==7){$atd_niveln="5 dias"; $sla = $sla_n7;}
-    //if($atd_nivel==8){$atd_niveln="15 dias"; $sla = $sla_n8;}
-    //if($atd_nivel==9){$atd_niveln="30 dias"; $sla = $sla_n9;}
-    //if($atd_nivel==10){$atd_niveln="60 dias"; $sla = $sla_n10;}
-    //if($atd_nivel==11){$atd_niveln="90 dias"; $sla = $sla_n11;}
+                                <div class="col-2 col-form-label-sm">
+                                    <label class="my-0">Cliente:</label>
+                                    <select class="form-control form-control-sm" name="cliente" id="cliente">
+                                        <option value="">Todos</option>
+                                        <?php foreach ($todosClientes as $cliente) : ?>
+                                            <option value="<?= $cliente['userid'] ?>" <?= (isset($_POST['cliente']) && $_POST['cliente'] == $cliente['userid']) ? 'selected' : '' ?>>
+                                                <?= $cliente['company'] ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
 
-  
-  $projeto_forma=$row["forma"];
-    
-  $clt_id=$row["clt_id"];
-  $clt_nomer=$row["clt_nomer"];
-  $clt_nomef=$row["clt_nomef"];
-  $clt_cnpj=$row["clt_cnpj"];
+                                <div class="col-auto col-form-label-sm">
+                                    <label class="my-0">Status:</label>
+                                    <div class="dropdown" style="width: 190px">
+                                        <div class="form-control form-control-sm dropdown-toggle dropdown-toggle-split" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style="cursor: pointer;">
+                                            Selecione
+                                        </div>
+                                        <div class="dropdown-menu p-2" style="width: 190px; border-radius: 4px;">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="select-all-status" onclick="toggleAllStatuses()">
+                                                <label class="form-check-label" for="select-all-status">Todos</label>
+                                            </div>
+                                            <?php foreach ($todosStatus as $status) : ?>
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" name="status[]" value="<?= $status['id'] ?>" id="status<?= $status['id'] ?>" <?= (isset($_POST['status']) && in_array($status['id'], $_POST['status'])) ? 'checked' : '' ?>>
+                                                    <label class="form-check-label" for="status<?= $status['id'] ?>"><?= $status['name'] ?></label>
+                                                </div>
+                                            <?php endforeach; ?>
+                                        </div>
+                                    </div>
+                                </div>
 
-  $pessoa_nom=$row["pessoa_nom"];
-  $pessoa_cargo=$row["pessoa_cargo"];
-  $pessoa_tel=$row["pessoa_tel"];
-  $pessoa_mail=$row["pessoa_mail"];
-  
-  $local=$row["local"];
-  $local_nom=$row["local_nom"];
-  if($local==0){$local_nom = "Não informado";}
-  $local_end=$row["local_end"];
-  $local_city=$row["local_city"];
-  $local_uf=$row["local_uf"];
-  
-  $cat_nome=$row["cat_nome"];
-  $scat_nome=$row["scat_nome"];
-  $itens_nome=$row["itens_nome"];
-  
-  $tecnico=$row["tecnico"];
-  $tecnico_nome=$row["tecnico_nome"];
-  if($tecnico==0){$tecnico_nome = "Não direcionado";}
-          
-  //TIME TO CLOSE
-  //calcula hora limite para o fechamento do projeto: Abertura + SLA
-    $time_limit_to_close = date("Y-m-d H:i:s",strtotime($projeto_hora_abertura." + minutes"));
-  //hora atual
-    $time_now = date("Y-m-d H:i:s");
-    $start_date = new DateTime($time_now);
-    $end_date = new DateTime($time_limit_to_close);
-  
-  //TRABALHA O TEMPO DE ESPERA
-  //SOMA TEMPO TOTAL EM QUE O PROJETO FICOU EM ESPERA
-  $pdo = ConnectionN3();
-  $show_espera = $pdo->prepare("SELECT SUM(TIMESTAMPDIFF(SECOND, espera_start, espera_end)) AS segundos FROM espera WHERE espera.espera_atd = '$projs_mkt'");
-  $show_espera->execute();
-  $conta_espera = $show_espera->rowCount();
-  $exibe_espera=$show_espera->fetch(PDO::FETCH_ASSOC);
-  $espera_tempo_total=$exibe_espera["segundos"];
-  //SE NÃO TIVER RETORNO, ATRIBUI 0 SEGUNDOS AO TEMPO DE ESPERA
-  if($espera_tempo_total==""){$espera_tempo_total=0;}
-  //SOMA O TEMPO TOTAL DE ESPERA AO PRAZO PARA O FECHAMENTO DO ATENDIMENTO
-  $end_date0 = date("Y-m-d H:i:s",strtotime($time_limit_to_close." +$espera_tempo_total SECOND"));
-  $end_date = new DateTime($end_date0);
-    
-  //SE PROJETO ESTIVER EM ESPERA
-  //BUSCA A DATA HORA QUE FOI COLOCADO EM ESPERA
-  //BUSCA A DATA HORA QUE ELE DEVE VOLTAR PARA O PROJETO
-  if($projeto_status==3){
-    $pdo = ConnectionN3();
-    $show_espera = $pdo->prepare("SELECT espera_projeto.espera_start, espera_projeto.espera_prev FROM espera_projeto WHERE espera_projeto.espera_projeto = '$projs_mkt' ORDER BY espera_id DESC LIMIT 0,1");
-    $show_espera->execute();
-    $exibe_espera=$show_espera->fetch(PDO::FETCH_ASSOC);
-    $espera_start=$exibe_espera["espera_start"];
-    $espera_prev=$exibe_espera["espera_prev"];
-    
-    //VERIFICA DE DATA HORA ATUAL FOR MAIOR DO QUE DATA HORA PREVISTA PARA RETOMADA
-    //SE POSITIVO:
-    if(strtotime($time_now) > strtotime($espera_prev)){
-    //MUDA STATUS DO PEDIDO PARA 2 (EM EXECUÇÃO)
-    //ALTERA A INFORMAÇÃO DE ESPERA NA TABELA DE ESPERAS
-    //INSERE REGISTRO DE INTERAÇÃO NA TABELA DE INTERAÇÃO
-      $pdo = ConnectionN3();
-      
-      //altera o status do atendimento para 2 (Em execução)
-      $edt= $pdo->prepare("UPDATE `proj_mkt` SET `status`='2' WHERE  `id`='$projs_mkt';");
-      if($edt->execute()){
-        //busca o ID do registro de espera, na tabela espera
-        $show_espera = $pdo->prepare("SELECT espera.espera_id FROM espera WHERE espera.espera_projeto = '$projs_mkt' ORDER BY espera.espera_id DESC LIMIT 0,1");
-        $show_espera->execute();
-        $exibe=$show_espera->fetch(PDO::FETCH_ASSOC);
-        $espera_id = $exibe["espera_id"]; 
-        
-        //registra A data hora final de espera, na tabela espera
-        $edt_espera= $pdo->prepare("UPDATE `espera` SET `espera_end`='$time_now' WHERE `espera_id`='$espera_id';");
-        if($edt_espera->execute()){
+                                <div class="col-auto col-form-label-sm">
+                                    <label class="my-0">Prioridade:</label>
+                                    <select class="form-control form-control-sm" name="prioridade" id="prioridade">
+                                        <option value="">Todas</option>
+                                        <option value="1" <?= (isset($_POST['prioridade']) && $_POST['prioridade'] == "1") ? 'selected' : '' ?>>Baixa</option>
+                                        <option value="2" <?= (isset($_POST['prioridade']) && $_POST['prioridade'] == "2") ? 'selected' : '' ?>>Média</option>
+                                        <option value="3" <?= (isset($_POST['prioridade']) && $_POST['prioridade'] == "3") ? 'selected' : '' ?>>Alta</option>
+                                        <option value="4" <?= (isset($_POST['prioridade']) && $_POST['prioridade'] == "4") ? 'selected' : '' ?>>Urgente</option>
 
-          //insere o registro de uma nova interação 
-          $adc= $pdo->prepare("INSERT INTO `inter_proj_mkt` (`inter_tipo`, `inter_projeto`, `inter_user`, `inter_data`, `inter_desc`) VALUES ('6', '$projs_mkt', '1', '$time_now', 'Status do atendimento alterado automaticamente para Em Execução.');");
-          if($adc->execute()){
-          }else{
-            $mensagem = "<i class=\"fas fa-exclamation-triangle\"></i> Falha ao adicionar registro na tabela de interação!";
-            $mensagem_cor = "alert-danger"; 
-          }
-        }else{
-          $mensagem = "<i class=\"fas fa-exclamation-triangle\"></i> Falha ao adicionar registro na tabela de interação!";
-          $mensagem_cor = "alert-danger"; 
-        }        
-      }else{
-         $mensagem = "<i class=\"fas fa-exclamation-triangle\"></i> Falha ao retomar o atendimento!";
-         $mensagem_cor = "alert-danger"; 
-      }       
-      
-      
-    }else{
-    //SE NEGATIVO:
-    //DEFINE A DATA HORA DO INÍCIO DA ESPERA COMO A DATA HORA ATUAL PARA CALCULAR QUANTO TEMPO FALTA PARA ENCERRAR O PRAZO DE PROJETO
-      $time_now = $espera_start;
-      $start_date = new DateTime($espera_start);
-    }
-  }    
-   
-   
-  //verifica se ainda existe prazo para atendimento
-  if($start_date<$end_date){
-  //calcula a diferença entre o prazo de fechamento e a hora atual
-    $interval = $start_date->diff($end_date);
-    $hours   = $interval->format('%h'); 
-    $minutes = $interval->format('%i');
-    $progress_color = "blue";
-    $tag = $hours."h ".$minutes."m";
-  //calcula o tamanho da barra de progresso do chamado
-    $minutos_restantes = $hours * 60 + $minutes;
-    $progress_width = (110-($minutos_restantes/180*100));
-    if($progress_width>92){$progress_color = "orange"; }
-  } else { 
-    $progress_color = "orange";
-    $progress_width = "100";
-    $tag = "Vencido";
-  }
-  //se atendimento concluído
-  if($projeto_status==4){
-    $progress_color = "green";
-    $progress_width = "100";
-    $tag = "ok";
-  }
-  
-  //BUSCA A ÚLTIMA INTERAÇÃO QUE HOUVE NO CHAMADO
-  $pdo = ConnectionN3();
-  $show_inter = $pdo->prepare("SELECT inter_proj_mkt.inter_data FROM inter_proj_mkt WHERE inter_proj_mkt.inter_projeto = '$projs_mkt' AND inter_proj_mkt.inter_tipo > '0' ORDER BY inter_id DESC LIMIT 0,1");
-  $show_inter->execute();
-  $exibe_inter=$show_inter->fetch(PDO::FETCH_ASSOC);
-  $last_inter_data=$exibe_inter["inter_data"];
-  $end_date = new DateTime($time_now);
-  //$start_date = new DateTime("$last_inter_data");
-  $interval = $start_date->diff($end_date);
-  $hours   = $interval->format('%h'); 
-  $minutes = $interval->format('%i');
-  $time_last_inter = $hours * 60 + $minutes;
-?>
-                  <tr>
-                    <th class="align-middle">
-                      #<?php echo str_pad($projs_mkt , 5 , '0' , STR_PAD_LEFT); ?>
-                    <button type="button" class="btn btn-outline-light btn-sm" data-container="body" data-toggle="popover" data-trigger="focus" data-placement="right" data-content="<?php echo $projeto_desc_abertura; ?>"><i class="fas fa-comment-alt text-warning"></i></button>
-                    <?php if($projeto_reincidente==1){ ?> 
-                    <i class="fas fa-exclamation-triangle text-danger" title="Reincidente"></i>
-                    <?php } ?> 
-                    </th>
-                    <td class="align-middle">
-                      <strong><?php echo substr($nome_proj, 0, 35); ?></strong><br>
-                      <?php echo substr($clt_nomer, 0, 35); ?>
-                      <?php if($pessoa_nom!=""){ ?> <br> <i class="far fa-user mr-1"></i> <?php echo $pessoa_nom; }?>
-                    </td>
-                    <td class="align-middle text-center">
-                      <?php echo $dt1 = date('d/m/y', strtotime($projeto_hora_abertura));?>
-                      <br>
-                      <?php echo $dt1 = date('H:i', strtotime($projeto_hora_abertura));?> h
-                    </td>
-                    <td>
-                      <?php echo $cat_nome;?> <br/> <?php echo $scat_nome;?> <br/> <?php echo $itens_nome;?>
-                   
-                    <th class="align-middle">
-<?php if($projeto_forma==1){ ?> <i class="fas fa-laptop-house text-primary" title="Remoto"></i> <?php } ?>
-<?php if($projeto_forma==2){ ?> <i class="fas fa-briefcase text-danger" title="Presencial"></i> <?php } ?>
-                    </th>                    
-                    <td class="align-middle">
-<?php if($projeto_status>0){ ?>
+                                    </select>
+                                </div>
 
-                      
-<?php } ?>
-                    </td>
-                    <td class="align-middle">
-                      <?php echo $tecnico_nome; ?>
-                    </td>
-                    <td class="align-middle">
-<?php if($projeto_status==0){ ?>
-                      <i class="far fa-clock"></i> Agendado 
-<?php } ?>
-<?php if($projeto_status==1){ ?>
-                       <i class="fas fa-hourglass-half"></i> Aguardando
-<?php } ?>
-<?php if($projeto_status==2){ ?>
-                      <i class="fas fa-magic"></i> Em Execução
-<?php } ?>
-<?php if($projeto_status==3){ ?>
-                      <i class="far fa-pause-circle"></i> Em Espera
-<?php } ?>
-<?php if($projeto_status==4){ ?>
-                      <i class="fas fa-check"></i> Finalizada
-<?php } ?>                    
-                    </td>
-                    <td class="align-middle p-1">
-                      <form action="projeto.php" method="POST">
-                        <input type="hidden" name="projeto" value="<?php echo $projs_mkt;?>">
-                        <button type="submit" class="btn btn-light btn-sm p-1"><i class="far fa-folder-open"><?php echo $projs_mkt ?></i></button>
-                      </form>                    
-                    </td>
-                  </tr>
-<?php } ?>
-                </tbody>
-              </table>
-            
-            </div>
-          </div>
-        </div>
-      </div>
-<!-- MODAL DE AJUDA PARA A LISTA DE ATENDIMENTO -->    
-<div class="modal right fade" id="Help" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
-  <div class="modal-dialog" role="document">
-    <div class="modal-content">
+                                <div class="col-auto col-form-label-sm">
+                                    <label class="my-0">Tecnico:</label>
+                                    <select class="form-control form-control-sm" name="tecnico" id="tecnico">
+                                        <option value="">Todos</option>
+                                        <?php foreach ($todosTecnicos as $tecnico) : ?>
+                                            <option value="<?= $tecnico['staffid'] ?>" <?= (isset($_POST['tecnico']) && $_POST['tecnico'] == $tecnico['staffid']) ? 'selected' : '' ?>>
+                                                <?= $tecnico['firstname'] . ' ' . $tecnico['lastname'] ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
 
-      <div class="modal-header">
-        <h6 class="modal-title" id="myModalLabel"><i class="far fa-question-circle text-danger"></i> Lista de atendimento</h6>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-      </div>
+                                <button type="submit" name="filtrar" class="btn btn-sm btn-info my-1 mr-3 ml-3 mt-4">Filtrar</button>
 
-      <div class="modal-body">
-        <p><strong>Os projetos são marcados com os seguintes status:</strong></p>
-        <ul class="list">
-          <li><i class="far fa-clock"></i> Agendado 
-            <ul>
-              <li class="small">São projetos cadastrados com Data/Hora futura.</li>
-              <li class="small">Eles podem ser listados na tela através das opções do filtro.</li>
-              <li class="small">Quando for a Data/Hora do agendamento o Atendimento terá seu status alterado automaticamente para <span class="badge badge-light"><i class="fas fa-hourglass-half"></i> Aguardando Execução</span>.</li>
-            </ul>
-          </li>
-          <li class="pt-1"><i class="fas fa-hourglass-half"></i> Aguardando Execução
-            <ul>
-              <li class="small">São projetos que devem ser executados pelos técnicos.</li>
-              <li class="small">Cada atendimento tem um prazo para ser atendido.</li>
-              <li class="small">Caso o atendimento fique por mais de 20 minutos sem uma interação, será exibido o seguinte alerta: <i class="fas fa-bell blink"></i>.</li>
-              <li class="small">Quando um técnico iniciar o Atendimento, terá seu status alterado automaticamente para <span class="badge badge-light"><i class="fas fa-magic"></i> Em Execução</span>.</li>
-            </ul>
-          </li>
-          <li class="pt-1"><i class="fas fa-magic"></i> Em Execução
-            <ul>
-              <li class="small">São projetos que estão sob responsabilidade de um técnico.</li>
-              <li class="small">O técnico responsável tem autonomia para transferir, colocar em espera e finalizar o atendimento.</li>
-            </ul>
-          </li>            
-          <li class="pt-1"><i class="far fa-pause-circle"></i> Em Espera
-            <ul>
-              <li class="small">São projetos que estão aguardando uma resposta de alguém externo a Nível 3.</li>
-              <li class="small">Durante o período de espera o prazo para atendimento é <em>pausado</em>.</li>
-              <li class="small">Toda espera tem um prazo (Data/Hora).</li>
-              <li class="small">Quando o prazo da espera vencer o Atendimento terá seu status alterado automaticamente para <span class="badge badge-light"><i class="fas fa-magic"></i> Em Execução</span>.</li>
-            </ul>
-          </li>
-          <li class="pt-1"><i class="fas fa-check"></i> Finalizada
-            <ul>
-              <li class="small">São projetos concluídos.</li>
-            </ul>
-          </li>
-        </ul>
-        <p><strong>Os projetos serão classificados de forma automática como:</strong></p>
-        <ul class="list">
-          <li><i class="fas fa-exclamation-triangle text-danger"></i> Reincidente 
-            <ul>
-              <li class="small">Quando já tiver sido registrado um atendimento para o mesmo cliente, a mesma categoria e a mesma sub-categoria em um período de 30 dias.</li>
-            </ul>
-          </li>
-        </ul>
-      </div>
+                                <button type="button" class="btn btn-sm btn-outline-info my-1 mt-4" onclick="limparFiltros()">Limpar</button>
 
-    </div>
-  </div>
-</div>         
-    </div>
-<?php if (isset($mensagem)){ ?>
-<div class="row pull-right" style="position:absolute; top: 65px; right:25px;">
-  <div class="alert <?php echo $mensagem_cor; ?> alert-dismissible fade show" role="alert">
-    <?php echo $mensagem; ?> 
-    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-      <span aria-hidden="true">&times;</span>
-    </button>
-  </div>
-</div>
-<?php } ?>
-<?php include_once("../all/update_pass.php"); ?>
-    <script src="../js/bootstrap.min.js"></script>
-    <script src="../js/jquery-3.6.0.min.js"></script>
-<!--    <script src="../js/bootstrap.bundle.min.js"></script>    -->
-    <script src="../js/bootstrap.bundle.min.js"></script>    
-    <script src="../js/bootstrap-select.min.js"></script>    
-<?php if (isset($mensagem)){ ?>
+                                <div class="col-auto">
+                                    <a href="./srhomeMKT.php" class="btn btn-sm btn-outline-info my-1 mt-4">
+                                        <i class="fas fa-calendar-alt"></i> Filtro Avançado
+                                    </a>
+                                </div>
+
+                                <div class="col-auto pt-3 mt-1">
+                                    <button class="btn btn-sm btn-outline-info">Total de Atendimentos: <?= $count_atendimentos ?></button>
+                                </div>
+
+                                <!-- Campos ocultos para ordenação -->
+                                <input type="hidden" name="ord" id="ord" value="<?= htmlspecialchars($_POST['ord'] ?? '') ?>">
+                                <input type="hidden" name="order_dir" id="order_dir" value="<?= htmlspecialchars($_POST['order_dir'] ?? 'ASC') ?>">
+                            </div>
+                        </form>
+                    </div>
+
+                    <div class="card-body p-0">
+                        <div class="table-container">
+                            <table class="table table-hover small">
+                                <thead>
+                                    <tr>
+                                        <?php
+                                        $colunas = [
+                                            'id' => 'ID',
+                                            'name' => 'Título',
+                                            'nome_cliente' => 'Nome Cliente',
+                                            'priority' => 'Prioridade',
+                                            'total_artes' => 'Nº Artes',
+                                            'nome_tecnico' => 'Designer',
+                                            'nome_direcionador' => 'Direcionado por',
+                                            'status' => 'Status',
+                                            'inicio' => 'Criação',
+                                            'prazo' => 'Prazo',
+                                            'finalizado' => 'Finalizado'
+                                        ];
+
+                                        foreach ($colunas as $campo => $titulo) {
+                                            $ord = $_POST['ord'] ?? '';
+                                            $dir = $_POST['order_dir'] ?? 'ASC';
+                                            $nextDir = ($ord == $campo && $dir == 'ASC') ? 'DESC' : 'ASC';
+                                            echo "<th>
+                                                    <form method='POST' style='display:inline;'>
+                                                        <input type='hidden' name='ord' value='$campo'>
+                                                        <input type='hidden' name='order_dir' value='$nextDir'>";
+                                            // Manter filtros ao ordenar
+                                            foreach ($_POST as $key => $val) {
+                                                if ($key != 'ord' && $key != 'order_dir') {
+                                                    if (is_array($val)) {
+                                                        foreach ($val as $v) {
+                                                            echo "<input type='hidden' name='{$key}[]' value='" . htmlspecialchars($v) . "'>";
+                                                        }
+                                                    } else {
+                                                        echo "<input type='hidden' name='$key' value='" . htmlspecialchars($val) . "'>";
+                                                    }
+                                                }
+                                            }
+                                            echo "<button type='submit' class='btn btn-light btn-sm btn-block'><i class='fas fa-sort'></i> $titulo</button>
+                                                    </form>
+                                                </th>";
+                                        }
+                                        ?>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach ($todosAtendimentos as $atendimento) : ?>
+                                        <tr>
+                                            <td><strong>#<?= $atendimento['id'] ?></strong></td>
+                                            <td><?= htmlspecialchars($atendimento['name']) ?></td>
+                                            <td><strong><?= htmlspecialchars($atendimento['nome_cliente']) ?></strong></td>
+                                            <td>
+                                                <?php
+                                                $prio = $atendimento['priority'];
+                                                $cores = [1 => 'success', 2 => 'warning', 3 => 'custom', 4 => 'danger'];
+                                                $labels = [1 => 'Baixa', 2 => 'Média', 3 => 'Alta', 4 => 'Urgente'];
+                                                if ($prio == 0) {
+                                                    echo '<span class="badge badge-secondary">NA</span>';
+                                                } elseif ($prio == 3) {
+                                                    echo '<span class="badge" style="color: black; background-color: #FF8C00;">Alta</span>';
+                                                } else {
+                                                    echo "<span class='badge badge-{$cores[$prio]}'>{$labels[$prio]}</span>";
+                                                }
+                                                ?>
+                                            </td>
+                                            <td><?= $atendimento['total_artes'] ?></td>
+                                            <td><?= htmlspecialchars($atendimento['nome_tecnico'] . ' ' . $atendimento['sobrenome_tecnico']) ?></td>
+                                            <td><?= htmlspecialchars($atendimento['nome_direcionador'] . ' ' . $atendimento['sobrenome_direcionador']) ?></td>
+                                            <td><?= htmlspecialchars($atendimento['status']) ?></td>
+                                            <td><?= $atendimento['inicio'] ?></td>
+                                            <td><?= $atendimento['prazo'] ?></td>
+                                            <td><?= $atendimento['finalizado'] ?></td>
+                                            <td class="align-middle p-1">
+                                                <form action="mkt_atd.php" method="POST">
+                                                    <input type="hidden" name="mkt_atd" value="<?php echo $atendimento['id']; ?>">
+                                                    <button type="submit" class="btn btn-light btn-sm p-1"><i class="far fa-folder-open"></i></button>
+                                                </form>
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div> <!-- card-body -->
+                </div> <!-- card -->
+            </div> <!-- col -->
+        </div> <!-- row -->
+    </div> <!-- container -->
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
+
     <script>
-      window.setTimeout(function() {
-        $(".alert").alert('close');
-      }, 4000); 
+        function limparFiltros() {
+            // Limpa todos os inputs e selects
+            document.querySelectorAll('form input, form select').forEach(element => {
+                if (element.type === 'checkbox' || element.type === 'radio') {
+                    element.checked = false;
+                } else if (element.tagName === 'SELECT') {
+                    element.selectedIndex = 0;
+                } else {
+                    element.value = '';
+                }
+            });
+
+
+            document.querySelector('form').submit();
+        }
     </script>
-<?php } ?>
+
     <script>
-      $(document).ready(function(){
-        $('[data-toggle="popover"]').popover();
-      });
+        function toggleAllStatuses() {
+            const checkboxes = document.querySelectorAll("input[name='status[]']");
+            const master = document.getElementById("select-all-status");
+            checkboxes.forEach(c => c.checked = master.checked);
+        }
     </script>
-    <script>      
-      $('.popover-dismiss').popover({
-        trigger: 'focus'
-      })
-    </script>    
-  </body>
+</body>
+
 </html>

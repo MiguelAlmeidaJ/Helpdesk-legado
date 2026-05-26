@@ -54,10 +54,10 @@ if($m6_00==0){header("Location: ../index.php");}
   </head>
   <body>
 <?php include_once("../all/loading.php"); ?>
-<?php include_once("../all/header.php"); ?>
+<?php include_once("../all/sidebar.php"); ?>
 <?php 
 //verifico se existe alguma requisição POST chamada action
-$action = filter_input(INPUT_POST, 'action', FILTER_SANITIZE_STRING);
+$action = filter_input(INPUT_POST, 'action', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
 //verifico se existe alguma requisição via post cahamda projeto
 $projeto = filter_input(INPUT_POST, 'projeto', FILTER_SANITIZE_NUMBER_INT);
@@ -67,20 +67,20 @@ if ($action == "alterar_senha") {include_once("../all/update_senha.php");}
 if ($usar_token=="true") {
   if($action){
     if ($action == "projeto_adc") {
-      $nome_proj = filter_input(INPUT_POST, 'nome_proj', FILTER_SANITIZE_STRING);
-      $cliente = filter_input(INPUT_POST, 'cliente', FILTER_SANITIZE_STRING);
-      $pessoa = filter_input(INPUT_POST, 'solicitante', FILTER_SANITIZE_STRING);
-      $local = filter_input(INPUT_POST, 'local', FILTER_SANITIZE_STRING);
-      $tipo = filter_input(INPUT_POST, 'tipo', FILTER_SANITIZE_STRING);
+      $nome_proj = filter_input(INPUT_POST, 'nome_proj', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+      $cliente = filter_input(INPUT_POST, 'cliente', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+      $pessoa = filter_input(INPUT_POST, 'solicitante', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+      $local = filter_input(INPUT_POST, 'local', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+      $tipo = filter_input(INPUT_POST, 'tipo', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
       $forma = filter_input(INPUT_POST, 'forma', FILTER_SANITIZE_NUMBER_INT);
-      $categoria = filter_input(INPUT_POST, 'categoria', FILTER_SANITIZE_STRING);
-      $subcategoria = filter_input(INPUT_POST, 'subcategoria', FILTER_SANITIZE_STRING);
-      $item = filter_input(INPUT_POST, 'item', FILTER_SANITIZE_STRING);
-      $dias = filter_input(INPUT_POST, 'dias', FILTER_SANITIZE_STRING);
-      $desc_abertura = filter_input(INPUT_POST, 'desc_abertura', FILTER_SANITIZE_STRING);
+      $categoria = filter_input(INPUT_POST, 'categoria', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+      $subcategoria = filter_input(INPUT_POST, 'subcategoria', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+      $item = filter_input(INPUT_POST, 'item', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+      $dias = filter_input(INPUT_POST, 'dias', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+      $desc_abertura = filter_input(INPUT_POST, 'desc_abertura', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
       //$abertura = date("Y-m-d H:i:s");
-      $abertura = filter_input(INPUT_POST, 'abertura', FILTER_SANITIZE_STRING);
-      $tecnico = filter_input(INPUT_POST, 'tecnico', FILTER_SANITIZE_STRING);
+      $abertura = filter_input(INPUT_POST, 'abertura', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+      $tecnico = filter_input(INPUT_POST, 'tecnico', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
       //VERIFICA SE DATA HORA ABERTURA É MAIOR DO QUE DATA HORA ATUAL.
       //SE POSITIVO: UM ATENDIMENTO AGENDADO
@@ -155,21 +155,21 @@ if ($usar_token=="true") {
 
     //EDITA A CATEGORIZAÇÃO DO ATENDIMENTO
     if ($action == "projeto_edt") {   
-      $tipo = filter_input(INPUT_POST, 'tipo', FILTER_SANITIZE_STRING);
+      $tipo = filter_input(INPUT_POST, 'tipo', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         if($tipo==1){$projeto_tipo_nome="Falha";}
         if($tipo==2){$projeto_tipo_nome="Relacionamento";}
         if($tipo==3){$projeto_tipo_nome="Requisição de Serviços";}
         if($tipo==4){$projeto_tipo_nome="Requisição de informação";}
         if($tipo==5){$projeto_tipo_nome="Notificação de monitoramento";}
         if($tipo==0){$projeto_tipo_nome="Não informado";}          
-      $categoria = filter_input(INPUT_POST, 'categoria', FILTER_SANITIZE_STRING);
+      $categoria = filter_input(INPUT_POST, 'categoria', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         $pdo = ConnectionN3();
         $show_cat = $pdo->prepare("SELECT categorias.cat_nome FROM categorias WHERE categorias.cat_id = '$categoria'");
         $show_cat->execute();
         $row=$show_cat->fetch(PDO::FETCH_ASSOC);
         $projeto_cat_nome=$row["cat_nome"];
         
-      $subcategoria = filter_input(INPUT_POST, 'subcategoria', FILTER_SANITIZE_STRING);
+      $subcategoria = filter_input(INPUT_POST, 'subcategoria', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         $pdo = ConnectionN3();
         $show_scat = $pdo->prepare("SELECT subcategorias.scat_nome FROM subcategorias WHERE subcategorias.scat_id = '$subcategoria'");
         $show_scat->execute();
@@ -221,7 +221,7 @@ if ($usar_token=="true") {
       //COMPARA O DIA DO PROJETO:
       //SE DIFERENTE:
       if($dias!=$projeto_dias_original){
-        //ALTERA O CÓDIGO DO NÍVEL NA TABELA DE PROJETOS
+        //ALTERA O CÓDIGO DO NºVEL NA TABELA DE PROJETOS
         $pdo = ConnectionN3();
         $adc= $pdo->prepare("UPDATE `projetos` SET `dias`='$dias' WHERE `id`='$projeto';");
         if($adc->execute()){
@@ -286,7 +286,7 @@ if ($usar_token=="true") {
 
     //REGISTRAR NOVA INTERAÇÃO
     if ($action == "projeto_new_inter") {
-      $inter_desc = filter_input(INPUT_POST, 'inter_desc', FILTER_SANITIZE_STRING);
+      $inter_desc = filter_input(INPUT_POST, 'inter_desc', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
       $pdo = ConnectionN3();
       $adc= $pdo->prepare("INSERT INTO `inter_projeto` (`inter_tipo`, `inter_projeto`, `inter_user`, `inter_data`, `inter_desc`) VALUES ('7', :projeto, '$user_id', '$agora', :inter_desc);");
       $adc->bindParam(':inter_desc', $inter_desc);
@@ -303,7 +303,7 @@ if ($usar_token=="true") {
     //USUÁRIO ACEITA INICIAR UM ATENDIMENTO
     if ($action == "projeto_aceitar") {
       $tecnico = filter_input(INPUT_POST, 'tecnico', FILTER_SANITIZE_NUMBER_INT);
-    //VERIFICA SE TECNICO ATRIBUÍDO É O PRÓPRIO USUÁRIO
+    //VERIFICA SE TECNICO ATRIBUÍDO é O PRÓPRIO USUÁRIO
       //SE VERDADEIRO:
       //1 - muda o status do atendimento para 2 (ATENDIMENTO EM EXECUÇÃO)
       //2 - registra na tabela de interatividade que o usuário iniciou o atendimento.
@@ -313,15 +313,15 @@ if ($usar_token=="true") {
         if($adc->execute()){
           $adc= $pdo->prepare("INSERT INTO `inter_projeto` (`inter_tipo`, `inter_projeto`, `inter_user`, `inter_data`, `inter_desc`) VALUES ('2', '$projeto', '$user_id', '$agora', 'Iniciou o projeto.')");
           if($adc->execute()){
-            $mensagem = "<i class=\"fas fa-check\"></i> Ótimo! <br> O status do projeto foi alterado para 'Em Execução'!";
+            $mensagem = "<i class=\"fas fa-check\"></i> ótimo! <br> O status do projeto foi alterado para 'Em Execução'!";
             $mensagem_cor = "alert-success";
           }        
         }
       }
       //SE FALSO:
       //1 - mantem status do atendimento como 1 (ATENDIMENTO AGUARDANDO EXECUÇÃO)
-      //1 - registra na tabela de atendimento o novo técnico responsável 
-      //2 - busca o NOME do técnico responsável
+      //1 - registra na tabela de atendimento o novo técnico responsóvel 
+      //2 - busca o NOME do técnico responsóvel
       //3 - registra na tabela de interatividade a atribuição do chamando
       if($tecnico!=$user_id){
         $pdo = ConnectionN3();
@@ -367,7 +367,7 @@ if ($usar_token=="true") {
           //insere o registro de uma nova interação 
           $adc= $pdo->prepare("INSERT INTO `inter_projeto` (`inter_tipo`, `inter_projeto`, `inter_user`, `inter_data`, `inter_desc`) VALUES ('6', '$projeto', '$user_id', '$agora', 'Retomou o projeto.');");
           if($adc->execute()){
-            $mensagem = "<i class=\"fas fa-check\"></i> Beleza! <br> Agora vamos descrever as interações com o cliente!";
+            $mensagem = "<i class=\"fas fa-check\"></i> Beleza! <br> Agora vamos descrever as interaçães com o cliente!";
             $mensagem_cor = "alert-success";
           }else{
             $mensagem = "<i class=\"fas fa-exclamation-triangle\"></i> Falha ao adicionar registro na tabela de interação!";
@@ -386,12 +386,12 @@ if ($usar_token=="true") {
     //USUÁRIO RECUSA UM ATENDIMENTO
     if ($action == "projeto_recusar") {
       $tecnico = filter_input(INPUT_POST, 'tecnico', FILTER_SANITIZE_NUMBER_INT);
-      $inter_desc = filter_input(INPUT_POST, 'inter_desc', FILTER_SANITIZE_STRING);
+      $inter_desc = filter_input(INPUT_POST, 'inter_desc', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
     //VERIFICA SE O ATENDIMENTO FOI DIRECIONADO PARA OUTRO TÉCNICO
       //SE VERDADEIRO:
       //1 - muda o status do atendimento para 1 (aguardando atendimento)
-      //1 - registra na tabela de atendimento o novo técnico responsável 
-      //2 - busca o NOME do técnico responsável
+      //1 - registra na tabela de atendimento o novo técnico responsóvel 
+      //2 - busca o NOME do técnico responsóvel
       //2 - registra na tabela de interatividade que o usuário direcionou o atendimento.      
       if($tecnico!=0){
         $pdo = ConnectionN3();
@@ -415,7 +415,7 @@ if ($usar_token=="true") {
       }
       //SE FALSO:
       //1 - muda o status do atendimento para 1 (aguardando atendimento)
-      //1 - remove o técnico como responsável pelo atendimento
+      //1 - remove o técnico como responsóvel pelo atendimento
       //2 - registra na tabela de interatividade que o usuário recusou o atendimento.     
       if($tecnico==0){
         $pdo = ConnectionN3();
@@ -437,8 +437,8 @@ if ($usar_token=="true") {
     
     //COLOCAR ATENDIMENTO EM ESPERA
     if ($action == "projeto_espera") {
-      $espera_desc = filter_input(INPUT_POST, 'espera_desc', FILTER_SANITIZE_STRING);
-      $espera_prev = filter_input(INPUT_POST, 'espera_prev', FILTER_SANITIZE_STRING);
+      $espera_desc = filter_input(INPUT_POST, 'espera_desc', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+      $espera_prev = filter_input(INPUT_POST, 'espera_prev', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
       $espera_prev_br = date('d/m/Y H:i', strtotime($espera_prev));
       $pdo = ConnectionN3();
       //altera status do atendimento para 3 (Em espera)
@@ -468,7 +468,7 @@ if ($usar_token=="true") {
     
     //USUÁRIO FINALIZA UM ATENDIMENTO
     if ($action == "projeto_finalizar") {
-      $desc_fechamento = filter_input(INPUT_POST, 'desc_fechamento', FILTER_SANITIZE_STRING);
+      $desc_fechamento = filter_input(INPUT_POST, 'desc_fechamento', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
       $pdo = ConnectionN3();
       $adc= $pdo->prepare("UPDATE `projetos` SET `desc_fechamento`=:desc_fechamento, `fechamento`=:fechamento, `status`='4' WHERE  `id`='$projeto';");
       $adc->bindParam(':desc_fechamento', $desc_fechamento);
@@ -477,7 +477,7 @@ if ($usar_token=="true") {
         $pdo = ConnectionN3();
         $adc= $pdo->prepare("INSERT INTO `inter_projeto` (`inter_tipo`, `inter_projeto`, `inter_user`, `inter_data`, `inter_desc`) VALUES ('8', '$projeto', '$user_id', '$agora', 'Finalizou o atendimento. <br> Descrição: $desc_fechamento');");
         if($adc->execute()){
-           $mensagem = "<i class=\"fas fa-check\"></i> Ótimo! <br> O que mais temos para hoje?!";
+           $mensagem = "<i class=\"fas fa-check\"></i> ótimo! <br> O que mais temos para hoje?!";
            $mensagem_cor = "alert-success";
         }        
       }else{
@@ -610,7 +610,7 @@ while($exibe=$show_clt->fetch(PDO::FETCH_ASSOC)){
                     <div class="form-row">
                       
                   <div class="form-group col-sm-12 col-md-6">
-                    <label class="my-0 small">Técnico:</label>
+                    <label class="my-0 small">Tecnico:</label>
                     <select name="tecnico" id="tecnico"  class="form-control form-control-sm selectpicker" data-live-search="true" required="required" tabindex="10">
                       <option></option>
                       <option value="0">Não determinado</option>
@@ -632,6 +632,8 @@ while($exibe=$show_clt->fetch(PDO::FETCH_ASSOC)){
                     <select name="forma" class="form-control form-control-sm" required="required" tabindex="11">
                       <option value="1">Remoto</option>
                       <option value="2">Presencial</option>
+                      <option value="3">Remoto - Plantão</option>
+                      <option value="4">Presencial - Plantão</option>
                     </select>
                   </div>
                   
@@ -808,7 +810,7 @@ $row=$show_projeto->fetch(PDO::FETCH_ASSOC);
             <div class="h6 card-header py-1">
               <div class="row">
                 <div class="col-6 h6 pt-2 mb-0">
-                  <i class="fas fa-check"></i> Ações
+                  <i class="fas fa-check"></i> Açães
                 </div>
                 <div class="col-6 text-right px-0">
 <?php if($projeto_status==0){ ?>
@@ -843,7 +845,7 @@ $row=$show_projeto->fetch(PDO::FETCH_ASSOC);
                 </div>
 
                 <div class="form-group col-sm-4 col-md-4">
-                  <label class="my-0 small">Técnico:</label>
+                  <label class="my-0 small">Tecnico:</label>
                   <input class="form-control form-control-sm" value="<?php echo $tecnico_nome; ?>" disabled="">
                 </div>
               </div>
@@ -866,7 +868,7 @@ $row=$show_projeto->fetch(PDO::FETCH_ASSOC);
 <?php 
 //ANALISA E ALTERA REGRAS PARA EXIBIÇÃO DE BOTÕES, MODAIS, ETC DE ACORDO COM O STATUS DO CHAMADO
 
-//SE NÃO HOUVER TÉCNICO ATRIBUÍDO PARA O ATENDIMENTO
+//SE NºO HOUVER TÉCNICO ATRIBUÍDO PARA O ATENDIMENTO
 if($tecnico_id==0){ $exibe_bt_projeto_aceitar=true; }
 
 //SE O ATENDIMENTO ESTIVER AGUARDANDO E O USUÁRIO FOR O TÉCNICO
@@ -1082,7 +1084,7 @@ while($exibe=$show_clt->fetch(PDO::FETCH_ASSOC)){
     <div class="modal-content">
       <form action="#" method="POST">
         <div class="modal-header">
-          <h6 class="modal-title"><i class="far fa-arrow-alt-circle-down text-success"></i> Iniciar atendimento ou direcionar para outro Técnico</h6>
+          <h6 class="modal-title"><i class="far fa-arrow-alt-circle-down text-success"></i> Iniciar atendimento ou direcionar para outro Tecnico</h6>
           <button type="button" class="close" data-dismiss="modal" aria-label="Fechar">
             <span aria-hidden="true">&times;</span>
           </button>
@@ -1091,11 +1093,11 @@ while($exibe=$show_clt->fetch(PDO::FETCH_ASSOC)){
           <label class="small"><strong>Iniciar o atendimento:</strong></label>
           <label class="small">Se o técnico informado for o próprio usuário: a) este atendimento ficará sob sua responsabilidade; b) o status do atendimento será alterado para "Em execução".</label>
           <label class="small pt-1"><strong>Direcionar a outro técnico:</strong></label>
-          <label class="small">Se o técnico informado NÃO for o próprio usuário: a) este atendimento será redirecionado para a fila de projetos do técnico informado; b) este atendimento contuará com o status "Aguardando atendimento" até que o técnico responsável confirme o início da execução.</label>
+          <label class="small">Se o técnico informado NºO for o próprio usuário: a) este atendimento será redirecionado para a fila de projetos do técnico informado; b) este atendimento contuará com o status "Aguardando atendimento" até que o técnico responsóvel confirme o início da execução.</label>
           <label class="small pt-1">Não esqueça de informar todas as interação com o cliente.</label>
           <div class="form-row">        
             <div class="form-group col-sm-12">
-              <label class="my-0 small">Técnico responsável:</label>
+              <label class="my-0 small">Tecnico responsóvel:</label>
               <select name="tecnico" class="form-control form-control-sm selectpicker" data-live-search="true" required="required" tabindex="9">
 <?php
 $pdo = ConnectionN3();
@@ -1209,14 +1211,14 @@ while($exibe=$show_clt->fetch(PDO::FETCH_ASSOC)){
         <div class="modal-body">
           <div class="form-row">        
             <label class="small"><strong>Recusar atendimento:</strong></label>
-            <label class="small">Ao confirmar esta tela SEM informar um técnico: a) o atendimento voltará para a fila de atendimento sem um responsável; b) este atendimento contuará com o status "Aguardando atendimento" até que um técnico o aceite.</label>
+            <label class="small">Ao confirmar esta tela SEM informar um técnico: a) o atendimento voltará para a fila de atendimento sem um responsóvel; b) este atendimento contuará com o status "Aguardando atendimento" até que um técnico o aceite.</label>
             <label class="small pt-1"><strong>Direcionar atendimento:</strong></label>
-            <label class="small">Ao confirmar esta tela informando um técnico responsável: a) este atendimento será redirecionado para a fila de projetos do técnico informado; b) este atendimento contuará com o status "Aguardando atendimento" até que o técnico responsável confirme o início da execução.</label>
+            <label class="small">Ao confirmar esta tela informando um técnico responsóvel: a) este atendimento será redirecionado para a fila de projetos do técnico informado; b) este atendimento contuará com o status "Aguardando atendimento" até que o técnico responsóvel confirme o início da execução.</label>
             <label class="small pt-1">Não esqueça de informar todas as interação com o cliente.</label>
           </div>
           <div class="form-row">        
             <div class="form-group col-sm-12">
-              <label class="my-0 small">Técnico responsável:</label>
+              <label class="my-0 small">Tecnico responsóvel:</label>
               <select name="tecnico" class="form-control form-control-sm selectpicker" data-live-search="true" required="required" tabindex="9">
                 <option value="0">Não atribuído</option>                
 <?php
@@ -1305,8 +1307,8 @@ while($exibe=$show_clt->fetch(PDO::FETCH_ASSOC)){
           </li>
           <li class="pt-1">Iniciei a execução do atendimento através do <span class="badge badge-light"><i class="far fa-arrow-alt-circle-down"></i> Iniciar ou Direcionar</span>
             <ul>
-              <li class="small">Se você for o técnico que executará o atendimento, apenas confirme o seu nome como <em>Técnico Resposável</em>.</li>
-              <li class="small">Quando você confirmar seu nome como <em>Técnico Resposável</em> pelo atendimento outras opções de gestão do atendimento aparecerão na sua tela.</li>
+              <li class="small">Se você for o técnico que executará o atendimento, apenas confirme o seu nome como <em>Tecnico Resposável</em>.</li>
+              <li class="small">Quando você confirmar seu nome como <em>Tecnico Resposável</em> pelo atendimento outras opçães de gestão do atendimento aparecerão na sua tela.</li>
               <li class="small">Se não for você quem executará o atendimento, você pode também informar quem será o técnico que deverá executar o atendimento.</li>
               <li class="small">Cada ação que você fizer será exibida no <span class="badge badge-light"><i class="fas fa-list-ol"></i> Histórico do atendimento</span> com a data/hora e o seu nome.</li>
             </ul>
@@ -1415,8 +1417,8 @@ while($exibe=$show_clt->fetch(PDO::FETCH_ASSOC)){
               $('.carregando2').hide();
             });
           } else {
-            $('#solicitante').html('<option value="">– Escolha o Solicitante –</option>');
-            $('#local').html('<option value="">– Escolha o Local –</option>');
+            $('#solicitante').html('<option value="">Escolha o Solicitante</option>');
+            $('#local').html('<option value="">Escolha o Local</option>');
           }
         });
       });
@@ -1439,7 +1441,7 @@ while($exibe=$show_clt->fetch(PDO::FETCH_ASSOC)){
             });
             
           } else {
-            $('#subcategoria').html('<option value="">– Escolha a Subcategoria –</option>');
+            $('#subcategoria').html('<option value="">Escolha a Subcategoria</option>');
           }
         });
       });
@@ -1460,7 +1462,7 @@ while($exibe=$show_clt->fetch(PDO::FETCH_ASSOC)){
               $('.carregando4').hide();
             });
           } else {
-            $('#item').html('<option value="">– Escolha o Item –</option>');
+            $('#item').html('<option value="">Escolha o Item</option>');
           }
         });
       });

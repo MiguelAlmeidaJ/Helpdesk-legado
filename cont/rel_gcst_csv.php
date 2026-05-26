@@ -1,7 +1,10 @@
 <?php
+
+session_start();
+include_once("../all/seguranca.php");
 include_once("../all/conect.php");
 
-$contrato_id = filter_input(INPUT_POST, 'contrato', FILTER_SANITIZE_STRING);
+$contrato_id = filter_input(INPUT_POST, 'contrato', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
 if (isset($_POST['ord'])) {$ord = $_POST['ord'];} else {$ord = "vencimento";}
 if ($ord == "vencimento") {$orderby = "custos.data_vencimento DESC";}
@@ -10,10 +13,10 @@ if ($ord == "tipo") {$orderby = "custos.tipo ASC";}
 if ($ord == "valor") {$orderby = "custos.valor DESC";}
 if ($ord == "status") {$orderby = "custos.status DESC";}
 
-$cst_exibir_ccusto = filter_input(INPUT_POST, 'cst_exibir_ccusto', FILTER_SANITIZE_STRING);
+$cst_exibir_ccusto = filter_input(INPUT_POST, 'cst_exibir_ccusto', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 if(empty($cst_exibir_ccusto)){$cst_exibir_ccusto=0; $cst_pesquisar_ccusto=""; $show_card_cst = false; }else{$show_card_cst = true; $cst_pesquisar_ccusto = "AND custos.centro_custo = '$cst_exibir_ccusto'";}
 
-$cst_exibir_tipo = filter_input(INPUT_POST, 'cst_exibir_tipo', FILTER_SANITIZE_STRING);
+$cst_exibir_tipo = filter_input(INPUT_POST, 'cst_exibir_tipo', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 if(empty($cst_exibir_tipo)){$cst_exibir_tipo="todos"; $show_card_cst = false; }else{$show_card_cst = true;}
 if($cst_exibir_tipo=="despesas"){$cst_tipo="1";}
 if($cst_exibir_tipo=="servicos"){$cst_tipo="2";}
@@ -21,7 +24,7 @@ if($cst_exibir_tipo=="taxas"){$cst_tipo="3";}
 if($cst_exibir_tipo=="todos"){$cst_tipo="1,2,3";}
 
 
-$cst_exibir_inicio_br = filter_input(INPUT_POST, 'cst_exibir_inicio', FILTER_SANITIZE_STRING);
+$cst_exibir_inicio_br = filter_input(INPUT_POST, 'cst_exibir_inicio', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 if(empty($cst_exibir_inicio_br)){  
   $cst_exibir_inicio_br = date('d/m/y', strtotime($hoje. ' -91 days'));
   $cst_exibir_inicio_usa = date('Y-m-d', strtotime($hoje. ' -91 days'));
@@ -31,7 +34,7 @@ if(empty($cst_exibir_inicio_br)){
     $cst_exibir_inicio_usa = implode('-', array_reverse(explode('/', "$cst_exibir_inicio_br")));
 }
 
-$cst_exibir_fim_br = filter_input(INPUT_POST, 'cst_exibir_fim', FILTER_SANITIZE_STRING);
+$cst_exibir_fim_br = filter_input(INPUT_POST, 'cst_exibir_fim', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 if(empty($cst_exibir_fim_br)){
   $cst_exibir_fim_br = date("d/m/y");
   $cst_exibir_fim_usa = date("Y-m-d");

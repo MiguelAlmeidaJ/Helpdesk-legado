@@ -8,7 +8,7 @@ $hoje = date("Y-m-d");
 $agora = date("Y-m-d H:i:s");
 
 //verifico se existe alguma requisição POST chamada action
-$action = filter_input(INPUT_POST, 'action', FILTER_SANITIZE_STRING);
+$action = filter_input(INPUT_POST, 'action', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
 if ($action == "alterar_senha") {include_once("../all/update_senha.php");}
 
@@ -36,8 +36,16 @@ if($f_nivel==0){$p_nivel = "1,2,3";}
     <script type="text/javascript" src="../js/loader.js"></script>
     <title>Allterus</title>
   </head>
+  <style>
+            body {
+            zoom: 0.9;
+            width: 100%;
+            overflow-x: hidden;
+        }
+
+  </style>
   <body>
-<?php include_once("../all/header.php"); ?>
+<?php include_once("../all/sidebar.php"); ?>
 
     <div class="container-fluid">
       <div class="row">
@@ -47,7 +55,7 @@ if($f_nivel==0){$p_nivel = "1,2,3";}
               <div class="card py-0 my-0">
                 <div class="card-header my-0 bg-light py-0 h6" id="headingOne">
                   <button class="btn" data-toggle="collapse" data-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
-                      <i class="fas fa-chart-bar"></i> Relatório de atendimentos por Categoria
+                      <i class="fas fa-chart-bar"></i> Relatério de atendimentos por Categoria
                   </button>
                 </div>
                 <div id="collapseOne" class="collapse show" aria-labelledby="headingOne" data-parent="#accordion">
@@ -114,7 +122,7 @@ count(case when nivel = '3' then 1 else null end) AS n3
 FROM atendimentos 
 INNER JOIN categorias ON categorias.cat_id = atendimentos.categoria
 WHERE atendimentos.`status` > '0'  
-AND atendimentos.abertura BETWEEN '$data_1' AND '$data_2' 
+AND atendimentos.abertura BETWEEN '$data_1' AND DATE_ADD('$data_2', INTERVAL 1 DAY) 
 AND atendimentos.nivel IN ($p_nivel)
 " . $filterEmpresas . "
 GROUP BY categorias.cat_id ORDER BY atendimentos DESC"); 
@@ -166,7 +174,7 @@ function drawStacked() {
       </div>
 
       <div class="modal-body">
-        <p><strong>Relatório de atendimentos totais por categoria:</strong></p>
+        <p><strong>Relatério de atendimentos totais por categoria:</strong></p>
         <p>Este relatório conta o total de atendimentos que foram atendidos no período indicado para cada uma das categorias e plota um gráfico de colunas.</p>
         <p>São considerados os atendimentos com os seguintes status:</p>
         <ul class="list">

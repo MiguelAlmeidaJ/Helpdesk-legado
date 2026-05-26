@@ -8,7 +8,7 @@ $hoje = date("Y-m-d");
 $agora = date("Y-m-d H:i:s");
 
 //verifico se existe alguma requisição POST chamada action
-$action = filter_input(INPUT_POST, 'action', FILTER_SANITIZE_STRING);
+$action = filter_input(INPUT_POST, 'action', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
 if ($action == "alterar_senha") {include_once("../all/update_senha.php");}
 
@@ -36,8 +36,16 @@ if($f_nivel==0){$p_nivel = "1,2,3";}
     <script type="text/javascript" src="../js/loader.js"></script>
     <title>Allterus</title>
   </head>
+  <style>
+            body {
+            zoom: 0.9;
+            width: 100%;
+            overflow-x: hidden;
+        }
+
+  </style>
   <body>
-<?php include_once("../all/header.php"); ?>
+<?php include_once("../all/sidebar.php"); ?>
 
     <div class="container-fluid">
       <div class="row">
@@ -47,7 +55,7 @@ if($f_nivel==0){$p_nivel = "1,2,3";}
               <div class="card py-0 my-0">
                 <div class="card-header my-0 bg-light py-0 h6" id="headingOne">
                   <button class="btn" data-toggle="collapse" data-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
-                      <i class="fas fa-chart-bar"></i> Relatório de atendimentos por Técnico
+                      <i class="fas fa-chart-bar"></i> Relatério de atendimentos por Tecnico
                   </button>
                 </div>
                 <div id="collapseOne" class="collapse show" aria-labelledby="headingOne" data-parent="#accordion">
@@ -93,11 +101,11 @@ if($f_nivel==0){$p_nivel = "1,2,3";}
           <div class="card bg-default">
             <div class="card-header py-2 h6">
               <i class="fas fa-chart-pie"></i>
-              Atendimentos por Técnico
+              Atendimentos por Tecnico
             </div>
             <div class="card-body small text-danger text-justify">
 <?php 
-$matriz = "['Técnico', 'Nível 1', 'Nível 2', 'Nível 3']";
+$matriz = "['Tecnico', 'Nível 1', 'Nível 2', 'Nível 3']";
 $pdo = ConnectionN3();
 
 $filterEmpresas = "";
@@ -166,8 +174,8 @@ function drawStacked() {
       </div>
 
       <div class="modal-body">
-        <p><strong>Relatório de atendimentos totais por técnico:</strong></p>
-        <p>Este relatório conta o total de atendimentos que foram atendidos no período indicado para cada um dos técnicos e plota um gráfico de colunas.</p>
+        <p><strong>Relatério de atendimentos totais por técnico:</strong></p>
+        <p>Este relatório conta o total de atendimentos que foram atendidos no período indicado para cada um dos tecnicos e plota um gráfico de colunas.</p>
         <p>São considerados os atendimentos com os seguintes status:</p>
         <ul class="list">
           <li><i class="fas fa-hourglass-half"></i> Aguardando Execução</li>

@@ -5,8 +5,17 @@ include_once("../all/conect.php");
 include_once("../all/permissoes.php");
 include_once("../all/token.php");
 $hoje = date("Y-m-d");
-        
-$action = filter_input(INPUT_POST, 'action', FILTER_SANITIZE_STRING);
+
+
+$funcoes_permitidas = [1, 2, 3, 7, 9, 10];
+$funcao_do_usuario  = $_SESSION["allterusN3func"];
+
+if (!isset($_SESSION['allterusN3func']) || !in_array($funcao_do_usuario, $funcoes_permitidas)) {
+  header("Location: ../home.php");
+  exit;
+}
+
+$action = filter_input(INPUT_POST, 'action', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 if ($action == "alterar_senha") {include_once("../all/update_senha.php");}
 
 if ($usar_token=="true") {
@@ -63,6 +72,8 @@ $sla_n2=$rowc["sla_n2"];
 $sla_n3=$rowc["sla_n3"];
 $sla_n4=$rowc["sla_n4"];
 
+
+
 ?>
 <!doctype html>
 <html lang="pt-BR">
@@ -73,11 +84,23 @@ $sla_n4=$rowc["sla_n4"];
     <link rel="stylesheet" href="../css/bootstrap.min.css">
     <link rel="stylesheet" href="../fontawesome/css/all.css">
     <link rel="stylesheet" href="../css/help.css">
+    <link rel="stylesheet" href="../css/blink.css">
+
     <title>Allterus</title>
   </head>
+  <style>   
+body {
+  zoom: 0.9; /* Escala o conteúdo sem alterar o contexto de layout */
+  width: 100%; /* Mantém o layout responsivo */
+  overflow-x: hidden; /* Garante que não haja rolagem horizontal */
+}
+
+
+
+  </style>
   <body>
 <?php include_once("../all/loading.php"); ?>
-<?php include("../all/header.php"); ?>
+<?php include("../all/sidebar.php"); ?>
     <div class="container-fluid">
       <div class="row">
         
@@ -110,7 +133,7 @@ $sla_n4=$rowc["sla_n4"];
                 <div class="form-group row">
                   <input type="hidden" name="action" value="edt_tempo_alerta">
                   <input type="hidden" name="token" value="<?php echo $token;?>">
-                  <button type="submit" class="btn btn-outline-danger">Editar</button>
+                  <button type="submit" class="btn btn-outline-danger">Salvar Alterações</button>
                 </div>
 <?php } ?>
 <?php if($m4_01==3){ ?>
@@ -123,15 +146,15 @@ $sla_n4=$rowc["sla_n4"];
         <div class="col-md-3 mt-2">
           <div class="card">
             <div class="card-header py-2">
-              <i class="fas fa-stopwatch"></i> SLA Padrão
+              <i class="fas fa-stopwatch"></i> Alerta Padrao de SLA 
             </div>
             <div class="card-body">
 <?php if($m4_02==3){ ?> 
               <form action="#" method="POST">
 <?php } ?>
                 <div class="form-group row">
-                  <label class="col-sm-5 col-form-label">Nível 1:</label>
-                  <div class="col-sm-7">
+                  <label class="col-sm-6 col-form-label">Alerta 1: <i class="fas fa-bell fa-2x blink"></i></label>
+                  <div class="col-sm-6">
                     <div class="input-group">
                       <input type="number" name="sla_n1" class="form-control" value="<?php echo $sla_n1; ?>">
                       <div class="input-group-append">
@@ -140,9 +163,10 @@ $sla_n4=$rowc["sla_n4"];
                     </div>
                   </div>
                 </div>
+
                 <div class="form-group row">
-                  <label class="col-sm-5 col-form-label">Nível 2:</label>
-                  <div class="col-sm-7">
+                  <label class="col-sm-6 col-form-label">Alerta 2: <i class="fas fa-bell fa-2x blinkkk"></i></label>
+                  <div class="col-sm-6">
                     <div class="input-group">
                       <input type="number" name="sla_n2" class="form-control" value="<?php echo $sla_n2; ?>">
                       <div class="input-group-append">
@@ -151,9 +175,10 @@ $sla_n4=$rowc["sla_n4"];
                     </div>
                   </div>
                 </div>
+
                 <div class="form-group row">
-                  <label class="col-sm-5 col-form-label">Nível 3:</label>
-                  <div class="col-sm-7">
+                  <label class="col-sm-6 col-form-label">Alerta 3: <i class="fas fa-bell fa-2x blinkk"></i></label>
+                  <div class="col-sm-6">
                     <div class="input-group">
                       <input type="number" name="sla_n3" class="form-control" value="<?php echo $sla_n3; ?>">
                       <div class="input-group-append">
@@ -163,8 +188,8 @@ $sla_n4=$rowc["sla_n4"];
                   </div>
                 </div>
                   <div class="form-group row">
-                  <label class="col-sm-5 col-form-label">Rotina:</label>
-                  <div class="col-sm-7">
+                  <label class="col-sm-6 col-form-label">Rotina:</label>
+                  <div class="col-sm-6">
                     <div class="input-group">
                       <input type="number" name="sla_n4" class="form-control" value="<?php echo $sla_n4; ?>">
                       <div class="input-group-append">
@@ -174,7 +199,7 @@ $sla_n4=$rowc["sla_n4"];
                   </div>
                 </div>
                 <div class="form-group row">
-                  <small class="text-muted">
+                  <small class="text-muted col-sm-12">
                     <i class="fas fa-info-circle"></i> O Allterus usará os tempos acima para determinar o prazo de atendimento de um atendimento.
                   </small>
                 </div>
@@ -182,7 +207,7 @@ $sla_n4=$rowc["sla_n4"];
                 <div class="form-group row">
                   <input type="hidden" name="action" value="edt_sla">
                   <input type="hidden" name="token" value="<?php echo $token;?>">
-                  <button type="submit" class="btn btn-outline-danger">Editar</button>
+                  <button type="submit" class="btn btn-outline-danger">Salvar Alterações</button>
                 </div>
 <?php } ?>
 <?php if($m4_02==3){ ?>

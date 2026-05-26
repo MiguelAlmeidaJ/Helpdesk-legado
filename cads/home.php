@@ -5,7 +5,7 @@ include_once("../all/conect.php");
 include_once("../all/permissoes.php");
 $hoje = date("Y-m-d");
         
-$action = filter_input(INPUT_POST, 'action', FILTER_SANITIZE_STRING);
+$action = filter_input(INPUT_POST, 'action', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 if ($action == "alterar_senha") {include_once("../all/update_senha.php");}
 
 ?>
@@ -23,7 +23,7 @@ if ($action == "alterar_senha") {include_once("../all/update_senha.php");}
   </head>
   <body>
 <?php include_once("../all/loading.php"); ?>
-<?php include("../all/header.php"); ?>
+<?php include("../all/sidebar.php"); ?>
     <div class="container-fluid">
       <div class="row">
         <div class="col-md-12 mt-2">

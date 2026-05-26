@@ -1,5 +1,14 @@
+/* 
+correto:
+blinkkkk = #15fe00 = green
+blink = #f9bf00 = yellow
+blinkkk = #e60000 = red
+blinkk = #000000 = black
+ */
+
+
 .blink {
-    animation: blink .7s infinite;
+    animation: blink 1.2s infinite;
     margin :0 auto;
 }
 @keyframes blink {
@@ -7,7 +16,56 @@
         color: #ffffff;
     }
     50% {
-        color: #f96900;
+        color: #f9bf00;
+    }
+    100% {
+        color: #ffffff;
+    }
+}
+
+
+.blinkk {
+    animation: blinkk 1.2s infinite;
+    margin :0 auto;
+}
+@keyframes blinkk {
+    0% {
+        color: #ffffff;
+    }
+    50% {
+        color: #000000;
+    }
+    100% {
+        color: #ffffff;
+    }
+}
+
+.blinkkk {
+    animation: blinkkk 1.2s infinite;
+    margin :0 auto;
+}
+@keyframes blinkkk {
+    0% {
+        color: #ffffff;
+    }
+    50% {
+        color: #e60000;
+    }
+    100% {
+        color: #ffffff;
+    }
+}
+
+.blinkkkk {
+    animation: blinkkkk 1.2s infinite;
+    margin :0 auto;
+}
+@keyframes blinkkkk {
+    0% {
+        color: #ffffff;
+    }
+    50% {
+        color: #15fe00;
     }
     100% {
         color: #ffffff;

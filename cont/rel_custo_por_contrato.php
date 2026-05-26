@@ -1,6 +1,6 @@
 <?php
 session_start();
-//include_once("../all/seguranca.php");
+include_once("../all/seguranca.php");
 include_once("../all/conect.php");
 include_once("../all/permissoes.php");
 
@@ -11,7 +11,7 @@ $data_90 =  date('Y-m-d', strtotime($hoje. ' -90 days'));
  
 // if($m3_00==0){header("Location: ../index.php");}
 
-$action = filter_input(INPUT_POST, 'action', FILTER_SANITIZE_STRING);
+$action = filter_input(INPUT_POST, 'action', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
 if ($action == "alterar_senha") {include_once("../all/update_senha.php");}
 
@@ -32,7 +32,7 @@ if (isset($_POST['f_cont'])) {$f_cont = $_POST['f_cont'];} else {$f_cont = 0;}
 if (isset($_POST['f_ccusto'])) {$f_ccusto = $_POST['f_ccusto'];} else {$f_ccusto = 0;}
 
 
-$cst_exibir_inicio_br = filter_input(INPUT_POST, 'cst_exibir_inicio', FILTER_SANITIZE_STRING);
+$cst_exibir_inicio_br = filter_input(INPUT_POST, 'cst_exibir_inicio', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 if(empty($cst_exibir_inicio_br)){  
   $cst_exibir_inicio_br = date('d/m/y', strtotime($hoje. ' -183 days'));
   $cst_exibir_inicio_usa = date('Y-m-d', strtotime($hoje. ' -183 days'));
@@ -40,7 +40,7 @@ if(empty($cst_exibir_inicio_br)){
     $cst_exibir_inicio_usa = implode('-', array_reverse(explode('/', "$cst_exibir_inicio_br")));
 }
 
-$cst_exibir_fim_br = filter_input(INPUT_POST, 'cst_exibir_fim', FILTER_SANITIZE_STRING);
+$cst_exibir_fim_br = filter_input(INPUT_POST, 'cst_exibir_fim', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 if(empty($cst_exibir_fim_br)){
   $cst_exibir_fim_br = date("d/m/y");
   $cst_exibir_fim_usa = date("Y-m-d");
@@ -75,7 +75,7 @@ if ($ord == "status") {$orderby = "custos.status DESC";}
   </head>
   <body>
 <?php include_once("../all/loading.php"); ?>
-<?php include("../all/header.php"); ?>
+<?php include("../all/sidebar.php"); ?>
     <div class="container-fluid">
       <div class="row">
         <div class="col-md-12 mt-2 px-1">
@@ -557,7 +557,7 @@ $custo_clas_cont = $row_class["categoria"];
     <div class="modal-content">
 
       <div class="modal-header">
-        <h6 class="modal-title" id="myModalLabel"><i class="far fa-question-circle text-danger"></i> Relatório de custos</h6>
+        <h6 class="modal-title" id="myModalLabel"><i class="far fa-question-circle text-danger"></i> Relatério de custos</h6>
         <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
       </div>
 
