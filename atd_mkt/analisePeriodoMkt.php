@@ -39,7 +39,7 @@ $params[':inicio'] = $data_inicio;
 $params[':fim'] = $data_fim;
 
 
-// Consulta 1: Interaçães
+// Consulta 1: InterAções
 
 $sqlInteracoes = "
 SELECT 
@@ -126,7 +126,7 @@ $maxArtesFeitas = max(array_column($dados, 'artes_feitas') ?: [1]); // evita err
 
     <style>
         body {
-            zoom: 0.9;
+            zoom: 1;
             width: 100%;
             overflow-x: hidden;
         }

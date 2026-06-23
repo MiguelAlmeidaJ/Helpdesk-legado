@@ -1,5 +1,6 @@
 <?php
 session_start();
+ob_start();
 include_once("../all/seguranca.php");
 include_once("../all/conect.php");
 include_once("../all/permissoes.php");
@@ -37,16 +38,18 @@ if ($m5_00 == 0) {
   <link rel="stylesheet" href="../css/progress_bar.css">
   <link rel="stylesheet" href="../css/blink.css">
   <link rel="stylesheet" href="../css/bootstrap-datetimepicker.min.css">
-  <!-- <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script> -->
-  <link rel="stylesheet" href="https://unpkg.com/frappe-gantt/dist/frappe-gantt.css">
-  <script src="https://unpkg.com/frappe-gantt/dist/frappe-gantt.min.js"></script>
-
 
   <title>Allterus</title>
   <style type="text/css">
+    html,
     body {
-      zoom: 0.9;
       width: 100%;
+      min-height: 100vh;
+      min-height: 100dvh;
+    }
+
+    body {
+      zoom: 1;
       overflow-x: hidden;
     }
 
@@ -69,6 +72,1324 @@ if ($m5_00 == 0) {
       color: #ff0000;
       display: none;
     }
+
+    .project-page {
+      height: calc(100vh - 16px);
+      overflow: hidden;
+      padding-bottom: 8px;
+      font-family: "Segoe UI", Arial, sans-serif;
+    }
+
+    .project-main-column,
+    .project-history-column {
+      height: calc(100vh - 24px);
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .project-card {
+      border: 1px solid #d8e3ef;
+      border-radius: 6px;
+      box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+      background: #fff;
+    }
+
+    .project-hero {
+      padding: 14px 16px;
+      margin-bottom: 8px;
+    }
+
+    .project-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+
+    .project-title-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .project-title h1 {
+      font-size: 18px;
+      line-height: 1.2;
+      margin: 0;
+      font-weight: 700;
+      color: #0f172a;
+    }
+
+    .project-title small {
+      font-size: 12px;
+      font-weight: 700;
+      color: #53677f;
+      text-transform: uppercase;
+    }
+
+    .project-meta-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(150px, 1fr));
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .project-meta-item {
+      border: 1px solid #d8e3ef;
+      border-radius: 6px;
+      padding: 8px 10px;
+      background: #f8fafc;
+      min-width: 0;
+    }
+
+    .project-meta-item span {
+      display: block;
+      font-size: 10px;
+      font-weight: 700;
+      color: #53677f;
+      text-transform: uppercase;
+      margin-bottom: 2px;
+    }
+
+    .project-meta-item strong {
+      display: block;
+      color: #0f172a;
+      font-size: 13px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .project-status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border-radius: 999px;
+      padding: 7px 12px;
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .project-status-0 {
+      color: #7a4c00;
+      background: #fff4c6;
+    }
+
+    .project-status-1 {
+      color: #7f1d1d;
+      background: #fee2e2;
+    }
+
+    .project-status-2 {
+      color: #075985;
+      background: #cffafe;
+    }
+
+    .project-status-3 {
+      color: #92400e;
+      background: #ffedd5;
+    }
+
+    .project-status-4 {
+      color: #166534;
+      background: #dcfce7;
+    }
+
+    .project-description {
+      border: 1px solid #d8e3ef;
+      border-radius: 6px;
+      padding: 10px 12px;
+      background: #fff;
+      color: #0f172a;
+      line-height: 1.45;
+      max-height: 92px;
+      overflow: auto;
+      margin-bottom: 10px;
+    }
+
+    .project-actions {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .project-actions .btn {
+      border-radius: 5px;
+      font-weight: 700;
+      padding: 6px 10px;
+    }
+
+    .project-info-btn {
+      width: 34px;
+      height: 34px;
+      border-radius: 6px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      flex: 0 0 auto;
+    }
+
+    .project-info-modal .modal-content {
+      border: 1px solid #d8e3ef;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 22px 70px rgba(15, 23, 42, 0.22);
+      font-family: "Segoe UI", Arial, sans-serif;
+    }
+
+    .project-info-modal .modal-header {
+      background: #fff;
+      border-bottom: 1px solid #d8e3ef;
+      padding: 14px 18px;
+    }
+
+    .project-info-modal .modal-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: #0f172a;
+    }
+
+    .project-info-modal .modal-body {
+      background: #f8fafc;
+      padding: 16px;
+    }
+
+    .project-info-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .project-info-group {
+      border: 1px solid #d8e3ef;
+      border-radius: 6px;
+      background: #fff;
+      padding: 12px;
+    }
+
+    .project-info-group h3 {
+      font-size: 13px;
+      font-weight: 700;
+      color: #0f172a;
+      margin: 0 0 10px;
+    }
+
+    .project-info-line {
+      display: grid;
+      grid-template-columns: 110px minmax(0, 1fr);
+      gap: 8px;
+      font-size: 13px;
+      padding: 5px 0;
+      border-top: 1px solid #edf2f7;
+    }
+
+    .project-info-line:first-of-type {
+      border-top: 0;
+    }
+
+    .project-info-line span {
+      color: #53677f;
+      font-weight: 700;
+    }
+
+    .project-info-line strong {
+      color: #0f172a;
+      font-weight: 600;
+      min-width: 0;
+      overflow-wrap: anywhere;
+    }
+
+    .project-tasks-card {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .project-section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 12px;
+      border-bottom: 1px solid #d8e3ef;
+      gap: 10px;
+    }
+
+    .project-section-header h2 {
+      font-size: 15px;
+      font-weight: 700;
+      margin: 0;
+      color: #0f172a;
+    }
+
+    .project-tasks-scroll {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      overflow-x: hidden;
+      background: #fff;
+    }
+
+    .project-tasks-table {
+      margin: 0;
+      table-layout: fixed;
+      width: 100%;
+    }
+
+    .project-tasks-table th:nth-child(1),
+    .project-tasks-table td:nth-child(1) {
+      width: 5% !important;
+    }
+
+    .project-tasks-table th:nth-child(2),
+    .project-tasks-table td:nth-child(2) {
+      width: 31% !important;
+    }
+
+    .project-tasks-table th:nth-child(3),
+    .project-tasks-table td:nth-child(3) {
+      width: 22% !important;
+    }
+
+    .project-tasks-table th:nth-child(4),
+    .project-tasks-table td:nth-child(4) {
+      width: 11% !important;
+    }
+
+    .project-tasks-table th:nth-child(5),
+    .project-tasks-table td:nth-child(5) {
+      width: 13% !important;
+    }
+
+    .project-tasks-table th:nth-child(6),
+    .project-tasks-table td:nth-child(6) {
+      width: 10% !important;
+    }
+
+    .project-tasks-table th:nth-child(7),
+    .project-tasks-table td:nth-child(7) {
+      width: 8% !important;
+    }
+
+    .project-tasks-table thead th {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      background: #f8fafc;
+      border-bottom: 1px solid #d8e3ef;
+      font-size: 12px;
+      color: #334155;
+      font-weight: 700;
+      height: 40px;
+      vertical-align: middle;
+    }
+
+    .project-tasks-table td {
+      vertical-align: middle !important;
+      padding-top: 10px;
+      padding-bottom: 10px;
+    }
+
+    .project-tasks-table th:nth-child(1),
+    .project-tasks-table td:nth-child(1),
+    .project-tasks-table th:nth-child(4),
+    .project-tasks-table td:nth-child(4),
+    .project-tasks-table th:nth-child(6),
+    .project-tasks-table td:nth-child(6),
+    .project-tasks-table th:nth-child(7),
+    .project-tasks-table td:nth-child(7) {
+      text-align: center;
+    }
+
+    .project-task-row {
+      cursor: pointer;
+      height: 86px;
+    }
+
+    .project-task-row:hover {
+      background: #f8fbff;
+    }
+
+    .project-task-row.is-hidden {
+      display: none;
+    }
+
+    .project-task-name {
+      display: block;
+      font-weight: 700;
+      color: #0f172a;
+      max-height: 32px;
+      font-size: 12px;
+      overflow: hidden;
+    }
+
+    .project-task-desc,
+    .project-task-meta {
+      color: #53677f;
+      font-size: 11px;
+      line-height: 1.22;
+    }
+
+    .project-task-desc {
+      display: block;
+      max-height: 28px;
+      overflow: hidden;
+    }
+
+    .project-task-id {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 52px;
+      color: #0f172a;
+      font-size: 12px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .project-task-classification {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 6px;
+      min-height: 52px;
+      max-width: 100%;
+    }
+
+    .project-task-classification-line {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 5px 6px;
+    }
+
+    .project-chip {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      max-width: 100%;
+      border-radius: 999px;
+      padding: 4px 8px;
+      background: #eef4fb;
+      color: #334155;
+      font-size: 10px;
+      font-weight: 600;
+      line-height: 1.1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .project-chip i {
+      margin-right: 4px;
+      font-size: 10px;
+    }
+
+    .project-chip-forma {
+      background: #e8f8fc;
+      color: #075985;
+    }
+
+    .project-tasks-table .project-status-badge {
+      padding: 5px 9px;
+      font-size: 11px;
+    }
+
+    .project-task-action-form {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0;
+    }
+
+    .project-task-action-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 34px;
+      min-width: 34px;
+      height: 30px;
+      border-radius: 5px;
+      padding: 0;
+      border: 1px solid #cfd9e6;
+      background: #fff;
+      color: #334155;
+      font-size: 0;
+      font-weight: 800;
+      line-height: 1;
+      box-shadow: none;
+      transition: background .15s ease, border-color .15s ease, color .15s ease, box-shadow .15s ease, transform .15s ease;
+    }
+
+    .project-task-action-btn i {
+      margin-right: 0;
+      font-size: 16px;
+    }
+
+    .project-task-action-btn.is-start {
+      border-color: #0ea5e9;
+      color: #087ea4;
+      background: #f0fbff;
+    }
+
+    .project-task-action-btn.is-finish {
+      border-color: #16a34a;
+      color: #0f7a35;
+      background: #f2fcf5;
+    }
+
+    .project-task-action-btn .project-action-check {
+      position: relative;
+      display: inline-block;
+      width: 18px;
+      height: 12px;
+      transform: rotate(-45deg);
+    }
+
+    .project-task-action-btn .project-action-check:before,
+    .project-task-action-btn .project-action-check:after {
+      content: "";
+      position: absolute;
+      border-radius: 4px;
+      background: currentColor;
+    }
+
+    .project-task-action-btn .project-action-check:before {
+      left: 0;
+      bottom: 0;
+      width: 6px;
+      height: 12px;
+    }
+
+    .project-task-action-btn .project-action-check:after {
+      left: 0;
+      bottom: 0;
+      width: 18px;
+      height: 6px;
+    }
+
+    .project-task-action-btn.is-done {
+      border-color: #86efac;
+      color: #15803d;
+      background: #ecfdf3;
+      cursor: default;
+      opacity: .85;
+    }
+
+    .project-task-action-btn.is-start:hover,
+    .project-task-action-btn.is-finish:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 14px rgba(15, 23, 42, .12);
+    }
+
+    .project-task-action-btn.is-start:hover {
+      border-color: #0284c7;
+      color: #075985;
+      background: #e0f7ff;
+    }
+
+    .project-task-action-btn.is-finish:hover {
+      border-color: #15803d;
+      color: #166534;
+      background: #dcfce7;
+    }
+
+    .project-load-indicator {
+      display: none;
+      padding: 12px;
+      text-align: center;
+      color: #53677f;
+      font-size: 12px;
+      border-top: 1px solid #edf2f7;
+    }
+
+    .project-load-indicator.is-visible {
+      display: block;
+    }
+
+    .project-history-card {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .project-history-card .card-body {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      padding: 12px !important;
+    }
+
+    .project-history-filter {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      min-height: 32px;
+      margin-bottom: 14px;
+      border: 1px solid #d9e3ef;
+      border-radius: 5px;
+      background: #fff;
+      color: #263244;
+      font-size: .84rem;
+      font-weight: 600;
+    }
+
+    .project-history-filter i {
+      color: #334155;
+    }
+
+    .project-history-card .timeline {
+      position: relative;
+      margin: 0;
+      padding: 0 0 0 28px;
+    }
+
+    .project-history-card .timeline:before {
+      content: "";
+      position: absolute;
+      top: 10px;
+      bottom: 10px;
+      left: 9px;
+      width: 2px;
+      border-radius: 999px;
+      background: #93c5fd;
+    }
+
+    .project-history-card .tl-item {
+      position: relative;
+      display: block;
+      padding: 0 0 10px;
+      margin: 0;
+    }
+
+    .project-history-card .tl-item>* {
+      padding: 0;
+    }
+
+    .project-history-card .tl-dot {
+      position: absolute;
+      top: 12px;
+      left: -28px;
+      width: 18px;
+      height: 18px;
+      min-height: 0;
+      margin: 0;
+      border: 0;
+      background: transparent;
+      z-index: 2;
+    }
+
+    .project-history-card .tl-dot:before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      width: 18px;
+      height: 18px;
+      border: 4px solid #60a5fa;
+      border-radius: 999px;
+      background: #fff;
+      box-shadow: 0 0 0 4px #dbeafe;
+      transform: none;
+    }
+
+    .project-history-card .tl-dot:after {
+      display: none;
+    }
+
+    .project-history-card .tl-dot.b-success:before {
+      border-color: #22c55e;
+      box-shadow: 0 0 0 4px #dcfce7;
+    }
+
+    .project-history-card .tl-dot.b-danger:before {
+      border-color: #f43f5e;
+      box-shadow: 0 0 0 4px #ffe4ec;
+    }
+
+    .project-history-card .tl-dot.b-warning:before {
+      border-color: #f59e0b;
+      box-shadow: 0 0 0 4px #fef3c7;
+    }
+
+    .project-history-card .tl-dot.b-primary:before {
+      border-color: #60a5fa;
+      box-shadow: 0 0 0 4px #dbeafe;
+    }
+
+    .project-history-card .tl-content {
+      min-width: 0;
+      margin-left: 0;
+      padding: 10px 12px !important;
+      border-radius: 7px;
+      background: #fff;
+      border: 1px solid #dbe4ef;
+      box-shadow: 0 3px 10px rgba(15, 23, 42, .05);
+    }
+
+    .proj-history-meta {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px 8px;
+      min-width: 0;
+      margin-bottom: 6px;
+      color: #64748b;
+      font-size: .78rem;
+      font-weight: 600;
+    }
+
+    .proj-history-author {
+      min-width: 0;
+      color: #172033;
+      font-weight: 800;
+      overflow-wrap: anywhere;
+    }
+
+    .proj-history-desc {
+      color: #263244;
+      font-size: .86rem;
+      line-height: 1.42;
+      word-break: break-word;
+      overflow-wrap: anywhere;
+    }
+
+    .proj-history-desc br {
+      content: "";
+      display: block;
+      margin-top: 5px;
+    }
+
+    @media (max-width: 1199px) {
+      .project-page {
+        height: auto;
+        overflow: visible;
+      }
+
+      .project-main-column,
+      .project-history-column {
+        height: auto;
+      }
+
+      .project-meta-grid {
+        grid-template-columns: repeat(2, minmax(150px, 1fr));
+      }
+
+      .project-tasks-card,
+      .project-history-card {
+        max-height: none;
+      }
+    }
+
+    @media (max-width: 767px) {
+      .project-meta-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .project-title {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .project-info-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .project-info-line {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* MODAL STYLES (MATCHING TELA DE ATENDIMENTOS / ATD.PHP) */
+    .modal-content {
+      border: 1px solid #dbe4ef;
+      border-radius: 8px;
+      box-shadow: 0 18px 48px rgba(15, 23, 42, .24);
+      overflow: hidden;
+    }
+
+    .modal-header {
+      min-height: 42px;
+      border-bottom: 1px solid #e7edf5;
+      background: #fff;
+      color: #172033;
+      align-items: center;
+      padding: 13px 16px;
+    }
+
+    .modal-title {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin: 0;
+      color: #172033;
+      font-size: 1rem;
+      font-weight: 800;
+      line-height: 1.2;
+    }
+
+    .modal-header .close {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      margin: 0;
+      padding: 0;
+      border-radius: 999px;
+      color: #64748b;
+      opacity: 1;
+      transition: background 0.15s ease, color 0.15s ease;
+    }
+
+    #projeto_edt .modal-content {
+      border: 1px solid #dbe4ef;
+      border-radius: 12px;
+      box-shadow: 0 20px 48px rgba(15, 23, 42, .28);
+      overflow: hidden;
+    }
+
+    #projeto_edt .modal-header {
+      align-items: center;
+      padding: 16px 20px;
+      border-bottom: 1px solid #e1e8f2;
+      background: #f8fafc;
+      color: #172033;
+    }
+
+    #projeto_edt .modal-title {
+      font-size: 1.05rem;
+      font-weight: 800;
+    }
+
+    #projeto_edt .modal-body {
+      padding: 20px;
+      color: #263244;
+      font-size: .94rem;
+      line-height: 1.5;
+    }
+
+    #projeto_edt .modal-footer {
+      gap: 8px;
+      padding: 14px 18px;
+      background: #fff;
+      border-top: 1px solid #e6edf5;
+    }
+
+    #projeto_edt .modal-footer .btn {
+      min-width: 94px;
+      min-height: 36px;
+      border-radius: 6px;
+      font-weight: 700;
+      box-shadow: none;
+    }
+
+    #projeto_edt .modal-footer .btn-secondary {
+      border-color: #cfd8e3;
+      background: #f8fafc;
+      color: #344054;
+    }
+
+    #projeto_edt .modal-footer .btn-danger {
+      border-color: #0ea5e9;
+      background: #0ea5e9;
+      color: #fff;
+    }
+
+    #projeto_edt .modal-footer .btn-danger:hover {
+      border-color: #0284c7;
+      background: #0284c7;
+    }
+
+    @media (max-width: 767.98px) {
+      #projeto_edt .modal-dialog {
+        max-width: calc(100vw - 16px);
+        margin: .5rem auto;
+      }
+
+      #projeto_edt .modal-body {
+        padding: 14px !important;
+      }
+
+      #projeto_edt .modal-footer {
+        flex-direction: column-reverse;
+        align-items: stretch;
+      }
+
+      #projeto_edt .modal-footer .btn {
+        width: 100%;
+      }
+    }
+
+    .modal-header .close:hover {
+      background: #f1f5f9;
+      color: #172033;
+      text-decoration: none;
+    }
+
+    .modal-title i {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      margin: 0 !important;
+      border-radius: 999px;
+      background: #edf8fb;
+      color: #169bb5 !important;
+      font-size: .88rem;
+    }
+
+    #projeto_espera .modal-title i {
+      background: #fff7ed;
+      color: #d97706 !important;
+    }
+
+    #projeto_recusar .modal-title i {
+      background: #fff1f2;
+      color: #dc2626 !important;
+    }
+
+    #projeto_aceitar .modal-title i,
+    #projeto_retomar .modal-title i,
+    #projeto_finalizar .modal-title i {
+      background: #f0fdf4;
+      color: #16a34a !important;
+    }
+
+    #Help .modal-title i {
+      background: #fff1f2;
+      color: #dc2626 !important;
+    }
+
+    .modal-body {
+      padding: 16px;
+      color: #263244;
+      font-size: .9rem;
+      line-height: 1.5;
+    }
+
+    .modal-body > label.small {
+      display: block;
+      width: 100%;
+      margin-bottom: 12px !important;
+      padding: 12px;
+      border: 1px solid #e1e8f2;
+      border-radius: 8px;
+      background: #fbfcfe;
+      color: #334155;
+      line-height: 1.45;
+    }
+    
+    .modal-body > label.small + label.small {
+      margin-top: -6px;
+    }
+
+    .modal-body .form-row {
+      margin-left: 0;
+      margin-right: 0;
+    }
+
+    .modal-body .form-group {
+      padding-left: 0;
+      padding-right: 0;
+      margin-bottom: 12px;
+    }
+
+    .modal-body label,
+    .modal-body .my-0.small {
+      color: #334155;
+      font-weight: 600;
+      display: block;
+      margin-bottom: 4px !important;
+      font-size: .86rem;
+      line-height: 1.15;
+    }
+
+    .modal-body textarea.form-control,
+    .modal-body textarea {
+      min-height: 120px;
+      padding: 10px 11px;
+      border-radius: 6px;
+      line-height: 1.45;
+    }
+
+    .modal-footer {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 8px;
+      padding: 12px 16px;
+      border-top: 1px solid #e7edf5;
+      background: #fbfcfe;
+    }
+
+    .modal-footer form {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      width: 100%;
+      margin: 0;
+    }
+
+    .modal-footer .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 34px;
+      min-width: 96px;
+      border-radius: 6px;
+      padding: 7px 13px;
+      font-weight: 600;
+    }
+
+    .modal-body .form-control,
+    .modal-body .form-control-sm,
+    .modal-body .bootstrap-select>.dropdown-toggle {
+      min-height: 34px;
+      border: 1px solid #d3dbe7;
+      border-radius: 4px;
+      background-color: #fff;
+      color: #172033;
+      font-size: .86rem;
+      box-shadow: none;
+    }
+
+    .modal-body .form-control:focus,
+    .modal-body .form-control-sm:focus,
+    .modal-body .bootstrap-select>.dropdown-toggle:focus {
+      border-color: #74a7e8;
+      box-shadow: 0 0 0 2px rgba(13, 110, 253, .12);
+      outline: none !important;
+    }
+
+    .bootstrap-select .dropdown-menu,
+    .dropdown-menu {
+      border: 1px solid #d9e3ef;
+      border-radius: 6px;
+      box-shadow: 0 10px 24px rgba(15, 23, 42, .14);
+    }
+
+    #projeto_new_inter .modal-dialog,
+    #projeto_aceitar .modal-dialog,
+    #projeto_retomar .modal-dialog,
+    #projeto_espera .modal-dialog,
+    #projeto_recusar .modal-dialog,
+    #projeto_finalizar .modal-dialog {
+      max-width: 620px;
+    }
+
+    .modal:not(#Help) .modal-dialog {
+      max-width: min(760px, calc(100vw - 32px));
+      margin: 1.25rem auto;
+    }
+
+    #new_tarefa .modal-dialog {
+      max-width: min(1200px, calc(100vw - 32px));
+    }
+
+    #relacionar .modal-dialog,
+    #projeto_edt .modal-dialog,
+    #project_info_modal .modal-dialog {
+      max-width: min(920px, calc(100vw - 32px));
+    }
+
+    #relacionar .bootstrap-select {
+      width: 100% !important;
+    }
+
+    #relacionar .modal-content,
+    #relacionar .modal-body,
+    #relacionar .form-row,
+    #relacionar .form-group {
+      overflow: visible !important;
+    }
+
+    #relacionar .bootstrap-select>.dropdown-toggle {
+      width: 100%;
+      max-width: 100%;
+    }
+
+    #relacionar .bootstrap-select>.dropdown-menu {
+      width: 100% !important;
+      min-width: 100% !important;
+      max-width: 100% !important;
+      max-height: none !important;
+      overflow: hidden !important;
+      z-index: 1070;
+    }
+
+    #relacionar .bootstrap-select .dropdown-menu.inner {
+      max-height: 260px !important;
+      overflow-y: auto !important;
+      overflow-x: hidden !important;
+    }
+
+    #relacionar .bootstrap-select .bs-searchbox {
+      display: none !important;
+    }
+
+    #relacionar .bootstrap-select .inner.show {
+      width: 100% !important;
+      min-width: 100% !important;
+      max-width: 100% !important;
+    }
+
+    #relacionar .bootstrap-select .dropdown-menu li a {
+      white-space: normal;
+      word-break: break-word;
+      line-height: 1.35;
+    }
+
+    #relacionar .bootstrap-select .filter-option-inner-inner {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .modal:not(#Help) .modal-content {
+      border: 1px solid #dbe4ef;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #fff;
+      box-shadow: 0 22px 58px rgba(15, 23, 42, .28);
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .modal:not(#Help) .modal-header {
+      min-height: 56px;
+      padding: 14px 18px;
+      border-bottom: 1px solid #e7edf5;
+      background: #fff;
+      color: #172033;
+    }
+
+    .modal:not(#Help) .modal-title {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      color: #172033;
+      font-size: 1rem;
+      font-weight: 800;
+      letter-spacing: 0;
+    }
+
+    .modal:not(#Help) .modal-title i {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex: 0 0 30px;
+      width: 30px;
+      height: 30px;
+      border-radius: 999px;
+      background: #e8f8fc;
+      color: #169bb5 !important;
+      font-size: .9rem;
+    }
+
+    .modal:not(#Help) .modal-header .close {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      margin: 0 0 0 auto;
+      padding: 0;
+      border-radius: 999px;
+      color: #64748b;
+      opacity: 1;
+      text-shadow: none;
+      transition: background .15s ease, color .15s ease;
+    }
+
+    .modal:not(#Help) .modal-header .close:hover {
+      background: #f1f5f9;
+      color: #172033;
+      text-decoration: none;
+    }
+
+    .modal:not(#Help) .modal-body {
+      padding: 18px 20px !important;
+      background: #fff;
+      color: #263244;
+      font-size: .9rem;
+      line-height: 1.45;
+    }
+
+    .modal:not(#Help) .modal-body .form-row {
+      margin-right: -6px;
+      margin-left: -6px;
+    }
+
+    .modal:not(#Help) .modal-body .form-group {
+      margin-bottom: 13px;
+      padding-right: 6px;
+      padding-left: 6px;
+    }
+
+    .modal:not(#Help) .modal-body label,
+    .modal:not(#Help) .modal-body .my-0.small {
+      display: block;
+      margin-bottom: 5px !important;
+      color: #334155;
+      font-size: .84rem;
+      font-weight: 600;
+      line-height: 1.2;
+    }
+
+    .modal:not(#Help) .modal-body > label.small {
+      padding: 12px 14px;
+      border: 1px solid #e1e8f2;
+      border-radius: 7px;
+      background: #f8fafc;
+      color: #334155;
+    }
+
+    .modal:not(#Help) .modal-body .form-control,
+    .modal:not(#Help) .modal-body .form-control-sm,
+    .modal:not(#Help) .modal-body .bootstrap-select>.dropdown-toggle {
+      min-height: 36px;
+      border: 1px solid #cfd9e6;
+      border-radius: 5px;
+      background-color: #fff;
+      color: #172033;
+      font-size: .88rem;
+      box-shadow: none;
+    }
+
+    .modal:not(#Help) .modal-body textarea.form-control,
+    .modal:not(#Help) .modal-body textarea {
+      min-height: 118px;
+      padding: 10px 11px;
+      line-height: 1.45;
+      resize: vertical;
+    }
+
+    .modal:not(#Help) .modal-body .form-control:focus,
+    .modal:not(#Help) .modal-body .form-control-sm:focus,
+    .modal:not(#Help) .modal-body .bootstrap-select>.dropdown-toggle:focus {
+      border-color: #74a7e8;
+      box-shadow: 0 0 0 3px rgba(13, 110, 253, .12);
+      outline: none !important;
+    }
+
+    .modal:not(#Help) .modal-footer {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 8px;
+      padding: 13px 18px;
+      border-top: 1px solid #e7edf5;
+      background: #fbfcfe;
+    }
+
+    .modal:not(#Help) .modal-footer form {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      width: 100%;
+      margin: 0;
+    }
+
+    .modal:not(#Help) .modal-footer .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 96px;
+      min-height: 36px;
+      border-radius: 5px;
+      padding: 7px 14px;
+      font-weight: 700;
+      box-shadow: none;
+    }
+
+    @media (max-width: 767.98px) {
+      .modal:not(#Help) .modal-dialog,
+      #new_tarefa .modal-dialog,
+      #relacionar .modal-dialog,
+      #projeto_edt .modal-dialog,
+      #project_info_modal .modal-dialog {
+        max-width: calc(100vw - 16px);
+        margin: .5rem auto;
+      }
+
+      .modal:not(#Help) .modal-body {
+        padding: 14px !important;
+      }
+
+      .modal:not(#Help) .modal-footer {
+        flex-direction: column-reverse;
+        align-items: stretch;
+      }
+
+      .modal:not(#Help) .modal-footer .btn,
+      .modal:not(#Help) .modal-footer form {
+        width: 100%;
+      }
+    }
+
+    /* GENERAL BUTTON OVERRIDES (MATCHING ATD.PHP) */
+    .btn {
+      border-radius: 4px;
+      font-weight: 500;
+    }
+
+    .btn-sm {
+      min-height: 32px;
+      font-size: .84rem;
+    }
+
+    .btn-primary,
+    .btn-info {
+      border-color: #169bb5;
+      background-color: #169bb5;
+      color: #fff;
+    }
+
+    .btn-outline-primary,
+    .btn-outline-info {
+      border-color: #1597bd;
+      color: #1597bd;
+      background-color: #fff;
+    }
+
+    .btn-outline-primary:hover,
+    .btn-outline-info:hover {
+      border-color: #1597bd;
+      background-color: #e9f8fc;
+      color: #0f7897;
+    }
+
+    .btn-outline-secondary {
+      border-color: #cfd9e6;
+      color: #263244;
+      background: #fff;
+    }
+
+    .btn-outline-secondary:hover {
+      background: #f8fafc;
+      color: #172033;
+    }
+
+    .badge {
+      border-radius: 999px;
+      padding: .26rem .48rem;
+      font-weight: 700;
+    }
+
+    hr {
+      border-top-color: #e7edf5;
+    }
+
   </style>
 
 </head>
@@ -81,7 +1402,7 @@ if ($m5_00 == 0) {
 
   //verifico se existe alguma requisição via post cahamda projeto
   // $projeto = filter_input(INPUT_POST, 'projeto', FILTER_SANITIZE_NUMBER_INT);
-  $projeto = $_POST['projeto'] ?? $_GET['projeto'] ?? 0;
+  $projeto = $_POST['projeto'] ?? $_GET['projeto'] ??  0;
 
 
   if ($action == "alterar_senha") {
@@ -230,7 +1551,7 @@ if ($m5_00 == 0) {
         $row = $show_itens->fetch(PDO::FETCH_ASSOC);
 
         if ($row) { // Verificando se a consulta retornou resultados
-          $projeto_itens_nome = isset($row["itens_nome"]) ? $row["itens_nome"] : ''; // Acesso seguro é chave
+          $projeto_itens_nome = isset($row["itens_nome"]) ?$row["itens_nome"] : ''; // Acesso seguro é chave
         } else {
           $projeto_itens_nome = ''; // Valor padrão se não houver resultados
         }
@@ -549,7 +1870,7 @@ if ($m5_00 == 0) {
             //insere o registro de uma nova interação 
             $adc = $pdo->prepare("INSERT INTO `inter_projeto` (`inter_tipo`, `inter_projeto`, `inter_user`, `inter_data`, `inter_desc`) VALUES ('6', '$projeto', '$user_id', '$agora', 'Retomou o projeto.');");
             if ($adc->execute()) {
-              $mensagem = "<i class=\"fas fa-check\"></i> Beleza! <br> Agora vamos descrever as interaçães com o cliente!";
+              $mensagem = "<i class=\"fas fa-check\"></i> Beleza! <br> Agora vamos descrever as interAções com o cliente!";
               $mensagem_cor = "alert-success";
             } else {
               $mensagem = "<i class=\"fas fa-exclamation-triangle\"></i> Falha ao adicionar registro na tabela de interação!";
@@ -667,7 +1988,133 @@ if ($m5_00 == 0) {
           $mensagem_cor = "alert-danger";
         }
       }
+
+      // CADASTRA NOVA TAREFA
+      if ($action == "new_tarefa") {
+        $nome_tarefa = htmlspecialchars(filter_input(INPUT_POST, 'nome_tarefa', FILTER_DEFAULT), ENT_QUOTES, 'UTF-8');
+        $cliente = filter_input(INPUT_POST, 'cliente', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+        $pessoa = filter_input(INPUT_POST, 'solicitante', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+        $local = filter_input(INPUT_POST, 'local', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+        $tipo = filter_input(INPUT_POST, 'tipo', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+        $forma = filter_input(INPUT_POST, 'forma', FILTER_SANITIZE_NUMBER_INT);
+        $categoria = filter_input(INPUT_POST, 'categoria', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+        $subcategoria = filter_input(INPUT_POST, 'subcategoria', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+        $item = filter_input(INPUT_POST, 'item', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+        $nivel = filter_input(INPUT_POST, 'nivel', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+        $desc_abertura = htmlspecialchars(filter_input(INPUT_POST, 'desc_abertura', FILTER_DEFAULT), ENT_QUOTES, 'UTF-8');
+        $dias = filter_input(INPUT_POST, 'dias', FILTER_SANITIZE_NUMBER_INT);
+        $abertura = filter_input(INPUT_POST, 'abertura', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+        $tecnico = filter_input(INPUT_POST, 'tecnico', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+        $dependencia = filter_input(INPUT_POST, 'dependencia', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+
+        if (strtotime($abertura) > strtotime($agora)) {
+          $tarefa_sts = 0;
+          $agendamento = date("d/m/Y H:i", strtotime($abertura));
+          $inter_msg = "Registrou o Agendamento da Tarefa para $agendamento.";
+        } else {
+          $tarefa_sts = 1;
+          $inter_msg = "Registrou solicitação de Tarefa.";
+        }
+
+        $prazo_reincidente = 30;
+        $data_reincidente = date("Y-m-d", strtotime($hoje . " - $prazo_reincidente days"));
+        $show = $pdo->prepare("SELECT tarefas.id FROM tarefas WHERE tarefas.abertura > '$data_reincidente' AND tarefas.cliente = '$cliente' AND tarefas.categoria = '$categoria' AND tarefas.subcategoria = '$subcategoria'");
+        $show->execute();
+        $conta_tarefa = $show->rowCount();
+        if ($conta_tarefa > 0) {
+          $reincidente = 1;
+        } else {
+          $reincidente = 0;
+        }
+
+        $pdo = ConnectionN3();
+        $adc = $pdo->prepare("INSERT INTO `tarefas` (`id_projeto`,`nome_tarefa`, `cliente`, `pessoa`, `local`, `tipo`, `categoria`, `subcategoria`, `item`, `nivel`, `forma`, `desc_abertura`, `abertura`, `tecnico`, `reincidente`, `status`, `dias`,`tarefas_relacionadas`) VALUES (:id_projeto,:nome_tarefa, :cliente, :pessoa, :local, :tipo, :categoria, :subcategoria, :item, :nivel, :forma, :desc_abertura, :abertura, :tecnico, '$reincidente', '$tarefa_sts', :dias , :dependencia);");
+        $adc->bindParam(':nome_tarefa', $nome_tarefa);
+        $adc->bindParam(':cliente', $cliente);
+        $adc->bindParam(':pessoa', $pessoa);
+        $adc->bindParam(':local', $local);
+        $adc->bindParam(':tipo', $tipo);
+        $adc->bindParam(':categoria', $categoria);
+        $adc->bindParam(':subcategoria', $subcategoria);
+        $adc->bindParam(':item', $item);
+        $adc->bindParam(':nivel', $nivel);
+        $adc->bindParam(':forma', $forma);
+        $adc->bindParam(':desc_abertura', $desc_abertura);
+        $adc->bindParam(':abertura', $abertura);
+        $adc->bindParam(':tecnico', $tecnico);
+        $adc->bindParam(':dias', $dias);
+        $adc->bindParam(':id_projeto', $projeto);
+        $adc->bindParam(':dependencia', $dependencia);
+
+        if ($adc->execute()) {
+          $tarefa = $pdo->lastInsertId();
+          $mensagem = "<i class=\"fas fa-check\"></i> Tarefa cadastrada!";
+          $mensagem_cor = "alert-success";
+          $log = "true";
+
+          $pdo = ConnectionN3();
+          $adc = $pdo->prepare("INSERT INTO `inter_tarefa` (`inter_tipo`, `inter_tarefa`, `inter_user`, `inter_data`, `inter_desc`) VALUES ('1', '$tarefa', '$user_id', '$agora', '$inter_msg');");
+          $adc->execute();
+
+          if ($tecnico > 0 && $tecnico != $user_id) {
+            $show_tec = $pdo->prepare("SELECT usuarios.user_nome FROM usuarios WHERE usuarios.user_id = '$tecnico'");
+            $show_tec->execute();
+            $exibe = $show_tec->fetch(PDO::FETCH_ASSOC);
+            $tecnico_nome = $exibe["user_nome"];
+
+            $adc = $pdo->prepare("INSERT INTO `inter_tarefa` (`inter_tipo`, `inter_tarefa`, `inter_user`, `inter_data`, `inter_desc`) VALUES ('4', '$tarefa', '$user_id', '$agora', 'Direcionou o tarefa para $tecnico_nome.')");
+            $adc->execute();
+          }
+        } else {
+          $mensagem = "<i class=\"fas fa-exclamation-triangle\"></i> Falha ao cadastrar tarefa!";
+          $mensagem_cor = "alert-danger";
+          $log = "false";
+        }
+      }
+
+      // RELACIONAR TAREFAS
+      if ($action == "relacionar_tar") {
+        $tarefa = filter_input(INPUT_POST, 'tarefa', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+        $dependencia = filter_input(INPUT_POST, 'dependencia', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+
+        $pdo = ConnectionN3();
+        $adc = $pdo->prepare("UPDATE `tarefas` SET `tarefas_relacionadas`='$dependencia' WHERE `id`='$tarefa';");
+        if ($adc->execute()) {
+          $mensagem = "<i class=\"fas fa-check\"></i> OK! <br> Tarefas relacionadas com sucesso";
+          $mensagem_cor = "alert-success";
+        } else {
+          $mensagem = "<i class=\"fas fa-exclamation-triangle\"></i> Falha ao relacionar tarefas!";
+          $mensagem_cor = "alert-danger";
+        }
+      }
+
     }
+  }
+
+  // PRG blanket redirect: any POST request redirects to the GET view to avoid form resubmission
+  if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (isset($mensagem)) {
+      $_SESSION['projeto_msg'] = $mensagem;
+      $_SESSION['projeto_msg_cor'] = $mensagem_cor;
+    }
+
+    if (ob_get_length()) {
+      ob_clean();
+    }
+
+    if (!empty($projeto)) {
+      header("Location: projeto.php?projeto=" . urlencode((string)$projeto));
+    } else {
+      header("Location: projeto.php");
+    }
+    exit;
+  }
+
+  // Recupera mensagem da sessão (após redirect PRG)
+  if (isset($_SESSION['projeto_msg'])) {
+    $mensagem = $_SESSION['projeto_msg'];
+    $mensagem_cor = $_SESSION['projeto_msg_cor'] ?? 'alert-info';
+    unset($_SESSION['projeto_msg'], $_SESSION['projeto_msg_cor']);
   }
   ?>
   <?php
@@ -917,7 +2364,7 @@ if ($m5_00 == 0) {
     //Busca informações do projeto
 
     $pdo = ConnectionN3();
-    $show_projeto = $pdo->prepare("SELECT projetos.`area`, projetos.`tipo`, projetos.`categoria`, projetos.`subcategoria`, projetos.`item`, projetos.`nivel`, projetos.`local`, projetos.`dias`, projetos.forma, projetos.desc_abertura, projetos.desc_fechamento, projetos.abertura, projetos.fechamento, projetos.reincidente, projetos.`status`, projetos.`tecnico`,
+    $show_projeto = $pdo->prepare("SELECT projetos.`nome_proj`, projetos.`area`, projetos.`tipo`, projetos.`categoria`, projetos.`subcategoria`, projetos.`item`, projetos.`nivel`, projetos.`local`, projetos.`dias`, projetos.forma, projetos.desc_abertura, projetos.desc_fechamento, projetos.abertura, projetos.fechamento, projetos.reincidente, projetos.`status`, projetos.`tecnico`,
     clientes.clt_id, clientes.clt_nomer, clientes.clt_nomef, clientes.clt_cnpj,
     pessoas.pessoa_nom, pessoas.pessoa_cargo, pessoas.pessoa_tel, pessoas.pessoa_mail,
     locais.local_nom, locais.local_end, locais.local_city, locais.local_uf,
@@ -944,13 +2391,15 @@ if ($m5_00 == 0) {
     // $projeto_status = $row["status"];
     // $projeto_tipo = $row["tipo"];
 
-    $projeto_desc_abertura   = $row['desc_abertura']   ?? null;
-    $projeto_desc_fechamento = $row['desc_fechamento'] ?? null;
-    $projeto_hora_abertura   = $row['abertura']        ?? null;
-    $projeto_hora_fechamento = $row['fechamento']     ?? null;
-    $projeto_reincidente     = $row['reincidente']    ?? 0;
+    $projeto_nome            = $row['nome_proj']       ??  '';
+    $projeto_desc_abertura   = $row['desc_abertura']   ??  null;
+    $projeto_desc_fechamento = $row['desc_fechamento'] ??  null;
+    $projeto_hora_abertura   = $row['abertura']        ??  null;
+    $projeto_hora_fechamento = $row['fechamento']     ??  null;
+    $projeto_reincidente     = $row['reincidente']    ??  0;
     $projeto_status          = $row['status']         ?? 0;
     $projeto_tipo            = $row['tipo']           ?? null;
+    $projeto_tipo_nome       = "Não informado";
     if ($projeto_tipo == 1) {
       $projeto_tipo_nome = "Falha";
     }
@@ -969,7 +2418,7 @@ if ($m5_00 == 0) {
     if ($projeto_tipo == 0) {
       $projeto_tipo_nome = "Não informado";
     }
-    $projeto_dias = $row["dias"] ?? '';
+    $projeto_dias = $row["dias"] ??  '';
     //    if($projeto_nivel==5){$projeto_nivel_nome="1 dia";}
     //    if($projeto_nivel==6){$projeto_nivel_nome="2 dias";}
     //    if($projeto_nivel==7){$projeto_nivel_nome="5 dias";}
@@ -979,7 +2428,8 @@ if ($m5_00 == 0) {
     //    if($projeto_nivel==11){$projeto_nivel_nome="90 dias";}
 
 
-    $projeto_nivel = $row["nivel"] ?? '';
+    $projeto_nivel = $row["nivel"] ??  '';
+    $projeto_nivel_nome = "Não informado";
     if ($projeto_nivel == 0) {
       $projeto_nivel_nome = "Não informado";
     }
@@ -1000,7 +2450,7 @@ if ($m5_00 == 0) {
     }
 
 
-    // $projeto_forma = $row["forma"] ?? '';
+    // $projeto_forma = $row["forma"] ??  '';
 
     // $clt_id = $row["clt_id"];
     // $clt_nomer = $row["clt_nomer"];
@@ -1033,1175 +2483,527 @@ if ($m5_00 == 0) {
     //   $tecnico_nome = "Não Atribuído";
     // }
 
-    $projeto_forma = $row["forma"] ?? '';
+    $projeto_forma = $row["forma"] ??  '';
 
-    $clt_id    = $row["clt_id"]    ?? 0;
-    $clt_nomer = $row["clt_nomer"] ?? '';
-    $clt_nomef = $row["clt_nomef"] ?? '';
-    $clt_cnpj  = $row["clt_cnpj"]  ?? '';
+    $clt_id    = $row["clt_id"]    ??  0;
+    $clt_nomer = $row["clt_nomer"] ??  '';
+    $clt_nomef = $row["clt_nomef"] ??  '';
+    $clt_cnpj  = $row["clt_cnpj"]  ??  '';
 
-    $pessoa_nom   = $row["pessoa_nom"]   ?? '';
-    $pessoa_cargo = $row["pessoa_cargo"] ?? '';
-    $pessoa_tel   = $row["pessoa_tel"]   ?? '';
-    $pessoa_mail  = $row["pessoa_mail"]  ?? '';
+    $pessoa_nom   = $row["pessoa_nom"]   ??  '';
+    $pessoa_cargo = $row["pessoa_cargo"] ??  '';
+    $pessoa_tel   = $row["pessoa_tel"]   ??  '';
+    $pessoa_mail  = $row["pessoa_mail"]  ??  '';
 
-    $local       = $row["local"]       ?? 0;
+    $local       = $row["local"]       ??  0;
     $local_nom   = $row["local_nom"]   ?? 'Não informado';
-    $local_end   = $row["local_end"]   ?? '';
-    $local_city  = $row["local_city"]  ?? '';
-    $local_uf    = $row["local_uf"]    ?? '';
+    $local_end   = $row["local_end"]   ??  '';
+    $local_city  = $row["local_city"]  ??  '';
+    $local_uf    = $row["local_uf"]    ??  '';
 
-    $projeto_cat      = $row["categoria"]   ?? 0;
+    $projeto_cat      = $row["categoria"]   ??  0;
     $projeto_item     = $row["item"]        ?? 0;
-    $cat_nome         = $row["cat_nome"]    ?? '';
-    $projeto_scat     = $row["subcategoria"] ?? 0;
-    $scat_nome        = $row["scat_nome"]   ?? '';
-    $projeto_itens_nome = $row["itens_nome"] ?? '';
+    $cat_nome         = $row["cat_nome"]    ??  '';
+    $projeto_scat     = $row["subcategoria"] ??  0;
+    $scat_nome        = $row["scat_nome"]   ??  '';
+    $projeto_itens_nome = $row["itens_nome"] ??  '';
 
-    $tecnico_nome = $row["tecnico_nome"] ?? 'Não Atribuído';
+    $tecnico_nome = $row["tecnico_nome"] ??  'Não Atribuído';
     $tecnico_id   = $row["tecnico"]      ?? 0;
     if ($tecnico_id == 0) {
       $tecnico_nome = "Não Atribuído";
     }
-
-
-
-
-    //verifico se existe alguma requisição POST chamada action
-    $action = filter_input(INPUT_POST, 'action', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-
-    //verifico se existe alguma requisição via post cahamda tarefa
-    $tarefa = filter_input(INPUT_POST, 'tarefa', FILTER_SANITIZE_NUMBER_INT);
-
-    if ($action == "alterar_senha") {
-      include_once("../all/update_senha.php");
+    
+    if ($projeto_status == 2) {
+      $exibe_bt_cont_new_tarefa = true;
+    } else {
+      $exibe_bt_cont_new_tarefa = false;
     }
 
-    if ($usar_token == "true") {
-      if ($action) {
-        if ($action == "new_tarefa") {
-          $nome_tarefa = htmlspecialchars(filter_input(INPUT_POST, 'nome_tarefa', FILTER_DEFAULT), ENT_QUOTES, 'UTF-8');
-          // $nome_tarefa = filter_input(INPUT_POST, 'nome_tarefa', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-          $cliente = filter_input(INPUT_POST, 'cliente', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-          $pessoa = filter_input(INPUT_POST, 'solicitante', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-          $local = filter_input(INPUT_POST, 'local', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-          $tipo = filter_input(INPUT_POST, 'tipo', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-          $forma = filter_input(INPUT_POST, 'forma', FILTER_SANITIZE_NUMBER_INT);
-          $categoria = filter_input(INPUT_POST, 'categoria', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-          $subcategoria = filter_input(INPUT_POST, 'subcategoria', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-          $item = filter_input(INPUT_POST, 'item', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-          $nivel = filter_input(INPUT_POST, 'nivel', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-          // $desc_abertura = filter_input(INPUT_POST, 'desc_abertura', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-          $desc_abertura = htmlspecialchars(filter_input(INPUT_POST, 'desc_abertura', FILTER_DEFAULT), ENT_QUOTES, 'UTF-8');
-          $dias = filter_input(INPUT_POST, 'dias', FILTER_SANITIZE_NUMBER_INT);
-          $abertura = filter_input(INPUT_POST, 'abertura', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-          $tecnico = filter_input(INPUT_POST, 'tecnico', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-          $dependencia = filter_input(INPUT_POST, 'dependencia', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+    if ($tecnico_id == 0) {
+      $exibe_bt_projeto_aceitar = true;
+    }
 
+    if ($projeto_status == 1 && $tecnico_id == $user_id) {
+      $exibe_bt_projeto_aceitar = true;
+    }
 
-          //VERIFICA SE DATA HORA ABERTURA É MAIOR DO QUE DATA HORA ATUAL.
-          //SE POSITIVO: UM TAREFA AGENDADO
-          //MUDA O STATUS PADRÃO DE ABERTURA PARA 0 (AGENDADO)
-          if (strtotime($abertura) > strtotime($agora)) {
-            $tarefa_sts = 0;
-            $agendamento = date("d/m/Y H:i", strtotime($abertura));
-            $inter_msg = "Registrou o Agendamento da Tarefa para $agendamento.";
-          } else {
-            $tarefa_sts = 1;
-            $inter_msg = "Registrou solicitação de Tarefa.";
-          }
+    if ($projeto_status == 3 && $tecnico_id == $user_id) {
+      $exibe_bt_projeto_retomar = true;
+    }
 
-          //VERIFICA SE EXISTE UM TAREFA ABERTO PARA O MESMO CLIENTE, COM A MESMA CATEGORIA E MESMA SUBCATEGORIA NOS ÚLTIMOS 30 DIAS
-          //SE HOUVER, CLASSIFICA O TAREFA COMO REINCIDENTE
-          $prazo_reincidente = 30; //PERIODO EM DIAS PARA VERIFICAR REINCIDÊNCIA
-          $data_reincidente = date("Y-m-d", strtotime($hoje . " - $prazo_reincidente days"));
-          $show = $pdo->prepare("SELECT tarefas.id FROM tarefas WHERE tarefas.abertura > '$data_reincidente' AND tarefas.cliente = '$cliente' AND tarefas.categoria = '$categoria' AND tarefas.subcategoria = '$subcategoria'");
-          $show->execute();
-          $conta_tarefa = $show->rowCount();
-          if ($conta_tarefa > 0) {
-            $reincidente = 1;
-          } else {
-            $reincidente = 0;
-          }
+    if ($projeto_status == 2 && $tecnico_id == $user_id) {
+      $exibe_bt_projeto_devolver = true;
+    }
 
+    if ($m3_02 == 0) {
+      $exibe_bt_projeto_aceitar = false;
+    }
+    if ($m3_04 == 0) {
+      $exibe_bt_projeto_devolver = false;
+    }
 
-          //SELECIONAR TABELA PROJETO PARA `PEGAR` O ID DO PROJETO
+    if ($m3_05 == 2) {
+      if ($projeto_status == 3) {
+        $exibe_bt_projeto_retomar = true;
+      }
+      $exibe_bt_projeto_devolver = true;
+      if ($projeto_status == 2) {
+        $exibe_bt_projeto_espera = true;
+      }
+    }
 
+    $project_status_labels = [
+      0 => 'Projeto agendado',
+      1 => 'Aguardando execução',
+      2 => 'Projeto em execução',
+      3 => 'Projeto em espera',
+      4 => 'Projeto finalizado'
+    ];
+    $project_status_icons = [
+      0 => 'far fa-clock',
+      1 => 'fas fa-hourglass-half',
+      2 => 'fas fa-magic',
+      3 => 'far fa-pause-circle',
+      4 => 'fas fa-check'
+    ];
+    $project_status_label = $project_status_labels[(int)$projeto_status] ??  'Não informado';
+    $project_status_icon = $project_status_icons[(int)$projeto_status] ??  'fas fa-info-circle';
+    $project_status_class = 'project-status-' . (int)$projeto_status;
+    $project_deadline = $projeto_hora_abertura ?date("d/m/y H:i", strtotime($projeto_hora_abertura . " +20 hours")) : 'Não informado';
 
+    $pdo = ConnectionN3();
+    $show_last_project_inter = $pdo->prepare("SELECT inter_data FROM inter_projeto WHERE inter_projeto = :projeto AND inter_tipo > '0' ORDER BY inter_id DESC LIMIT 1");
+    $show_last_project_inter->bindParam(':projeto', $projeto, PDO::PARAM_INT);
+    $show_last_project_inter->execute();
+    $last_project_inter = $show_last_project_inter->fetch(PDO::FETCH_ASSOC);
+    $last_project_inter_label = !empty($last_project_inter['inter_data']) ?date('d/m/y H:i', strtotime($last_project_inter['inter_data'])) : 'Sem interação';
 
-
-          //INICIA PROCESSO DE GRAVAÇÃO DO TAREFA NA BASE DE DADOS
-          $pdo = ConnectionN3();
-          $adc = $pdo->prepare("INSERT INTO `tarefas` (`id_projeto`,`nome_tarefa`, `cliente`, `pessoa`, `local`, `tipo`, `categoria`, `subcategoria`, `item`, `nivel`, `forma`, `desc_abertura`, `abertura`, `tecnico`, `reincidente`, `status`, `dias`,`tarefas_relacionadas`) VALUES (:id_projeto,:nome_tarefa, :cliente, :pessoa, :local, :tipo, :categoria, :subcategoria, :item, :nivel, :forma, :desc_abertura, :abertura, :tecnico, '$reincidente', '$tarefa_sts', :dias , :dependencia);");
-          $adc->bindParam(':nome_tarefa', $nome_tarefa);
-          $adc->bindParam(':cliente', $cliente);
-          $adc->bindParam(':pessoa', $pessoa);
-          $adc->bindParam(':local', $local);
-          $adc->bindParam(':tipo', $tipo);
-          $adc->bindParam(':categoria', $categoria);
-          $adc->bindParam(':subcategoria', $subcategoria);
-          $adc->bindParam(':item', $item);
-          $adc->bindParam(':nivel', $nivel);
-          $adc->bindParam(':forma', $forma);
-          $adc->bindParam(':desc_abertura', $desc_abertura);
-          $adc->bindParam(':abertura', $abertura);
-          $adc->bindParam(':tecnico', $tecnico);
-          $adc->bindParam(':dias', $dias);
-          $adc->bindParam(':id_projeto', $projeto);
-          $adc->bindParam(':dependencia', $dependencia);
-
-
-
-          //SE O TÉCNICO ESCOLHIDO FOR DIFERENTE DO USUÁRIO
-          //if($tecnico>0 && $tecnico!= $user_id){
-          //}
-
-          if ($adc->execute()) {
-            $tarefa = $pdo->lastInsertId();
-            $mensagem = "<i class=\"fas fa-check\"></i> Tarefa cadastrada!";
-            $mensagem_cor = "alert-success";
-            $log = "true";
-
-            //cadastra abertura do tarefa na tabela de interatividade
-            $pdo = ConnectionN3();
-            $adc = $pdo->prepare("INSERT INTO `inter_tarefa` (`inter_tipo`, `inter_tarefa`, `inter_user`, `inter_data`, `inter_desc`) VALUES ('1', '$tarefa', '$user_id', '$agora', '$inter_msg');");
-            $adc->execute();
-
-            //SE O TÉCNICO ESCOLHIDO FOR DIFERENTE DO USUÁRIO
-            //registra interação de direcionamento de tarefa
-            if ($tecnico > 0 && $tecnico != $user_id) {
-              $show_tec = $pdo->prepare("SELECT usuarios.user_nome FROM usuarios WHERE usuarios.user_id = '$tecnico'");
-              $show_tec->execute();
-              $exibe = $show_tec->fetch(PDO::FETCH_ASSOC);
-              $tecnico_nome = $exibe["user_nome"];
-
-              $adc = $pdo->prepare("INSERT INTO `inter_tarefa` (`inter_tipo`, `inter_tarefa`, `inter_user`, `inter_data`, `inter_desc`) VALUES ('4', '$tarefa', '$user_id', '$agora', 'Direcionou o tarefa para $tecnico_nome.')");
-              $adc->execute();
-            }
-          } else {
-            $mensagem = "<i class=\"fas fa-exclamation-triangle\"></i> Falha ao cadastrar tarefa!";
+    $time_now = date("Y-m-d H:i:s");
+    $pdo = ConnectionN3();
+    $show_tarefas = $pdo->prepare("SELECT tarefas.id, tarefas.abertura, tarefas.id_projeto FROM tarefas WHERE tarefas.`status` = '0'");
+    $show_tarefas->execute();
+    while ($exibe = $show_tarefas->fetch(PDO::FETCH_ASSOC)) {
+      $tarefas = $exibe["id"];
+      $tarefas_agendamento = $exibe["abertura"];
+      if (strtotime($time_now) > strtotime($tarefas_agendamento)) {
+        $edt = $pdo->prepare("UPDATE `tarefas` SET `status`='1' WHERE `id`='$tarefas';");
+        if ($edt->execute()) {
+          $adc = $pdo->prepare("INSERT INTO `inter_tarefa` (`inter_tipo`, `inter_tarefa`, `inter_user`, `inter_data`, `inter_desc`) VALUES ('1', '$tarefas', '1', '$time_now', 'Status do atendimento alterado automaticamente para Aguardando Execução.');");
+          if (!$adc->execute()) {
+            $mensagem = "<i class=\"fas fa-exclamation-triangle\"></i> Falha ao adicionar registro na tabela de interação!";
             $mensagem_cor = "alert-danger";
-            $log = "false";
           }
         }
       }
     }
     ?>
-    <div class="container-fluid">
-      <div class="row mt-2">
-        <div class="col-md-3 px-1">
 
-          <div class="card">
-            <div class="card-header py-1 h6 pt-2 pb-2">
-              <i class="fas fa-headset text-danger"></i> projeto #<?php echo str_pad($projeto, 5, '0', STR_PAD_LEFT); ?>
+    <div class="container-fluid project-page">
+      <div class="row mt-2 h-100">
+        <div class="col-lg-9 col-md-12 px-1 project-main-column">
+          <div class="project-card project-hero">
+            <div class="project-title">
+              <div>
+                <small>Projeto #<?php echo str_pad($projeto, 5, '0', STR_PAD_LEFT); ?></small>
+                <h1><?php echo htmlspecialchars($projeto_nome ?: 'Projeto sem nome'); ?></h1>
+              </div>
+              <div class="project-title-actions">
+                <span class="project-status-badge <?php echo $project_status_class; ?>">
+                  <i class="<?php echo $project_status_icon; ?>"></i> <?php echo $project_status_label; ?>
+                </span>
+                <button type="button" class="btn btn-outline-secondary btn-sm project-info-btn" data-toggle="modal" data-target="#project_info_modal" title="Mais informações">
+                  <i class="fas fa-info"></i>
+                </button>
+              </div>
             </div>
-            <div class="card-body pt-1 pl-0 pr-0">
-              <ul class="list-unstyled">
-                <li class="pl-2 mt-0 d-flex align-items-center"><i class="fas fa-building mr-2"></i><?php echo $clt_nomer; ?></li>
-                <li class="pl-2 mt-0 d-flex align-items-center"><i class="fas fa-paste small ml-3 pl-3 mr-2"></i><small>CNPJ: <?php echo $clt_cnpj; ?></small></li>
-                <li class="pl-2 mt-0 d-flex align-items-center"><i class="far fa-building small ml-3 pl-3 mr-2"></i><small><?php echo $clt_nomef; ?></small></li>
-                <hr class="p-0 mt-1 mb-0">
-                <li class="pl-2 mt-1 d-flex align-items-center"><i class="fas fa-user-tag mr-2"></i><?php echo $pessoa_nom; ?></li>
-                <?php if ($pessoa_cargo != "") { ?>
-                  <li class="pl-2 mt-0 d-flex align-items-center"><i class="fas fa-sitemap small ml-3 pl-3 mr-2"></i><small><?php echo $pessoa_cargo; ?></small></li>
-                <?php } ?>
-                <li class="pl-2 mt-0 d-flex align-items-center"><i class="fas fa-mobile-alt small ml-3 pl-3 mr-2"></i><small><?php echo $pessoa_tel; ?></small></li>
-                <hr class="p-0 mt-1 mb-0">
-                <li class="pl-2 mt-1 d-flex align-items-center"><i class="fas fa-map-marked-alt mr-2"></i><?php echo $local_nom; ?></li>
-                <?php if ($local > 0) {   ?>
-                  <li class="pl-2 mt-0 d-flex align-items-center"><i class="fas fa-map-signs small ml-3 pl-3 mr-2"></i><small><?php echo "$local_end - $local_city - $local_uf"; ?></small></li>
-                <?php } ?>
-                <hr class="p-0 mt-2 mb-0">
-                <li class="mt-1 align-items-center">
-                  <div class="row px-0 mx-0 ">
-                    <div class="col-10 pt-1 small">
-                      <strong>Classificação do projeto:</strong>
-                    </div>
-                    <?php if ($m3_01 == 3) { ?>
-                      <div class="col-2 text-right">
-                        <button type="button" class="btn btn-outline-secondary btn-sm small" data-toggle="modal" data-target="#projeto_edt"> <i class="far fa-edit"></i></button>
-                      </div>
-                    <?php } ?>
-                  </div>
-                </li>
-                <hr class="p-0 mt-1 mb-0">
-                <li class="pl-2 mt-1 d-flex align-items-center">
-                  <?php if ($projeto_forma == 1) { ?> <i class="fas fa-laptop-house mr-2 text-primary"></i> projeto Remoto <?php } ?>
-                  <?php if ($projeto_forma == 2) { ?> <i class="fas fa-briefcase mr-2 text-danger"></i> projeto Presencial <?php } ?>
-                  <span class="badge badge-warning ml-3"><?php echo $projeto_dias; ?> Dias<span>
-                      <?php if ($projeto_reincidente == 1) { ?>
-                        <i class=" ml-3 fas fa-exclamation-triangle text-danger" title="Reincidente"></i>
-                      <?php } ?>
-                </li>
-                <li class="pl-2 mt-1 d-flex align-items-center"><i class="fas fa-archive mr-2"></i><?php echo $projeto_tipo_nome; ?></li>
-                <li class="pl-2 mt-0 d-flex align-items-center"><i class="far fa-folder-open ml-3 mr-2"></i><?php echo $cat_nome; ?></li>
-                <li class="pl-2 mt-0 d-flex align-items-center"><i class="far fa-file-alt ml-5 mr-2 text-primary"></i><?php echo $scat_nome; ?></li>
-                <li class="pl-2 mt-0 d-flex align-items-center"><i class="fas fa-list-ol ml-5 pl-4 mr-2"></i><?php echo $projeto_itens_nome; ?></li>
-              </ul>
 
+            <div class="project-meta-grid">
+              <div class="project-meta-item">
+                <span>Cliente</span>
+                <strong title="<?php echo htmlspecialchars($clt_nomer); ?>"><?php echo htmlspecialchars($clt_nomer); ?></strong>
+              </div>
+              <div class="project-meta-item">
+                <span>Prazo</span>
+                <strong><?php echo $project_deadline; ?></strong>
+              </div>
+              <div class="project-meta-item">
+                <span>Técnico</span>
+                <strong title="<?php echo htmlspecialchars($tecnico_nome); ?>"><?php echo htmlspecialchars($tecnico_nome); ?></strong>
+              </div>
+              <div class="project-meta-item">
+                <span>Última interação</span>
+                <strong><?php echo $last_project_inter_label; ?></strong>
+              </div>
+            </div>
 
-              <?php if ($projeto_status == 0) { ?>
-                <button type="button" class="btn btn-warning btn-sm btn-block text-center text-dark"> <i class="far fa-clock"></i> Projeto Agendado </button>
+            <div class="project-description">
+              <strong>Descrição:</strong>
+              <?php echo nl2br(htmlspecialchars($projeto_desc_abertura ?: 'Sem descrição informada.')); ?>
+            </div>
+
+            <div class="row pt-2 pb-2 mt-3">
+              <?php if ($exibe_bt_cont_new_tarefa == true) { ?>
+                <div class="col-12 col-md-3 px-1 mb-2">
+                  <button type="button" class="btn btn-outline-primary btn-sm btn-block text-center text-dark" data-toggle="modal" data-target="#new_tarefa"><i class="fas fa-plus"></i> Adicionar tarefa</button>
+                </div>
               <?php } ?>
-              <?php if ($projeto_status == 1) { ?>
-                <button type="button" class="btn btn-danger btn-sm btn-block text-center text-dark"> <i class="fas fa-hourglass-half"></i> Aguardando Execução </button>
-              <?php } ?>
-              <?php if ($projeto_status == 2) { ?>
-                <button type="button" class="btn btn-warning btn-sm btn-block text-center text-dark"> <i class="fas fa-magic"></i> Projeto em Execução </button>
-              <?php } ?>
-              <?php if ($projeto_status == 3) { ?>
-                <button type="button" class="btn btn-danger btn-sm btn-block text-center text-dark"> <i class="far fa-pause-circle"></i> Projeto em Espera </button>
-              <?php } ?>
-              <?php if ($projeto_status == 4) { ?>
-                <button type="button" class="btn btn-success btn-sm btn-block text-center text-dark"> <i class="fas fa-check"></i> Projeto Finalizado </button>
-              <?php } ?>
-
-
-              <?php
-              if ($projeto_status == 2) {
-                $exibe_bt_cont_new_tarefa = true;
-              } else {
-                $exibe_bt_cont_new_tarefa = false;
-              }
-              ?>
-              <?php
-              //ANALISA E ALTERA REGRAS PARA EXIBIÇÃO DE BOTÕES, MODAIS, ETC DE ACORDO COM O STATUS DO CHAMADO
-
-              //SE NºO HOUVER TÉCNICO ATRIBUÍDO PARA O PROJETO
-              if ($tecnico_id == 0) {
-                $exibe_bt_projeto_aceitar = true;
-              }
-
-              //SE O PROJETO ESTIVER AGUARDANDO E O USUÁRIO FOR O TÉCNICO
-              if ($projeto_status == 1 && $tecnico_id == $user_id) {
-                $exibe_bt_projeto_aceitar = true;
-              }
-
-              //SE O PROJETO ESTIVER EM ESPERA E O USUÁRIO FOR O TÉCNICO
-              if ($projeto_status == 3 && $tecnico_id == $user_id) {
-                $exibe_bt_projeto_retomar = true;
-              }
-
-              //SE O PROJETO ESTIVER EM EXECUÇÃO E O USUÁRIO FOR O TÉCNICO
-              if ($projeto_status == 2 && $tecnico_id == $user_id) {
-                $exibe_bt_projeto_devolver = true;
-                /* $exibe_bt_projeto_espera = true; */
-                /* $exibe_bt_projeto_finalizar = true; */
-              }
-
-              //ANALISA E ALTERA REGRAS PARA EXIBIÇÃO DE BOTÕES, MODAIS, ETC DE ACORDO COM A PERMISSÃO DO USUÁRIO
-              if ($m3_02 == 0) {
-                $exibe_bt_projeto_aceitar = false;
-                /* $exibe_bt_projeto_finalizar = false; */
-              }
-              if ($m3_03 == 0) {
-                  /* $exibe_bt_projeto_espera = false */;
-              }
-              if ($m3_04 == 0) {
-                $exibe_bt_projeto_devolver = false;
-              }
-
-
-              if ($m3_05 == 2) { //se usuário com permissão para editar projetos de terceiros
-                if ($projeto_status == 3) {
-                  $exibe_bt_projeto_retomar = true;
-                }
-                $exibe_bt_projeto_devolver = true;
-                if ($projeto_status == 2) {
-                  /* $exibe_bt_projeto_espera = true; */
-                }
-                if ($projeto_status > 1 && $projeto_status < 4) {
-                  /* $exibe_bt_projeto_finalizar = true; */
-                }
-              }
-
-              ?>
               <?php if ($exibe_bt_projeto_interacao == true) { ?>
-                <div class="col-12 px-1">
-                  <button type="button" class="btn btn-outline-primary btn-sm btn-block text-center text-dark" data-toggle="modal" data-target="#projeto_new_inter"> <i class="fas fa-headset"></i> Nova Interação </button>
+                <div class="col-12 col-md-3 px-1 mb-2">
+                  <button type="button" class="btn btn-outline-primary btn-sm btn-block text-center text-dark" data-toggle="modal" data-target="#projeto_new_inter"><i class="fas fa-headset"></i> Nova interação</button>
                 </div>
               <?php } ?>
               <?php if ($exibe_bt_projeto_aceitar == true) { ?>
-                <div class="col-12 px-1">
-                  <button type="button" class="btn btn-outline-success btn-sm btn-block text-center text-dark" data-toggle="modal" data-target="#projeto_aceitar"> <i class="far fa-arrow-alt-circle-down"></i> Iniciar ou Direcionar </button>
+                <div class="col-12 col-md-3 px-1 mb-2">
+                  <button type="button" class="btn btn-outline-success btn-sm btn-block text-center text-dark" data-toggle="modal" data-target="#projeto_aceitar"><i class="far fa-arrow-alt-circle-down"></i> Iniciar/Direcionar</button>
                 </div>
               <?php } ?>
               <?php if ($exibe_bt_projeto_retomar == true) { ?>
-                <!-- <div class="col-12 px-1">
-                  <button type="button" class="btn btn-outline-success btn-sm btn-block text-center text-dark" data-toggle="modal" data-target="#projeto_retomar"> <i class="far fa-arrow-alt-circle-down"></i> Retomar </button>
-                </div> -->
+                <div class="col-12 col-md-3 px-1 mb-2">
+                  <button type="button" class="btn btn-outline-success btn-sm btn-block text-center text-dark" data-toggle="modal" data-target="#projeto_retomar"><i class="far fa-play-circle"></i> Retomar</button>
+                </div>
               <?php } ?>
               <?php if ($exibe_bt_projeto_espera == true) { ?>
-                <!-- <div class="col-12 px-1">
-                  <button type="button" class="btn btn-outline-warning btn-sm btn-block text-center text-dark" data-toggle="modal" data-target="#projeto_espera"> <i class="far fa-pause-circle"></i> Colocar em Espera </button>
-                </div> -->
-              <?php } ?>
-              <?php if ($exibe_bt_projeto_devolver == true) { ?>
-                <div class="col-12 px-1">
-                  <button type="button" class="btn btn-outline-danger btn-sm btn-block text-center text-dark" data-toggle="modal" data-target="#projeto_recusar"> <i class="far fa-arrow-alt-circle-up"></i> Recusar </button>
+                <div class="col-12 col-md-3 px-1 mb-2">
+                  <button type="button" class="btn btn-outline-warning btn-sm btn-block text-center text-dark" data-toggle="modal" data-target="#projeto_espera"><i class="far fa-pause-circle"></i> Alterar status</button>
                 </div>
               <?php } ?>
               <?php if ($exibe_bt_projeto_finalizar == true) { ?>
-                <<!-- div class="col-12 px-1">
-                  <button type="button" class="btn btn-outline-primary btn-sm btn-block text-center text-dark" data-toggle="modal" data-target="#projeto_finalizar"> <i class="far fa-check-circle"></i> Finalizar </button>
-            </div> -->
-          <?php } ?>
-          <?php if ($exibe_bt_cont_new_tarefa == true) { ?>
-            <div class="col-sm-12 px-1 py-1">
-              <button type="button" class="btn btn-outline-danger btn-sm btn-block text-center text-dark" data-toggle="modal" data-target="#new_tarefa"> <i class="fas fa-plus text-dark"></i> Adicionar Tarefa </button>
-            </div>
-          <?php } ?>
-          </div>
-        </div>
-      </div>
-
-
-      <div class="col-md-6 px-1">
-        <div class="card">
-          <div class="h6 card-header py-1">
-            <div class="row">
-              <div class="col-6 h6 pt-2 mb-0">
-                <i class="fas fa-check"></i> Açães
-              </div>
-              <div class="col-6 text-right px-0">
-
-              </div>
-            </div>
-          </div>
-          <div class="card-body py-1">
-
-            <div class="form-row">
-              <div class="form-group col-sm-4 col-md-4">
-                <label class="my-0 small">Abertura:</label>
-                <input class="form-control form-control-sm" value="<?php echo date('d/m/y H:i', strtotime($projeto_hora_abertura)); ?>" disabled="">
-              </div>
-
-              <div class="form-group col-sm-4 col-md-4">
-                <label class="my-0 small">Prazo:</label>
-                <input class="form-control form-control-sm" value="<?php echo $time_limit_to_close = date("d/m/y H:i", strtotime($projeto_hora_abertura . " +20 hours")); ?>" disabled="">
-              </div>
-
-              <div class="form-group col-sm-4 col-md-4">
-                <label class="my-0 small">Tecnico:</label>
-                <input class="form-control form-control-sm" value="<?php echo $tecnico_nome; ?>" disabled="">
-              </div>
-            </div>
-
-            <div class="form-row">
-              <div class="form-group col-sm-12">
-                <label class="my-0 small">Descrição de abertura:</label>
-                <textarea class="form-control form-control-sm" rows="4" disabled=""><?php echo $projeto_desc_abertura; ?></textarea>
-              </div>
-            </div>
-            <?php if ($projeto_status == 4) { ?>
-              <div class="form-row">
-                <div class="form-group col-sm-12">
-                  <label class="my-0 small">Descrição de fechamento:</label>
-                  <textarea class="form-control form-control-sm" rows="3" disabled=""><?php echo $projeto_desc_fechamento; ?></textarea>
+                <div class="col-12 col-md-3 px-1 mb-2">
+                  <button type="button" class="btn btn-outline-primary btn-sm btn-block text-center text-dark" data-toggle="modal" data-target="#projeto_finalizar"><i class="far fa-check-circle"></i> Finalizar</button>
                 </div>
-              </div>
-            <?php } ?>
-            <div class="row">
-            </div>
-          </div>
-
-
-          <?php
-          //ANALISA E ALTERA REGRAS PARA EXIBIÇÃO DE BOTÕES, MODAIS, ETC DE ACORDO COM O STATUS DO CHAMADO
-
-          //SE NºO HOUVER TÉCNICO ATRIBUÍDO PARA O PROJETO
-          if ($tecnico_id == 0) {
-            $exibe_bt_projeto_aceitar = true;
-          }
-
-          //SE O PROJETO ESTIVER AGUARDANDO E O USUÁRIO FOR O TÉCNICO
-          if ($projeto_status == 1 && $tecnico_id == $user_id) {
-            $exibe_bt_projeto_aceitar = true;
-          }
-
-          //SE O PROJETO ESTIVER EM ESPERA E O USUÁRIO FOR O TÉCNICO
-          if ($projeto_status == 3 && $tecnico_id == $user_id) {
-            $exibe_bt_projeto_retomar = true;
-          }
-
-          //SE O PROJETO ESTIVER EM EXECUÇÃO E O USUÁRIO FOR O TÉCNICO
-          if ($projeto_status == 2 && $tecnico_id == $user_id) {
-            $exibe_bt_projeto_devolver = true;
-            /* $exibe_bt_projeto_espera = true; */
-            /* $exibe_bt_projeto_finalizar = true; */
-          }
-
-          //ANALISA E ALTERA REGRAS PARA EXIBIÇÃO DE BOTÕES, MODAIS, ETC DE ACORDO COM A PERMISSÃO DO USUÁRIO
-          if ($m3_02 == 0) {
-            $exibe_bt_projeto_aceitar = false;
-            /* $exibe_bt_projeto_finalizar = false; */
-          }
-          if ($m3_03 == 0) {
-            /* $exibe_bt_projeto_espera = false; */
-          }
-          if ($m3_04 == 0) {
-            $exibe_bt_projeto_devolver = false;
-          }
-
-
-          if ($m3_05 == 2) { //se usuário com permissão para editar projetos de terceiros
-            if ($projeto_status == 3) {
-              $exibe_bt_projeto_retomar = true;
-            }
-            $exibe_bt_projeto_devolver = true;
-            if ($projeto_status == 2) {
-              $exibe_bt_projeto_espera = true;
-            }
-            if ($projeto_status > 1 && $projeto_status < 4) {
-              /* $exibe_bt_projeto_finalizar = true; */
-            }
-          }
-
-          ?>
-          <!-- Será add nova sequência de tarefas -->
-          <?php
-
-
-          $projeto = $_POST['projeto'] ?? $_GET['projeto'] ?? 0;
-
-
-          $f_sts = $_POST['f_sts'] ?? 11;
-          if ($f_sts == 10) {
-            $p_sts = "0,1,2,3,4";
-          } elseif ($f_sts == 11) {
-            $p_sts = "1,2,3";
-          } else {
-            $p_sts = (string)$f_sts;
-          }
-
-          $f_clt = $_POST['f_clt'] ?? 0;
-          $p_clt = ($f_clt == 0) ? "%" : $f_clt;
-
-          $f_sol = $_POST['f_sol'] ?? 0;
-          $p_sol = ($f_clt == 0 || $f_sol == 0) ? "%" : $f_sol;
-
-          $f_tec = $_POST['f_tec'] ?? 'all';
-          $p_tec = ($f_tec === 'all') ? "%" : $f_tec;
-
-
-          // --- NOVA LÓGICA DE ORDENAÇÃO ---
-
-          $ord = $_POST['ord'] ?? 'cliente';
-          $dir = $_POST['dir'] ?? 'ASC'; // Padrão inicial é ASC
-
-          $proxima_dir = ($dir === 'ASC') ? 'DESC' : 'ASC';
-
-          $direcao = ($dir === 'DESC') ? 'DESC' : 'ASC'; // Garante que só pode ser ASC ou DESC
-
-          switch ($ord) {
-            case 'abertura':
-              $order_by = "tarefas.abertura $direcao";
-              break;
-            case 'tecnico':
-              $order_by = "tecnico_nome $direcao";
-              break;
-            case 'status':
-              $order_by = "tarefas.status $direcao";
-              break;
-            case 'forma':
-              $order_by = "tarefas.forma $direcao";
-              break; // Adicionado DESC como padrão
-            case 'cliente':
-            default:
-              $order_by = "tarefas.abertura $direcao";
-              break;
-          }
-
-          ?>
-
-
-
-          <?php
-          //BUSCA TODOS AS TAREFAS QUE ESTÃO AGENDADOS (STATUS = 0)
-          //COMPARA DATA HORA DO AGENDAMENTO COM DATA HORA ATUAL
-          //SE DATA HORA ATUAL MAIOR QUE DATA HORA DE AGENDAMENTO
-          //ALTERA O STATUS DO ATENDIMENTO PARA 1 (AGUARDANDO EXECUÇÃO)
-          //REGISTRA ALTERAÇÃO NA TABELA DE INTERATIVIDADE
-          $time_now = date("Y-m-d H:i:s");
-          $pdo = ConnectionN3();
-          $show_tarefas = $pdo->prepare("SELECT tarefas.id, tarefas.abertura, tarefas.id_projeto FROM tarefas WHERE tarefas.`status` = '0'");
-          $show_tarefas->execute();
-          while ($exibe = $show_tarefas->fetch(PDO::FETCH_ASSOC)) {
-            $tarefas = $exibe["id"];
-            $tarefas_agendamento = $exibe["abertura"];
-            if (strtotime($time_now) > strtotime($tarefas_agendamento)) {
-              //altera o status do atendimento para 1 (Aguardando execução)
-              $edt = $pdo->prepare("UPDATE `tarefas` SET `status`='1' WHERE  `id`='$tarefas';");
-              if ($edt->execute()) {
-                //insere o registro de uma nova interação 
-                $adc = $pdo->prepare("INSERT INTO `inter_tarefa` (`inter_tipo`, `inter_tarefa`, `inter_user`, `inter_data`, `inter_desc`) VALUES ('1', '$tarefas', '1', '$time_now', 'Status do atendimento alterado automaticamente para Aguardando Execução.');");
-                if ($adc->execute()) {
-                } else {
-                  $mensagem = "<i class=\"fas fa-exclamation-triangle\"></i> Falha ao adicionar registro na tabela de interação!";
-                  $mensagem_cor = "alert-danger";
-                }
-              }
-            }
-          }
-
-
-          ?>
-
-
-        </div>
-        <div class="card">
-          <div class="card-header py-1 h6 pt-2 pb-2">
-            <a href="#" data-toggle="collapse" data-target="#gcst" aria-expanded="true" style="color:#000000 !important; text-decoration:none;">
-              <i class="fas fa-file-invoice-dollar"></i> Tarefas do Projeto <i class="icon-action fa fa-chevron-down"></i>
-            </a>
-          </div>
-          <div id="gcst">
-            <div class="card-body p-0">
-
-              <div class="card-body p-0" style="overflow-x: auto;">
-                <table class="table table-hover small">
-                  <thead>
-                    <tr>
-
-                      <th class="p-1">
-                        <form action="projeto.php" method="POST"> <input type="hidden" name="projeto" value="<?= htmlspecialchars($projeto) ?>">
-
-                          <input type="hidden" name="f_clt" value="<?php echo $f_clt; ?>">
-                          <input type="hidden" name="f_sts" value="<?php echo $f_sts; ?>">
-                          <input type="hidden" name="f_tec" value="<?php echo $f_tec; ?>">
-                          <input type="hidden" name="f_sol" value="<?php echo $f_sol; ?>">
-                          <input type="hidden" name="ord" value="cliente">
-                          <input type="hidden" name="dir" value="<?= ($ord === 'cliente') ? $proxima_dir : 'ASC' ?>">
-                          <button type="submit" onclick="event.stopPropagation();" class="btn btn-light btn-sm btn-block text-left <?= ($ord === 'cliente') ? 'coluna-ativa' : '' ?>">
-                            <i class="fas fa-sort-amount-down-alt"></i> Cliente
-                          </button>
-                        </form>
-                      </th>
-                      <th class="p-1">
-                        <form action="projeto.php" method="POST"> <input type="hidden" name="projeto" value="<?= htmlspecialchars($projeto) ?>">
-
-                          <input type="hidden" name="f_clt" value="<?php echo $f_clt; ?>">
-                          <input type="hidden" name="f_sts" value="<?php echo $f_sts; ?>">
-                          <input type="hidden" name="f_tec" value="<?php echo $f_tec; ?>">
-                          <input type="hidden" name="f_sol" value="<?php echo $f_sol; ?>">
-                          <input type="hidden" name="ord" value="abertura">
-                          <input type="hidden" name="dir" value="<?= ($ord === 'abertura') ? $proxima_dir : 'ASC' ?>">
-                          <button type="submit" onclick="event.stopPropagation();" class="btn btn-light btn-sm btn-block"><i class="fas fa-sort-amount-down-alt"></i> Abertura</button>
-                        </form>
-                      </th>
-                      <th class="p-1">
-                        <button type="submit" class="btn btn-light btn-sm btn-block">Categoria</button>
-                      </th>
-
-                      <th class="p-1">
-                        <form action="projeto.php" method="POST"> <input type="hidden" name="projeto" value="<?= htmlspecialchars($projeto) ?>">
-
-                          <input type="hidden" name="f_clt" value="<?php echo $f_clt; ?>">
-                          <input type="hidden" name="f_sts" value="<?php echo $f_sts; ?>">
-                          <input type="hidden" name="f_tec" value="<?php echo $f_tec; ?>">
-                          <input type="hidden" name="f_sol" value="<?php echo $f_sol; ?>">
-                          <input type="hidden" name="ord" value="forma">
-                          <input type="hidden" name="dir" value="<?= ($ord === 'forma') ? $proxima_dir : 'ASC' ?>">
-                          <button type="submit" onclick="event.stopPropagation();" class="btn btn-light btn-sm btn-block"><i class="fas fa-sort-amount-down-alt"></i></button>
-                        </form>
-                      </th>
-                      <th class="p-1">
-
-                        <input type="hidden" name="f_clt" value="<?php echo $f_clt; ?>">
-                        <input type="hidden" name="f_sts" value="<?php echo $f_sts; ?>">
-                        <input type="hidden" name="f_tec" value="<?php echo $f_tec; ?>">
-                        <input type="hidden" name="f_sol" value="<?php echo $f_sol; ?>">
-
-                      </th>
-                      <th class="p-1">
-                        <form action="projeto.php" method="POST"> <input type="hidden" name="projeto" value="<?= htmlspecialchars($projeto) ?>">
-
-                          <input type="hidden" name="f_clt" value="<?php echo $f_clt; ?>">
-                          <input type="hidden" name="f_sts" value="<?php echo $f_sts; ?>">
-                          <input type="hidden" name="f_tec" value="<?php echo $f_tec; ?>">
-                          <input type="hidden" name="f_sol" value="<?php echo $f_sol; ?>">
-                          <input type="hidden" name="ord" value="tecnico">
-                          <input type="hidden" name="dir" value="<?= ($ord === 'tecnico') ? $proxima_dir : 'ASC' ?>">
-
-                          <button type="submit" onclick="event.stopPropagation();" class="btn btn-light btn-sm btn-block"><i class="fas fa-sort-amount-down-alt"></i> Tecnico</button>
-                        </form>
-                      </th>
-                      <th class="p-1">
-                        <form action="projeto.php" method="POST"> <input type="hidden" name="projeto" value="<?= htmlspecialchars($projeto) ?>">
-
-                          <input type="hidden" name="f_clt" value="<?php echo $f_clt; ?>">
-                          <input type="hidden" name="f_sts" value="<?php echo $f_sts; ?>">
-                          <input type="hidden" name="f_tec" value="<?php echo $f_tec; ?>">
-                          <input type="hidden" name="f_sol" value="<?php echo $f_sol; ?>">
-                          <input type="hidden" name="ord" value="status">
-                          <input type="hidden" name="dir" value="<?= ($ord === 'status') ? $proxima_dir : 'ASC' ?>">
-                          <button type="submit" onclick="event.stopPropagation();" class="btn btn-light btn-sm btn-block"><i class="fas fa-sort-amount-down-alt"></i> Status</button>
-                        </form>
-                      </th>
-                      <th class="p-1"></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <?php
-                    $pdo = ConnectionN3();
-                    $show_tarefas = $pdo->prepare("SELECT tarefas.id as id_tarefa,tarefas.`id_projeto`, tarefas.`nome_tarefa`, tarefas.`tipo`, tarefas.`local`, tarefas.dias, tarefas.forma, tarefas.desc_abertura, tarefas.desc_fechamento, tarefas.abertura, tarefas.fechamento, tarefas.tecnico, tarefas.reincidente, tarefas.`status`,
-                          clientes.clt_id, clientes.clt_nomer, clientes.clt_nomef, clientes.clt_cnpj,
-                          pessoas.pessoa_nom, pessoas.pessoa_cargo, pessoas.pessoa_tel, pessoas.pessoa_mail,
-                          locais.local_nom, locais.local_end, locais.local_city, locais.local_uf,
-                          projetos.id,
-                          categorias.cat_nome,
-                          subcategorias.scat_nome,
-                          itens.itens_nome,
-                          usuarios.user_nome AS tecnico_nome, usuarios.user_cel AS tecnico_tel, usuarios.user_mail AS tecnico_mail
-                          FROM tarefas
-                          LEFT JOIN pessoas ON pessoas.pessoa_id = tarefas.pessoa
-                          LEFT JOIN projetos ON projetos.id = id_projeto
-                          INNER JOIN clientes ON clientes.clt_id = projetos.cliente
-                          LEFT JOIN locais ON locais.local_id = tarefas.`local`
-                          LEFT JOIN categorias ON categorias.cat_id = tarefas.categoria
-                          LEFT JOIN subcategorias ON subcategorias.scat_id = tarefas.subcategoria
-                          LEFT JOIN itens ON itens.itens_id = tarefas.item
-                          LEFT JOIN usuarios ON usuarios.user_id = tarefas.tecnico
-                          WHERE tarefas.id_projeto = $projeto
-                          AND clientes.clt_id LIKE '$p_clt'
-                          AND tarefas.tecnico LIKE '$p_tec'  
-                          AND tarefas.pessoa LIKE '$p_sol'  
-                          ORDER BY $order_by
-                          ");
-                    $show_tarefas->execute();
-                    while ($row = $show_tarefas->fetch(PDO::FETCH_ASSOC)) {
-                      $tarefa = $row["id_tarefa"];
-                      $id_projeto = $row["id_projeto"];
-                      $nome_tarefa = $row["nome_tarefa"];
-                      $tarefas_desc_abertura = $row["desc_abertura"];
-                      $tarefas_desc_fechamento = $row["desc_fechamento"];
-                      $tarefas_hora_abertura = $row["abertura"];
-                      $tarefas_hora_fechamento = $row["fechamento"];
-                      $tarefas_reincidente = $row["reincidente"];
-                      $tarefas_status = $row["status"];
-                      $tarefas_tipo = $row["tipo"];
-                      if ($tarefas_tipo == 1) {
-                        $tarefas_tipo = "Falha";
-                      }
-                      if ($tarefas_tipo == 2) {
-                        $tarefas_tipo = "Requisição de Serviços";
-                      }
-                      if ($tarefas_tipo == 3) {
-                        $tarefas_tipo = "Requisição de informação";
-                      }
-                      if ($tarefas_tipo == 4) {
-                        $tarefas_tipo = "Notificação de monitoramento";
-                      }
-                      if ($tarefas_tipo == 0) {
-                        $tarefas_tipo = "Não informado";
-                      }
-                      $tarefas_dias = $row["dias"];
-                      //if($tarefas_nivel==0){$tarefas_niveln="Não informado"; $sla = $sla_n1;}
-                      //if($tarefas_nivel==5){$tarefas_niveln="1 dia"; $sla = $sla_n5;}
-                      //if($tarefas_nivel==6){$tarefas_niveln="2 dias"; $sla = $sla_n6;}
-                      //if($tarefas_nivel==7){$tarefas_niveln="5 dias"; $sla = $sla_n7;}
-                      //if($tarefas_nivel==8){$tarefas_niveln="15 dias"; $sla = $sla_n8;}
-                      //if($tarefas_nivel==9){$tarefas_niveln="30 dias"; $sla = $sla_n9;}
-                      //if($tarefas_nivel==10){$tarefas_niveln="60 dias"; $sla = $sla_n10;}
-                      //if($tarefas_nivel==11){$tarefas_niveln="90 dias"; $sla = $sla_n11;}
-
-
-                      $tarefas_forma = $row["forma"];
-
-                      $clt_id = $row["clt_id"];
-                      $clt_nomer = $row["clt_nomer"];
-                      $clt_nomef = $row["clt_nomef"];
-                      $clt_cnpj = $row["clt_cnpj"];
-
-                      $pessoa_nom = $row["pessoa_nom"];
-                      $pessoa_cargo = $row["pessoa_cargo"];
-                      $pessoa_tel = $row["pessoa_tel"];
-                      $pessoa_mail = $row["pessoa_mail"];
-
-                      $local = $row["local"];
-                      $local_nom = $row["local_nom"];
-                      if ($local == 0) {
-                        $local_nom = "Não informado";
-                      }
-                      $local_end = $row["local_end"];
-                      $local_city = $row["local_city"];
-                      $local_uf = $row["local_uf"];
-
-                      $cat_nome = $row["cat_nome"];
-                      $scat_nome = $row["scat_nome"];
-                      $itens_nome = $row["itens_nome"];
-
-                      $tecnico = $row["tecnico"];
-                      $tecnico_nome = $row["tecnico_nome"];
-                      if ($tecnico == 0) {
-                        $tecnico_nome = "Não direcionado";
-                      }
-
-                      //TIME TO CLOSE
-                      //calcula hora limite para o fechamento do atendimento: Abertura + SLA
-                      $time_limit_to_close = date("Y-m-d H:i:s", strtotime($tarefas_hora_abertura . " + minutes"));
-                      //hora atual
-                      $time_now = date("Y-m-d H:i:s");
-                      $start_date = new DateTime($time_now);
-                      $end_date = new DateTime($time_limit_to_close);
-
-                      //TRABALHA O TEMPO DE ESPERA
-                      //SOMA TEMPO TOTAL EM QUE O PROJETO FICOU EM ESPERA
-                      $pdo = ConnectionN3();
-                      $show_espera = $pdo->prepare("SELECT SUM(TIMESTAMPDIFF(SECOND, espera_start, espera_end)) AS segundos FROM espera WHERE espera.espera_atd = '$tarefa'");
-                      $show_espera->execute();
-                      $conta_espera = $show_espera->rowCount();
-                      $exibe_espera = $show_espera->fetch(PDO::FETCH_ASSOC);
-                      $espera_tempo_total = $exibe_espera["segundos"];
-                      //SE NºO TIVER RETORNO, ATRIBUI 0 SEGUNDOS AO TEMPO DE ESPERA
-                      if ($espera_tempo_total == "") {
-                        $espera_tempo_total = 0;
-                      }
-                      //SOMA O TEMPO TOTAL DE ESPERA AO PRAZO PARA O FECHAMENTO DO ATENDIMENTO
-                      $end_date0 = date("Y-m-d H:i:s", strtotime($time_limit_to_close . " +$espera_tempo_total SECOND"));
-                      $end_date = new DateTime($end_date0);
-
-                      //SE ATENDIMENTO ESTIVER EM ESPERA
-                      //BUSCA A DATA HORA QUE FOI COLOCADO EM ESPERA
-                      //BUSCA A DATA HORA QUE ELE DEVE VOLTAR PARA O ATENDIMENTO
-
-                      /* if ($tarefas_status == 3) {
-                                $pdo = ConnectionN3();
-                                $show_espera = $pdo->prepare("SELECT espera.espera_start, espera.espera_prev FROM espera_tarefas WHERE espera.espera_tarefas = '$tarefa' ORDER BY espera_id DESC LIMIT 0,1");
-                                $show_espera->execute();
-                                $exibe_espera = $show_espera->fetch(PDO::FETCH_ASSOC);
-                                $espera_start = $exibe_espera["espera_start"] ?? '';
-                                $espera_prev = $exibe_espera["espera_prev"] ?? '';
-
-                                //VERIFICA DE DATA HORA ATUAL FOR MAIOR DO QUE DATA HORA PREVISTA PARA RETOMADA
-                                //SE POSITIVO:
-                                if (strtotime($time_now) > strtotime($espera_prev)) {
-                                  //MUDA STATUS DO PEDIDO PARA 2 (EM EXECUÇÃO)
-                                  //ALTERA A INFORMAÇÃO DE ESPERA NA TABELA DE ESPERAS
-                                  //INSERE REGISTRO DE INTERAÇÃO NA TABELA DE INTERAÇÃO
-                                  $pdo = ConnectionN3();
-
-                                  //altera o status do atendimento para 2 (Em execução)
-                                  $edt = $pdo->prepare("UPDATE `tarefas` SET `status`='2' WHERE  `id`='$tarefa';");
-                                  if ($edt->execute()) {
-                                    //busca o ID do registro de espera, na tabela espera
-                                    $show_espera = $pdo->prepare("SELECT espera.espera_id FROM espera_tarefas WHERE espera.espera_tarefas = '$tarefa' ORDER BY espera.espera_id DESC LIMIT 0,1");
-                                    $show_espera->execute();
-                                    $exibe = $show_espera->fetch(PDO::FETCH_ASSOC);
-                                    $espera_id = $exibe["espera_id"];
-
-                                    //registra A data hora final de espera, na tabela espera
-                                    $edt_espera = $pdo->prepare("UPDATE `espera` SET `espera_end`='$time_now' WHERE `espera_id`='$espera_id';");
-                                    if ($edt_espera->execute()) {
-
-                                      //insere o registro de uma nova interação 
-                                      $adc = $pdo->prepare("INSERT INTO `inter_tarefa` (`inter_tipo`, `inter_tarefa`, `inter_user`, `inter_data`, `inter_desc`) VALUES ('6', '$tarefa', '1', '$time_now', 'Status do atendimento alterado automaticamente para Em Execução.');");
-                                      if ($adc->execute()) {
-                                      } else {
-                                        $mensagem = "<i class=\"fas fa-exclamation-triangle\"></i> Falha ao adicionar registro na tabela de interação!";
-                                        $mensagem_cor = "alert-danger";
-                                      }
-                                    } else {
-                                      $mensagem = "<i class=\"fas fa-exclamation-triangle\"></i> Falha ao adicionar registro na tabela de interação!";
-                                      $mensagem_cor = "alert-danger";
-                                    }
-                                  } else {
-                                    $mensagem = "<i class=\"fas fa-exclamation-triangle\"></i> Falha ao retomar o atendimento!";
-                                    $mensagem_cor = "alert-danger";
-                                  }
-                                } else {
-                                  //SE NEGATIVO:
-                                  //DEFINE A DATA HORA DO INÍCIO DA ESPERA COMO A DATA HORA ATUAL PARA CALCULAR QUANTO TEMPO FALTA PARA ENCERRAR O PRAZO DE PROJETO
-                                  $time_now = $espera_start;
-                                  $start_date = new DateTime($espera_start);
-                                }
-                              } */
-
-
-                      //verifica se ainda existe prazo para atendimento
-                      if ($start_date < $end_date) {
-                        //calcula a diferença entre o prazo de fechamento e a hora atual
-                        $interval = $start_date->diff($end_date);
-                        $hours   = $interval->format('%h');
-                        $minutes = $interval->format('%i');
-                        $progress_color = "blue";
-                        $tag = $hours . "h " . $minutes . "m";
-                        //calcula o tamanho da barra de progresso do chamado
-                        $minutos_restantes = $hours * 60 + $minutes;
-                        $progress_width = (110 - ($minutos_restantes / 180 * 100));
-                        if ($progress_width > 92) {
-                          $progress_color = "orange";
-                        }
-                      } else {
-                        $progress_color = "orange";
-                        $progress_width = "100";
-                        $tag = "Vencido";
-                      }
-                      //se atendimento concluído
-                      if ($tarefas_status == 4) {
-                        $progress_color = "green";
-                        $progress_width = "100";
-                        $tag = "ok";
-                      }
-
-                      //BUSCA A ÚLTIMA INTERAÇÃO QUE HOUVE NO CHAMADO
-                      $pdo = ConnectionN3();
-                      $show_inter = $pdo->prepare("SELECT inter_tarefa.inter_data FROM inter_tarefa WHERE inter_tarefa.inter_tarefa = '$tarefa' AND inter_tarefa.inter_tipo > '0' ORDER BY inter_id DESC LIMIT 0,1");
-                      $show_inter->execute();
-                      $exibe_inter = $show_inter->fetch(PDO::FETCH_ASSOC);
-
-                      $last_inter_data = $exibe_inter["inter_data"];
-                      $end_date = new DateTime($time_now);
-                      $start_date = new DateTime("$last_inter_data");
-                      $interval = $start_date->diff($end_date);
-                      $hours   = $interval->format('%h');
-                      $minutes = $interval->format('%i');
-                      $time_last_inter = $hours * 60 + $minutes;
-                    ?>
-                      <tr>
-
-                        <td class="align-middle">
-                          <!-- <strong><?php echo substr($nome_tarefa, 0, 35); ?></strong><br> -->
-                          <?php echo substr($clt_nomer, 0, 35); ?>
-                          <?php if ($pessoa_nom != "") { ?> <br> <i class="far fa-user mr-1"></i> <?php echo $pessoa_nom;
-                                                                                                } ?>
-                        </td>
-                        <td class="align-middle text-start">
-                          <?php echo $dt1 = date('d/m/y', strtotime($tarefas_hora_abertura)); ?>
-                          às
-                          <?php echo $dt1 = date('H:i', strtotime($tarefas_hora_abertura)); ?> h
-                          <br>
-                          <?php echo $tarefas_desc_abertura; ?><br>
-
-                        </td>
-                        <td>
-                          <?php echo $cat_nome; ?> <br /> <?php echo $scat_nome; ?> <br /> <?php echo $itens_nome; ?>
-
-                        <th class="align-middle">
-                          <?php if ($tarefas_forma == 1) { ?> <i class="fas fa-laptop-house text-primary" title="Remoto"></i> <?php } ?>
-                          <?php if ($tarefas_forma == 2) { ?> <i class="fas fa-briefcase text-danger" title="Presencial"></i> <?php } ?>
-                        </th>
-                        <td class="align-middle">
-                        </td>
-                        <td class="align-middle">
-                          <?php //se atendimento aberto e com mais de 20 minutos sem interação, mostra sino piscando
-                          if ($tarefas_status > 0 && $tarefas_status < 3) { ?>
-
-                          <?php } ?>
-                          <?php echo $tecnico_nome; ?>
-                        </td>
-                        <td class="align-middle">
-                          <?php if ($tarefas_status == 0) { ?>
-                            <i class="far fa-clock"></i> Agendado
-                          <?php } ?>
-                          <?php if ($tarefas_status == 1) { ?>
-                            <i class="fas fa-hourglass-half"></i> Aguardando
-                          <?php } ?>
-                          <?php if ($tarefas_status == 2) { ?>
-                            <i class="fas fa-magic"></i> Em Execução
-                          <?php } ?>
-                          <?php if ($tarefas_status == 3) { ?>
-                            <i class="far fa-pause-circle"></i> Em Espera
-                          <?php } ?>
-                          <?php if ($tarefas_status == 4) { ?>
-                            <i class="fas fa-check"></i> Finalizada
-                          <?php } ?>
-                        </td>
-
-                        <td class="align-middle p-1">
-                          <form action="tarefa.php" method="POST">
-                            <input type="hidden" name="tarefa" value="<?php echo $tarefa; ?>">
-                            <button type="submit" class="btn btn-light btn-sm p-1"><i class="far fa-folder-open"></i></button>
-                          </form>
-                        </td>
-                      </tr>
-                    <?php } ?>
-                  </tbody>
-                </table>
-              </div>
-
-            </div>
-          </div>
-        </div>
-
-        <div class="card">
-          <div class="card-header py-1 h6 pt-2 pb-2">
-            <button type="button" class="btn btn-dark btn-sm p-1 col-12" data-toggle="modal" data-target="#relacionar">Relacionar Tarefas</button>
-            <!-- <button type="submit" class="btn btn-dark btn-sm p-1 col-12">Relacionar Tarefas</button> -->
-          </div>
-        </div>
-
-        <div class="card">
-          <?php
-          $pdo = ConnectionN3();
-
-          // Verifica total de dias das tarefas do projeto
-          $stmt = $pdo->prepare("SELECT SUM(dias) as total_dias FROM tarefas WHERE id_projeto = :projeto");
-          $stmt->bindParam(':projeto', $projeto, PDO::PARAM_INT);
-          $stmt->execute();
-          $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
-          $total_dias = $resultado['total_dias'] ?? 0;
-
-          // Atualiza o total de dias no projeto
-          $update = $pdo->prepare("UPDATE projetos SET dias = :dias WHERE id = :projeto");
-          $update->bindParam(':dias', $total_dias, PDO::PARAM_INT);
-          $update->bindParam(':projeto', $projeto, PDO::PARAM_INT);
-          $update->execute();
-
-          // Verifica se existem tarefas com dias > 0
-          $stmt = $pdo->prepare("SELECT COUNT(*) FROM tarefas WHERE id_projeto = :projeto AND dias > 0");
-          $stmt->bindParam(':projeto', $projeto, PDO::PARAM_INT);
-          $stmt->execute();
-          $tem_tarefas = $stmt->fetchColumn() > 0;
-
-          // Verifica se existem interaçães válidas
-          $stmt = $pdo->prepare("SELECT COUNT(*) FROM inter_tarefa WHERE inter_tipo > 0");
-          $stmt->execute();
-          $tem_interacoes = $stmt->fetchColumn() > 0;
-          ?>
-
-
-
-          <div class="card-header py-1 h6 pt-2 pb-2">
-            <a href="#" data-toggle="collapse" data-target="#gcst2" aria-expanded="true" style="color:#000000 !important; text-decoration:none;">
-              <i class="fas fa-file-invoice-dollar"></i> Gantt <i class="icon-action fa fa-chevron-down"></i>
-              <?= $total_dias ?> Dias
-            </a>
-          </div>
-
-          <div id="gcst2">
-            <div class="card-body p-0">
-              <!-- <div class="col-12 border-bottom"> -->
-              <!-- <div class="row py-2"> -->
-              <!-- <div class="card-body p-0" style="overflow: scroll"> -->
-              <?php if ($tem_tarefas && $tem_interacoes) : ?>
-                <div id="chartContainer" style="width: 100%; height: 300px;">
-                  <div class="p-2 pr-4" id="chart_div" style="width: 100%; height: 100%;overflow: scroll"></div>
-                </div>
-              <?php else : ?>
-                <div class="alert alert-warning m-3">
-                  Nenhuma tarefa adicionada ao projeto.
-                </div>
-              <?php endif; ?>
-              <!-- </div> -->
-              <!-- </div> -->
-              <!-- </div> -->
-            </div>
-          </div>
-        </div>
-
-        <div class="card">
-          <div class="card-header py-1 h6 pt-2 pb-2">
-            <a href="#" data-toggle="collapse" data-target="#relat" aria-expanded="true" style="color:#000000 !important; text-decoration:none;">
-              <i class="fas fa-file-invoice-dollar"></i> Relatério do Projeto - Tarefas Finalizadas: <i class="icon-action fa fa-chevron-down"></i>
-            </a>
-          </div>
-
-          <div id="relat" class="collapse show">
-            <div class="card-body p-0">
-              <div class="col-12 border-bottom">
-                <div class="row py-2">
-                  <div class="card-body p-0" style="overflow: scroll">
-                    <?php
-                    $stmt = $pdo->prepare("SELECT status FROM projetos WHERE id = :id_projeto");
-                    $stmt->bindParam(':id_projeto', $projeto, PDO::PARAM_INT);
-                    $stmt->execute();
-                    $status = (int)$stmt->fetchColumn();
-
-                    if ($status >= 2) :
-                    ?>
-                      <table border="1" bgcolor="lightblue" width="99%">
-                        <tr align="center">
-                          <td>Tarefa:</td>
-                          <td>Data de Início:</td>
-                          <td>Data de Fim:</td>
-                          <td>Tempo de Espera:</td>
-                          <td>Tempo de Execução:</td>
-                        </tr>
-
-                        <?php
-                        $stmt = $pdo->prepare("SELECT * FROM gantt WHERE id_projeto = :id_projeto and status_tarefa = 4 ORDER BY inicio_tarefa ASC");
-                        $stmt->bindParam(':id_projeto', $projeto, PDO::PARAM_INT);
-                        $stmt->execute();
-
-                        $tempo_total = $tempo_espera = ['H' => 0, 'M' => 0, 'S' => 0];
-
-                        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) :
-                          $inicio = new DateTimeImmutable($row['inicio_tarefa']);
-                          $fim = $row['finalizou_tarefa'] ? new DateTimeImmutable($row['finalizou_tarefa']) : new DateTimeImmutable();
-
-                          $id_tarefa = $row['id_tarefa'];
-
-                          $nome = $row['nome_tarefa'];
-                          $exec = [
-                            'H' => abs((int)$row['horas_total']),
-                            'M' => abs((int)$row['minutos_total']),
-                            'S' => abs((int)$row['segundos_total'])
-                          ];
-                          $espera = [
-                            'H' => abs((int)$row['hora_espera']),
-                            'M' => abs((int)$row['minutos_espera']),
-                            'S' => abs((int)$row['segundos_espera'])
-                          ];
-
-                          foreach (['H', 'M', 'S'] as $unit) {
-                            $tempo_total[$unit] += $exec[$unit];
-                            $tempo_espera[$unit] += $espera[$unit];
-                          }
-
-                          $tempo_inicio_tarefa = $inicio->format('d/m/Y');
-                          $tempo_final_tarefa = $fim->format('d/m/Y');
-
-                          $tempo_exec_str = sprintf('%02d:%02d:%02d', $exec['H'], $exec['M'], $exec['S']);
-                          $tempo_espera_str = sprintf('%02d:%02d:%02d', $espera['H'], $espera['M'], $espera['S']);
-                        ?>
-                          <tr>
-
-                            <td><?= htmlspecialchars('#' . $id_tarefa . ' - ' . $nome) ?></td>
-                            <td align="center">
-                              <h6><?= $tempo_inicio_tarefa ?></h6>
-                            </td>
-                            <td align="center">
-                              <h6><?= $tempo_final_tarefa ?></h6>
-                            </td>
-                            <td align="center">
-                              <h6><?= $tempo_espera_str ?></h6>
-                            </td>
-                            <td align="center">
-                              <h6><?= $tempo_exec_str ?></65>
-                            </td>
-                          </tr>
-                        <?php endwhile;
-
-                        // Ajuste de minutos e segundos
-                        foreach (['total' => $tempo_total, 'espera' => $tempo_espera] as $label => &$tempo) {
-                          if ($tempo['S'] >= 60) {
-                            $tempo['M'] += floor($tempo['S'] / 60);
-                            $tempo['S'] %= 60;
-                          }
-                          if ($tempo['M'] >= 60) {
-                            $tempo['H'] += floor($tempo['M'] / 60);
-                            $tempo['M'] %= 60;
-                          }
-                        }
-
-                        $tempo_real = [
-                          'H' => $tempo_total['H'] - $tempo_espera['H'],
-                          'M' => $tempo_total['M'] - $tempo_espera['M'],
-                          'S' => $tempo_total['S'] - $tempo_espera['S']
-                        ];
-                        ?>
-                      </table>
-
-                      <table border="1" width="99%" bgcolor="#FFEFD5">
-                        <tr align="center">
-                          <td>Tempo Total do Projeto:</td>
-                          <td>Tempo Total da Espera:</td>
-                          <td>Tempo Real de Execução:</td>
-                        </tr>
-                        <tr align="center">
-                          <td>
-                            <?= $tempo_total['H'] >= 24 ? round($tempo_total['H'] / 24) . ' Dia(s)' : sprintf('%02d:%02d:%02d', ...array_values($tempo_total)) ?>
-                          </td>
-                          <td>
-                            <?= $tempo_espera['H'] >= 24 ? round($tempo_espera['H'] / 24) . ' Dia(s)' : sprintf('%02d:%02d:%02d', ...array_values($tempo_espera)) ?>
-                          </td>
-                          <td>
-                            <?= $tempo_real['H'] >= 24 ? round($tempo_real['H'] / 24) . ' Dia(s)' : sprintf('%02d:%02d:%02d', ...array_values($tempo_real)) ?>
-                          </td>
-                        </tr>
-                      </table>
-                    <?php else : ?>
-                      <div class="alert alert-warning m-3">
-                        Projeto ainda não foi iniciado.
-                      </div>
-                    <?php endif; ?>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-
-
-
-      </div>
-
-
-
-
-      <div class="col-md-3 px-1">
-        <div class="card">
-          <div class="card-header py-1 h6 pt-2 pb-2">
-            <i class="fas fa-list-ol"></i> Histórico do projeto #<?php echo str_pad($projeto, 5, '0', STR_PAD_LEFT); ?>
-          </div>
-          <div class="card-body">
-
-            <div class="timeline">
-              <?php
-              $pdo = ConnectionN3();
-              $show_inter = $pdo->prepare("SELECT inter_projeto.*, usuarios.user_nome FROM inter_projeto INNER JOIN usuarios ON usuarios.user_id = inter_projeto.inter_user WHERE inter_projeto.inter_projeto = '$projeto' AND inter_projeto.inter_tipo > '0' ORDER BY inter_id DESC");
-              $show_inter->execute();
-              while ($exibe = $show_inter->fetch(PDO::FETCH_ASSOC)) {
-                $inter_tipo = $exibe["inter_tipo"];
-                $inter_data = $exibe["inter_data"];
-                $inter_desc = $exibe["inter_desc"];
-                $inter_user = $exibe["user_nome"];
-
-                //define cores de acordo com o tipo da interatividade
-                if ($inter_tipo == 1) {
-                  $tl_dot_color = "b-primary";
-                  $tl_active_color = "active-primary";
-                } //1 = Abertura de Projeto
-                if ($inter_tipo == 2) {
-                  $tl_dot_color = "b-success";
-                  $tl_active_color = "active-success";
-                } //2 = Aceite de Projeto
-                if ($inter_tipo == 3) {
-                  $tl_dot_color = "b-danger";
-                  $tl_active_color = "active-danger";
-                } //3 = Devolução de Projeto
-                if ($inter_tipo == 4) {
-                  $tl_dot_color = "b-warning";
-                  $tl_active_color = "active-warning";
-                } //4 = Transferência de Atendim
-                if ($inter_tipo == 5) {
-                  $tl_dot_color = "b-danger";
-                  $tl_active_color = "active-danger";
-                } //5 = Envio para espera
-                if ($inter_tipo == 6) {
-                  $tl_dot_color = "b-primary";
-                  $tl_active_color = "active-primary";
-                } //6 = Retomada do Projeto
-                if ($inter_tipo == 7) {
-                  $tl_dot_color = "b-primary";
-                  $tl_active_color = "active-primary";
-                } //7 = Interação com o solicita
-                if ($inter_tipo == 8) {
-                  $tl_dot_color = "b-success";
-                  $tl_active_color = "active-success";
-                } //8 = Conclusão de Projeto
-                if ($inter_tipo == 9) {
-                  $tl_dot_color = "b-danger";
-                  $tl_active_color = "active-danger";
-                } //9 = Edição da classificação do Projeto
-              ?>
-                <div class="tl-item <?php echo $tl_active_color; ?>">
-                  <div class="tl-dot <?php echo $tl_dot_color; ?>"></div>
-                  <div class="tl-content">
-                    <div class="tl-date text-muted"><i class="far fa-user"></i> <?php echo $inter_user; ?> <i class="far fa-clock"></i> <?php echo $dt1 = date('d/m/y H:i', strtotime($inter_data)); ?></div>
-                    <div class=""><?php echo $inter_desc; ?> </div>
-                  </div>
+              <?php } ?>
+              <?php if ($exibe_bt_projeto_devolver == true) { ?>
+                <div class="col-12 col-md-3 px-1 mb-2">
+                  <button type="button" class="btn btn-outline-danger btn-sm btn-block text-center text-dark" data-toggle="modal" data-target="#projeto_recusar"><i class="far fa-arrow-alt-circle-up"></i> Recusar</button>
                 </div>
               <?php } ?>
             </div>
+          </div>
 
+          <?php
+          $projeto = $_POST['projeto'] ?? $_GET['projeto'] ??  0;
+          $f_sts = $_POST['f_sts'] ??  11;
+          $f_clt = $_POST['f_clt'] ??  0;
+          $p_clt = ($f_clt == 0) ?"%" : $f_clt;
+          $f_sol = $_POST['f_sol'] ??  0;
+          $p_sol = ($f_clt == 0 || $f_sol == 0) ?"%" : $f_sol;
+          $f_tec = $_POST['f_tec'] ??  'all';
+          $p_tec = ($f_tec === 'all') ?"%" : $f_tec;
+          $ord = $_POST['ord'] ??  'abertura';
+          $dir = $_POST['dir'] ??  'ASC';
+          $direcao = ($dir === 'DESC') ?'DESC' : 'ASC';
+          $status_order = "CASE tarefas.status WHEN 2 THEN 1 WHEN 1 THEN 2 WHEN 3 THEN 3 WHEN 0 THEN 4 WHEN 4 THEN 5 ELSE 6 END";
+          $project_return_url = 'projeto.php?projeto=' . urlencode((string)$projeto);
+          $task_quick_modals = '';
+          $project_technicians = [];
+          $pdo = ConnectionN3();
+          $show_tecnicos_quick = $pdo->prepare("SELECT usuarios.user_id, usuarios.user_nome FROM usuarios WHERE usuarios.user_sts = '1' ORDER BY usuarios.user_nome ASC");
+          $show_tecnicos_quick->execute();
+          while ($tec_row = $show_tecnicos_quick->fetch(PDO::FETCH_ASSOC)) {
+            $project_technicians[] = [
+              'id' => (int)$tec_row['user_id'],
+              'nome' => $tec_row['user_nome'],
+            ];
+          }
+          switch ($ord) {
+            case 'tecnico':
+              $order_by = "$status_order ASC, tecnico_nome $direcao, tarefas.abertura ASC";
+              break;
+            case 'status':
+              $order_by = "$status_order ASC, tarefas.abertura ASC";
+              break;
+            case 'forma':
+              $order_by = "$status_order ASC, tarefas.forma $direcao, tarefas.abertura ASC";
+              break;
+            case 'abertura':
+            default:
+              $order_by = "$status_order ASC, tarefas.abertura $direcao";
+              break;
+          }
+          ?>
+
+          <div class="project-card project-tasks-card">
+            <div class="project-section-header">
+              <h2><i class="fas fa-tasks"></i> Tarefas do projeto</h2>
+              <span class="project-task-meta">Duplo clique em uma tarefa para abrir</span>
+            </div>
+            <div class="project-tasks-scroll" id="projectTasksScroll">
+              <table class="table table-hover small project-tasks-table">
+                <thead>
+                  <tr>
+                    <th style="width: 6%;">ID</th>
+                    <th style="width: 32%;">Tarefa</th>
+                    <th style="width: 25%;">Classificação</th>
+                    <th style="width: 14%;">Abertura</th>
+                    <th style="width: 15%;">Técnico</th>
+                    <th style="width: 12%;">Status</th>
+                    <th style="width: 8%;">Ação</th>
+                  </tr>
+                </thead>
+                <tbody id="projectTasksBody">
+                  <?php
+                  $pdo = ConnectionN3();
+                  $show_tarefas = $pdo->prepare("SELECT tarefas.id as id_tarefa,tarefas.`id_projeto`, tarefas.`nome_tarefa`, tarefas.`tipo`, tarefas.`local`, tarefas.dias, tarefas.forma, tarefas.desc_abertura, tarefas.desc_fechamento, tarefas.abertura, tarefas.fechamento, tarefas.tecnico, tarefas.reincidente, tarefas.tarefas_relacionadas, tarefas.`status`,
+                    clientes.clt_id, clientes.clt_nomer, clientes.clt_nomef, clientes.clt_cnpj,
+                    pessoas.pessoa_nom, pessoas.pessoa_cargo, pessoas.pessoa_tel, pessoas.pessoa_mail,
+                    locais.local_nom, locais.local_end, locais.local_city, locais.local_uf,
+                    projetos.id,
+                    categorias.cat_nome,
+                    subcategorias.scat_nome,
+                    itens.itens_nome,
+                    tarefa_dependencia.status AS dependencia_status,
+                    usuarios.user_nome AS tecnico_nome, usuarios.user_cel AS tecnico_tel, usuarios.user_mail AS tecnico_mail
+                    FROM tarefas
+                    LEFT JOIN pessoas ON pessoas.pessoa_id = tarefas.pessoa
+                    LEFT JOIN projetos ON projetos.id = id_projeto
+                    INNER JOIN clientes ON clientes.clt_id = projetos.cliente
+                    LEFT JOIN locais ON locais.local_id = tarefas.`local`
+                    LEFT JOIN categorias ON categorias.cat_id = tarefas.categoria
+                    LEFT JOIN subcategorias ON subcategorias.scat_id = tarefas.subcategoria
+                    LEFT JOIN itens ON itens.itens_id = tarefas.item
+                    LEFT JOIN tarefas tarefa_dependencia ON tarefa_dependencia.id = tarefas.tarefas_relacionadas
+                    LEFT JOIN usuarios ON usuarios.user_id = tarefas.tecnico
+                    WHERE tarefas.id_projeto = $projeto
+                    AND clientes.clt_id LIKE '$p_clt'
+                    AND tarefas.tecnico LIKE '$p_tec'
+                    AND tarefas.pessoa LIKE '$p_sol'
+                    ORDER BY $order_by");
+                  $show_tarefas->execute();
+                  $task_count = 0;
+                  while ($row = $show_tarefas->fetch(PDO::FETCH_ASSOC)) {
+                    $task_count++;
+                    $tarefa = $row["id_tarefa"];
+                    $nome_tarefa = $row["nome_tarefa"];
+                    $tarefas_desc_abertura = $row["desc_abertura"];
+                    $tarefas_hora_abertura = $row["abertura"];
+                    $tarefas_status = (int)$row["status"];
+                    $tarefas_forma = $row["forma"];
+                    $tarefas_relacionadas = (int)($row["tarefas_relacionadas"] ?? 0);
+                    $dependencia_status = isset($row["dependencia_status"]) ? (int)$row["dependencia_status"] : null;
+                    $task_modal_suffix = (int)$tarefa;
+                    $task_can_start = ($tarefas_relacionadas === 0 || $dependencia_status === 4);
+                    $task_title = htmlspecialchars($nome_tarefa ?: 'Tarefa sem nome', ENT_QUOTES, 'UTF-8');
+
+                    if ($tarefas_status === 2) {
+                      ob_start();
+                      ?>
+                      <div class="modal fade" id="project_task_finish_<?php echo $task_modal_suffix; ?>" tabindex="-1" role="dialog">
+                        <div class="modal-dialog" role="document">
+                          <div class="modal-content">
+                            <form action="tarefa.php" method="POST">
+                              <div class="modal-header">
+                                <h6 class="modal-title"><i class="far fa-check-circle text-primary"></i> Finalizar tarefa #<?php echo $task_modal_suffix; ?></h6>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Fechar"><span aria-hidden="true">&times;</span></button>
+                              </div>
+                              <div class="modal-body">
+                                <label class="small"><strong><?php echo $task_title; ?></strong></label>
+                                <div class="form-group mb-0">
+                                  <label class="my-0 small">Descricao de encerramento:</label>
+                                  <textarea name="desc_fechamento" class="form-control form-control-sm" rows="4" required></textarea>
+                                </div>
+                              </div>
+                              <div class="modal-footer">
+                                <input type="hidden" name="tarefa" value="<?php echo $task_modal_suffix; ?>">
+                                <input type="hidden" name="token" value="<?php echo $token; ?>">
+                                <input type="hidden" name="action" value="tarefa_finalizar">
+                                <input type="hidden" name="return_to" value="<?php echo htmlspecialchars($project_return_url, ENT_QUOTES, 'UTF-8'); ?>">
+                                <button type="button" class="btn btn-sm btn-secondary" data-dismiss="modal">Fechar</button>
+                                <button type="submit" class="btn btn-sm btn-primary">Finalizar</button>
+                              </div>
+                            </form>
+                          </div>
+                        </div>
+                      </div>
+                      <?php
+                      $task_quick_modals .= ob_get_clean();
+                    } elseif ($tarefas_status === 3) {
+                      ob_start();
+                      ?>
+                      <div class="modal fade" id="project_task_resume_<?php echo $task_modal_suffix; ?>" tabindex="-1" role="dialog">
+                        <div class="modal-dialog" role="document">
+                          <div class="modal-content">
+                            <form action="tarefa.php" method="POST">
+                              <div class="modal-header">
+                                <h6 class="modal-title"><i class="far fa-play-circle text-success"></i> Retomar tarefa #<?php echo $task_modal_suffix; ?></h6>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Fechar"><span aria-hidden="true">&times;</span></button>
+                              </div>
+                              <div class="modal-body">
+                                <label class="small"><strong><?php echo $task_title; ?></strong></label>
+                                <label class="small">Confirme para retomar a tarefa em espera e colocar novamente em execucao.</label>
+                              </div>
+                              <div class="modal-footer">
+                                <input type="hidden" name="tarefa" value="<?php echo $task_modal_suffix; ?>">
+                                <input type="hidden" name="token" value="<?php echo $token; ?>">
+                                <input type="hidden" name="action" value="tarefa_retomar">
+                                <input type="hidden" name="return_to" value="<?php echo htmlspecialchars($project_return_url, ENT_QUOTES, 'UTF-8'); ?>">
+                                <button type="button" class="btn btn-sm btn-secondary" data-dismiss="modal">Fechar</button>
+                                <button type="submit" class="btn btn-sm btn-success">Retomar</button>
+                              </div>
+                            </form>
+                          </div>
+                        </div>
+                      </div>
+                      <?php
+                      $task_quick_modals .= ob_get_clean();
+                    } elseif ($tarefas_status !== 4 && $task_can_start) {
+                      ob_start();
+                      ?>
+                      <div class="modal fade" id="project_task_start_<?php echo $task_modal_suffix; ?>" tabindex="-1" role="dialog">
+                        <div class="modal-dialog" role="document">
+                          <div class="modal-content">
+                            <form action="tarefa.php" method="POST">
+                              <div class="modal-header">
+                                <h6 class="modal-title"><i class="far fa-play-circle text-success"></i> Iniciar ou direcionar tarefa #<?php echo $task_modal_suffix; ?></h6>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Fechar"><span aria-hidden="true">&times;</span></button>
+                              </div>
+                              <div class="modal-body">
+                                <label class="small"><strong><?php echo $task_title; ?></strong></label>
+                                <label class="small">Selecione o tecnico responsavel. Se for voce, a tarefa entra em execucao; se for outro tecnico, ela sera direcionada para a fila dele.</label>
+                                <div class="form-group mb-0">
+                                  <label class="my-0 small">Tecnico responsavel:</label>
+                                  <select name="tecnico" class="form-control form-control-sm selectpicker" data-live-search="true" required>
+                                    <?php foreach ($project_technicians as $tec_option) { ?>
+                                      <option value="<?php echo (int)$tec_option['id']; ?>" <?php if ((int)$tec_option['id'] === (int)$user_id) { echo ' selected'; } ?>><?php echo htmlspecialchars($tec_option['nome'], ENT_QUOTES, 'UTF-8'); ?></option>
+                                    <?php } ?>
+                                  </select>
+                                </div>
+                              </div>
+                              <div class="modal-footer">
+                                <input type="hidden" name="tarefa" value="<?php echo $task_modal_suffix; ?>">
+                                <input type="hidden" name="token" value="<?php echo $token; ?>">
+                                <input type="hidden" name="action" value="tarefa_aceitar">
+                                <input type="hidden" name="return_to" value="<?php echo htmlspecialchars($project_return_url, ENT_QUOTES, 'UTF-8'); ?>">
+                                <button type="button" class="btn btn-sm btn-secondary" data-dismiss="modal">Fechar</button>
+                                <button type="submit" class="btn btn-sm btn-success">Confirmar</button>
+                              </div>
+                            </form>
+                          </div>
+                        </div>
+                      </div>
+                      <?php
+                      $task_quick_modals .= ob_get_clean();
+                    }
+                    $pessoa_nom_tarefa = $row["pessoa_nom"];
+                    $cat_nome_tarefa = $row["cat_nome"];
+                    $scat_nome_tarefa = $row["scat_nome"];
+                    $itens_nome_tarefa = $row["itens_nome"];
+                    $tecnico_nome_tarefa = $row["tecnico_nome"] ?: "Não direcionado";
+                    $status_labels = [0 => 'Agendada', 1 => 'Aguardando', 2 => 'Em execução', 3 => 'Em espera', 4 => 'Finalizada'];
+                    $status_icons = [0 => 'far fa-clock', 1 => 'fas fa-hourglass-half', 2 => 'fas fa-magic', 3 => 'far fa-pause-circle', 4 => 'fas fa-check'];
+                    $status_label = $status_labels[$tarefas_status] ??  'Não informado';
+                    $status_icon = $status_icons[$tarefas_status] ??  'fas fa-info-circle';
+                  ?>
+                    <tr class="project-task-row" data-task-row data-tarefa="<?php echo (int)$tarefa; ?>">
+                      <td class="align-middle">
+                        <span class="project-task-id">#<?php echo (int)$tarefa; ?></span>
+                      </td>
+                      <td class="align-middle">
+                        <span class="project-task-name"><?php echo htmlspecialchars($nome_tarefa ?: 'Tarefa sem nome'); ?></span>
+                        <span class="project-task-desc"><?php $task_desc_short = strip_tags(html_entity_decode($tarefas_desc_abertura ??  '', ENT_QUOTES, 'UTF-8')); echo htmlspecialchars(strlen($task_desc_short) > 140 ?substr($task_desc_short, 0, 140) . '...' : $task_desc_short); ?></span>
+                        <?php if ($pessoa_nom_tarefa != '') { ?>
+                          <span class="project-task-meta"><i class="far fa-user"></i> <?php echo htmlspecialchars($pessoa_nom_tarefa); ?></span>
+                        <?php } ?>
+                      </td>
+                      <td class="align-middle">
+                        <div class="project-task-classification">
+                          <div class="project-task-classification-line">
+                            <?php if ($cat_nome_tarefa != '') { ?><span class="project-chip"><?php echo htmlspecialchars(html_entity_decode($cat_nome_tarefa, ENT_QUOTES, 'UTF-8')); ?></span><?php } ?>
+                            <?php if ($scat_nome_tarefa != '') { ?><span class="project-chip"><?php echo htmlspecialchars(html_entity_decode($scat_nome_tarefa, ENT_QUOTES, 'UTF-8')); ?></span><?php } ?>
+                            <?php if ($itens_nome_tarefa != '') { ?><span class="project-chip"><?php echo htmlspecialchars(html_entity_decode($itens_nome_tarefa, ENT_QUOTES, 'UTF-8')); ?></span><?php } ?>
+                          </div>
+                          <div class="project-task-classification-line">
+                            <?php if ($tarefas_forma == 1) { ?><span class="project-chip project-chip-forma"><i class="fas fa-laptop-house text-primary"></i> Remoto</span><?php } ?>
+                            <?php if ($tarefas_forma == 2) { ?><span class="project-chip project-chip-forma"><i class="fas fa-briefcase text-danger"></i> Presencial</span><?php } ?>
+                          </div>
+                        </div>
+                      </td>
+                      <td class="align-middle">
+                        <?php echo date('d/m/y', strtotime($tarefas_hora_abertura)); ?><br>
+                        <span class="project-task-meta"><?php echo date('H:i', strtotime($tarefas_hora_abertura)); ?></span>
+                      </td>
+                      <td class="align-middle"><?php echo htmlspecialchars($tecnico_nome_tarefa); ?></td>
+                      <td class="align-middle">
+                        <span class="project-status-badge project-status-<?php echo $tarefas_status; ?>"><i class="<?php echo $status_icon; ?>"></i> <?php echo $status_label; ?></span>
+                      </td>
+                      <td class="align-middle text-center">
+                        <?php if ($tarefas_status === 4) { ?>
+                          <button type="button" class="project-task-action-btn is-done" title="Tarefa finalizada" disabled><span class="project-action-check"></span></button>
+                        <?php } elseif ($tarefas_status === 2) { ?>
+                          <form action="tarefa.php" method="POST" class="project-task-action-form">
+                            <input type="hidden" name="tarefa" value="<?php echo (int)$tarefa; ?>">
+                            <input type="hidden" name="quick_modal" value="tarefa_finalizar">
+                            <button type="submit" class="project-task-action-btn is-finish" title="Abrir finalização da tarefa"><span class="project-action-check"></span></button>
+                          </form>
+                        <?php } else { ?>
+                          <form action="tarefa.php" method="POST" class="project-task-action-form">
+                            <input type="hidden" name="tarefa" value="<?php echo (int)$tarefa; ?>">
+                            <input type="hidden" name="quick_modal" value="<?php echo $tarefas_status === 3 ? 'tarefa_retomar' : 'tarefa_aceitar'; ?>">
+                            <button type="submit" class="project-task-action-btn is-start" title="Abrir início da tarefa"><i class="fas fa-play"></i></button>
+                          </form>
+                        <?php } ?>
+                      </td>
+                    </tr>
+                  <?php } ?>
+                  <?php if ($task_count == 0) { ?>
+                    <tr>
+                      <td colspan="7" class="text-center text-muted py-4">Nenhuma tarefa cadastrada para este projeto.</td>
+                    </tr>
+                  <?php } ?>
+                </tbody>
+              </table>
+              <div class="project-load-indicator" id="projectTasksLoader">Carregando mais tarefas...</div>
+            </div>
+          </div>
+          <?php echo $task_quick_modals; ?>
+        </div>
+
+        <div class="col-lg-3 col-md-12 px-1 project-history-column">
+          <div class="project-card project-history-card">
+            <div class="project-section-header">
+              <h2><i class="fas fa-list-ol"></i> Interações</h2>
+              <span class="project-task-meta">#<?php echo str_pad($projeto, 5, '0', STR_PAD_LEFT); ?></span>
+            </div>
+            <div class="card-body">
+              <div class="project-history-filter">
+                <i class="fas fa-filter"></i>
+                <span>Registros de Projeto</span>
+              </div>
+              <div class="timeline">
+                <?php
+                $pdo = ConnectionN3();
+                $show_inter = $pdo->prepare("SELECT inter_projeto.*, usuarios.user_nome FROM inter_projeto INNER JOIN usuarios ON usuarios.user_id = inter_projeto.inter_user WHERE inter_projeto.inter_projeto = '$projeto' AND inter_projeto.inter_tipo > '0' ORDER BY inter_id DESC");
+                $show_inter->execute();
+                while ($exibe = $show_inter->fetch(PDO::FETCH_ASSOC)) {
+                  $inter_tipo = $exibe["inter_tipo"];
+                  $inter_data = $exibe["inter_data"];
+                  $inter_desc = $exibe["inter_desc"];
+                  $inter_user = $exibe["user_nome"];
+                  $tl_dot_color = "b-primary";
+                  $tl_active_color = "active-primary";
+                  if ($inter_tipo == 1) { $tl_dot_color = "b-primary"; $tl_active_color = "active-primary"; }
+                  if ($inter_tipo == 2) { $tl_dot_color = "b-success"; $tl_active_color = "active-success"; }
+                  if ($inter_tipo == 3) { $tl_dot_color = "b-danger"; $tl_active_color = "active-danger"; }
+                  if ($inter_tipo == 4) { $tl_dot_color = "b-warning"; $tl_active_color = "active-warning"; }
+                  if ($inter_tipo == 5) { $tl_dot_color = "b-danger"; $tl_active_color = "active-danger"; }
+                  if ($inter_tipo == 6) { $tl_dot_color = "b-primary"; $tl_active_color = "active-primary"; }
+                  if ($inter_tipo == 7) { $tl_dot_color = "b-primary"; $tl_active_color = "active-primary"; }
+                  if ($inter_tipo == 8) { $tl_dot_color = "b-success"; $tl_active_color = "active-success"; }
+                  if ($inter_tipo == 9) { $tl_dot_color = "b-danger"; $tl_active_color = "active-danger"; }
+                ?>
+                  <div class="tl-item <?php echo $tl_active_color; ?>">
+                    <div class="tl-dot <?php echo $tl_dot_color; ?>"></div>
+                    <div class="tl-content">
+                      <div class="tl-date text-muted proj-history-meta"><span class="proj-history-author"><i class="far fa-user"></i> <?php echo htmlspecialchars($inter_user); ?></span> <span><i class="far fa-clock"></i> <?php echo date('d/m/y H:i', strtotime($inter_data)); ?></span></div>
+                      <div class="proj-history-desc"><?php echo nl2br(htmlspecialchars($inter_desc)); ?></div>
+                    </div>
+                  </div>
+                <?php } ?>
+              </div>
+            </div>
           </div>
         </div>
       </div>
-
-
     </div>
 
     <!-- MODAL NOVA INTERAÇÃO -->
@@ -2218,7 +3020,7 @@ if ($m5_00 == 0) {
             <div class="modal-body py-1">
               <div class="form-row">
                 <div class="form-group col-sm-12">
-                  <label class="my-0 small">Descrição da interação:</label>
+                  <label class="my-0 small"><span style="color: grey;"><b>Descrição da interação:</b></span></label>
                   <textarea name="inter_desc" class="form-control form-control-sm" rows="4" required="required" tabindex="1"></textarea>
                 </div>
               </div>
@@ -2247,7 +3049,7 @@ if ($m5_00 == 0) {
             <div class="modal-body py-1">
               <div class="form-row pt-2">
 
-                <div class="form-group col-sm-6 col-md-3">
+                <div class="form-group col-sm-12 col-md-6">
                   <label class="my-0 small">Tarefas :</label>
                   <select name="tarefa" id="tarefa" class="form-control form-control-sm" required="required" tabindex="5">
                     <option></option>
@@ -2266,7 +3068,7 @@ if ($m5_00 == 0) {
                   </select>
                 </div>
 
-                <div class="form-group col-sm-6 col-md-3">
+                <div class="form-group col-sm-12 col-md-6">
                   <label class="my-0 small">Dependecia :</label>
                   <select name="dependencia" id="dependencia_rel" class="form-control form-control-sm" required="required" tabindex="5">
                     <option></option>
@@ -2298,6 +3100,75 @@ if ($m5_00 == 0) {
       </div>
     </div>
 
+
+    <!-- MODAL INFORMAÇÕES DO PROJETO -->
+    <div class="modal fade project-info-modal" id="project_info_modal" tabindex="-1" role="dialog">
+      <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h6 class="modal-title"><i class="fas fa-info-circle text-primary"></i> Informações do projeto #<?php echo str_pad($projeto, 5, '0', STR_PAD_LEFT); ?></h6>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Fechar">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <div class="project-info-grid">
+              <div class="project-info-group">
+                <h3><i class="fas fa-building text-primary"></i> Cliente</h3>
+                <div class="project-info-line"><span>Razão social</span><strong><?php echo htmlspecialchars($clt_nomer ?: 'Não informado'); ?></strong></div>
+                <div class="project-info-line"><span>Fantasia</span><strong><?php echo htmlspecialchars($clt_nomef ?: 'Não informado'); ?></strong></div>
+                <div class="project-info-line"><span>CNPJ</span><strong><?php echo htmlspecialchars($clt_cnpj ?: 'Não informado'); ?></strong></div>
+              </div>
+
+              <div class="project-info-group">
+                <h3><i class="fas fa-user-tag text-primary"></i> Solicitante</h3>
+                <div class="project-info-line"><span>Nome</span><strong><?php echo htmlspecialchars($pessoa_nom ?: 'Não informado'); ?></strong></div>
+                <div class="project-info-line"><span>Cargo</span><strong><?php echo htmlspecialchars($pessoa_cargo ?: 'Não informado'); ?></strong></div>
+                <div class="project-info-line"><span>Telefone</span><strong><?php echo htmlspecialchars($pessoa_tel ?: 'Não informado'); ?></strong></div>
+                <div class="project-info-line"><span>E-mail</span><strong><?php echo htmlspecialchars($pessoa_mail ?: 'Não informado'); ?></strong></div>
+              </div>
+
+              <div class="project-info-group">
+                <h3><i class="fas fa-map-marked-alt text-primary"></i> Local</h3>
+                <div class="project-info-line"><span>Nome</span><strong><?php echo htmlspecialchars($local_nom ?: 'Não informado'); ?></strong></div>
+                <div class="project-info-line"><span>Endereço</span><strong><?php echo htmlspecialchars($local_end ?: 'Não informado'); ?></strong></div>
+                <div class="project-info-line"><span>Cidade/UF</span><strong><?php echo htmlspecialchars(trim(($local_city ?: '') . ' / ' . ($local_uf ?: ''), ' /') ?: 'Não informado'); ?></strong></div>
+              </div>
+
+              <div class="project-info-group">
+                <h3><i class="fas fa-layer-group text-primary"></i> Classificação</h3>
+                <div class="project-info-line"><span>Tipo</span><strong><?php echo htmlspecialchars($projeto_tipo_nome ?: 'Não informado'); ?></strong></div>
+                <div class="project-info-line"><span>Categoria</span><strong><?php echo htmlspecialchars($cat_nome ?: 'Não informado'); ?></strong></div>
+                <div class="project-info-line"><span>Subcategoria</span><strong><?php echo htmlspecialchars($scat_nome ?: 'Não informado'); ?></strong></div>
+                <div class="project-info-line"><span>Item</span><strong><?php echo htmlspecialchars(html_entity_decode($projeto_itens_nome ?: 'Não informado', ENT_QUOTES, 'UTF-8')); ?></strong></div>
+                <div class="project-info-line"><span>Nível</span><strong><?php echo htmlspecialchars($projeto_nivel_nome ?: 'Não informado'); ?></strong></div>
+                <div class="project-info-line"><span>Forma</span><strong><?php echo $projeto_forma == 1 ?'Remoto' : ($projeto_forma == 2 ?'Presencial' : 'Não informado'); ?></strong></div>
+              </div>
+
+              <div class="project-info-group">
+                <h3><i class="fas fa-clipboard-list text-primary"></i> Dados técnicos</h3>
+                <div class="project-info-line"><span>Abertura</span><strong><?php echo $projeto_hora_abertura ?date('d/m/y H:i', strtotime($projeto_hora_abertura)) : 'Não informado'; ?></strong></div>
+                <div class="project-info-line"><span>Prazo</span><strong><?php echo $project_deadline; ?></strong></div>
+                <div class="project-info-line"><span>Dias</span><strong><?php echo htmlspecialchars((string)($projeto_dias ?: 'Não informado')); ?></strong></div>
+                <div class="project-info-line"><span>Reincidente</span><strong><?php echo $projeto_reincidente == 1 ?'Sim' : 'Não'; ?></strong></div>
+                <div class="project-info-line"><span>Fechamento</span><strong><?php echo $projeto_hora_fechamento ?date('d/m/y H:i', strtotime($projeto_hora_fechamento)) : 'Não informado'; ?></strong></div>
+              </div>
+
+              <div class="project-info-group">
+                <h3><i class="fas fa-align-left text-primary"></i> Descrição de fechamento</h3>
+                <div class="project-info-line"><span>Relato</span><strong><?php echo nl2br(htmlspecialchars($projeto_desc_fechamento ?: 'Não informado')); ?></strong></div>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-sm btn-secondary" data-dismiss="modal">Fechar</button>
+            <?php if ($m3_01 == 3) { ?>
+              <button type="button" class="btn btn-sm btn-primary" id="openProjectEditFromInfo"><i class="far fa-edit"></i> Alterar classificação</button>
+            <?php } ?>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <!-- MODAL EDIÇÃO DA CLASSIFICAÇÃO DO PROJETO-->
     <div class="modal fade" id="projeto_edt" tabindex="-1" role="dialog">
@@ -2449,21 +3320,6 @@ if ($m5_00 == 0) {
         </div>
       </div>
     </div>
-    <?php
-    if ($action == "relacionar_tar") {
-      $tarefa = filter_input(INPUT_POST, 'tarefa', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-      $dependencia = filter_input(INPUT_POST, 'dependencia', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-
-      $pdo = ConnectionN3();
-      $adc = $pdo->prepare("UPDATE `tarefas` SET `tarefas_relacionadas`='$dependencia' WHERE `id`='$tarefa';");
-      if ($adc->execute()) {
-        if ($adc->execute()) {
-          $mensagem = "<i class=\"fas fa-check\"></i> OK! <br> Tarefas relacionadas com sucesso";
-          $mensagem_cor = "alert-success";
-        }
-      }
-    }
-    ?>
     <?php if ($exibe_bt_projeto_aceitar == true) { ?>
       <!-- MODAL ACEITE DO CHAMADO -->
       <div class="modal fade" id="projeto_aceitar" tabindex="-1" role="dialog">
@@ -2658,7 +3514,7 @@ if ($m5_00 == 0) {
               <div class="modal-body py-1">
                 <div class="form-row">
                   <div class="form-group col-sm-12">
-                    <label class="my-0 small">Descrição de encerramento:</label>
+                    <label class="my-0 small"><span style="color: grey;"><b>Descrição de encerramento:</b></span></label>
                     <textarea name="desc_fechamento" class="form-control form-control-sm" rows="4" required="required" tabindex="1"></textarea>
                   </div>
                 </div>
@@ -2703,22 +3559,22 @@ if ($m5_00 == 0) {
 
       if ($last_tarefa) {
         $has_prefill_tarefa = true;
-        $prefill_tarefa['solicitante'] = (int)($last_tarefa['pessoa'] ?? 0);
-        $prefill_tarefa['local'] = (int)($last_tarefa['local'] ?? 0);
-        $prefill_tarefa['tipo'] = (int)($last_tarefa['tipo'] ?? 0);
-        $prefill_tarefa['categoria'] = (int)($last_tarefa['categoria'] ?? 0);
-        $prefill_tarefa['subcategoria'] = (int)($last_tarefa['subcategoria'] ?? 0);
-        $prefill_tarefa['item'] = (int)($last_tarefa['item'] ?? 0);
-        $prefill_tarefa['nivel'] = (int)($last_tarefa['nivel'] ?? 0);
-        $prefill_tarefa['tecnico'] = (int)($last_tarefa['tecnico'] ?? 0);
-        $prefill_tarefa['forma'] = (int)($last_tarefa['forma'] ?? 0);
-        $dependencia_bruta = trim((string)($last_tarefa['tarefas_relacionadas'] ?? ''));
+        $prefill_tarefa['solicitante'] = (int)($last_tarefa['pessoa'] ??  0);
+        $prefill_tarefa['local'] = (int)($last_tarefa['local'] ??  0);
+        $prefill_tarefa['tipo'] = (int)($last_tarefa['tipo'] ??  0);
+        $prefill_tarefa['categoria'] = (int)($last_tarefa['categoria'] ??  0);
+        $prefill_tarefa['subcategoria'] = (int)($last_tarefa['subcategoria'] ??  0);
+        $prefill_tarefa['item'] = (int)($last_tarefa['item'] ??  0);
+        $prefill_tarefa['nivel'] = (int)($last_tarefa['nivel'] ??  0);
+        $prefill_tarefa['tecnico'] = (int)($last_tarefa['tecnico'] ??  0);
+        $prefill_tarefa['forma'] = (int)($last_tarefa['forma'] ??  0);
+        $dependencia_bruta = trim((string)($last_tarefa['tarefas_relacionadas'] ??  ''));
         if ($dependencia_bruta !== '') {
           $dependencia_lista = explode(',', $dependencia_bruta);
           $prefill_tarefa['dependencia'] = (int)$dependencia_lista[0];
         }
-        $dias_ultima_tarefa = (int)($last_tarefa['dias'] ?? 0);
-        $prefill_tarefa['dias'] = $dias_ultima_tarefa > 0 ? $dias_ultima_tarefa : '';
+        $dias_ultima_tarefa = (int)($last_tarefa['dias'] ??  0);
+        $prefill_tarefa['dias'] = $dias_ultima_tarefa > 0 ?$dias_ultima_tarefa : '';
       }
     }
     ?>
@@ -3085,17 +3941,6 @@ if ($m5_00 == 0) {
   </div>
 
 
-  <?php if (isset($mensagem)) { ?>
-    <div class="row pull-right" style="position:absolute; top: 65px; right:25px; z-index: 3;">
-      <div class="alert <?php echo $mensagem_cor; ?> alert-dismissible fade show" role="alert">
-        <?php echo $mensagem; ?>
-        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
-      </div>
-    </div>
-  <?php } ?>
-
   <?php include_once("../all/update_pass.php"); ?>
   <script src="../js/bootstrap.min.js"></script>
   <script src="../js/jquery-3.6.0.min.js"></script>
@@ -3109,11 +3954,11 @@ if ($m5_00 == 0) {
   </script>
   <script>
     window.novaTarefaPrefill = {
-      solicitante: <?php echo (int)($prefill_tarefa['solicitante'] ?? 0); ?>,
-      local: <?php echo (int)($prefill_tarefa['local'] ?? 0); ?>,
-      categoria: <?php echo (int)($prefill_tarefa['categoria'] ?? 0); ?>,
-      subcategoria: <?php echo (int)($prefill_tarefa['subcategoria'] ?? 0); ?>,
-      item: <?php echo (int)($prefill_tarefa['item'] ?? 0); ?>
+      solicitante: <?php echo (int)($prefill_tarefa['solicitante'] ??  0); ?>,
+      local: <?php echo (int)($prefill_tarefa['local'] ??  0); ?>,
+      categoria: <?php echo (int)($prefill_tarefa['categoria'] ??  0); ?>,
+      subcategoria: <?php echo (int)($prefill_tarefa['subcategoria'] ??  0); ?>,
+      item: <?php echo (int)($prefill_tarefa['item'] ??  0); ?>
     };
     window.novaTarefaPrefillApplied = {
       solicitante: false,
@@ -3262,13 +4107,6 @@ if ($m5_00 == 0) {
   </script>
 
 
-  <?php if (isset($mensagem)) { ?>
-    <script>
-      window.setTimeout(function() {
-        $(".alert").alert('close');
-      }, 5000);
-    </script>
-  <?php } ?>
 
   <!-- loader e os js abaixo são necessários para popular os selects dependentes (solicitante, local e subcategoria) -->
   <!-- <script src="../js/loader.js" type="text/javascript">
@@ -3389,222 +4227,109 @@ if ($m5_00 == 0) {
     });
   </script>
 
-
-  <!-- <?php if (isset($mensagem)) { ?>
-    <script>
-      window.setTimeout(function() {
-        $(".alert").alert('close');
-      }, 5000);
-    </script>
-
-  <?php } ?> -->
-
-  <?php
-  $show = $pdo->prepare("SELECT * FROM tarefas WHERE id_projeto = :id_projeto");
-  $id_projeto = $projeto;
-  $show->bindParam(':id_projeto', $id_projeto);
-  $show->execute();
-  $conta_tarefas = $show->rowCount();
-
-  $dataRows = array();
-  $startDates = array();
-  $dataRows4 = array();
-
-  if ($conta_tarefas > 0) {
-    while ($row = $show->fetch(PDO::FETCH_ASSOC)) {
-      $nometar = $row["nome_tarefa"];
-      $dias = $row["dias"];
-      $dependencia = $row["tarefas_relacionadas"];
-      $porcentagem = $row["porcentagem"];
-      $status = $row['status'];
-      $id = $row["id"];
-
-      $comeco = new DateTime($row['abertura']);
-      $cccd = $comeco->format('Y/m/d H:i:s');
-
-      if (!empty($dependencia)) {
-        $dependenciaIds = explode(',', $dependencia);
-
-        $maxEndDate = null;
-        foreach ($dependenciaIds as $depId) {
-          if (isset($startDates[$depId]) && $startDates[$depId] > $maxEndDate) {
-            $maxEndDate = $startDates[$depId];
-          }
-        }
-
-        if ($maxEndDate !== null) {
-          $cccd = $maxEndDate;
-          $comeco = new DateTime($cccd);
-        }
+  <script>
+    (function() {
+      var openProjectEditFromInfo = document.getElementById('openProjectEditFromInfo');
+      if (openProjectEditFromInfo && window.jQuery) {
+        openProjectEditFromInfo.addEventListener('click', function() {
+          $('#project_info_modal').one('hidden.bs.modal', function() {
+            $('#projeto_edt').modal('show');
+          });
+          $('#project_info_modal').modal('hide');
+        });
       }
 
-      $datafim = clone $comeco;
-      $datafim->modify("+$dias days");
-      $fffd = $datafim->format('Y/m/d H:i:s');
+      var taskRows = Array.prototype.slice.call(document.querySelectorAll('[data-task-row]'));
+      var taskScroll = document.getElementById('projectTasksScroll');
+      var loader = document.getElementById('projectTasksLoader');
+      var pageSize = 30;
+      var visibleCount = 0;
 
-      $dependencies = array();
-      if (!empty($dependencia)) {
-        $dependenciaIds = explode(',', $dependencia);
+      document.querySelectorAll('.project-task-action-form').forEach(function(form) {
+        form.addEventListener('submit', function(event) {
+          var tarefaInput = form.querySelector('input[name="tarefa"]');
+          var modalInput = form.querySelector('input[name="quick_modal"]');
+          var tarefa = tarefaInput ? tarefaInput.value : '';
+          var quickModal = modalInput ? modalInput.value : '';
+          var target = '';
 
-        foreach ($dependenciaIds as $depId) {
-          $showDepen = $pdo->prepare("SELECT * FROM tarefas WHERE id = :depId");
-          $showDepen->bindParam(':depId', $depId);
-          $showDepen->execute();
-
-          if ($showDepen->rowCount() > 0) {
-            $depRow = $showDepen->fetch(PDO::FETCH_ASSOC);
-            $dependencies[] = $depRow["nome_tarefa"];
-          } else {
-            echo "Erro: Não foi possível encontrar a tarefa com o ID $depId";
+          if (quickModal === 'tarefa_finalizar') {
+            target = '#project_task_finish_' + tarefa;
+          } else if (quickModal === 'tarefa_retomar') {
+            target = '#project_task_resume_' + tarefa;
+          } else if (quickModal === 'tarefa_aceitar') {
+            target = '#project_task_start_' + tarefa;
           }
-        }
-      }
 
-      if ($status == 4) {
-        $showDepen4 = $pdo->prepare("SELECT * FROM gantt WHERE id_projeto = :id_projeto");
-        $id_projeto = $projeto;
-        $showDepen4->bindParam(':id_projeto', $id_projeto);
-        $showDepen4->execute();
-        $conta_tarefas4 = $showDepen4->rowCount();
-
-        if ($conta_tarefas4 > 0) {
-          while ($row4 = $showDepen4->fetch(PDO::FETCH_ASSOC)) {
-            $comeco_real = new DateTime($row4['inicio_tarefa']);
-            $fim_real = new DateTime($row4['finalizou_tarefa']);
-            $tempo_espera_real = new DateTime(($row4['espera_tarefa']));
-            $dependencia = $row4["dependencia_tarefa"];
-
-            if ($comeco_real != NULL && $fim_real != NULL) {
-              // LINHAS CORRIGIDAS
-              $cccd = $comeco_real->format('Y/m/d H:i:s');
-              $fffd = $fim_real->format('Y/m/d H:i:s');
-              $intervalo = $comeco_real->diff($fim_real);
-              $md = 0;
-              if ($intervalo->m > 0) {
-                $md = $intervalo->m * 30.437;
-              }
-              $diaas = $md + $intervalo->d;
-              $diash = $intervalo->h + ($diaas * 24);
-              $diasm = $intervalo->i;
-              $diass = $intervalo->s;
-              $nometar = $row4['nome_tarefa'];
-
-              $dependencies = array();
-              if (!empty($dependencia)) {
-                $dependenciaIds = explode(',', $dependencia);
-
-                foreach ($dependenciaIds as $depId) {
-                  $showDepen = $pdo->prepare("SELECT * FROM gantt WHERE id_tarefa = :depId");
-                  $showDepen->bindParam(':depId', $depId);
-                  $showDepen->execute();
-
-                  if ($showDepen->rowCount() > 0) {
-                    $depRow = $showDepen->fetch(PDO::FETCH_ASSOC);
-                    $dependencies[] = $depRow["nome_tarefa"];
-                  } else {
-                    echo "Erro: Não foi possível encontrar a tarefa com o ID $depId";
-                  }
-                }
-              }
-
-              $dependenciesStr = implode(',', $dependencies);
-              $dataRows4[] = "['$nometar', '$nometar', new Date('$cccd'), new Date('$fffd'), " . ($diash !== null ? $diash : 'null') . ", $porcentagem, '$dependenciesStr']";
-              $startDates[$row4['id']] = $fffd;
+          if (target && window.jQuery && $(target).length) {
+            event.preventDefault();
+            $(target).modal('show');
+            if ($.fn.selectpicker) {
+              $(target).find('.selectpicker').selectpicker('refresh');
             }
+            return;
           }
-        }
-      } else {
-        $dependenciesStr = implode(',', $dependencies);
-        $dataRows[] = "['$nometar', '$nometar', new Date('$cccd'), new Date('$fffd'), " . ($dias !== null ? $dias : 'null') . ", $porcentagem, '$dependenciesStr']";
-        $startDates[$row['id']] = $fffd;
-      }
-    }
-  }
 
-  $dataRows = array_merge($dataRows, $dataRows4);
-  $dataRowsStr = implode(",", $dataRows);
-
-  ?>
-
-
-  <script type="text/javascript">
-    // Carrega a biblioteca Google Charts
-    function loadGoogleCharts(callback) {
-      if (!window.google || !window.google.charts) {
-        const script = document.createElement('script');
-        script.src = 'https://www.gstatic.com/charts/loader.js';
-        script.onload = callback;
-        document.head.appendChild(script);
-      } else {
-        callback();
-      }
-    }
-
-    // Inicia o carregamento do gráfico
-    loadGoogleCharts(function() {
-      google.charts.load('current', {
-        'packages': ['gantt'],
-        'language': 'pt-br'
-      });
-      google.charts.setOnLoadCallback(drawChart);
-    });
-
-    // Função principal para desenhar o gráfico
-    function drawChart() {
-      const data = new google.visualization.DataTable();
-      data.addColumn('string', 'Task ID');
-      data.addColumn('string', 'Task Name');
-      data.addColumn('date', 'Start Date');
-      data.addColumn('date', 'End Date');
-      data.addColumn('number', 'Duracion');
-      data.addColumn('number', 'Percent Complete');
-      data.addColumn('string', 'Dependencies');
-
-      // Preenche as linhas com os dados do PHP
-      data.addRows([
-        <?php echo !empty($dataRowsStr) ? $dataRowsStr : "[]"; ?>
-      ]);
-
-      const options = {
-        height: 500,
-        width: '100%',
-        gantt: {
-          trackHeight: 40,
-          criticalPathVisible: true,
-          criticalPathEnabled: true,
-          innerGridHorizLine: {
-            stroke: '#e0e0e0',
-            strokeWidth: 1
-          },
-          labelStyle: {
-            fontName: 'Arial',
-            fontSize: 11,
-            color: '#333'
-          },
-          percentEnabled: true, // Mostra porcentagem dentro da barra
-          labelMaxWidth: 300
-        }
-      };
-
-      const chartDiv = document.getElementById('chart_div');
-      const chart = new google.visualization.Gantt(chartDiv);
-
-      // Após o gráfico estar pronto, traduz os dias da semana
-      google.visualization.events.addListener(chart, 'ready', function() {
-        const diasSemana = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
-        const labels = chartDiv.querySelectorAll('.google-visualization-dayofweeklabel');
-        labels.forEach((label, index) => {
-          if (diasSemana[index]) label.textContent = diasSemana[index];
+          if (target) {
+            event.preventDefault();
+          }
         });
       });
 
-      try {
-        chart.draw(data, options);
-      } catch (e) {
-        chartDiv.innerHTML = '<p style="color: red;">Erro ao carregar gráfico. Verifique os dados fornecidos.</p>';
-        console.error('Erro ao desenhar gráfico Gantt:', e);
+      function showMoreTasks() {
+        if (!taskRows.length) {
+          return;
+        }
+
+        var nextCount = Math.min(visibleCount + pageSize, taskRows.length);
+        for (var i = visibleCount; i < nextCount; i++) {
+          taskRows[i].classList.remove('is-hidden');
+        }
+        visibleCount = nextCount;
+
+        if (loader) {
+          loader.classList.toggle('is-visible', visibleCount < taskRows.length);
+          loader.textContent = visibleCount < taskRows.length ?'Role até o fim para carregar mais tarefas' : 'Todas as tarefas foram exibidas';
+        }
       }
-    }
+
+      taskRows.forEach(function(row) {
+        row.classList.add('is-hidden');
+        row.addEventListener('dblclick', function(event) {
+          if (event.target.closest('button, form, input, select, textarea, a')) {
+            return;
+          }
+
+          var tarefa = row.getAttribute('data-tarefa');
+          if (!tarefa) {
+            return;
+          }
+
+          var form = document.createElement('form');
+          form.method = 'POST';
+          form.action = 'tarefa.php';
+
+          var input = document.createElement('input');
+          input.type = 'hidden';
+          input.name = 'tarefa';
+          input.value = tarefa;
+
+          form.appendChild(input);
+          document.body.appendChild(form);
+          form.submit();
+        });
+      });
+
+      if (taskScroll) {
+        taskScroll.addEventListener('scroll', function() {
+          if (taskScroll.scrollTop + taskScroll.clientHeight >= taskScroll.scrollHeight - 80) {
+            showMoreTasks();
+          }
+        });
+      }
+
+      showMoreTasks();
+    })();
   </script>
 
 </body>

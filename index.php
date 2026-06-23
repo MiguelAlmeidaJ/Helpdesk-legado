@@ -65,12 +65,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 
   if ($action == "logar") {
-    if (!isPasswordValid($senhat)) {
-      $_SESSION['loginErro'] = "A senha deve ter entre 12 e 20 caracteres, incluindo: letra maiúscula, letra minúscula, números e caracteres especiais.";
-      header("Location: index.php");
-      exit;
-    }
-
     $pdo = ConnectionN3();
     // Consulta segura ao banco
     $sql = "SELECT * FROM usuarios WHERE user_login = :usuariot AND user_sts = '1' LIMIT 1";
@@ -378,10 +372,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         return hasUpperCase && hasLowerCase && hasNumbers && hasSpecialChar && lengthValid;
       }
 
-      // Validação da senha antes de enviar o formulário
+      // A regra de força de senha deve ser aplicada no cadastro/troca de senha.
+      // No login, a senha digitada precisa ser validada apenas contra o hash salvo.
       form.addEventListener('submit', function(event) {
         errorMessage.style.display = 'none';
-        if (!validatePassword(passwordInput.value)) {
+        if (false && !validatePassword(passwordInput.value)) {
           event.preventDefault();
           errorMessage.innerHTML = `
         <p>A senha deve atender aos seguintes critérios:</p>

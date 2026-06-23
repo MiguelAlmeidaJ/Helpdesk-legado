@@ -52,17 +52,20 @@ if ($tipoFiltro === 'extrato') {
     $mesesNomes = [1 => 'janeiro', 2 => 'fevereiro', 3 => 'marco', 4 => 'abril', 5 => 'maio', 6 => 'junho', 7 => 'julho', 8 => 'agosto', 9 => 'setembro', 10 => 'outubro', 11 => 'novembro', 12 => 'dezembro'];
     $nomeMes = $mesesNomes[(int)$mesFiltro] ?? 'mes_invalido';
     $diretorioParaBuscar = dirname(__DIR__) . '/uploads_rd/' . $pastaDocumento . '/' . $nomeMes . '_' . $anoFiltro . '/';
+    $baseUrlSistema = rtrim(dirname(dirname($_SERVER['SCRIPT_NAME'])), '/\\');
+    $urlBase = $baseUrlSistema . '/uploads_rd/' . $pastaDocumento . '/' . $nomeMes . '_' . $anoFiltro . '/';
 
     if (is_dir($diretorioParaBuscar)) {
         $arquivosEncontrados = glob($diretorioParaBuscar . '*.pdf');
-        $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? "https://" : "http://";
-        // $host = $_SERVER['HTTP_HOST'];
-        $host = 'allterus.nivel3ti.com.br/n3ti';
-        $urlBase = $protocol . $host . '/uploads_rd/' . $pastaDocumento . '/' . $nomeMes . '_' . $anoFiltro . '/';
 
         foreach ($arquivosEncontrados as $caminhoCompleto) {
             $nomeArquivo = basename($caminhoCompleto);
-            $arquivos[] = ['nome' => $nomeArquivo, 'url' => $urlBase . $nomeArquivo, 'tamanho' => filesize($caminhoCompleto)];
+            $arquivos[] = [
+                'nome' => $nomeArquivo,
+                'url' => $urlBase . rawurlencode($nomeArquivo),
+                'arquivo_relativo' => $pastaDocumento . '/' . $nomeMes . '_' . $anoFiltro . '/' . $nomeArquivo,
+                'tamanho' => filesize($caminhoCompleto)
+            ];
         }
     }
 }
@@ -146,11 +149,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao'])) {
         if ($_POST['acao'] === 'download_zip') {
             $zip = new ZipArchive();
             $nome_zip = sys_get_temp_dir() . '/' . ucfirst($pastaDocumento) . '_' . $nomeMes . '_' . $anoFiltro . '.zip';
+            $baseUploads = realpath(dirname(__DIR__) . '/uploads_rd');
 
             if ($zip->open($nome_zip, ZipArchive::CREATE | ZipArchive::OVERWRITE) === TRUE) {
-                foreach ($_POST['arquivos_selecionados'] as $urlArquivo) {
-                    $caminhoFisico = $_SERVER['DOCUMENT_ROOT'] . parse_url($urlArquivo, PHP_URL_PATH);
-                    if (file_exists($caminhoFisico)) {
+                foreach ($_POST['arquivos_selecionados'] as $arquivoRelativo) {
+                    $caminhoFisico = realpath($baseUploads . '/' . ltrim($arquivoRelativo, '/\\'));
+                    if ($caminhoFisico && strpos($caminhoFisico, $baseUploads) === 0 && file_exists($caminhoFisico)) {
                         $zip->addFile($caminhoFisico, basename($caminhoFisico));
                     }
                 }
@@ -166,9 +170,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao'])) {
         }
         // --- EXCLUSÃO EM MASSA ---
         elseif ($_POST['acao'] === 'excluir_selecionados') {
-            foreach ($_POST['arquivos_selecionados'] as $urlArquivo) {
-                $caminhoFisico = $_SERVER['DOCUMENT_ROOT'] . parse_url($urlArquivo, PHP_URL_PATH);
-                if (file_exists($caminhoFisico)) {
+            $baseUploads = realpath(dirname(__DIR__) . '/uploads_rd');
+            foreach ($_POST['arquivos_selecionados'] as $arquivoRelativo) {
+                $caminhoFisico = realpath($baseUploads . '/' . ltrim($arquivoRelativo, '/\\'));
+                if ($caminhoFisico && strpos($caminhoFisico, $baseUploads) === 0 && file_exists($caminhoFisico)) {
                     unlink($caminhoFisico);
                 }
             }
@@ -189,61 +194,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao'])) {
     <link rel="icon" href="../img/favicon.ico">
     <link rel="stylesheet" href="../css/bootstrap.min.css">
     <link rel="stylesheet" href="../fontawesome/css/all.css">
-    <style>
-        body {
-            zoom: 0.9;
-            width: 100%;
-            background-color: #f4f6f9;
-        }
-
-        .card-body {
-            padding: 10px;
-            overflow-y: auto;
-            height: calc(100vh - 80px);
-        }
-
-        .card-lista {
-            overflow-y: auto;
-            height: calc(100vh - 85px);
-        }
-
-        .pdf-checkbox,
-        #selecionar-todos-pdfs {
-            margin-right: 0px;
-            margin-left: 10px;
-            width: 1.2rem;
-            height: 1.2rem;
-            cursor: pointer;
-            vertical-align: middle;
-        }
-
-        .table td {
-            font-size: 11px;
-        }
-
-        .table-responsive {
-            max-height: calc(100vh - 150px);
-            /* Ajuste a altura máxima para a área de rolagem */
-            overflow-y: auto;
-        }
-
-        .table thead th {
-            position: sticky;
-            top: 0;
-            z-index: 10;
-            background-color: #e9ecef;
-            vertical-align: top;
-        }
-    </style>
+    <link rel="stylesheet" href="css/contabilidade_modern.css">
 </head>
 
 <body>
     <?php include("../all/sidebar.php"); ?>
-    <div class="container-fluid pt-2">
-        <div class="card">
-            <div class="card-header bg-light py-2 d-flex justify-content-between align-items-center">
-                <h4 class="m-0 font-weight-bold">Contabilidade - <?= htmlspecialchars($tituloPagina) ?></h4>
-                <form method="GET" class="form-inline">
+    <div class="container-fluid pt-2 contabilidade-page">
+        <div class="card contabilidade-main-card">
+            <div class="card-header py-2 d-flex justify-content-between align-items-center contabilidade-toolbar">
+                <div class="contabilidade-title"><i class="fas fa-calculator"></i><h4 class="m-0 font-weight-bold">Contabilidade - <?= htmlspecialchars($tituloPagina) ?></h4></div>
+                <form method="GET" class="form-inline contabilidade-filter-form">
                     <label for="tipo" class="mr-2">Visualizar:</label>
                     <select name="tipo" id="tipo" class="form-control form-control-sm mr-3">
                         <option value="notas_servico" <?= $tipoFiltro == 'notas_servico' ? 'selected' : '' ?>>Notas de Serviço</option>
@@ -276,27 +236,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao'])) {
                             ?>
                         </select>
                         <label for="ano" class="mr-2">Ano:</label>
-                        <input type="number" name="ano" id="ano" class="form-control form-control-sm mr-3" value="<?= $anoFiltro ?>" style="width: 100px;">
+                        <input type="number" name="ano" id="ano" class="form-control form-control-sm mr-3 contabilidade-year-input" value="<?= $anoFiltro ?>">
                     </div>
 
-                    <button type="submit" class="btn btn-sm btn-secondary" title="Aplicar Filtro"><i class="fas fa-filter"></i></button>
+                    <button type="submit" class="btn btn-sm btn-secondary contabilidade-btn" title="Aplicar Filtro"><i class="fas fa-filter"></i></button>
                 </form>
 
             </div>
 
-            <div class="card card-lista">
+            <div class="card card-lista contabilidade-content-card">
                 <?php if ($tipoFiltro !== 'extrato') : ?>
                     <form action="" method="POST" id="formAcoes">
                         <input type="hidden" name="acao" id="acao">
-                        <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+                        <div class="card-header d-flex justify-content-between align-items-center contabilidade-section-header">
                             <h5 class="m-0">Arquivos Encontrados</h5>
                             <?php if (!empty($arquivos)) : ?>
                                 <div>
-                                    <button type="button" id="btnDownloadZip" class="btn btn-success mr-2"><i class="fas fa-file-archive"></i> Download Selecionados (.zip)</button>
+                                    <button type="button" id="btnDownloadZip" class="btn btn-success btn-sm contabilidade-btn mr-2"><i class="fas fa-file-archive"></i> Download Selecionados (.zip)</button>
                                 </div>
                             <?php endif; ?>
                         </div>
-                        <table class="table table-hover table-sm mb-0">
+                        <div class="table-responsive contabilidade-table-area contabilidade-files-area">
+                        <table class="table table-hover table-sm mb-0 contabilidade-table contabilidade-files-table">
                             <tbody>
                                 <?php if (empty($arquivos)) : ?>
                                     <tr>
@@ -304,33 +265,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao'])) {
                                     </tr>
                                     <?php else : foreach ($arquivos as $arquivo) : ?>
                                         <tr>
-                                            <td><input type="checkbox" class="pdf-checkbox" name="arquivos_selecionados[]" value="<?= htmlspecialchars($arquivo['url']) ?>" data-tamanho="<?= $arquivo['tamanho'] ?>"></td>
-                                            <td><i class="fas fa-file-pdf text-danger"></i> <?= htmlspecialchars($arquivo['nome']) ?></td>
+                                            <td><input type="checkbox" class="pdf-checkbox" name="arquivos_selecionados[]" value="<?= htmlspecialchars($arquivo['arquivo_relativo']) ?>" data-tamanho="<?= $arquivo['tamanho'] ?>"></td>
+                                            <td><div class="contabilidade-file-name"><i class="fas fa-file-pdf text-danger"></i> <?= htmlspecialchars($arquivo['nome']) ?></div></td>
                                             <td class="text-center">
-                                                <a href="<?= htmlspecialchars($arquivo['url']) ?>" class="btn btn-sm btn-info" target="_blank" title="Visualizar"><i class="fas fa-eye"></i></a>
-                                                <a href="<?= htmlspecialchars($arquivo['url']) ?>" class="btn btn-sm btn-primary" download title="Baixar"><i class="fas fa-download"></i></a>
+                                                <a href="<?= htmlspecialchars($arquivo['url']) ?>" class="btn btn-sm btn-info contabilidade-icon-btn" target="_blank" title="Visualizar"><i class="fas fa-eye"></i></a>
+                                                <a href="<?= htmlspecialchars($arquivo['url']) ?>" class="btn btn-sm btn-primary contabilidade-icon-btn" download title="Baixar"><i class="fas fa-download"></i></a>
                                             </td>
                                         </tr>
                                 <?php endforeach;
                                 endif; ?>
                             </tbody>
                         </table>
+                        </div>
                     </form>
                 <?php else : // ## NOVO BLOCO PARA EXIBIR O EXTRATO ## 
                 ?>
-                    <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+                    <div class="card-header d-flex justify-content-between align-items-center contabilidade-section-header">
                         <h5 class="m-0">Lançamentos Encontrados</h5>
                         <?php if (!empty($extrato_data)) : ?>
                             <div>
-                                <a href="?tipo=extrato&mes=<?= $mesFiltro ?>&ano=<?= $anoFiltro ?>&action=download_excel" class="btn btn-success mr-2">
+                                <a href="?tipo=extrato&mes=<?= $mesFiltro ?>&ano=<?= $anoFiltro ?>&action=download_excel" class="btn btn-success btn-sm contabilidade-btn mr-2">
                                     <i class="fas fa-file-excel"></i> Baixar Excel
                                 </a>
                             </div>
                         <?php endif; ?>
                     </div>
-                    <div class="table-responsive">
-                        <table class="table table-hover table-sm table-bordered mb-0">
-                            <thead class="thead-light">
+                    <div class="table-responsive contabilidade-table-area contabilidade-extrato-area">
+                        <table class="table table-hover table-sm table-bordered mb-0 contabilidade-table contabilidade-extrato-table">
+                            <thead>
                                 <tr>
                                     <th>Data</th>
                                     <th>Tipo Mov</th>
@@ -343,7 +305,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao'])) {
                                     <th>Subgrupo</th>
                                     <th>Classificação</th>
                                     <th>Empresa</Unid>
-                                    <th class="text-right" style="width: 100px;">Valor (R$)</th>
+                                    <th class="text-right contabilidade-value-col">Valor (R$)</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -351,8 +313,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao'])) {
                                     <tr>
                                         <td colspan="8" class="text-center text-muted p-4">Nenhum lançamento encontrado para o período.</td>
                                     </tr>
-                                    <?php else : foreach ($extrato_data as $linha) : ?>
-                                        <tr>
+                                    <?php else : foreach ($extrato_data as $index => $linha) : ?>
+                                        <tr class="<?= $index >= 50 ? 'd-none contabilidade-extra-row' : '' ?>">
                                             <td><?= date('d/m/Y', strtotime($linha['data'])) ?></td>
                                             <!-- <td class="text-center font-weight-bold <?= $linha['tipo_movimento'] == 'Entrada' ? 'bg-success text-white' : 'text-danger' ?>"><?= htmlspecialchars($linha['tipo_movimento'] ?? '') ?></td> -->
                                             <td class="text-center font-weight-bold <?= $linha['tipo_movimento'] == 'Entrada' ? 'text-success fs-1' : 'text-danger' ?>"><?= htmlspecialchars($linha['tipo_movimento'] ?? '') ?></td>
@@ -374,24 +336,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao'])) {
                             </tbody>
                         </table>
                     </div>
+                    <div id="contabilidadeLoadStatus" class="contabilidade-load-status"></div>
                 <?php endif; ?>
             </div>
         </div>
     </div>
 
 
-    <div class="modal fade" id="confirmacaoModal" tabindex="-1">
-        <div class="modal-dialog">
+    <div class="modal fade contabilidade-modal" id="confirmacaoModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="confirmacaoModalLabel">Confirmar Ação</h5>
-                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Fechar"><span aria-hidden="true">&times;</span></button>
                 </div>
                 <div class="modal-body" id="confirmacaoModalBody">
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
-                    <button type="button" class="btn btn-primary" id="btnConfirmarAcao">Confirmar</button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary btn-sm" id="btnConfirmarAcao">Confirmar</button>
                 </div>
             </div>
         </div>

@@ -428,7 +428,7 @@ if ($m8_00 == 0) {
             //insere o registro de uma nova interação 
             $adc = $pdo->prepare("INSERT INTO `inter_proj_mkt` (`inter_tipo`, `inter_projeto`, `inter_user`, `inter_data`, `inter_desc`) VALUES ('6', '$projs_mkt', '$user_id', '$agora', 'Retomou o projeto.');");
             if ($adc->execute()) {
-              $mensagem = "<i class=\"fas fa-check\"></i> Beleza! <br> Agora vamos descrever as interaçães com o cliente!";
+              $mensagem = "<i class=\"fas fa-check\"></i> Beleza! <br> Agora vamos descrever as interAções com o cliente!";
               $mensagem_cor = "alert-success";
             } else {
               $mensagem = "<i class=\"fas fa-exclamation-triangle\"></i> Falha ao adicionar registro na tabela de interação!";
@@ -1341,7 +1341,7 @@ WHERE proj_mkt.id = '$projs_mkt'");
             <div class="h6 card-header py-1">
               <div class="row">
                 <div class="col-6 h6 pt-2 mb-0">
-                  <i class="fas fa-check"></i> Açães
+                  <i class="fas fa-check"></i> Ações
                 </div>
                 <div class="col-6 text-right px-0">
 

@@ -763,7 +763,7 @@ function sortLink($label, $column, $currentOrderBy, $currentOrderDir)
                                 <th>Valor Recebido</th>
                                 <th><?= sortLink('A Receber', 'saldo', $orderBy, $orderDir) ?></th>
                                 <th class="text-center"><?= sortLink('Status', 'status', $orderBy, $orderDir) ?></th>
-                                <th class="text-center">Açães</th>
+                                <th class="text-center">Ações</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -864,7 +864,7 @@ function sortLink($label, $column, $currentOrderBy, $currentOrderDir)
                                     <th class="text-right">Valor Recebido</th>
                                     <th>Agência / Banco</th>
                                     <th>Observação</th>
-                                    <th>Açães</th>
+                                    <th>Ações</th>
                                 </tr>
                             </thead>
                             <tbody id="lista_recebimentos_body"></tbody>

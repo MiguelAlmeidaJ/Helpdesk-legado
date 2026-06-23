@@ -874,7 +874,7 @@ while ($exibe = $show_atd->fetch(PDO::FETCH_ASSOC)) {
                       $minutes = $interval->format('%i');
                       $time_last_inter = $hours * 60 + $minutes;
                     } else {
-                      // Se não houver interaçães, defina um valor padrão ou faça algo apropriado
+                      // Se não houver interAções, defina um valor padrão ou faça algo apropriado
                       $time_last_inter = 0; // Exemplo de valor padrão
                     }
 

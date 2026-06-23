@@ -4,763 +4,1188 @@ include_once("../all/seguranca.php");
 include_once("../all/conect.php");
 include_once("../all/permissoes.php");
 
-if ($m8_00 == 0) {
+if (!isset($m8_00) || (int)$m8_00 === 0) {
     header("Location: ../home.php");
+    exit;
 }
 
-// Definindo dos status dos atendimentos
-// 0 == agendado
-// 1 == aguardando execução
-// 2 == em execução
-// 3 == em espera
-// 4 == finalizado
-// 5 == concluído
-
-function loadTecnicos($pdo)
+function disp_h($value)
 {
-    // Consulta para obter todos os tecnicos e analistas ativos
-    $stmtTodos = $pdo->prepare("SELECT user_id, user_nome, user_funcao, user_sts FROM usuarios WHERE user_sts = 1 AND usuarios.user_funcao IN (5, 6, 10, 12, 14)
-");
-    $stmtTodos->execute();
-
-    $todosTecnicos = $stmtTodos->fetchAll(PDO::FETCH_ASSOC);
-
-
-    // Agrupar tecnicos por setor
-    // $ti = [];
-    // $devops = [];
-
-    // foreach ($todosTecnicos as $tecnico) {
-    //     if (in_array($tecnico['user_funcao'], [5, 6])) {
-    //         $ti[] = $tecnico;
-    //     } elseif (in_array($tecnico['user_funcao'], [10, 12, 14])) {
-    //         $devops[] = $tecnico;
-    //     }
-    // }
-
-
-    // Consulta para obter tecnicos e analistas com tarefas em execução (status = 2) e suas tarefas
-    $stmtOcupados = $pdo->prepare("
-    SELECT
-        usuarios.user_id,
-        usuarios.user_nome,
-        usuarios.user_funcao,
-        atendimentos.id AS tarefa_id,
-        atendimentos.tipo AS tipo_atendimento,
-        clientes.clt_nomef AS nome_cliente
-    FROM usuarios
-    INNER JOIN atendimentos ON usuarios.user_id = atendimentos.tecnico
-    INNER JOIN clientes ON atendimentos.cliente = clientes.clt_id
-    WHERE atendimentos.status = 2
-    AND usuarios.user_sts = 1
-    AND usuarios.user_funcao IN (5, 6, 10, 12, 14)
-");
-    $stmtOcupados->execute();
-    $tecnicosOcupados = $stmtOcupados->fetchAll(PDO::FETCH_ASSOC);
-
-
-    // Agrupar tarefas por técnico
-    $ocupadosAgrupados = [];
-    $mapaTipos = [
-        1 => "Falha",
-        2 => "Relacionamento",
-        3 => "Requisição de Serviços",
-        4 => "Requisição de informação",
-        6 => "Melhoria",
-        0 => "Não informado"
-    ];
-
-    foreach ($tecnicosOcupados as $tecnico) {
-        if ($tecnico['user_funcao'] == 7) {
-            $tecnico['user_nome'] = 'Aguardando Atendimento';
-        }
-        if (!isset($ocupadosAgrupados[$tecnico['user_id']])) {
-            $ocupadosAgrupados[$tecnico['user_id']]['user_nome'] = $tecnico['user_nome'];
-            $ocupadosAgrupados[$tecnico['user_id']]['user_funcao'] = $tecnico['user_funcao'];
-            $ocupadosAgrupados[$tecnico['user_id']]['id'] = [];
-        }
-        $tipoTexto = isset($mapaTipos[$tecnico['tipo_atendimento']]) ? $mapaTipos[$tecnico['tipo_atendimento']] : "Desconhecido";
-
-        // Define o texto do tooltip com o nome da empresa e o tipo de atendimento
-        $tooltipTexto = $tecnico['nome_cliente'] . '<br>' . $tipoTexto;
-
-        $ocupadosAgrupados[$tecnico['user_id']]['id'][] = [
-            'tarefa_id' => $tecnico['tarefa_id'],
-            'tooltip_texto' => $tooltipTexto
-        ];
-    }
-
-
-    // Extraindo os tecnicos ocupados para ordena-los pelo nome
-    $tecnicosOrdenar = [];
-    foreach ($ocupadosAgrupados as $user_id => $dados) {
-        $tecnicosOrdenar[] = [
-            'user_id' => $user_id,
-            'user_nome' => $dados['user_nome'],
-            'user_funcao' => $dados['user_funcao'],
-            'id' => $dados['id']
-        ];
-    }
-
-    // Ordenar os tecnicos ocupados pelo nome
-    usort($tecnicosOrdenar, function ($a, $b) {
-        return strcmp($a['user_nome'], $b['user_nome']);
-    });
-
-    // Recriar o array $ocupadosAgrupados ordenado
-    $ocupadosAgrupados = [];
-    // foreach ($tecnicosOrdenar as $tecnico) {
-    //     $ocupadosAgrupados[$tecnico['user_id']] = [
-    //         'user_nome' => $tecnico['user_nome'],
-    //         'id' => $tecnico['id']
-    //     ];
-    // }
-    foreach ($tecnicosOrdenar as $tecnico) {
-        // Verifica se a função está entre 9 e 14
-        $nome = $tecnico['user_nome'];
-        if ($tecnico['user_funcao'] >= 9 && $tecnico['user_funcao'] <= 14) {
-            $nome .= ' - DevOps';
-        }
-
-        $ocupadosAgrupados[$tecnico['user_id']] = [
-            'user_nome' => $nome,
-            'user_funcao' => $tecnico['user_funcao'],
-            'id' => $tecnico['id']
-        ];
-    }
-
-    // Filtrar tecnicos livres (não ocupados)
-    $tecnicosLivres = [];
-    foreach ($todosTecnicos as $tecnico) {
-        if (!isset($ocupadosAgrupados[$tecnico['user_id']]) && $tecnico['user_id'] !== 1) {
-            $tecnicosLivres[] = $tecnico;
-        }
-    }
-
-    //ALTERAÇÃO PARA HABILITAR OU DESABILITAR TECNICO DISPONIVEL
-
-    // Aplicar filtro de seleção dos tecnicos disponíveis
-    if (isset($_SESSION['tecnicos_selecionados'])) {
-        $tecnicosSelecionados = $_SESSION['tecnicos_selecionados'];
-        $tecnicosLivres = array_filter($tecnicosLivres, function ($tecnico) use ($tecnicosSelecionados) {
-            return in_array($tecnico['user_id'], $tecnicosSelecionados);
-        });
-    }
-
-    //ALTERAÇÃO PARA HABILITAR OU DESABILITAR TECNICO DISPONIVEL
-
-    ////////////////////////////////////////////////////////////////////////////////////////
-
-    ////////////////////////////////////////////////////////////////////////////////////////
-
-
-    // CONSULTA ATENDIMENTOS EM EXECUÇÃO
-    $stmtAtendimentosExecucao = $pdo->prepare("
-        SELECT COUNT(atendimentos.id) AS total_execucao
-        FROM usuarios
-        INNER JOIN atendimentos ON usuarios.user_id = atendimentos.tecnico
-        WHERE atendimentos.status = 2
-        AND usuarios.user_sts = 1
-        AND usuarios.user_funcao IN (5, 6, 10, 12, 14)
-    ");
-    $stmtAtendimentosExecucao->execute();
-    $execucao = $stmtAtendimentosExecucao->fetch(PDO::FETCH_ASSOC);
-    $numAtendimentosExecucao = $execucao['total_execucao'];
-
-    ////////////////////////////////////////////////////////////////////////////////////////
-
-    ////////////////////////////////////////////////////////////////////////////////////////
-
-
-    // CONSULTA ATENDIMENTOS AGUARDANDO
-
-    // Consulta unificada para buscar atendimentos aguardando (com ou sem técnico)
-    $stmtAguardandoAtendimento = $pdo->prepare("
-    SELECT
-        COALESCE(usuarios.user_id, 0) AS user_id,
-        COALESCE(usuarios.user_nome, 'Sem Tecnico') AS user_nome,
-        COALESCE(usuarios.user_funcao, 'N/A') AS user_funcao,
-        atendimentos.id AS tarefa_id,
-        atendimentos.tipo AS tipo_atendimento,
-        clientes.clt_nomef AS nome_cliente
-    FROM atendimentos
-    LEFT JOIN usuarios ON usuarios.user_id = atendimentos.tecnico AND usuarios.user_sts = 1
-    LEFT JOIN clientes ON clientes.clt_id = atendimentos.cliente
-    WHERE atendimentos.status = 1
-");
-    $stmtAguardandoAtendimento->execute();
-    $tarefaAguardando = $stmtAguardandoAtendimento->fetchAll(PDO::FETCH_ASSOC);
-
-
-    // Define o mapa de tipos
-    $mapaTipos = [
-        1 => "Falha",
-        2 => "Relacionamento",
-        3 => "Requisição de Serviços",
-        4 => "Requisição de informação",
-        6 => "Melhoria",
-        0 => "Não informado"
-    ];
-
-    // Substituir o valor numérico de tipo_atendimento pelo nome correspondente
-    foreach ($tarefaAguardando as &$tarefa) {
-        //imprime a tarefa_id dos atendimentos
-        $tipoTexto = $mapaTipos[$tarefa['tipo_atendimento']] ?? "Desconhecido";
-        $tarefa['tipo_atendimento_nome'] = $tipoTexto;
-
-        // Define a string do tooltip com quebra de linha
-        $tarefa['tooltip_texto'] = $tarefa['nome_cliente'] . '<br>' . $tipoTexto;
-    }
-    unset($tarefa); // Evitar referências não desejadas
-
-    // Ordenar o array pelo 'tarefa_id'
-    usort($tarefaAguardando, function ($a, $b) {
-        return $a['tarefa_id'] <=> $b['tarefa_id'];
-    });
-
-    // Filtrar e contar tarefas aguardando atendimento
-    $aguardandoAtendimento = [];
-    $numAguardandoAtendimento = 0;
-
-    foreach ($tarefaAguardando as $tarefa) {
-        if (!isset($aguardandoAtendimento[$tarefa['user_id']])) {
-            $aguardandoAtendimento[$tarefa['user_id']] = [];
-        }
-        $aguardandoAtendimento[$tarefa['user_id']][] = $tarefa['tarefa_id']; // Adiciona apenas o ID da tarefa
-        $numAguardandoAtendimento++;
-    }
-
-
-    ////////////////////////////////////////////////////////////////////////////////////////
-
-    ////////////////////////////////////////////////////////////////////////////////////////
-
-    // Consulta atendimentos agendados (status = 0)
-    $stmtAtendimentosAgendados = $pdo->prepare("
-        SELECT
-    usuarios.user_id,
-    COALESCE(usuarios.user_nome, 'Sem Tecnico') AS user_nome,
-    COALESCE(usuarios.user_funcao, 'N/A') AS user_funcao,
-    atendimentos.id AS tarefa_id,
-    atendimentos.tipo AS tipo_atendimento,
-    clientes.clt_nomef AS nome_cliente
-FROM atendimentos
-LEFT JOIN usuarios ON usuarios.user_id = atendimentos.tecnico
-INNER JOIN clientes ON clientes.clt_id = atendimentos.cliente
-WHERE atendimentos.status = 0
-    ");
-    $stmtAtendimentosAgendados->execute();
-    $agendados = $stmtAtendimentosAgendados->fetchAll(PDO::FETCH_ASSOC);
-
-    // AND usuarios.user_sts = 1
-
-    echo '<script> console.log(' . json_encode($agendados) . '); </script>';
-
-    // Filtrar tecnicos e contar tarefas agendadas
-    // Agrupar tarefas por técnico e adicionar tipo de atendimento
-    $atendimentosAgendados = [];
-    foreach ($agendados as $tarefa) {
-        $userId = $tarefa['user_id'];
-        //imprime a tarefa_id dos atendimentos
-        $tipoTexto = $mapaTipos[$tarefa['tipo_atendimento']] ?? "Desconhecido";
-        $tarefa['tipo_atendimento_nome'] = $tipoTexto;
-
-        // Define a string do tooltip com quebra de linha
-        $tarefa['tooltip_texto'] = $tarefa['nome_cliente'] . '<br>' . $tipoTexto;
-
-        if (!isset($atendimentosAgendados[$userId])) {
-            $atendimentosAgendados[$userId] = [
-                'user_nome' => $tarefa['user_nome'],
-                'tarefas' => []
-            ];
-        }
-        $atendimentosAgendados[$userId]['tarefas'][] = [
-            'tarefa_id' => $tarefa['tarefa_id'],
-            'tipo_atendimento' => $tarefa['tipo_atendimento'],
-            'tooltip_texto' => $tarefa['tooltip_texto']
-
-        ];
-    }
-
-
-    ///////////////////////////////////////////////////////////////////////////////////////////
-
-
-    ///////////////////////////////////////////////////////////////////////////////////////////
-
-    // CONSULTA ATENDIMENTOS FINALIZADOS OU CONCLUÍDOS (status = 4 ou 5)
-
-    // Consulta atendimentos finalizados ou concluídos (status = 4 ou 5) na data atual (hoje)
-    $stmtFinalizadosHoje = $pdo->prepare("
-    SELECT usuarios.user_id,
-           usuarios.user_nome,
-           atendimentos.id AS tarefa_id,
-           atendimentos.tipo AS tipo_atendimento,
-           clientes.clt_nomef AS nome_cliente
-    FROM usuarios
-    INNER JOIN atendimentos ON usuarios.user_id = atendimentos.tecnico
-    INNER JOIN clientes ON clientes.clt_id = atendimentos.cliente
-    WHERE (atendimentos.status = 4 OR atendimentos.status = 5)
-    AND usuarios.user_sts = 1
-    AND usuarios.user_funcao IN (5, 6, 10, 12, 14)
-    AND DATE(atendimentos.fechamento) = CURDATE()
-");
-    $stmtFinalizadosHoje->execute();
-    $finalizadosConcluidos = $stmtFinalizadosHoje->fetchAll(PDO::FETCH_ASSOC);
-
-    // Define o mapa de tipos
-    $mapaTipos = [
-        1 => "Falha",
-        2 => "Relacionamento",
-        3 => "Requisição de Serviços",
-        4 => "Requisição de Informação",
-        6 => "Melhoria",
-        0 => "Não informado"
-    ];
-    // Agrupar tarefas por técnico e adicionar tipo de atendimento
-    $concluidosAgrupados = [];
-    foreach ($finalizadosConcluidos as $tarefa) {
-        $userId = $tarefa['user_id'];
-        $tipoTexto = $mapaTipos[$tarefa['tipo_atendimento']] ?? "Desconhecido";
-        $tarefa['tipo_atendimento_nome'] = $tipoTexto;
-
-        // Define a string do tooltip com quebra de linha
-        $tarefa['tooltip_texto'] = $tarefa['nome_cliente'] . '<br>' . $tipoTexto;
-        echo '<script>console.log(' . json_encode($tarefa) . ');</script>';
-
-
-        if (!isset($concluidosAgrupados[$userId])) {
-            $concluidosAgrupados[$userId] = [
-                'user_nome' => $tarefa['user_nome'],
-                'tarefas' => []
-            ];
-        }
-        $concluidosAgrupados[$userId]['tarefas'][] = [
-            'tarefa_id' => $tarefa['tarefa_id'],
-            'tipo_atendimento' => $tarefa['tipo_atendimento'],
-            'tooltip_texto' => $tarefa['tooltip_texto']
-        ];
-    }
-
-    // Ordenar tecnicos pelo nome
-    usort($concluidosAgrupados, function ($a, $b) {
-        return strcasecmp($a['user_nome'], $b['user_nome']);
-    });
-
-    // Contar o total de tarefas finalizadas hoje
-    $numFinalizadosHoje = 0;
-    foreach ($concluidosAgrupados as $tecnico) {
-        $numFinalizadosHoje += count($tecnico['tarefas']);
-    }
-
-    ///////////////////////////////////////////////////////////////////////////////////////////////
-
-    /////////////////////////////////////////////////////////////////////////////////////////////
-
-    /// CONSULTA ATENDIMENTOS EM ESPERA (status = 3)
-    $stmtAtendimentosEspera = $pdo->prepare("SELECT
-        usuarios.user_id,
-        usuarios.user_nome,
-        usuarios.user_funcao,
-        atendimentos.id AS tarefa_id,
-        atendimentos.tipo AS tipo_atendimento,
-        clientes.clt_nomef AS nome_cliente,
-        IFNULL(espera_counts.qtde_espera, 0) AS qtde_espera,
-        (SELECT espera_causa FROM espera
-        WHERE espera_atd = atendimentos.id
-        ORDER BY espera_start DESC LIMIT 1) AS ultima_causa
-            FROM
-                usuarios
-            INNER JOIN
-                atendimentos ON usuarios.user_id = atendimentos.tecnico
-            INNER JOIN
-                clientes ON atendimentos.cliente = clientes.clt_id
-
-            LEFT JOIN
-                (SELECT espera_atd, COUNT(*) as qtde_espera FROM espera GROUP BY espera_atd) AS espera_counts
-                ON atendimentos.id = espera_counts.espera_atd
-
-            WHERE
-                atendimentos.status = 3
-                AND usuarios.user_sts = 1
-        ");
-    $stmtAtendimentosEspera->execute();
-    $emEspera = $stmtAtendimentosEspera->fetchAll(PDO::FETCH_ASSOC);
-
-    // Define o mapa de tipos
-    $mapaTipos = [
-        1 => "Falha",
-        2 => "Relacionamento",
-        3 => "Requisição de Serviços",
-        4 => "Requisição de Informação",
-        6 => "Melhoria",
-        0 => "Não informado"
-    ];
-
-    // Adiciona o nome do tipo de atendimento a cada tarefa
-    foreach ($emEspera as &$tarefa) {
-        //imprime a tarefa_id dos atendimentos
-        $tipoTexto = $mapaTipos[$tarefa['tipo_atendimento']] ?? "Desconhecido";
-        $tarefa['tipo_atendimento_nome'] = $tipoTexto;
-
-        // Define a string do tooltip com quebra de linha
-        $tarefa['tooltip_texto'] = $tarefa['nome_cliente'] . '<br>' . $tipoTexto;
-    }
-
-    // Filtrar e contar tarefas em espera
-    $atendimentosEspera = [];
-    foreach ($emEspera as $tecnico) {
-        if (!isset($atendimentosEspera[$tecnico['user_id']])) {
-            $atendimentosEspera[$tecnico['user_id']] = [];
-        }
-        $atendimentosEspera[$tecnico['user_id']][] = $tecnico;
-    }
-
-    // Agrupar tarefas em espera por causa
-    $esperaAgrupada = [];
-    foreach ($emEspera as $tarefa) {
-        $tarefaId = $tarefa['tarefa_id'];
-
-
-        // Verificar na tabela de espera a causa da espera, pegando a última registrada pela coluna espera_start
-        //         $stmtCausa = $pdo->prepare("
-        //     SELECT espera_causa
-        //     FROM espera
-        //     WHERE espera_atd = :tarefa_id
-        //     ORDER BY ultimo_registro DESC
-        //     LIMIT 1
-        // ");
-        //         $stmtCausa->bindParam(':tarefa_id', $tarefaId);
-        //         $stmtCausa->execute();
-        //         $causa = $stmtCausa->fetchColumn();
-
-        $causa = $tarefa['ultima_causa'];
-
-        // Agrupar pela causa se encontrada
-        if ($causa) {
-            if (!isset($esperaAgrupada[$causa])) {
-                $esperaAgrupada[$causa] = [];
-            }
-            $esperaAgrupada[$causa][] = $tarefa;
-        }
-    }
-
-    // cria a contagem de todos os atendimento e conta quantas vezes o atendimento foi para espera
-
-
-
-    $dadosTecnicos = [
-        'todosTecnicos' => $todosTecnicos,
-        'tecnicosLivres' => $tecnicosLivres,
-        'ocupadosAgrupados' => $ocupadosAgrupados,
-        'aguardandoAtendimento' => $aguardandoAtendimento,
-        'numAtendimentosExecucao' => $numAtendimentosExecucao,
-        'atendimentosAgendados' => $atendimentosAgendados,
-        'numFinalizadosHoje' => $numFinalizadosHoje,
-        'finalizadosConcluidos' => $finalizadosConcluidos,
-        'atendimentosEspera' => $atendimentosEspera,
-        'numAtendimentosEspera' => $emEspera,
-        'tarefaAguardando' => $tarefaAguardando,
-        'numAguardandoAtendimento' => $numAguardandoAtendimento,
-        'concluidosAgrupados' => $concluidosAgrupados,
-        'esperaAgrupada' => $esperaAgrupada
-    ];
-
-    return $dadosTecnicos;
+    return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8');
 }
 
-// Conexão com o banco de dados
+function disp_roles_tecnicos()
+{
+    return [5, 6, 10, 12, 14];
+}
+
+function disp_tipo_nome($tipo)
+{
+    $mapa = [
+        0 => 'Nao informado',
+        1 => 'Falha',
+        2 => 'Relacionamento',
+        3 => 'Requisicao de Servicos',
+        4 => 'Requisicao de Informacao',
+        6 => 'Melhoria',
+    ];
+
+    return $mapa[(int)$tipo] ?? 'Desconhecido';
+}
+
+function disp_prioridade_nome($prioridade)
+{
+    $mapa = [
+        1 => 'Baixa',
+        2 => 'Media',
+        3 => 'Alta',
+        4 => 'Urgente',
+    ];
+
+    return $mapa[(int)$prioridade] ?? 'NA';
+}
+
+function disp_setor_nome($funcao)
+{
+    $funcao = (int)$funcao;
+    return ($funcao >= 9 && $funcao <= 14) ? 'DevOps' : 'TI';
+}
+
+function disp_format_atd($id)
+{
+    return '#' . str_pad((string)(int)$id, 5, '0', STR_PAD_LEFT);
+}
+
+function disp_format_data($data)
+{
+    if (empty($data)) {
+        return '';
+    }
+
+    $ts = strtotime($data);
+    return $ts ? date('d/m/y H:i', $ts) : '';
+}
+
+function disp_minutes_since($data)
+{
+    if (empty($data)) {
+        return null;
+    }
+
+    $ts = strtotime($data);
+    if (!$ts) {
+        return null;
+    }
+
+    return max(0, (int)floor((time() - $ts) / 60));
+}
+
+function disp_tempo_curto($minutes)
+{
+    if ($minutes === null) {
+        return '';
+    }
+
+    $minutes = (int)$minutes;
+    if ($minutes < 60) {
+        return $minutes . 'min';
+    }
+
+    $hours = (int)floor($minutes / 60);
+    $rest = $minutes % 60;
+    if ($hours < 24) {
+        return $hours . 'h' . ($rest > 0 ? ' ' . $rest . 'min' : '');
+    }
+
+    $days = (int)floor($hours / 24);
+    $dayHours = $hours % 24;
+    return $days . 'd' . ($dayHours > 0 ? ' ' . $dayHours . 'h' : '');
+}
+
+function disp_normalize_filters()
+{
+    $setor = $_GET['setor'] ?? 'todos';
+    if (!in_array($setor, ['todos', 'ti', 'devops'], true)) {
+        $setor = 'todos';
+    }
+
+    $foco = $_GET['foco'] ?? 'todos';
+    if (!in_array($foco, ['todos', 'livres', 'execucao', 'espera', 'sobrecarga'], true)) {
+        $foco = 'todos';
+    }
+
+    return [
+        'setor' => $setor,
+        'foco' => $foco,
+        'busca' => trim((string)($_GET['busca'] ?? '')),
+    ];
+}
+
+function disp_ids_placeholders($values, $prefix)
+{
+    $params = [];
+    $placeholders = [];
+
+    foreach (array_values(array_unique(array_map('intval', $values))) as $index => $value) {
+        $name = ':' . $prefix . $index;
+        $placeholders[] = $name;
+        $params[$name] = $value;
+    }
+
+    return [
+        'sql' => implode(', ', $placeholders),
+        'params' => $params,
+    ];
+}
+
+function disp_bind_params($stmt, $params)
+{
+    foreach ($params as $name => $value) {
+        $stmt->bindValue($name, $value, is_int($value) ? PDO::PARAM_INT : PDO::PARAM_STR);
+    }
+}
+
+function disp_fetch_tecnicos($pdo)
+{
+    $roles = disp_ids_placeholders(disp_roles_tecnicos(), 'role');
+    $stmt = $pdo->prepare("
+        SELECT user_id, user_nome, user_funcao
+        FROM usuarios
+        WHERE user_sts = 1
+          AND user_id > 1
+          AND user_funcao IN (" . $roles['sql'] . ")
+        ORDER BY user_nome ASC
+    ");
+    disp_bind_params($stmt, $roles['params']);
+    $stmt->execute();
+
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
+function disp_fetch_atendimentos($pdo)
+{
+    $roles = disp_ids_placeholders(disp_roles_tecnicos(), 'role_atd');
+    $sql = "
+        SELECT
+            atendimentos.id,
+            atendimentos.status,
+            atendimentos.tipo,
+            atendimentos.abertura,
+            atendimentos.fechamento,
+            atendimentos.tecnico,
+            atendimentos.nivel,
+            atendimentos.prioridade,
+            clientes.clt_nomef AS cliente_nome,
+            usuarios.user_nome AS tecnico_nome,
+            usuarios.user_funcao,
+            0 AS qtde_espera,
+            NULL AS espera_causa,
+            NULL AS espera_start,
+            NULL AS espera_prev
+        FROM atendimentos
+        LEFT JOIN clientes ON clientes.clt_id = atendimentos.cliente
+        LEFT JOIN usuarios ON usuarios.user_id = atendimentos.tecnico
+        WHERE (
+            atendimentos.status IN (0, 1, 2, 3)
+            OR (
+                atendimentos.status IN (4, 5)
+                AND atendimentos.fechamento >= CURDATE()
+                AND atendimentos.fechamento < DATE_ADD(CURDATE(), INTERVAL 1 DAY)
+            )
+        )
+        AND (
+            atendimentos.tecnico IS NULL
+            OR atendimentos.tecnico = 0
+            OR usuarios.user_id IS NULL
+            OR (
+                usuarios.user_sts = 1
+                AND usuarios.user_funcao IN (" . $roles['sql'] . ")
+            )
+        )
+        ORDER BY atendimentos.status ASC, atendimentos.abertura ASC, atendimentos.id ASC
+    ";
+
+    $stmt = $pdo->prepare($sql);
+    disp_bind_params($stmt, $roles['params']);
+    $stmt->execute();
+
+    return disp_hydrate_espera($pdo, $stmt->fetchAll(PDO::FETCH_ASSOC));
+}
+
+function disp_hydrate_espera($pdo, $rows)
+{
+    if (empty($rows)) {
+        return $rows;
+    }
+
+    $ids = [];
+    foreach ($rows as $row) {
+        if ((int)$row['status'] === 3) {
+            $ids[] = (int)$row['id'];
+        }
+    }
+
+    if (empty($ids)) {
+        return $rows;
+    }
+
+    $in = disp_ids_placeholders($ids, 'espera_atd');
+    $stmt = $pdo->prepare("
+        SELECT
+            espera_info.espera_atd,
+            espera_info.qtde_espera,
+            espera.espera_causa,
+            espera.espera_start,
+            espera.espera_prev
+        FROM (
+            SELECT espera_atd, COUNT(*) AS qtde_espera, MAX(espera_id) AS espera_id
+            FROM espera
+            WHERE espera_atd IN (" . $in['sql'] . ")
+            GROUP BY espera_atd
+        ) espera_info
+        INNER JOIN espera ON espera.espera_id = espera_info.espera_id
+    ");
+    disp_bind_params($stmt, $in['params']);
+    $stmt->execute();
+
+    $esperaPorAtendimento = [];
+    while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+        $esperaPorAtendimento[(int)$row['espera_atd']] = $row;
+    }
+
+    foreach ($rows as $index => $row) {
+        $id = (int)$row['id'];
+        if (!isset($esperaPorAtendimento[$id])) {
+            continue;
+        }
+
+        $rows[$index]['qtde_espera'] = (int)$esperaPorAtendimento[$id]['qtde_espera'];
+        $rows[$index]['espera_causa'] = $esperaPorAtendimento[$id]['espera_causa'];
+        $rows[$index]['espera_start'] = $esperaPorAtendimento[$id]['espera_start'];
+        $rows[$index]['espera_prev'] = $esperaPorAtendimento[$id]['espera_prev'];
+    }
+
+    return $rows;
+}
+
+function disp_ticket_from_row($row)
+{
+    $openedMinutes = disp_minutes_since($row['abertura']);
+    $waitMinutes = disp_minutes_since($row['espera_start']);
+
+    return [
+        'id' => (int)$row['id'],
+        'status' => (int)$row['status'],
+        'tipo' => (int)$row['tipo'],
+        'tipo_nome' => disp_tipo_nome($row['tipo']),
+        'cliente' => $row['cliente_nome'] ?: 'Sem cliente',
+        'abertura' => $row['abertura'],
+        'fechamento' => $row['fechamento'],
+        'tecnico' => (int)$row['tecnico'],
+        'nivel' => (int)$row['nivel'],
+        'prioridade' => (int)$row['prioridade'],
+        'prioridade_nome' => disp_prioridade_nome($row['prioridade']),
+        'qtde_espera' => (int)$row['qtde_espera'],
+        'espera_causa' => $row['espera_causa'] ?: 'Sem motivo',
+        'espera_start' => $row['espera_start'],
+        'espera_prev' => $row['espera_prev'],
+        'tempo_aberto_min' => $openedMinutes,
+        'tempo_espera_min' => $waitMinutes,
+    ];
+}
+
+function disp_empty_tecnico($row)
+{
+    return [
+        'id' => (int)$row['user_id'],
+        'nome' => $row['user_nome'],
+        'funcao' => (int)$row['user_funcao'],
+        'setor' => disp_setor_nome($row['user_funcao']),
+        'execucao' => [],
+        'fila' => [],
+        'espera' => [],
+        'agendados' => [],
+        'concluidos_hoje' => [],
+    ];
+}
+
+function disp_build_dashboard($pdo, $filters)
+{
+    $tecnicos = disp_fetch_tecnicos($pdo);
+    $allIds = array_map(function ($tecnico) {
+        return (int)$tecnico['user_id'];
+    }, $tecnicos);
+
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'salvar_visualizacao') {
+        $_SESSION['tecnicos_selecionados'] = isset($_POST['tecnicos'])
+            ? array_values(array_intersect(array_map('intval', $_POST['tecnicos']), $allIds))
+            : [];
+
+        $query = $_GET ? '?' . http_build_query($_GET) : '';
+        header('Location: ' . $_SERVER['PHP_SELF'] . $query);
+        exit;
+    }
+
+    if (!isset($_SESSION['tecnicos_selecionados']) || !is_array($_SESSION['tecnicos_selecionados'])) {
+        $_SESSION['tecnicos_selecionados'] = $allIds;
+    }
+
+    $selectedIds = array_values(array_intersect(array_map('intval', $_SESSION['tecnicos_selecionados']), $allIds));
+    $selectedMap = array_fill_keys($selectedIds, true);
+
+    $byId = [];
+    foreach ($tecnicos as $tecnico) {
+        $id = (int)$tecnico['user_id'];
+        if (!isset($selectedMap[$id])) {
+            continue;
+        }
+
+        $setor = strtolower(disp_setor_nome($tecnico['user_funcao']));
+        if ($filters['setor'] === 'ti' && $setor !== 'ti') {
+            continue;
+        }
+        if ($filters['setor'] === 'devops' && $setor !== 'devops') {
+            continue;
+        }
+        if ($filters['busca'] !== '' && stripos($tecnico['user_nome'], $filters['busca']) === false) {
+            continue;
+        }
+
+        $byId[$id] = disp_empty_tecnico($tecnico);
+    }
+
+    $filaSemTecnico = [];
+    $agendadosSemTecnico = [];
+    $esperaPorCausa = [];
+
+    foreach (disp_fetch_atendimentos($pdo) as $row) {
+        $ticket = disp_ticket_from_row($row);
+        $status = (int)$row['status'];
+        $tecnicoId = (int)$row['tecnico'];
+        $hasVisibleTech = isset($byId[$tecnicoId]);
+
+        if ($status === 1) {
+            if ($hasVisibleTech) {
+                $byId[$tecnicoId]['fila'][] = $ticket;
+            } elseif ($tecnicoId <= 0 || $filters['setor'] === 'todos') {
+                $filaSemTecnico[] = $ticket;
+            }
+            continue;
+        }
+
+        if ($status === 0) {
+            if ($hasVisibleTech) {
+                $byId[$tecnicoId]['agendados'][] = $ticket;
+            } elseif ($tecnicoId <= 0 || $filters['setor'] === 'todos') {
+                $agendadosSemTecnico[] = $ticket;
+            }
+            continue;
+        }
+
+        if (!$hasVisibleTech) {
+            continue;
+        }
+
+        if ($status === 2) {
+            $byId[$tecnicoId]['execucao'][] = $ticket;
+        } elseif ($status === 3) {
+            $byId[$tecnicoId]['espera'][] = $ticket;
+            $causa = $ticket['espera_causa'];
+            if (!isset($esperaPorCausa[$causa])) {
+                $esperaPorCausa[$causa] = [];
+            }
+            $esperaPorCausa[$causa][] = [
+                'tecnico' => $byId[$tecnicoId]['nome'],
+                'ticket' => $ticket,
+            ];
+        } elseif ($status === 4 || $status === 5) {
+            $byId[$tecnicoId]['concluidos_hoje'][] = $ticket;
+        }
+    }
+
+    $tecnicosVisiveis = array_values($byId);
+    usort($tecnicosVisiveis, function ($a, $b) {
+        return strcasecmp($a['nome'], $b['nome']);
+    });
+
+    $tecnicosFiltrados = [];
+    foreach ($tecnicosVisiveis as $tecnico) {
+        $exec = count($tecnico['execucao']);
+        $espera = count($tecnico['espera']);
+        $fila = count($tecnico['fila']);
+        $sobrecarga = $exec > 1 || ($exec + $fila) >= 3;
+
+        if ($filters['foco'] === 'livres' && ($exec > 0 || $espera > 0)) {
+            continue;
+        }
+        if ($filters['foco'] === 'execucao' && $exec === 0) {
+            continue;
+        }
+        if ($filters['foco'] === 'espera' && $espera === 0) {
+            continue;
+        }
+        if ($filters['foco'] === 'sobrecarga' && !$sobrecarga) {
+            continue;
+        }
+
+        $tecnicosFiltrados[] = $tecnico;
+    }
+
+    $summary = [
+        'tecnicos' => count($tecnicosVisiveis),
+        'livres' => 0,
+        'ocupados' => 0,
+        'sobrecarga' => 0,
+        'execucao_atd' => 0,
+        'fila' => count($filaSemTecnico),
+        'espera' => 0,
+        'agendados' => count($agendadosSemTecnico),
+        'concluidos_hoje' => 0,
+    ];
+
+    $sobrecarga = [];
+    foreach ($tecnicosVisiveis as $tecnico) {
+        $exec = count($tecnico['execucao']);
+        $espera = count($tecnico['espera']);
+        $fila = count($tecnico['fila']);
+        $isOverloaded = $exec > 1 || ($exec + $fila) >= 3;
+
+        $summary['execucao_atd'] += $exec;
+        $summary['fila'] += $fila;
+        $summary['espera'] += $espera;
+        $summary['agendados'] += count($tecnico['agendados']);
+        $summary['concluidos_hoje'] += count($tecnico['concluidos_hoje']);
+
+        if ($exec > 0) {
+            $summary['ocupados']++;
+        } elseif ($espera === 0) {
+            $summary['livres']++;
+        }
+
+        if ($isOverloaded) {
+            $summary['sobrecarga']++;
+            $sobrecarga[] = $tecnico;
+        }
+    }
+
+    uksort($esperaPorCausa, 'strcasecmp');
+
+    return [
+        'tecnicosTodos' => $tecnicos,
+        'selectedIds' => $selectedIds,
+        'tecnicos' => $tecnicosFiltrados,
+        'summary' => $summary,
+        'filaSemTecnico' => $filaSemTecnico,
+        'agendadosSemTecnico' => $agendadosSemTecnico,
+        'esperaPorCausa' => $esperaPorCausa,
+        'sobrecarga' => $sobrecarga,
+        'filters' => $filters,
+        'updatedAt' => date('H:i:s'),
+    ];
+}
+
+function disp_ticket_class($ticket)
+{
+    if ((int)$ticket['status'] === 3) {
+        return 'ticket-wait';
+    }
+    if ((int)$ticket['status'] === 2) {
+        return 'ticket-run';
+    }
+    if ((int)$ticket['status'] === 0) {
+        return 'ticket-scheduled';
+    }
+    if ((int)$ticket['prioridade'] >= 3) {
+        return 'ticket-hot';
+    }
+    return 'ticket-default';
+}
+
+function disp_render_ticket($ticket)
+{
+    $title = $ticket['cliente'] . "\n"
+        . $ticket['tipo_nome'] . ' - Prioridade ' . $ticket['prioridade_nome'] . "\n"
+        . 'Abertura: ' . disp_format_data($ticket['abertura']);
+
+    if ((int)$ticket['status'] === 3) {
+        $title .= "\nEm espera: " . $ticket['espera_causa'];
+        if (!empty($ticket['espera_prev'])) {
+            $title .= "\nPrevisao: " . disp_format_data($ticket['espera_prev']);
+        }
+    }
+
+    $meta = '';
+    if ((int)$ticket['status'] === 3 && $ticket['tempo_espera_min'] !== null) {
+        $meta = disp_tempo_curto($ticket['tempo_espera_min']);
+    } elseif ($ticket['tempo_aberto_min'] !== null && (int)$ticket['status'] !== 0) {
+        $meta = disp_tempo_curto($ticket['tempo_aberto_min']);
+    } elseif ((int)$ticket['status'] === 0) {
+        $meta = disp_format_data($ticket['abertura']);
+    }
+
+    ob_start();
+?>
+    <a class="ticket-chip <?php echo disp_ticket_class($ticket); ?>" href="atd.php?atd=<?php echo urlencode((string)$ticket['id']); ?>" target="_blank" rel="noopener" title="<?php echo disp_h($title); ?>">
+        <span class="ticket-id"><?php echo disp_h(disp_format_atd($ticket['id'])); ?></span>
+        <span class="ticket-client"><?php echo disp_h($ticket['cliente']); ?></span>
+        <?php if ($meta !== '') : ?>
+            <span class="ticket-time"><?php echo disp_h($meta); ?></span>
+        <?php endif; ?>
+    </a>
+<?php
+    return ob_get_clean();
+}
+
+function disp_render_ticket_list($tickets, $limit = 8)
+{
+    if (empty($tickets)) {
+        return '<span class="empty-inline">Nada no momento</span>';
+    }
+
+    $html = '';
+    $count = 0;
+    foreach ($tickets as $ticket) {
+        if ($count >= $limit) {
+            break;
+        }
+        $html .= disp_render_ticket($ticket);
+        $count++;
+    }
+
+    $remaining = count($tickets) - $count;
+    if ($remaining > 0) {
+        $html .= '<span class="more-chip">+' . (int)$remaining . '</span>';
+    }
+
+    return $html;
+}
+
+function disp_tecnico_state($tecnico)
+{
+    $exec = count($tecnico['execucao']);
+    $espera = count($tecnico['espera']);
+    $fila = count($tecnico['fila']);
+
+    if ($exec > 1 || ($exec + $fila) >= 3) {
+        return ['label' => 'Sobrecarga', 'class' => 'state-danger'];
+    }
+    if ($exec > 0) {
+        return ['label' => 'Em atendimento', 'class' => 'state-run'];
+    }
+    if ($espera > 0) {
+        return ['label' => 'Em espera', 'class' => 'state-wait'];
+    }
+    return ['label' => 'Livre', 'class' => 'state-free'];
+}
+
 $pdo = ConnectionN3();
 if (!$pdo) {
     exit("Erro ao conectar ao banco de dados.");
 }
 
-//ALTERAÇÃO PARA HABILITAR OU DESABILITAR TECNICO DISPONIVEL
-
-// Salvar a seleção dos tecnicos disponíveis na sessão
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $_SESSION['tecnicos_selecionados'] = isset($_POST['tecnicos']) ? $_POST['tecnicos'] : [];
-    header("Location: " . $_SERVER['PHP_SELF']);
-    exit;
-}
-
-//ALTERAÇÃO PARA HABILITAR OU DESABILITAR TECNICO DISPONIVEL
-
-
-// Obtém os dados dos tecnicos
-$dadosTecnicos = loadTecnicos($pdo);
-
-$numTecnicos = count($dadosTecnicos['todosTecnicos']);
-$numTecnicosLivres = count($dadosTecnicos['tecnicosLivres']);
-$numTecnicosOcupados = count($dadosTecnicos['ocupadosAgrupados']);
-$numAtendimentosEspera = count($dadosTecnicos['numAtendimentosEspera']);
-$numFinalizadosHoje = $dadosTecnicos['numFinalizadosHoje'];
-$numAtendimentosAgendados = count($dadosTecnicos['atendimentosAgendados']);
-$numAguardandoAtendimento = $dadosTecnicos['numAguardandoAtendimento'];
-$numAtendimentosExecucao = $dadosTecnicos['numAtendimentosExecucao'];
-
-// Gerar string com IDs das tarefas aguardando atendimento
-$tarefasAguardandoStr = "";
-foreach ($dadosTecnicos['tarefaAguardando'] as $tarefas) {
-    $tarefasAguardandoStr .= implode(", ", $tarefas) . ", ";
-}
-$tarefasAguardandoStr = rtrim($tarefasAguardandoStr, ", ");
-
-// Gerar string com IDs das tarefas em espera
-$atendimentosEsperaStr = "";
-foreach ($dadosTecnicos['atendimentosEspera'] as $tarefas) {
-    foreach ($tarefas as $tarefa) {
-        if (is_array($tarefa)) {
-            // Caso $tarefa seja um array, extraia o ID da tarefa (ou outro campo necessário)
-            if (isset($tarefa['tarefa_id'])) {
-                $atendimentosEsperaStr .= $tarefa['tarefa_id'] . ", ";
-            }
-        } else {
-            // Caso $tarefa já seja uma string ou número
-            $atendimentosEsperaStr .= $tarefa . ", ";
-        }
-    }
-}
-// Remover a vírgula e espaço extras no final da string
-$atendimentosEsperaStr = rtrim($atendimentosEsperaStr, ", ");
-
-
-// // Gerar string com IDs das tarefas agendadas
-// $atendimentosAgendadosStr = "";
-// foreach ($dadosTecnicos['atendimentosAgendados'] as $tarefas) {
-//     $atendimentosAgendadosStr .= implode(", ", $tarefas) . ", ";
-// }
-// $atendimentosAgendadosStr = rtrim($atendimentosAgendadosStr, ", ");
-
-// echo "<script> console.log('concluidosAgrupados:', " . json_encode($dadosTecnicos['concluidosAgrupados']) . "); </script>";
-// echo "<script> console.log('finalizadosConcluidos:', " . json_encode($dadosTecnicos['finalizadosConcluidos']) . "); </script>";
-
+$filters = disp_normalize_filters();
+$dashboard = disp_build_dashboard($pdo, $filters);
+$summary = $dashboard['summary'];
 ?>
-
-<!DOCTYPE html>
-<html lang="pt-br">
+<!doctype html>
+<html lang="pt-BR">
 
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=0.9, shrink-to-fit=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <link rel="icon" href="../img/favicon.ico">
     <link rel="stylesheet" href="../css/help.css">
     <link rel="stylesheet" href="../css/bootstrap.min.css">
     <link rel="stylesheet" href="../fontawesome/css/all.css">
-    <link rel="stylesheet" href="../css/bootstrap-select.min.css">
-    <link rel="stylesheet" href="../css/timeline.css">
-    <link rel="stylesheet" href="../css/bootstrap-datetimepicker.min.css">
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-
     <title>Allterus</title>
-
     <style>
-        .card {
-            font-family: "Helvetica Neue", Arial, sans-serif !important;
+        html {
+            height: 100%;
+            background: #f6f8fb;
+            overflow: hidden;
         }
-
-        .tooltip.custom-tooltip {
-            background-color: #f8f9fa !important;
-            /* Fundo claro */
-            color: #212529 !important;
-            /* Texto escuro */
-            border: 1px solid #ccc !important;
-            font-size: 14px !important;
-            box-shadow: 0px 2px 6px rgba(0, 0, 0, 0.15) !important;
-            padding: 8px;
-            /* Espaço interno */
-            border-radius: 5px;
-            /* Bordas arredondadas */
-        }
-
-        .tooltip.bs-tooltip-top .arrow::before {
-            border-top-color: #f8f9fa !important;
-            /* Ajusta a seta superior */
-        }
-
-        .tooltip.bs-tooltip-bottom .arrow::before {
-            border-bottom-color: #f8f9fa !important;
-            /* Ajusta a seta inferior */
-        }
-
-
-        .container {
-            margin: 10px;
-            margin-left: 10px;
-            align-items: flex-start;
-        }
-
-        .atd-list {
-            font-size: 13px;
-        }
-
-
-        .tecnico-list {
-            border: 1px solid #ccc;
-            padding: 10px;
-            font-size: 13px;
-        }
-
-        .tecnico-list h5 {
-            font-size: 1em;
-            margin-top: 0;
-        }
-
-        .tecnico-item {
-            margin: 2px 0;
-            padding: 2px 0;
-            border-bottom: 1px solid #ccc;
-        }
-
-        .tecnico-item:last-child {
-            border-bottom: none;
-        }
-
-        .tecnico-item span {
-            font-weight: bold;
-            margin-right: 2px;
-        }
-
-        .tecnico-livre {
-            color: green;
-        }
-
-        .tecnico-ocupado {
-            color: red;
-        }
-
-        .id-item {
-            margin-right: 10px;
-        }
-
-        .card {
-            margin: 5px;
-            margin-left: 5px;
-            margin-right: 5px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        }
-
-        .card-header {
-            background-color: #f8f9fa;
-            padding: 10px;
-            font-size: 1.25em;
-            border-bottom: 1px solid #ccc;
-        }
-
-
-
-        .card-header .atendimentos {
-            float: right;
-            font-size: 0.9em;
-            /* Ajuste conforme necessário */
-            padding-left: 10px;
-        }
-
-        .card-body {
-            padding: 10px;
-        }
-
-        .btn-group {
-            position: relative;
-            /* Define o grupo de botões como referência */
-        }
-
-        .btn {
-            position: relative;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            text-decoration: none;
-            display: inline-block;
-            cursor: pointer;
-            transition: background-color 0.3s;
-            font-size: 14px;
-            margin-right: 50px;
-        }
-
-        .btn:hover {
-            background-color: #b3b3b3;
-        }
-
-
-        .dropdown-menu.dropdown-visualizar {
-            position: absolute;
-            top: 100%;
-            /* Logo abaixo do botão */
-            right: 0;
-            /* Alinha à direita do botão */
-            width: 200px;
-            /* Define largura */
-            padding: 10px;
-            /* Espaçamento interno */
-            background-color: #fff;
-            /* Fundo branco */
-            border: 1px solid #ccc;
-            /* Borda leve */
-            border-radius: 5px;
-            /* Bordas arredondadas */
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-            /* Adiciona sombra */
-            z-index: 1000;
-            /* Garante que esteja acima de outros elementos */
-        }
-
 
         body {
-            zoom: 0.9;
+            height: 100vh;
             width: 100%;
-            overflow-x: hidden;
+            margin: 0;
+            overflow: hidden;
+            background: #f6f8fb;
+            color: #0f172a;
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            font-size: 90%;
         }
 
-
-        .atendimento-container {
-            position: relative;
-            display: inline-block;
-            padding-right: 5px;
+        body,
+        button,
+        input,
+        select {
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
         }
 
-        .alerta-espera {
-            position: absolute;
-            top: -10px;
-            right: -8px;
-            background-color: #dc3545;
-            color: white;
-            border-radius: 50%;
-            width: 16px;
-            height: 16px;
-            font-size: 10px;
-            font-weight: bold;
+        .container-fluid {
+            max-width: 100vw;
+            padding: 0;
+            overflow: hidden;
+        }
+
+        .container-fluid>.row {
+            margin: 0;
+        }
+
+        .container-fluid>.row>[class*="col-"] {
+            padding: 0;
+        }
+
+        .availability-shell {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background: #f6f8fb;
+        }
+
+        .availability-top {
+            flex: 0 0 auto;
+            border-bottom: 1px solid #d9e0ea;
+            background: #fff;
+            box-shadow: 0 2px 8px rgba(15, 23, 42, .05);
+        }
+
+        .page-title-row {
             display: flex;
             align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 12px 14px 8px;
+        }
+
+        .page-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 0;
+        }
+
+        .page-title i {
+            width: 30px;
+            height: 30px;
+            display: inline-flex;
+            align-items: center;
             justify-content: center;
-            box-shadow: 0 0 3px rgba(0, 0, 0, 0.5);
+            color: #0b7285;
+            background: #eef9fc;
+            border: 1px solid #d4eef4;
+            border-radius: 6px;
         }
 
-        /* Adiciona um espaçamento vertical (entre as linhas dos tecnicos) */
-        .atd-list ul li {
-            margin-bottom: 9px;
-            /* Aumenta o espaço abaixo de cada linha de técnico */
-            line-height: 1.6;
-            /* Melhora a legibilidade do texto na linha */
+        .page-title h1 {
+            margin: 0;
+            font-size: 1.08rem;
+            font-weight: 700;
+            color: #0f172a;
         }
 
-        /* Adiciona um espaçamento horizontal (entre os números de atendimento) */
-        .atendimento-container {
-            margin-right: 10px;
-            /* Aumenta o espaço à direita de cada número de chamado */
+        .page-title span {
+            display: block;
+            margin-top: 2px;
+            font-size: .78rem;
+            color: #64748b;
+        }
+
+        .summary-bar {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(185px, 1fr));
+            gap: 16px;
+            padding: 10px 12px 14px;
+            background: #fff;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .summary-card {
+            border: 1px solid #e1e9f2;
+            border-radius: 8px;
+            min-height: 78px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: #fff;
+            color: #172033;
+            box-shadow: 0 3px 8px rgba(15, 23, 42, .08);
+            text-decoration: none;
+            transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease;
+        }
+
+        .summary-card:hover {
+            text-decoration: none;
+            color: #172033;
+            box-shadow: 0 6px 14px rgba(15, 23, 42, .12);
+            transform: translateY(-1px);
+        }
+
+        .summary-card strong {
+            font-size: 1.18rem;
+            line-height: 1;
+            font-weight: 700;
+        }
+
+        .summary-card span {
+            margin-top: 4px;
+            font-size: .72rem;
+            text-transform: uppercase;
+            color: #5f6b7a;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .summary-free {
+            border-color: #15b33a;
+        }
+
+        .summary-run {
+            border-color: #0d6efd;
+        }
+
+        .summary-wait {
+            border-color: #fd7e14;
+        }
+
+        .summary-danger {
+            border-color: #dc3545;
+        }
+
+        .filters-row {
+            display: flex;
+            align-items: end;
+            gap: 8px;
+            padding: 12px 14px 10px;
+            flex-wrap: nowrap;
+            background: #fff;
+            border-bottom: 1px solid #d9e0ea;
+            box-shadow: 0 2px 8px rgba(15, 23, 42, .05);
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            flex: 1 1 0;
+            min-width: 0;
+        }
+
+        .filter-group label {
+            margin: 0;
+            color: #172033;
+            font-size: .86rem;
+            font-weight: 500;
+            line-height: 1.15;
+            white-space: nowrap;
+        }
+
+        .filter-control {
+            height: 34px;
+            min-height: 34px;
+            border: 1px solid #d3dbe7;
+            border-radius: 4px;
+            padding: 0 10px;
+            width: 100%;
+            min-width: 0;
+            color: #172033;
+            background: #fff;
+            font-size: .86rem;
+            box-shadow: none;
+        }
+
+        .filter-control:focus {
+            outline: none;
+            border-color: #74a7e8;
+            box-shadow: 0 0 0 2px rgba(13, 110, 253, .12);
+        }
+
+        .btn-action {
+            height: 34px;
+            min-width: 64px;
+            border-radius: 4px;
+            font-size: .86rem;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+
+        .filter-actions {
+            flex: 0 0 auto;
+            display: flex;
+            align-items: flex-end;
+            gap: 8px;
+        }
+
+        .content-scroll {
+            flex: 1 1 auto;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding: 10px 12px 12px;
+        }
+
+        .attention-grid {
+            display: grid;
+            grid-template-columns: 1.2fr 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .panel {
+            border: 1px solid #dbe4ef;
+            border-radius: 8px;
+            background: #fff;
+            box-shadow: 0 3px 8px rgba(15, 23, 42, .06);
+            overflow: hidden;
+        }
+
+        .panel-header {
+            min-height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 9px 12px;
+            border-bottom: 1px solid #e7edf5;
+            background: #fff;
+            color: #172033;
+            font-weight: 700;
+        }
+
+        .panel-header small {
+            color: #64748b;
+            font-weight: 600;
+        }
+
+        .panel-body {
+            padding: 10px 12px;
+        }
+
+        .tech-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(260px, 1fr));
+            gap: 12px;
+        }
+
+        .tech-card {
+            border: 1px solid #dbe4ef;
+            border-radius: 8px;
+            background: #fff;
+            min-height: 190px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 3px 8px rgba(15, 23, 42, .055);
+        }
+
+        .tech-card-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 8px;
+            padding: 11px 12px 8px;
+            border-bottom: 1px solid #e7edf5;
+        }
+
+        .tech-name {
+            min-width: 0;
+        }
+
+        .tech-name strong {
+            display: block;
+            color: #0f172a;
+            font-size: .96rem;
+            line-height: 1.25;
+        }
+
+        .tech-name span {
+            display: block;
+            margin-top: 3px;
+            color: #64748b;
+            font-size: .75rem;
+            font-weight: 600;
+        }
+
+        .state-pill {
+            white-space: nowrap;
+            border-radius: 999px;
+            padding: 4px 8px;
+            font-size: .72rem;
+            font-weight: 700;
+            border: 1px solid transparent;
+        }
+
+        .state-free {
+            color: #087f3e;
+            background: #e9fbef;
+            border-color: #abe9c0;
+        }
+
+        .state-run {
+            color: #084f9d;
+            background: #edf6ff;
+            border-color: #afd5ff;
+        }
+
+        .state-wait {
+            color: #9a5200;
+            background: #fff7e8;
+            border-color: #ffd391;
+        }
+
+        .state-danger {
+            color: #a11616;
+            background: #fff0f0;
+            border-color: #ffb1b1;
+        }
+
+        .tech-metrics {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 6px;
+            padding: 9px 12px;
+        }
+
+        .metric {
+            border: 1px solid #e7edf5;
+            border-radius: 4px;
+            padding: 6px 4px;
+            text-align: center;
+            background: #fff;
+        }
+
+        .metric strong {
+            display: block;
+            font-size: .95rem;
+            color: #0f172a;
+            line-height: 1;
+        }
+
+        .metric span {
+            display: block;
+            margin-top: 4px;
+            font-size: .66rem;
+            color: #64748b;
+            text-transform: uppercase;
+            font-weight: 700;
+        }
+
+        .tech-sections {
+            padding: 0 12px 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .ticket-section-title {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: #334155;
+            font-weight: 700;
+            font-size: .76rem;
             margin-bottom: 5px;
-            /* Adiciona um pequeno espaço vertical para quebra de linha */
         }
 
-        /* 3. (Opcional) Adiciona um espaçamento maior entre os grupos (Nivel3, Cliente, etc) */
-        /* .atd-list>div[style*="border-bottom"] {
-            margin-bottom: 15px;
-            padding-bottom: 15px;
-        } */
-    </style>
+        .ticket-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            min-height: 24px;
+        }
 
+        .ticket-chip,
+        .more-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            max-width: 100%;
+            min-height: 24px;
+            border-radius: 4px;
+            padding: 3px 6px;
+            font-size: .74rem;
+            color: #142033;
+            border: 1px solid #d5dfeb;
+            background: #f8fafc;
+            text-decoration: none;
+        }
+
+        .ticket-chip:hover {
+            text-decoration: none;
+            color: #142033;
+            border-color: #94b8d4;
+            background: #fff;
+        }
+
+        .ticket-id {
+            font-weight: 800;
+        }
+
+        .ticket-client {
+            max-width: 130px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .ticket-time {
+            color: #475569;
+            font-weight: 700;
+        }
+
+        .ticket-run {
+            border-color: #b8d9ff;
+            background: #f0f7ff;
+        }
+
+        .ticket-wait {
+            border-color: #ffd08a;
+            background: #fff8eb;
+        }
+
+        .ticket-scheduled {
+            border-color: #c8b8ff;
+            background: #f5f1ff;
+        }
+
+        .ticket-hot {
+            border-color: #ffb0b0;
+            background: #fff2f2;
+        }
+
+        .empty-inline {
+            color: #94a3b8;
+            font-size: .78rem;
+            font-weight: 600;
+        }
+
+        .more-chip {
+            color: #475569;
+            font-weight: 700;
+        }
+
+        .cause-row,
+        .overload-row {
+            padding: 7px 0;
+            border-bottom: 1px solid #eef2f7;
+        }
+
+        .cause-row:last-child,
+        .overload-row:last-child {
+            border-bottom: 0;
+        }
+
+        .cause-title,
+        .overload-title {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 6px;
+            color: #172033;
+            font-weight: 700;
+            font-size: .82rem;
+        }
+
+        .soft-count {
+            color: #64748b;
+            font-size: .76rem;
+            font-weight: 700;
+        }
+
+        .visibility-menu {
+            width: 260px;
+            max-height: 360px;
+            overflow-y: auto;
+            padding: 10px;
+            border: 1px solid #d9e3ef;
+            border-radius: 6px !important;
+            box-shadow: 0 10px 24px rgba(15, 23, 42, .14);
+        }
+
+        .visibility-menu .form-check {
+            margin-bottom: 6px;
+        }
+
+        .visibility-menu label {
+            color: #263244;
+            font-size: .82rem;
+        }
+
+        .empty-state {
+            padding: 30px;
+            text-align: center;
+            color: #64748b;
+            background: #fff;
+            border: 1px solid #dbe4ef;
+            border-radius: 8px;
+        }
+
+        @media (max-width: 1500px) {
+            .tech-grid {
+                grid-template-columns: repeat(3, minmax(260px, 1fr));
+            }
+        }
+
+        @media (max-width: 1250px) {
+            .filters-row {
+                flex-wrap: wrap;
+            }
+
+            .filter-group {
+                flex: 1 1 220px;
+            }
+        }
+
+        @media (max-width: 1100px) {
+            html,
+            body {
+                overflow: auto;
+                height: auto;
+            }
+
+            .availability-shell {
+                height: auto;
+                min-height: 100vh;
+            }
+
+            .content-scroll {
+                overflow: visible;
+            }
+
+            .attention-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .tech-grid {
+                grid-template-columns: repeat(2, minmax(260px, 1fr));
+            }
+        }
+
+        @media (max-width: 720px) {
+            .summary-bar,
+            .tech-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .page-title-row,
+            .filters-row {
+                align-items: stretch;
+                flex-direction: column;
+            }
+
+            .filter-control,
+            .filters-row .btn,
+            .filters-row .dropdown,
+            .filter-actions {
+                width: 100%;
+            }
+
+            .filter-actions {
+                flex-wrap: wrap;
+            }
+        }
+    </style>
 </head>
 
 <body>
@@ -768,411 +1193,301 @@ $atendimentosEsperaStr = rtrim($atendimentosEsperaStr, ", ");
 
     <div class="container-fluid">
         <div class="row">
-            <div class="col-md-12" style="padding-right: 0px; padding-left: 0px">
-                <div class="card" style="overflow-x: hidden; overflow-y: hidden; min-height: 555px">
-                    <div class="card-header py-1">
-                        <i class="fas fa-users"></i> Disponibilidade Técnica
-                        <div class="btn-group float-right">
-                            <!-- <button type="button" class="btn btn-success btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style="width: 200px">
-                                Setor
-                            </button> -->
-                            <!-- <div class="dropdown-menu dropdown-setor">
-                                <form method="POST" action="">
-                                    <strong class="dropdown-header">TI</strong>
-                                    <?php foreach ($dadosTecnicos['ti'] as $tecnico) : ?>
-                                        <div class="form-check">
-                                            <input class="form-check-input tecnico-checkbox" type="checkbox" name="tecnicos[]" value="<?= $tecnico['user_id']; ?>" <?= (isset($_SESSION['tecnicos_selecionados']) && in_array($tecnico['user_id'], $_SESSION['tecnicos_selecionados'])) ? 'checked' : ''; ?>>
-                                            <label class="form-check-label"><?= $tecnico['user_nome']; ?></label>
-                                        </div>
-                                    <?php endforeach; ?>
-
-                                    <hr>
-                                    <strong class="dropdown-header">DevOps</strong>
-                                    <?php foreach ($dadosTecnicos['devops'] as $tecnico) : ?>
-                                        <div class="form-check">
-                                            <input class="form-check-input tecnico-checkbox" type="checkbox" name="tecnicos[]" value="<?= $tecnico['user_id']; ?>" <?= (isset($_SESSION['tecnicos_selecionados']) && in_array($tecnico['user_id'], $_SESSION['tecnicos_selecionados'])) ? 'checked' : ''; ?>>
-                                            <label class="form-check-label"><?= $tecnico['user_nome']; ?></label>
-                                        </div>
-                                    <?php endforeach; ?>
-
-                                    <button type="submit" class="btn btn-primary btn-sm mt-2">Salvar</button>
-                                </form>
-                            </div> -->
-
-
-
-
-                            <button type="button" class="btn btn-secondary btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style="width: 200px">
-                                Visualizar
-                            </button>
-                            <div class="dropdown-menu dropdown-visualizar">
-                                <form method="POST" action="">
-                                    <!-- Checkbox "Selecionar Todos" -->
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" id="select-all-checkbox">
-                                        <label class="form-check-label" for="select-all-checkbox">
-                                            Selecionar Todos
-                                        </label>
-                                    </div>
-
-                                    <!-- Lista de tecnicos -->
-                                    <?php foreach ($dadosTecnicos['todosTecnicos'] as $tecnico) : ?>
-                                        <div class="form-check">
-                                            <input class="form-check-input tecnico-checkbox" type="checkbox" name="tecnicos[]" value="<?php echo $tecnico['user_id']; ?>" <?php echo (isset($_SESSION['tecnicos_selecionados']) && in_array($tecnico['user_id'], $_SESSION['tecnicos_selecionados'])) ? 'checked' : ''; ?>>
-                                            <label class="form-check-label">
-                                                <?php echo $tecnico['user_nome']; ?>
-                                            </label>
-                                        </div>
-                                    <?php endforeach; ?>
-
-                                    <button type="submit" class="btn btn-primary btn-sm mt-2">Salvar</button>
-                                </form>
+            <div class="col-12">
+                <main class="availability-shell">
+                    <section class="availability-top">
+                        <div class="page-title-row">
+                            <div class="page-title">
+                                <i class="fas fa-users-cog"></i>
+                                <div>
+                                    <h1>Disponibilidade Tecnica</h1>
+                                    <span>Atualizado as <?php echo disp_h($dashboard['updatedAt']); ?> · abre atendimentos em nova aba</span>
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    <div class="card-body col-md-12" style="margin-top: -10px;">
-                        <div class="row">
-                            <div class="col-md-3" style="padding-left: 5px; padding-right: 0px">
-
-                                <!-- card tecnicos livres -->
-                                <div class="card" style="overflow-x: hidden; overflow-y: hidden; min-height: 250px">
-                                    <div class="card-header py-1">
-                                        <i class="fa fa-thumbs-up" style="padding-right: 7px;"></i> Tecnicos livres: <?php echo $numTecnicosLivres; ?>
-                                    </div>
-                                    <div class="card-body atd-list">
-                                        <div style="color:black;">
-                                            <ul id="tecnicosLivres">
-                                                <?php foreach ($dadosTecnicos['tecnicosLivres'] as $tecnico) : ?>
-                                                    <?php
-                                                    $nome = $tecnico['user_nome'];
-                                                    if ($tecnico['user_funcao'] >= 9 && $tecnico['user_funcao'] <= 14) {
-                                                        $nome .= ' - DevOps';
-                                                    }
-                                                    ?>
-                                                    <li class="tecnico-item tecnico-livre">
-                                                        <span><?php echo $nome; ?></span>
-                                                    </li>
-                                                <?php endforeach; ?>
-                                            </ul>
-                                        </div>
-                                    </div>
-
-                                </div>
-
-
-                                <!--Card FILA-->
-                                <div class="card mt-3" style="overflow-x: hidden; overflow-y: hidden;min-height: 125px">
-                                    <div class="card-header py-1">
-                                        <i class="fas fa-bell" style="padding-right: 7px; color: red;"></i> Atendimentos na fila: <?php echo $numAguardandoAtendimento; ?>
-                                    </div>
-                                    <div class="card-body atd-list">
-                                        <div style="color:black;">
-                                            <?php
-                                            foreach ($dadosTecnicos['aguardandoAtendimento'] as $tarefas) {
-                                                foreach ($tarefas as $tarefaId) {
-                                                    $tarefaId = trim($tarefaId);
-                                                    if (!empty($tarefaId)) {
-                                                        $tipoTexto = "Desconhecido"; // Valor padrão
-                                                        foreach ($dadosTecnicos['tarefaAguardando'] as $tarefa) {
-                                                            if ($tarefa['tarefa_id'] == $tarefaId) {
-                                                                $tipoTexto = isset($tarefa['tipo']) ? htmlspecialchars($tarefa['tipo']) : "Desconhecido";
-                                                                break;
-                                                            }
-                                                        }
-                                                        echo '<form action="atd.php" method="POST" id="form-atendimento-' . $tarefaId . '" style="display: inline;">
-                                                            <input type="hidden" name="atd" value="' . htmlspecialchars($tarefaId) . '">
-                                                                <a href="#"
-                                                                    onclick="document.getElementById(\'form-atendimento-' . htmlspecialchars($tarefaId) . '\').submit();"
-                                                                    style="font-size: 1em; color: black; padding: 3px;"
-                                                                    data-bs-toggle="tooltip"
-                                                                    data-bs-placement="top"
-                                                                    data-html="true"
-                                                                    title="' . $tarefa['tooltip_texto'] . '"
-                                                            class="custom-tooltip">
-                                                            ' . htmlspecialchars($tarefaId) . '
-                                                            </a>
-                                                        </form>';
-                                                    }
-                                                }
-                                            }
-                                            ?>
-                                        </div>
-                                    </div>
-
-
-
-                                </div>
-
-
-
-                                <!-- Card EM EXECUÇÃO -->
-                                <div class="card mt-3" style="overflow-x: hidden; overflow-y: hidden">
-                                    <div class="card-header py-1">
-                                        <i class="fas fa-keyboard" style="padding-right: 7px;"></i> Atendimentos Em Execução: <?php echo $numAtendimentosExecucao; ?>
-                                    </div>
-                                </div>
-                                <!-- Card AGENDADOS -->
-                                <div class="card mt-3" style="overflow-x: hidden; overflow-y: hidden; min-height: 80px">
-                                    <div class="card-header py-1">
-                                        <i class="fas fa-calendar-alt" style="padding-right: 7px;"></i> Atendimentos Agendados: <?php echo $numAtendimentosAgendados; ?>
-                                    </div>
-                                    <div class="card-body atd-list">
-                                        <div style="color:black;">
-                                            <?php
-                                            // Iterar pelos tecnicos
-                                            foreach ($dadosTecnicos['atendimentosAgendados'] as $tecnico) {
-                                                echo '<div class="tecnico-item tecnico-agendado">';
-                                                echo '<li style="margin-left: 1px; padding-left: 0px;">';
-                                                echo '<span style="font-weight: bold;">' . htmlspecialchars($tecnico['user_nome']) . ' (' . count($tecnico['tarefas']) . ')</span>';
-                                                echo '<div class="ids-list" style="color:black;">';
-
-                                                // Iterar pelas tarefas do técnico
-                                                foreach ($tecnico['tarefas'] as $tarefa) {
-                                                    $tarefaId = $tarefa['tarefa_id'];
-                                                    $tipoTexto = isset($tarefa['tipo']) ? htmlspecialchars($tarefa['tipo']) : "Desconhecido";
-
-                                                    // Formatar cada tarefa como link
-                                                    echo '<form action="atd.php" method="POST" id="form-atendimento-agendado-' . $tarefaId . '" style="display: inline;">
-                                                            <input type="hidden" name="atd" value="' . htmlspecialchars($tarefaId) . '">
-                                                    <a href="#"
-                                                    onclick="document.getElementById(\'form-atendimento-agendado-' . $tarefaId . '\').submit();"
-                                                    style="font-size: 1em; color: black; padding: 3px;"
-                                                    data-bs-toggle="tooltip"
-                                                    data-bs-placement="top"
-data-html="true"
-                                                            title="' . $tarefa['tooltip_texto'] . '"
-                                                            class="custom-tooltip">
-                                                            ' . htmlspecialchars($tarefaId) . '
-                                                            </a>
-                                                        </form>';
-                                                }
-
-                                                echo '</div>'; // Fechar div .ids-list
-                                                echo '</li>';
-                                                echo '</div>'; // Fechar div .tecnico-item
-                                            }
-                                            ?>
-                                        </div>
-                                    </div>
-                                </div>
-
+                        <div class="summary-bar">
+                            <a class="summary-card summary-free" href="?<?php echo disp_h(http_build_query(array_merge($filters, ['foco' => 'livres']))); ?>">
+                                <strong><?php echo (int)$summary['livres']; ?></strong>
+                                <span>Livres agora</span>
+                            </a>
+                            <a class="summary-card summary-run" href="?<?php echo disp_h(http_build_query(array_merge($filters, ['foco' => 'execucao']))); ?>">
+                                <strong><?php echo (int)$summary['ocupados']; ?></strong>
+                                <span>Tecnicos ocupados</span>
+                            </a>
+                            <div class="summary-card summary-run">
+                                <strong><?php echo (int)$summary['execucao_atd']; ?></strong>
+                                <span>Atendimentos em execucao</span>
                             </div>
-
-
-
-
-                            <!-- card OCUPADOS -->
-                            <div class="col-md-3" style="padding-left: 0px; padding-right: 0px; display: flex; flex-direction: column;">
-                                <div class="card" style="flex-grow: 1; overflow-x: hidden; overflow-y: hidden;">
-                                    <div class="card-header py-1">
-                                        <i class="fas fa-thumbs-down" style="padding-right: 7px;"></i> Tecnicos Ocupados: <?php echo $numTecnicosOcupados; ?>
-                                    </div>
-                                    <div class="card-body atd-list">
-
-                                        <div style="color:black;">
-                                            <?php
-                                            foreach ($dadosTecnicos['ocupadosAgrupados'] as $tecnico) {
-                                                echo '<div class="tecnico-item tecnico-ocupado" >';
-                                                echo '<li style="margin-left: 1px; padding-left: 0px;">';
-                                                echo '<span style="font-weight: bold;">' . htmlspecialchars($tecnico['user_nome']) . ' (' . count($tecnico['id']) . ')</span>';
-                                                echo '<div class="ids-list" style="color:black;">';
-
-
-                                                foreach ($tecnico['id'] as $tarefa) {
-                                                    $tarefaId = $tarefa['tarefa_id'];
-                                                    $tipoTexto = isset($tarefa['tipo']) ? htmlspecialchars($tarefa['tipo']) : "Desconhecido";
-
-                                                    echo '<form action="atd.php" method="POST" id="form-atendimento-ocupado' . $tarefaId . '" style="display: inline;">
-                                                            <input type="hidden" name="atd" value="' . htmlspecialchars($tarefaId) . '">
-                                                            <a href="#"
-                                                            onclick="document.getElementById(\'form-atendimento-ocupado' . htmlspecialchars($tarefaId) . '\').submit();"
-                                                            style="font-size: 1em; color: black; padding: 3px;"
-                                                            data-bs-toggle="tooltip"
-                                                            data-bs-placement="top"
-                                                            data-html="true"
-                                                            title="' . $tarefa['tooltip_texto'] . '"
-                                                            class="custom-tooltip">
-                                                            ' . htmlspecialchars($tarefaId) . '
-                                                            </a>
-                                                        </form>';
-                                                }
-                                                echo '</div>';
-                                                echo '</div>';
-                                            }
-                                            ?>
-                                        </div>
-                                    </div>
-                                </div>
+                            <div class="summary-card">
+                                <strong><?php echo (int)$summary['fila']; ?></strong>
+                                <span>Fila aguardando</span>
                             </div>
+                            <a class="summary-card summary-wait" href="?<?php echo disp_h(http_build_query(array_merge($filters, ['foco' => 'espera']))); ?>">
+                                <strong><?php echo (int)$summary['espera']; ?></strong>
+                                <span>Em espera</span>
+                            </a>
+                            <a class="summary-card summary-danger" href="?<?php echo disp_h(http_build_query(array_merge($filters, ['foco' => 'sobrecarga']))); ?>">
+                                <strong><?php echo (int)$summary['sobrecarga']; ?></strong>
+                                <span>Sobrecarga</span>
+                            </a>
+                            <div class="summary-card">
+                                <strong><?php echo (int)$summary['concluidos_hoje']; ?></strong>
+                                <span>Concluidos hoje</span>
+                            </div>
+                        </div>
 
-                            <!-- quarto card EM ESPERA -->
-                            <div class="col-md-3" style="padding-left: 0px; padding-right: 0px; display: flex; flex-direction: column;">
-                                <div class="card" style="flex-grow: 1; overflow-x: hidden; overflow-y: hidden;">
-                                    <div class="card-header py-1">
-                                        <i class="fas fa-pause-circle" style="padding-right: 7px; color: orange;"></i> Atendimentos Em Espera: <?php echo $numAtendimentosEspera; ?>
-                                    </div>
-                                    <div class="card-body atd-list">
-                                        <div style="color:black;">
-                                            <?php
-                                            $totalNiveis = count($dadosTecnicos['esperaAgrupada']);
-                                            $currentNivel = 0;
-
-                                            foreach ($dadosTecnicos['esperaAgrupada'] as $nivel => $atendimentos) :
-                                                $currentNivel++;
-                                                $numChamados = count($atendimentos);
-                                                $borderStyle = ($currentNivel < $totalNiveis) ? 'border-bottom: 1px solid #ddd;' : '';
-                                            ?>
-                                                <div style="padding: 5px 0; <?php echo $borderStyle; ?>">
-                                                    <strong><?php echo htmlspecialchars($nivel ?: 'Sem Motivo'); ?> (<?php echo $numChamados; ?>):</strong><br>
-
-                                                    <?php
-                                                    // 1. Agrupar atendimentos por técnico e CRIAR UM MAPA DE DADOS para acesso rápido
-                                                    $tecnicos = [];
-                                                    $dadosTarefas = []; // Array auxiliar para não precisar fazer loop dentro de loop
-
-                                                    foreach ($atendimentos as $atendimento) {
-                                                        // Correção de segurança: Se não tiver nome, usa "Sem Tecnico"
-                                                        $nomeTecnico = !empty($atendimento['user_nome']) ? $atendimento['user_nome'] : 'Sem Tecnico';
-                                                        $idTarefa = $atendimento['tarefa_id'];
-
-                                                        if ($idTarefa) {
-                                                            $tecnicos[$nomeTecnico][] = $idTarefa;
-
-                                                            // Salva os dados num array indexado pelo ID para acesso instantâneo depois
-                                                            $dadosTarefas[$idTarefa] = [
-                                                                'tooltip' => $atendimento['tooltip_texto'] ?? "Desconhecido",
-                                                                'qtde_espera' => $atendimento['qtde_espera'] ?? 0
-                                                            ];
-                                                        }
-                                                    }
-                                                    ?>
-
-                                                    <ul style="margin: 0; padding-left: 15px;">
-                                                        <?php foreach ($tecnicos as $tecnico => $tarefa_ids) : ?>
-                                                            <li style="margin-left: 1px; padding-left: 0px;">
-                                                                <strong><?php echo htmlspecialchars($tecnico); ?>:</strong>
-
-                                                                <?php foreach ($tarefa_ids as $tarefaId) :
-                                                                    // Busca direta sem precisar de loop (performance muito melhor)
-                                                                    $dados = $dadosTarefas[$tarefaId];
-                                                                ?>
-                                                                    <span class="atendimento-container">
-                                                                        <form action="atd.php" method="POST" id="form-atendimento-espera-<?php echo htmlspecialchars($tarefaId); ?>" style="display: inline;">
-                                                                            <input type="hidden" name="atd" value="<?php echo htmlspecialchars($tarefaId); ?>">
-                                                                            <a href="#" onclick="document.getElementById('form-atendimento-espera-<?php echo htmlspecialchars($tarefaId); ?>').submit();" style="font-size: 1em; color: black; padding: 3px;" data-bs-toggle="tooltip" data-bs-placement="top" data-html="true" title="<?php echo $dados['tooltip']; ?>" class="custom-tooltip">
-                                                                                <?php echo htmlspecialchars($tarefaId); ?>
-                                                                            </a>
-                                                                        </form>
-
-                                                                        <?php if ($dados['qtde_espera'] > 1) : ?>
-                                                                            <span class="alerta-espera"><?php echo $dados['qtde_espera']; ?></span>
-                                                                        <?php endif; ?>
-                                                                    </span>
-                                                                <?php endforeach; ?>
-                                                            </li>
-                                                        <?php endforeach; ?>
-                                                    </ul>
+                        <div class="filters-row">
+                            <form method="GET" action="" style="display: contents;">
+                            <div class="filter-group">
+                                <label for="setor">Setor</label>
+                                <select class="filter-control" id="setor" name="setor">
+                                    <option value="todos" <?php echo $filters['setor'] === 'todos' ? 'selected' : ''; ?>>Todos</option>
+                                    <option value="ti" <?php echo $filters['setor'] === 'ti' ? 'selected' : ''; ?>>TI</option>
+                                    <option value="devops" <?php echo $filters['setor'] === 'devops' ? 'selected' : ''; ?>>DevOps</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <label for="foco">Foco</label>
+                                <select class="filter-control" id="foco" name="foco">
+                                    <option value="todos" <?php echo $filters['foco'] === 'todos' ? 'selected' : ''; ?>>Todos</option>
+                                    <option value="livres" <?php echo $filters['foco'] === 'livres' ? 'selected' : ''; ?>>Livres</option>
+                                    <option value="execucao" <?php echo $filters['foco'] === 'execucao' ? 'selected' : ''; ?>>Em atendimento</option>
+                                    <option value="espera" <?php echo $filters['foco'] === 'espera' ? 'selected' : ''; ?>>Em espera</option>
+                                    <option value="sobrecarga" <?php echo $filters['foco'] === 'sobrecarga' ? 'selected' : ''; ?>>Sobrecarga</option>
+                                </select>
+                            </div>
+                            <div class="filter-group" style="flex: 1.6 1 0;">
+                                <label for="busca">Tecnico</label>
+                                <input class="filter-control" style="width: 100%;" type="text" id="busca" name="busca" value="<?php echo disp_h($filters['busca']); ?>" placeholder="Busque pelo nome">
+                            </div>
+                                <div class="filter-actions">
+                                    <button class="btn btn-info btn-sm btn-action" type="submit">Filtrar</button>
+                                    <a class="btn btn-outline-info btn-sm btn-action" href="disponibilidadeTec.php">Limpar</a>
+                                </div>
+                            </form>
+                            <div class="filter-actions">
+                                <div class="dropdown">
+                                    <button class="btn btn-outline-info btn-sm btn-action dropdown-toggle" type="button" id="visibilityMenu" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                        <i class="fas fa-eye"></i> Tecnicos
+                                    </button>
+                                    <div class="dropdown-menu dropdown-menu-right visibility-menu" aria-labelledby="visibilityMenu">
+                                        <form method="POST" action="<?php echo disp_h($_SERVER['REQUEST_URI']); ?>">
+                                            <input type="hidden" name="action" value="salvar_visualizacao">
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="checkbox" id="selectAllTechs">
+                                                <label class="form-check-label" for="selectAllTechs">Selecionar todos</label>
+                                            </div>
+                                            <hr class="my-2">
+                                            <?php foreach ($dashboard['tecnicosTodos'] as $tecnico) : ?>
+                                                <?php $checked = in_array((int)$tecnico['user_id'], $dashboard['selectedIds'], true); ?>
+                                                <div class="form-check">
+                                                    <input class="form-check-input tecnico-checkbox" type="checkbox" name="tecnicos[]" id="tec_<?php echo (int)$tecnico['user_id']; ?>" value="<?php echo (int)$tecnico['user_id']; ?>" <?php echo $checked ? 'checked' : ''; ?>>
+                                                    <label class="form-check-label" for="tec_<?php echo (int)$tecnico['user_id']; ?>">
+                                                        <?php echo disp_h($tecnico['user_nome']); ?>
+                                                    </label>
                                                 </div>
                                             <?php endforeach; ?>
-                                        </div>
+                                            <button type="submit" class="btn btn-info btn-sm btn-block mt-2">Salvar visualizacao</button>
+                                        </form>
                                     </div>
+                                </div>
+                                <button type="button" class="btn btn-outline-info btn-sm btn-action" onclick="window.location.reload();">
+                                    <i class="fas fa-sync-alt"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="content-scroll">
+                        <div class="attention-grid">
+                            <div class="panel">
+                                <div class="panel-header">
+                                    <span><i class="fas fa-bell text-danger"></i> Fila sem tecnico</span>
+                                    <small><?php echo count($dashboard['filaSemTecnico']); ?> aguardando</small>
+                                </div>
+                                <div class="panel-body ticket-list">
+                                    <?php echo disp_render_ticket_list($dashboard['filaSemTecnico'], 14); ?>
                                 </div>
                             </div>
 
+                            <div class="panel">
+                                <div class="panel-header">
+                                    <span><i class="fas fa-exclamation-triangle text-danger"></i> Sobrecarga</span>
+                                    <small><?php echo count($dashboard['sobrecarga']); ?> tecnico(s)</small>
+                                </div>
+                                <div class="panel-body">
+                                    <?php if (empty($dashboard['sobrecarga'])) : ?>
+                                        <span class="empty-inline">Nenhum tecnico sobrecarregado</span>
+                                    <?php else : ?>
+                                        <?php foreach (array_slice($dashboard['sobrecarga'], 0, 5) as $tecnico) : ?>
+                                            <div class="overload-row">
+                                                <div class="overload-title">
+                                                    <span><?php echo disp_h($tecnico['nome']); ?></span>
+                                                    <span class="soft-count"><?php echo count($tecnico['execucao']); ?> exec · <?php echo count($tecnico['fila']); ?> fila</span>
+                                                </div>
+                                                <div class="ticket-list">
+                                                    <?php echo disp_render_ticket_list(array_merge($tecnico['execucao'], $tecnico['fila']), 6); ?>
+                                                </div>
+                                            </div>
+                                        <?php endforeach; ?>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
 
-                            <!-- Card CONCLUÍDOS HOJE -->
-                            <div class="col-md-3" style="padding-left: 0px; padding-right: 0px; display: flex; flex-direction: column;">
-                                <div class="card" style="flex-grow: 1; overflow-x: hidden; overflow-y: hidden;">
-                                    <div class="card-header py-1">
-                                        <i class="fas fa-check-circle" style="padding-right: 7px; color: green;"></i> Atendimentos Concluidos Hoje: <?php echo $numFinalizadosHoje; ?>
-                                    </div>
-                                    <div class="card-body atd-list">
-                                        <div style="color:black;">
-                                            <?php
-                                            // var_dump($dadosTecnicos['concluidosAgrupados']);
-                                            foreach ($dadosTecnicos['concluidosAgrupados'] as $user_id => $tecnico) {
-                                                echo '<div class="tecnico-item tecnico-concluido">';
-                                                echo '<li style="margin-left: 1px; padding-left: 0px;">';
-                                                echo '<span style="font-weight: bold;">' . htmlspecialchars($tecnico['user_nome']) . ' (' . count($tecnico['tarefas']) . ')</span>';
-                                                echo '<div class="ids-list" style="color:black;">';
-
-                                                foreach ($tecnico['tarefas'] as $tarefa) {
-                                                    $tarefaId = $tarefa['tarefa_id'];
-                                                    $tipoTexto = isset($tarefa['tipo']) ? htmlspecialchars($tarefa['tipo']) : "Desconhecido";
-
-
-                                                    // Exibir cada tarefa com tooltip
-                                                    echo '<form action="atd.php" method="POST" id="form-atendimento-' . $tarefaId . '" style="display: inline;">
-                                                    <input type="hidden" name="atd" value="' . htmlspecialchars($tarefaId) . '">
-                                                    <a href="#"
-                                                        onclick="document.getElementById(\'form-atendimento-' . $tarefaId . '\').submit();"
-                                                            style="font-size: 1em; color: black; padding: 3px;"
-                                                            data-bs-toggle="tooltip"
-                                                            data-bs-placement="top"
-                                                            data-html="true"
-                                                            title="' . $tarefa['tooltip_texto'] . '"
-                                                            class="custom-tooltip">
-                                                            ' . htmlspecialchars($tarefaId) . '
-                                                            </a>
-                                                        </form>';
-                                                }
-                                                echo '</div>';
-                                                echo '</div>';
-                                            }
-                                            ?>
-                                        </div>
-                                    </div>
+                            <div class="panel">
+                                <div class="panel-header">
+                                    <span><i class="fas fa-pause-circle text-warning"></i> Espera por motivo</span>
+                                    <small><?php echo count($dashboard['esperaPorCausa']); ?> motivo(s)</small>
+                                </div>
+                                <div class="panel-body">
+                                    <?php if (empty($dashboard['esperaPorCausa'])) : ?>
+                                        <span class="empty-inline">Nada em espera agora</span>
+                                    <?php else : ?>
+                                        <?php foreach (array_slice($dashboard['esperaPorCausa'], 0, 4, true) as $causa => $items) : ?>
+                                            <div class="cause-row">
+                                                <div class="cause-title">
+                                                    <span><?php echo disp_h($causa); ?></span>
+                                                    <span class="soft-count"><?php echo count($items); ?></span>
+                                                </div>
+                                                <div class="ticket-list">
+                                                    <?php
+                                                    $tickets = array_map(function ($item) {
+                                                        return $item['ticket'];
+                                                    }, $items);
+                                                    echo disp_render_ticket_list($tickets, 6);
+                                                    ?>
+                                                </div>
+                                            </div>
+                                        <?php endforeach; ?>
+                                    <?php endif; ?>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                </div>
+
+                        <?php if (!empty($dashboard['agendadosSemTecnico'])) : ?>
+                            <div class="panel mb-3">
+                                <div class="panel-header">
+                                    <span><i class="fas fa-calendar-alt"></i> Agendados sem tecnico</span>
+                                    <small><?php echo count($dashboard['agendadosSemTecnico']); ?> atendimento(s)</small>
+                                </div>
+                                <div class="panel-body ticket-list">
+                                    <?php echo disp_render_ticket_list($dashboard['agendadosSemTecnico'], 18); ?>
+                                </div>
+                            </div>
+                        <?php endif; ?>
+
+                        <?php if (empty($dashboard['tecnicos'])) : ?>
+                            <div class="empty-state">
+                                Nenhum tecnico encontrado para os filtros atuais.
+                            </div>
+                        <?php else : ?>
+                            <div class="tech-grid">
+                                <?php foreach ($dashboard['tecnicos'] as $tecnico) : ?>
+                                    <?php $state = disp_tecnico_state($tecnico); ?>
+                                    <article class="tech-card">
+                                        <div class="tech-card-header">
+                                            <div class="tech-name">
+                                                <strong><?php echo disp_h($tecnico['nome']); ?></strong>
+                                                <span><?php echo disp_h($tecnico['setor']); ?></span>
+                                            </div>
+                                            <span class="state-pill <?php echo disp_h($state['class']); ?>"><?php echo disp_h($state['label']); ?></span>
+                                        </div>
+
+                                        <div class="tech-metrics">
+                                            <div class="metric">
+                                                <strong><?php echo count($tecnico['execucao']); ?></strong>
+                                                <span>Exec</span>
+                                            </div>
+                                            <div class="metric">
+                                                <strong><?php echo count($tecnico['fila']); ?></strong>
+                                                <span>Fila</span>
+                                            </div>
+                                            <div class="metric">
+                                                <strong><?php echo count($tecnico['espera']); ?></strong>
+                                                <span>Espera</span>
+                                            </div>
+                                            <div class="metric">
+                                                <strong><?php echo count($tecnico['concluidos_hoje']); ?></strong>
+                                                <span>Hoje</span>
+                                            </div>
+                                        </div>
+
+                                        <div class="tech-sections">
+                                            <?php if (!empty($tecnico['execucao'])) : ?>
+                                                <div>
+                                                    <div class="ticket-section-title"><i class="fas fa-keyboard"></i> Em atendimento</div>
+                                                    <div class="ticket-list"><?php echo disp_render_ticket_list($tecnico['execucao'], 5); ?></div>
+                                                </div>
+                                            <?php endif; ?>
+
+                                            <?php if (!empty($tecnico['fila'])) : ?>
+                                                <div>
+                                                    <div class="ticket-section-title"><i class="fas fa-list"></i> Fila atribuida</div>
+                                                    <div class="ticket-list"><?php echo disp_render_ticket_list($tecnico['fila'], 5); ?></div>
+                                                </div>
+                                            <?php endif; ?>
+
+                                            <?php if (!empty($tecnico['espera'])) : ?>
+                                                <div>
+                                                    <div class="ticket-section-title"><i class="fas fa-pause-circle"></i> Em espera</div>
+                                                    <div class="ticket-list"><?php echo disp_render_ticket_list($tecnico['espera'], 5); ?></div>
+                                                </div>
+                                            <?php endif; ?>
+
+                                            <?php if (!empty($tecnico['agendados'])) : ?>
+                                                <div>
+                                                    <div class="ticket-section-title"><i class="fas fa-calendar-alt"></i> Agendados</div>
+                                                    <div class="ticket-list"><?php echo disp_render_ticket_list($tecnico['agendados'], 4); ?></div>
+                                                </div>
+                                            <?php endif; ?>
+
+                                            <?php if (empty($tecnico['execucao']) && empty($tecnico['fila']) && empty($tecnico['espera']) && empty($tecnico['agendados'])) : ?>
+                                                <span class="empty-inline">Sem atendimento ativo ou atribuido</span>
+                                            <?php endif; ?>
+                                        </div>
+                                    </article>
+                                <?php endforeach; ?>
+                            </div>
+                        <?php endif; ?>
+                    </section>
+                </main>
             </div>
         </div>
     </div>
 
-
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
-
-
-    <script>
-        // Controlar a seleção/desmarcação de todos os tecnicos com o checkbox "Selecionar Todos"
-        document.addEventListener("DOMContentLoaded", function() {
-            const selectAllCheckbox = document.getElementById('select-all-checkbox');
-            const tecnicoCheckboxes = document.querySelectorAll('.tecnico-checkbox');
-
-            selectAllCheckbox.addEventListener('change', function() {
-                tecnicoCheckboxes.forEach(checkbox => {
-                    checkbox.checked = selectAllCheckbox.checked;
-                });
-            });
-        });
-    </script>
-
-
+    <script src="../js/jquery-3.6.0.min.js"></script>
+    <script src="../js/bootstrap.bundle.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-            tooltipTriggerList.map(function(tooltipTriggerEl) {
-                return new bootstrap.Tooltip(tooltipTriggerEl, {
-                    customClass: 'custom-tooltip', // Classe customizada
-                    boundary: 'window' // Limita ao viewport
+            var selectAll = document.getElementById('selectAllTechs');
+            var checks = Array.prototype.slice.call(document.querySelectorAll('.tecnico-checkbox'));
+
+            function syncSelectAll() {
+                if (!selectAll) return;
+                selectAll.checked = checks.length > 0 && checks.every(function(check) {
+                    return check.checked;
                 });
+            }
+
+            if (selectAll) {
+                selectAll.addEventListener('change', function() {
+                    checks.forEach(function(check) {
+                        check.checked = selectAll.checked;
+                    });
+                });
+            }
+
+            checks.forEach(function(check) {
+                check.addEventListener('change', syncSelectAll);
             });
+            syncSelectAll();
+
+            setTimeout(function() {
+                window.location.reload();
+            }, 60000);
         });
     </script>
-
-
-
-    <script>
-        setTimeout(function() {
-            window.location.href = '../atd/disponibilidadeTec.php';
-        }, 60000, ); // 1000 milissegundos = 1 segundo
-    </script>
-
-
 </body>
 
 </html>

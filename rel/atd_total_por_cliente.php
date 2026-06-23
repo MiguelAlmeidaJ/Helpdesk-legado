@@ -33,29 +33,22 @@ if($f_nivel==0){$p_nivel = "1,2,3";}
     <link rel="stylesheet" href="../css/help.css">
     <link rel="stylesheet" href="../css/bootstrap.min.css">
     <link rel="stylesheet" href="../fontawesome/css/all.css">
+    <link rel="stylesheet" href="css/relatorios_modern.css">
     <script type="text/javascript" src="../js/loader.js"></script>
     <title>Allterus</title>
   </head>
-  <style>
-            body {
-            zoom: 0.9;
-            width: 100%;
-            overflow-x: hidden;
-        }
-
-  </style>
-  <body>
+  <body class="rel-legacy-body">
 <?php include_once("../all/sidebar.php"); ?>
 
-    <div class="container-fluid">
-      <div class="row">
-        <div class="col-md-12 mt-2">
+    <div class="container-fluid rel-page rel-legacy-page rel-total-page">
+      <div class="row rel-filter-row">
+        <div class="col-md-12">
           <div class="card">
             <div id="accordion">
               <div class="card py-0 my-0">
-                <div class="card-header my-0 bg-light py-0 h6" id="headingOne">
+                <div class="card-header my-0 py-2 h6 rel-filter-header" id="headingOne">
                   <button class="btn" data-toggle="collapse" data-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
-                      <i class="fas fa-chart-bar"></i> Relatério de atendimentos Por Cliente
+                      <i class="fas fa-chart-bar"></i> Relatório de atendimentos Por Cliente
                   </button>
                 </div>
                 <div id="collapseOne" class="collapse show" aria-labelledby="headingOne" data-parent="#accordion">
@@ -82,7 +75,7 @@ if($f_nivel==0){$p_nivel = "1,2,3";}
                               </select>
                             </div>
                             <div class="col-sm-2 col-4">
-                              <button type="submit" class="btn btn-info">Filtrar</button>
+                              <button type="submit" class="btn btn-info rel-pill-btn">Filtrar</button>
                             </div>
                           </div>
                         </form>
@@ -96,16 +89,18 @@ if($f_nivel==0){$p_nivel = "1,2,3";}
       </div>
     </div>
       
-      <div class="row mt-2 mb-2">
+      <div class="row rel-chart-row">
         <div class="col-md-12">
-          <div class="card bg-default">
-            <div class="card-header py-2 h6">
+          <div class="card bg-default rel-chart-card">
+            <div class="card-header py-2 h6 rel-section-header">
               <i class="fas fa-chart-pie"></i>
               Atendimentos Por Cliente
             </div>
-            <div class="card-body small text-danger text-justify">
-<?php 
-$matriz = "['Cliente', 'Nível 1', 'Nível 2', 'Nível 3']";
+            <div class="card-body rel-chart-body">
+<?php
+$chartData = [
+  ['Cliente', 'Nível 1', 'Nível 2', 'Nível 3']
+];
 $pdo = ConnectionN3();
 
 $filterEmpresas = "";
@@ -122,41 +117,46 @@ count(case when nivel = '3' then 1 else null end) AS n3
 FROM atendimentos
 INNER JOIN clientes ON clientes.clt_id = atendimentos.cliente
 WHERE atendimentos.`status` > '0'
-AND atendimentos.abertura BETWEEN '$data_1' AND '$data_2'
+AND atendimentos.abertura >= :data_1 AND atendimentos.abertura < DATE_ADD(:data_2, INTERVAL 1 DAY)
 AND atendimentos.nivel IN ($p_nivel)
 " . $filterEmpresas . "
 GROUP BY clientes.clt_id
 ORDER BY atendimentos DESC"); 
-$show->execute();
+$show->execute([':data_1' => $data_1, ':data_2' => $data_2]);
 while($row=$show->fetch(PDO::FETCH_ASSOC)){
-  $id = $row["clt_id"];
-  $nome = $row["clt_nomer"];
-  $n1 = $row["n1"];
-  $n2 = $row["n2"];
-  $n3 = $row["n3"];
-$matriz = "$matriz, ['$nome',$n1,$n2,$n3]";
+  $nome = $row["clt_nomer"] ?: 'Sem identificação';
+  $chartData[] = [$nome, (int)$row["n1"], (int)$row["n2"], (int)$row["n3"]];
 }
+$chartJson = json_encode($chartData, JSON_UNESCAPED_UNICODE | JSON_NUMERIC_CHECK);
 ?>
 <script type="text/javascript">
 google.charts.load('current', {packages: ['corechart', 'bar']});
 google.charts.setOnLoadCallback(drawStacked);
 
 function drawStacked() {
-      var data = google.visualization.arrayToDataTable([
-<?php echo $matriz; ?>
-        ]);
+      var chartData = <?php echo $chartJson; ?>;
+      var container = document.getElementById('chart_div');
+      if (!chartData || chartData.length <= 1) {
+        container.innerHTML = '<div class="rel-empty-state"><i class="fas fa-info-circle"></i><strong>Nenhum dado encontrado</strong><span>Altere os filtros e tente novamente.</span></div>';
+        return;
+      }
+      var data = google.visualization.arrayToDataTable(chartData);
       var options = {
-        legend: { position: 'none'},
-        bar: { groupWidth: '80%'},
+        legend: { position: 'top', maxLines: 3},
+        bar: { groupWidth: '72%'},
         isStacked: true,
-        chartArea: {bottom:50, top:5, left:40, right:40},
+        colors: ['#2563eb', '#f59e0b', '#dc2626'],
+        chartArea: {bottom:60, top:36, left:56, right:24, width: '88%', height: '72%'},
+        backgroundColor: 'transparent',
+        hAxis: { textStyle: { color: '#475569', fontSize: 11 } },
+        vAxis: { minValue: 0, textStyle: { color: '#475569', fontSize: 11 }, gridlines: { color: '#e2e8f0' } }
       };
 
-      var chart = new google.visualization.ColumnChart(document.getElementById('chart_div'));
+      var chart = new google.visualization.ColumnChart(container);
       chart.draw(data, options);
     }
 </script>
-              <div id="chart_div" style="width: 100%; height: 400px;"></div>
+              <div id="chart_div" class="rel-chart-box rel-chart-box-total"></div>
             </div>
           </div>
         </div>
@@ -165,17 +165,17 @@ function drawStacked() {
     </div>
 
 <!-- MODAL DE AJUDA PARA A GESTÃO DE UM ATENDIMENTO -->    
-<div class="modal right fade" id="Help" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
-  <div class="modal-dialog" role="document">
+<div class="modal fade rel-modal" id="Help" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+  <div class="modal-dialog modal-dialog-centered" role="document">
     <div class="modal-content">
 
       <div class="modal-header">
-        <h6 class="modal-title" id="myModalLabel"><i class="far fa-question-circle text-danger"></i> Ajuda com relatórios</h6>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h6 class="modal-title" id="myModalLabel"><i class="far fa-question-circle text-primary"></i> Ajuda com relatórios</h6>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Fechar"><span aria-hidden="true">&times;</span></button>
       </div>
 
       <div class="modal-body">
-        <p><strong>Relatério de atendimentos totais Por Cliente:</strong></p>
+        <p><strong>Relatório de atendimentos totais Por Cliente:</strong></p>
         <p>Este relatório conta o total de atendimentos que foram abertos no período indicado para cada um dos cliente cadastrados e plota um gráfico de colunas.</p>
         <p>São considerados os atendimentos com os seguintes status:</p>
         <ul class="list">
@@ -196,15 +196,14 @@ function drawStacked() {
 
 
 <?php include_once("../all/update_pass.php"); ?>
-    <script src="../js/bootstrap.min.js"></script>
-    <script src="../js/jquery-3.6.0.min.js"></script>
+        <script src="../js/jquery-3.6.0.min.js"></script>
     <script src="../js/bootstrap.bundle.min.js"></script>
     
 <?php if (isset($mensagem)){ ?>
-<div class="row pull-right" style="position:absolute; top: 65px; right:25px; z-index: 3;">
+<div class="rel-floating-alert">
   <div class="alert <?php echo $mensagem_cor; ?> alert-dismissible fade show" role="alert">
     <?php echo $mensagem; ?> 
-    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+    <button type="button" class="close" data-dismiss="alert" aria-label="Fechar">
       <span aria-hidden="true">&times;</span>
     </button>
   </div>
@@ -217,7 +216,8 @@ function drawStacked() {
       }, 5000); 
     </script>
 <?php }?>
-  </body>
+      <script src="js/relatorios_modern.js"></script>
+</body>
 </html>
 
 

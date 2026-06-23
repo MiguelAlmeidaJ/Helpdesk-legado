@@ -3,6 +3,7 @@ session_start();
 include_once("../all/seguranca.php");
 include_once("../all/conect.php");
 include_once("../all/permissoes.php");
+include_once("../all/email_smtp.php");
 
 if ($m9_02 < 2) {
     header("Location: ../home.php");
@@ -66,7 +67,7 @@ function sendApprovalEmail($pdo, $balanceIds, $userId)
     $headers .= "MIME-Version: 1.0\r\n";
     $headers .= "Content-Type: text/html; charset=UTF-8\r\n";
 
-    mail($to, $subject, $content, $headers);
+    n3_send_mail($to, $subject, $content, $headers);
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {

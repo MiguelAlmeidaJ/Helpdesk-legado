@@ -24,30 +24,23 @@ header("Refresh:60");
     <link rel="stylesheet" href="../css/help.css">
     <link rel="stylesheet" href="../css/bootstrap.min.css">
     <link rel="stylesheet" href="../fontawesome/css/all.css">
+    <link rel="stylesheet" href="css/relatorios_modern.css">
     <title>Allterus</title>
 </head>
-<style>
-            body {
-            zoom: 0.9;
-            width: 100%;
-            overflow-x: hidden;
-        }
-
-  </style>
-<body>
+<body class="rel-legacy-body">
 <?php include_once("../all/sidebar.php"); ?>
 <!-- parte acima direcionada ao cabeçalho (incluir e ajustar para necessário)-->
 
-<div class="container-fluid">
+<div class="container-fluid rel-page rel-legacy-page">
     <div class="row">
         <div class="col-md-12 mt-2">
             <div class="card">
-                <div class="card-header h4 text-center py-2">
+                <div class="card-header h4 text-center py-2 rel-section-header">
                     <i class="fas fa-list-ul"></i> Lista de atendimentos e abertos por técnico
                 </div>
 
                 <div class="card-body p-0">
-                    <table class="table table-hover h2 ">
+                    <table class="table table-hover h2  rel-table">
                         <thead>
 
                         <tr>
@@ -163,17 +156,17 @@ header("Refresh:60");
 </div>
 
 <!-- MODAL DE AJUDA PARA A GESTÃO DE UM ATENDIMENTO -->
-<div class="modal right fade" id="Help" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
-    <div class="modal-dialog" role="document">
+<div class="modal fade rel-modal" id="Help" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+    <div class="modal-dialog modal-dialog-centered" role="document">
         <div class="modal-content">
 
             <div class="modal-header">
-                <h6 class="modal-title" id="myModalLabel"><i class="far fa-question-circle text-danger"></i> Ajuda com relatórios</h6>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h6 class="modal-title" id="myModalLabel"><i class="far fa-question-circle text-primary"></i> Ajuda com relatórios</h6>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Fechar"><span aria-hidden="true">&times;</span></button>
             </div>
 
             <div class="modal-body">
-                <p><strong>Relatério de atendimentos abertos por técnico:</strong></p>
+                <p><strong>Relatório de atendimentos abertos por técnico:</strong></p>
                 <p>Em desenvolvimento...</p>
             </div>
 
@@ -182,15 +175,14 @@ header("Refresh:60");
 </div>
 
 <?php include_once("../all/update_pass.php"); ?>
-<script src="../js/bootstrap.min.js"></script>
 <script src="../js/jquery-3.6.0.min.js"></script>
 <script src="../js/bootstrap.bundle.min.js"></script>
 
 <?php if (isset($mensagem)) { ?>
-    <div class="row pull-right" style="position:absolute; top: 65px; right:25px; z-index: 3;">
+    <div class="rel-floating-alert">
         <div class="alert <?php echo $mensagem_cor; ?> alert-dismissible fade show" role="alert">
             <?php echo $mensagem; ?>
-            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <button type="button" class="close" data-dismiss="alert" aria-label="Fechar">
                 <span aria-hidden="true">&times;</span>
             </button>
         </div>
@@ -203,5 +195,6 @@ header("Refresh:60");
         }, 5000);
     </script>
 <?php } ?>
+    <script src="js/relatorios_modern.js"></script>
 </body>
 </html>

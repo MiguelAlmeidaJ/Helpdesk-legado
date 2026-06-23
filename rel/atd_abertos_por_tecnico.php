@@ -25,37 +25,36 @@ header("Refresh:60");
     <link rel="stylesheet" href="../css/help.css">
     <link rel="stylesheet" href="../css/bootstrap.min.css">
     <link rel="stylesheet" href="../fontawesome/css/all.css">
-    <title>Allterus</title>
+    <link rel="stylesheet" href="css/relatorios_modern.css">
+    <title>Atendimentos Abertos por Técnico</title>
 </head>
-<style>
-            body {
-            zoom: 0.9;
-            width: 100%;
-            overflow-x: hidden;
-        }
-
-  </style>
 <body>
 <?php include_once("../all/sidebar.php"); ?>
 <!-- parte acima direcionada ao cabeçalho (incluir e ajustar para necessário)-->
 
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-md-12 mt-2">
-            <div class="card">
-                <div class="card-header h5 text-center py-2">
-                    <i class="fas fa-list-ul"></i> Lista de Atendimentos - Tecnico/Analista
+<div class="container-fluid rel-page">
+    <div class="card rel-main-card">
+        <div class="card-header rel-toolbar">
+            <div class="rel-title">
+                <span class="rel-title-icon"><i class="fas fa-list-ul"></i></span>
+                <div>
+                    <h4>Atendimentos Abertos por Técnico</h4>
+                    <small>Resumo operacional por técnico/analista, atualizado automaticamente a cada 60 segundos.</small>
                 </div>
+            </div>
+            <a href="../home.php" class="btn btn-outline-secondary btn-sm rel-pill-btn" title="Voltar para home"><i class="fas fa-home"></i></a>
+        </div>
 
-                <div class="card-body p-0">
-                    <table class="table table-hover h2">
+        <div class="card-body rel-card-body">
+            <div class="rel-table-wrap">
+                <table class="table table-hover rel-table rel-kpi-table">
                         <thead>
                         <tr>
-                            <th class="text-right h5"></th>
-                            <th class="text-center h5">Aberto</th>
-                            <th class="text-center h5">Em espera</th>
-                            <th class="text-center h5">Vencidos</th>
-                            <th class="text-center h5">Tempo Atd Abertos (d:h:m)</th>
+                            <th>Técnico/Analista</th>
+                            <th class="text-center">Aberto</th>
+                            <th class="text-center">Em espera</th>
+                            <th class="text-center">Vencidos</th>
+                            <th class="text-center">Tempo aberto (d:h:m)</th>
                         </tr>
                         </thead>
                         <tbody>
@@ -164,35 +163,32 @@ header("Refresh:60");
 
                             ?>
                             <tr>
-                                <td class="text-right"><?php echo $user_name; ?></td>
-                                <td class="text-center"><?php echo $atd_ab; ?></td>
-                                <td class="text-center"><?php echo $atd_ep; ?></td>
-                                <td class="text-center <?php if ($atd_venc > 0) {
-                                    echo "text-danger";
-                                } ?>"><?php echo $atd_venc; ?></td>
-                                <td class="text-center"><?php echo sprintf('%d:%02d:%02d', $dias, $horas, $minutos); ?></td>
+                                <td><div class="rel-user-name"><?php echo htmlspecialchars($user_name); ?></div></td>
+                                <td class="text-center"><span class="rel-count rel-count-open"><?php echo $atd_ab; ?></span></td>
+                                <td class="text-center"><span class="rel-count rel-count-wait"><?php echo $atd_ep; ?></span></td>
+                                <td class="text-center"><span class="rel-count <?php echo $atd_venc > 0 ? 'rel-count-danger' : 'rel-count-neutral'; ?>"><?php echo $atd_venc; ?></span></td>
+                                <td class="text-center"><span class="rel-time-badge"><?php echo sprintf('%d:%02d:%02d', $dias, $horas, $minutos); ?></span></td>
                             </tr>
                             <?php
                         }
                         ?>
                         </tbody>
-                    </table>
-                </div>
+                </table>
             </div>
         </div>
     </div>
 </div>
 
 <!-- MODAL DE AJUDA PARA A GESTÃO DE UM ATENDIMENTO -->
-<div class="modal right fade" id="Help" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
-    <div class="modal-dialog" role="document">
+<div class="modal fade rel-modal" id="Help" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+    <div class="modal-dialog modal-dialog-centered" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h6 class="modal-title" id="myModalLabel"><i class="far fa-question-circle text-danger"></i> Ajuda com relatórios</h6>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h6 class="modal-title" id="myModalLabel"><i class="far fa-question-circle text-primary"></i> Ajuda com relatórios</h6>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Fechar"><span aria-hidden="true">&times;</span></button>
             </div>
             <div class="modal-body">
-                <p><strong>Relatério de atendimentos abertos por técnico:</strong></p>
+                <p><strong>Relatório de atendimentos abertos por técnico:</strong></p>
                 <p>Em desenvolvimento...</p>
             </div>
         </div>
@@ -200,15 +196,14 @@ header("Refresh:60");
 </div>
 
 <?php include_once("../all/update_pass.php"); ?>
-<script src="../js/bootstrap.min.js"></script>
 <script src="../js/jquery-3.6.0.min.js"></script>
 <script src="../js/bootstrap.bundle.min.js"></script>
 
 <?php if (isset($mensagem)) { ?>
-    <div class="row pull-right" style="position:absolute; top: 65px; right:25px; z-index: 3;">
+    <div class="rel-floating-alert">
         <div class="alert <?php echo $mensagem_cor; ?> alert-dismissible fade show" role="alert">
             <?php echo $mensagem; ?>
-            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <button type="button" class="close" data-dismiss="alert" aria-label="Fechar">
                 <span aria-hidden="true">&times;</span>
             </button>
         </div>
@@ -221,5 +216,6 @@ header("Refresh:60");
         }, 5000);
     </script>
 <?php } ?>
+    <script src="js/relatorios_modern.js"></script>
 </body>
 </html>

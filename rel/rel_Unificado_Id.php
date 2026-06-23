@@ -67,35 +67,23 @@ if ($f_nivel == 0) {
     <link rel="stylesheet" href="../css/help.css">
     <link rel="stylesheet" href="../css/bootstrap.min.css">
     <link rel="stylesheet" href="../fontawesome/css/all.css">
+    <link rel="stylesheet" href="css/relatorios_modern.css">
     <script type="text/javascript" src="../js/loader.js"></script>
     <title>Allterus</title>
 </head>
-<style>
-    body {
-        zoom: 0.9;
-        width: 100%;
-        overflow-x: hidden;
-    }
 
-    @media print {
-        .no-print {
-            display: none !important;
-        }
-    }
-</style>
-
-<body>
+<body class="rel-legacy-body">
     <?php include_once("../all/sidebar.php"); ?>
 
-    <div class="container-fluid">
+    <div class="container-fluid rel-page rel-legacy-page">
         <div class="row no-print">
             <div class="col-md-12 mt-2">
                 <div class="card">
                     <div id="accordion">
                         <div class="card py-0 my-0">
-                            <div class="card-header my-0 bg-light py-0 h6" id="headingOne">
+                            <div class="card-header my-0 py-2 h6 rel-filter-header" id="headingOne">
                                 <button class="btn" data-toggle="collapse" data-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
-                                    <i class="fas fa-chart-bar"></i> Relatério de atendimentos
+                                    <i class="fas fa-chart-bar"></i> Relatório de atendimentos
                                 </button>
                             </div>
                             <div id="collapseOne" class="collapse show" aria-labelledby="headingOne" data-parent="#accordion">
@@ -182,7 +170,7 @@ if ($f_nivel == 0) {
 
                                                     <div class="col-md-4 mb-2 ml-4">
                                                         <button type="submit" class="btn btn-info btn-sm mr-2">Filtrar</button>
-                                                        <a href="rel_Unificado_Id.php" class="btn btn-secondary btn-sm mr-2">Limpar</a>
+                                                        <a href="rel_Unificado_Id.php" class="btn btn-outline-secondary btn-sm mr-2 rel-pill-btn">Limpar</a>
 
                                                         <!-- <button onclick="baixarPDF()" class="btn btn-danger btn-sm">
                               <i class="fas fa-file-pdf"></i> Exportar PDF
@@ -232,9 +220,9 @@ if ($f_nivel == 0) {
         <div class="row mt-1 mb-2">
             <div class="col-md-12">
                 <div class="card bg-default">
-                    <div class="card-header py-2 h6">
+                    <div class="card-header py-2 h6 rel-section-header">
                         <i class="fas fa-chart-pie"></i>
-                        Relatério analítico de Atendimentos Por Cliente - Suporte T.I
+                        Relatório analítico de Atendimentos Por Cliente - Suporte T.I
                     </div>
                     <?php
                     $pdo = ConnectionN3();
@@ -262,7 +250,7 @@ if ($f_nivel == 0) {
                     $qnt->execute();
                     $total = $qnt->fetch(PDO::FETCH_ASSOC);
                     ?>
-                    <div class="card-header py-2 h6">
+                    <div class="card-header py-2 h6 rel-section-header">
                         <i class="fas fa-chart-pie"></i>
                         Total de registros: <?php echo $total["n"] ?>
                     </div>
@@ -406,9 +394,9 @@ ORDER BY atendimentos.abertura ASC");
         <div class="row mt-2 mb-2">
             <div class="col-md-12">
                 <div class="card bg-default">
-                    <div class="card-header py-2 h6">
+                    <div class="card-header py-2 h6 rel-section-header">
                         <i class="fas fa-chart-pie"></i>
-                        Relatério Analítico de Atendimentos Por Cliente - Suporte DevOps
+                        Relatório Analítico de Atendimentos Por Cliente - Suporte DevOps
                     </div>
                     <?php
                     $pdo = ConnectionN3();
@@ -430,7 +418,7 @@ ORDER BY atendimentos.abertura ASC");
                     $qnt->execute();
                     $total = $qnt->fetch(PDO::FETCH_ASSOC);
                     ?>
-                    <div class="card-header py-2 h6">
+                    <div class="card-header py-2 h6 rel-section-header">
                         <i class="fas fa-chart-pie"></i>
                         Total de registros: <?php echo $total["n"] ?>
                     </div>
@@ -569,17 +557,17 @@ ORDER BY atendimentos.abertura ASC");
     </div>
 
     <!-- MODAL DE AJUDA PARA A GESTÃO DE UM ATENDIMENTO -->
-    <div class="modal right fade" id="Help" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
-        <div class="modal-dialog" role="document">
+    <div class="modal fade rel-modal" id="Help" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+        <div class="modal-dialog modal-dialog-centered" role="document">
             <div class="modal-content">
 
                 <div class="modal-header">
-                    <h6 class="modal-title" id="myModalLabel"><i class="far fa-question-circle text-danger"></i> Ajuda com relatórios</h6>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h6 class="modal-title" id="myModalLabel"><i class="far fa-question-circle text-primary"></i> Ajuda com relatórios</h6>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Fechar"><span aria-hidden="true">&times;</span></button>
                 </div>
 
                 <div class="modal-body">
-                    <p><strong>Relatério analítico de atendimentos por cliente:</strong></p>
+                    <p><strong>Relatório analítico de atendimentos por cliente:</strong></p>
                     <p>Este relatório exibe de forma analítica os atendimentos para um determinado cliente em um determinado período de tempo.</p>
                     <p>São considerados os atendimentos com os seguintes status:</p>
                     <ul class="list">
@@ -602,8 +590,7 @@ ORDER BY atendimentos.abertura ASC");
 
     <?php include_once("../all/update_pass.php"); ?>
     <script src="../js/jquery-3.6.0.min.js"></script>
-    <script src="../js/bootstrap.min.js"></script>
-    <script src="../js/bootstrap.bundle.min.js"></script>
+        <script src="../js/bootstrap.bundle.min.js"></script>
 
     <script>
         function decodeHtmlEntities(str) {
@@ -660,10 +647,10 @@ ORDER BY atendimentos.abertura ASC");
     </script>
 
     <?php if (isset($mensagem)) { ?>
-        <div class="row pull-right" style="position:absolute; top: 65px; right:25px; z-index: 3;">
+        <div class="rel-floating-alert">
             <div class="alert <?php echo $mensagem_cor; ?> alert-dismissible fade show" role="alert">
                 <?php echo $mensagem; ?>
-                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <button type="button" class="close" data-dismiss="alert" aria-label="Fechar">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
@@ -676,6 +663,7 @@ ORDER BY atendimentos.abertura ASC");
             }, 5000);
         </script>
     <?php } ?>
+    <script src="js/relatorios_modern.js"></script>
 </body>
 
 </html>

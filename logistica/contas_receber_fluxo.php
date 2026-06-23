@@ -845,110 +845,51 @@ foreach ($contas_modal_detalhe as $item) {
     <link rel="stylesheet" href="../css/bootstrap.min.css">
     <link rel="stylesheet" href="../fontawesome/css/all.css">
     <link rel="stylesheet" href="https://cdn.datatables.net/1.10.25/css/dataTables.bootstrap4.min.css" />
-    <style>
-        body {
-            zoom: 0.9;
-            overflow: hidden;
-        }
-
-        .card-principal {
-            height: calc(100vh - 70px);
-            overflow-y: auto;
-        }
-
-        .table td,
-        .table th {
-            padding: 0.3rem 0.6rem;
-            font-size: 0.9rem;
-            vertical-align: middle;
-        }
-
-        .table-vencido {
-            background-color: #ffe5e5 !important;
-        }
-
-        .table-recebido {
-            background-color: #e5ffe7 !important;
-        }
-
-        .table-parcial {
-            background-color: #e3f2fd !important;
-        }
-
-        thead a {
-            color: white;
-        }
-
-        thead a {
-            color: white;
-            text-decoration: none;
-        }
-
-        thead a:hover {
-            color: #ddd;
-        }
-
-        .form-check-input {
-            width: 20px;
-            height: 20px;
-        }
-
-        .btn-registrar-recebimento,
-        .btn-exibir-recebimentos,
-        .btn-edit-conta-receber,
-        .btn-excluir {
-            width: 30px;
-            height: 30px;
-            padding: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-right: 3px;
-            line-height: 0;
-        }
-    </style>
+    <link rel="stylesheet" href="css/contas_receber_modern.css">
 </head>
 
 
 <body>
     <?php include("../all/sidebar.php"); ?>
 
-    <div class="container-fluid mt-2">
+    <div class="container-fluid mt-2 contas-rec-page">
+        <div class="row">
+            <div class="col-12">
         <?php
         if (isset($_SESSION['alert_message'])) {
             $alert = $_SESSION['alert_message'];
-            echo "<div class='alert alert-{$alert['type']}'>{$alert['text']}</div>";
+            echo "<div class='alert alert-{$alert['type']} contas-rec-alert'>{$alert['text']}</div>";
             unset($_SESSION['alert_message']);
         }
         ?>
-        <div class="card mt-2">
-            <div class="card-header d-flex justify-content-between align-items-center py-2">
-                <div class="col-md-6 mt-1 mb-0 row align-items-center">
+        <div class="card mt-2 contas-rec-main-card">
+            <div class="card-header d-flex justify-content-between align-items-center py-2 contas-rec-toolbar">
+                <div class="col-md-6 mt-1 mb-0 d-flex align-items-center">
                     <h5 class="m-0 font-weight-bold">Gestão de Contas a Receber - Fluxo</h5>
 
-                    <a href="gestaoRD.php" class="ml-4"><i class="fas fa-home" style="font-size: 25px;" data-toggle="tooltip" title="Home RD"></i></a>
+                    <a href="gestaoRD.php" class="ml-4 contas-rec-home-link"><i class="fas fa-home" data-toggle="tooltip" title="Home RD"></i></a>
                 </div>
-                <div class="d-flex align-items-center">
-                    <button type="button" class="btn btn-outline-secondary btn-sm" data-toggle="modal" data-target="#modalResumoFiltro" title="Ver Resumo do Filtro">
+                <div class="d-flex align-items-center contas-rec-actions">
+                    <button type="button" class="btn btn-outline-secondary btn-sm contas-rec-btn" data-toggle="modal" data-target="#modalResumoFiltro" title="Ver Resumo do Filtro">
                         <i class="fas fa-chart-pie"> </i> Resumo
                     </button>
-                    <button class="btn btn-outline-secondary btn-sm ml-3" type="button" data-toggle="collapse" data-target="#filtroCollapse">
+                    <button class="btn btn-outline-secondary btn-sm contas-rec-btn" type="button" data-toggle="collapse" data-target="#filtroCollapse">
                         <i class="fas fa-filter"></i> Filtrar
                     </button>
-                    <button type="button" class="btn btn-success btn-sm ml-3" data-toggle="modal" data-target="#modalAddContaReceber">
-                        <i class="fas fa-plus"></i> Novo Lancamento
+                    <button type="button" class="btn btn-success btn-sm contas-rec-btn" data-toggle="modal" data-target="#modalAddContaReceber">
+                        <i class="fas fa-plus"></i> Novo Lançamento
                     </button>
                 </div>
             </div>
 
 
-            <div class="card-body py-2 card-principal">
+            <div class="card-body py-2 card-principal contas-rec-body">
                 <?php
                 $isFiltroAtivo = !empty($filtro_status) && $filtro_status !== 'todos' || !empty($filtro_texto) || !empty($filtro_data_inicio) || !empty($filtro_data_fim);
                 $collapseShowClass = $isFiltroAtivo ? 'show' : '';
                 ?>
                 <div class="collapse <?= $collapseShowClass ?>" id="filtroCollapse">
-                    <div class="card card-body mb-2 py-2">
+                    <div class="card card-body mb-2 py-2 contas-rec-filter-card">
                         <form method="GET" class="mb-0">
                             <div class="row">
                                 <div class="col-md-2">
@@ -987,9 +928,9 @@ foreach ($contas_modal_detalhe as $item) {
                     </div>
                 </div>
 
-                <div class="table-responsive">
-                    <table class="table table-sm table-bordered table-striped table-hover">
-                        <thead class="thead-dark">
+                <div class="table-responsive contas-rec-table-area">
+                    <table class="table table-sm table-bordered table-hover contas-rec-table">
+                        <thead>
                             <tr>
                                 <th class="text-center">ID</th>
                                 <th><?= sortLink('Cliente', 'nome_cliente', $orderBy, $orderDir) ?></th>
@@ -1000,7 +941,7 @@ foreach ($contas_modal_detalhe as $item) {
                                 <th><?= sortLink('Recebido', 'total_recebido', $orderBy, $orderDir) ?></th>
                                 <th><?= sortLink('A Receber', 'saldo', $orderBy, $orderDir) ?></th>
                                 <th class="text-center"><?= sortLink('Status', 'status_id', $orderBy, $orderDir) ?></th>
-                                <th class="text-center">Açães</th>
+                                <th class="text-center">Ações</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -1008,10 +949,10 @@ foreach ($contas_modal_detalhe as $item) {
                                 <tr>
                                     <td colspan="9" class="text-center">Nenhum lançamento encontrado.</td>
                                 </tr>
-                                <?php else : foreach ($contas_a_receber as $item) : ?>
-                                    <tr class="<?=
+                                <?php else : foreach ($contas_a_receber as $indexContaFluxo => $item) : ?>
+                                    <tr class="contas-rec-main-row <?= $indexContaFluxo >= 50 ? 'd-none' : '' ?> <?=
                                                 $item['status_id'] == 3 ? 'table-recebido' : ($item['status_id'] == 2 ? 'table-parcial' : '')
-                                                ?>">
+                                                ?>" data-index="<?= $indexContaFluxo ?>">
                                         <td><?= htmlspecialchars($item['id']) ?></td>
                                         <td><?= $item['nome_cliente'] ?></td>
                                         <td><?= $item['descricao'] ?></td>
@@ -1055,7 +996,7 @@ foreach ($contas_modal_detalhe as $item) {
                                         </td>
 
                                         <td class="text-right">
-                                            <div class="d-flex justify-content-end align-items-center">
+                                            <div class="d-flex justify-content-end align-items-center contas-rec-row-actions">
                                                 <?php if ($item['status_id'] != '3') : ?>
                                                     <button type="button" class="btn btn-sm btn-success btn-registrar-recebimento" data-toggle="modal" data-target="#modalRegistrarRecebimento" data-id="<?= $item['fatura_id'] ?>" data-descricao="<?= htmlspecialchars($item['descricao']) ?>" data-valor_total="<?= number_format($item['valor_total'], 2, ',', '.') ?>" data-valor_recebido="<?= number_format(($item['valor_total'] ?? 0) - ($item['saldo'] ?? 0), 2, ',', '.') ?>" data-saldo="<?= number_format($item['saldo'], 2, ',', '.') ?>" data-vencimento="<?= date('d/m/Y', strtotime($item['data_vencimento'])) ?>" data-nome_cliente="<?= htmlspecialchars($item['nome_cliente']) ?>" title="Registrar Recebimento">
                                                         <i class="fas fa-dollar-sign"></i>
@@ -1063,7 +1004,7 @@ foreach ($contas_modal_detalhe as $item) {
                                                 <?php endif; ?>
 
 
-                                                <button type="button" class="btn btn-sm btn-info btn-exibir-recebimentos" data-toggle="modal" data-target="#modalExibirRecebimentos" data-id="<?= $item['fatura_id'] ?>" data-nome_cliente="<?= htmlspecialchars($item['nome_cliente']) ?>" title="Exibir Recebimentos">
+                                                <button type="button" class="btn btn-sm btn-info btn-exibir-recebimentos" data-toggle="modal" data-target="#modalExibirRecebimento" data-id="<?= $item['fatura_id'] ?>" data-nome_cliente="<?= htmlspecialchars($item['nome_cliente']) ?>" title="Exibir Recebimentos">
                                                     <i class="fas fa-list"></i>
                                                 </button>
 
@@ -1085,13 +1026,16 @@ foreach ($contas_modal_detalhe as $item) {
                             endif; ?>
                         </tbody>
                     </table>
+                    <div id="contasRecFluxoLoadStatus" class="contas-rec-load-status" data-visible="50" data-total="<?= count($contas_a_receber) ?>">
+                        <?= count($contas_a_receber) > 50 ? 'Role para carregar mais lançamentos' : count($contas_a_receber) . ' lançamento(s) exibido(s)' ?>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
     <!-- Modal gerir recebimentos-->
-    <div class="modal fade" id="modalExibirRecebimento" tabindex="-1" role="dialog" aria-labelledby="tituloModal" aria-hidden="true">
+    <div class="modal fade contas-rec-modal" id="modalExibirRecebimento" tabindex="-1" role="dialog" aria-labelledby="tituloModal" aria-hidden="true">
         <div class="modal-dialog modal-xl" role="document">
             <div class="modal-content">
                 <div class="modal-header">
@@ -1113,7 +1057,7 @@ foreach ($contas_modal_detalhe as $item) {
                                     <th class="text-center" style="width: 150px">Valor Recebido</th>
                                     <th class="text-center" style="width: 180px">Agência / Banco</th>
                                     <th>Observação</th>
-                                    <th class="text-center" style="width: 150px">Açães</th>
+                                    <th class="text-center" style="width: 150px">Ações</th>
                                 </tr>
                             </thead>
                             <tbody id="lista_recebimentos_body"></tbody>
@@ -1121,26 +1065,26 @@ foreach ($contas_modal_detalhe as $item) {
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Fechar</button>
+                    <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Fechar</button>
                 </div>
             </div>
         </div>
     </div>
 
     <!-- Modal Resumo Filtro -->
-    <div class="modal fade" id="modalResumoFiltro" tabindex="-1">
+    <div class="modal fade contas-rec-modal" id="modalResumoFiltro" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered modal-xl">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Resumo do Filtro Atual (Contas a Receber)</h5>
-                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h5 class="modal-title">Resumo do Fluxo de Contas a Receber</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Fechar"><span aria-hidden="true">&times;</span></button>
                 </div>
                 <div class="modal-body">
 
                     <!--Filtros Ativos -->
                     <div class="card p-2 mb-3 bg-light" style="font-size: 0.85rem;">
                         <span class="text-muted">
-                            <strong>Filtros Ativos:</strong>
+                            <strong>Escopo do resumo:</strong>
                             <?php
                             if (empty($filtrosAtivosHTML)) {
                                 echo 'Nenhum filtro aplicado.';
@@ -1156,21 +1100,21 @@ foreach ($contas_modal_detalhe as $item) {
                         <div class="col-md-4">
                             <h6 class="text-center text-muted mb-3">Resumo Financeiro (A receber)</h6>
 
-                            <div class="card shadow-sm mb-3">
+                            <div class="card shadow-sm mb-3 contas-rec-mini-card">
                                 <div class="card-body text-center py-2">
                                     <h6 class="card-title text-muted mb-1">TOTAL PREVISTO</h6>
                                     <h3 class="font-weight-bold text-primary mb-0">R$ <?= number_format($totalFaturadoFiltrado, 2, ',', '.') ?></h3>
                                 </div>
                             </div>
 
-                            <div class="card shadow-sm mb-3">
+                            <div class="card shadow-sm mb-3 contas-rec-mini-card">
                                 <div class="card-body text-center py-2">
                                     <h6 class="card-title text-muted mb-1">TOTAL RECEBIDO</h6>
                                     <h3 class="font-weight-bold text-success mb-0">R$ <?= number_format($totalRecebidoFiltrado, 2, ',', '.') ?></h3>
                                 </div>
                             </div>
 
-                            <div class="card shadow-sm mb-3">
+                            <div class="card shadow-sm mb-3 contas-rec-mini-card">
                                 <div class="card-body text-center py-2">
                                     <h6 class="card-title text-muted mb-1">SALDO A RECEBER (do período)</h6>
                                     <h3 class="font-weight-bold text-warning mb-0">R$ <?= number_format($totalSaldoFiltrado, 2, ',', '.') ?></h3>
@@ -1181,9 +1125,9 @@ foreach ($contas_modal_detalhe as $item) {
                                 Total de <strong><?= $totalFaturasFiltradas ?></strong> fatura(s) encontradas no período.
                             </p>
 
-                            <div class="card shadow-sm border-dark mt-4">
+                            <div class="card shadow-sm border-dark mt-4 contas-rec-mini-card">
                                 <div class="card-body text-center py-2 bg-light">
-                                    <h6 class="card-title text-muted mb-1">?? TOTAL INADIMPLENTE (Geral)</h6>
+                                    <h6 class="card-title text-muted mb-1"><i class="fas fa-exclamation-triangle mr-1"></i> TOTAL INADIMPLENTE (Geral)</h6>
                                     <h3 class="font-weight-bold text-dark mb-0">R$ <?= number_format($totalInadimplenteGlobal, 2, ',', '.') ?></h3>
                                     <small class="text-muted"><?= $contasInadimplentesGlobal ?> fatura(s) de meses anteriores</small>
                                 </div>
@@ -1223,13 +1167,20 @@ foreach ($contas_modal_detalhe as $item) {
                                     echo '<tr><td colspan="4" class="text-center text-muted py-3">Nenhum registro encontrado.</td></tr>';
                                     return;
                                 }
-                                foreach ($contas as $item) {
+                                foreach ($contas as $index => $item) {
                                     $statusNome = $item['nome_status'];
                                     $dataVenc = $item['data_vencimento'];
                                     $saldo = $item['saldo'];
+                                    $rowHiddenClass = $index >= 50 ? ' d-none' : '';
+                                    $descricao = trim($item['descricao'] ?? '');
                             ?>
-                                    <tr>
-                                        <td><?= $item['nome_cliente'] ?></td>
+                                    <tr class="contas-rec-modal-row<?= $rowHiddenClass ?>" data-table-key="<?= htmlspecialchars($tableKey) ?>" data-index="<?= $index ?>">
+                                        <td>
+                                            <div class="contas-rec-client-name"><?= htmlspecialchars($item['nome_cliente']) ?></div>
+                                            <?php if ($descricao !== '') : ?>
+                                                <div class="contas-rec-client-desc"><?= htmlspecialchars($descricao) ?></div>
+                                            <?php endif; ?>
+                                        </td>
                                         <td class="text-center">
                                             <?php
                                             if ($statusNome == 'Recebido') {
@@ -1255,11 +1206,11 @@ foreach ($contas_modal_detalhe as $item) {
                             }
                             ?>
 
-                            <div class="card shadow-sm mb-3">
+                            <div class="card shadow-sm mb-3 contas-rec-mini-card">
                                 <div class="card-header bg-primary text-white py-2 text-left">
                                     <strong>Pendentes (do Período Filtrado)</strong>
                                 </div>
-                                <div class="card-body p-0" style="max-height: 250px; overflow-y: auto;">
+                                <div class="card-body p-0 contas-rec-modal-table-wrap" data-table-key="pendentes">
                                     <table class="table table-sm table-striped table-hover mb-0" id="tabelaPendentesFiltradas">
                                         <thead style="position: sticky; top: 0; background-color: #f8f9fa;">
                                             <tr>
@@ -1270,17 +1221,20 @@ foreach ($contas_modal_detalhe as $item) {
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            <?php renderTabelaContas($contasPendentesFiltradas); ?>
+                                            <?php renderTabelaContas($contasPendentesFiltradas, 'pendentes'); ?>
                                         </tbody>
                                     </table>
+                                    <div class="contas-rec-modal-scroll-status" data-table-key="pendentes" data-visible="50" data-total="<?= count($contasPendentesFiltradas) ?>">
+                                        <?= count($contasPendentesFiltradas) > 50 ? 'Role para carregar mais registros' : count($contasPendentesFiltradas) . ' registro(s) exibido(s)' ?>
+                                    </div>
                                 </div>
                             </div>
 
-                            <div class="card shadow-sm border-dark">
+                            <div class="card shadow-sm border-dark contas-rec-mini-card">
                                 <div class="card-header bg-dark text-white py-2 text-left">
-                                    <strong>?? Inadimplentes (Geral / Meses Anteriores)</strong>
+                                    <strong><i class="fas fa-exclamation-triangle mr-1"></i> Inadimplentes (Geral / Meses Anteriores)</strong>
                                 </div>
-                                <div class="card-body p-0" style="max-height: 220px; overflow-y: auto;">
+                                <div class="card-body p-0 contas-rec-modal-table-wrap" data-table-key="inadimplentes">
                                     <table class="table table-sm table-striped table-hover mb-0" id="tabelaInadimplentesGlobal">
                                         <thead style="position: sticky; top: 0; background-color: #f8f9fa;">
                                             <tr>
@@ -1291,30 +1245,32 @@ foreach ($contas_modal_detalhe as $item) {
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            <?php renderTabelaContas($contasInadimplentesArrGlobal); ?>
+                                            <?php renderTabelaContas($contasInadimplentesArrGlobal, 'inadimplentes'); ?>
                                         </tbody>
                                     </table>
-
+                                    <div class="contas-rec-modal-scroll-status" data-table-key="inadimplentes" data-visible="50" data-total="<?= count($contasInadimplentesArrGlobal) ?>">
+                                        <?= count($contasInadimplentesArrGlobal) > 50 ? 'Role para carregar mais registros' : count($contasInadimplentesArrGlobal) . ' registro(s) exibido(s)' ?>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Fechar</button>
+                    <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Fechar</button>
                 </div>
             </div>
         </div>
     </div>
 
     <!-- Modal Add Recebimento -->
-    <div class="modal fade" id="modalAddContaReceber" tabindex="-1">
-        <div class="modal-dialog modal-xl">
+    <div class="modal fade contas-rec-modal" id="modalAddContaReceber" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-xl" role="document">
             <div class="modal-content">
                 <form method="POST" id="form-add-conta">
                     <input type="hidden" name="action" value="add_conta_receber">
                     <div class="modal-header">
-                        <h5 class="modal-title">Nova Conta a Receber</h5><button type="button" class="close" data-dismiss="modal">&times;</button>
+                        <h5 class="modal-title">Nova Conta a Receber</h5><button type="button" class="close" data-dismiss="modal" aria-label="Fechar"><span aria-hidden="true">&times;</span></button>
                     </div>
                     <div class="modal-body">
                         <div class="row">
@@ -1411,15 +1367,15 @@ foreach ($contas_modal_detalhe as $item) {
     </div>
 
     <!-- Modal Editar Conta a Receber -->
-    <div class="modal fade" id="modalEditContaReceber" tabindex="-1">
-        <div class="modal-dialog modal-xl">
+    <div class="modal fade contas-rec-modal" id="modalEditContaReceber" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-xl" role="document">
             <div class="modal-content">
                 <form method="POST" id="form-edit-conta">
                     <input type="hidden" name="action" value="edit_conta_receber">
                     <input type="hidden" name="id" id="edit_id_conta">
                     <div class="modal-header">
                         <h5 class="modal-title">Editar Conta a Receber</h5>
-                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Fechar"><span aria-hidden="true">&times;</span></button>
                     </div>
                     <div class="modal-body">
                         <div class="row">
@@ -1522,7 +1478,7 @@ foreach ($contas_modal_detalhe as $item) {
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                        <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Cancelar</button>
                         <button type="submit" class="btn btn-primary" id="edit-btn-salvar">Salvar Alterações</button>
                     </div>
                 </form>
@@ -1531,26 +1487,26 @@ foreach ($contas_modal_detalhe as $item) {
     </div>
 
     <!-- Modal Excluir Conta Simples -->
-    <!-- <div class="modal fade" id="modalExcluirSimples" tabindex="-1">
-        <div class="modal-dialog modal-sm">
+    <!-- <div class="modal fade contas-rec-modal" id="modalExcluirSimples" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-sm" role="document">
             <div class="modal-content">
                 <form method="POST">
                     <input type="hidden" name="action" value="excluir_conta_simples">
                     <input type="hidden" name="id" id="excluir_id_simples">
                     <div class="modal-header">
-                        <h5 class="modal-title">Confirmar Exclusão</h5><button type="button" class="close" data-dismiss="modal">&times;</button>
+                        <h5 class="modal-title">Confirmar Exclusão</h5><button type="button" class="close" data-dismiss="modal" aria-label="Fechar"><span aria-hidden="true">&times;</span></button>
                     </div>
                     <div class="modal-body">
                         <p>Tem certeza que deseja excluir a fatura <strong id="excluir_desc_simples"></strong>? Esta ação não pode ser desfeita.</p>
                     </div>
-                    <div class="modal-footer"><button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button><button type="submit" class="btn btn-danger">Excluir</button></div>
+                    <div class="modal-footer"><button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Cancelar</button><button type="submit" class="btn btn-danger btn-sm">Excluir</button></div>
                 </form>
             </div>
         </div>
     </div> -->
 
     <!-- Modal Excluir Conta Simples -->
-    <div class="modal fade" id="modalExcluirSimples" tabindex="-1">
+    <div class="modal fade contas-rec-modal" id="modalExcluirSimples" tabindex="-1">
         <div class="modal-dialog ">
             <div class="modal-content">
                 <form method="POST">
@@ -1559,7 +1515,7 @@ foreach ($contas_modal_detalhe as $item) {
 
                     <div class="modal-header">
                         <h5 class="modal-title" id="titulo_modal_simples">Confirmar Exclusão</h5>
-                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Fechar"><span aria-hidden="true">&times;</span></button>
                     </div>
 
                     <div class="modal-body">
@@ -1589,8 +1545,8 @@ foreach ($contas_modal_detalhe as $item) {
 
 
     <!-- Modal Excluir Conta com Recorrencia -->
-    <div class="modal fade" id="modalExcluirComRecorrencia" tabindex="-1">
-        <div class="modal-dialog">
+    <div class="modal fade contas-rec-modal" id="modalExcluirComRecorrencia" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered" role="document">
             <div class="modal-content">
                 <form method="POST">
                     <input type="hidden" name="action" value="excluir_conta_com_recorrencia">
@@ -1598,7 +1554,7 @@ foreach ($contas_modal_detalhe as $item) {
 
                     <div class="modal-header">
                         <h5 class="modal-title" id="titulo_modal_rec">Confirmar Exclusão</h5>
-                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Fechar"><span aria-hidden="true">&times;</span></button>
                     </div>
 
                     <div class="modal-body">
@@ -1634,14 +1590,14 @@ foreach ($contas_modal_detalhe as $item) {
     </div>
 
     <!-- Modal Registrar Recebimento -->
-    <div class="modal fade" id="modalRegistrarRecebimento" tabindex="-1">
-        <div class="modal-dialog modal-lg">
+    <div class="modal fade contas-rec-modal" id="modalRegistrarRecebimento" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
             <div class="modal-content">
                 <form method="POST">
                     <input type="hidden" name="action" value="registrar_recebimento">
                     <input type="hidden" name="id_conta" id="rec_id_conta">
                     <div class="modal-header">
-                        <h5 class="modal-title">Registrar Recebimento</h5><button type="button" class="close" data-dismiss="modal">&times;</button>
+                        <h5 class="modal-title">Registrar Recebimento</h5><button type="button" class="close" data-dismiss="modal" aria-label="Fechar"><span aria-hidden="true">&times;</span></button>
                     </div>
                     <div class="modal-body">
                         <label>Registrando recebimento para:</label>
@@ -1679,7 +1635,7 @@ foreach ($contas_modal_detalhe as $item) {
                             </div>
                         </div>
                         <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                            <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Cancelar</button>
                             <button type="submit" class="btn btn-success">Registrar</button>
                         </div>
                 </form>
@@ -1735,7 +1691,7 @@ foreach ($contas_modal_detalhe as $item) {
             $('#form-edit-conta .percent-input').on('input', () => validarPercentual('#form-edit-conta', '#edit-percent-total', '#edit-btn-salvar'));
 
             // --- Modal: Registrar Recebimento ---
-            $('.btn-registrar-recebimento').on('click', function() {
+            $(document).on('click', '.btn-registrar-recebimento', function() {
                 const id = $(this).data('id');
                 const descricao = $(this).data('descricao');
                 const saldo = $(this).data('saldo');
@@ -1756,7 +1712,7 @@ foreach ($contas_modal_detalhe as $item) {
             });
 
             // --- Modal: Editar Conta a Receber (BLOCO CORRIGIDO) ---
-            $('.btn-edit-conta-receber').on('click', function() {
+            $(document).on('click', '.btn-edit-conta-receber', function() {
                 const id = $(this).data('id');
                 const id_cliente = $(this).data('id_cliente');
                 const descricao = $(this).data('descricao');
@@ -1795,7 +1751,7 @@ foreach ($contas_modal_detalhe as $item) {
 
             // --- Modal: Excluir Conta / excluir recorrencia ---
 
-            // $('.btn-excluir').on('click', function() {
+            // $(document).on('click', '.btn-excluir', function() {
             //     const id = $(this).data('id');
             //     const descricao = $(this).data('descricao');
             //     const isRecorrente = $(this).data('recorrente') == 1;
@@ -1818,7 +1774,7 @@ foreach ($contas_modal_detalhe as $item) {
             let bloqueioRecorrente = false;
             let bloqueioSimples = false;
 
-            $('.btn-excluir').on('click', function() {
+            $(document).on('click', '.btn-excluir', function() {
                 const id = $(this).data('id');
                 const descricao = $(this).data('descricao');
                 const isRecorrente = $(this).data('recorrente') == 1;
@@ -1914,7 +1870,7 @@ foreach ($contas_modal_detalhe as $item) {
             });
 
 
-            $('.btn-exibir-recebimentos').on('click', function() {
+            $(document).on('click', '.btn-exibir-recebimentos', function() {
                 const contaId = $(this).data('id');
                 const contaDescricao = $(this).data('descricao');
                 const nomeCliente = $(this).data('nome_cliente');
@@ -2051,47 +2007,58 @@ foreach ($contas_modal_detalhe as $item) {
 
 
 
-            // tabelas do modal
-            var dataTableOptions = {
-                "language": {
-                    "url": "https://cdn.datatables.net/plug-ins/1.10.25/i18n/Portuguese-Brasil.json"
-                },
-                "paging": false,
-                "searching": false,
-                "info": false,
-                "order": [
-                    [3, "desc"]
-                ],
-                "columnDefs": [
-                    // Colunas 1 (Status):
-                    {
-                        "orderable": false,
-                        "targets": 1
-                    },
+            function revelarMaisRegistrosModal(tableKey) {
+                const status = $('.contas-rec-modal-scroll-status[data-table-key="' + tableKey + '"]');
+                const total = parseInt(status.data('total'), 10) || 0;
+                let visible = parseInt(status.data('visible'), 10) || 50;
+                const nextVisible = Math.min(visible + 50, total);
 
-                    // Coluna 2 (Vencimento):
-                    {
-                        "type": "date-br",
-                        "targets": 2
-                    },
-
-                    // Coluna 3 (Saldo):
-                    {
-                        "type": "num-fmt",
-                        "targets": 3
+                $('.contas-rec-modal-row[data-table-key="' + tableKey + '"]').each(function() {
+                    const index = parseInt($(this).data('index'), 10) || 0;
+                    if (index < nextVisible) {
+                        $(this).removeClass('d-none');
                     }
-                ]
-            };
+                });
 
-            $('#tabelaPendentesFiltradas').DataTable(dataTableOptions);
-            $('#tabelaInadimplentesGlobal').DataTable(dataTableOptions);
+                status.data('visible', nextVisible);
+                status.text(nextVisible < total ? 'Role para carregar mais registros' : total + ' registro(s) exibido(s)');
+            }
 
-
-            $('#modalResumoFiltro').on('shown.bs.modal', function(e) {
-                $($.fn.dataTable.tables(true)).DataTable().columns.adjust();
+            $('.contas-rec-modal-table-wrap').on('scroll', function() {
+                const threshold = 70;
+                if (this.scrollTop + this.clientHeight >= this.scrollHeight - threshold) {
+                    revelarMaisRegistrosModal($(this).data('table-key'));
+                }
             });
 
 
+
+            const fluxoTableArea = $('.contas-rec-table-area').first();
+            const fluxoLoadStatus = $('#contasRecFluxoLoadStatus');
+
+            function revelarMaisFluxo() {
+                if (!fluxoLoadStatus.length) return;
+                const total = parseInt(fluxoLoadStatus.data('total'), 10) || 0;
+                let visible = parseInt(fluxoLoadStatus.data('visible'), 10) || 50;
+                const nextVisible = Math.min(visible + 50, total);
+
+                $('.contas-rec-main-row').each(function() {
+                    const index = parseInt($(this).data('index'), 10) || 0;
+                    if (index < nextVisible) {
+                        $(this).removeClass('d-none');
+                    }
+                });
+
+                fluxoLoadStatus.data('visible', nextVisible);
+                fluxoLoadStatus.text(nextVisible < total ? 'Role para carregar mais lançamentos' : total + ' lançamento(s) exibido(s)');
+            }
+
+            fluxoTableArea.on('scroll', function() {
+                const threshold = 80;
+                if (this.scrollTop + this.clientHeight >= this.scrollHeight - threshold) {
+                    revelarMaisFluxo();
+                }
+            });
 
             window.setTimeout(function() {
                 $(".alert").fadeOut(500, function() {
@@ -2102,6 +2069,9 @@ foreach ($contas_modal_detalhe as $item) {
     </script>
 
 
+            </div>
+        </div>
+    </div>
 </body>
 
 </html>

@@ -37,29 +37,22 @@ if($f_nivel==0){$p_nivel = "1,2,3,4,5";}
     <link rel="stylesheet" href="../css/help.css">
     <link rel="stylesheet" href="../css/bootstrap.min.css">
     <link rel="stylesheet" href="../fontawesome/css/all.css">
+    <link rel="stylesheet" href="css/relatorios_modern.css">
     <script type="text/javascript" src="../js/loader.js"></script>
     <title>Allterus</title>
   </head>
-  <style>
-            body {
-            zoom: 0.9;
-            width: 100%;
-            overflow-x: hidden;
-        }
-
-  </style>
-  <body>
+  <body class="rel-legacy-body">
 <?php include_once("../all/sidebar.php"); ?>
 
-    <div class="container-fluid">
+    <div class="container-fluid rel-page rel-legacy-page">
       <div class="row">
         <div class="col-md-12 mt-2">
           <div class="card">
             <div id="accordion">
               <div class="card py-0 my-0">
-                <div class="card-header my-0 bg-light py-0 h6" id="headingOne">
+                <div class="card-header my-0 py-2 h6 rel-filter-header" id="headingOne">
                   <button class="btn" data-toggle="collapse" data-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
-                      <i class="fas fa-chart-bar"></i> Relatério de melhorias por Tecnico
+                      <i class="fas fa-chart-bar"></i> Relatório de melhorias por Tecnico
                   </button>
                 </div>
                 <div id="collapseOne" class="collapse show" aria-labelledby="headingOne" data-parent="#accordion">
@@ -133,7 +126,7 @@ while($exibe=$show_clt->fetch(PDO::FETCH_ASSOC)){
                             </div>
 <?php } ?>
                             <div class="col-sm-2 col-4">
-                              <button type="submit" class="btn btn-info">Filtrar</button>
+                              <button type="submit" class="btn btn-info rel-pill-btn">Filtrar</button>
                             </div>
                           </div>
                         </form>
@@ -150,9 +143,9 @@ while($exibe=$show_clt->fetch(PDO::FETCH_ASSOC)){
       <div class="row mt-2 mb-2">
         <div class="col-md-12">
           <div class="card bg-default">
-            <div class="card-header py-2 h6">
+            <div class="card-header py-2 h6 rel-section-header">
               <i class="fas fa-chart-pie"></i>
-              Relatério analítico de Melhorias Por Cliente
+              Relatório analítico de Melhorias Por Cliente
             </div>
 <?php 
 $pdo = ConnectionN3();
@@ -172,7 +165,7 @@ $qnt = $pdo->prepare($query);
 $qnt->execute();
 $total = $qnt->fetch(PDO::FETCH_ASSOC);
 ?>
-            <div class="card-header py-2 h6">
+            <div class="card-header py-2 h6 rel-section-header">
               <i class="fas fa-chart-pie"></i>
               Total de registros:  <?php echo $total["n"]?> 
             </div>
@@ -314,17 +307,17 @@ while($row=$show->fetch(PDO::FETCH_ASSOC)){
     </div>
 
 <!-- MODAL DE AJUDA PARA A GESTÃO DE UM ATENDIMENTO -->    
-<div class="modal right fade" id="Help" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
-  <div class="modal-dialog" role="document">
+<div class="modal fade rel-modal" id="Help" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+  <div class="modal-dialog modal-dialog-centered" role="document">
     <div class="modal-content">
 
       <div class="modal-header">
-        <h6 class="modal-title" id="myModalLabel"><i class="far fa-question-circle text-danger"></i> Ajuda com relatórios</h6>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h6 class="modal-title" id="myModalLabel"><i class="far fa-question-circle text-primary"></i> Ajuda com relatórios</h6>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Fechar"><span aria-hidden="true">&times;</span></button>
       </div>
 
       <div class="modal-body">
-        <p><strong>Relatério analítico de melhorias por cliente:</strong></p>
+        <p><strong>Relatório analítico de melhorias por cliente:</strong></p>
         <p>Este relatório exibe de forma analítica os melhorias para um determinado cliente em um determinado período de tempo.</p>
         <p>São considerados os melhorias com os seguintes status:</p>
         <ul class="list">
@@ -346,15 +339,14 @@ while($row=$show->fetch(PDO::FETCH_ASSOC)){
 
 
 <?php include_once("../all/update_pass.php"); ?>
-    <script src="../js/bootstrap.min.js"></script>
-    <script src="../js/jquery-3.6.0.min.js"></script>
+        <script src="../js/jquery-3.6.0.min.js"></script>
     <script src="../js/bootstrap.bundle.min.js"></script>
     
 <?php if (isset($mensagem)){ ?>
-<div class="row pull-right" style="position:absolute; top: 65px; right:25px; z-index: 3;">
+<div class="rel-floating-alert">
   <div class="alert <?php echo $mensagem_cor; ?> alert-dismissible fade show" role="alert">
     <?php echo $mensagem; ?> 
-    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+    <button type="button" class="close" data-dismiss="alert" aria-label="Fechar">
       <span aria-hidden="true">&times;</span>
     </button>
   </div>
@@ -367,7 +359,8 @@ while($row=$show->fetch(PDO::FETCH_ASSOC)){
       }, 5000); 
     </script>
 <?php }?>
-  </body>
+      <script src="js/relatorios_modern.js"></script>
+</body>
 </html>
 
 

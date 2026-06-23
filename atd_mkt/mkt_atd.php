@@ -332,14 +332,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                     </div>
 
 
-                    <!-- card central Açães -->
+                    <!-- card central Ações -->
 
                     <div class="col-md-6 px-1">
                         <div class="card">
                             <div class="h6 card-header py-1">
                                 <div class="row">
                                     <div class="col-6 h6 pt-2 mb-0">
-                                        <i class="fas fa-check"></i> Açães
+                                        <i class="fas fa-check"></i> Ações
                                     </div>
                                     <div class="col-6 text-right px-0">
                                         <?php if ($tarefa['status'] == 54) { ?>

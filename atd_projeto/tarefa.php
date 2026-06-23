@@ -1,6 +1,7 @@
-<?php
+﻿<?php
 
 session_start();
+ob_start();
 include_once("../all/seguranca.php");
 include_once("../all/conect.php");
 include_once("../all/permissoes.php");
@@ -35,6 +36,7 @@ if ($m5_00 == 0) {
   <link rel="stylesheet" href="../css/bootstrap-select.min.css">
   <link rel="stylesheet" href="../css/timeline.css">
   <link rel="stylesheet" href="../css/bootstrap-datetimepicker.min.css">
+  <link rel="stylesheet" href="css/projeto_modern.css">
 
 
   <title>Allterus</title>
@@ -42,7 +44,7 @@ if ($m5_00 == 0) {
     /* usado apenas para formatar a mensagem de espera para os selectbox dependentes */
 
     body {
-      zoom: 0.9;
+      zoom: 1;
       /* Escala o conteúdo sem alterar o contexto de layout */
       width: 100%;
       /* Mantém o layout responsivo */
@@ -82,6 +84,475 @@ if ($m5_00 == 0) {
       cursor: pointer;
       /* Define o cursor como uma mão ao passar o mouse */
     }
+    body,
+    body .modal-content,
+    body .dropdown-menu {
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      min-height: 100vh;
+      min-height: 100dvh;
+      background: #f3f6fa;
+    }
+
+    .task-create-page {
+      min-height: calc(100vh - 12px);
+      min-height: calc(100dvh - 12px);
+      padding: 8px 10px;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .task-create-card {
+      max-width: 1320px;
+      margin: 0 auto;
+      border: 1px solid #d8e3ef;
+      border-radius: 8px;
+      background: #fff;
+      box-shadow: 0 10px 28px rgba(15, 23, 42, .07);
+      overflow: hidden;
+    }
+
+    .task-create-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px 18px;
+      border-bottom: 1px solid #e3ebf5;
+      background: #fbfcfe;
+      font-size: 0;
+    }
+
+    .task-create-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 0;
+      color: #0f172a;
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: 0;
+    }
+
+    .task-create-title i {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      border-radius: 999px;
+      background: #e8f8fc;
+      color: #169bb5;
+      font-size: 14px;
+    }
+
+    .task-create-subtitle {
+      margin: 3px 0 0 42px;
+      color: #64748b;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .task-create-body {
+      padding: 16px 18px 18px;
+    }
+
+    .task-form-section {
+      padding: 14px;
+      border: 1px solid #e1e8f2;
+      border-radius: 7px;
+      background: #fff;
+      margin-bottom: 12px;
+    }
+
+    .task-form-section-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 0 0 12px;
+      color: #172033;
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    .task-form-section-title i {
+      color: #169bb5;
+      font-size: 13px;
+    }
+
+    .task-create-card label {
+      color: #334155;
+      font-size: 12px;
+      font-weight: 700;
+      margin-bottom: 5px !important;
+    }
+
+    .task-create-card .form-control,
+    .task-create-card .form-control-sm,
+    .task-create-card .bootstrap-select>.dropdown-toggle {
+      min-height: 36px;
+      border: 1px solid #cfd9e6;
+      border-radius: 5px;
+      color: #172033;
+      font-size: 13px;
+      box-shadow: none;
+    }
+
+    .task-create-card textarea.form-control {
+      min-height: 96px;
+      resize: vertical;
+      line-height: 1.45;
+      padding: 10px 11px;
+    }
+
+    .task-create-card textarea[name="nome_tarefa"] {
+      min-height: 42px;
+    }
+
+    .task-create-actions {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 8px;
+      padding-top: 2px;
+    }
+
+    .task-create-actions .btn {
+      min-height: 36px;
+      border-radius: 5px;
+      padding: 7px 16px;
+      font-weight: 700;
+    }
+
+    .task-date-field {
+      max-width: 330px;
+    }
+
+    .task-date-field .form-control {
+      height: 36px;
+      max-width: 100%;
+      background-color: #fff !important;
+      cursor: pointer;
+    }
+
+    .datetimepicker.dropdown-menu {
+      position: absolute !important;
+      width: 220px !important;
+      min-width: 220px !important;
+      max-width: calc(100vw - 24px) !important;
+      z-index: 2070 !important;
+      box-sizing: border-box;
+      border: 1px solid #d9e3ef;
+      border-radius: 6px;
+      box-shadow: 0 12px 28px rgba(15, 23, 42, .18);
+    }
+
+    .datetimepicker table {
+      width: 100%;
+    }
+
+    .task-loading-label {
+      display: none;
+      margin-left: 6px;
+      color: #64748b;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .modal:not(#Help) .modal-dialog {
+      max-width: min(760px, calc(100vw - 32px));
+      margin: 1.25rem auto;
+    }
+
+    #tarefa_edt .modal-dialog {
+      max-width: min(920px, calc(100vw - 32px));
+    }
+
+    #modalImagem .modal-dialog {
+      max-width: min(1040px, calc(100vw - 32px));
+    }
+
+    .modal:not(#Help) .modal-content {
+      border: 1px solid #dbe4ef;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #fff;
+      box-shadow: 0 22px 58px rgba(15, 23, 42, .28);
+    }
+
+    .modal:not(#Help) .modal-header {
+      min-height: 56px;
+      padding: 14px 18px;
+      border-bottom: 1px solid #e7edf5;
+      background: #fff;
+      color: #172033;
+      align-items: center;
+    }
+
+    .modal:not(#Help) .modal-title {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      margin: 0;
+      color: #172033;
+      font-size: 1rem;
+      font-weight: 800;
+      letter-spacing: 0;
+      line-height: 1.2;
+    }
+
+    .modal:not(#Help) .modal-title i {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex: 0 0 30px;
+      width: 30px;
+      height: 30px;
+      margin: 0 !important;
+      border-radius: 999px;
+      background: #e8f8fc;
+      color: #169bb5 !important;
+      font-size: .9rem;
+    }
+
+    #tarefa_aceitar .modal-title i,
+    #tarefa_retomar .modal-title i {
+      background: #f0fdf4;
+      color: #16a34a !important;
+    }
+
+    #tarefa_espera .modal-title i,
+    #tarefa_porcentagem .modal-title i {
+      background: #fff7ed;
+      color: #d97706 !important;
+    }
+
+    #tarefa_recusar .modal-title i {
+      background: #fff1f2;
+      color: #dc2626 !important;
+    }
+
+    .modal:not(#Help) .modal-header .close {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      margin: 0 0 0 auto;
+      padding: 0;
+      border-radius: 999px;
+      color: #64748b;
+      opacity: 1;
+      text-shadow: none;
+      transition: background .15s ease, color .15s ease;
+    }
+
+    .modal:not(#Help) .modal-header .close:hover {
+      background: #f1f5f9;
+      color: #172033;
+      text-decoration: none;
+    }
+
+    .modal:not(#Help) .modal-body {
+      padding: 18px 20px !important;
+      background: #fff;
+      color: #263244;
+      font-size: .9rem;
+      line-height: 1.45;
+    }
+
+    .modal:not(#Help) .modal-body .form-row {
+      margin-right: -6px;
+      margin-left: -6px;
+    }
+
+    .modal:not(#Help) .modal-body .form-group {
+      margin-bottom: 13px;
+      padding-right: 6px;
+      padding-left: 6px;
+    }
+
+    .modal:not(#Help) .modal-body label,
+    .modal:not(#Help) .modal-body .my-0.small {
+      display: block;
+      margin-bottom: 5px !important;
+      color: #334155;
+      font-size: .84rem;
+      font-weight: 600;
+      line-height: 1.2;
+    }
+
+    .modal:not(#Help) .modal-body > label.small,
+    .modal:not(#Help) .modal-body .form-row > label.small {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid #e1e8f2;
+      border-radius: 7px;
+      background: #f8fafc;
+      color: #334155;
+      line-height: 1.45;
+    }
+
+    .modal:not(#Help) .modal-body .form-control,
+    .modal:not(#Help) .modal-body .form-control-sm,
+    .modal:not(#Help) .modal-body .bootstrap-select>.dropdown-toggle {
+      min-height: 36px;
+      border: 1px solid #cfd9e6;
+      border-radius: 5px;
+      background-color: #fff;
+      color: #172033;
+      font-size: .88rem;
+      box-shadow: none;
+    }
+
+    .modal:not(#Help) .modal-body textarea.form-control,
+    .modal:not(#Help) .modal-body textarea {
+      min-height: 118px;
+      padding: 10px 11px;
+      line-height: 1.45;
+      resize: vertical;
+    }
+
+    .modal:not(#Help) .modal-body .form-control:focus,
+    .modal:not(#Help) .modal-body .form-control-sm:focus,
+    .modal:not(#Help) .modal-body .bootstrap-select>.dropdown-toggle:focus {
+      border-color: #74a7e8;
+      box-shadow: 0 0 0 3px rgba(13, 110, 253, .12);
+      outline: none !important;
+    }
+
+    .modal:not(#Help) .modal-footer {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 8px;
+      padding: 13px 18px;
+      border-top: 1px solid #e7edf5;
+      background: #fbfcfe;
+    }
+
+    .modal:not(#Help) .modal-footer form {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      width: 100%;
+      margin: 0;
+    }
+
+    .modal:not(#Help) .modal-footer .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 96px;
+      min-height: 36px;
+      border-radius: 5px;
+      padding: 7px 14px;
+      font-weight: 700;
+      box-shadow: none;
+    }
+
+    .bootstrap-select .dropdown-menu,
+    .dropdown-menu {
+      border: 1px solid #d9e3ef;
+      border-radius: 6px;
+      box-shadow: 0 10px 24px rgba(15, 23, 42, .14);
+      z-index: 2055;
+    }
+
+    .bootstrap-select {
+      width: 100% !important;
+    }
+
+    .bootstrap-select>.dropdown-toggle {
+      width: 100%;
+      min-height: 36px;
+      padding-right: 32px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .bootstrap-select>.dropdown-toggle:after {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      margin: 0;
+    }
+
+    body>.bootstrap-select .dropdown-menu,
+    .bs-container.bootstrap-select .dropdown-menu,
+    .bootstrap-select.show .dropdown-menu {
+      max-width: min(420px, calc(100vw - 24px));
+      min-width: 0 !important;
+      max-height: 280px !important;
+      overflow: hidden;
+    }
+
+    .bs-container.bootstrap-select {
+      width: auto !important;
+      min-width: 0 !important;
+      max-width: calc(100vw - 24px);
+    }
+
+    body>.bootstrap-select .dropdown-menu.inner,
+    .bs-container.bootstrap-select .dropdown-menu.inner,
+    .bootstrap-select .dropdown-menu.inner {
+      max-height: 238px !important;
+      overflow-y: auto !important;
+      overflow-x: hidden !important;
+    }
+
+    .bootstrap-select .dropdown-menu li a,
+    .bootstrap-select .dropdown-item {
+      white-space: normal;
+      line-height: 1.25;
+      padding: 7px 10px;
+      font-size: 13px;
+    }
+
+    .bootstrap-select .filter-option-inner-inner {
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .bootstrap-select .bs-searchbox {
+      padding: 8px;
+    }
+
+    .bootstrap-select .bs-searchbox .form-control {
+      min-height: 32px;
+      border-radius: 5px;
+      font-size: 13px;
+    }
+
+    body.modal-open>.bootstrap-select .dropdown-menu,
+    body>.bootstrap-select.show .dropdown-menu {
+      z-index: 2065;
+    }
+
+    @media (max-width: 767.98px) {
+      .modal:not(#Help) .modal-dialog,
+      #tarefa_edt .modal-dialog,
+      #modalImagem .modal-dialog {
+        max-width: calc(100vw - 16px);
+        margin: .5rem auto;
+      }
+
+      .modal:not(#Help) .modal-body {
+        padding: 14px !important;
+      }
+
+      .modal:not(#Help) .modal-footer {
+        flex-direction: column-reverse;
+        align-items: stretch;
+      }
+
+      .modal:not(#Help) .modal-footer .btn,
+      .modal:not(#Help) .modal-footer form {
+        width: 100%;
+      }
+    }
   </style>
 </head>
 
@@ -94,8 +565,8 @@ if ($m5_00 == 0) {
   //verifico se existe alguma requisição POST chamada action
   $action = filter_input(INPUT_POST, 'action', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
-  //verifico se existe alguma requisição via post cahamda tarefa
-  $tarefa = filter_input(INPUT_POST, 'tarefa', FILTER_SANITIZE_NUMBER_INT);
+  //verifico se existe alguma requisição via post/get chamada tarefa
+  $tarefa = (int)($_POST['tarefa'] ?? $_GET['tarefa'] ?? 0);
 
 
   if ($action == "alterar_senha") {
@@ -417,10 +888,10 @@ if ($m5_00 == 0) {
         }
 
 
-        //COMPARA O NºVEL DO ATENDIMENTO:
+        //COMPARA O NÍVEL DO ATENDIMENTO:
         //SE DIFERENTE:
         if ($nivel != $tarefa_nivel_original) {
-          //ALTERA O CÓDIGO DO NºVEL NA TABELA DE tarefas
+          //ALTERA O CÓDIGO DO NÍVEL NA TABELA DE tarefas
           $pdo = ConnectionN3();
           $adc = $pdo->prepare("UPDATE `tarefas` SET `nivel`='$nivel' WHERE `id`='$tarefa';");
           if ($adc->execute()) {
@@ -571,8 +1042,8 @@ if ($m5_00 == 0) {
         }
         //SE FALSO:
         //1 - mantem status da tarefa como 1 (ATENDIMENTO AGUARDANDO EXECUÇÃO)
-        //1 - registra na tabela de atendimento o novo técnico responsóvel 
-        //2 - busca o NOME do técnico responsóvel
+        //1 - registra na tabela de atendimento o novo técnico responsável 
+        //2 - busca o NOME do técnico responsável
         //3 - registra na tabela de interatividade a atribuição do chamando
         if ($tecnico != $user_id) {
           $pdo = ConnectionN3();
@@ -618,7 +1089,7 @@ if ($m5_00 == 0) {
             //insere o registro de uma nova interação 
             $adc = $pdo->prepare("INSERT INTO `inter_tarefa` (`inter_tipo`, `inter_tarefa`, `inter_user`, `inter_data`, `inter_desc`) VALUES ('6', '$tarefa', '$user_id', '$agora', 'Retomou a tarefa.');");
             if ($adc->execute()) {
-              $mensagem = "<i class=\"fas fa-check\"></i> Beleza! <br> Agora vamos descrever as interaçães com o cliente!";
+              $mensagem = "<i class=\"fas fa-check\"></i> Beleza! <br> Agora vamos descrever as interAções com o cliente!";
               $mensagem_cor = "alert-success";
             } else {
               $mensagem = "<i class=\"fas fa-exclamation-triangle\"></i> Falha ao adicionar registro na tabela de interação!";
@@ -641,8 +1112,8 @@ if ($m5_00 == 0) {
         //VERIFICA SE O ATENDIMENTO FOI DIRECIONADO PARA OUTRO TÉCNICO
         //SE VERDADEIRO:
         //1 - muda o status da tarefa para 1 (aguardando atendimento)
-        //1 - registra na tabela de atendimento o novo técnico responsóvel 
-        //2 - busca o NOME do técnico responsóvel
+        //1 - registra na tabela de atendimento o novo técnico responsável 
+        //2 - busca o NOME do técnico responsável
         //2 - registra na tabela de interatividade que o usuário direcionou o atendimento.      
         if ($tecnico != 0) {
           $pdo = ConnectionN3();
@@ -666,7 +1137,7 @@ if ($m5_00 == 0) {
         }
         //SE FALSO:
         //1 - muda o status da tarefa para 1 (aguardando atendimento)
-        //1 - remove o técnico como responsóvel pelo atendimento
+        //1 - remove o técnico como responsável pelo atendimento
         //2 - registra na tabela de interatividade que o usuário recusou o atendimento.     
         if ($tecnico == 0) {
           $pdo = ConnectionN3();
@@ -765,6 +1236,35 @@ if ($m5_00 == 0) {
       }
     }
   }
+
+  if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (isset($mensagem)) {
+      $_SESSION['mensagem'] = $mensagem;
+      $_SESSION['mensagem_cor'] = $mensagem_cor ?? 'alert-info';
+    }
+
+    $quick_modal = $_POST['quick_modal'] ?? '';
+    $allowed_quick_modals = ['tarefa_aceitar', 'tarefa_retomar', 'tarefa_finalizar'];
+    if (!$action && in_array($quick_modal, $allowed_quick_modals, true)) {
+      $_SESSION['tarefa_quick_modal'] = $quick_modal;
+    }
+
+    $return_to = $_POST['return_to'] ?? '';
+    $redirect_url = !empty($tarefa) ? 'tarefa.php?tarefa=' . urlencode((string)$tarefa) : 'tarefa.php';
+    if (preg_match('/^projeto\.php\?projeto=\d+$/', $return_to)) {
+      $redirect_url = $return_to;
+    }
+    if (ob_get_length()) {
+      ob_clean();
+    }
+
+    if (!headers_sent()) {
+      header('Location: ' . $redirect_url);
+    } else {
+      echo '<script>window.location.href = ' . json_encode($redirect_url) . ';</script>';
+    }
+    exit;
+  }
   ?>
   <?php
   // Verifica de existe o ID de um atendimento setado.
@@ -774,15 +1274,21 @@ if ($m5_00 == 0) {
       header("Location: ../home.php");
     }
   ?>
-    <div class="container-fluid">
-      <div class="row mt-2 justify-content-md-center">
-        <div class="col-12 col-sm-12 col-md-11 col-lg-10">
-          <div class="card">
-            <div class="h6 card-header">
+    <div class="container-fluid task-create-page">
+      <div class="row justify-content-md-center">
+        <div class="col-12">
+          <div class="task-create-card">
+            <div class="task-create-header">
+              <div>
+                <h1 class="task-create-title"><i class="fas fa-plus"></i> Cadastro de solicitação de tarefa</h1>
+                <p class="task-create-subtitle">Preencha os dados principais para registrar uma nova tarefa de projeto.</p>
+              </div>
               <i class="fas fa-headset text-danger"></i> Cadastro de solicitação de tarefa
             </div>
-            <div class="card-body py-3">
+            <div class="task-create-body">
               <form action="#" method="POST">
+                <div class="task-form-section">
+                  <h2 class="task-form-section-title"><i class="fas fa-building"></i> Dados do cliente</h2>
                 <div class="form-row">
                   <!--  -->
 
@@ -791,7 +1297,7 @@ if ($m5_00 == 0) {
 
                   <div class="form-group col-sm-12 col-md-4">
                     <label class="my-0 small">Cliente:</label>
-                    <select name="cliente" id="cliente" class="form-control form-control-sm selectpicker" data-live-search="true" tabindex="1">
+                    <select name="cliente" id="cliente" class="form-control form-control-sm selectpicker" data-live-search="true" data-container="body" data-width="100%" tabindex="1">
                       <option></option>
                       <?php
                       $pdo = ConnectionN3();
@@ -829,7 +1335,7 @@ if ($m5_00 == 0) {
                   <div class="form-group col-sm-6 col-md-4">
                     <label class="my-0 small">Solicitante:</label>
                     <span class="carregando small">Carregando...</span>
-                    <select name="solicitante" id="solicitante" class="form-control form-control-sm" required="required" tabindex="2">
+                    <select name="solicitante" id="solicitante" class="form-control form-control-sm selectpicker" data-live-search="true" data-container="body" data-width="100%" required="required" tabindex="2">
 
                       <option></option>
                     </select>
@@ -839,16 +1345,20 @@ if ($m5_00 == 0) {
                   <div class="form-group col-sm-6 col-md-4">
                     <label class="my-0 small">Local:</label>
                     <span class="carregando2 small">Carregando...</span>
-                    <select name="local" id="local" class="form-control form-control-sm" required="required" tabindex="3">
+                    <select name="local" id="local" class="form-control form-control-sm selectpicker" data-live-search="true" data-container="body" data-width="100%" required="required" tabindex="3">
                       <option></option>
                     </select>
                   </div>
                 </div>
 
+                </div>
+
+                <div class="task-form-section">
+                  <h2 class="task-form-section-title"><i class="fas fa-layer-group"></i> Classificação</h2>
                 <div class="form-row pt-2">
                   <div class="form-group col-sm-6 col-md-3">
                     <label class="my-0 small">Tipo de atendimento:</label>
-                    <select name="tipo" class="form-control form-control-sm" required="required" tabindex="4">
+                    <select name="tipo" class="form-control form-control-sm selectpicker" data-container="body" data-width="100%" required="required" tabindex="4">
                       <option></option>
                       <option value="1">Falha</option>
                       <option value="2">Relacionamento</option>
@@ -861,7 +1371,7 @@ if ($m5_00 == 0) {
 
                   <div class="form-group col-sm-6 col-md-3">
                     <label class="my-0 small">Categoria:</label>
-                    <select name="categoria" id="categoria" class="form-control form-control-sm" required="required" tabindex="5">
+                    <select name="categoria" id="categoria" class="form-control form-control-sm selectpicker" data-live-search="true" data-container="body" data-width="100%" required="required" tabindex="5">
                       <option></option>
                       <?php
                       $pdo = ConnectionN3();
@@ -880,7 +1390,7 @@ if ($m5_00 == 0) {
                   <div class="form-group col-sm-6 col-md-2">
                     <label class="my-0 small">SubCategoria:</label>
                     <span class="carregando3 small">Aguarde, carregando...</span>
-                    <select name="subcategoria" id="subcategoria" class="form-control form-control-sm" required="required" tabindex="6">
+                    <select name="subcategoria" id="subcategoria" class="form-control form-control-sm selectpicker" data-live-search="true" data-container="body" data-width="100%" required="required" tabindex="6">
                       <option></option>
                     </select>
                   </div>
@@ -889,14 +1399,14 @@ if ($m5_00 == 0) {
                   <div class="form-group col-sm-6 col-md-2">
                     <label class="my-0 small">Item:</label>
                     <span class="carregando4 small">Aguarde, carregando...</span>
-                    <select name="item" id="item" class="form-control form-control-sm" required="required" tabindex="7">
+                    <select name="item" id="item" class="form-control form-control-sm selectpicker" data-live-search="true" data-container="body" data-width="100%" required="required" tabindex="7">
                       <option></option>
                     </select>
                   </div>
 
                   <div class="form-group col-sm-6 col-md-2">
                     <label class="my-0 small">Nível:</label>
-                    <select name="nivel" class="form-control form-control-sm" required="required" tabindex="8">
+                    <select name="nivel" class="form-control form-control-sm selectpicker" data-container="body" data-width="100%" required="required" tabindex="8">
                       <option></option>
                       <option value="1">Nível 1</option>
                       <option value="2">Nível 2</option>
@@ -908,23 +1418,27 @@ if ($m5_00 == 0) {
                   </div>
                 </div>
 
+                </div>
+
+                <div class="task-form-section">
+                  <h2 class="task-form-section-title"><i class="fas fa-tasks"></i> Tarefa</h2>
                 <div class="form-row pt-2">
 
                   <div class="form-group col-sm-6 col-md-6">
                     <label class="my-0 small">Nome da Tarefa:</label>
-                    <textarea name="nome_tarefa" class="form-control form-control-sm" rows="1" required="required" tabindex="9"></textarea>
+                    <textarea name="nome_tarefa" class="form-control form-control-sm" rows="2" required="required" tabindex="9"></textarea>
                   </div>
                   <div class="form-group col-sm-6 col-md-6">
                     <label class="my-0 small">Descrição de abertura:</label>
-                    <textarea name="desc_abertura" class="form-control form-control-sm" rows="1" required="required" tabindex="9"></textarea>
+                    <textarea name="desc_abertura" class="form-control form-control-sm" rows="4" required="required" tabindex="9"></textarea>
                   </div>
 
                   <div class="form-group col-sm-6 col-md-6">
                     <div class="form-row">
 
                       <div class="form-group col-sm-12 col-md-6">
-                        <label class="my-0 small">Tecnico:</label>
-                        <select name="tecnico" id="tecnico" class="form-control form-control-sm selectpicker" data-live-search="true" required="required" tabindex="10">
+                        <label class="my-0 small">Técnico:</label>
+                        <select name="tecnico" id="tecnico" class="form-control form-control-sm selectpicker" data-live-search="true" data-container="body" data-width="100%" required="required" tabindex="10">
                           <option></option>
                           <option value="0">Não determinado</option>
                           <?php
@@ -942,7 +1456,7 @@ if ($m5_00 == 0) {
 
                       <div class="form-group col-sm-12 col-md-6">
                         <label class="my-0 small">Forma de atendimento:</label>
-                        <select name="forma" class="form-control form-control-sm" required="required" tabindex="11">
+                        <select name="forma" class="form-control form-control-sm selectpicker" data-container="body" data-width="100%" required="required" tabindex="11">
                           <option value="1">Remoto</option>
                           <option value="2">Presencial</option>
                           <option value="3">Remoto - Plantão </option>
@@ -950,20 +1464,21 @@ if ($m5_00 == 0) {
                         </select>
                       </div>
 
-                      <div class="form-group col-sm-12 col-md-6">
+                      <div class="form-group col-sm-12 col-md-6 task-date-field">
                         <label class="my-0 small">Abertura:</label>
                         <input type="text" name="abertura" value="<?php echo date("Y-m-d H:i", strtotime($agora)); ?>" required="required" readonly class="form-control form-control-sm form_datetime" tabindex="12">
                       </div>
 
-                      <div class="form-group col-sm-12 col-md-6 pt-3 text-center">
+                      <div class="form-group col-sm-12 col-md-6 task-create-actions">
                         <input type="hidden" name="token" value="<?php echo $token; ?>">
                         <input type="hidden" name="action" value="tarefa_adc">
-                        <button type="submit" class="btn btn-danger btn-sm p-1"><i class="fas fa-plus"></i> Iniciar atendimento</button>
+                        <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-plus"></i> Criar tarefa</button>
                       </div>
 
                     </div>
                   </div>
 
+                </div>
                 </div>
 
               </form>
@@ -995,7 +1510,7 @@ if ($m5_00 == 0) {
   <?php } ?>
 
   <?php
-  if (isset($tarefa)) {
+  if (!empty($tarefa)) {
     // Preparar e executar a query
     $query = $pdo->prepare("SELECT img_tarefa, id FROM imagens_tarefa WHERE tarefa_id = :tarefa");
     $query->bindParam(':tarefa', $tarefa, PDO::PARAM_STR);
@@ -1020,7 +1535,7 @@ if ($m5_00 == 0) {
   <?php
   // Verifica de existe o ID de um atendimento setado.
   // Se não houver, exibe a parte de CADASTRO DE tarefas
-  if (isset($tarefa)) { ?>
+  if (!empty($tarefa)) { ?>
     <?php
     //Busca informações da tarefa
 
@@ -1376,7 +1891,7 @@ if ($m5_00 == 0) {
             <div class="h6 card-header py-1">
               <div class="row">
                 <div class="col-6 h6 pt-2 mb-0">
-                  <i class="fas fa-check"></i> Açães
+                  <i class="fas fa-check"></i> Ações
                 </div>
                 <div class="col-6 text-right px-0">
                   <?php if ($tarefa_status == 0) { ?>
@@ -1411,7 +1926,7 @@ if ($m5_00 == 0) {
                 </div>
 
                 <div class="form-group col-sm-4 col-md-4">
-                  <label class="my-0 small">Tecnico:</label>
+                  <label class="my-0 small">Técnico:</label>
                   <input class="form-control form-control-sm" value="<?php echo $tecnico_nome; ?>" disabled="">
                 </div>
               </div>
@@ -1453,7 +1968,7 @@ if ($m5_00 == 0) {
                   <?php
                   //ANALISA E ALTERA REGRAS PARA EXIBIÇÃO DE BOTÕES, MODAIS, ETC DE ACORDO COM O STATUS DO CHAMADO
 
-                  // SE NºO HOUVER TÉCNICO ATRIBUÍDO PARA O ATENDIMENTO
+                  // SE NÃO HOUVER TÉCNICO ATRIBUÍDO PARA O ATENDIMENTO
                   if ($tecnico_id == 0) {
                     $exibe_bt_tarefa_aceitar = true;
                   }
@@ -1892,7 +2407,7 @@ if ($m5_00 == 0) {
               <div class="form-row pt-2">
                 <div class="form-group col-sm-6 col-md-4">
                   <label class="my-0 small">Tipo de atendimento:</label>
-                  <select name="tipo" class="form-control form-control-sm" required="required" tabindex="4">
+                  <select name="tipo" class="form-control form-control-sm selectpicker" data-container="body" data-width="100%" required="required" tabindex="4">
                     <option></option>
                     <option value="1" <?php if ($tarefa_tipo == 1) {
                                         echo " selected";
@@ -1917,7 +2432,7 @@ if ($m5_00 == 0) {
 
                 <div class="form-group col-sm-6 col-md-3">
                   <label class="my-0 small">Categoria:</label>
-                  <select name="categoria" id="categoria" class="form-control form-control-sm" required="required" tabindex="5">
+                  <select name="categoria" id="categoria" class="form-control form-control-sm selectpicker" data-live-search="true" data-container="body" data-width="100%" required="required" tabindex="5">
                     <option></option>
                     <?php
                     $pdo = ConnectionN3();
@@ -1938,7 +2453,7 @@ if ($m5_00 == 0) {
                 <div class="form-group col-sm-6 col-md-3">
                   <label class="my-0 small">Sub Categoria:</label>
                   <span class="carregando3 small">Aguarde, carregando...</span>
-                  <select name="subcategoria" id="subcategoria" class="form-control form-control-sm" required="required" tabindex="6">
+                  <select name="subcategoria" id="subcategoria" class="form-control form-control-sm selectpicker" data-live-search="true" data-container="body" data-width="100%" required="required" tabindex="6">
                     <option value="<?php echo $tarefa_scat; ?>"><?php echo $scat_nome; ?></option>
                   </select>
                 </div>
@@ -1946,7 +2461,7 @@ if ($m5_00 == 0) {
                 <div class="form-group col-sm-6 col-md-4">
                   <label class="my-0 small">Item:</label>
                   <span class="carregando4 small">Aguarde, carregando...</span>
-                  <select name="item" id="item" class="form-control form-control-sm" required="required" tabindex="7">
+                  <select name="item" id="item" class="form-control form-control-sm selectpicker" data-live-search="true" data-container="body" data-width="100%" required="required" tabindex="7">
                     <option value="<?php echo $tarefa_item; ?>"><?php echo $tarefa_itens_nome; ?></option>
                   </select>
                 </div>
@@ -1954,7 +2469,7 @@ if ($m5_00 == 0) {
 
                 <div class="form-group col-sm-6 col-md-3">
                   <label class="my-0 small">Nível:</label>
-                  <select name="nivel" class="form-control form-control-sm" required="required" tabindex="8">
+                  <select name="nivel" class="form-control form-control-sm selectpicker" data-container="body" data-width="100%" required="required" tabindex="8">
                     <option></option>
                     <option value="1" <?php if ($tarefa_nivel == 1) {
                                         echo " selected";
@@ -1979,7 +2494,7 @@ if ($m5_00 == 0) {
 
                 <div class="form-group col-sm-6 col-md-3">
                   <label class="my-0 small">Forma de atendimento:</label>
-                  <select name="forma" class="form-control form-control-sm" required="required" tabindex="9">
+                  <select name="forma" class="form-control form-control-sm selectpicker" data-container="body" data-width="100%" required="required" tabindex="9">
                     <option></option>
                     <option value="1" <?php if ($tarefa_forma == 1) {
                                         echo " selected";
@@ -2023,7 +2538,7 @@ if ($m5_00 == 0) {
           <div class="modal-content">
             <form action="#" method="POST">
               <div class="modal-header">
-                <h6 class="modal-title"><i class="far fa-arrow-alt-circle-down text-success"></i> Iniciar atendimento ou direcionar para outro Tecnico</h6>
+                <h6 class="modal-title"><i class="far fa-arrow-alt-circle-down text-success"></i> Iniciar atendimento ou direcionar para outro técnico</h6>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Fechar">
                   <span aria-hidden="true">&times;</span>
                 </button>
@@ -2032,12 +2547,12 @@ if ($m5_00 == 0) {
                 <label class="small"><strong>Iniciar o atendimento:</strong></label>
                 <label class="small">Se o técnico informado for o próprio usuário: a) este atendimento ficará sob sua responsabilidade; b) o status da tarefa será alterado para "Em execução".</label>
                 <label class="small pt-1"><strong>Direcionar a outro técnico:</strong></label>
-                <label class="small">Se o técnico informado NºO for o próprio usuário: a) este atendimento será redirecionado para a fila de tarefas do técnico informado; b) este atendimento contuará com o status "Aguardando atendimento" até que o técnico responsóvel confirme o início da execução.</label>
+                <label class="small">Se o técnico informado NÃO for o próprio usuário: a) este atendimento será redirecionado para a fila de tarefas do técnico informado; b) este atendimento continuará com o status "Aguardando atendimento" até que o técnico responsável confirme o início da execução.</label>
                 <label class="small pt-1">Não esqueça de informar todas as interação com o cliente.</label>
                 <div class="form-row">
                   <div class="form-group col-sm-12">
-                    <label class="my-0 small">Tecnico responsóvel:</label>
-                    <select name="tecnico" class="form-control form-control-sm selectpicker" data-live-search="true" required="required" tabindex="9">
+                    <label class="my-0 small">Técnico responsável:</label>
+                    <select name="tecnico" class="form-control form-control-sm selectpicker" data-live-search="true" data-container="body" data-width="100%" required="required" tabindex="9">
                       <?php
                       $pdo = ConnectionN3();
                       $show_clt = $pdo->prepare("SELECT usuarios.user_id, usuarios.user_nome FROM usuarios WHERE usuarios.user_sts = '1' ORDER BY usuarios.user_nome ASC");
@@ -2081,7 +2596,7 @@ if ($m5_00 == 0) {
             <div class="modal-body">
               <label class="small"><b>Confirmação de retomada da tarefa.</b></label>
               <label class="small"><b><i>Este atendimento estava aguardando o retorno de um terceiro. <br>Ao retomar este atendimento ele ficará sob sua responsabilidade.</i></b></label>
-              <label class="small" style="color: red;"><b><i><br>Não esqueça de informar todas interaçães com o cliente.</i></b></label>
+              <label class="small" style="color: red;"><b><i><br>Não esqueça de informar todas interAções com o cliente.</i></b></label>
             </div>
             <div class="modal-footer">
               <form action="#" method="POST">
@@ -2202,15 +2717,15 @@ if ($m5_00 == 0) {
               <div class="modal-body">
                 <div class="form-row">
                   <label class="small"><strong>Recusar atendimento:</strong></label>
-                  <label class="small">Ao confirmar esta tela SEM informar um técnico: a) o atendimento voltará para a fila de atendimento sem um responsóvel; b) este atendimento contuará com o status "Aguardando atendimento" até que um técnico o aceite.</label>
+                  <label class="small">Ao confirmar esta tela SEM informar um técnico: a) o atendimento voltará para a fila de atendimento sem um responsável; b) este atendimento continuará com o status "Aguardando atendimento" até que um técnico o aceite.</label>
                   <label class="small pt-1"><strong>Direcionar atendimento:</strong></label>
-                  <label class="small">Ao confirmar esta tela informando um técnico responsóvel: a) este atendimento será redirecionado para a fila de tarefas do técnico informado; b) este atendimento contuará com o status "Aguardando atendimento" até que o técnico responsóvel confirme o início da execução.</label>
+                  <label class="small">Ao confirmar esta tela informando um técnico responsável: a) este atendimento será redirecionado para a fila de tarefas do técnico informado; b) este atendimento continuará com o status "Aguardando atendimento" até que o técnico responsável confirme o início da execução.</label>
                   <label class="small pt-1">Não esqueça de informar todas as interação com o cliente.</label>
                 </div>
                 <div class="form-row">
                   <div class="form-group col-sm-12">
-                    <label class="my-0 small">Tecnico responsóvel:</label>
-                    <select name="tecnico" class="form-control form-control-sm selectpicker" data-live-search="true" required="required" tabindex="9">
+                    <label class="my-0 small">Técnico responsável:</label>
+                    <select name="tecnico" class="form-control form-control-sm selectpicker" data-live-search="true" data-container="body" data-width="100%" required="required" tabindex="9">
                       <option value="0">Não atribuído</option>
                       <?php
                       $pdo = ConnectionN3();
@@ -2298,8 +2813,8 @@ if ($m5_00 == 0) {
               </li>
               <li class="pt-1">Iniciei a execução da tarefa através do <span class="badge badge-light"><i class="far fa-arrow-alt-circle-down"></i> Iniciar ou Direcionar</span>
                 <ul>
-                  <li class="small">Se você for o técnico que executará o atendimento, apenas confirme o seu nome como <em>Tecnico Resposável</em>.</li>
-                  <li class="small">Quando você confirmar seu nome como <em>Tecnico Resposável</em> pelo atendimento outras opçães de gestão da tarefa aparecerão na sua tela.</li>
+                  <li class="small">Se você for o técnico que executará o atendimento, apenas confirme o seu nome como <em>Técnico Responsável</em>.</li>
+                  <li class="small">Quando você confirmar seu nome como <em>Técnico Responsável</em> pelo atendimento outras opções de gestão da tarefa aparecerão na sua tela.</li>
                   <li class="small">Se não for você quem executará o atendimento, você pode também informar quem será o técnico que deverá executar o atendimento.</li>
                   <li class="small">Cada ação que você fizer será exibida no <span class="badge badge-light"><i class="fas fa-list-ol"></i> Histórico da tarefa</span> com a data/hora e o seu nome.</li>
                 </ul>
@@ -2355,7 +2870,66 @@ if ($m5_00 == 0) {
   <script src="../js/bootstrap-datetimepicker.js"></script>
 
   <script>
-    $('.selectpicker').selectpicker();
+    function normalizeSelectpickers(scope) {
+      if (!$.fn.selectpicker) {
+        return;
+      }
+      $(scope || document).find('.selectpicker').each(function() {
+        var $select = $(this);
+        $select.attr('data-container', 'body');
+        $select.attr('data-width', '100%');
+        if ($select.data('selectpicker')) {
+          $select.selectpicker('refresh');
+        } else {
+          $select.selectpicker({
+            container: 'body',
+            width: '100%',
+            dropupAuto: false,
+            size: 8
+          });
+        }
+      });
+    }
+
+    function hideEnhancedSelect(selector) {
+      var $select = $(selector);
+      $select.hide();
+      $select.parent('.bootstrap-select').hide();
+    }
+
+    function showEnhancedSelect(selector) {
+      var $select = $(selector);
+      $select.show();
+      normalizeSelectpickers(document);
+      $select.parent('.bootstrap-select').show();
+    }
+
+    normalizeSelectpickers(document);
+
+    $(document).on('shown.bs.select', '.selectpicker', function() {
+      var $select = $(this);
+      var $button = $select.parent('.bootstrap-select').find('> button.dropdown-toggle');
+      var $container = $('.bs-container.bootstrap-select').last();
+      var $menu = $container.find('> .dropdown-menu');
+
+      if (!$menu.length) {
+        $menu = $select.parent('.bootstrap-select').find('> .dropdown-menu');
+      }
+
+      if ($button.length && $menu.length) {
+        var width = Math.min(Math.max($button.outerWidth(), 180), 420, window.innerWidth - 24);
+        $container.css({
+          width: width,
+          minWidth: width,
+          maxWidth: width
+        });
+        $menu.css({
+          width: width,
+          minWidth: width,
+          maxWidth: width
+        });
+      }
+    });
   </script>
 
   <?php if (empty($tarefa) || $exibe_bt_tarefa_espera == true) { ?>
@@ -2376,8 +2950,29 @@ if ($m5_00 == 0) {
     </script>
     <script type="text/javascript">
       $(".form_datetime").datetimepicker({
-        format: "yyyy-mm-dd hh:ii"
+        format: "yyyy-mm-dd hh:ii",
+        container: "body",
+        pickerPosition: "bottom-left",
+        autoclose: true,
+        zIndex: 2070
       });
+
+      $('.form_datetime').on('show', function() {
+        window.setTimeout(function() {
+          $('.datetimepicker.dropdown-menu:visible').each(function() {
+            var $picker = $(this);
+            var left = parseInt($picker.css('left'), 10) || 0;
+            var maxLeft = Math.max(8, window.innerWidth - $picker.outerWidth() - 12);
+
+            if (left > maxLeft) {
+              $picker.css('left', maxLeft);
+            } else if (left < 8) {
+              $picker.css('left', 8);
+            }
+          });
+        }, 0);
+      });
+
     </script>
   <?php } ?>
 
@@ -2389,11 +2984,9 @@ if ($m5_00 == 0) {
       //pupula os selects solicitante e local de acordo com o cliente escolhido
       $(function() {
         $('#cliente').change(function() {
-          console.log('called');
           if ($(this).val()) {
-            console.log('called');
-            $('#solicitante').hide();
-            $('#local').hide();
+            hideEnhancedSelect('#solicitante');
+            hideEnhancedSelect('#local');
             $('.carregando').show();
             $('.carregando2').show();
             $.getJSON('busca_solicitantes.php?search=', {
@@ -2404,7 +2997,8 @@ if ($m5_00 == 0) {
               for (var i = 0; i < j.length; i++) {
                 options += '<option value="' + j[i].id + '">' + j[i].nome + '</option>';
               }
-              $('#solicitante').html(options).show();
+              $('#solicitante').html(options);
+              showEnhancedSelect('#solicitante');
               $('.carregando').hide();
             });
             $.getJSON('busca_locais.php?search=', {
@@ -2415,12 +3009,14 @@ if ($m5_00 == 0) {
               for (var i = 0; i < j.length; i++) {
                 options += '<option value="' + j[i].id + '">' + j[i].nome + '</option>';
               }
-              $('#local').html(options).show();
+              $('#local').html(options);
+              showEnhancedSelect('#local');
               $('.carregando2').hide();
             });
           } else {
             $('#solicitante').html('<option value="">Escolha o Solicitante</option>');
             $('#local').html('<option value="">Escolha o Local</option>');
+            normalizeSelectpickers(document);
           }
         });
       });
@@ -2431,7 +3027,7 @@ if ($m5_00 == 0) {
     $(function() {
       $('#categoria').change(function() {
         if ($(this).val()) {
-          $('#subcategoria').hide();
+          hideEnhancedSelect('#subcategoria');
           $('.carregando3').show();
           $.getJSON('busca_subcategorias.php?search=', {
             categoria: $(this).val(),
@@ -2441,12 +3037,14 @@ if ($m5_00 == 0) {
             for (var i = 0; i < j.length; i++) {
               options += '<option value="' + j[i].id + '">' + j[i].nome + '</option>';
             }
-            $('#subcategoria').html(options).show();
+            $('#subcategoria').html(options);
+            showEnhancedSelect('#subcategoria');
             $('.carregando3').hide();
           });
 
         } else {
           $('#subcategoria').html('<option value="">Escolha a Subcategoria</option>');
+          normalizeSelectpickers(document);
         }
       });
     });
@@ -2456,7 +3054,7 @@ if ($m5_00 == 0) {
     $(function() {
       $('#subcategoria').change(function() {
         if ($(this).val()) {
-          $('#item').hide();
+          hideEnhancedSelect('#item');
           $('.carregando4').show();
           $.getJSON('busca_itens.php?search=', {
             subcategoria: $(this).val(),
@@ -2466,11 +3064,13 @@ if ($m5_00 == 0) {
             for (var i = 0; i < j.length; i++) {
               options += '<option value="' + j[i].id + '">' + j[i].nome + '</option>';
             }
-            $('#item').html(options).show();
+            $('#item').html(options);
+            showEnhancedSelect('#item');
             $('.carregando4').hide();
           });
         } else {
           $('#item').html('<option value="">Escolha o Item</option>');
+          normalizeSelectpickers(document);
         }
       });
     });
@@ -2955,7 +3555,7 @@ WHERE tarefas.id = '$tarefa'");
             //insere o registro de uma nova interação 
             $adc = $pdo->prepare("INSERT INTO `inter_projeto` (`inter_tipo`, `inter_projeto`, `inter_user`, `inter_data`, `inter_desc`) VALUES ('6', '$projeto_id', '$user_id', '$agora', 'Retomou o projeto.');");
             if ($adc->execute()) {
-              $mensagem = "<i class=\"fas fa-check\"></i> Beleza! <br> Agora vamos descrever as interaçães com o cliente!";
+              $mensagem = "<i class=\"fas fa-check\"></i> Beleza! <br> Agora vamos descrever as interAções com o cliente!";
               $mensagem_cor = "alert-success";
             } else {
               $mensagem = "<i class=\"fas fa-exclamation-triangle\"></i> Falha ao adicionar registro na tabela de interação!";
@@ -3167,6 +3767,22 @@ WHERE tarefas.id = '$tarefa'");
   </script>
 
 
+  <?php
+  $quick_modal = $_SESSION['tarefa_quick_modal'] ?? '';
+  unset($_SESSION['tarefa_quick_modal']);
+  $allowed_quick_modals = ['tarefa_aceitar', 'tarefa_retomar', 'tarefa_finalizar'];
+  if (in_array($quick_modal, $allowed_quick_modals, true)) { ?>
+    <script>
+      $(function() {
+        var quickModal = '#<?php echo $quick_modal; ?>';
+        if ($(quickModal).length) {
+          $(quickModal).modal('show');
+        }
+      });
+    </script>
+  <?php } ?>
+
 </body>
 
 </html>
+

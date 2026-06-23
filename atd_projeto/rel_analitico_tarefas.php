@@ -95,7 +95,7 @@ $total_sla = 0;
             <div class="card py-0 my-0">
               <div class="card-header my-0 bg-light py-0 h6" id="headingOne">
                 <button class="btn" data-toggle="collapse" data-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
-                  <i class="fas fa-chart-bar"></i> <strong><i>Relatério de Tarefas Por Cliente e Tecnico</i></strong>
+                  <i class="fas fa-chart-bar"></i> <strong><i>Relatório de Tarefas Por Cliente e Tecnico</i></strong>
 
                 </button>
               </div>
@@ -347,7 +347,7 @@ $total_sla = 0;
         </div>
 
         <div class="modal-body">
-          <p><strong>Relatério de Tarefas por Cliente e Tecnico:</strong></p>
+          <p><strong>Relatório de Tarefas por Cliente e Tecnico:</strong></p>
           <p>Este relatório apresenta uma análise detalhada das tarefas realizadas para um cliente específico em um determinado período. Ele é útil para acompanhar a eficiência das equipes e a satisfação dos clientes.</p>
 
           <p><strong>Filtros Disponíveis:</strong></p>
@@ -360,7 +360,7 @@ $total_sla = 0;
           <p><strong>Exemplo de Uso:</strong></p>
           <p>Suponha que você deseja verificar todas as tarefas realizadas pelo técnico João para o cliente ABC Ltda. no mês de julho de 2024. Você pode selecionar "ABC Ltda." no filtro de Cliente, "João" no filtro de DevOps, e definir o período de 01/07/2024 a 31/07/2024 nos campos de data. O relatório mostrará todas as tarefas que atendem a esses critérios.</p>
 
-          <p><strong>Status das Tarefas Consideradas no Relatério:</strong></p>
+          <p><strong>Status das Tarefas Consideradas no Relatório:</strong></p>
           <ul class="list">
             <li><i class="fas fa-hourglass-half text-warning"></i> <strong>Aguardando Execução:</strong> Tarefas que foram registradas, mas ainda não foram iniciadas.</li>
             <li><i class="fas fa-magic text-primary"></i> <strong>Em Execução:</strong> Tarefas que estão atualmente em andamento.</li>
@@ -368,7 +368,7 @@ $total_sla = 0;
             <li class="pt-1"><i class="fas fa-check text-success"></i> <strong>Finalizada:</strong> Tarefas que foram concluídas com sucesso.</li>
           </ul>
 
-          <p><strong>Status das Tarefas Não Consideradas no Relatério:</strong></p>
+          <p><strong>Status das Tarefas Não Consideradas no Relatório:</strong></p>
           <ul class="list">
             <li><i class="far fa-clock text-info"></i> <strong>Agendado:</strong> Tarefas que foram programadas para uma data futura, mas ainda não foram iniciadas.</li>
           </ul>
@@ -376,7 +376,7 @@ $total_sla = 0;
           <p><strong>Informações Adicionais:</strong></p>
           <p>O relatório também permite especificar o local onde o atendimento foi prestado (por exemplo, atendimento remoto ou presencial) e o nível de atendimento (como falha, relacionamento, requisição de serviços, etc.). Essas informações ajudam a entender melhor o contexto e a natureza das tarefas realizadas.</p>
 
-          <p><strong>Exemplo de Relatério:</strong></p>
+          <p><strong>Exemplo de Relatório:</strong></p>
           <p>Se um técnico realizou várias tarefas para diferentes clientes, o relatório pode mostrar informações detalhadas como:</p>
           <ul class="list">
             <li><strong>Cliente:</strong> ABC Ltda.</li>

@@ -30,6 +30,20 @@ $params = [
     ':fim' => $dataFim . " 23:59:59"
 ];
 
+$statusPermitidosResumo = [1, 2, 4];
+$statusResumo = isset($_GET['status']) ? (int)$_GET['status'] : 4;
+if (!in_array($statusResumo, $statusPermitidosResumo, true)) {
+    $statusResumo = 4;
+}
+
+$visoesResumo = [
+    1 => ['titulo' => 'Despesas Aguardando Aprovação', 'label' => 'Aguardando Aprovação'],
+    2 => ['titulo' => 'Despesas Aprovadas Aguardando Pagamento', 'label' => 'Aprovadas Aguardando Pagamento'],
+    4 => ['titulo' => 'Despesas Pagas', 'label' => 'Pagas'],
+];
+$tituloResumo = $visoesResumo[$statusResumo]['titulo'];
+$paramsResumo = $params + [':status_resumo' => $statusResumo];
+
 // --- CÁLCULOS TOTAIS E PARA CARDS (sem alterações) ---
 $totalAguardandoGeral = $pdo->query("SELECT IFNULL(SUM(amount), 0) FROM running_balance WHERE status = 1 AND aj = 1")->fetchColumn();
 
@@ -55,6 +69,8 @@ $stmtTotalAprovado = $pdo->prepare("SELECT COUNT(*) FROM running_balance r WHERE
 $stmtTotalAprovado->execute($params);
 $countTotalAprovado = $stmtTotalAprovado->fetchColumn();
 
+$countTotalAprovadoGeral = $pdo->query("SELECT COUNT(*) FROM running_balance WHERE status = 2 AND aj = 1")->fetchColumn();
+
 // ======================================================================
 // ## INÍCIO DA LÓGICA HÍBRIDA PARA RESUMO DE CATEGORIAS ##
 // ======================================================================
@@ -69,10 +85,10 @@ if ($dataInicio < $dataCorteCategorias) {
     $sqlAntigo = "SELECT c.categories, SUM(r.amount) as balance 
                   FROM running_balance r 
                   JOIN category c ON c.id = r.category_id 
-                  WHERE r.status = 4 AND r.aj = 1 AND r.date_created BETWEEN :inicio AND :fim
+                  WHERE r.status = :status_resumo AND r.aj = 1 AND r.date_created BETWEEN :inicio AND :fim
                   GROUP BY c.categories";
     $stmtAntigo = $pdo->prepare($sqlAntigo);
-    $stmtAntigo->execute($paramsAntigo);
+    $stmtAntigo->execute($paramsAntigo + [':status_resumo' => $statusResumo]);
     $resultadoAntigo = $stmtAntigo->fetchAll(PDO::FETCH_ASSOC);
     foreach ($resultadoAntigo as $item) {
         $resumoAgregado[$item['categories']] = ($resumoAgregado[$item['categories']] ?? 0) + $item['balance'];
@@ -86,10 +102,10 @@ if ($dataFim >= $dataCorteCategorias) {
     $sqlNovo = "SELECT c.nome AS categories, SUM(r.amount) as balance 
                 FROM running_balance r 
                 JOIN categorias_subgrupo c ON c.id = r.category_id 
-                WHERE r.status = 4 AND r.aj = 1 AND c.aplicavel IN ('Ambos', 'RD') AND r.date_created BETWEEN :inicio AND :fim
+                WHERE r.status = :status_resumo AND r.aj = 1 AND c.aplicavel IN ('Ambos', 'RD') AND r.date_created BETWEEN :inicio AND :fim
                 GROUP BY c.id, c.nome";
     $stmtNovo = $pdo->prepare($sqlNovo);
-    $stmtNovo->execute($paramsNovo);
+    $stmtNovo->execute($paramsNovo + [':status_resumo' => $statusResumo]);
     $resultadoNovo = $stmtNovo->fetchAll(PDO::FETCH_ASSOC);
     foreach ($resultadoNovo as $item) {
         $resumoAgregado[$item['categories']] = ($resumoAgregado[$item['categories']] ?? 0) + $item['balance'];
@@ -110,8 +126,8 @@ $totalAmountCategoria = array_sum(array_column($categoriasResumo, 'balance'));
 // ======================================================================
 
 // Resumo por Cliente 
-$stmtEmpresas = $pdo->prepare("SELECT r.cliente, SUM(r.amount) as balance FROM running_balance r WHERE r.status = 4 AND r.aj = 1 $filtroData GROUP BY r.cliente ORDER BY balance DESC");
-$stmtEmpresas->execute($params);
+$stmtEmpresas = $pdo->prepare("SELECT r.cliente, SUM(r.amount) as balance FROM running_balance r WHERE r.status = :status_resumo AND r.aj = 1 $filtroData GROUP BY r.cliente ORDER BY balance DESC");
+$stmtEmpresas->execute($paramsResumo);
 $empresasResumo = $stmtEmpresas->fetchAll(PDO::FETCH_ASSOC);
 
 // contar amount por empresa
@@ -120,8 +136,8 @@ $totalAmountEmpresa = array_sum(array_column($empresasResumo, 'balance'));
 
 
 // Resumo por Colaborador 
-$stmtUsuarios = $pdo->prepare("SELECT u.user_id, u.user_nome, SUM(r.amount) AS balance FROM running_balance r left JOIN usuarios u ON u.user_id = r.user_id WHERE r.status = 4 AND r.aj = 1 $filtroData GROUP BY u.user_id, u.user_nome ORDER BY balance DESC");
-$stmtUsuarios->execute($params);
+$stmtUsuarios = $pdo->prepare("SELECT u.user_id, u.user_nome, SUM(r.amount) AS balance FROM running_balance r left JOIN usuarios u ON u.user_id = r.user_id WHERE r.status = :status_resumo AND r.aj = 1 $filtroData GROUP BY u.user_id, u.user_nome ORDER BY balance DESC");
+$stmtUsuarios->execute($paramsResumo);
 $usuariosResumo = $stmtUsuarios->fetchAll(PDO::FETCH_ASSOC);
 // contar amount por colaborador
 $totalAmountColaborador = array_sum(array_column($usuariosResumo, 'balance'));
@@ -253,28 +269,30 @@ $totalAmountColaborador = array_sum(array_column($usuariosResumo, 'balance'));
             transition: transform 0.2s ease-in-out;
         }
     </style>
+    <link rel="stylesheet" href="css/gestao_rd_modern.css">
 </head>
 
 <body>
     <?php include("../all/sidebar.php"); ?>
-    <div class="container-fluid mt-2">
-        <div class="d-flex flex-column" style="min-height: 100vh;">
+    <div class="container-fluid mt-2 gestao-rd-page">
+        <div class="d-flex flex-column gestao-rd-shell" style="min-height: 100vh;">
 
-            <div class="card">
+            <div class="card gestao-rd-main-card">
                 <div class="card-header py-2">
                     <div class="row">
                         <div class="col-md-6 mt-2 mb-0 ml-2 row">
-                            <h4 class="m-0 font-weight-bold">Painel Financeiro</h4>
-                            <a href="gestaoRD.php" class="ml-4"><i class="fas fa-home" style="font-size: 25px;" data-toggle="tooltip" title="Home RD"></i></a>
+                            <h4 class="m-0 font-weight-bold gestao-rd-title">Painel Financeiro</h4>
+                            <a href="gestaoRD.php" class="ml-4 gestao-rd-home-link"><i class="fas fa-home" style="font-size: 25px;" data-toggle="tooltip" title="Home RD"></i></a>
                         </div>
                         <div class="col-md-6 text-right">
-                            <form method="GET" class="form-inline justify-content-end">
+                            <form method="GET" class="form-inline justify-content-end gestao-rd-filter">
+                                <input type="hidden" name="status" value="<?= (int)$statusResumo ?>">
                                 <label class="mr-2 small">De:</label>
                                 <input type="date" name="data_inicio" class="form-control form-control-sm mr-2" value="<?= htmlspecialchars($_GET['data_inicio'] ?? $dataInicio) ?>">
                                 <label class="mr-2 small">Até:</label>
                                 <input type="date" name="data_fim" class="form-control form-control-sm mr-2" value="<?= htmlspecialchars($_GET['data_fim'] ?? $dataFim) ?>">
-                                <button type="submit" class="btn btn-sm btn-primary mr-2">Filtrar</button>
-                                <a href="gestaoRD.php" class="btn btn-sm btn-secondary">Limpar</a>
+                                <button type="submit" class="btn btn-sm btn-primary mr-2"><i class="fas fa-filter"></i> Filtrar</button>
+                                <a href="gestaoRD.php" class="btn btn-sm btn-secondary"><i class="fas fa-eraser"></i> Limpar</a>
                             </form>
                         </div>
                     </div>
@@ -285,7 +303,7 @@ $totalAmountColaborador = array_sum(array_column($usuariosResumo, 'balance'));
                         <div class="row text-center resumo-box mt-0">
 
                             <div class="col-md-4 mb-3 mt-0">
-                                <div class="card border-left-warning shadow h-100 py-2 card-metric">
+                                <div class="card border-left-warning shadow h-100 py-2 card-metric <?= $statusResumo === 1 ? 'gestao-rd-active' : '' ?>">
                                     <div class="card-body">
                                         <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Aguardando Aprovação</div>
                                         <div class="h5 mb-0 font-weight-bold text-gray-800">R$ <?= number_format($totalAguardandoGeral, 2, ',', '.') ?></div>
@@ -295,11 +313,10 @@ $totalAmountColaborador = array_sum(array_column($usuariosResumo, 'balance'));
                                         <button id="btnAprovarPendentes" class="btn btn-sm btn-warning">Aprovar</button>
                                     </div>
                                 </div>
-                                </a>
                             </div>
 
                             <div class="col-md-4 mb-3 mt-0">
-                                <div class="card border-left-info shadow h-100 py-2 card-metric">
+                                <div class="card border-left-info shadow h-100 py-2 card-metric <?= $statusResumo === 2 ? 'gestao-rd-active' : '' ?>">
                                     <div class="card-body">
                                         <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Aprovadas Aguardando Pagamento</div>
                                         <div class="h5 mb-0 font-weight-bold text-gray-800">R$ <?= number_format($totalAprovadoGeral, 2, ',', '.') ?></div>
@@ -318,14 +335,14 @@ $totalAmountColaborador = array_sum(array_column($usuariosResumo, 'balance'));
                             </div>
 
                             <div class="col-md-4 mb-3 mt-0">
-                                <div class="card border-left-info shadow h-100 py-2 card-metric">
+                                <div class="card border-left-info shadow h-100 py-2 card-metric <?= $statusResumo === 4 ? 'gestao-rd-active' : '' ?>">
                                     <div class="card-body">
                                         <div class="text-xs font-weight-bold text-success text-uppercase mb-1"><i class="fas fa-money-check-alt "></i> Pagas</div>
                                         <div class="h5 mb-0 font-weight-bold text-gray-800">R$ <?= number_format($totalPagas, 2, ',', '.') ?></span></div>
                                     </div>
                                     <div class="mt-2">
                                         <button id="btnVerPagas" class="btn btn-sm btn-outline-dark">Ver Resumo</button>
-                                        <button id="btnRelatorio" class="btn btn-sm btn-secondary">Relatério</button>
+                                        <button id="btnRelatorio" class="btn btn-sm btn-secondary">Relatório</button>
                                     </div>
                                 </div>
                             </div>
@@ -333,7 +350,7 @@ $totalAmountColaborador = array_sum(array_column($usuariosResumo, 'balance'));
 
                         <div class="text-center m-0 p-0">
                             <hr class="m-1">
-                            <h4 class="m-0 p-0">Despesas Pagas</h4>
+                            <h4 class="m-0 p-0"><?= htmlspecialchars($tituloResumo) ?></h4>
                             <hr class="m-1 mb-3">
                         </div>
 
@@ -442,19 +459,19 @@ $totalAmountColaborador = array_sum(array_column($usuariosResumo, 'balance'));
         $(document).ready(function() {
             // --- Variáveis vindas do PHP ---
             const countTotalAguardando = <?= (int)($countTotalAguardando ?? 0) ?>;
-            const countTotalAprovado = <?= (int)($countTotalAprovado ?? 0) ?>;
+            const countTotalAprovado = <?= (int)($countTotalAprovadoGeral ?? 0) ?>;
 
             // --- Funções de Ação dos Botões ---
             $('#btnVerRegistradas').on('click', function() {
-                window.location.href = 'rdRegistradas.php?data_inicio=<?= $dataInicio ?>&data_fim=<?= $dataFim ?>';
+                window.location.href = 'gestaoRD.php?status=1&data_inicio=<?= $dataInicio ?>&data_fim=<?= $dataFim ?>';
             });
 
             $('#btnVerAprovadas').on('click', function() {
-                window.location.href = 'rdAprovadas.php?data_inicio=<?= $dataInicio ?>&data_fim=<?= $dataFim ?>';
+                window.location.href = 'gestaoRD.php?status=2&data_inicio=<?= $dataInicio ?>&data_fim=<?= $dataFim ?>';
             });
 
             $('#btnVerPagas').on('click', function() {
-                window.location.href = 'gestaoRD.php?data_inicio=<?= $dataInicio ?>&data_fim=<?= $dataFim ?>';
+                window.location.href = 'gestaoRD.php?status=4&data_inicio=<?= $dataInicio ?>&data_fim=<?= $dataFim ?>';
             });
 
             function aprovarPendentes() {
@@ -512,7 +529,7 @@ $totalAmountColaborador = array_sum(array_column($usuariosResumo, 'balance'));
                         url: 'buscar_detalhesRD.php',
                         type: 'GET',
                         data: {
-                            status: 4,
+                            status: <?= (int)$statusResumo ?>,
                             tipo,
                             identificador,
                             data_inicio: dataInicio,

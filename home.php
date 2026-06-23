@@ -6,10 +6,10 @@ include_once("./all/conect.php");
 include_once("./all/permissoes.php");
 $data = date("Y-m-d");
 
-//VERIFICA SE HÁ REQUISICAO PARA SER EXECUTADA
+//VERIFICA SE HÃ¡ REQUISICAO PARA SER EXECUTADA
 if (isset($_POST['action'])) {
   $action  = $_POST['action'];
-  //SE A REQUISIÇÃO FOR PARA ALTERAR SENHA
+  //SE A REQUISIÃ‡ÃƒO FOR PARA ALTERAR SENHA
   if ($action == "alterar_senha") {
     include_once("all/update_senha.php");
   }
@@ -28,7 +28,6 @@ $data_d7 =  date('Y-m-d', strtotime($data . ' -7 days'));
   <link rel="stylesheet" href="./css/bootstrap.min.css">
   <link rel="stylesheet" href="./fontawesome/css/all.css">
   <link rel="icon" href="./img/favicon.ico">
-  <script type="text/javascript" src="./js/loader.js"></script>
   <title>Allterus</title>
 </head>
 <style>
@@ -67,9 +66,33 @@ $data_d7 =  date('Y-m-d', strtotime($data . ' -7 days'));
   }
 
   body {
-    zoom: 0.9;
     width: 100%;
+    min-height: auto !important;
     overflow-x: hidden;
+    overflow-y: auto;
+  }
+
+  html {
+    height: 100%;
+    overflow: hidden;
+  }
+
+  body.home-dashboard {
+    height: 100vh;
+    min-height: 100vh !important;
+    overflow: hidden;
+    padding-bottom: 0;
+  }
+
+  body.home-dashboard>.card.shadow {
+    height: calc(100vh - 1px);
+    margin-bottom: 0 !important;
+    overflow: hidden;
+    box-sizing: border-box;
+  }
+
+  body.home-dashboard>.card.shadow:last-of-type {
+    margin-bottom: 0 !important;
   }
 
   .navbar-nav {
@@ -82,7 +105,7 @@ $data_d7 =  date('Y-m-d', strtotime($data . ' -7 days'));
   .navbar-nav .nav-link,
   .navbar-nav .dropdown-item {
     padding: 0.4rem 1rem;
-    /* Segunda medida regula o espaço entre colunas */
+    /* Segunda medida regula o espaÃ§o entre colunas */
     margin: 0;
     font-size: 16px;
   }
@@ -100,6 +123,46 @@ $data_d7 =  date('Y-m-d', strtotime($data . ' -7 days'));
     max-height: calc(100vh - 57px);
   }
 
+  body.home-dashboard>.card.shadow>.card-body {
+    max-height: calc(100vh - 49px);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    padding-bottom: .25rem;
+  }
+
+  .monthly-ranking-row,
+  .annual-ranking-grid {
+    flex: 0 0 auto;
+  }
+
+  .annual-ranking-intro {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .75rem;
+    margin: auto 0 .65rem;
+    padding: .55rem .75rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background: #f7f7f7;
+  }
+
+  .annual-ranking-intro h6 {
+    margin: 0;
+    color: #212529;
+    font-weight: 700;
+  }
+
+  .annual-ranking-intro span {
+    color: #405167;
+    font-size: .82rem;
+  }
+
+  .annual-ranking-intro i {
+    color: #f59e0b;
+  }
+
   @keyframes pulse {
     0% {
       /* Tamanho normal e inclinado */
@@ -107,24 +170,524 @@ $data_d7 =  date('Y-m-d', strtotime($data . ' -7 days'));
     }
 
     50% {
-      /* Aumenta o tamanho e mantém a inclinação */
+      /* Aumenta o tamanho e mantÃ©m a inclinaÃ§Ã£o */
       transform: scale(1.5) rotate(-15deg);
     }
 
     100% {
-      /* Volta ao normal, mantendo a inclinação */
+      /* Volta ao normal, mantendo a inclinaÃ§Ã£o */
       transform: scale(1) rotate(-15deg);
     }
   }
 
-  /* 2. Aplica a animação (esta parte não muda) */
+  /* 2. Aplica a animaÃ§Ã£o (esta parte nÃ£o muda) */
   .crown-pulse {
     display: inline-block;
     animation: pulse 2s ease-in-out infinite;
   }
+
+  .annual-card {
+    height: 100%;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background: #fff;
+    overflow: hidden;
+  }
+
+  .annual-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .5rem;
+    padding: .55rem .75rem;
+    border-bottom: 1px solid #ddd;
+    background: #f7f7f7;
+  }
+
+  .annual-card-title {
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+    margin: 0;
+    color: #212529;
+    font-size: .88rem;
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+
+  .annual-card-title i {
+    color: #f59e0b;
+  }
+
+  .annual-card-year {
+    color: #405167;
+    font-size: .75rem;
+    font-weight: 600;
+  }
+
+  .annual-card-body {
+    padding: .95rem 1rem .95rem;
+  }
+
+  .annual-first {
+    display: flex;
+    grid-template-columns: 34px minmax(0, 1fr);
+    align-items: center;
+    gap: .65rem;
+    min-height: 64px;
+    padding-bottom: .8rem;
+    justify-content: center;
+    border-bottom: 1px solid #eee;
+  }
+
+  .annual-medal {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    font-size: 1.65rem;
+    line-height: 1;
+  }
+
+  .annual-name {
+    margin: 0;
+    overflow: hidden;
+    color: #111827;
+    font-size: 1.12rem;
+    font-weight: 700;
+    line-height: 1.2;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .annual-total {
+    margin: .15rem 0 0;
+    color: #405167;
+    font-size: .78rem;
+  }
+
+  .annual-runners {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0;
+    padding-top: .35rem;
+  }
+
+  .annual-runner {
+    display: grid;
+    grid-template-columns: 24px minmax(0, 1fr);
+    align-items: center;
+    gap: .4rem;
+    min-height: 50px;
+    padding: .55rem .35rem;
+    background: #fff;
+  }
+
+  .annual-runner-rank {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    font-size: 1.15rem;
+    line-height: 1;
+  }
+
+  .annual-runner-name {
+    margin: 0;
+    overflow: hidden;
+    color: #111827;
+    font-size: .84rem;
+    font-weight: 700;
+    text-overflow: ellipsis;
+    white-space: normal;
+  }
+
+  .annual-runner-total {
+    color: #405167;
+    font-size: .72rem;
+  }
+
+  .annual-empty {
+    display: flex;
+    min-height: 112px;
+    align-items: center;
+    justify-content: center;
+    color: #405167;
+    font-size: .85rem;
+    text-align: center;
+  }
+
+  .ranking-period-form {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    position: relative;
+  }
+
+  .ranking-range-toggle {
+    display: flex;
+    align-items: center;
+    gap: .45rem;
+    min-width: 235px;
+    height: 31px;
+    padding: .2rem .65rem;
+    border: 1px solid #6c757d;
+    border-radius: 3px;
+    background: #fff;
+    color: #405167;
+    font-size: .84rem;
+    text-align: left;
+  }
+
+  .ranking-range-toggle i {
+    color: #007bff;
+  }
+
+  .ranking-range-picker {
+    display: none;
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    z-index: 1060;
+    width: 340px;
+    padding: 0;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background: #fff;
+    box-shadow: 0 8px 18px rgba(15, 23, 42, .12);
+    overflow: hidden;
+  }
+
+  .ranking-period-form.range-open .ranking-range-picker {
+    display: block;
+  }
+
+  .ranking-calendar-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: .7rem .75rem .45rem;
+  }
+
+  .ranking-calendar-nav {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border: 0;
+    border-radius: 4px;
+    background: transparent;
+    color: #405167;
+    cursor: pointer;
+  }
+
+  .ranking-calendar-nav:hover {
+    background: #eef2f7;
+  }
+
+  .ranking-calendar-title {
+    display: flex;
+    align-items: baseline;
+    gap: .45rem;
+    color: #405167;
+    font-size: 1.05rem;
+    font-weight: 600;
+  }
+
+  .ranking-calendar-weekdays,
+  .ranking-calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+  }
+
+  .ranking-calendar-weekdays {
+    padding: 0 .65rem;
+    color: #6c757d;
+    font-size: .78rem;
+    font-weight: 700;
+    text-align: center;
+  }
+
+  .ranking-calendar-weekdays span {
+    padding: .35rem 0;
+  }
+
+  .ranking-calendar-grid {
+    padding: 0 .65rem .65rem;
+  }
+
+  .ranking-day {
+    position: relative;
+    height: 38px;
+    border: 0;
+    background: transparent;
+    color: #405167;
+    font-size: .82rem;
+    cursor: pointer;
+  }
+
+  .ranking-day::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: transparent;
+  }
+
+  .ranking-day span {
+    position: relative;
+    z-index: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+  }
+
+  .ranking-day:hover span {
+    background: #e9ecef;
+  }
+
+  .ranking-day.is-muted {
+    color: #c4c9cf;
+  }
+
+  .ranking-day.is-in-range::before {
+    background: #e9ecef;
+  }
+
+  .ranking-day.is-range-start::before {
+    left: 50%;
+    background: #e9ecef;
+  }
+
+  .ranking-day.is-range-end::before {
+    right: 50%;
+    background: #e9ecef;
+  }
+
+  .ranking-day.is-range-start span,
+  .ranking-day.is-range-end span {
+    background: #5aa2ff;
+    color: #fff;
+  }
+
+  .ranking-day.is-range-start.is-range-end::before {
+    background: transparent;
+  }
+
+  .ranking-range-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .5rem;
+    padding: .55rem .75rem;
+    border-top: 1px solid #ddd;
+    background: #f7f7f7;
+  }
+
+  .ranking-range-hint {
+    color: #405167;
+    font-size: .75rem;
+  }
+
+  @media (max-height: 880px) and (min-width: 992px) {
+    body.home-dashboard>.card.shadow>.card-body {
+      max-height: calc(100vh - 49px);
+      overflow-y: auto;
+    }
+
+    .monthly-ranking-row>[class*="col-"]>.card {
+      height: 500px !important;
+    }
+
+    .monthly-ranking-row .atd-list {
+      height: 436px !important;
+    }
+
+    .monthly-ranking-row>[class*="col-"] {
+      margin-bottom: .35rem !important;
+    }
+
+    .monthly-ranking-row+hr {
+      margin-top: .2rem !important;
+      margin-bottom: .2rem !important;
+    }
+
+    .annual-ranking-intro {
+      margin: auto 0 .45rem;
+      padding: .45rem .7rem;
+    }
+
+    .annual-card-body {
+      padding: .75rem .85rem;
+    }
+
+    .annual-first {
+      min-height: 56px;
+      padding-bottom: .55rem;
+    }
+
+    .annual-runner {
+      min-height: 42px;
+      padding-top: .4rem;
+      padding-bottom: .4rem;
+    }
+  }
+
+  @media (max-height: 760px) and (min-width: 992px) {
+    .monthly-ranking-row>[class*="col-"]>.card {
+      height: 420px !important;
+    }
+
+    .monthly-ranking-row .atd-list {
+      height: 356px !important;
+    }
+
+    .monthly-ranking-row>[class*="col-"] {
+      margin-bottom: .2rem !important;
+    }
+
+    .monthly-ranking-row+hr {
+      margin-top: .15rem !important;
+      margin-bottom: .15rem !important;
+    }
+
+    .annual-ranking-intro {
+      margin: auto 0 .35rem;
+      padding: .35rem .65rem;
+    }
+
+    .annual-card-header {
+      padding: .4rem .65rem;
+    }
+
+    .annual-card-body {
+      padding: .55rem .75rem;
+    }
+
+    .annual-first {
+      min-height: 48px;
+      padding-bottom: .4rem;
+    }
+
+    .annual-medal {
+      font-size: 1.45rem;
+    }
+
+    .annual-name {
+      font-size: 1rem;
+    }
+
+    .annual-runners {
+      padding-top: .2rem;
+    }
+
+    .annual-runner {
+      min-height: 36px;
+      padding-top: .3rem;
+      padding-bottom: .3rem;
+    }
+  }
+
+  @media (max-height: 680px) and (min-width: 992px) {
+    .monthly-ranking-row>[class*="col-"]>.card {
+      height: 360px !important;
+    }
+
+    .monthly-ranking-row .atd-list {
+      height: 296px !important;
+    }
+
+    .monthly-ranking-row>[class*="col-"] {
+      margin-bottom: .15rem !important;
+    }
+
+    .monthly-ranking-row+hr {
+      margin-top: .1rem !important;
+      margin-bottom: .1rem !important;
+    }
+
+    .annual-ranking-intro {
+      margin: auto 0 .3rem;
+    }
+
+    .annual-ranking-intro span {
+      display: none;
+    }
+
+    .annual-card-body {
+      padding: .45rem .65rem;
+    }
+
+    .annual-first {
+      min-height: 42px;
+    }
+
+    .annual-runner {
+      min-height: 32px;
+    }
+  }
+
+  @media (max-width: 991.98px) {
+    html {
+      height: auto;
+      overflow: auto;
+    }
+
+    body.home-dashboard {
+      height: auto;
+      min-height: 100vh !important;
+      overflow-y: auto;
+    }
+
+    body.home-dashboard>.card.shadow {
+      height: auto;
+      min-height: 100vh;
+      overflow: visible;
+    }
+
+    body.home-dashboard>.card.shadow>.card-body {
+      display: block;
+      max-height: none;
+      overflow: visible;
+    }
+
+    .monthly-ranking-row>[class*="col-"]>.card {
+      height: 380px !important;
+    }
+
+    .monthly-ranking-row .atd-list {
+      height: 316px !important;
+    }
+
+    .annual-ranking-intro {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .annual-ranking-grid>[class*="col-"] {
+      margin-bottom: .75rem !important;
+    }
+
+    .ranking-period-form {
+      justify-content: flex-start;
+      margin-top: .5rem;
+    }
+
+    .ranking-range-picker {
+      left: 0;
+      right: auto;
+      width: min(340px, calc(100vw - 120px));
+    }
+  }
+
 </style>
 
-<body>
+<body class="home-dashboard">
   <?php include_once("./all/loading_home.php"); ?>
   <?php include_once("all/sidebar.php"); ?>
 
@@ -133,43 +696,61 @@ $data_d7 =  date('Y-m-d', strtotime($data . ' -7 days'));
 
   // --- nova pagina home ---
   $ano_atual = date('Y');
-  $mes_selecionado = isset($_GET['mes']) ? (int)$_GET['mes'] : date('n');
-  $mes_selecionado = max(1, min(12, $mes_selecionado));
 
-  $ano_inicio = "{$ano_atual}-01-01";
-  $ano_fim = "{$ano_atual}-12-31";
+  $trimestre_atual = (int) ceil(date('n') / 3);
+  $trimestre_mes_inicio = (($trimestre_atual - 1) * 3) + 1;
+  $trimestre_mes_fim = $trimestre_mes_inicio + 2;
+  $trimestre_inicio = date('Y-m-d', mktime(0, 0, 0, $trimestre_mes_inicio, 1, $ano_atual));
+  $trimestre_fim = date('Y-m-t', mktime(0, 0, 0, $trimestre_mes_fim, 1, $ano_atual));
+  $ranking_trimestral_titulo = $trimestre_atual . '&ordm; trimestre ' . $ano_atual;
+  $ranking_trimestral_periodo = 'T' . $trimestre_atual . ' ' . $ano_atual;
 
-  $data_inicio = "{$ano_atual}-{$mes_selecionado}-01";
-  // $data_fim = "{$ano_atual}-{$mes_selecionado}-31";
+  $data_inicio_padrao = date('Y-m-01');
+  $data_fim_padrao = date('Y-m-t');
+  $data_inicio = $_GET['data_inicio'] ?? $data_inicio_padrao;
+  $data_fim = $_GET['data_fim'] ?? $data_fim_padrao;
 
-  // Linha corrigida
-  $data_fim = date('Y-m-t', strtotime($data_inicio));
+  if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $data_inicio) || !strtotime($data_inicio)) {
+    $data_inicio = $data_inicio_padrao;
+  }
+
+  if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $data_fim) || !strtotime($data_fim)) {
+    $data_fim = $data_fim_padrao;
+  }
+
+  if ($data_inicio > $data_fim) {
+    [$data_inicio, $data_fim] = [$data_fim, $data_inicio];
+  }
+
+  $periodo_inicio_valor = htmlspecialchars($data_inicio, ENT_QUOTES, 'UTF-8');
+  $periodo_fim_valor = htmlspecialchars($data_fim, ENT_QUOTES, 'UTF-8');
+  $periodo_label = date('d/m/Y', strtotime($data_inicio)) . ' - ' . date('d/m/Y', strtotime($data_fim));
 
   $filtro_data_sql_atendimentos = " AND a.abertura BETWEEN '{$data_inicio} 00:00:00' AND '{$data_fim} 23:59:59' ";
   $filtro_data_sql_tarefas = " AND t.fechamento BETWEEN '{$data_inicio}' AND '{$data_fim} 23:59:59' ";
   $filtro_data_sql_QA = " AND interacoes.inter_data BETWEEN '{$data_inicio}' AND '{$data_fim} 23:59:59' ";
 
 
-  // Filtros para o ANO INTEIRO
-  $filtro_ano_atendimentos = " AND a.abertura BETWEEN '{$ano_inicio} 00:00:00' AND '{$ano_fim} 23:59:59' ";
-  $filtro_ano_tarefas = " AND t.fechamento BETWEEN '{$ano_inicio}' AND '{$ano_fim}' ";
-  $filtro_ano_sql_QA = " AND interacoes.inter_data BETWEEN '{$ano_inicio}' AND '{$ano_fim} 23:59:59' ";
+  // Filtros para o trimestre atual
+  $filtro_trimestre_atendimentos = " AND a.abertura BETWEEN '{$trimestre_inicio} 00:00:00' AND '{$trimestre_fim} 23:59:59' ";
+  $filtro_trimestre_tarefas = " AND t.fechamento BETWEEN '{$trimestre_inicio}' AND '{$trimestre_fim} 23:59:59' ";
+  $filtro_trimestre_sql_QA = " AND interacoes.inter_data BETWEEN '{$trimestre_inicio}' AND '{$trimestre_fim} 23:59:59' ";
 
-  // 1. Pódio do ano: TI (alterado para LIMIT 3)
+  // 1. PÃ³dio do ano: TI (alterado para LIMIT 3)
   $pdo = ConnectionN3();
   $sql_podio_ti = "SELECT u.user_nome AS nome_tecnico, COUNT(a.id) AS total
                  FROM atendimentos a JOIN usuarios u ON a.tecnico = u.user_id
                  WHERE u.user_funcao IN (1, 2, 3, 4, 5, 6)
                  AND u.user_sts = 1
                  AND (a.status = 4 OR a.status = 5)
-                 {$filtro_ano_atendimentos}
+                 {$filtro_trimestre_atendimentos}
                  GROUP BY u.user_id, u.user_nome ORDER BY total DESC LIMIT 3";
   $stmt_podio_ti = $pdo->prepare($sql_podio_ti);
   $stmt_podio_ti->execute();
   $podio_ti = $stmt_podio_ti->fetchAll(PDO::FETCH_ASSOC);
 
 
-  // 2. Pódio do ano: DevOps (alterado para LIMIT 3)
+  // 2. PÃ³dio do ano: DevOps (alterado para LIMIT 3)
   $sql_podio_devops = "SELECT nome_tecnico, COUNT(*) AS total FROM (
                        SELECT u.user_nome AS nome_tecnico 
                        FROM atendimentos a
@@ -178,7 +759,7 @@ $data_d7 =  date('Y-m-d', strtotime($data . ' -7 days'));
                      WHERE (u.user_funcao BETWEEN 9 AND 14)
                          AND u.user_sts = 1
                          AND (a.status = 4 OR a.status = 5)
-                         {$filtro_ano_atendimentos}
+                         {$filtro_trimestre_atendimentos}
 
                        UNION ALL
 
@@ -189,7 +770,7 @@ $data_d7 =  date('Y-m-d', strtotime($data . ' -7 days'));
                      WHERE (u.user_funcao BETWEEN 9 AND 14)
                          AND u.user_sts = 1
                          AND (t.status = 4 OR t.status = 5)
-                         {$filtro_ano_tarefas}
+                         {$filtro_trimestre_tarefas}
                    ) AS dados_combinados
                    GROUP BY nome_tecnico 
                    ORDER BY total DESC 
@@ -199,9 +780,9 @@ $data_d7 =  date('Y-m-d', strtotime($data . ' -7 days'));
   $podio_devops = $stmt_podio_devops->fetchAll(PDO::FETCH_ASSOC);
 
 
-  // 3. Pódio do ano: MKT (a lógica de pegar os 3 primeiros é em PHP)
+  // 3. PÃ³dio do ano: MKT (a lÃ³gica de pegar os 3 primeiros Ã© em PHP)
   $pdoMkt = ConnectionMkt();
-  $params_mkt_ano = [':inicio' => $ano_inicio, ':fim' => $ano_fim];
+  $params_mkt_trimestre = [':inicio' => $trimestre_inicio, ':fim' => $trimestre_fim];
   $where_mkt_ano = "WHERE f.rel_type = 'task' 
                   AND COALESCE(ta.staffid, f.staffid) IN (SELECT staffid FROM tblstaff WHERE active = 1 AND staffid != 23)
                   AND DATE(f.dateadded) BETWEEN :inicio AND :fim";
@@ -213,7 +794,7 @@ $data_d7 =  date('Y-m-d', strtotime($data . ' -7 days'));
                      {$where_mkt_ano}
                      GROUP BY COALESCE(ta.staffid, f.staffid)";
   $stmt_mkt_ano = $pdoMkt->prepare($sqlInteracoesAno);
-  $stmt_mkt_ano->execute($params_mkt_ano);
+  $stmt_mkt_ano->execute($params_mkt_trimestre);
   $dadosInteracoesAno = $stmt_mkt_ano->fetchAll(PDO::FETCH_ASSOC);
   $dados_mkt_ano = [];
   foreach ($dadosInteracoesAno as $linha) {
@@ -235,10 +816,10 @@ $data_d7 =  date('Y-m-d', strtotime($data . ' -7 days'));
   usort($dados_mkt_ano, function ($a, $b) {
     return $b['artes_feitas'] <=> $a['artes_feitas'];
   });
-  // Pega os 3 primeiros do array após ordenar
+  // Pega os 3 primeiros do array apÃ³s ordenar
   $podio_mkt = array_slice($dados_mkt_ano, 0, 3);
 
-  // 4. Pódio do ano: QA
+  // 4. PÃ³dio do ano: QA
   $sql_podio_qa = "SELECT
                             CASE
                                 WHEN u.user_funcao = 7 THEN u.user_nome
@@ -255,7 +836,7 @@ $data_d7 =  date('Y-m-d', strtotime($data . ' -7 days'));
                           ) AS interacoes
                           JOIN usuarios u ON u.user_id = interacoes.inter_user
                           WHERE u.user_sts = 1
-                        {$filtro_ano_sql_QA}
+                        {$filtro_trimestre_sql_QA}
                       GROUP BY u.user_id, u.user_nome ORDER BY total DESC LIMIT 3";
   $stmt_podio_qa = $pdo->prepare($sql_podio_qa);
   $stmt_podio_qa->execute();
@@ -272,23 +853,48 @@ $data_d7 =  date('Y-m-d', strtotime($data . ' -7 days'));
         <div class="d-flex justify-content-between align-items-center">
           <h5 class="mb-0">RANKING
           </h5>
-          <div class="btn-toolbar" role="toolbar">
-            <div class="btn-group btn-group-sm flex-wrap" role="group">
-              <?php
-              $meses_abrev = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
-              foreach ($meses_abrev as $i => $nome_mes) {
-                $num_mes = $i + 1;
-                $classe_ativo = ($num_mes == $mes_selecionado) ? 'btn-secondary' : 'btn-outline-secondary';
-                echo "<a href='?mes={$num_mes}' class='btn {$classe_ativo} mb-1'>{$nome_mes}</a>";
-              }
-              ?>
+          <form class="ranking-period-form" method="get" id="rankingPeriodForm">
+            <input type="hidden" id="data_inicio" name="data_inicio" value="<?= $periodo_inicio_valor ?>">
+            <input type="hidden" id="data_fim" name="data_fim" value="<?= $periodo_fim_valor ?>">
+            <button type="button" class="ranking-range-toggle" id="rankingRangeToggle" aria-expanded="false" aria-controls="rankingRangePicker">
+              <i class="far fa-calendar-alt"></i>
+              <span id="rankingRangeLabel"><?= htmlspecialchars($periodo_label, ENT_QUOTES, 'UTF-8') ?></span>
+            </button>
+            <div class="ranking-range-picker" id="rankingRangePicker">
+              <div class="ranking-calendar-header">
+                <button type="button" class="ranking-calendar-nav" id="rankingCalendarPrev" aria-label="Mes anterior">
+                  <i class="fas fa-chevron-left"></i>
+                </button>
+                <div class="ranking-calendar-title">
+                  <span id="rankingCalendarMonth"></span>
+                  <span id="rankingCalendarYear"></span>
+                </div>
+                <button type="button" class="ranking-calendar-nav" id="rankingCalendarNext" aria-label="Proximo mes">
+                  <i class="fas fa-chevron-right"></i>
+                </button>
+              </div>
+              <div class="ranking-calendar-weekdays">
+                <span>Dom</span>
+                <span>Seg</span>
+                <span>Ter</span>
+                <span>Qua</span>
+                <span>Qui</span>
+                <span>Sex</span>
+                <span>Sab</span>
+              </div>
+              <div class="ranking-calendar-grid" id="rankingCalendarGrid"></div>
+              <div class="ranking-range-actions">
+                <span class="ranking-range-hint" id="rankingRangeHint">Selecione o período</span>
+                <a href="home.php" class="btn btn-outline-secondary btn-sm">Mês atual</a>
+                <button type="submit" class="btn btn-secondary btn-sm" id="rankingRangeApply">Aplicar</button>
+              </div>
             </div>
-          </div>
+          </form>
         </div>
       </div>
 
       <div class="card-body bg-light;">
-        <div class="row">
+        <div class="row monthly-ranking-row">
 
           <!-- Coluna de 1 barras TI-->
           <div class="col-lg-3 col-md-6 col-sm-12 mb-3">
@@ -320,7 +926,7 @@ $data_d7 =  date('Y-m-d', strtotime($data . ' -7 days'));
                 if (empty($resultados_1)) {
                   echo '<p class="p-2 text-muted">Nenhum dado no período.</p>';
                 } else {
-                  // Alteração aqui para adicionar a coroa
+                  // AlteraÃ§Ã£o aqui para adicionar a coroa
                   foreach ($resultados_1 as $index => $item) {
                     $percentual = $max_valor_1 > 0 ? ($item['total'] / $max_valor_1) * 100 : 0;
                     $coroa = ($index == 0) ? '<i class="fas fa-crown text-warning crown-pulse" style="margin-right: 5px;"></i>' : '';
@@ -376,7 +982,7 @@ $data_d7 =  date('Y-m-d', strtotime($data . ' -7 days'));
               $stmt_tarefas->execute();
               $tarefas_list = $stmt_tarefas->fetchAll(PDO::FETCH_ASSOC);
 
-              // Combinar dados mantendo a separação por cores
+              // Combinar dados mantendo a separaÃ§Ã£o por cores
               $resultados_2 = [];
 
               foreach ($atendimentos_list as $atd) {
@@ -507,7 +1113,7 @@ $data_d7 =  date('Y-m-d', strtotime($data . ' -7 days'));
                 if (empty($dados_mkt)) {
                   echo '<p class="p-2 text-muted">Nenhum dado no período.</p>';
                 } else {
-                  // Alteração aqui para adicionar a coroa
+                  // AlteraÃ§Ã£o aqui para adicionar a coroa
                   foreach ($dados_mkt as $index => $item) {
                     $percentual = $max_valor_mkt > 0 ? ($item['artes_feitas'] / $max_valor_mkt) * 100 : 0;
                     // DEPOIS (com a nova classe):
@@ -532,7 +1138,7 @@ $data_d7 =  date('Y-m-d', strtotime($data . ' -7 days'));
           <div class="col-lg-3 col-md-6 col-sm-12 mb-3">
             <div class="card h-100">
               <?php
-              // Conexão com o banco de dados
+              // ConexÃ£o com o banco de dados
               $pdo = ConnectionN3();
               $sql_QA = "SELECT
               CASE
@@ -596,726 +1202,236 @@ $data_d7 =  date('Y-m-d', strtotime($data . ' -7 days'));
         </div>
         <!-- </div> -->
 
-        <hr class="mt-5 mb-5">
-        <div class="row mt-3 mb-3">
+        <hr class="my-1">
+        <div class="annual-ranking-intro">
+          <h6><i class="fas fa-trophy"></i> Ranking trimestral <?= $ranking_trimestral_titulo ?></h6>
+        </div>
+        <div class="row annual-ranking-grid mt-1 mb-0">
 
-          <div class="col-lg-3 col-md-12 mb-2 text-center">
-            <h6 class="text-muted">🏆 RANKING TI <?= date('Y') ?></h6>
+          <div class="col-lg-3 col-md-6 col-sm-12 mb-0">
             <?php
             if (!empty($podio_ti)) :
-              // Separa os colocados em variáveis para facilitar o uso
               $primeiro_ti = $podio_ti[0] ?? null;
               $segundo_ti  = $podio_ti[1] ?? null;
               $terceiro_ti = $podio_ti[2] ?? null;
             ?>
-
-              <?php if ($primeiro_ti) : ?>
-                <div class="mb-3">
-                  <span style="font-size: 2.4em;">🥇</span>
-                  <p class="lead mb-0" style="font-weight: 600; font-size: 1.8rem;"><?= htmlspecialchars($primeiro_ti['nome_tecnico']) ?></p>
-                  <small class="text-muted"><?= $primeiro_ti['total'] ?> atendimentos</small>
+              <div class="annual-card">
+                <div class="annual-card-header">
+                  <h6 class="annual-card-title"><i class="fas fa-trophy"></i>TI</h6>
+                  <span class="annual-card-year"><?= $ranking_trimestral_periodo ?></span>
                 </div>
-              <?php endif; ?>
-
-              <div class="row">
-                <?php if ($segundo_ti) : ?>
-                  <div class="col-6 ">
-                    <span style="font-size: 1.5em;">🥈</span>
-                    <p class="lead mb-0" style="font-weight: 500;"><?= htmlspecialchars($segundo_ti['nome_tecnico']) ?></p>
-                    <small class="text-muted"><?= $segundo_ti['total'] ?> atendimentos</small>
+                <div class="annual-card-body">
+                  <?php if ($primeiro_ti) : ?>
+                    <div class="annual-first">
+                      <span class="annual-medal">&#129351;</span>
+                      <div>
+                        <p class="annual-name"><?= htmlspecialchars($primeiro_ti['nome_tecnico']) ?></p>
+                        <p class="annual-total"><?= $primeiro_ti['total'] ?> atendimentos</p>
+                      </div>
+                    </div>
+                  <?php endif; ?>
+                  <div class="annual-runners">
+                    <?php if ($segundo_ti) : ?>
+                      <div class="annual-runner">
+                        <span class="annual-runner-rank">&#129352;</span>
+                        <div>
+                          <p class="annual-runner-name"><?= htmlspecialchars($segundo_ti['nome_tecnico']) ?></p>
+                          <span class="annual-runner-total"><?= $segundo_ti['total'] ?> atendimentos</span>
+                        </div>
+                      </div>
+                    <?php endif; ?>
+                    <?php if ($terceiro_ti) : ?>
+                      <div class="annual-runner">
+                        <span class="annual-runner-rank">&#129353;</span>
+                        <div>
+                          <p class="annual-runner-name"><?= htmlspecialchars($terceiro_ti['nome_tecnico']) ?></p>
+                          <span class="annual-runner-total"><?= $terceiro_ti['total'] ?> atendimentos</span>
+                        </div>
+                      </div>
+                    <?php endif; ?>
                   </div>
-                <?php endif; ?>
-
-                <?php if ($terceiro_ti) : ?>
-                  <div class="col-6">
-                    <span style="font-size: 1.5em;">🥉</span>
-                    <p class="lead mb-0" style="font-weight: 500;"><?= htmlspecialchars($terceiro_ti['nome_tecnico']) ?></p>
-                    <small class="text-muted"><?= $terceiro_ti['total'] ?> atendimentos</small>
-                  </div>
-                <?php endif; ?>
+                </div>
               </div>
-
             <?php else : ?>
-              <p class="text-muted">Nenhum registro no ano.</p>
+              <div class="annual-card">
+                <div class="annual-card-header">
+                  <h6 class="annual-card-title"><i class="fas fa-trophy"></i>TI</h6>
+                  <span class="annual-card-year"><?= $ranking_trimestral_periodo ?></span>
+                </div>
+                <div class="annual-empty">Nenhum registro no trimestre.</div>
+              </div>
             <?php endif; ?>
           </div>
 
-          <div class="col-lg-3 col-md-12 mb-2 text-center border-left border-right">
-            <h6 class="text-muted">🏆 RANKING DEVOPS <?= date('Y') ?></h6>
+          <div class="col-lg-3 col-md-6 col-sm-12 mb-0">
             <?php
             if (!empty($podio_devops)) :
               $primeiro_devops = $podio_devops[0] ?? null;
               $segundo_devops  = $podio_devops[1] ?? null;
               $terceiro_devops = $podio_devops[2] ?? null;
             ?>
-
-              <?php if ($primeiro_devops) : ?>
-                <div class="mb-3">
-                  <span style="font-size: 2.4em;">🥇</span>
-                  <p class="lead mb-0" style="font-weight: 600; font-size: 1.8rem;"><?= htmlspecialchars($primeiro_devops['nome_tecnico']) ?></p>
-                  <small class="text-muted"><?= $primeiro_devops['total'] ?> chamados</small>
+              <div class="annual-card">
+                <div class="annual-card-header">
+                  <h6 class="annual-card-title"><i class="fas fa-trophy"></i>DevOps</h6>
+                  <span class="annual-card-year"><?= $ranking_trimestral_periodo ?></span>
                 </div>
-              <?php endif; ?>
-
-              <div class="row">
-                <?php if ($segundo_devops) : ?>
-                  <div class="col-6 ">
-                    <span style="font-size: 1.5em;">🥈</span>
-                    <p class="lead mb-0" style="font-weight: 500;"><?= htmlspecialchars($segundo_devops['nome_tecnico']) ?></p>
-                    <small class="text-muted"><?= $segundo_devops['total'] ?> chamados</small>
+                <div class="annual-card-body">
+                  <?php if ($primeiro_devops) : ?>
+                    <div class="annual-first">
+                      <span class="annual-medal">&#129351;</span>
+                      <div>
+                        <p class="annual-name"><?= htmlspecialchars($primeiro_devops['nome_tecnico']) ?></p>
+                        <p class="annual-total"><?= $primeiro_devops['total'] ?> chamados</p>
+                      </div>
+                    </div>
+                  <?php endif; ?>
+                  <div class="annual-runners">
+                    <?php if ($segundo_devops) : ?>
+                      <div class="annual-runner">
+                        <span class="annual-runner-rank">&#129352;</span>
+                        <div>
+                          <p class="annual-runner-name"><?= htmlspecialchars($segundo_devops['nome_tecnico']) ?></p>
+                          <span class="annual-runner-total"><?= $segundo_devops['total'] ?> chamados</span>
+                        </div>
+                      </div>
+                    <?php endif; ?>
+                    <?php if ($terceiro_devops) : ?>
+                      <div class="annual-runner">
+                        <span class="annual-runner-rank">&#129353;</span>
+                        <div>
+                          <p class="annual-runner-name"><?= htmlspecialchars($terceiro_devops['nome_tecnico']) ?></p>
+                          <span class="annual-runner-total"><?= $terceiro_devops['total'] ?> chamados</span>
+                        </div>
+                      </div>
+                    <?php endif; ?>
                   </div>
-                <?php endif; ?>
-
-                <?php if ($terceiro_devops) : ?>
-                  <div class="col-6">
-                    <span style="font-size: 1.5em;">🥉</span>
-                    <p class="lead mb-0" style="font-weight: 500;"><?= htmlspecialchars($terceiro_devops['nome_tecnico']) ?></p>
-                    <small class="text-muted"><?= $terceiro_devops['total'] ?> chamados</small>
-                  </div>
-                <?php endif; ?>
+                </div>
               </div>
-
             <?php else : ?>
-              <p class="text-muted">Nenhum registro no ano.</p>
+              <div class="annual-card">
+                <div class="annual-card-header">
+                  <h6 class="annual-card-title"><i class="fas fa-trophy"></i>DevOps</h6>
+                  <span class="annual-card-year"><?= $ranking_trimestral_periodo ?></span>
+                </div>
+                <div class="annual-empty">Nenhum registro no trimestre.</div>
+              </div>
             <?php endif; ?>
           </div>
 
-          <div class="col-lg-3 col-md-12 mb-2 text-center">
-            <h6 class="text-muted">🏆 RANKING MKT <?= date('Y') ?></h6>
+          <div class="col-lg-3 col-md-6 col-sm-12 mb-0">
             <?php
             if (!empty($podio_mkt)) :
               $primeiro_mkt = $podio_mkt[0] ?? null;
               $segundo_mkt  = $podio_mkt[1] ?? null;
               $terceiro_mkt = $podio_mkt[2] ?? null;
             ?>
-              <?php if ($primeiro_mkt) : ?>
-                <div class="mb-3">
-                  <span style="font-size: 2.4em;">🥇</span>
-                  <p class="lead mb-0" style="font-weight: 600; font-size: 1.8rem;"><?= htmlspecialchars($primeiro_mkt['nome_tecnico']) ?></p>
-                  <small class="text-muted"><?= $primeiro_mkt['artes_feitas'] ?> artes</small>
+              <div class="annual-card">
+                <div class="annual-card-header">
+                  <h6 class="annual-card-title"><i class="fas fa-trophy"></i>MKT</h6>
+                  <span class="annual-card-year"><?= $ranking_trimestral_periodo ?></span>
                 </div>
-              <?php endif; ?>
-
-              <div class="row">
-                <?php if ($segundo_mkt) : ?>
-                  <div class="col-6 ">
-                    <span style="font-size: 1.5em;">🥈</span>
-                    <p class="lead mb-0" style="font-weight: 500;"><?= htmlspecialchars($segundo_mkt['nome_tecnico']) ?></p>
-                    <small class="text-muted"><?= $segundo_mkt['artes_feitas'] ?> artes</small>
+                <div class="annual-card-body">
+                  <?php if ($primeiro_mkt) : ?>
+                    <div class="annual-first">
+                      <span class="annual-medal">&#129351;</span>
+                      <div>
+                        <p class="annual-name"><?= htmlspecialchars($primeiro_mkt['nome_tecnico']) ?></p>
+                        <p class="annual-total"><?= $primeiro_mkt['artes_feitas'] ?> artes</p>
+                      </div>
+                    </div>
+                  <?php endif; ?>
+                  <div class="annual-runners">
+                    <?php if ($segundo_mkt) : ?>
+                      <div class="annual-runner">
+                        <span class="annual-runner-rank">&#129352;</span>
+                        <div>
+                          <p class="annual-runner-name"><?= htmlspecialchars($segundo_mkt['nome_tecnico']) ?></p>
+                          <span class="annual-runner-total"><?= $segundo_mkt['artes_feitas'] ?> artes</span>
+                        </div>
+                      </div>
+                    <?php endif; ?>
+                    <?php if ($terceiro_mkt) : ?>
+                      <div class="annual-runner">
+                        <span class="annual-runner-rank">&#129353;</span>
+                        <div>
+                          <p class="annual-runner-name"><?= htmlspecialchars($terceiro_mkt['nome_tecnico']) ?></p>
+                          <span class="annual-runner-total"><?= $terceiro_mkt['artes_feitas'] ?> artes</span>
+                        </div>
+                      </div>
+                    <?php endif; ?>
                   </div>
-                <?php endif; ?>
-
-                <?php if ($terceiro_mkt) : ?>
-                  <div class="col-6">
-                    <span style="font-size: 1.5em;">🥉</span>
-                    <p class="lead mb-0" style="font-weight: 500;"><?= htmlspecialchars($terceiro_mkt['nome_tecnico']) ?></p>
-                    <small class="text-muted"><?= $terceiro_mkt['artes_feitas'] ?> artes</small>
-                  </div>
-                <?php endif; ?>
+                </div>
               </div>
-
             <?php else : ?>
-              <p class="text-muted">Nenhum registro no ano.</p>
+              <div class="annual-card">
+                <div class="annual-card-header">
+                  <h6 class="annual-card-title"><i class="fas fa-trophy"></i>MKT</h6>
+                  <span class="annual-card-year"><?= $ranking_trimestral_periodo ?></span>
+                </div>
+                <div class="annual-empty">Nenhum registro no trimestre.</div>
+              </div>
             <?php endif; ?>
           </div>
 
-          <div class="col-lg-3 col-md-12 mb-2 text-center border-left">
-            <h6 class="text-muted">🏆 RANKING QA <?= date('Y') ?></h6>
+          <div class="col-lg-3 col-md-6 col-sm-12 mb-0">
             <?php
             if (!empty($podio_qa)) :
               $primeiro_qa = $podio_qa[0] ?? null;
               $segundo_qa  = $podio_qa[1] ?? null;
               $terceiro_qa = $podio_qa[2] ?? null;
             ?>
-              <?php if ($primeiro_qa) : ?>
-                <div class="mb-3">
-                  <span style="font-size: 2.4em;">🥇</span>
-                  <p class="lead mb-0" style="font-weight: 600; font-size: 1.8rem;"><?= htmlspecialchars($primeiro_qa['nome_colaborador']) ?></p>
-                  <small class="text-muted"><?= $primeiro_qa['total'] ?> chamados</small>
+              <div class="annual-card">
+                <div class="annual-card-header">
+                  <h6 class="annual-card-title"><i class="fas fa-trophy"></i>QA</h6>
+                  <span class="annual-card-year"><?= $ranking_trimestral_periodo ?></span>
                 </div>
-              <?php endif; ?>
-
-              <div class="row">
-                <?php if ($segundo_qa) : ?>
-                  <div class="col-6">
-                    <span style="font-size: 1.5em;">🥈</span>
-                    <p class="lead mb-0" style="font-weight: 500;"><?= htmlspecialchars($segundo_qa['nome_colaborador']) ?></p>
-                    <small class="text-muted"><?= $segundo_qa['total'] ?> chamados</small>
+                <div class="annual-card-body">
+                  <?php if ($primeiro_qa) : ?>
+                    <div class="annual-first">
+                      <span class="annual-medal">&#129351;</span>
+                      <div>
+                        <p class="annual-name"><?= htmlspecialchars($primeiro_qa['nome_colaborador']) ?></p>
+                        <p class="annual-total"><?= $primeiro_qa['total'] ?> chamados</p>
+                      </div>
+                    </div>
+                  <?php endif; ?>
+                  <div class="annual-runners">
+                    <?php if ($segundo_qa) : ?>
+                      <div class="annual-runner">
+                        <span class="annual-runner-rank">&#129352;</span>
+                        <div>
+                          <p class="annual-runner-name"><?= htmlspecialchars($segundo_qa['nome_colaborador']) ?></p>
+                          <span class="annual-runner-total"><?= $segundo_qa['total'] ?> chamados</span>
+                        </div>
+                      </div>
+                    <?php endif; ?>
+                    <?php if ($terceiro_qa) : ?>
+                      <div class="annual-runner">
+                        <span class="annual-runner-rank">&#129353;</span>
+                        <div>
+                          <p class="annual-runner-name"><?= htmlspecialchars($terceiro_qa['nome_colaborador']) ?></p>
+                          <span class="annual-runner-total"><?= $terceiro_qa['total'] ?> chamados</span>
+                        </div>
+                      </div>
+                    <?php endif; ?>
                   </div>
-                <?php endif; ?>
-
-                <?php if ($terceiro_qa) : ?>
-                  <div class="col-6">
-                    <span style="font-size: 1.5em;">🥉</span>
-                    <p class="lead mb-0" style="font-weight: 500;"><?= htmlspecialchars($terceiro_qa['nome_colaborador']) ?></p>
-                    <small class="text-muted"><?= $terceiro_qa['total'] ?> chamados</small>
-                  </div>
-                <?php endif; ?>
+                </div>
               </div>
-
             <?php else : ?>
-              <p class="text-muted">Nenhum registro no ano.</p>
+              <div class="annual-card">
+                <div class="annual-card-header">
+                  <h6 class="annual-card-title"><i class="fas fa-trophy"></i>QA</h6>
+                  <span class="annual-card-year"><?= $ranking_trimestral_periodo ?></span>
+                </div>
+                <div class="annual-empty">Nenhum registro no trimestre.</div>
+              </div>
             <?php endif; ?>
           </div>
-
-
-
-
         </div>
-        <hr class="mt-5 mb-5 py-3">
+        </div>
+      </div>
 
       <?php endif; ?>
-
-
-      <!-- inicio -->
-      <div class="container-fluid mt-4 ">
-
-        <div class="row">
-
-          <div class="col-sx-12 col-sm-6 col-md-4 mb-1 px-1">
-            <div class="card bg-default">
-              <h6 class="card-header py-2">
-                <i class="fas fa-chart-pie text-info"></i> Chamados abertos <small>(Por Tipo)</small>
-              </h6>
-              <div class="card-body">
-                <?php
-                $pdo = ConnectionN3();
-
-                $filterEmpresas = "";
-
-                if (isset($_SESSION['tipo']) && $_SESSION['tipo'] == 2 && isset($_SESSION['empresas']) && count($_SESSION['empresas']) > 0) {
-                  $filterEmpresas .= " AND atendimentos.cliente IN (" . implode(',', $_SESSION['empresas']) . ")";
-                }
-
-                $sql = "SELECT count(atendimentos.id) AS atd_num FROM atendimentos WHERE atendimentos.tipo = '1' AND atendimentos.`status` IN (1,2,3,4,5) ";
-                if ($filterEmpresas) {
-                  $sql .= $filterEmpresas;
-                }
-                $show = $pdo->prepare($sql);
-                $show->execute();
-                $exibe = $show->fetch(PDO::FETCH_ASSOC);
-                $atd_1 = $exibe["atd_num"];
-                if ($atd_1 == "") {
-                  $atd_1 = 0;
-                }
-
-                $sql2 = "SELECT count(atendimentos.id) AS atd_num FROM atendimentos WHERE atendimentos.tipo = '2' AND atendimentos.`status` IN (1,2,3,4,5)";
-                if ($filterEmpresas) {
-                  $sql2 .= $filterEmpresas;
-                }
-
-
-
-
-                $show = $pdo->prepare($sql2);
-                $show->execute();
-                $exibe = $show->fetch(PDO::FETCH_ASSOC);
-
-                $atd_2 = $exibe["atd_num"];
-                if ($atd_2 == "") {
-                  $atd_2 = 0;
-                }
-
-                $sql3 = "SELECT count(atendimentos.id) AS atd_num FROM atendimentos WHERE atendimentos.tipo = '3' AND atendimentos.`status` IN (1,2,3,4,5)";
-                if ($filterEmpresas) {
-                  $sql3 .= $filterEmpresas;
-                }
-                $show = $pdo->prepare($sql3);
-                $show->execute();
-                $exibe = $show->fetch(PDO::FETCH_ASSOC);
-                $atd_3 = $exibe["atd_num"];
-                if ($atd_3 == "") {
-                  $atd_3 = 0;
-                }
-
-                $sql4 = "SELECT count(atendimentos.id) AS atd_num FROM atendimentos WHERE atendimentos.tipo = '4' AND atendimentos.`status` IN (1,2,3,4,5)";
-                if ($filterEmpresas) {
-                  $sql4 .= $filterEmpresas;
-                }
-                $show = $pdo->prepare($sql4);
-                $show->execute();
-                $exibe = $show->fetch(PDO::FETCH_ASSOC);
-                $atd_4 = $exibe["atd_num"];
-                if ($atd_4 == "") {
-                  $atd_4 = 0;
-                }
-
-                $sql5 = "SELECT count(atendimentos.id) AS atd_num FROM atendimentos WHERE atendimentos.tipo = '5' AND atendimentos.`status` IN (1,2,3,4,5)";
-                if ($filterEmpresas) {
-                  $sql5 .= $filterEmpresas;
-                }
-                $show = $pdo->prepare($sql5);
-                $show->execute();
-                $exibe = $show->fetch(PDO::FETCH_ASSOC);
-                $atd_5 = $exibe["atd_num"];
-                if ($atd_5 == "") {
-                  $atd_5 = 0;
-                }
-
-                $matriz = "
-            ['Falha',$atd_1],
-            ['Relacionamento',$atd_2],
-            ['Requisição de Serviços',$atd_3],
-            ['Requisição de informação',$atd_4],
-            ['Notificação de monitoramento',$atd_5]
-            ";
-
-                ?>
-                <script type="text/javascript">
-                  google.charts.load("current", {
-                    packages: ["corechart"]
-                  });
-                  google.charts.setOnLoadCallback(drawChart);
-
-                  function drawChart() {
-                    var data = google.visualization.arrayToDataTable([
-                      ['Tipo', 'Atendimentos'],
-                      <?php echo $matriz; ?>
-                    ]);
-                    var options = {
-                      is3D: true,
-                      pieHole: 0.4,
-                      chartArea: {
-                        left: 2,
-                        top: 5,
-                        bottom: 35,
-                        width: '100%',
-                        height: '90%'
-                      },
-                      legend: {
-                        position: 'bottom',
-                        alignment: 'start'
-                      },
-                    };
-                    var chart = new google.visualization.PieChart(document.getElementById('donutchart'));
-                    chart.draw(data, options);
-                  }
-                </script>
-                <div id="donutchart" style="width: 100%; height: 200px;"></div>
-              </div>
-            </div>
-          </div>
-
-          <div class="col-sx-12 col-sm-6 col-md-4 mb-1 px-1">
-            <div class="card bg-default">
-              <h6 class="card-header py-2">
-                <!--  -->
-                <i class="fas fa-chart-bar text-danger"></i> Chamados abertos <small>(Por Cliente)</small>
-              </h6>
-              <div class="card-body">
-                <?php
-                $pdo = ConnectionN3();
-
-                $show_clt = $pdo->prepare("SELECT count(atendimentos.id) AS atd_num, clientes.clt_nomer
-            FROM atendimentos
-            INNER JOIN clientes ON atendimentos.cliente = clientes.clt_id
-            WHERE atendimentos.`status` IN (1,2,3) " . $filterEmpresas . "
-            GROUP BY clientes.clt_id
-            ORDER BY atd_num DESC LIMIT 0,10");
-                $show_clt->execute();
-                $matriz = "['Cliente','Atendimentos']";
-
-                while ($exibe = $show_clt->fetch(PDO::FETCH_ASSOC)) {
-                  $clt_nom = $exibe["clt_nomer"];
-                  $atd_num = $exibe["atd_num"];
-                  $clt_nom = mb_strimwidth("$clt_nom", 0, 10, ".");
-                  $matriz = "$matriz,['$clt_nom',$atd_num]";
-                }
-                ?>
-                <script type="text/javascript">
-                  google.charts.load('current', {
-                    'packages': ['bar']
-                  });
-                  google.charts.setOnLoadCallback(drawStuff);
-
-                  function drawStuff() {
-                    var data = new google.visualization.arrayToDataTable([
-                      <?php echo $matriz; ?>
-                    ]);
-                    var options = {
-                      //width: 300,
-                      width: "100%",
-                      legend: {
-                        position: 'none'
-                      },
-                      //chart: {
-                      //title: 'Produtos mais vendidos',
-                      //subtitle: 'Peso Total'
-                      //},
-                      bars: 'horizontal',
-                      bar: {
-                        groupWidth: "90%"
-                      },
-
-
-                    };
-                    var chart = new google.charts.Bar(document.getElementById('top_10'));
-                    chart.draw(data, options);
-                  };
-                </script>
-                <div id="top_10" style="width: 100%; height: 200px;"></div>
-              </div>
-            </div>
-          </div>
-
-          <div class="col-sx-12 col-sm-6 col-md-4 mb-1 px-1">
-            <div class="card bg-default">
-              <h6 class="card-header py-2">
-                <i class="fas fa-trophy text-primary"></i> Ranking <small>(Últimos 7 Dias)</small>
-              </h6>
-              <div class="card-body">
-                <?php
-                //conta o total atendido pelos 3 maiores matadores de chamados
-                $pdo = ConnectionN3();
-                $cont_atd = $pdo->prepare("SELECT COUNT(atendimentos.id) AS atd_qnt, usuarios.user_nome FROM atendimentos INNER JOIN usuarios ON usuarios.user_id = atendimentos.tecnico WHERE atendimentos.abertura > '$data_d7' AND atendimentos.`status` = 4 " . $filterEmpresas . " GROUP BY atendimentos.tecnico ORDER BY atd_qnt DESC LIMIT 0,3");
-                $cont_atd->execute();
-                $n = 1;
-                while ($e1 = $cont_atd->fetch(PDO::FETCH_ASSOC)) {
-                  $positions[] = array(
-                    'posicao' => "$n",
-                    'tecnico' => $e1["user_nome"],
-                    'atendimentos' => $e1["atd_qnt"]
-                  );
-                  $n++;
-                }
-
-                if (isset($positions[0]['tecnico'])) {
-                  $p1_nome = ($positions[0]['tecnico']);
-                } else {
-                  $p1_nome = "";
-                }
-                if (isset($positions[1]['tecnico'])) {
-                  $p2_nome = ($positions[1]['tecnico']);
-                } else {
-                  $p2_nome = "";
-                }
-                if (isset($positions[2]['tecnico'])) {
-                  $p3_nome = ($positions[2]['tecnico']);
-                } else {
-                  $p3_nome = "";
-                }
-
-                if (isset($positions[0]['atendimentos'])) {
-                  $p1_atd = ($positions[0]['atendimentos']);
-                } else {
-                  $p1_atd = "";
-                }
-                if (isset($positions[1]['atendimentos'])) {
-                  $p2_atd = ($positions[1]['atendimentos']);
-                } else {
-                  $p2_atd = "";
-                }
-                if (isset($positions[2]['atendimentos'])) {
-                  $p3_atd = ($positions[2]['atendimentos']);
-                } else {
-                  $p3_atd = "";
-                }
-
-                ?>
-                <script type="text/javascript">
-                  google.charts.load("current", {
-                    packages: ['corechart']
-                  });
-                  google.charts.setOnLoadCallback(drawChart);
-
-                  function drawChart() {
-                    var data = google.visualization.arrayToDataTable([
-                      ['Período', '<?php echo $p2_nome; ?>', '<?php echo $p1_nome; ?>', '<?php echo $p3_nome; ?>'],
-                      ['7 Dias', <?php echo $p2_atd; ?>, <?php echo $p1_atd; ?>, <?php echo $p3_atd; ?>]
-                    ]);
-
-                    var view = new google.visualization.DataView(data);
-                    var options = {
-                      width: '100%',
-                      height: '100%',
-                      bar: {
-                        groupWidth: "100%"
-                      },
-                      legend: {
-                        position: "right"
-                      },
-                      chartArea: {
-                        bottom: 3,
-                        top: 5,
-                        left: 20,
-                        right: 120
-                      },
-                    };
-                    var chart = new google.visualization.ColumnChart(document.getElementById("matadores"));
-                    chart.draw(view, options);
-                  }
-                </script>
-                <div id="matadores" style="width: 100%; height: 200px;"></div>
-              </div>
-            </div>
-          </div>
-
-        </div>
-
-
-        <div class="row">
-          <div class="col-sx-12 col-sm-12 col-md-6 mb-1 px-1">
-            <div class="card bg-default">
-              <h6 class="card-header py-2">
-                <i class="fas fa-chart-line text-primary"></i> Abertura de Chamados <small>(Últimas 8 semanas)</small>
-              </h6>
-              <div class="card-body">
-                <?php
-
-                $hoje = date("Y-m-d");
-                $dia = new DateTime($hoje);
-                $dia->modify('next saturday');
-                $dia_0 = $dia->format('Y-m-d');
-
-                //$dia_0 = $hoje;
-                $dia_0_n =  date('d/m', strtotime($dia_0));
-                $dia_0a =  date('Y-m-d', strtotime($dia_0 . ' -6 days'));
-                $dia_0a_n =  date('d/m', strtotime($dia_0 . ' -6 days'));
-
-                $dia_1 =  date('Y-m-d', strtotime($dia_0 . ' -7 days'));
-                $dia_1_n =  date('d/m', strtotime($dia_0 . ' -7 days'));
-                $dia_1a =  date('Y-m-d', strtotime($dia_0 . ' -13 days'));
-                $dia_1a_n =  date('d/m', strtotime($dia_0 . ' -13 days'));
-
-                $dia_2 =  date('Y-m-d', strtotime($dia_0 . ' -14 days'));
-                $dia_2_n =  date('d/m', strtotime($dia_0 . ' -14 days'));
-                $dia_2a =  date('Y-m-d', strtotime($dia_0 . ' -20 days'));
-                $dia_2a_n =  date('d/m', strtotime($dia_0 . ' -20 days'));
-
-                $dia_3 =  date('Y-m-d', strtotime($dia_0 . ' -21 days'));
-                $dia_3_n =  date('d/m', strtotime($dia_0 . ' -21 days'));
-                $dia_3a =  date('Y-m-d', strtotime($dia_0 . ' -27 days'));
-                $dia_3a_n =  date('d/m', strtotime($dia_0 . ' -27 days'));
-
-                $dia_4 =  date('Y-m-d', strtotime($dia_0 . ' -28 days'));
-                $dia_4_n =  date('d/m', strtotime($dia_0 . ' -28 days'));
-                $dia_4a =  date('Y-m-d', strtotime($dia_0 . ' -34 days'));
-                $dia_4a_n =  date('d/m', strtotime($dia_0 . ' -34 days'));
-
-                $dia_5 =  date('Y-m-d', strtotime($dia_0 . ' -35 days'));
-                $dia_5_n =  date('d/m', strtotime($dia_0 . ' -35 days'));
-                $dia_5a =  date('Y-m-d', strtotime($dia_0 . ' -41 days'));
-                $dia_5a_n =  date('d/m', strtotime($dia_0 . ' -41 days'));
-
-                $dia_6 =  date('Y-m-d', strtotime($dia_0 . ' -42 days'));
-                $dia_6_n =  date('d/m', strtotime($dia_0 . ' -42 days'));
-                $dia_6a =  date('Y-m-d', strtotime($dia_0 . ' -48 days'));
-                $dia_6a_n =  date('d/m', strtotime($dia_0 . ' -48 days'));
-
-                $dia_7 =  date('Y-m-d', strtotime($dia_0 . ' -49 days'));
-                $dia_7_n =  date('d/m', strtotime($dia_0 . ' -49 days'));
-                $dia_7a =  date('Y-m-d', strtotime($dia_0 . ' -55 days'));
-                $dia_7a_n =  date('d/m', strtotime($dia_0 . ' -55 days'));
-
-                $pdo = ConnectionN3();
-                $show = $pdo->prepare("SELECT count(atendimentos.id) AS atd_num FROM atendimentos WHERE atendimentos.abertura BETWEEN '$dia_0a' AND '$dia_0' AND atendimentos.`status` > '0' " . $filterEmpresas);
-                $show->execute();
-                $exibe = $show->fetch(PDO::FETCH_ASSOC);
-                $atd_0 = $exibe["atd_num"];
-                if ($atd_0 == "") {
-                  $atd_0 = 0;
-                }
-                $show = $pdo->prepare("SELECT count(atendimentos.id) AS atd_num FROM atendimentos WHERE atendimentos.abertura BETWEEN '$dia_1a' AND '$dia_1' AND atendimentos.`status` > '0' " . $filterEmpresas);
-                $show->execute();
-                $exibe = $show->fetch(PDO::FETCH_ASSOC);
-                $atd_1 = $exibe["atd_num"];
-                if ($atd_1 == "") {
-                  $atd_1 = 0;
-                }
-                $show = $pdo->prepare("SELECT count(atendimentos.id) AS atd_num FROM atendimentos WHERE atendimentos.abertura BETWEEN '$dia_2a' AND '$dia_2' AND atendimentos.`status` > '0' " . $filterEmpresas);
-                $show->execute();
-                $exibe = $show->fetch(PDO::FETCH_ASSOC);
-                $atd_2 = $exibe["atd_num"];
-                if ($atd_2 == "") {
-                  $atd_2 = 0;
-                }
-                $show = $pdo->prepare("SELECT count(atendimentos.id) AS atd_num FROM atendimentos WHERE atendimentos.abertura BETWEEN '$dia_3a' AND '$dia_3' AND atendimentos.`status` > '0' " . $filterEmpresas);
-                $show->execute();
-                $exibe = $show->fetch(PDO::FETCH_ASSOC);
-                $atd_3 = $exibe["atd_num"];
-                if ($atd_3 == "") {
-                  $atd_3 = 0;
-                }
-                $show = $pdo->prepare("SELECT count(atendimentos.id) AS atd_num FROM atendimentos WHERE atendimentos.abertura BETWEEN '$dia_4a' AND '$dia_4' AND atendimentos.`status` > '0' " . $filterEmpresas);
-                $show->execute();
-                $exibe = $show->fetch(PDO::FETCH_ASSOC);
-                $atd_4 = $exibe["atd_num"];
-                if ($atd_4 == "") {
-                  $atd_4 = 0;
-                }
-                $show = $pdo->prepare("SELECT count(atendimentos.id) AS atd_num FROM atendimentos WHERE atendimentos.abertura BETWEEN '$dia_5a' AND '$dia_5' AND atendimentos.`status` > '0' " . $filterEmpresas);
-                $show->execute();
-                $exibe = $show->fetch(PDO::FETCH_ASSOC);
-                $atd_5 = $exibe["atd_num"];
-                if ($atd_5 == "") {
-                  $atd_5 = 0;
-                }
-                $show = $pdo->prepare("SELECT count(atendimentos.id) AS atd_num FROM atendimentos WHERE atendimentos.abertura BETWEEN '$dia_6a' AND '$dia_6' AND atendimentos.`status` > '0' " . $filterEmpresas);
-                $show->execute();
-                $exibe = $show->fetch(PDO::FETCH_ASSOC);
-                $atd_6 = $exibe["atd_num"];
-                if ($atd_6 == "") {
-                  $atd_6 = 0;
-                }
-                $show = $pdo->prepare("SELECT count(atendimentos.id) AS atd_num FROM atendimentos WHERE atendimentos.abertura BETWEEN '$dia_7a' AND '$dia_7' AND atendimentos.`status` > '0' " . $filterEmpresas);
-                $show->execute();
-                $exibe = $show->fetch(PDO::FETCH_ASSOC);
-                $atd_7 = $exibe["atd_num"];
-                if ($atd_7 == "") {
-                  $atd_7 = 0;
-                }
-
-                $matriz = "
-            ['$dia_7a_n a $dia_7_n',$atd_7],
-            ['$dia_6a_n a $dia_6_n',$atd_6],
-            ['$dia_5a_n a $dia_5_n',$atd_5],
-            ['$dia_4a_n a $dia_4_n',$atd_4],
-            ['$dia_3a_n a $dia_3_n',$atd_3],
-            ['$dia_2a_n a $dia_2_n',$atd_2],
-            ['$dia_1a_n a $dia_1_n',$atd_1],
-            ['$dia_0a_n a $dia_0_n',$atd_0]
-            ";
-                ?>
-                <script type="text/javascript">
-                  google.charts.load('current', {
-                    'packages': ['corechart']
-                  });
-                  google.charts.setOnLoadCallback(drawVisualization);
-
-                  function drawVisualization() {
-                    var data = google.visualization.arrayToDataTable([
-                      ['Month', 'Chamados'],
-                      <?php echo $matriz; ?>
-                    ]);
-                    var options = {
-                      curveType: 'function',
-                      chartArea: {
-                        left: 30,
-                        bottom: 30,
-                        top: 0,
-                        width: '100%',
-                        height: '100%'
-                      }
-                    };
-                    var chart = new google.visualization.ComboChart(document.getElementById('chart_div'));
-                    chart.draw(data, options);
-                  }
-                </script>
-                <div id="chart_div" style="width: 100%; height: 200px;"></div>
-              </div>
-            </div>
-          </div>
-
-          <div class="col-sx-12 col-sm-12 col-md-6 mb-1 px-1">
-            <div class="card bg-default">
-              <h6 class="card-header py-2">
-                <i class="fas fa-chart-line text-danger"></i> Chamados Reincidentes <small>(Últimas 8 semanas)</small>
-              </h6>
-              <div class="card-body">
-                <?php
-                $pdo = ConnectionN3();
-                $show = $pdo->prepare("SELECT count(atendimentos.id) AS atd_num FROM atendimentos WHERE atendimentos.abertura BETWEEN '$dia_0a' AND '$dia_0' AND atendimentos.`reincidente` = '1' AND atendimentos.`status` > '0' " . $filterEmpresas);
-                $show->execute();
-                $exibe = $show->fetch(PDO::FETCH_ASSOC);
-                $atd_0 = $exibe["atd_num"];
-                if ($atd_0 == "") {
-                  $atd_0 = 0;
-                }
-                $show = $pdo->prepare("SELECT count(atendimentos.id) AS atd_num FROM atendimentos WHERE atendimentos.abertura BETWEEN '$dia_1a' AND '$dia_1' AND atendimentos.`reincidente` = '1' AND atendimentos.`status` > '0' " . $filterEmpresas);
-                $show->execute();
-                $exibe = $show->fetch(PDO::FETCH_ASSOC);
-                $atd_1 = $exibe["atd_num"];
-                if ($atd_1 == "") {
-                  $atd_1 = 0;
-                }
-                $show = $pdo->prepare("SELECT count(atendimentos.id) AS atd_num FROM atendimentos WHERE atendimentos.abertura BETWEEN '$dia_2a' AND '$dia_2' AND atendimentos.`reincidente` = '1' AND atendimentos.`status` > '0' " . $filterEmpresas);
-                $show->execute();
-                $exibe = $show->fetch(PDO::FETCH_ASSOC);
-                $atd_2 = $exibe["atd_num"];
-                if ($atd_2 == "") {
-                  $atd_2 = 0;
-                }
-                $show = $pdo->prepare("SELECT count(atendimentos.id) AS atd_num FROM atendimentos WHERE atendimentos.abertura BETWEEN '$dia_3a' AND '$dia_3' AND atendimentos.`reincidente` = '1' AND atendimentos.`status` > '0' " . $filterEmpresas);
-                $show->execute();
-                $exibe = $show->fetch(PDO::FETCH_ASSOC);
-                $atd_3 = $exibe["atd_num"];
-                if ($atd_3 == "") {
-                  $atd_3 = 0;
-                }
-                $show = $pdo->prepare("SELECT count(atendimentos.id) AS atd_num FROM atendimentos WHERE atendimentos.abertura BETWEEN '$dia_4a' AND '$dia_4' AND atendimentos.`reincidente` = '1' AND atendimentos.`status` > '0' " . $filterEmpresas);
-                $show->execute();
-                $exibe = $show->fetch(PDO::FETCH_ASSOC);
-                $atd_4 = $exibe["atd_num"];
-                if ($atd_4 == "") {
-                  $atd_4 = 0;
-                }
-                $show = $pdo->prepare("SELECT count(atendimentos.id) AS atd_num FROM atendimentos WHERE atendimentos.abertura BETWEEN '$dia_5a' AND '$dia_5' AND atendimentos.`reincidente` = '1' AND atendimentos.`status` > '0' " . $filterEmpresas);
-                $show->execute();
-                $exibe = $show->fetch(PDO::FETCH_ASSOC);
-                $atd_5 = $exibe["atd_num"];
-                if ($atd_5 == "") {
-                  $atd_5 = 0;
-                }
-                $show = $pdo->prepare("SELECT count(atendimentos.id) AS atd_num FROM atendimentos WHERE atendimentos.abertura BETWEEN '$dia_6a' AND '$dia_6' AND atendimentos.`reincidente` = '1' AND atendimentos.`status` > '0' " . $filterEmpresas);
-                $show->execute();
-                $exibe = $show->fetch(PDO::FETCH_ASSOC);
-                $atd_6 = $exibe["atd_num"];
-                if ($atd_6 == "") {
-                  $atd_6 = 0;
-                }
-                $show = $pdo->prepare("SELECT count(atendimentos.id) AS atd_num FROM atendimentos WHERE atendimentos.abertura BETWEEN '$dia_7a' AND '$dia_7' AND atendimentos.`reincidente` = '1' AND atendimentos.`status` > '0' " . $filterEmpresas);
-                $show->execute();
-                $exibe = $show->fetch(PDO::FETCH_ASSOC);
-                $atd_7 = $exibe["atd_num"];
-                if ($atd_7 == "") {
-                  $atd_7 = 0;
-                }
-
-                $matriz = "
-            ['$dia_7a_n a $dia_7_n',$atd_7],
-            ['$dia_6a_n a $dia_6_n',$atd_6],
-            ['$dia_5a_n a $dia_5_n',$atd_5],
-            ['$dia_4a_n a $dia_4_n',$atd_4],
-            ['$dia_3a_n a $dia_3_n',$atd_3],
-            ['$dia_2a_n a $dia_2_n',$atd_2],
-            ['$dia_1a_n a $dia_1_n',$atd_1],
-            ['$dia_0a_n a $dia_0_n',$atd_0]
-            ";
-                ?>
-                <script type="text/javascript">
-                  google.charts.load('current', {
-                    'packages': ['corechart']
-                  });
-                  google.charts.setOnLoadCallback(drawVisualization);
-
-                  function drawVisualization() {
-                    var data = google.visualization.arrayToDataTable([
-                      ['Month', 'Reincidentes'],
-                      <?php echo $matriz; ?>
-                    ]);
-                    var options = {
-                      curveType: 'function',
-                      chartArea: {
-                        left: 30,
-                        bottom: 30,
-                        top: 0,
-                        width: '100%',
-                        height: '100%'
-                      },
-                      colors: ['red', '#004411'],
-                    };
-                    var chart = new google.visualization.ComboChart(document.getElementById('chart_div1'));
-                    chart.draw(data, options);
-                  }
-                </script>
-                <div id="chart_div1" style="width: 100%; height: 200px;"></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      </div>
-
 
       <?php if (isset($mensagem)) { ?>
         <div class="row pull-right" style="position:absolute; top: 65px; right:25px;">
@@ -1342,7 +1458,7 @@ $data_d7 =  date('Y-m-d', strtotime($data . ' -7 days'));
         $(document).ready(function() {
           $('#modalSenha').on('click', '.toggle-password', function() {
 
-            // 'this' é o <span> que foi clicado
+            // 'this' Ã© o <span> que foi clicado
             var icon = $(this).find('i');
             var input = $(this).closest('.input-group').find('input');
 
@@ -1350,15 +1466,206 @@ $data_d7 =  date('Y-m-d', strtotime($data . ' -7 days'));
             if (input.attr('type') === 'password') {
               // Muda para texto
               input.attr('type', 'text');
-              // Muda o ícone para 'olho cortado'
+              // Muda o Ã­cone para 'olho cortado'
               icon.removeClass('fa-eye').addClass('fa-eye-slash');
             } else {
               // Muda para senha
               input.attr('type', 'password');
-              // Muda o ícone de volta para 'olho'
+              // Muda o Ã­cone de volta para 'olho'
               icon.removeClass('fa-eye-slash').addClass('fa-eye');
             }
           });
+
+          var periodForm = $('#rankingPeriodForm');
+          var rangeToggle = $('#rankingRangeToggle');
+          var hiddenStart = $('#data_inicio');
+          var hiddenEnd = $('#data_fim');
+          var calendarGrid = $('#rankingCalendarGrid');
+          var calendarMonth = $('#rankingCalendarMonth');
+          var calendarYear = $('#rankingCalendarYear');
+          var rangeLabel = $('#rankingRangeLabel');
+          var rangeHint = $('#rankingRangeHint');
+          var monthNames = ['Janeiro', 'Fevereiro', 'Marco', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+          var selectedStart = parseDateValue(hiddenStart.val());
+          var selectedEnd = parseDateValue(hiddenEnd.val());
+          var viewDate = new Date(selectedStart.getFullYear(), selectedStart.getMonth(), 1);
+          var selectingEnd = false;
+
+          function parseDateValue(value) {
+            var parts = (value || '').split('-');
+            if (parts.length !== 3) {
+              return new Date();
+            }
+
+            return new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+          }
+
+          function formatDateValue(date) {
+            var month = String(date.getMonth() + 1).padStart(2, '0');
+            var day = String(date.getDate()).padStart(2, '0');
+            return date.getFullYear() + '-' + month + '-' + day;
+          }
+
+          function formatDateLabel(date) {
+            var day = String(date.getDate()).padStart(2, '0');
+            var month = String(date.getMonth() + 1).padStart(2, '0');
+            return day + '/' + month + '/' + date.getFullYear();
+          }
+
+          function sameDate(first, second) {
+            return first && second && first.getFullYear() === second.getFullYear() && first.getMonth() === second.getMonth() && first.getDate() === second.getDate();
+          }
+
+          function normalizeDate(date) {
+            return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+          }
+
+          function syncRangePreview(updateHidden) {
+            if (!selectedStart) {
+              rangeHint.text('Selecione a data inicial');
+              return;
+            }
+
+            var finalEnd = selectedEnd || selectedStart;
+
+            if (updateHidden) {
+              hiddenStart.val(formatDateValue(selectedStart));
+              hiddenEnd.val(formatDateValue(finalEnd));
+              rangeLabel.text(formatDateLabel(selectedStart) + ' - ' + formatDateLabel(finalEnd));
+            }
+
+            if (selectingEnd) {
+              rangeHint.text('Escolha a data final');
+            } else {
+              rangeHint.text(formatDateLabel(selectedStart) + ' - ' + formatDateLabel(finalEnd));
+            }
+          }
+
+          function renderCalendar() {
+            var year = viewDate.getFullYear();
+            var month = viewDate.getMonth();
+            var firstDay = new Date(year, month, 1);
+            var gridStart = new Date(year, month, 1 - firstDay.getDay());
+            var rangeStart = selectedStart ? normalizeDate(selectedStart) : null;
+            var rangeEnd = selectedStart ? normalizeDate(selectedEnd || selectedStart) : null;
+
+            if (rangeStart && rangeEnd && rangeEnd < rangeStart) {
+              var tempDate = rangeStart;
+              rangeStart = rangeEnd;
+              rangeEnd = tempDate;
+            }
+
+            calendarMonth.text(monthNames[month]);
+            calendarYear.text(year);
+            calendarGrid.empty();
+
+            for (var index = 0; index < 42; index++) {
+              var dayDate = new Date(gridStart.getFullYear(), gridStart.getMonth(), gridStart.getDate() + index);
+              var normalizedDay = normalizeDate(dayDate);
+              var dayButton = $('<button type="button" class="ranking-day"><span></span></button>');
+
+              dayButton.find('span').text(dayDate.getDate());
+              dayButton.attr('data-date', formatDateValue(dayDate));
+
+              if (dayDate.getMonth() !== month) {
+                dayButton.addClass('is-muted');
+              }
+
+              if (rangeStart && rangeEnd && normalizedDay >= rangeStart && normalizedDay <= rangeEnd) {
+                dayButton.addClass('is-in-range');
+              }
+
+              if (rangeStart && sameDate(normalizedDay, rangeStart)) {
+                dayButton.addClass('is-range-start');
+              }
+
+              if (rangeEnd && sameDate(normalizedDay, rangeEnd)) {
+                dayButton.addClass('is-range-end');
+              }
+
+              calendarGrid.append(dayButton);
+            }
+          }
+
+          rangeToggle.on('click', function(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            periodForm.toggleClass('range-open');
+            rangeToggle.attr('aria-expanded', periodForm.hasClass('range-open') ? 'true' : 'false');
+            renderCalendar();
+          });
+
+          periodForm.on('click', function(event) {
+            event.stopPropagation();
+          });
+
+          $('#rankingCalendarPrev').on('click', function(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            viewDate = new Date(viewDate.getFullYear(), viewDate.getMonth() - 1, 1);
+            renderCalendar();
+          });
+
+          $('#rankingCalendarNext').on('click', function(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            viewDate = new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 1);
+            renderCalendar();
+          });
+
+          calendarGrid.on('click', '.ranking-day', function(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            var clickedDate = parseDateValue($(this).attr('data-date'));
+
+            if ((selectedStart && sameDate(clickedDate, selectedStart)) || (selectedEnd && sameDate(clickedDate, selectedEnd))) {
+              selectedStart = null;
+              selectedEnd = null;
+              selectingEnd = false;
+              rangeHint.text('Selecione a data inicial');
+              renderCalendar();
+              return;
+            }
+
+            if (!selectingEnd) {
+              selectedStart = clickedDate;
+              selectedEnd = null;
+              selectingEnd = true;
+            } else {
+              selectedEnd = clickedDate;
+
+              if (selectedEnd < selectedStart) {
+                var oldStart = selectedStart;
+                selectedStart = selectedEnd;
+                selectedEnd = oldStart;
+              }
+
+              selectingEnd = false;
+            }
+
+            syncRangePreview(false);
+            renderCalendar();
+          });
+
+          $('#rankingRangeApply').on('click', function(event) {
+            if (!selectedStart) {
+              event.preventDefault();
+              rangeHint.text('Selecione a data inicial');
+              return;
+            }
+
+            syncRangePreview(true);
+          });
+
+          $(document).on('click', function(event) {
+            if (!$(event.target).closest('#rankingPeriodForm').length) {
+              periodForm.removeClass('range-open');
+              rangeToggle.attr('aria-expanded', 'false');
+            }
+          });
+
+          syncRangePreview(true);
+          renderCalendar();
 
         })
       </script>

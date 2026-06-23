@@ -23,8 +23,8 @@ $usuario = $usuarioStmt->fetch(PDO::FETCH_ASSOC);
 
 
 // Captura dos filtros
-$dataInicio = $_GET['date_start'] ?? date('Y-m-01');
-$dataFim = $_GET['date_end'] ?? date('Y-m-t');
+$dataInicio = $_GET['date_start'] ?? $_GET['data_inicio'] ?? date('Y-m-01');
+$dataFim = $_GET['date_end'] ?? $_GET['data_fim'] ?? date('Y-m-t');
 $user_id_filter = $_GET['user_id'] ?? null;
 // MUDANÇA: Captura do filtro de cliente pelo nome
 $cliente_nome_filter = $_GET['cliente_nome'] ?? null;
@@ -115,236 +115,28 @@ $category_label = empty($category_id_filter) ? 'Selecione' : count($category_id_
     <link rel="stylesheet" href="../fontawesome/css/all.css" />
     <link rel="stylesheet" href="https://cdn.datatables.net/1.10.25/css/dataTables.bootstrap4.min.css" />
     <link rel="stylesheet" href="https://cdn.datatables.net/buttons/1.7.1/css/buttons.bootstrap4.min.css" />
-    <title>Relatério de Pagamentos</title>
-    <style>
-        body {
-            zoom: 0.9;
-            overflow-x: hidden;
-            width: 100%;
-        }
-
-        .card-body {
-            padding: 5px 30px;
-        }
-
-        .tabela {
-            overflow-y: auto;
-            max-height: calc(100vh - 180px);
-            width: 100%;
-            padding: 0;
-            font-size: 0.85rem;
-            color: #333;
-        }
-
-        #dataTable {
-            table-layout: fixed !important;
-            /* Força o navegador a respeitar as larguras definidas */
-            width: 100% !important;
-            word-wrap: break-word;
-            /* Quebra palavras longas que estourarem o espaço */
-        }
-
-        #dataTable td,
-        #dataTable th {
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: normal !important;
-            /* Permite que o texto ocupe várias linhas */
-        }
-
-
-        .form-inline .form-control {
-            margin-right: 1rem;
-        }
-
-        .linha-clicavel:hover {
-            cursor: pointer;
-            background-color: #f5f5f5;
-        }
-
-        /* Padronização de altura para todos os campos (Inputs, Selects e o Div do Dropdown) */
-        .form-control-sm,
-        #categoryDropdown {
-            height: 31px !important;
-            /* Altura padrão Bootstrap SM */
-            padding: 2px 10px !important;
-            font-size: 0.875rem !important;
-            border: 1px solid #ced4da !important;
-            border-radius: 4px !important;
-            background-color: #fff !important;
-            display: flex;
-            align-items: center;
-            width: 100%;
-            box-sizing: border-box;
-        }
-
-        /* Apenas para os SELECTS: Removemos a seta nativa para usar a personalizada */
-        select.form-control-sm {
-            appearance: none;
-            -webkit-appearance: none;
-            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%236c757d' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e") !important;
-            background-repeat: no-repeat !important;
-            background-position: right 0.6rem center !important;
-            background-size: 12px 10px !important;
-            padding-right: 1.5rem !important;
-        }
-
-        /* Apenas para o DROPDOWN de Categoria: Colocamos a mesma seta do select */
-        #categoryDropdown {
-            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%236c757d' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e") !important;
-            background-repeat: no-repeat !important;
-            background-position: right 0.6rem center !important;
-            background-size: 12px 10px !important;
-            padding-right: 1.5rem !important;
-        }
-
-        /* Reset para INPUT DE DATA: Mantém o ícone nativo no canto e permite digitar */
-        input[type="date"].form-control-sm {
-            appearance: auto !important;
-            /* Devolve o controle nativo do calendário */
-            -webkit-appearance: auto !important;
-            display: inline-block;
-            /* Alinhamento correto para inputs de texto/data */
-            line-height: normal;
-        }
-
-        /* 1. Iguala a borda do Dropdown com a do Select azul quando focado */
-        .dropdown.show #categoryDropdown {
-            border-color: #80bdff !important;
-            outline: 0;
-            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25) !important;
-        }
-
-
-        /* 2. Cria o efeito azul "Seleção de Sistema" ao passar o mouse nos itens */
-        .dropdown-menu .form-check:hover {
-            background-color: #007bff !important;
-            /* Azul padrão Windows/Chrome */
-            color: white !important;
-        }
-
-        /* 3. Garante que o texto fique branco e o checkbox visível no hover */
-        .dropdown-menu .form-check:hover .form-check-label {
-            color: white !important;
-        }
-
-        /* 4. Padroniza o padding interno para alinhar com os outros selects */
-        #categoryDropdown {
-            padding: 0.375rem 0.75rem !important;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        /* Remove o ícone extra que tínhamos colocado manualmente no HTML do dropdown */
-        #categoryDropdown i.fas.fa-caret-down {
-            display: none !important;
-        }
-
-        /* Ajuste para input de data não ficar desalinhado */
-        input[type="date"].form-control-sm {
-            line-height: 1;
-        }
-
-        /* Alinhamento dos botões para casar com a altura dos campos */
-        .btn-group-filters .btn {
-            height: 35px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-
-
-
-
-        @media print {
-            @page {
-                size: A4 landscape;
-                /* Paisagem é obrigatório para este número de colunas */
-                margin: 1.5cm !important;
-                /* Força a margem física na folha */
-            }
-
-            /* Reset de layout para o navegador não cortar as bordas */
-            html,
-            body {
-                width: 100% !important;
-                margin: 0 !important;
-                padding: 0 !important;
-                background: #fff !important;
-            }
-
-            /* Remove elementos desnecessários e remove limites de largura */
-            .no-print,
-            .main-header,
-            footer,
-            .nav-lateral {
-                display: none !important;
-            }
-
-            .container-fluid,
-            .container {
-                width: 100% !important;
-                max-width: none !important;
-                margin: 0 !important;
-                padding: 0 !important;
-            }
-
-            .card {
-                border: none !important;
-                box-shadow: none !important;
-                margin: 0 !important;
-            }
-
-            /* Ajuste da Tabela */
-            .tabela {
-                max-height: none !important;
-                overflow: visible !important;
-            }
-
-            #dataTable {
-                width: 100% !important;
-                table-layout: fixed !important;
-                /* Força o respeito pelas larguras do header */
-                border-collapse: collapse !important;
-                font-size: 8.5pt !important;
-                /* Reduz ligeiramente para garantir margem lateral */
-            }
-
-            /* Garante que o texto quebre linha e não empurre a margem */
-            #dataTable th,
-            #dataTable td {
-                word-wrap: break-word !important;
-                white-space: normal !important;
-                padding: 6px 4px !important;
-                border: 1px solid #ccc !important;
-                /* Borda visível para o papel */
-            }
-
-            /* Impede que o valor monetário quebre em duas linhas */
-            .text-right {
-                white-space: nowrap !important;
-            }
-        }
-    </style>
+    <title>Relatório de Pagamentos</title>
+    <link rel="stylesheet" href="css/detalhar_rd_modern.css" />
 </head>
 
 <body>
     <?php include("../all/sidebar.php"); ?>
-    <div class="container-fluid mt-2">
-        <div class="card card-primary card-outline">
-            <div class="card-header py-2 no-print">
+    <div class="container-fluid mt-2 detalhar-rd-page">
+        <div class="row">
+            <div class="col-12">
+                <div class="card detalhar-rd-main-card">
+            <div class="card-header py-2 no-print detalhar-rd-toolbar">
                 <div class="d-flex align-items-center">
-                    <h4 class="m-0 font-weight-bold">Relatério de Pagamentos</h4>
-                    <a href="gestaoRD.php" class="ml-4"><i class="fas fa-home" style="font-size: 25px;" data-toggle="tooltip" title="Home RD"></i></a>
+                    <h4 class="m-0 font-weight-bold detalhar-rd-title">Relatório de Pagamentos</h4>
+                    <a href="gestaoRD.php" class="ml-4 detalhar-rd-home-link"><i class="fas fa-home" data-toggle="tooltip" title="Home RD"></i></a>
                 </div>
 
             </div>
-            <div class="card-body">
-                <form method="GET" id="filter-form">
+            <div class="card-body detalhar-rd-body">
+                <form method="GET" id="filter-form" class="detalhar-rd-filter-card no-print">
                     <div class="row align-items-end">
-                        <div class="row">
+                        <div class="col-md-2">
+                            <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group mb-2">
                                     <label class="small mb-1">De:</label>
@@ -357,6 +149,7 @@ $category_label = empty($category_id_filter) ? 'Selecione' : count($category_id_
                                     <label class="small mb-1">Até:</label>
                                     <input type="date" name="date_end" class="form-control form-control-sm" value="<?= htmlspecialchars($dataFim) ?>" />
                                 </div>
+                            </div>
                             </div>
                         </div>
 
@@ -396,7 +189,7 @@ $category_label = empty($category_id_filter) ? 'Selecione' : count($category_id_
                                         <span class="text-truncate"><?= htmlspecialchars($category_label) ?></span>
                                         <i class="fas fa-caret-down ml-1 small text-muted"></i>
                                     </div>
-                                    <div class="dropdown-menu shadow-sm" aria-labelledby="categoryDropdown" style="width: 100%; max-height: 500px; overflow-y: auto; padding: 10px;">
+                                    <div class="dropdown-menu shadow-sm detalhar-rd-category-menu" aria-labelledby="categoryDropdown">
                                         <div class="form-check border-bottom mb-2 pb-1">
                                             <input class="form-check-input" type="checkbox" id="cat_select_all">
                                             <label class="form-check-label " for="cat_select_all">Selecionar todas</label>
@@ -420,14 +213,14 @@ $category_label = empty($category_id_filter) ? 'Selecione' : count($category_id_
                             <div class="form-group mb-2">
                                 <label class="small mb-1">Categoria:</label>
                                 <div class="dropdown no-print">
-                                    <div class="form-control-sm" role="button" id="categoryDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style="cursor: pointer;">
+                                    <div class="form-control-sm" role="button" id="categoryDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                         <span class="text-truncate"><?= htmlspecialchars($category_label) ?></span>
                                     </div>
 
-                                    <div class="dropdown-menu shadow-sm" aria-labelledby="categoryDropdown" style="width: 100%; max-height: 500px; overflow-y: auto; padding: 10px;">
+                                    <div class="dropdown-menu shadow-sm detalhar-rd-category-menu" aria-labelledby="categoryDropdown">
                                         <div class="form-check border-bottom mb-2 pb-1">
                                             <input class="form-check-input" type="checkbox" id="cat_select_all">
-                                            <label class="form-check-label" for="cat_select_all" style="cursor:pointer">Selecionar todas</label>
+                                            <label class="form-check-label" for="cat_select_all">Selecionar todas</label>
                                         </div>
                                         <?php foreach ($categorias_filtro as $categoria) :
                                             $categoriaId = (int)$categoria['id'];
@@ -436,7 +229,7 @@ $category_label = empty($category_id_filter) ? 'Selecione' : count($category_id_
                                         ?>
                                             <div class="form-check py-1">
                                                 <input class="form-check-input" type="checkbox" name="category_id[]" value="<?= $categoriaId ?>" id="cat_<?= $categoriaId ?>" <?= $checked ?>>
-                                                <label class="form-check-label small" for="cat_<?= $categoriaId ?>" style="cursor:pointer"><?= $categoriaNome ?></label>
+                                                <label class="form-check-label small" for="cat_<?= $categoriaId ?>"><?= $categoriaNome ?></label>
                                             </div>
                                         <?php endforeach; ?>
                                     </div>
@@ -444,12 +237,12 @@ $category_label = empty($category_id_filter) ? 'Selecione' : count($category_id_
                             </div>
                         </div>
 
-                        <div class="col-md-2">
-                            <div class="form-group d-flex ">
-                                <button type="submit" class="btn btn-primary btn-sm no-print mr-1 "><i class="fa fa-filter"></i> Filtrar</button>
-                                <a href="detalharRD.php" class="btn btn-secondary btn-sm no-print mr-1">Limpar</a>
-                                <!-- <div id="botoes-datatable" class="d-inline-block ml-1"></div> -->
-                                <a href="gerarPDF.php?<?= $_SERVER['QUERY_STRING'] ?>" target="_blank" class="btn btn-danger btn-sm no-print">
+                        <div class="col-md-4">
+                            <div class="form-group detalhar-rd-actions mb-2">
+                                <button type="submit" class="btn btn-primary btn-sm no-print detalhar-rd-btn"><i class="fa fa-filter"></i> Filtrar</button>
+                                <a href="detalharRD.php" class="btn btn-secondary btn-sm no-print detalhar-rd-btn">Limpar</a>
+                                <div id="botoes-datatable" class="detalhar-rd-export-actions"></div>
+                                <a href="gerarPDF.php?<?= $_SERVER['QUERY_STRING'] ?>" target="_blank" class="btn btn-danger btn-sm no-print detalhar-rd-btn">
                                     <i class="fas fa-file-pdf"></i> Gerar PDF
                                 </a>
                             </div>
@@ -460,10 +253,10 @@ $category_label = empty($category_id_filter) ? 'Selecione' : count($category_id_
             </div>
 
 
-            <div id="printable">
-                <div class="text-center">
+            <div id="printable" class="detalhar-rd-report">
+                <div class="text-center detalhar-rd-report-title">
                     <h5>
-                        <b>Relatério de Pagamentos</b> - Período de <b><?= date("d/m/Y", strtotime($dataInicio)) ?></b> a <b><?= date("d/m/Y", strtotime($dataFim)) ?></b>
+                        <b>Relatório de Pagamentos</b> - Período de <b><?= date("d/m/Y", strtotime($dataInicio)) ?></b> a <b><?= date("d/m/Y", strtotime($dataFim)) ?></b>
                     </h5>
                 </div>
 
@@ -475,8 +268,8 @@ $category_label = empty($category_id_filter) ? 'Selecione' : count($category_id_
                 }
                 ?>
 
-                <div class="tabela table-responsive p-2">
-                    <table class="table table-bordered table-striped" id="dataTable" width="100%" cellspacing="0">
+                <div class="tabela table-responsive p-2 detalhar-rd-table-wrap">
+                    <table class="table table-bordered table-hover" id="dataTable" width="100%" cellspacing="0">
                         <thead class="thead-light">
                             <tr>
                                 <th style="width: 10px;">#</th>
@@ -493,7 +286,7 @@ $category_label = empty($category_id_filter) ? 'Selecione' : count($category_id_
                         <tbody>
                             <?php if (count($results) === 0) : ?>
                                 <tr>
-                                    <td colspan="8" class="text-center">Nenhum resultado encontrado.</td>
+                                    <td colspan="8" class="text-center detalhar-rd-empty">Nenhum resultado encontrado.</td>
                                 </tr>
                                 <?php else : $i = 1;
                                 foreach ($results as $row) : ?>
@@ -523,13 +316,15 @@ $category_label = empty($category_id_filter) ? 'Selecione' : count($category_id_
                     </table>
                 </div>
             </div>
+                </div>
+            </div>
         </div>
     </div>
     </div>
 
     <!-- Modal para editar despesa -->
-    <div class="modal fade" id="editModal" tabindex="-1" role="dialog" aria-labelledby="editModalLabel" aria-hidden="true">
-        <div class="modal-dialog" role="document">
+    <div class="modal fade detalhar-rd-modal" id="editModal" tabindex="-1" role="dialog" aria-labelledby="editModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
             <form class="modal-content" action="editarRDAdm.php" method="POST" enctype="multipart/form-data">
                 <div class="modal-header">
                     <h5 class="modal-title text-primary" id="editModalLabel"><i class="fas fa-edit text-primary"></i> Edição de Despesa pela Gestão</h5>
@@ -647,25 +442,32 @@ $category_label = empty($category_id_filter) ? 'Selecione' : count($category_id_
                 order: [
                     [1, 'asc']
                 ],
-                pageLength: 25,
-                "searching": false,
-                dom: 'Bfrtip',
+                paging: true,
+                pageLength: 10,
+                lengthChange: false,
+                searching: false,
+                pagingType: 'simple_numbers',
+                dom: 'rt<"detalhar-rd-pagination-row row align-items-center"<"col-sm-6"i><"col-sm-6"p>>'
+            });
+
+            new $.fn.dataTable.Buttons(table, {
                 buttons: [{
                     extend: 'print',
                     text: '<i class="fa fa-print"></i> Imprimir',
-                    className: 'btn btn-secondary btn-sm mr-1 ml-3',
-                    title: 'Relatério de Pagamentos',
+                    className: 'btn btn-secondary btn-sm detalhar-rd-btn',
+                    title: 'Relatório de Pagamentos',
                     exportOptions: {
                         columns: ':visible'
                     }
                 }, {
                     extend: 'excelHtml5',
                     text: '<i class="fa fa-file-excel"></i> Exportar',
-                    className: 'btn btn-success btn-sm',
+                    className: 'btn btn-success btn-sm detalhar-rd-btn',
                     title: 'Relatorio_Pagamentos'
                 }]
             });
-            table.buttons().container().appendTo('#botoes-datatable');
+
+            table.buttons(0, null).container().appendTo('#botoes-datatable');
 
         });
     </script>
@@ -730,7 +532,7 @@ $category_label = empty($category_id_filter) ? 'Selecione' : count($category_id_
                 $menu.css({
                     position: 'absolute',
                     top: (offset.top + height + 12) + 'px',
-                    left: (offset.left + 114) + 'px',
+                    left: offset.left + 'px',
                     width: width + 'px',
                     display: 'block'
                 });

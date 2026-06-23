@@ -3,10 +3,16 @@ session_start();
 include_once("../all/permissoes.php");
 if(isset($_POST["id"])){
   include_once("../all/conect.php");
-  $id = $_POST["id"];
+  $id = filter_input(INPUT_POST, 'id', FILTER_SANITIZE_NUMBER_INT);
+
+  function h($value)
+  {
+    return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8');
+  }
   
   $pdo = ConnectionN3();
-  $show = $pdo->prepare("SELECT categorias.* FROM categorias WHERE categorias.cat_id = '$id'");
+  $show = $pdo->prepare("SELECT categorias.* FROM categorias WHERE categorias.cat_id = :id");
+  $show->bindParam(':id', $id, PDO::PARAM_INT);
   $show->execute();
   $row=$show->fetch(PDO::FETCH_ASSOC);
   $cat_nome=$row["cat_nome"];
@@ -19,8 +25,8 @@ if(isset($_POST["id"])){
                     <div class="input-group-prepend">
                       <div class="input-group-text"><i class="fas fa-tags"></i></div>
                     </div> 
-                    <input name="cat_nome" value="<?php echo $cat_nome; ?>" type="text" class="form-control" disabled="">
-                    <input type="hidden" name="scat_cat" value="<?php echo $id;?>">
+                    <input name="cat_nome" value="<?php echo h($cat_nome); ?>" type="text" class="form-control" disabled="">
+                    <input type="hidden" name="scat_cat" value="<?php echo h($id);?>">
                   </div>
                 </div>
               </div>

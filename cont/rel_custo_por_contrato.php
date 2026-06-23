@@ -557,7 +557,7 @@ $custo_clas_cont = $row_class["categoria"];
     <div class="modal-content">
 
       <div class="modal-header">
-        <h6 class="modal-title" id="myModalLabel"><i class="far fa-question-circle text-danger"></i> Relatério de custos</h6>
+        <h6 class="modal-title" id="myModalLabel"><i class="far fa-question-circle text-danger"></i> Relatório de custos</h6>
         <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
       </div>
 

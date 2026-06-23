@@ -149,80 +149,49 @@ $active_tab = $_GET['tab'] ?? 'grupos';
     <link rel="icon" href="../img/favicon.ico">
     <link rel="stylesheet" href="../css/bootstrap.min.css">
     <link rel="stylesheet" href="../fontawesome/css/all.css">
-    <link rel="icon" href="../img/favicon.ico">    <style>
-        body {
-            zoom: 0.9;
-            overflow-x: hidden;
-        }
-
-        .card-principal {
-            height: calc(100vh - 85px);
-            overflow-y: auto;
-        }
-
-        .table td,
-        .table th {
-            padding: 6px 12px;
-            vertical-align: middle;
-        }
-
-        .table td {
-            font-size: 13px;
-        }
-
-        .nav-pills .nav-link {
-            color: #495057;
-            padding: 0.3rem 0.7rem;
-        }
-
-        .nav-pills .nav-link.active {
-            background-color: #343a40;
-            color: white;
-            padding: 0.3rem;
-        }
-
-
-    </style>
+    <link rel="stylesheet" href="css/cadastros_financeiros_modern.css">
 </head>
 
 <body>
     <?php include("../all/sidebar.php"); ?>
-    <div class="container-fluid pt-2">
+    <div class="container-fluid pt-2 cadfin-page">
+        <div class="row">
+            <div class="col-12">
         <?php
         if (isset($_SESSION['alert_message'])) {
             $alert = $_SESSION['alert_message'];
-            echo "<div class='alert alert-{$alert['type']}'>{$alert['text']}</div>";
+            echo "<div class='alert alert-{$alert['type']} cadfin-alert'>{$alert['text']}</div>";
             unset($_SESSION['alert_message']);
         }
         ?>
-        <div class="card">
-            <div class="card-header py-1">
+        <div class="card cadfin-main-card">
+            <div class="card-header py-1 cadfin-toolbar">
                 <div class="d-flex justify-content-between align-items-center">
-                    <h5 class="m-0 font-weight-bold">Cadastro de Dados Financeiros</h5>
-                    <button type="button" class="btn btn-warning btn-sm" id="btn-novo-item"><i class="fas fa-plus"></i> Novo Cadastro</button>
+                    <h5 class="m-0 font-weight-bold cadfin-title">Cadastro de Dados Financeiros</h5>
+                    <button type="button" class="btn btn-primary btn-sm cadfin-new-btn" id="btn-novo-item"><i class="fas fa-plus"></i> Novo Cadastro</button>
                 </div>
-                <ul class="nav nav-pills mt-2" role="tablist">
+                <ul class="nav nav-pills mt-2 cadfin-tabs" role="tablist">
                     <li class="nav-item"><a class="nav-link <?= ($active_tab === 'grupos') ? 'active' : '' ?>" href="?tab=grupos"><i class="fas fa-layer-group mr-1"></i> Grupos</a></li>
                     <li class="nav-item"><a class="nav-link <?= ($active_tab === 'subgrupos') ? 'active' : '' ?>" href="?tab=subgrupos"><i class="fas fa-sitemap mr-1"></i> Subgrupos</a></li>
                     <li class="nav-item"><a class="nav-link <?= ($active_tab === 'classificacoes') ? 'active' : '' ?>" href="?tab=classificacoes"><i class="fas fa-tags mr-1"></i> Classificação</a></li>
                     <li class="nav-item"><a class="nav-link <?= ($active_tab === 'documentos') ? 'active' : '' ?>" href="?tab=documentos"><i class="fas fa-file-alt mr-1"></i> Tipos de Documento</a></li>
                     <li class="nav-item"><a class="nav-link <?= ($active_tab === 'pagamentos') ? 'active' : '' ?>" href="?tab=pagamentos"><i class="fas fa-credit-card mr-1"></i> Formas de Pagamento</a></li>
-                    <li class="nav-item"><a class="nav-link <?= ($active_tab === 'agencias') ? 'active' : '' ?>" href="?tab=agencias"><i class="fas fa-university mr-1"></i> Agencias Bancarias</a></li>
+                    <li class="nav-item"><a class="nav-link <?= ($active_tab === 'agencias') ? 'active' : '' ?>" href="?tab=agencias"><i class="fas fa-university mr-1"></i> Agências Bancárias</a></li>
                 </ul>
             </div>
 
-            <div class="card-body card-principal">
-                <div class="tab-content">
+            <div class="card-body card-principal cadfin-body">
+                <div class="tab-content cadfin-tab-content">
 
                     <!-- ABA GRUPOS -->
                     <div class="tab-pane fade <?= ($active_tab === 'grupos') ? 'show active' : '' ?>">
-                        <div class="table-responsive">
-                            <table class="table table-sm table-bordered table-striped table-hover">
-                                <thead class="thead-dark">
+                        <div class="table-responsive cadfin-table-wrap">
+                            <table class="table table-sm table-bordered table-hover cadfin-table">
+                                <thead>
                                     <tr>
                                         <th>Nome</th>
                                         <th class="text-center">Status</th>
-                                        <th class="text-center" width="150px">Açães</th>
+                                        <th class="text-center" width="150px">Ações</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -230,8 +199,8 @@ $active_tab = $_GET['tab'] ?? 'grupos';
                                         <tr>
                                             <td><?= htmlspecialchars($item['nome']) ?></td>
                                             <td class="text-center"><?= $item['status'] == 1 ? '<span class="badge badge-success">Ativo</span>' : '<span class="badge badge-secondary">Inativo</span>' ?></td>
-                                            <td class="text-center">
-                                                <form method="POST" style="display: inline;"><input type="hidden" name="action" value="toggle_status"><input type="hidden" name="id" value="<?= $item['id'] ?>"><input type="hidden" name="tabela" value="categorias_grupo"><input type="hidden" name="tabRedirect" value="grupos">
+                                            <td class="text-center cadfin-actions-cell">
+                                                <form method="POST"><input type="hidden" name="action" value="toggle_status"><input type="hidden" name="id" value="<?= $item['id'] ?>"><input type="hidden" name="tabela" value="categorias_grupo"><input type="hidden" name="tabRedirect" value="grupos">
                                                     <button type="submit" class="btn btn-sm <?= $item['status'] ? 'btn-secondary' : 'btn-success' ?>" title="<?= $item['status'] ? 'Desativar' : 'Ativar' ?>"><i class="fas <?= $item['status'] ? 'fa-power-off' : 'fa-check-circle' ?>"></i></button>
                                                 </form>
                                                 <button class="btn btn-warning btn-sm btn-edit-grupo" data-toggle="modal" data-target="#modalEditGrupo" data-id="<?= $item['id'] ?>" data-nome="<?= htmlspecialchars($item['nome']) ?>" title="Editar"><i class="fas fa-edit"></i></button>
@@ -246,14 +215,14 @@ $active_tab = $_GET['tab'] ?? 'grupos';
 
                     <!-- ABA SUBGRUPOS -->
                     <div class="tab-pane fade <?= ($active_tab === 'subgrupos') ? 'show active' : '' ?>">
-                        <div class="table-responsive">
-                            <table class="table table-sm table-bordered table-striped table-hover">
-                                <thead class="thead-dark">
+                        <div class="table-responsive cadfin-table-wrap">
+                            <table class="table table-sm table-bordered table-hover cadfin-table">
+                                <thead>
                                     <tr>
                                         <th>Nome</th>
                                         <th>Grupo</th>
                                         <th class="text-center">Status</th>
-                                        <th class="text-center" width="150px">Açães</th>
+                                        <th class="text-center" width="150px">Ações</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -262,8 +231,8 @@ $active_tab = $_GET['tab'] ?? 'grupos';
                                             <td><?= htmlspecialchars($item['nome']) ?></td>
                                             <td><?= htmlspecialchars($item['grupo_nome']) ?></td>
                                             <td class="text-center"><?= $item['status'] == 1 ? '<span class="badge badge-success">Ativo</span>' : '<span class="badge badge-secondary">Inativo</span>' ?></td>
-                                            <td class="text-center">
-                                                <form method="POST" style="display: inline;"><input type="hidden" name="action" value="toggle_status"><input type="hidden" name="id" value="<?= $item['id'] ?>"><input type="hidden" name="tabela" value="categorias_subgrupo"><input type="hidden" name="tabRedirect" value="subgrupos">
+                                            <td class="text-center cadfin-actions-cell">
+                                                <form method="POST"><input type="hidden" name="action" value="toggle_status"><input type="hidden" name="id" value="<?= $item['id'] ?>"><input type="hidden" name="tabela" value="categorias_subgrupo"><input type="hidden" name="tabRedirect" value="subgrupos">
                                                     <button type="submit" class="btn btn-sm <?= $item['status'] ? 'btn-secondary' : 'btn-success' ?>" title="<?= $item['status'] ? 'Desativar' : 'Ativar' ?>"><i class="fas <?= $item['status'] ? 'fa-power-off' : 'fa-check-circle' ?>"></i></button>
                                                 </form>
                                                 <button class="btn btn-warning btn-sm btn-edit-subgrupo" data-toggle="modal" data-target="#modalEditSubgrupo" data-id="<?= $item['id'] ?>" data-nome="<?= htmlspecialchars($item['nome']) ?>" data-id_grupo="<?= $item['id_grupo'] ?>" title="Editar"><i class="fas fa-edit"></i></button>
@@ -278,13 +247,13 @@ $active_tab = $_GET['tab'] ?? 'grupos';
 
                     <!-- ABA CLASSIFICAÇÕES -->
                     <div class="tab-pane fade <?= ($active_tab === 'classificacoes') ? 'show active' : '' ?>">
-                        <div class="table-responsive">
-                            <table class="table table-sm table-bordered table-striped table-hover">
-                                <thead class="thead-dark">
+                        <div class="table-responsive cadfin-table-wrap">
+                            <table class="table table-sm table-bordered table-hover cadfin-table">
+                                <thead>
                                     <tr>
                                         <th>Nome</th>
                                         <th class="text-center">Status</th>
-                                        <th class="text-center" width="150px">Açães</th>
+                                        <th class="text-center" width="150px">Ações</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -292,8 +261,8 @@ $active_tab = $_GET['tab'] ?? 'grupos';
                                         <tr>
                                             <td><?= htmlspecialchars($item['nome']) ?></td>
                                             <td class="text-center"><?= $item['status'] == 1 ? '<span class="badge badge-success">Ativo</span>' : '<span class="badge badge-secondary">Inativo</span>' ?></td>
-                                            <td class="text-center">
-                                                <form method="POST" style="display: inline;"><input type="hidden" name="action" value="toggle_status"><input type="hidden" name="id" value="<?= $item['id'] ?>"><input type="hidden" name="tabela" value="categorias_classificacao"><input type="hidden" name="tabRedirect" value="classificacoes">
+                                            <td class="text-center cadfin-actions-cell">
+                                                <form method="POST"><input type="hidden" name="action" value="toggle_status"><input type="hidden" name="id" value="<?= $item['id'] ?>"><input type="hidden" name="tabela" value="categorias_classificacao"><input type="hidden" name="tabRedirect" value="classificacoes">
                                                     <button type="submit" class="btn btn-sm <?= $item['status'] ? 'btn-secondary' : 'btn-success' ?>" title="<?= $item['status'] ? 'Desativar' : 'Ativar' ?>"><i class="fas <?= $item['status'] ? 'fa-power-off' : 'fa-check-circle' ?>"></i></button>
                                                 </form>
                                                 <button class="btn btn-warning btn-sm btn-edit-classificacao" data-toggle="modal" data-target="#modalEditClassificacao" data-id="<?= $item['id'] ?>" data-nome="<?= htmlspecialchars($item['nome']) ?>" title="Editar"><i class="fas fa-edit"></i></button>
@@ -308,13 +277,13 @@ $active_tab = $_GET['tab'] ?? 'grupos';
 
                     <!-- ABA DOCUMENTOS -->
                     <div class="tab-pane fade <?= ($active_tab === 'documentos') ? 'show active' : '' ?>">
-                        <div class="table-responsive">
-                            <table class="table table-sm table-bordered table-striped table-hover">
-                                <thead class="thead-dark">
+                        <div class="table-responsive cadfin-table-wrap">
+                            <table class="table table-sm table-bordered table-hover cadfin-table">
+                                <thead>
                                     <tr>
                                         <th>Nome</th>
                                         <th class="text-center">Status</th>
-                                        <th class="text-center" width="150px">Açães</th>
+                                        <th class="text-center" width="150px">Ações</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -322,8 +291,8 @@ $active_tab = $_GET['tab'] ?? 'grupos';
                                         <tr>
                                             <td><?= htmlspecialchars($item['nome']) ?></td>
                                             <td class="text-center"><?= $item['status'] == 1 ? '<span class="badge badge-success">Ativo</span>' : '<span class="badge badge-secondary">Inativo</span>' ?></td>
-                                            <td class="text-center">
-                                                <form method="POST" style="display: inline;"><input type="hidden" name="action" value="toggle_status"><input type="hidden" name="id" value="<?= $item['id'] ?>"><input type="hidden" name="tabela" value="categorias_tipo_documento"><input type="hidden" name="tabRedirect" value="documentos">
+                                            <td class="text-center cadfin-actions-cell">
+                                                <form method="POST"><input type="hidden" name="action" value="toggle_status"><input type="hidden" name="id" value="<?= $item['id'] ?>"><input type="hidden" name="tabela" value="categorias_tipo_documento"><input type="hidden" name="tabRedirect" value="documentos">
                                                     <button type="submit" class="btn btn-sm <?= $item['status'] ? 'btn-secondary' : 'btn-success' ?>" title="<?= $item['status'] ? 'Desativar' : 'Ativar' ?>"><i class="fas <?= $item['status'] ? 'fa-power-off' : 'fa-check-circle' ?>"></i></button>
                                                 </form>
                                                 <button class="btn btn-warning btn-sm btn-edit-tipo_documento" data-toggle="modal" data-target="#modalEditTipoDocumento" data-id="<?= $item['id'] ?>" data-nome="<?= htmlspecialchars($item['nome']) ?>" title="Editar"><i class="fas fa-edit"></i></button>
@@ -338,13 +307,13 @@ $active_tab = $_GET['tab'] ?? 'grupos';
 
                     <!-- ABA PAGAMENTOS -->
                     <div class="tab-pane fade <?= ($active_tab === 'pagamentos') ? 'show active' : '' ?>">
-                        <div class="table-responsive">
-                            <table class="table table-sm table-bordered table-striped table-hover">
-                                <thead class="thead-dark">
+                        <div class="table-responsive cadfin-table-wrap">
+                            <table class="table table-sm table-bordered table-hover cadfin-table">
+                                <thead>
                                     <tr>
                                         <th>Forma</th>
                                         <th class="text-center">Status</th>
-                                        <th class="text-center" width="150px">Açães</th>
+                                        <th class="text-center" width="150px">Ações</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -352,8 +321,8 @@ $active_tab = $_GET['tab'] ?? 'grupos';
                                         <tr>
                                             <td><?= htmlspecialchars($item['forma']) ?></td>
                                             <td class="text-center"><?= $item['status'] == 1 ? '<span class="badge badge-success">Ativo</span>' : '<span class="badge badge-secondary">Inativo</span>' ?></td>
-                                            <td class="text-center">
-                                                <form method="POST" style="display: inline;">
+                                            <td class="text-center cadfin-actions-cell">
+                                                <form method="POST">
                                                     <input type="hidden" name="action" value="toggle_status">
                                                     <input type="hidden" name="id" value="<?= $item['id'] ?>">
                                                     <input type="hidden" name="tabela" value="cads_forma_pag">
@@ -372,13 +341,13 @@ $active_tab = $_GET['tab'] ?? 'grupos';
 
                     <!-- ABA AGENCIA / BANCO -->
                     <div class="tab-pane fade <?= ($active_tab === 'agencias') ? 'show active' : '' ?>">
-                        <div class="table-responsive">
-                            <table class="table table-sm table-bordered table-striped table-hover">
-                                <thead class="thead-dark">
+                        <div class="table-responsive cadfin-table-wrap">
+                            <table class="table table-sm table-bordered table-hover cadfin-table">
+                                <thead>
                                     <tr>
                                         <th>Nome</th>
                                         <th class="text-center">Status</th>
-                                        <th class="text-center" width="150px">Açães</th>
+                                        <th class="text-center" width="150px">Ações</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -386,8 +355,8 @@ $active_tab = $_GET['tab'] ?? 'grupos';
                                         <tr>
                                             <td><?= htmlspecialchars($item['ag_nome']) ?></td>
                                             <td class="text-center"><?= $item['status'] == 1 ? '<span class="badge badge-success">Ativo</span>' : '<span class="badge badge-secondary">Inativo</span>' ?></td>
-                                            <td class="text-center">
-                                                <form method="POST" style="display: inline;">
+                                            <td class="text-center cadfin-actions-cell">
+                                                <form method="POST">
                                                     <input type="hidden" name="action" value="toggle_status">
                                                     <input type="hidden" name="id" value="<?= $item['id'] ?>">
                                                     <input type="hidden" name="tabela" value="agenciasbancarias">
@@ -408,11 +377,11 @@ $active_tab = $_GET['tab'] ?? 'grupos';
 
 
                     <!-- Modais add grupo -->
-                    <div class="modal fade" id="modalAddGrupo">
-                        <div class="modal-dialog">
+                    <div class="modal fade cadfin-modal" id="modalAddGrupo" tabindex="-1" role="dialog" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered" role="document">
                             <form class="modal-content" method="POST"><input type="hidden" name="action" value="add_grupo"><input type="hidden" name="tabRedirect" value="grupos">
                                 <div class="modal-header">
-                                    <h5 class="modal-title">Novo Grupo</h5><button type="button" class="close" data-dismiss="modal">&times;</button>
+                                    <h5 class="modal-title">Novo Grupo</h5><button type="button" class="close" data-dismiss="modal" aria-label="Fechar"><span aria-hidden="true">&times;</span></button>
                                 </div>
                                 <div class="modal-body">
                                     <div class="form-group"><label>Nome</label><input type="text" class="form-control" name="nome" required></div>
@@ -422,11 +391,11 @@ $active_tab = $_GET['tab'] ?? 'grupos';
                         </div>
                     </div>
                     <!-- Modal add subgrupo -->
-                    <div class="modal fade" id="modalAddSubgrupo">
-                        <div class="modal-dialog">
+                    <div class="modal fade cadfin-modal" id="modalAddSubgrupo" tabindex="-1" role="dialog" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered" role="document">
                             <form class="modal-content" method="POST"><input type="hidden" name="action" value="add_subgrupo"><input type="hidden" name="tabRedirect" value="subgrupos">
                                 <div class="modal-header">
-                                    <h5 class="modal-title">Novo Subgrupo</h5><button type="button" class="close" data-dismiss="modal">&times;</button>
+                                    <h5 class="modal-title">Novo Subgrupo</h5><button type="button" class="close" data-dismiss="modal" aria-label="Fechar"><span aria-hidden="true">&times;</span></button>
                                 </div>
                                 <div class="modal-body">
                                     <div class="form-group"><label>Nome</label><input type="text" class="form-control" name="nome" required></div>
@@ -439,11 +408,11 @@ $active_tab = $_GET['tab'] ?? 'grupos';
                         </div>
                     </div>
                     <!-- Modal add classificação -->
-                    <div class="modal fade" id="modalAddClassificacao">
-                        <div class="modal-dialog">
+                    <div class="modal fade cadfin-modal" id="modalAddClassificacao" tabindex="-1" role="dialog" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered" role="document">
                             <form class="modal-content" method="POST"><input type="hidden" name="action" value="add_classificacao"><input type="hidden" name="tabRedirect" value="classificacoes">
                                 <div class="modal-header">
-                                    <h5 class="modal-title">Nova Classificação</h5><button type="button" class="close" data-dismiss="modal">&times;</button>
+                                    <h5 class="modal-title">Nova Classificação</h5><button type="button" class="close" data-dismiss="modal" aria-label="Fechar"><span aria-hidden="true">&times;</span></button>
                                 </div>
                                 <div class="modal-body">
                                     <div class="form-group"><label>Nome</label><input type="text" class="form-control" name="nome" required></div>
@@ -453,11 +422,11 @@ $active_tab = $_GET['tab'] ?? 'grupos';
                         </div>
                     </div>
                     <!-- Modal add tipo de documento -->
-                    <div class="modal fade" id="modalAddTipoDocumento">
-                        <div class="modal-dialog">
+                    <div class="modal fade cadfin-modal" id="modalAddTipoDocumento" tabindex="-1" role="dialog" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered" role="document">
                             <form class="modal-content" method="POST"><input type="hidden" name="action" value="add_tipo_documento"><input type="hidden" name="tabRedirect" value="documentos">
                                 <div class="modal-header">
-                                    <h5 class="modal-title">Novo Tipo de Documento</h5><button type="button" class="close" data-dismiss="modal">&times;</button>
+                                    <h5 class="modal-title">Novo Tipo de Documento</h5><button type="button" class="close" data-dismiss="modal" aria-label="Fechar"><span aria-hidden="true">&times;</span></button>
                                 </div>
                                 <div class="modal-body">
                                     <div class="form-group"><label>Nome</label><input type="text" class="form-control" name="nome" required></div>
@@ -467,11 +436,11 @@ $active_tab = $_GET['tab'] ?? 'grupos';
                         </div>
                     </div>
                     <!-- Modal add forma de pagamento -->
-                    <div class="modal fade" id="modalAddFormaPag">
-                        <div class="modal-dialog">
+                    <div class="modal fade cadfin-modal" id="modalAddFormaPag" tabindex="-1" role="dialog" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered" role="document">
                             <form class="modal-content" method="POST"><input type="hidden" name="action" value="add_forma_pag"><input type="hidden" name="tabRedirect" value="pagamentos">
                                 <div class="modal-header">
-                                    <h5 class="modal-title">Nova Forma de Pagamento</h5><button type="button" class="close" data-dismiss="modal">&times;</button>
+                                    <h5 class="modal-title">Nova Forma de Pagamento</h5><button type="button" class="close" data-dismiss="modal" aria-label="Fechar"><span aria-hidden="true">&times;</span></button>
                                 </div>
                                 <div class="modal-body">
                                     <div class="form-group"><label>Forma</label><input type="text" class="form-control" name="forma" required></div>
@@ -485,13 +454,13 @@ $active_tab = $_GET['tab'] ?? 'grupos';
                         </div>
                     </div>
                     <!-- Modal add agencia -->
-                    <div class="modal fade" id="modalAddAgencia">
-                        <div class="modal-dialog">
+                    <div class="modal fade cadfin-modal" id="modalAddAgencia" tabindex="-1" role="dialog" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered" role="document">
                             <form class="modal-content" method="POST">
                                 <input type="hidden" name="action" value="add_agencia">
                                 <input type="hidden" name="tabRedirect" value="agencias">
                                 <div class="modal-header">
-                                    <h5 class="modal-title">Nova Agência Bancária</h5><button type="button" class="close" data-dismiss="modal">&times;</button>
+                                    <h5 class="modal-title">Nova Agência Bancária</h5><button type="button" class="close" data-dismiss="modal" aria-label="Fechar"><span aria-hidden="true">&times;</span></button>
                                 </div>
                                 <div class="modal-body">
                                     <div class="form-group">
@@ -513,11 +482,11 @@ $active_tab = $_GET['tab'] ?? 'grupos';
 
 
                     <!-- Modais de Edição -->
-                    <div class="modal fade" id="modalEditGrupo">
-                        <div class="modal-dialog">
+                    <div class="modal fade cadfin-modal" id="modalEditGrupo" tabindex="-1" role="dialog" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered" role="document">
                             <form class="modal-content" method="POST"><input type="hidden" name="action" value="edit_grupo"><input type="hidden" name="id" id="edit_g_id"><input type="hidden" name="tabRedirect" value="grupos">
                                 <div class="modal-header">
-                                    <h5 class="modal-title">Editar Grupo</h5><button type="button" class="close" data-dismiss="modal">&times;</button>
+                                    <h5 class="modal-title">Editar Grupo</h5><button type="button" class="close" data-dismiss="modal" aria-label="Fechar"><span aria-hidden="true">&times;</span></button>
                                 </div>
                                 <div class="modal-body">
                                     <div class="form-group"><label>Nome</label><input type="text" class="form-control" name="nome" id="edit_g_nome" required></div>
@@ -528,11 +497,11 @@ $active_tab = $_GET['tab'] ?? 'grupos';
                     </div>
 
                     <!-- Modal edit subgrupo -->
-                    <div class="modal fade" id="modalEditSubgrupo">
-                        <div class="modal-dialog">
+                    <div class="modal fade cadfin-modal" id="modalEditSubgrupo" tabindex="-1" role="dialog" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered" role="document">
                             <form class="modal-content" method="POST"><input type="hidden" name="action" value="edit_subgrupo"><input type="hidden" name="id" id="edit_sg_id"><input type="hidden" name="tabRedirect" value="subgrupos">
                                 <div class="modal-header">
-                                    <h5 class="modal-title">Editar Subgrupo</h5><button type="button" class="close" data-dismiss="modal">&times;</button>
+                                    <h5 class="modal-title">Editar Subgrupo</h5><button type="button" class="close" data-dismiss="modal" aria-label="Fechar"><span aria-hidden="true">&times;</span></button>
                                 </div>
                                 <div class="modal-body">
                                     <div class="form-group"><label>Nome</label><input type="text" class="form-control" name="nome" id="edit_sg_nome" required></div>
@@ -544,11 +513,11 @@ $active_tab = $_GET['tab'] ?? 'grupos';
                     </div>
 
                     <!-- Modal edit classificação -->
-                    <div class="modal fade" id="modalEditClassificacao">
-                        <div class="modal-dialog">
+                    <div class="modal fade cadfin-modal" id="modalEditClassificacao" tabindex="-1" role="dialog" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered" role="document">
                             <form class="modal-content" method="POST"><input type="hidden" name="action" value="edit_classificacao"><input type="hidden" name="id" id="edit_c_id"><input type="hidden" name="tabRedirect" value="classificacoes">
                                 <div class="modal-header">
-                                    <h5 class="modal-title">Editar Classificação</h5><button type="button" class="close" data-dismiss="modal">&times;</button>
+                                    <h5 class="modal-title">Editar Classificação</h5><button type="button" class="close" data-dismiss="modal" aria-label="Fechar"><span aria-hidden="true">&times;</span></button>
                                 </div>
                                 <div class="modal-body">
                                     <div class="form-group"><label>Nome</label><input type="text" class="form-control" name="nome" id="edit_c_nome" required></div>
@@ -559,11 +528,11 @@ $active_tab = $_GET['tab'] ?? 'grupos';
                     </div>
 
                     <!-- Modal edit tipo de documento -->
-                    <div class="modal fade" id="modalEditTipoDocumento">
-                        <div class="modal-dialog">
+                    <div class="modal fade cadfin-modal" id="modalEditTipoDocumento" tabindex="-1" role="dialog" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered" role="document">
                             <form class="modal-content" method="POST"><input type="hidden" name="action" value="edit_tipo_documento"><input type="hidden" name="id" id="edit_td_id"><input type="hidden" name="tabRedirect" value="documentos">
                                 <div class="modal-header">
-                                    <h5 class="modal-title">Editar Tipo de Documento</h5><button type="button" class="close" data-dismiss="modal">&times;</button>
+                                    <h5 class="modal-title">Editar Tipo de Documento</h5><button type="button" class="close" data-dismiss="modal" aria-label="Fechar"><span aria-hidden="true">&times;</span></button>
                                 </div>
                                 <div class="modal-body">
                                     <div class="form-group"><label>Nome</label><input type="text" class="form-control" name="nome" id="edit_td_nome" required></div>
@@ -574,11 +543,11 @@ $active_tab = $_GET['tab'] ?? 'grupos';
                     </div>
 
                     <!-- Modal edit forma de pagamento -->
-                    <div class="modal fade" id="modalEditFormaPag">
-                        <div class="modal-dialog">
+                    <div class="modal fade cadfin-modal" id="modalEditFormaPag" tabindex="-1" role="dialog" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered" role="document">
                             <form class="modal-content" method="POST"><input type="hidden" name="action" value="edit_forma_pag"><input type="hidden" name="id" id="edit_fp_id"><input type="hidden" name="tabRedirect" value="pagamentos">
                                 <div class="modal-header">
-                                    <h5 class="modal-title">Editar Forma de Pagamento</h5><button type="button" class="close" data-dismiss="modal">&times;</button>
+                                    <h5 class="modal-title">Editar Forma de Pagamento</h5><button type="button" class="close" data-dismiss="modal" aria-label="Fechar"><span aria-hidden="true">&times;</span></button>
                                 </div>
                                 <div class="modal-body">
                                     <div class="form-group"><label>Forma</label><input type="text" class="form-control" name="forma" id="edit_fp_forma" required></div>
@@ -587,20 +556,20 @@ $active_tab = $_GET['tab'] ?? 'grupos';
                                             <option value="0">Inativo</option>
                                         </select></div>
                                 </div>
-                                <div class="modal-footer"><button type="submit" class="btn btn-primary">Salvar</button></div>
+                                <div class="modal-footer"><button type="submit" class="btn btn-primary btn-sm">Salvar</button></div>
                             </form>
                         </div>
                     </div>
 
                     <!-- Modal edit agencia bancaria -->
-                    <div class="modal fade" id="modalEditAgencia">
-                        <div class="modal-dialog">
+                    <div class="modal fade cadfin-modal" id="modalEditAgencia" tabindex="-1" role="dialog" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered" role="document">
                             <form class="modal-content" method="POST">
                                 <input type="hidden" name="action" value="edit_agencia">
                                 <input type="hidden" name="id" id="edit_ag_id">
                                 <input type="hidden" name="tabRedirect" value="agencias">
                                 <div class="modal-header">
-                                    <h5 class="modal-title">Editar Agência Bancária</h5><button type="button" class="close" data-dismiss="modal">&times;</button>
+                                    <h5 class="modal-title">Editar Agência Bancária</h5><button type="button" class="close" data-dismiss="modal" aria-label="Fechar"><span aria-hidden="true">&times;</span></button>
                                 </div>
                                 <div class="modal-body">
                                     <div class="form-group">
@@ -615,23 +584,23 @@ $active_tab = $_GET['tab'] ?? 'grupos';
                                         </select>
                                     </div>
                                 </div>
-                                <div class="modal-footer"><button type="submit" class="btn btn-primary">Salvar</button></div>
+                                <div class="modal-footer"><button type="submit" class="btn btn-primary btn-sm">Salvar</button></div>
                             </form>
                         </div>
                     </div>
 
 
                     <!-- Modal Genérico de Exclusão -->
-                    <div class="modal fade" id="modalDelete">
-                        <div class="modal-dialog modal-sm">
+                    <div class="modal fade cadfin-modal" id="modalDelete" tabindex="-1" role="dialog" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered modal-sm" role="document">
                             <form class="modal-content" method="POST"><input type="hidden" name="action" value="delete_item"><input type="hidden" name="id" id="delete_id"><input type="hidden" name="tabela" id="delete_tabela"><input type="hidden" name="tabRedirect" id="delete_tab">
                                 <div class="modal-header">
-                                    <h5 class="modal-title">Confirmar Exclusão</h5><button type="button" class="close" data-dismiss="modal">&times;</button>
+                                    <h5 class="modal-title">Confirmar Exclusão</h5><button type="button" class="close" data-dismiss="modal" aria-label="Fechar"><span aria-hidden="true">&times;</span></button>
                                 </div>
                                 <div class="modal-body">
                                     <p>Tem certeza que deseja excluir este item? Esta ação não pode ser desfeita.</p>
                                 </div>
-                                <div class="modal-footer"><button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button><button type="submit" class="btn btn-danger">Excluir</button></div>
+                                <div class="modal-footer"><button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Cancelar</button><button type="submit" class="btn btn-danger btn-sm">Excluir</button></div>
                             </form>
                         </div>
                     </div>
@@ -716,6 +685,9 @@ $active_tab = $_GET['tab'] ?? 'grupos';
                             }, 3000);
                         });
                     </script>
+            </div>
+        </div>
+    </div>
 </body>
 
 </html>

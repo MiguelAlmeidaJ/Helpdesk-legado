@@ -213,7 +213,7 @@ $active_tab = $_GET['tab'] ?? 'categorias';
                                         <th>Nome</th>
                                         <th>Descrição</th>
                                         <th class="text-center">Status</th>
-                                        <th class="text-center" style="width: 100px;">Açães</th>
+                                        <th class="text-center" style="width: 100px;">Ações</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -245,7 +245,7 @@ $active_tab = $_GET['tab'] ?? 'categorias';
                                         <th>ID</th>
                                         <th>Nome do Cliente</th>
                                         <th class="text-center">Status</th>
-                                        <th class="text-center" style="width: 100px;">Açães</th>
+                                        <th class="text-center" style="width: 100px;">Ações</th>
                                     </tr>
                                 </thead>
                                 <tbody>

@@ -661,7 +661,7 @@ function renderTabelaContasPagar($contas)
                                 <th><?= sortLink('Subgrupo', 'subgrupo_nome', $orderBy, $orderDir) ?></th>
                                 <th class="text-center">Anexos</th>
                                 <th class="text-center"><?= sortLink('Status', 'status', $orderBy, $orderDir) ?></th>
-                                <th class="text-center" style="width: 160px;">Açães</th>
+                                <th class="text-center" style="width: 160px;">Ações</th>
                             </tr>
                         </thead>
                         <tbody>

@@ -14,6 +14,59 @@ if ($m9_01 == 0) {
 setlocale(LC_TIME, 'pt_BR.UTF-8', 'pt_BR.utf8', 'portuguese');
 date_default_timezone_set('America/Sao_Paulo');
 
+function nomeMesPtBr($mes)
+{
+    if (class_exists('IntlDateFormatter')) {
+        $fmt = new IntlDateFormatter('pt_BR', IntlDateFormatter::LONG, IntlDateFormatter::NONE, 'America/Sao_Paulo', IntlDateFormatter::GREGORIAN, 'MMMM');
+        $nomeMes = $fmt->format(mktime(0, 0, 0, (int)$mes, 1));
+
+        if ($nomeMes !== false) {
+            return ucfirst($nomeMes);
+        }
+    }
+
+    $meses = [
+        1 => 'Janeiro',
+        2 => 'Fevereiro',
+        3 => 'Março',
+        4 => 'Abril',
+        5 => 'Maio',
+        6 => 'Junho',
+        7 => 'Julho',
+        8 => 'Agosto',
+        9 => 'Setembro',
+        10 => 'Outubro',
+        11 => 'Novembro',
+        12 => 'Dezembro',
+    ];
+
+    return $meses[(int)$mes] ?? '';
+}
+
+function nomeDiaSemanaPtBr(DateTime $data)
+{
+    if (class_exists('IntlDateFormatter')) {
+        $fmt = new IntlDateFormatter('pt_BR', IntlDateFormatter::FULL, IntlDateFormatter::NONE, 'America/Sao_Paulo');
+        $nomeDia = $fmt->format($data);
+
+        if ($nomeDia !== false) {
+            return ucfirst(explode(',', $nomeDia)[0]);
+        }
+    }
+
+    $dias = [
+        0 => 'Domingo',
+        1 => 'Segunda-feira',
+        2 => 'Terça-feira',
+        3 => 'Quarta-feira',
+        4 => 'Quinta-feira',
+        5 => 'Sexta-feira',
+        6 => 'Sábado',
+    ];
+
+    return $dias[(int)$data->format('w')] ?? '';
+}
+
 
 $pdo = ConnectionN3();
 if (!$pdo) exit("Erro ao conectar ao banco de dados.");
@@ -21,7 +74,10 @@ if (!$pdo) exit("Erro ao conectar ao banco de dados.");
 $mes = isset($_GET['mes']) ? (int)$_GET['mes'] : date('n');
 $ano = isset($_GET['ano']) ? (int)$_GET['ano'] : date('Y');
 
-$data_base = date("$ano-$mes-01");
+$mes = max(1, min(12, $mes));
+$ano = max(2000, min(2100, $ano));
+
+$data_base = sprintf('%04d-%02d-01', $ano, $mes);
 $dias_do_mes = cal_days_in_month(CAL_GREGORIAN, $mes, $ano);
 
 $usuarioLogadoId = $_SESSION['allterusN3Id'];
@@ -211,7 +267,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['editAgendamento'])) {
         if ($check->rowCount() > 0) {
             setMensagem("Já existe um agendamento para este veículo nesta data e horário.", "danger");
         } elseif ($arquivado == 1 && (empty($kmInicial) || empty($kmFinal))) {
-            setMensagem("Não à possível arquivar: preencha o KM Inicial e o KM Final.", "warning");
+            setMensagem("Não ? possível arquivar: preencha o KM Inicial e o KM Final.", "warning");
         } elseif ($arquivado == 1 && $kmFinal < $kmInicial) {
             setMensagem("O KM Final deve ser maior que o KM Inicial.", "warning");
         } else {
@@ -482,299 +538,24 @@ $podeDesfazer = $checkUndo->fetchColumn();
     <link rel="stylesheet" href="../css/bootstrap.min.css">
     <link rel="stylesheet" href="../fontawesome/css/all.css">
 
+    <link rel="stylesheet" href="css/agenda_modern.css">
     <title>Agenda de Veículos</title>
-    <style>
-        body {
-            zoom: 0.9;
-            width: 100%;
-            overflow-x: hidden;
-        }
-
-        .card {
-            max-height: calc(100vh - 20px);
-        }
-
-        .card-body {
-            overflow-y: auto;
-            width: 100%;
-            padding: 0;
-            font-size: 0.85rem;
-            color: #333;
-        }
-
-        .table-responsive {
-            overflow-x: auto;
-            white-space: nowrap;
-        }
-
-        .veiculo-cell {
-            position: relative;
-            width: 200px;
-            min-width: 200px;
-            max-width: 200px;
-            vertical-align: top;
-        }
-
-        .agendado {
-            border-radius: 8px;
-            padding: 10px;
-            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
-            border: 1px solid #d1e7d1;
-        }
-
-        .agendamento-box {
-            width: 100%;
-            background-color: #f8f9fa;
-            border: 1px solid #e0e0e0;
-            padding: 12px;
-            border-radius: 6px;
-            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-            word-wrap: break-word;
-            overflow-wrap: break-word;
-            white-space: normal;
-            box-sizing: border-box;
-        }
-
-
-        .alert-fixed {
-            position: fixed;
-            top: 50px;
-            left: 70%;
-            transform: translateX(-50%);
-            z-index: 9999;
-            max-width: 700px;
-            width: 90%;
-            padding: 15px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-        }
-
-        .edit-btn {
-            position: absolute;
-            top: 2px;
-            right: 10px;
-            background: none;
-            border: none;
-            padding: 0;
-            font-size: 13px;
-            color: #333;
-            cursor: pointer;
-        }
-
-        .copy-btn {
-            position: absolute;
-            top: 2px;
-            right: 30px;
-            background: none;
-            border: none;
-            padding: 0;
-            font-size: 13px;
-            color: #333;
-            cursor: pointer;
-        }
-
-        .colar-btn {
-            position: absolute;
-            top: 2px;
-            right: 30px;
-            background: none;
-            border: none;
-            padding: 0;
-            font-size: 13px;
-            color: #333;
-            cursor: pointer;
-        }
-
-        .delete-btn {
-            position: absolute;
-            top: 2px;
-            right: 40px;
-            background: none;
-            border: none;
-            padding: 0;
-            font-size: 13px;
-            color: #333;
-            cursor: pointer;
-        }
-
-        /* Remover a borda preta ao clicar */
-        .delete-btn:focus {
-            outline: none;
-            border: none;
-        }
-
-        /* Alterar a cor do botão ao passar o mouse */
-        .delete-btn:hover {
-            background-color: transparent;
-            color: red;
-            border-color: #ccc;
-            font-size: 20px;
-        }
-
-        /* Melhorando a aparência das bordas e cabeçalhos */
-        .table thead th {
-            background-color: #28a745;
-            /* Verde mais forte para destacar o cabeçalho */
-            color: white;
-            font-weight: bold;
-            text-align: center;
-        }
-
-
-
-
-
-
-        /* Cores mais suaves para as células */
-        .table td {
-            vertical-align: top;
-            text-align: center;
-            padding: 10px 5px;
-            /* Mais espaçamento entre as células */
-        }
-
-
-        th:first-child,
-        td:first-child {
-            position: sticky;
-            left: 0;
-            background-color: #fff;
-            z-index: 2;
-        }
-
-
-        .table th,
-        .table td {
-            vertical-align: top;
-        }
-
-        /* Alinhamento da data na célula */
-        td.bg-light.font-weight-bold {
-            background-color: #f0f0f0;
-            font-weight: bold;
-            color: #212529;
-            text-align: left;
-        }
-
-        /* Remover a borda preta ao clicar */
-        .edit-btn:focus {
-            outline: none;
-            border: none;
-        }
-
-        /* Alterar a cor do botão ao passar o mouse */
-        .edit-btn:hover {
-            background-color: transparent;
-            color: rgb(7, 182, 48);
-            border-color: #ccc;
-            font-size: 30px;
-        }
-
-        /* Alterar a cor do botão quando está pressionado */
-        .edit-btn:active {
-            background-color: #e6e6e6;
-            /* cor de fundo quando clicado */
-            color: #333;
-            /* cor do texto quando clicado */
-        }
-
-        /* Remover a borda preta ao clicar */
-        .copy-btn:focus {
-            outline: none;
-            border: none;
-        }
-
-        /* Alterar a cor do botão ao passar o mouse */
-        .copy-btn:hover {
-            background-color: transparent;
-            color: rgb(7, 182, 48);
-            border-color: #ccc;
-            font-size: 30px;
-        }
-
-        /* Alterar a cor do botão quando está pressionado */
-        .copy-btn:active {
-            background-color: #e6e6e6;
-            /* cor de fundo quando clicado */
-            color: #333;
-            /* cor do texto quando clicado */
-        }
-
-        /* Remover a borda preta ao clicar */
-        .colar-btn:focus {
-            outline: none;
-            border: none;
-        }
-
-        /* Alterar a cor do botão ao passar o mouse */
-        .colar-btn:hover {
-            background-color: transparent;
-            color: rgb(7, 182, 48);
-            border-color: #ccc;
-            font-size: 30px;
-        }
-
-        /* Alterar a cor do botão quando está pressionado */
-        .colar-btn:active {
-            background-color: #e6e6e6;
-            /* cor de fundo quando clicado */
-            color: #333;
-            /* cor do texto quando clicado */
-        }
-
-
-        .btn-veiculos:hover {
-            background-color: #28a745;
-            color: #fff;
-            border-color: #ccc;
-        }
-
-        .modal {
-            z-index: 1050 !important;
-            /* Garante que o modal fique visível acima de outros elementos */
-        }
-
-        .modal.show {
-            display: block !important;
-            /* Força o modal a ser exibido */
-        }
-
-
-
-        .modalEditarAgendamento {
-            max-width: 900px;
-            width: 100%;
-        }
-
-        .color-square.selected {
-            border-color: #000;
-            /* borda preta para selecionado */
-            box-shadow: 0 0 5px 2px rgba(0, 0, 0, 0.3);
-        }
-
-        .coluna-data {
-            background-color: #FF0000;
-            font-weight: bold;
-            padding-left: 10px;
-        }
-    </style>
 </head>
 
 <body>
     <?php include("../all/sidebar.php"); ?>
-    <div class="container-fluid mt-1">
-        <div class="card">
-            <div class="card-header py-2 d-flex justify-content-between align-items-center flex-wrap">
-                <div class="d-flex align-items-center flex-wrap">
-                    <h5 class="mb-0 mr-4"><i class="fas fa-car"></i> Agenda de Veículos</h5>
-                    <form method="GET" class="form-inline" id="filtroAgenda">
+    <div class="container-fluid agenda-page agenda-page-wrap">
+        <div class="card agenda-shell-card">
+            <div class="card-header agenda-toolbar">
+                <div class="agenda-toolbar-main">
+                    <h5 class="agenda-title"><i class="fas fa-car"></i> Agenda de Veículos</h5>
+                    <form method="GET" class="form-inline agenda-filter-form" id="filtroAgenda">
                         <select name="mes" class="form-control form-control-sm mr-2" onchange="document.getElementById('filtroAgenda').submit()">
                             <?php
-                            $fmt = new IntlDateFormatter('pt_BR', IntlDateFormatter::LONG, IntlDateFormatter::NONE, 'America/Sao_Paulo', IntlDateFormatter::GREGORIAN, 'MMMM');
                             for ($m = 1; $m <= 12; $m++) :
-                                $data = mktime(0, 0, 0, $m, 1);
-                                $nomeMes = $fmt->format($data);
+                                $nomeMes = nomeMesPtBr($m);
                             ?>
-                                <option value="<?= $m ?>" <?= $m == $mes ? 'selected' : '' ?>><?= ucfirst($nomeMes) ?></option>
+                                <option value="<?= $m ?>" <?= $m == $mes ? 'selected' : '' ?>><?= $nomeMes ?></option>
                             <?php endfor; ?>
                         </select>
                         <select name="ano" class="form-control form-control-sm mr-2" onchange="document.getElementById('filtroAgenda').submit()">
@@ -786,16 +567,16 @@ $podeDesfazer = $checkUndo->fetchColumn();
                 </div>
 
                 <?php if ($m9_01 > 1) : ?>
-                    <div>
-                        <button type="button" id="btnDesfazerGlobal" class="btn btn-sm btn-info mr-2" <?= !$podeDesfazer ? 'disabled' : '' ?> title="Desfaz a sua última movimentação de dia, horário ou veículo">
+                    <div class="agenda-actions">
+                        <button type="button" id="btnDesfazerGlobal" class="btn btn-sm btn-info agenda-action-btn" <?= !$podeDesfazer ? 'disabled' : '' ?> title="Desfaz a sua última movimentação de dia, horário ou veículo">
                             <i class="fas fa-undo"></i> Desfazer Minha Alteração
                         </button>
-                        <a href="relatorioAgenda.php?mes=<?= $mes ?>&ano=<?= $ano ?>" target="_blank" class="btn btn-sm btn-primary mr-3">
-                            Imprimir
+                        <a href="relatorioAgenda.php?mes=<?= $mes ?>&ano=<?= $ano ?>" target="_blank" class="btn btn-sm btn-primary agenda-action-btn">
+                            <i class="fas fa-print"></i> Imprimir
                         </a>
 
-                        <button type="button" class="btn btn-sm btn-secondary btn-veiculos mr-5" data-toggle="modal" data-target="#modalListarVeiculos">
-                            Veículos
+                        <button type="button" class="btn btn-sm btn-secondary btn-veiculos agenda-action-btn" data-toggle="modal" data-target="#modalListarVeiculos">
+                            <i class="fas fa-car-side"></i> Veículos
                         </button>
                     </div>
                 <?php endif; ?>
@@ -804,13 +585,13 @@ $podeDesfazer = $checkUndo->fetchColumn();
 
 
             <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-bordered table-striped table-sm" style="table-layout: fixed; width: 100%;">
-                        <thead class="thead-light">
+                <div class="table-responsive agenda-table-wrap">
+                    <table class="table agenda-table table-bordered table-striped table-sm">
+                        <thead class="agenda-thead">
                             <tr>
-                                <th style="width: 150px; text-align: center; position: sticky; top: 0; z-index: 10;"> Data</th>
+                                <th class="agenda-date-header">Data</th>
                                 <?php foreach ($veiculos as $v) : ?>
-                                    <th style="width: 300px; text-align: center; position: sticky; top: 0; z-index: 10;" data-veiculo-id="<?= $v['id'] ?>">
+                                    <th class="agenda-vehicle-header" data-veiculo-id="<?= $v['id'] ?>">
                                         <?= htmlspecialchars($v['veiculo']) ?>
                                     </th>
                                 <?php endforeach; ?>
@@ -822,25 +603,22 @@ $podeDesfazer = $checkUndo->fetchColumn();
                                 $dataObj = new DateTime($data);
                                 $dataFormatada = $dataObj->format('d/m');
 
-                                $formatter = new IntlDateFormatter('pt_BR', IntlDateFormatter::FULL, IntlDateFormatter::NONE);
-                                $nomeDia = ucfirst(explode(',', $formatter->format($dataObj))[0]);
+                                $nomeDia = nomeDiaSemanaPtBr($dataObj);
 
                                 $diaSemana = $dataObj->format('w'); // 0 = Domingo, 6 = Sábado
-                                $estiloFds = ($diaSemana == 0 || $diaSemana == 6) ? 'background-color:#a1a1a1; ' : 'background-color: #E9ECEF;';
+                                $classeFds = ($diaSemana == 0 || $diaSemana == 6) ? 'is-weekend' : 'is-weekday';
                             ?>
                                 <tr>
-                                    <td style="width: 10px; <?= $estiloFds ?> padding-left: 10px; font-weight: bold;">
+                                    <td class="agenda-date-cell <?= $classeFds ?>">
                                         <?php
                                         $dataObj = new DateTime($data);
                                         $dataFormatada = $dataObj->format('d/m');
-
-                                        $formatter = new IntlDateFormatter('pt_BR', IntlDateFormatter::FULL, IntlDateFormatter::NONE);
-                                        $nomeDia = ucfirst(explode(',', $formatter->format($dataObj))[0]);
+                                        $nomeDia = nomeDiaSemanaPtBr($dataObj);
                                         ?>
-                                        <span style="font-size: 1.2rem; font-weight: bold; color: #000;">
+                                        <span class="agenda-date-number">
                                             <?= $dataFormatada ?>
                                         </span><br>
-                                        <span style="font-size: 0.8rem; color: #666;">
+                                        <span class="agenda-date-name">
                                             <?= $nomeDia ?>
                                         </span>
                                     </td>
@@ -918,7 +696,7 @@ $podeDesfazer = $checkUndo->fetchColumn();
                                                         <button class='btn btn-sm btn-outline-success mt-1 copy-btn'
                                                             data-agendamento='" . $ag['id'] . "'
                                                             title='Copiar'>
-                                                            <i class='far fa-copy'></i>
+                                                            <i class='far fa-copy'></i><span>Copiar</span>
                                                         </button>
 
                                                         <button class='btn btn-sm btn-outline-success mt-1 edit-btn'
@@ -926,7 +704,7 @@ $podeDesfazer = $checkUndo->fetchColumn();
                                                             data-data='" . $data . "'
                                                             data-agendamentos='" . htmlspecialchars(json_encode($agendamentosPorDiaEVeiculo), ENT_QUOTES, 'UTF-8') . "'
                                                             title='Editar'>
-                                                            <i class='fas fa-pencil-alt'></i>
+                                                            <i class='fas fa-pencil-alt'></i><span>Editar</span>
                                                         </button>
                                                         ";
                                                     }
@@ -947,7 +725,7 @@ $podeDesfazer = $checkUndo->fetchColumn();
                                                     <button class='edit-btn' data-toggle='modal' data-target='#modalNovoAgendamento'
                                                     data-veiculo='" . $v['id'] . "' data-data='" . $data . "'
                                                     title='Adicionar Agendamento'>
-                                                    <i class='fas fa-plus'></i>
+                                                    <i class='fas fa-plus'></i><span>Novo</span>
                                                 </button>";
                                                 }
                                             }
@@ -968,11 +746,11 @@ $podeDesfazer = $checkUndo->fetchColumn();
     </div>
 
     <!-- Modal Escolha -->
-    <div class="modal fade" id="modalEscolha" tabindex="-1">
-        <div class="modal-dialog">
+    <div class="modal fade agenda-modal agenda-modal-choice" id="modalEscolha" tabindex="-1">
+        <div class="modal-dialog agenda-modal-md">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Agendamentos existentes </h5>
+                    <h5 class="modal-title"><i class="far fa-calendar-check"></i> Agendamentos existentes</h5>
                     <button type="button" class="close" data-dismiss="modal">&times;</button>
                 </div>
                 <div class="modal-body">
@@ -982,12 +760,12 @@ $podeDesfazer = $checkUndo->fetchColumn();
                     <div class="form-group row">
                         <div class="col">
                             <button class="btn btn-success btn-block" id="btnNovoAgendamentoMesmoDia">
-                                Adicionar novo agendamento para esta data
+                                <i class="fas fa-plus"></i> Adicionar novo agendamento
                             </button>
                         </div>
                         <div class="col">
                             <button type="button" class="btn btn-secondary btn-block" data-dismiss="modal">
-                                Cancelar
+                                <i class="fas fa-times"></i> Cancelar
                             </button>
                         </div>
                     </div>
@@ -997,14 +775,14 @@ $podeDesfazer = $checkUndo->fetchColumn();
     </div>
 
     <!-- Modal adicionar Veículo -->
-    <div class="modal fade" id="modalAddVeiculo" tabindex="-1" role="dialog">
-        <div class="modal-dialog" role="document">
+    <div class="modal fade agenda-modal agenda-modal-vehicle" id="modalAddVeiculo" tabindex="-1" role="dialog">
+        <div class="modal-dialog agenda-modal-sm" role="document">
             <form method="POST">
                 <input type="hidden" name="acao" value="adicionar">
                 <input type="hidden" name="veiculoId" id="veiculoId" value="0">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title" id="modalTitle">Adicionar Veículo</h5>
+                        <h5 class="modal-title" id="modalTitle"><i class="fas fa-car-side"></i> Adicionar Veículo</h5>
                         <button type="button" class="close" data-dismiss="modal">&times;</button>
                     </div>
                     <div class="modal-body">
@@ -1020,7 +798,7 @@ $podeDesfazer = $checkUndo->fetchColumn();
                         </select>
                     </div>
                     <div class="modal-footer">
-                        <button type="submit" class="btn btn-success">Salvar</button>
+                        <button type="submit" class="btn btn-success"><i class="fas fa-save"></i> Salvar</button>
                     </div>
                 </div>
             </form>
@@ -1028,14 +806,14 @@ $podeDesfazer = $checkUndo->fetchColumn();
     </div>
 
     <!-- Modal Editar Veículo -->
-    <div class="modal fade" id="modalEditVeiculo" tabindex="-1" role="dialog">
-        <div class="modal-dialog" role="document">
+    <div class="modal fade agenda-modal agenda-modal-vehicle" id="modalEditVeiculo" tabindex="-1" role="dialog">
+        <div class="modal-dialog agenda-modal-sm" role="document">
             <form method="POST">
                 <input type="hidden" name="acao" value="editar">
                 <input type="hidden" id="editVeiculoId" name="veiculoId">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title">Editar Veículo</h5>
+                        <h5 class="modal-title"><i class="fas fa-edit"></i> Editar Veículo</h5>
                         <button type="button" class="close" data-dismiss="modal">&times;</button>
                     </div>
                     <div class="modal-body">
@@ -1051,8 +829,8 @@ $podeDesfazer = $checkUndo->fetchColumn();
                         </select>
                     </div>
                     <div class="modal-footer">
-                        <button type="submit" class="btn btn-primary">Salvar</button>
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Salvar</button>
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal"><i class="fas fa-times"></i> Cancelar</button>
                     </div>
                 </div>
             </form>
@@ -1060,31 +838,31 @@ $podeDesfazer = $checkUndo->fetchColumn();
     </div>
 
     <!-- Modal Listar Veículos -->
-    <div class="modal fade" id="modalListarVeiculos" tabindex="-1" role="dialog">
-        <div class="modal-dialog" role="document">
+    <div class="modal fade agenda-modal agenda-modal-vehicle-list" id="modalListarVeiculos" tabindex="-1" role="dialog">
+        <div class="modal-dialog agenda-modal-md" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Lista de Veículos</h5>
+                    <h5 class="modal-title"><i class="fas fa-car"></i> Lista de Veículos</h5>
                     <button type="button" class="close" data-dismiss="modal">&times;</button>
                 </div>
                 <div class="modal-body">
                     <div id="listaVeiculos"></div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-success" data-toggle="modal" data-target="#modalAddVeiculo" id="btnAdicionarVeiculo">Adicionar Novo Veículo</button>
+                    <button type="button" class="btn btn-success" data-toggle="modal" data-target="#modalAddVeiculo" id="btnAdicionarVeiculo"><i class="fas fa-plus"></i> Adicionar Novo Veículo</button>
                 </div>
             </div>
         </div>
     </div>
 
     <!-- Modal Novo Agendamento -->
-    <div class="modal fade" id="modalNovoAgendamento" tabindex="-1">
-        <div class="modal-dialog modalEditarAgendamento" role="document">
+    <div class="modal fade agenda-modal agenda-modal-schedule" id="modalNovoAgendamento" tabindex="-1">
+        <div class="modal-dialog modalEditarAgendamento agenda-modal-lg" role="document">
             <form method="POST">
                 <input type="hidden" name="novoAgendamento" value="1">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title">Novo Agendamento</h5>
+                        <h5 class="modal-title"><i class="far fa-calendar-plus"></i> Novo Agendamento</h5>
                         <button type="button" class="close" data-dismiss="modal">&times;</button>
                     </div>
                     <div class="modal-body">
@@ -1213,8 +991,8 @@ $podeDesfazer = $checkUndo->fetchColumn();
 
                     </div>
                     <div class="modal-footer d-flex justify-content-end">
-                        <button type="submit" class="btn btn-success">Salvar</button>
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-success"><i class="fas fa-save"></i> Salvar</button>
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal"><i class="fas fa-times"></i> Cancelar</button>
                     </div>
                 </div>
             </form>
@@ -1222,33 +1000,33 @@ $podeDesfazer = $checkUndo->fetchColumn();
     </div>
 
     <!-- Modal Confirmação -->
-    <div class="modal fade" id="modalConfirmacao" tabindex="-1" role="dialog">
-        <div class="modal-dialog" role="document">
+    <div class="modal fade agenda-modal agenda-modal-confirm" id="modalConfirmacao" tabindex="-1" role="dialog">
+        <div class="modal-dialog agenda-modal-sm" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="confirmacaoTitulo">Confirmar Ação</h5>
+                    <h5 class="modal-title" id="confirmacaoTitulo"><i class="fas fa-exclamation-triangle"></i> Confirmar Ação</h5>
                     <button type="button" class="close" data-dismiss="modal">&times;</button>
                 </div>
                 <div class="modal-body">
                     <p id="confirmacaoMensagem"></p>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
-                    <button type="button" id="btnConfirmarAcao" class="btn btn-primary">Confirmar</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal"><i class="fas fa-times"></i> Cancelar</button>
+                    <button type="button" id="btnConfirmarAcao" class="btn btn-primary"><i class="fas fa-check"></i> Confirmar</button>
                 </div>
             </div>
         </div>
     </div>
 
     <!-- Modal Editar Agendamento -->
-    <div class="modal fade" id="modalEditar" tabindex="-1" role="dialog">
-        <div class="modal-dialog modalEditarAgendamento" role="document">
+    <div class="modal fade agenda-modal agenda-modal-schedule" id="modalEditar" tabindex="-1" role="dialog">
+        <div class="modal-dialog modalEditarAgendamento agenda-modal-lg" role="document">
             <form method="POST">
                 <input type="hidden" name="editAgendamento" value="1">
                 <input type="hidden" name="idAgendamento" id="modalIdAgendamento">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title">Editar Agendamento</h5>
+                        <h5 class="modal-title"><i class="fas fa-calendar-alt"></i> Editar Agendamento</h5>
                         <button type="button" class="close" data-dismiss="modal">&times;</button>
                     </div>
                     <div class="modal-body">
@@ -1381,7 +1159,7 @@ $podeDesfazer = $checkUndo->fetchColumn();
 
                     <div class="modal-footer d-flex justify-content-between">
                         <?php if ($m9_01 > 1) { ?>
-                            <button type="button" id="btnExcluirAg" class="btn btn-danger">Excluir</button>
+                            <button type="button" id="btnExcluirAg" class="btn btn-danger"><i class="fas fa-trash-alt"></i> Excluir</button>
 
                             <!-- Checkbox para arquivar -->
                             <div class="form-check form-switch">
@@ -1390,12 +1168,26 @@ $podeDesfazer = $checkUndo->fetchColumn();
                             </div>
 
                             <div>
-                                <button type="submit" class="btn btn-success">Salvar</button>
-                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                                <button type="submit" class="btn btn-success"><i class="fas fa-save"></i> Salvar</button>
+                                <button type="button" class="btn btn-secondary" data-dismiss="modal"><i class="fas fa-times"></i> Cancelar</button>
                             </div>
                         <?php } ?>
                     </div>
             </form>
+        </div>
+    </div>
+
+    <div id="agendaFeedbackOverlay" class="agenda-feedback-overlay d-none">
+        <div class="agenda-feedback-card" role="dialog" aria-modal="true" aria-labelledby="agendaFeedbackTitle">
+            <div class="agenda-feedback-header">
+                <h5 id="agendaFeedbackTitle"><i class="far fa-copy"></i> Agenda</h5>
+                <button type="button" class="agenda-feedback-close" id="agendaFeedbackClose">&times;</button>
+            </div>
+            <div class="agenda-feedback-body" id="agendaFeedbackMessage"></div>
+            <div class="agenda-feedback-footer">
+                <button type="button" class="btn btn-secondary d-none" id="agendaFeedbackCancel"><i class="fas fa-times"></i> Cancelar</button>
+                <button type="button" class="btn btn-primary" id="agendaFeedbackOk"><i class="fas fa-check"></i> OK</button>
+            </div>
         </div>
     </div>
 
@@ -1431,9 +1223,9 @@ $podeDesfazer = $checkUndo->fetchColumn();
                                     data-nomeveiculo="${veiculo.veiculo}"
                                     data-placaveiculo="${veiculo.placa}"
                                     data-statusveiculo="${veiculo.ativo}">
-                                    Editar
+                                    <i class="fas fa-edit"></i> Editar
                                 </button>
-                                <button class="btn btn-danger btn-sm float-right" onclick="excluirVeiculo(${veiculo.id})">Excluir</button>
+                                <button class="btn btn-danger btn-sm float-right" onclick="excluirVeiculo(${veiculo.id})"><i class="fas fa-trash-alt"></i> Excluir</button>
                             </li>`;
                         });
                         listaHtml += '</ul>';
@@ -1454,26 +1246,30 @@ $podeDesfazer = $checkUndo->fetchColumn();
 
             });
 
-            // Resetar modal de adição ao abrir
+            // Resetar modal de adi��o ao abrir
             $('#modalAddVeiculo').on('show.bs.modal', function() {
                 $(this).find('form')[0].reset();
             });
 
 
-            // Função para excluir um veículo
+            // Fun��o para excluir um veículo
             window.excluirVeiculo = function(veiculoId) {
-                if (confirm('Você tem certeza que deseja excluir este veículo?')) {
+                confirmarModalAgenda('Excluir veículo', 'Você tem certeza que deseja excluir este veículo?', function() {
                     $.post('', {
                         excluirveiculoId: veiculoId
                     }, function(response) {
                         if (response.status === 'success') {
-                            location.reload(); // Recarregar a página para atualizar a lista
+                            location.reload();
+                        } else {
+                            mostrarModalAgenda('Erro ao excluir', 'Não foi possível excluir o veículo.', 'danger');
                         }
-                    }, 'json');
-                }
+                    }, 'json').fail(function() {
+                        mostrarModalAgenda('Erro de comunicação', 'Erro na comunicação com o servidor.', 'danger');
+                    });
+                });
             };
 
-            // Botão de Adicionar
+            // Bot�o de Adicionar
             $('#btnAdicionarVeiculo').on('click', function() {
                 $('#veiculoId').val(0);
                 $('#acao').val('adicionar');
@@ -1523,7 +1319,7 @@ $podeDesfazer = $checkUndo->fetchColumn();
 
         // Ativa draggable nos agendamentos (divs com data-agendamento-id)
         document.addEventListener('DOMContentLoaded', () => {
-            // --- LÓGICA DO MODAL DE CONFIRMAÇÃO ---
+            // --- LÓGICA DO MODAL DE CONFIRMA��O ---
             let acaoPendente = null;
 
             $('#btnConfirmarAcao').on('click', function() {
@@ -1538,7 +1334,7 @@ $podeDesfazer = $checkUndo->fetchColumn();
                 acaoPendente = null;
             });
 
-            // --- LÓGICA DE EDIÇÃO (MODAL) ---
+            // --- LÓGICA DE EDI��O (MODAL) ---
             $('#modalEditar form').on('submit', function(e) {
                 e.preventDefault(); // Impede o envio direto do formulário
                 $(modalEditar).modal('hide');
@@ -1581,13 +1377,13 @@ $podeDesfazer = $checkUndo->fetchColumn();
 
                     if (!id || !novaData || !novoVeiculoId) return;
 
-                    // Prepara a mensagem de confirmação
+                    // Prepara a mensagem de confirma��o
                     const agendamentoBox = document.querySelector(`.agendamento-box[data-agendamento-id='${id}']`);
                     const nomeEmpresa = agendamentoBox.querySelector('strong').textContent;
                     const nomeVeiculo = document.querySelector(`th[data-veiculo-id='${novoVeiculoId}']`).textContent.trim();
                     const dataFormatada = new Date(novaData + 'T00:00:00').toLocaleDateString('pt-BR');
 
-                    $('#confirmacaoTitulo').text('Confirmar Movimentação');
+                    $('#confirmacaoTitulo').text('Confirmar Movimenta��o');
                     $('#confirmacaoMensagem').html(`Deseja mover o agendamento de <strong>${nomeEmpresa}</strong> para o veículo <strong>${nomeVeiculo}</strong> no dia <strong>${dataFormatada}</strong>?`);
 
                     acaoPendente = {
@@ -1602,7 +1398,7 @@ $podeDesfazer = $checkUndo->fetchColumn();
                 });
             });
 
-            // Função que envia os dados do "arrastar" para o PHP
+            // Fun��o que envia os dados do "arrastar" para o PHP
             async function enviarArrastar(dados) {
                 const formData = new FormData();
                 formData.append('arrastar', '1');
@@ -1625,7 +1421,7 @@ $podeDesfazer = $checkUndo->fetchColumn();
                     }
                 } catch (err) {
                     console.error('Erro na requisição:', err);
-                    alert('Falha ao comunicar com o servidor.');
+                    alert('Erro na comunicação com o servidor.');
                 }
             }
 
@@ -1636,7 +1432,7 @@ $podeDesfazer = $checkUndo->fetchColumn();
                     return cell.querySelector(`th[data-veiculo-id='${cell.dataset.veiculo}']`)?.textContent.trim() === veiculoNome;
                 })?.dataset.veiculo;
 
-                // Esta parte pode ser melhorada se o ID do veículo já estiver no TH
+                // Esta parte pode ser melhorada se o ID do veículo j� estiver no TH
                 // Vamos adicionar um no passo seguinte.
             });
         });
@@ -1658,7 +1454,7 @@ $podeDesfazer = $checkUndo->fetchColumn();
                     } catch (e) {}
 
                     if (agendamentos.length > 0) {
-                        // Se já houver agendamentos: abre modal de escolha
+                        // Se j� houver agendamentos: abre modal de escolha
                         abrirModalEscolha(veiculoId, data, agendamentos);
                     } else {
                         // Sem agendamentos: abre modal de novo
@@ -1705,7 +1501,7 @@ $podeDesfazer = $checkUndo->fetchColumn();
                             $('#modalEscolha').modal('hide');
                             $('#modalEditar').modal('show');
                         };
-                        container.appendChild(btn); // Adicionar o botão à lista
+                        container.appendChild(btn); // Adicionar o botão � lista
                     });
                 } else {
                     // Caso não haja agendamentos, exibe uma mensagem alternativa
@@ -1806,15 +1602,10 @@ $podeDesfazer = $checkUndo->fetchColumn();
             e.preventDefault();
 
             const agendamentoId = $('#modalIdAgendamento').val();
-            const veiculoId = $('#veiculoId').val();
-            const data = $('#dataAgendamento').val();
 
-            const confirmacao = confirm("Tem certeza que deseja excluir este agendamento?");
-
-            if (confirmacao) {
-                // Chamada AJAX direto para excluir
+            confirmarModalAgenda('Excluir agendamento', 'Tem certeza que deseja excluir este agendamento?', function() {
                 $.ajax({
-                    url: '', // URL do seu script PHP
+                    url: '',
                     type: 'POST',
                     data: {
                         excluir_agendamento: true,
@@ -1824,7 +1615,7 @@ $podeDesfazer = $checkUndo->fetchColumn();
                         const result = JSON.parse(response);
 
                         if (result.status === 'success') {
-                            sessionStorage.setItem('mensagem', '<i class="fas fa-check"></i> Agendamento excluído com sucesso!');
+                            sessionStorage.setItem('mensagem', '<i class="fas fa-check"></i> Agendamento exclu?do com sucesso!');
                             sessionStorage.setItem('mensagem_cor', 'alert-success');
                             location.reload();
                         } else {
@@ -1832,14 +1623,12 @@ $podeDesfazer = $checkUndo->fetchColumn();
                             sessionStorage.setItem('mensagem_cor', 'alert-danger');
                             location.reload();
                         }
-
-
                     },
                     error: function() {
-                        alert('Erro na comunicação com o servidor.');
+                        mostrarModalAgenda('Erro de comunicação', 'Erro na comunicação com o servidor.', 'danger');
                     }
                 });
-            }
+            });
         });
     </script>
 
@@ -1847,7 +1636,7 @@ $podeDesfazer = $checkUndo->fetchColumn();
         document.addEventListener("DOMContentLoaded", function() {
             const msg = sessionStorage.getItem('mensagemSucesso');
             if (msg) {
-                alert(msg); // ou mostrar com um toast, se preferir
+                mostrarModalAgenda('Aviso', msg, 'info');
                 sessionStorage.removeItem('mensagemSucesso'); // limpa após exibir
             }
         });
@@ -1875,6 +1664,66 @@ $podeDesfazer = $checkUndo->fetchColumn();
 
     <script>
         let agendamentoCopiado = null;
+
+        function fecharModalAgenda() {
+            const overlay = document.getElementById('agendaFeedbackOverlay');
+            if (overlay) {
+                overlay.classList.add('d-none');
+            }
+        }
+
+        function prepararModalAgenda(titulo, mensagem, tipo = 'info') {
+            const overlay = document.getElementById('agendaFeedbackOverlay');
+            const card = overlay ? overlay.querySelector('.agenda-feedback-card') : null;
+            const title = document.getElementById('agendaFeedbackTitle');
+            const message = document.getElementById('agendaFeedbackMessage');
+            const cancel = document.getElementById('agendaFeedbackCancel');
+            const ok = document.getElementById('agendaFeedbackOk');
+            const close = document.getElementById('agendaFeedbackClose');
+            const icones = {
+                success: 'fas fa-check',
+                danger: 'fas fa-exclamation-triangle',
+                warning: 'fas fa-exclamation-circle',
+                info: 'far fa-copy'
+            };
+
+            if (!overlay || !card || !title || !message || !cancel || !ok || !close) {
+                return null;
+            }
+
+            card.className = 'agenda-feedback-card agenda-feedback-' + tipo;
+            title.innerHTML = '<i class="' + (icones[tipo] || icones.info) + '"></i> ' + titulo;
+            message.innerHTML = mensagem;
+            cancel.classList.add('d-none');
+            cancel.onclick = fecharModalAgenda;
+            close.onclick = fecharModalAgenda;
+            ok.onclick = fecharModalAgenda;
+            ok.innerHTML = '<i class="fas fa-check"></i> OK';
+            overlay.classList.remove('d-none');
+
+            return { overlay, card, title, message, cancel, ok, close };
+        }
+
+        function mostrarModalAgenda(titulo, mensagem, tipo = 'info') {
+            prepararModalAgenda(titulo, mensagem, tipo);
+        }
+
+        function confirmarModalAgenda(titulo, mensagem, onConfirm) {
+            const modal = prepararModalAgenda(titulo, mensagem, 'warning');
+            if (!modal) {
+                if (typeof onConfirm === 'function') onConfirm();
+                return;
+            }
+            modal.title.innerHTML = '<i class="fas fa-question-circle"></i> ' + titulo;
+            modal.cancel.classList.remove('d-none');
+            modal.ok.innerHTML = '<i class="fas fa-check"></i> Confirmar';
+            modal.ok.onclick = function() {
+                fecharModalAgenda();
+                if (typeof onConfirm === 'function') {
+                    onConfirm();
+                }
+            };
+        }
 
         function mostrarBotoesColar() {
             document.querySelectorAll('.veiculo-cell').forEach(cell => {
@@ -1907,18 +1756,18 @@ $podeDesfazer = $checkUndo->fetchColumn();
 
                             if (result.success && result.dados) {
                                 agendamentoCopiado = result.dados;
-                                alert("Agendamento copiado! Clique em outro dia para colar.");
+                                alert('Agendamento copiado! Clique em outro dia para colar.');
                                 mostrarBotoesColar();
                             } else {
-                                alert("Erro ao copiar: " + (result.error || "Desconhecido"));
+                                alert('Erro ao copiar: ' + (result.error || 'Desconhecido'));
                             }
                         } catch (e) {
                             console.error("Erro no JSON:", e, response);
-                            alert("Resposta inválida do servidor.");
+                            alert('Resposta inv?lida do servidor.');
                         }
                     },
                     error: function() {
-                        alert("Erro ao buscar dados do agendamento.");
+                        alert('Erro ao buscar dados do agendamento.');
                     }
                 });
             });
@@ -1928,7 +1777,7 @@ $podeDesfazer = $checkUndo->fetchColumn();
         document.querySelectorAll('.colar-btn').forEach(btn => {
             btn.addEventListener('click', function() {
                 if (!agendamentoCopiado) {
-                    setMensagem("Nenhum agendamento copiado!", "alert-danger");
+                    alert('Nenhum agendamento copiado!');
                     return;
                 }
 
@@ -1948,8 +1797,7 @@ $podeDesfazer = $checkUndo->fetchColumn();
                 const dataFormatada = `${diaStr}/${mesStr}/${anoStr}`;
 
                 if (!confirm(`Deseja colar o agendamento em ${dataFormatada}?`)) return;
-
-                $.ajax({
+                    $.ajax({
                     url: '', // mesmo arquivo
                     type: 'POST',
                     data: {
@@ -1967,17 +1815,17 @@ $podeDesfazer = $checkUndo->fetchColumn();
                                 sessionStorage.setItem('mensagem_cor', 'alert-success');
                                 location.reload();
                             } else {
-                                alert("Erro ao colar: " + (result.error || "Desconhecido"));
+                                alert('Erro ao colar: ' + (result.error || 'Desconhecido'));
                             }
                         } catch (e) {
-                            alert("Erro ao processar resposta.");
                             console.error(response);
+                            alert('Erro ao processar resposta.');
                         }
                     },
                     error: function() {
-                        alert("Erro na comunicação com o servidor.");
+                        alert('Erro na comunicação com o servidor.');
                     }
-                });
+                    });
             });
         });
     </script>
@@ -1996,8 +1844,9 @@ $podeDesfazer = $checkUndo->fetchColumn();
             const isColarBtn = e.target.closest('.colar-btn');
             const isVeiculoCell = e.target.closest('.veiculo-cell');
             const isCopyBtn = e.target.closest('.copy-btn');
+            const isAgendaFeedback = e.target.closest('#agendaFeedbackOverlay');
 
-            if (!isColarBtn && !isVeiculoCell && !isCopyBtn) {
+            if (!isColarBtn && !isVeiculoCell && !isCopyBtn && !isAgendaFeedback) {
                 agendamentoCopiado = null;
                 esconderBotoesColar();
             }
@@ -2030,12 +1879,12 @@ $podeDesfazer = $checkUndo->fetchColumn();
 
     <script>
         $('#btnDesfazerGlobal').on('click', function() {
-            if (confirm('Tem certeza que deseja desfazer a SUA última alteração na agenda?')) {
+            confirmarModalAgenda('Desfazer alteração', 'Tem certeza que deseja desfazer a SUA última alteração na agenda?', function() {
                 $.ajax({
                     url: '',
                     type: 'POST',
                     data: {
-                        desfazer_minha_ultima_alteracao: true // <-- MUDOU AQUI
+                        desfazer_minha_ultima_alteracao: true
                     },
                     success: function(response) {
                         const result = JSON.parse(response);
@@ -2049,10 +1898,10 @@ $podeDesfazer = $checkUndo->fetchColumn();
                         location.reload();
                     },
                     error: function() {
-                        alert('Erro na comunicação com o servidor.');
+                        mostrarModalAgenda('Erro de comunicação', 'Erro na comunicação com o servidor.', 'danger');
                     }
                 });
-            }
+            });
         });
     </script>
 

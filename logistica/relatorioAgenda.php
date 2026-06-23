@@ -4,7 +4,7 @@ include_once("../all/seguranca.php");
 include_once("../all/conect.php");
 include_once("../all/permissoes.php");
 
-if ($m8_03 == 0) {
+if ($m9_01 == 0) {
     header("Location: ../home.php");
     exit;
 }
@@ -13,6 +13,30 @@ if ($m8_03 == 0) {
 setlocale(LC_TIME, 'pt_BR.UTF-8', 'pt_BR.utf8', 'portuguese');
 date_default_timezone_set('America/Sao_Paulo');
 
+function nomeDiaSemanaPtBr(DateTime $data)
+{
+    if (class_exists('IntlDateFormatter')) {
+        $fmt = new IntlDateFormatter('pt_BR', IntlDateFormatter::FULL, IntlDateFormatter::NONE, 'America/Sao_Paulo');
+        $nomeDia = $fmt->format($data);
+
+        if ($nomeDia !== false) {
+            return ucfirst(explode(',', $nomeDia)[0]);
+        }
+    }
+
+    $dias = [
+        0 => 'Domingo',
+        1 => 'Segunda-feira',
+        2 => 'Terça-feira',
+        3 => 'Quarta-feira',
+        4 => 'Quinta-feira',
+        5 => 'Sexta-feira',
+        6 => 'Sábado',
+    ];
+
+    return $dias[(int)$data->format('w')] ?? '';
+}
+
 
 $pdo = ConnectionN3();
 if (!$pdo) exit("Erro ao conectar ao banco de dados.");
@@ -20,7 +44,10 @@ if (!$pdo) exit("Erro ao conectar ao banco de dados.");
 $mes = isset($_GET['mes']) ? (int)$_GET['mes'] : date('n');
 $ano = isset($_GET['ano']) ? (int)$_GET['ano'] : date('Y');
 
-$data_base = date("$ano-$mes-01");
+$mes = max(1, min(12, $mes));
+$ano = max(2000, min(2100, $ano));
+
+$data_base = sprintf('%04d-%02d-01', $ano, $mes);
 $dias_do_mes = cal_days_in_month(CAL_GREGORIAN, $mes, $ano);
 
 
@@ -28,13 +55,17 @@ $dias_do_mes = cal_days_in_month(CAL_GREGORIAN, $mes, $ano);
 setlocale(LC_TIME, 'pt_BR.UTF-8', 'pt_BR.utf8', 'portuguese');
 date_default_timezone_set('America/Sao_Paulo');
 
-$ultimoDia = date('t', strtotime("$ano-$mes-01"));
+$ultimoDia = date('t', strtotime($data_base));
 
 $veiculos = $pdo->query("SELECT id, veiculo, placa FROM veiculos WHERE ativo = 1 ORDER BY id")->fetchAll(PDO::FETCH_ASSOC);
 
 $user_funcao = $_SESSION['allterusN3func'] ?? null;
 $Admin = [1, 2, 3, 9, 10, 18];
-$filtroVisibilidade = in_array($user_funcao, $Admin) ? '' : 'WHERE a.visibilidade = 0';
+$whereRelatorio = ['MONTH(a.data) = ?', 'YEAR(a.data) = ?'];
+if (!in_array($user_funcao, $Admin)) {
+    array_unshift($whereRelatorio, 'a.visibilidade = 0');
+}
+$whereRelatorioSql = 'WHERE ' . implode(' AND ', $whereRelatorio);
 
 $stmt = $pdo->prepare("
     SELECT a.*, u.user_nome AS usuario_nome, m.user_nome AS motorista_nome, c.clt_nomef AS nome_empresa
@@ -42,7 +73,7 @@ $stmt = $pdo->prepare("
     JOIN usuarios u ON a.usuario_id = u.user_id
     LEFT JOIN usuarios m ON a.motorista = m.user_id
     LEFT JOIN clientes c ON a.empresa = c.clt_id
-    $filtroVisibilidade AND MONTH(a.data) = ? AND YEAR(a.data) = ?
+    $whereRelatorioSql
 ");
 $stmt->execute([$mes, $ano]);
 $agendamentosRaw = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -185,8 +216,7 @@ $largura = $_GET['largura'] ?? 80;
                         $dataObj = new DateTime($data);
                         $dataFormatada = $dataObj->format('d/m');
 
-                        $formatter = new IntlDateFormatter('pt_BR', IntlDateFormatter::FULL, IntlDateFormatter::NONE);
-                        $nomeDia = ucfirst(explode(',', $formatter->format($dataObj))[0]);
+                        $nomeDia = nomeDiaSemanaPtBr($dataObj);
 
                         $diaSemana = $dataObj->format('w');
                         $estiloFds = ($diaSemana == 0 || $diaSemana == 6) ? 'background-color:#a1a1a1; padding: 0px;' : 'background-color: #E9ECEF; padding: 0px;';

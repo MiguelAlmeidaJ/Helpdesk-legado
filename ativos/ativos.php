@@ -546,7 +546,7 @@ function buildPaginationUrl($page, $lastId = null)
                 </div>
 
                 <div class="col-auto pt-3">
-                  <button type="button" class="btn btn-sm btn-outline-success my-0" style="margin-right: 1px" onclick="exportarRelatorio()" tabindex="5">Exportar Relatério</button>
+                  <button type="button" class="btn btn-sm btn-outline-success my-0" style="margin-right: 1px" onclick="exportarRelatorio()" tabindex="5">Exportar Relatório</button>
                 </div>
 
                 <div class="col-auto pt-3">

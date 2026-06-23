@@ -93,101 +93,65 @@ $ultimasDespesas = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <title>Dashboard de Despesas</title>
     <link rel="stylesheet" href="../css/bootstrap.min.css">
     <link rel="stylesheet" href="../fontawesome/css/all.css">
+    <link rel="stylesheet" href="css/rd_painel_modern.css">
     <link rel="icon" href="../img/favicon.ico">
-    <style>
-        body {
-            zoom: 0.9;
-            width: 100%;
-            background-color: #f4f6f9;
-            font-size: 0.9rem;
-        }
-
-        .card-metric .card-body {
-            transition: transform 0.2s;
-        }
-
-        .card-metric:hover .card-body {
-            transform: translateY(-5px);
-        }
-
-        .border-left-warning {
-            border-left: .25rem solid #ffc107 !important;
-        }
-
-        .border-left-info {
-            border-left: .25rem solid #17a2b8 !important;
-        }
-
-        .border-left-success {
-            border-left: .25rem solid #28a745 !important;
-        }
-
-        .border-left-danger {
-            border-left: .25rem solid #dc3545 !important;
-        }
-
-        .summary-table-container {
-            max-height: 350px;
-            overflow-y: auto;
-        }
-
-        a.card-metric-link {
-            text-decoration: none;
-            color: inherit;
-        }
-
-        .text-xs {
-            font-size: .8rem;
-        }
-    </style>
 </head>
 
 <body>
     <?php include("../all/sidebar.php"); ?>
-    <div class="container-fluid pt-3">
-        <section class="d-flex justify-content-between align-items-center mb-3">
-            <h1 class="h4 text-dark">Minhas Despesas - <?php echo $usuario['user_nome']; ?></h1>
-            <a href="rd.php" class="btn btn-primary"><i class="fas fa-home"></i> Gerenciar minhas despesas</a>
+    <div class="container-fluid rd-page">
+        <section class="rd-header">
+            <div class="rd-title-wrap">
+                <h1 class="rd-title"><i class="fas fa-receipt"></i> Minhas Despesas</h1>
+                <span class="rd-subtitle"><?php echo htmlspecialchars($usuario['user_nome']); ?></span>
+            </div>
+            <a href="rd.php" class="btn rd-action-btn"><i class="fas fa-wallet"></i> Gerenciar minhas despesas</a>
 
         </section>
 
-        <div class="row">
+        <div class="row rd-metrics-row">
             <div class="col-md-4 mb-4">
-                <div class="card border-left-warning shadow h-100 py-2 card-metric">
+                <div class="card rd-metric-card rd-metric-warning">
                     <div class="card-body">
-                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Aguardando Aprovação</div>
-                        <div class="h5 mb-0 font-weight-bold text-gray-800">R$ <?= number_format($totalAguardando, 2, ',', '.') ?></div>
+                        <div class="rd-metric-content">
+                            <div class="rd-metric-label">Aguardando Aprovação</div>
+                            <div class="rd-metric-value">R$ <?= number_format($totalAguardando, 2, ',', '.') ?></div>
+                        </div>
+                        <span class="rd-metric-icon"><i class="far fa-clock"></i></span>
                     </div>
                 </div>
-                </a>
             </div>
             <div class=" col-md-4 mb-4">
-                <div class="card border-left-info shadow h-100 py-2 card-metric">
+                <div class="card rd-metric-card rd-metric-info">
                     <div class="card-body">
-                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Aprovado (A Receber)</div>
-                        <div class="h5 mb-0 font-weight-bold text-gray-800">R$ <?= number_format($totalAReceber, 2, ',', '.') ?></div>
+                        <div class="rd-metric-content">
+                            <div class="rd-metric-label">Aprovado (A Receber)</div>
+                            <div class="rd-metric-value">R$ <?= number_format($totalAReceber, 2, ',', '.') ?></div>
+                        </div>
+                        <span class="rd-metric-icon"><i class="fas fa-hand-holding-usd"></i></span>
                     </div>
                 </div>
-                </a>
             </div>
             <div class=" col-md-4 mb-4">
-                <div class="card border-left-success shadow h-100 py-2 card-metric">
+                <div class="card rd-metric-card rd-metric-success">
                     <div class="card-body">
-                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Recebido (no período)</div>
-                        <div class="h5 mb-0 font-weight-bold text-gray-800">R$ <?= number_format($totalRecebido, 2, ',', '.') ?></div>
+                        <div class="rd-metric-content">
+                            <div class="rd-metric-label">Recebido (no período)</div>
+                            <div class="rd-metric-value">R$ <?= number_format($totalRecebido, 2, ',', '.') ?></div>
+                        </div>
+                        <span class="rd-metric-icon"><i class="fas fa-check-circle"></i></span>
                     </div>
                 </div>
-                </a>
             </div>
         </div>
 
         <div class="row">
             <div class="col-lg-12 mb-4">
-                <div class="card shadow">
-                    <div class="card-header bg-dark text-white">UÚltimas Despesas Recebidas</div>
-                    <div class="card-body summary-table-container">
-                        <table class="table table-sm table-hover mb-0">
-                            <thead class="thead-light">
+                <div class="card rd-panel-card">
+                    <div class="card-header"><i class="fas fa-list-ul"></i> Últimas Despesas Recebidas</div>
+                    <div class="card-body rd-table-container">
+                        <table class="table table-sm table-hover rd-table">
+                            <thead>
                                 <tr>
                                     <th>Empresa</th>
                                     <th>Data</th>
@@ -198,7 +162,7 @@ $ultimasDespesas = $stmt->fetchAll(PDO::FETCH_ASSOC);
                             <tbody>
                                 <?php if (empty($ultimasDespesas)) : ?>
                                     <tr>
-                                        <td colspan="4" class="text-center text-muted">Nenhum dado no período.</td>
+                                        <td colspan="4" class="text-center rd-empty-state">Nenhum dado no período.</td>
                                     </tr>
                                 <?php else : ?>
                                     <?php foreach ($ultimasDespesas as $item) : ?>
@@ -206,7 +170,7 @@ $ultimasDespesas = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                             <td><?= htmlspecialchars($item['cliente']) ?></td>
                                             <td><?= date('d/m/Y', strtotime($item['date_created'])) ?></td>
                                             <td><?= htmlspecialchars($item['categories']) ?></td>
-                                            <td class="text-right font-weight-bold">R$ <?= number_format($item['amount'], 2, ',', '.') ?></td>
+                                            <td class="text-right rd-value">R$ <?= number_format($item['amount'], 2, ',', '.') ?></td>
                                         </tr>
                                     <?php endforeach; ?>
                                 <?php endif; ?>

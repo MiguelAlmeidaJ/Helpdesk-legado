@@ -2,6 +2,7 @@
 session_start();
 
 include_once("./all/conect.php");
+include_once("./all/email_smtp.php");
 function generateToken($length = 20) {
     return bin2hex(random_bytes($length));
 }
@@ -55,7 +56,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $headers .= "Content-Type: text/html; charset=UTF-8\r\n";
 
         // Envie o e-mail
-        if (mail($email, $subject, $message, $headers)) {
+        if (n3_send_mail($email, $subject, $message, $headers)) {
             $_SESSION["success_message"] = "Um e-mail de recuperação de senha foi enviado para o seu endereço de e-mail.";
         } else {
             $_SESSION["error_message"] = "Ocorreu um erro ao enviar o e-mail.";

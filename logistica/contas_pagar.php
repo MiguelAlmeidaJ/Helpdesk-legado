@@ -476,31 +476,32 @@ foreach ($contas_modal_detalhe as $item) {
 
 $contagem_contasMesAtual = count($contasMesAtual);
 
-// Função para renderizar as tabelas do modal
+// Função para renderizar as listas do modal
 function renderTabelaContasPagar($contas)
 {
     if (empty($contas)) {
-        echo '<tr><td colspan="4" class="text-center text-muted py-3">Nenhum registro encontrado.</td></tr>';
+        echo '<tr class="contas-pagar-modal-empty"><td colspan="4" class="text-center text-muted py-3">Nenhum registro encontrado.</td></tr>';
         return;
     }
-    foreach ($contas as $item) {
+    foreach ($contas as $index => $item) {
         $saldo = $item['valor'];
         $dataVenc = $item['data_vencimento'];
         $isVencido = strtotime($dataVenc) < time();
 ?>
-        <tr>
-            <td><?= htmlspecialchars($item['fornecedor']) ?></td>
+        <tr class="contas-pagar-modal-row <?= $index >= 50 ? 'd-none contas-pagar-extra-modal-row' : '' ?>">
+            <td>
+                <div class="contas-pagar-client-name"><?= htmlspecialchars($item['fornecedor'] ?: 'Fornecedor não informado') ?></div>
+                <div class="contas-pagar-client-desc"><?= htmlspecialchars($item['descricao'] ?: 'Sem descrição') ?></div>
+            </td>
             <td class="text-center">
                 <?php if ($isVencido) : ?>
                     <span class="badge badge-danger">Vencido</span>
                 <?php else : ?>
-                    <span class="badge badge-warning">A Vencer</span>
+                    <span class="badge badge-warning">A vencer</span>
                 <?php endif; ?>
             </td>
             <td class="text-right"><?= date('d/m/Y', strtotime($dataVenc)) ?></td>
-            <td class="text-right text-danger font-weight-bold">
-                <?= number_format($saldo, 2, ',', '.') ?>
-            </td>
+            <td class="text-right text-danger font-weight-bold"><?= number_format($saldo, 2, ',', '.') ?></td>
         </tr>
 <?php
     }
@@ -517,78 +518,41 @@ function renderTabelaContasPagar($contas)
     <link rel="stylesheet" href="../css/bootstrap.min.css">
     <link rel="stylesheet" href="../fontawesome/css/all.css">
     <link rel="stylesheet" href="https://cdn.datatables.net/1.10.25/css/dataTables.bootstrap4.min.css" />
-
-    <style>
-        body {
-            zoom: 0.9;
-            overflow: hidden;
-        }
-
-        .card-principal {
-            height: calc(100vh - 70px);
-            overflow-y: auto;
-        }
-
-        .table td,
-        .table th {
-            padding: 0.3rem 0.6rem;
-            font-size: 0.9rem;
-            vertical-align: middle;
-        }
-
-        .table-vencido {
-            background-color: #ffe5e5 !important;
-        }
-
-        .table-pago {
-            background-color: #e5ffe7 !important;
-        }
-
-        thead a {
-            color: white;
-            text-decoration: none;
-        }
-
-        thead a:hover {
-            color: #ddd;
-        }
-
-        .form-check-input {
-            width: 20px;
-            height: 20px;
-        }
-    </style>
+    <link rel="stylesheet" href="css/contas_pagar_modern.css">
 </head>
 
 <body>
     <?php include("../all/sidebar.php"); ?>
-    <div class="container-fluid pt-2"> <?= $mensagem ?>
-        <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center py-2">
-                <div class="col-md-6 mt-1 mb-0 row">
+    <div class="container-fluid pt-2 contas-pagar-page">
+        <div class="row">
+            <div class="col-12">
+                <?= $mensagem ?>
+        <div class="card contas-pagar-main-card">
+            <div class="card-header d-flex justify-content-between align-items-center py-2 contas-pagar-toolbar">
+                <div class="col-md-6 mt-1 mb-0 d-flex align-items-center">
                     <h5 class="m-0 font-weight-bold">Gestão de Contas a Pagar</h5>
-                    <a href="gestaoRD.php" class="ml-4"><i class="fas fa-home" style="font-size: 25px;" data-toggle="tooltip" title="Home RD"></i></a>
+                    <a href="gestaoRD.php" class="ml-4 contas-pagar-home-link"><i class="fas fa-home" data-toggle="tooltip" title="Home RD"></i></a>
                 </div>
-                <div class="d-flex align-items-center">
-                    <button type="button" class="btn btn-outline-secondary btn-sm" data-toggle="modal" data-target="#modalResumoFiltro" title="Ver Resumo do Filtro">
+                <div class="d-flex align-items-center contas-pagar-actions">
+                    <button type="button" class="btn btn-outline-secondary btn-sm contas-pagar-btn" data-toggle="modal" data-target="#modalResumoFiltro" title="Ver Resumo do Filtro">
                         <i class="fas fa-chart-pie"> </i> Resumo
                     </button>
-                    <button class="btn btn-outline-secondary btn-sm ml-2" type="button" data-toggle="collapse" data-target="#filtroCollapse">
+                    <button class="btn btn-outline-secondary btn-sm contas-pagar-btn" type="button" data-toggle="collapse" data-target="#filtroCollapse">
                         <i class="fas fa-filter"></i> Filtrar
                     </button>
-                    <button type="button" class="btn btn-warning btn-sm ml-2" data-toggle="modal" data-target="#modalAddContaPagar">
+                    <button type="button" class="btn btn-danger btn-sm contas-pagar-btn" data-toggle="modal" data-target="#modalAddContaPagar">
                         <i class="fas fa-plus"></i> Nova Despesa
                     </button>
                 </div>
             </div>
 
-            <div class="card-body py-2 card-principal">
+            <div class="card-body py-2 card-principal contas-pagar-body">
                 <?php
                 $isFiltroAtivo = !empty($filtro_status) && $filtro_status !== 'todos' || !empty($filtro_texto) || !empty($filtro_data_inicio) || !empty($filtro_data_fim);
                 $collapseShowClass = $isFiltroAtivo ? 'show' : '';
                 ?>
                 <div class="collapse <?= $collapseShowClass ?>" id="filtroCollapse">
-                    <div class="card card-body mb-2 py-2">
+                    <div class="card card-body mb-2 py-2 contas-pagar-filter-card">
                         <form method="GET" class="mb-0">
                             <div class="row">
                                 <div class="col-md-2"><label class="small mb-1">Unidade de Negócio</label><select name="filtro_unid_negocio" class="form-control form-control-sm">
@@ -647,12 +611,12 @@ function renderTabelaContasPagar($contas)
                     </div>
                 </div>
 
-                <div class="table-responsive">
-                    <table class="table table-sm table-bordered table-striped table-hover">
-                        <thead class="thead-dark ">
+                <div class="table-responsive contas-pagar-table-area">
+                    <table class="table table-sm table-bordered table-hover contas-pagar-table">
+                        <thead>
                             <tr>
                                 <th><?= sortLink('Descrição', 'descricao', $orderBy, $orderDir) ?></th>
-                                <th class="text-right" style="width: 100px;"><?= sortLink('Valor', 'valor', $orderBy, $orderDir) ?></th>
+                                <th class="text-right contas-pagar-value-col"><?= sortLink('Valor', 'valor', $orderBy, $orderDir) ?></th>
                                 <th><?= sortLink('Fornecedor', 'fornecedor', $orderBy, $orderDir) ?></th>
                                 <th><?= sortLink('Dt. Venc.', 'data_vencimento', $orderBy, $orderDir) ?></th>
                                 <th><?= sortLink('Dt. Pag.', 'data_pagamento', $orderBy, $orderDir) ?></th>
@@ -661,7 +625,7 @@ function renderTabelaContasPagar($contas)
                                 <th><?= sortLink('Subgrupo', 'subgrupo_nome', $orderBy, $orderDir) ?></th>
                                 <th class="text-center">Anexos</th>
                                 <th class="text-center"><?= sortLink('Status', 'status', $orderBy, $orderDir) ?></th>
-                                <th class="text-center" style="width: 160px;">Açães</th>
+                                <th class="text-center contas-pagar-actions-col">Ações</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -670,7 +634,7 @@ function renderTabelaContasPagar($contas)
                                     <td colspan="11" class="text-center">Nenhum lançamento encontrado.</td>
                                 </tr>
                             <?php else : ?>
-                                <?php foreach ($contas_a_pagar as $item) :
+                                <?php foreach ($contas_a_pagar as $index => $item) :
 
                                     // Pega o ID do status (ex: 1, 4, 6)
                                     $status_id = $item['status_id'];
@@ -683,7 +647,7 @@ function renderTabelaContasPagar($contas)
                                         $row_class = 'table-danger'; // Classe do Bootstrap para linha vencida (vermelho claro)
                                     }
                                 ?>
-                                    <tr class="<?= $row_class ?>">
+                                    <tr class="<?= trim($row_class . ' ' . ($index >= 50 ? 'd-none contas-pagar-extra-row' : '')) ?>">
                                         <td><?= htmlspecialchars($item['descricao']) ?></td>
                                         <td>R$ <?= number_format($item['valor'], 2, ',', '.') ?></td>
                                         <td><?= htmlspecialchars($item['fornecedor'] ?? '') ?></td>
@@ -749,7 +713,7 @@ function renderTabelaContasPagar($contas)
                                             echo '<span class="badge ' . $badge_class . '">' . htmlspecialchars($status_nome ?? 'N/A') . '</span>';
                                             ?>
                                         </td>
-                                        <td class="text-center">
+                                        <td class="text-center contas-pagar-row-actions">
                                             <?php if ($item['status_id'] !== '6') : ?>
                                                 <button type="button" class="btn btn-sm btn-success btn-dar-baixa" data-toggle="modal" data-target="#modalDarBaixa" data-id="<?= $item['despesa_id'] ?>" data-descricao="<?= htmlspecialchars($item['descricao']) ?>" data-valor="<?= number_format($item['valor'], 2, ',', '.') ?>" title="Registrar Pagamento"><i class="fas fa-check"></i></button>
                                             <?php endif; ?>
@@ -768,137 +732,75 @@ function renderTabelaContasPagar($contas)
                         </tbody>
                     </table>
                 </div>
+                <div id="contasPagarLoadStatus" class="contas-pagar-load-status"></div>
             </div>
         </div>
     </div>
 
     <!-- Modal Dar Resumo -->
-    <div class="modal fade" id="modalResumoFiltro" tabindex="-1">
+    <div class="modal fade contas-pagar-modal" id="modalResumoFiltro" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered modal-xl">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Resumo do Filtro Atual (Contas a Pagar)</h5>
-                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <div>
+                        <h5 class="modal-title"><i class="fas fa-chart-pie mr-2"></i>Resumo de contas a pagar</h5>
+                        <small class="text-muted">Visão consolidada conforme filtro atual.</small>
+                    </div>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Fechar"><span aria-hidden="true">&times;</span></button>
                 </div>
                 <div class="modal-body">
-
-                    <div class="card p-2 mb-3 bg-light" style="font-size: 0.85rem;">
-                        <span class="text-muted">
-                            <strong>Filtros Ativos:</strong>
-                            <?php
-                            if (empty($filtrosAtivosHTML)) {
-                                echo 'Nenhum filtro aplicado.';
-                            } else {
-                                echo implode(' <span class="mx-2 text-black-50">|</span> ', $filtrosAtivosHTML);
-                            }
-                            ?>
-                        </span>
+                    <div class="contas-pagar-active-filters">
+                        <strong>Filtros ativos:</strong>
+                        <?php
+                        if (empty($filtrosAtivosHTML)) {
+                            echo 'Nenhum filtro aplicado.';
+                        } else {
+                            echo implode(' <span class="mx-2 text-black-50">|</span> ', $filtrosAtivosHTML);
+                        }
+                        ?>
                     </div>
-
-                    <div class="row">
-
-                        <div class="col-md-4">
-                            <h6 class="text-center text-muted mb-3">Resumo Financeiro (A Pagar)</h6>
-
-                            <div class="card shadow-sm mb-3">
-                                <div class="card-body text-center">
-                                    <h6 class="card-title text-muted">TOTAL A PAGAR</h6>
-                                    <h3 class="font-weight-bold text-primary mb-0">
-                                        R$ <?= number_format($totalAPagarFiltrado, 2, ',', '.') ?>
-                                    </h3>
-                                </div>
-                            </div>
-
-                            <div class="card shadow-sm mb-3">
-                                <div class="card-body text-center">
-                                    <h6 class="card-title text-muted">TOTAL PAGO</h6>
-                                    <h3 class="font-weight-bold text-success mb-0">
-                                        R$ <?= number_format($totalPagoFiltrado, 2, ',', '.') ?>
-                                    </h3>
-                                </div>
-                            </div>
-
-                            <div class="card shadow-sm mb-3">
-                                <div class="card-body text-center">
-                                    <h6 class="card-title text-muted">SALDO PENDENTE</h6>
-                                    <h3 class="font-weight-bold text-warning mb-0">
-                                        R$ <?= number_format($totalPendenteFiltrado, 2, ',', '.') ?>
-                                    </h3>
-                                </div>
-                            </div>
-
-                            <div class="card shadow-sm mb-3">
-                                <div class="card-body text-center">
-                                    <h6 class="card-title text-muted">TOTAL VENCIDO (pendente)</h6>
-                                    <h3 class="font-weight-bold text-danger mb-0">
-                                        R$ <?= number_format($totalVencidoFiltrado, 2, ',', '.') ?>
-                                    </h3>
-                                    <small class="text-muted"><?= $contagem_contasMesAtual ?> fatura(s)</small>
-                                </div>
-                            </div>
-
-                            <p class="text-center text-muted mt-2">
-                                Total de <strong><?= $totalFaturasFiltradas ?></strong> fatura(s) encontradas.
-                            </p>
+                    <div class="row contas-pagar-summary-layout">
+                        <div class="col-md-4 contas-pagar-summary-side">
+                            <h6 class="contas-pagar-section-title">Resumo financeiro</h6>
+                            <div class="contas-pagar-kpi-card contas-pagar-kpi-danger"><span>Total a pagar</span><strong>R$ <?= number_format($totalAPagarFiltrado, 2, ',', '.') ?></strong></div>
+                            <div class="contas-pagar-kpi-card contas-pagar-kpi-success"><span>Total pago</span><strong>R$ <?= number_format($totalPagoFiltrado, 2, ',', '.') ?></strong></div>
+                            <div class="contas-pagar-kpi-card contas-pagar-kpi-warning"><span>Saldo pendente</span><strong>R$ <?= number_format($totalPendenteFiltrado, 2, ',', '.') ?></strong></div>
+                            <div class="contas-pagar-kpi-card contas-pagar-kpi-overdue"><span>Total vencido pendente</span><strong>R$ <?= number_format($totalVencidoFiltrado, 2, ',', '.') ?></strong><small><?= $totalFaturasVencidas ?> fatura(s) vencida(s)</small></div>
+                            <p class="contas-pagar-total-note">Total de <strong><?= $totalFaturasFiltradas ?></strong> fatura(s) encontradas.</p>
                         </div>
-
-                        <div class="col-md-8">
-                            <h6 class="text-center text-muted mb-3">Detalhamento do Saldo Pendente de Pagamento</h6>
-
-                            <div class="card shadow-sm mb-4">
-                                <div class="card-header bg-primary text-white py-2 text-left">
-                                    <strong> Contas a Vencer (Màs Atual e Futuro)</strong>
-                                </div>
-                                <div class="card-body p-0" style="max-height: 310px; overflow-y: auto;">
-                                    <table class="table table-sm table-striped table-hover mb-0" id="tabelaContasPagar">
-                                        <thead style="position: sticky; top: 0; background-color: #f8f9fa;">
-                                            <tr>
-                                                <th>Fornecedor/Descrição</th>
-                                                <th class="text-center">Status</th>
-                                                <th class="text-right">Vencimento</th>
-                                                <th class="text-right">Valor (R$)</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <?php renderTabelaContasPagar($contasMesAtual); ?>
-                                        </tbody>
+                        <div class="col-md-8 contas-pagar-summary-detail">
+                            <h6 class="contas-pagar-section-title">Detalhamento do saldo pendente</h6>
+                            <div class="contas-pagar-mini-card">
+                                <div class="card-header contas-pagar-mini-header contas-pagar-mini-header-danger"><strong><i class="fas fa-calendar-check mr-2"></i>Contas a vencer</strong><span><?= count($contasMesAtual) ?> item(ns)</span></div>
+                                <div class="contas-pagar-modal-table-wrap" data-visible-step="50">
+                                    <table class="table table-sm table-hover mb-0" id="tabelaContasPagar">
+                                        <thead><tr><th>Fornecedor/Descrição</th><th class="text-center">Status</th><th class="text-right">Vencimento</th><th class="text-right">Valor (R$)</th></tr></thead>
+                                        <tbody><?php renderTabelaContasPagar($contasMesAtual); ?></tbody>
                                     </table>
                                 </div>
+                                <div class="contas-pagar-modal-scroll-status" data-table="#tabelaContasPagar"></div>
                             </div>
-
-                            <div class="card shadow-sm border-dark">
-                                <div class="card-header bg-dark text-white py-2 text-left">
-                                    <strong>?? Vencidas (Meses Anteriores)</strong>
-                                </div>
-                                <div class="card-body p-0" style="max-height: 220px; overflow-y: auto;">
-                                    <table class="table table-sm table-striped table-hover mb-0" id="tabelaContasVencidas">
-                                        <thead style="position: sticky; top: 0; background-color: #f8f9fa;">
-                                            <tr>
-                                                <th>Fornecedor/Descrição</th>
-                                                <th class="text-center">Status</th>
-                                                <th class="text-right">Vencimento</th>
-                                                <th class="text-right">Valor (R$)</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <?php renderTabelaContasPagar($contasVencidasArr); ?>
-                                        </tbody>
+                            <div class="contas-pagar-mini-card contas-pagar-mini-card-dark">
+                                <div class="card-header contas-pagar-mini-header contas-pagar-mini-header-dark"><strong><i class="fas fa-exclamation-triangle mr-2"></i>Vencidas</strong><span><?= count($contasVencidasArr) ?> item(ns)</span></div>
+                                <div class="contas-pagar-modal-table-wrap" data-visible-step="50">
+                                    <table class="table table-sm table-hover mb-0" id="tabelaContasVencidas">
+                                        <thead><tr><th>Fornecedor/Descrição</th><th class="text-center">Status</th><th class="text-right">Vencimento</th><th class="text-right">Valor (R$)</th></tr></thead>
+                                        <tbody><?php renderTabelaContasPagar($contasVencidasArr); ?></tbody>
                                     </table>
                                 </div>
+                                <div class="contas-pagar-modal-scroll-status" data-table="#tabelaContasVencidas"></div>
                             </div>
                         </div>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Fechar</button>
-                </div>
+                <div class="modal-footer"><button type="button" class="btn btn-outline-secondary btn-sm" data-dismiss="modal">Fechar</button></div>
             </div>
         </div>
     </div>
 
     <!-- Modal add anexo -->
-    <div class="modal fade" id="modalAnexarComprovante" tabindex="-1">
-        <div class="modal-dialog modal-lg">
+    <div class="modal fade contas-pagar-modal" id="modalAnexarComprovante" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
             <div class="modal-content">
                 <form id="formAnexarComprovante" method="POST">
                     <input type="hidden" name="action" value="salvar_anexos">
@@ -908,7 +810,7 @@ function renderTabelaContasPagar($contas)
 
                     <div class="modal-header">
                         <h5 class="modal-title">Anexos</h5>
-                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Fechar"><span aria-hidden="true">&times;</span></button>
                     </div>
                     <div class="modal-body">
                         <h6>Anexos Existentes</h6>
@@ -922,8 +824,8 @@ function renderTabelaContasPagar($contas)
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn btn-primary">Salvar Alterações</button>
+                        <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary btn-sm">Salvar Alterações</button>
                     </div>
                 </form>
             </div>
@@ -931,13 +833,13 @@ function renderTabelaContasPagar($contas)
     </div>
 
     <!-- MODAL ADD CONTA PAGAR -->
-    <div class="modal fade" id="modalAddContaPagar" tabindex="-1">
-        <div class="modal-dialog modal-xl">
+    <div class="modal fade contas-pagar-modal" id="modalAddContaPagar" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-xl" role="document">
             <div class="modal-content">
                 <form method="POST">
                     <input type="hidden" name="action" value="add_conta_pagar">
                     <div class="modal-header">
-                        <h5 class="modal-title">Nova Conta a Pagar</h5><button type="button" class="close" data-dismiss="modal">&times;</button>
+                        <h5 class="modal-title">Nova Conta a Pagar</h5><button type="button" class="close" data-dismiss="modal" aria-label="Fechar"><span aria-hidden="true">&times;</span></button>
                     </div>
                     <div class="modal-body">
                         <div class="form-row">
@@ -1013,20 +915,20 @@ function renderTabelaContasPagar($contas)
                             <label class="form-check-label ml-2" for="salvar_recorrencia"><b>Registrar como Despesa Recorrente</b></label>
                         </div>
                     </div>
-                    <div class="modal-footer"><button type="button" class="btn btn-secondary" data-dismiss="modal">Fechar</button><button type="submit" class="btn btn-primary">Lançar Despesa</button></div>
+                    <div class="modal-footer"><button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Fechar</button><button type="submit" class="btn btn-primary btn-sm">Lançar Despesa</button></div>
                 </form>
             </div>
         </div>
     </div>
 
     <!-- Modal Editar Conta a Pagar -->
-    <div class="modal fade" id="modalEditContaPagar" tabindex="-1">
-        <div class="modal-dialog modal-xl">
+    <div class="modal fade contas-pagar-modal" id="modalEditContaPagar" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-xl" role="document">
             <div class="modal-content">
                 <form method="POST">
                     <input type="hidden" name="action" value="edit_conta_pagar"><input type="hidden" name="id" id="edit_id_conta">
                     <div class="modal-header">
-                        <h5 class="modal-title">Editar Conta a Pagar</h5><button type="button" class="close" data-dismiss="modal">&times;</button>
+                        <h5 class="modal-title">Editar Conta a Pagar</h5><button type="button" class="close" data-dismiss="modal" aria-label="Fechar"><span aria-hidden="true">&times;</span></button>
                     </div>
                     <div class="modal-body">
                         <div class="form-row">
@@ -1095,20 +997,20 @@ function renderTabelaContasPagar($contas)
                             <input type="checkbox" class="form-check-input" name="editar_recorrencia" id="editar_recorrencia" value="1"><label class="form-check-label ml-2" for="editar_recorrencia"><b>Editar para Despesa Recorrente</b></label>
                         </div>
                     </div>
-                    <div class="modal-footer"><button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button><button type="submit" class="btn btn-primary">Salvar Alterações</button></div>
+                    <div class="modal-footer"><button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Cancelar</button><button type="submit" class="btn btn-primary btn-sm">Salvar Alterações</button></div>
                 </form>
             </div>
         </div>
     </div>
 
     <!-- Modal Dar Baixa -->
-    <div class="modal fade" id="modalDarBaixa" tabindex="-1">
-        <div class="modal-dialog modal-lg">
+    <div class="modal fade contas-pagar-modal" id="modalDarBaixa" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
             <div class="modal-content">
                 <form method="POST">
                     <input type="hidden" name="action" value="dar_baixa_pagar"><input type="hidden" name="id_conta" id="baixa_id_conta">
                     <div class="modal-header">
-                        <h5 class="modal-title">Confirmar Pagamento</h5><button type="button" class="close" data-dismiss="modal">&times;</button>
+                        <h5 class="modal-title">Confirmar Pagamento</h5><button type="button" class="close" data-dismiss="modal" aria-label="Fechar"><span aria-hidden="true">&times;</span></button>
                     </div>
                     <div class="modal-body">
                         <label>Confirmar pagamento para: </label><br>
@@ -1134,29 +1036,29 @@ function renderTabelaContasPagar($contas)
                         </div>
                         <div class="form-group"><label for="observacao_baixa">Observações (Opcional)</label><textarea name="observacao_baixa" class="form-control" rows="3" placeholder="Ex: Pago via PIX..."></textarea></div>
                     </div>
-                    <div class="modal-footer"><button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button><button type="submit" class="btn btn-success">Confirmar Pagamento</button></div>
+                    <div class="modal-footer"><button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Cancelar</button><button type="submit" class="btn btn-success">Confirmar Pagamento</button></div>
                 </form>
             </div>
         </div>
     </div>
 
     <!-- Modal Excluir Conta -->
-    <div class="modal fade" id="modalExcluirConta" tabindex="-1">
-        <div class="modal-dialog modal-sm">
+    <div class="modal fade contas-pagar-modal" id="modalExcluirConta" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-sm" role="document">
             <div class="modal-content">
                 <form method="POST">
                     <input type="hidden" name="action" value="excluir_conta">
                     <input type="hidden" name="id" id="excluir_id_conta">
                     <div class="modal-header">
                         <h5 class="modal-title">Confirmar Exclusão</h5>
-                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Fechar"><span aria-hidden="true">&times;</span></button>
                     </div>
                     <div class="modal-body">
                         <p>Tem certeza que deseja excluir este item? Esta ação não pode ser desfeita.</p>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn btn-danger">Excluir</button>
+                        <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-danger btn-sm">Excluir</button>
                     </div>
                 </form>
             </div>
@@ -1164,12 +1066,12 @@ function renderTabelaContasPagar($contas)
     </div>
 
     <!-- Modal Excluir Anexo -->
-    <div class="modal fade" id="modalConfirmarExclusaoAnexo" tabindex="-1">
-        <div class="modal-dialog modal-sm">
+    <div class="modal fade contas-pagar-modal" id="modalConfirmarExclusaoAnexo" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-sm" role="document">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">Confirmar Remoção</h5>
-                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Fechar"><span aria-hidden="true">&times;</span></button>
                 </div>
                 <div class="modal-body">
                     <p>Tem certeza que deseja remover este anexo da lista?</p>
@@ -1187,235 +1089,7 @@ function renderTabelaContasPagar($contas)
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.datatables.net/1.10.25/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.10.25/js/dataTables.bootstrap4.min.js"></script>
-    <!-- <script>
-        $(document).ready(function() {
-            const subgrupos = <?= json_encode($subgrupos, JSON_NUMERIC_CHECK) ?>;
 
-            function popularSubgrupos(grupoId, selectSubgrupo, subgrupoSelecionadoId = null) {
-                const subgruposFiltrados = subgrupos.filter(sg => sg.id_grupo === grupoId);
-                $(selectSubgrupo).empty().append('<option value="">Selecione...</option>');
-                subgruposFiltrados.forEach(sg => {
-                    const selected = sg.id === subgrupoSelecionadoId ? ' selected' : '';
-                    $(selectSubgrupo).append(`<option value="${sg.id}"${selected}>${sg.nome}</option>`);
-                });
-            }
-            $('#select_grupo').on('change', function() {
-                popularSubgrupos(parseInt($(this).val(), 10), '#select_subgrupo');
-            });
-            $('#edit_id_grupo').on('change', function() {
-                popularSubgrupos(parseInt($(this).val(), 10), '#edit_id_subgrupo');
-            });
-
-            $('.btn-dar-baixa').on('click', function() {
-                $('#baixa_id_conta').val($(this).data('id'));
-                $('#baixa_descricao').text($(this).data('descricao'));
-                $('#baixa_valor').text($(this).data('valor'));
-                $('#baixa_id_agBancaria').val($(this).data('id_agBancaria'));
-            });
-
-            $('.btn-excluir').on('click', function() {
-                const id = $(this).data('id');
-                $('#excluir_id_conta').val(id);
-            });
-
-            $('.btn-edit-conta').on('click', function() {
-                const id_grupo = parseInt($(this).data('id_grupo'), 10);
-                const id_subgrupo = parseInt($(this).data('id_subgrupo'), 10);
-                $('#edit_id_conta').val($(this).data('id'));
-                $('#edit_descricao').val($(this).data('descricao'));
-                $('#edit_valor').val($(this).data('valor'));
-                $('#edit_data_vencimento').val($(this).data('vencimento'));
-                $('#edit_fornecedor').val($(this).data('fornecedor'));
-                $('#edit_id_classificacao').val($(this).data('id_classificacao'));
-                $('#edit_id_tipo_documento').val($(this).data('id_tipo_documento'));
-                $('#edit_id_grupo').val(id_grupo);
-                $('#edit_unidade_negocio').val($(this).data('unidade_negocio'));
-                popularSubgrupos(id_grupo, '#edit_id_subgrupo', id_subgrupo);
-            });
-
-            let itemParaExcluir = null;
-            let anexosAtuais = {}; 
-            // --- LÓGICA PARA O MODAL DE ANEXOS ---
-            $('#modalAnexarComprovante').on('show.bs.modal', function(event) {
-                const button = $(event.relatedTarget);
-                const contaId = button.data('conta-id');
-                const tipoConta = button.data('tipo-conta');
-                let anexosExistentes = button.data('anexos');
-                const listaDiv = $('#listaAnexosExistentes');
-                const anexosInputId = 'anexos_json_anexo';
-
-                $('#anexo_conta_id').val(contaId);
-                $('#anexo_tipo_conta').val(tipoConta);
-
-                // Limpa e reinicia
-                listaDiv.html('');
-                $('#uploadStatus_anexo').html('');
-                $('#pdfFileInput_anexo').val('');
-                anexosAtuais[anexosInputId] = [];
-
-                if (typeof anexosExistentes === 'string') {
-                    try {
-                        anexosExistentes = JSON.parse(anexosExistentes);
-                    } catch (e) {
-                        anexosExistentes = [];
-                    }
-                }
-                if (!Array.isArray(anexosExistentes)) {
-                    anexosExistentes = [];
-                }
-
-                anexosAtuais[anexosInputId] = [...anexosExistentes];
-                $('#' + anexosInputId).val(JSON.stringify(anexosAtuais[anexosInputId]));
-
-                if (anexosExistentes.length > 0) {
-                    anexosExistentes.forEach((anexo, index) => {
-                        const anexoHtml = `
-                    <div class="d-flex justify-content-between align-items-center mb-1 border-bottom pb-1 anexo-item" data-index="${index}">
-                        <span><a href="${anexo.url}" target="_blank"><i class="fas fa-file-pdf text-danger"></i> ${anexo.nome}</a></span>
-                        <button type="button" class="btn btn-sm btn-outline-danger btn-remover-anexo" data-anexo-input-id="${anexosInputId}"><i class="fas fa-trash-alt"></i></button>
-                    </div>`;
-                        listaDiv.append(anexoHtml);
-                    });
-                } else {
-                    listaDiv.html('<p class="text-muted small">Nenhum anexo existente.</p>');
-                }
-            });
-
-            // --- LÓGICA PARA REMOVER ANEXO (AGORA ABRE O MODAL) ---
-            $('body').on('click', '.btn-remover-anexo', function() {
-                const itemDiv = $(this).closest('.anexo-item');
-                const index = itemDiv.data('index');
-                const anexosInputId = $(this).data('anexo-input-id');
-
-                // 1. Salva as informações do item a ser excluído
-                itemParaExcluir = {
-                    itemDiv: itemDiv,
-                    index: index,
-                    anexosInputId: anexosInputId
-                };
-
-                //esconde o modal
-                $('#modalAnexarComprovante').modal('hide');
-
-                // 2. Abre o modal de confirmação
-                $('#modalConfirmarExclusaoAnexo').modal('show');
-            });
-
-            $('#modalConfirmarExclusaoAnexo .btn-secondary[data-dismiss="modal"]').on('click', function() {
-                itemParaExcluir = null;
-
-                $('#modalConfirmarExclusaoAnexo').one('hidden.bs.modal', function() {
-                    $('#modalAnexarComprovante').modal('show');
-                });
-            });
-
-            // --- NOVA LÓGICA: AÇÃO DO BOTÃO DE CONFIRMAÇÃO DO MODAL ---
-            $('#btn-confirmar-excluir-anexo').on('click', function() {
-                // 1. Verifica se temos um item para excluir
-                if (itemParaExcluir) {
-                    const {
-                        itemDiv,
-                        index,
-                        anexosInputId
-                    } = itemParaExcluir;
-
-                    // 2. Executa a lógica de exclusáo original
-                    if (anexosAtuais[anexosInputId] && anexosAtuais[anexosInputId][index] !== undefined) {
-
-                        anexosAtuais[anexosInputId].splice(index, 1); // Remove do array
-                        $('#' + anexosInputId).val(JSON.stringify(anexosAtuais[anexosInputId])); // Atualiza o input hidden
-
-                        // Remove o item da lista visual com um efeito
-                        itemDiv.fadeOut(300, function() {
-                            $(this).remove();
-
-                            if ($('#listaAnexosExistentes .anexo-item').length === 0) {
-                                $('#listaAnexosExistentes').html('<p class="text-muted small">Nenhum anexo existente.</p>');
-                            }
-                        });
-                    }
-                }
-
-                // 3. Limpa a variável e fecha o modal
-                itemParaExcluir = null;
-                $('#modalConfirmarExclusaoAnexo').modal('hide');
-                $('#modalAnexarComprovante').modal('show');
-            });
-
-            // --- LÓGICA DE UPLOAD PARA FINANCEIRO ---
-            $('.auto-upload-financeiro').on('change', function(event) {
-                const input = event.target;
-                const statusDiv = $('#' + $(input).data('status-div'));
-                const anexosInputId = $(input).data('anexos-input');
-
-                // Pega os IDs diretamente dos data-attributes do input file
-                const contaId = $('#' + $(input).data('conta-id-input')).val();
-                const tipoConta = $('#' + $(input).data('tipo-conta-input')).val();
-
-                const files = input.files;
-                if (files.length === 0) return;
-
-                Array.from(files).forEach((file, index) => {
-                    handleFileUploadFinanceiro(file, index, statusDiv, anexosInputId, contaId, tipoConta);
-                });
-            });
-
-            function handleFileUploadFinanceiro(file, index, statusDiv, anexosInputId, contaId, tipoConta) {
-                const fileStatusId = 'file-status-' + Date.now() + '-' + index;
-                if (file.type !== 'application/pdf') {
-                    statusDiv.append(`<div class="text-danger"><i class="fas fa-times-circle"></i> ${file.name} (não é PDF)</div>`);
-                    return;
-                }
-                statusDiv.append(`<div id="${fileStatusId}"><i class="fas fa-spinner fa-spin"></i> Enviando ${file.name}...</div>`);
-
-                var formData = new FormData();
-                formData.append('pdfFile', file);
-                formData.append('conta_id', contaId);
-                formData.append('tipo_conta', tipoConta);
-
-                $.ajax({
-                    url: 'recebe_upload_financeiro.php', // USA O NOVO SCRIPT PHP
-                    type: 'POST',
-                    data: formData,
-                    processData: false,
-                    contentType: false,
-                    dataType: 'json',
-                    success: function(response) {
-                        const statusElement = $('#' + fileStatusId);
-                        if (response.success) {
-                            statusElement.html(`<i class="fas fa-check-circle text-success"></i> ${response.fileName} (Novo)`);
-
-                            if (!anexosAtuais[anexosInputId]) {
-                                anexosAtuais[anexosInputId] = [];
-                            }
-
-                            anexosAtuais[anexosInputId].push({
-                                nome: response.fileName,
-                                url: response.url
-                            });
-                            $('#' + anexosInputId).val(JSON.stringify(anexosAtuais[anexosInputId]));
-                        } else {
-                            statusElement.html(`<i class="fas fa-times-circle text-danger"></i> Erro: ${response.message}`);
-                        }
-                    },
-                    error: function() {
-                        $('#' + fileStatusId).html(`<i class="fas fa-exclamation-triangle text-danger"></i> Erro de comunicação.`);
-                    }
-                });
-            }
-
-            // Limpa o modal de anexos ao fechar
-            $('#modalAnexarComprovante').on('hidden.bs.modal', function() {
-                const anexosInputId = 'anexos_json_anexo';
-                anexosAtuais[anexosInputId] = [];
-                $('#' + anexosInputId).val('');
-                $(this).find('.upload-status').html('');
-                $(this).find('.auto-upload-financeiro').val('');
-                $('#listaAnexosExistentes').html('<p class="text-muted small">Nenhum anexo existente.</p>');
-            });
-
-        });
-    </script> -->
 
     <script>
         $(document).ready(function() {
@@ -1442,18 +1116,18 @@ function renderTabelaContasPagar($contas)
                 popularSubgrupos(parseInt($(this).val(), 10), '#edit_id_subgrupo');
             });
 
-            $('.btn-dar-baixa').on('click', function() {
+            $(document).on('click', '.btn-dar-baixa', function() {
                 $('#baixa_id_conta').val($(this).data('id'));
                 $('#baixa_descricao').text($(this).data('descricao'));
                 $('#baixa_valor').text($(this).data('valor'));
                 $('#baixa_id_agBancaria').val($(this).data('id_agBancaria'));
             });
 
-            $('.btn-excluir').on('click', function() {
+            $(document).on('click', '.btn-excluir', function() {
                 $('#excluir_id_conta').val($(this).data('id'));
             });
 
-            $('.btn-edit-conta').on('click', function() {
+            $(document).on('click', '.btn-edit-conta', function() {
                 const id_grupo = parseInt($(this).data('id_grupo'), 10);
                 const id_subgrupo = parseInt($(this).data('id_subgrupo'), 10);
                 $('#edit_id_conta').val($(this).data('id'));
@@ -1466,6 +1140,34 @@ function renderTabelaContasPagar($contas)
                 $('#edit_id_grupo').val(id_grupo);
                 $('#edit_unidade_negocio').val($(this).data('unidade_negocio'));
                 popularSubgrupos(id_grupo, '#edit_id_subgrupo', id_subgrupo);
+            });
+
+            function revealContasPagarRows() {
+                const hiddenRows = $('.contas-pagar-extra-row.d-none');
+                hiddenRows.slice(0, 50).removeClass('d-none');
+                const remaining = $('.contas-pagar-extra-row.d-none').length;
+                $('#contasPagarLoadStatus').text(remaining > 0 ? `Role para carregar mais ${remaining} conta(s).` : '');
+            }
+            $('#contasPagarLoadStatus').text($('.contas-pagar-extra-row.d-none').length > 0 ? `Role para carregar mais ${$('.contas-pagar-extra-row.d-none').length} conta(s).` : '');
+            $('.contas-pagar-table-area').on('scroll', function() {
+                const el = this;
+                if (el.scrollTop + el.clientHeight >= el.scrollHeight - 80) revealContasPagarRows();
+            });
+            function updateModalScrollStatus(tableSelector) {
+                const remaining = $(`${tableSelector} .contas-pagar-extra-modal-row.d-none`).length;
+                $(`.contas-pagar-modal-scroll-status[data-table="${tableSelector}"]`).text(remaining > 0 ? `Role para carregar mais ${remaining} item(ns).` : '');
+            }
+            function revealModalRows(tableSelector) {
+                $(`${tableSelector} .contas-pagar-extra-modal-row.d-none`).slice(0, 50).removeClass('d-none');
+                updateModalScrollStatus(tableSelector);
+            }
+            $('#modalResumoFiltro').on('shown.bs.modal', function() {
+                updateModalScrollStatus('#tabelaContasPagar');
+                updateModalScrollStatus('#tabelaContasVencidas');
+            });
+            $('.contas-pagar-modal-table-wrap').on('scroll', function() {
+                const el = this;
+                if (el.scrollTop + el.clientHeight >= el.scrollHeight - 60) revealModalRows('#' + $(this).find('table').attr('id'));
             });
 
             $('#modalAnexarComprovante').on('show.bs.modal', function(event) {
@@ -1688,9 +1390,6 @@ function renderTabelaContasPagar($contas)
                 ]
             };
 
-            $('#tabelaContasPagar').DataTable(dataTableOptions);
-            $('#tabelaContasVencidas').DataTable(dataTableOptions);
-
         });
     </script>
 
@@ -1701,6 +1400,9 @@ function renderTabelaContasPagar($contas)
             });
         }, 3000);
     </script>
+            </div>
+        </div>
+    </div>
 </body>
 
 </html>

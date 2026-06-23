@@ -8,6 +8,7 @@ include_once("../all/seguranca.php");
 include_once("../all/conect.php");
 include_once("../all/permissoes.php");
 include_once("../all/token.php");
+include_once("../all/email_smtp.php");
 $hoje = date("Y-m-d");
 $agora = date("Y-m-d H:i:s");
 
@@ -298,7 +299,7 @@ if ($m3_00 == 0) {
           $headers .= "MIME-Version: 1.0\r\n";
           $headers .= "Content-Type: text/html; charset=UTF-8\r\n";
 
-          $isMailSent = mail($to_email, $subject, $body, $headers);
+          $isMailSent = n3_send_mail($to_email, $subject, $body, $headers);
 
           //===================================CHAMADO ABERTO==========email=======================================================================================================================================================
 
@@ -851,7 +852,7 @@ if ($m3_00 == 0) {
               $headers_4 .= "MIME-Version: 1.0\r\n";
               $headers_4 .= "Content-Type: text/html; charset=UTF-8\r\n";
 
-              $isMailSent = mail($to_email, $subject_4, $body_4, $headers_4);
+              $isMailSent = n3_send_mail($to_email, $subject_4, $body_4, $headers_4);
 
               //=====================Chamado=SAIU ESPERA===email========================================================================================================================================================
 
@@ -991,7 +992,7 @@ if ($m3_00 == 0) {
               $headers_3 .= "MIME-Version: 1.0\r\n";
               $headers_3 .= "Content-Type: text/html; charset=UTF-8\r\n";
 
-              $isMailSent = mail($to_email, $subject_3, $body_3, $headers_3);
+              $isMailSent = n3_send_mail($to_email, $subject_3, $body_3, $headers_3);
 
               //=====================Chamado=EM ESPERA===email========================================================================================================================================================
 
@@ -1067,7 +1068,7 @@ if ($m3_00 == 0) {
       //                 $headers_2 .= "MIME-Version: 1.0\r\n";
       //                 $headers_2 .= "Content-Type: text/html; charset=UTF-8\r\n";
 
-      //                 $isMailSent = mail($to_email, $subject_2, $body_2, $headers_2);
+      //                 $isMailSent = n3_send_mail($to_email, $subject_2, $body_2, $headers_2);
 
       //                 //=====================Chamado=FINALIZADO================email============================================================================================================================================================
 
@@ -1179,10 +1180,10 @@ if ($m3_00 == 0) {
             $headers_2 .= "Content-Type: text/html; charset=UTF-8\r\n";
 
             // 6.3. Envio
-            $isMailSent = mail($to_email, $subject_2, $body_2, $headers_2);
+            $isMailSent = n3_send_mail($to_email, $subject_2, $body_2, $headers_2);
 
             if (!$isMailSent) {
-              // Se a função mail() retornar false (falha no envio), adiciona um aviso é mensagem de sucesso
+              // Se a função n3_send_mail() retornar false (falha no envio), adiciona um aviso é mensagem de sucesso
               $mensagem .= "<br><i class=\"fas fa-exclamation-triangle\"></i> **AVISO:** Falha no envio do e-mail de notificação.";
             }
           } catch (Exception $e) {

@@ -41,31 +41,160 @@ if ($m3_00 == 0) {
   <title>Allterus</title>
 
   <style type="text/css">
-    /* usado apenas para formatar a mensagem de espera para os selectbox dependentes - Coment?rio*/
+    html {
+      min-height: 100%;
+      background: #f6f8fb;
+      overflow-x: hidden;
+    }
+
     body {
-      transform: scale(0.9);
-      transform-origin: top left;
-      width: 111%;
+      min-height: 100%;
+      margin: 0;
+      background: #f6f8fb;
+      color: #0f172a;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      font-size: 90%;
+      overflow-x: hidden;
     }
 
-    .carregando {
-      color: #ff0000;
-      display: none;
+    body input,
+    body button,
+    body select,
+    body textarea {
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
     }
 
-    .carregando2 {
-      color: #ff0000;
-      display: none;
+    .container-fluid {
+      max-width: 100vw;
+      padding-left: 14px;
+      padding-right: 14px;
+      overflow-x: hidden;
     }
 
-    .carregando3 {
-      color: #ff0000;
-      display: none;
+    .card {
+      border: 1px solid #dbe6f3;
+      border-radius: 8px;
+      box-shadow: 0 8px 22px rgba(15, 23, 42, .08);
+      overflow: visible;
     }
 
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 14px 16px;
+      background: #fff;
+      border-bottom: 1px solid #e6edf5;
+      color: #101828;
+      font-size: 1rem;
+      font-weight: 700;
+    }
+
+    .card-header i {
+      color: #0891b2 !important;
+    }
+
+    .card-body {
+      padding: 18px !important;
+      background: #fff;
+    }
+
+    .form-row {
+      margin-right: -6px;
+      margin-left: -6px;
+    }
+
+    .form-group {
+      padding-right: 6px;
+      padding-left: 6px;
+      margin-bottom: 14px;
+    }
+
+    label.small,
+    label {
+      margin-bottom: 6px !important;
+      color: #344054;
+      font-size: .82rem;
+      font-weight: 700;
+    }
+
+    .form-control {
+      min-height: 38px;
+      border: 1px solid #cfd9e8;
+      border-radius: 6px;
+      background-color: #fff;
+      color: #172033;
+      font-size: .9rem;
+      box-shadow: none;
+      transition: border-color .15s ease, box-shadow .15s ease;
+    }
+
+    select.form-control {
+      padding-right: 30px;
+      background-image: linear-gradient(45deg, transparent 50%, #475569 50%), linear-gradient(135deg, #475569 50%, transparent 50%);
+      background-position: calc(100% - 15px) 16px, calc(100% - 10px) 16px;
+      background-size: 5px 5px, 5px 5px;
+      background-repeat: no-repeat;
+      appearance: none;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+    }
+
+    textarea.form-control {
+      min-height: 150px;
+      padding: 10px 12px;
+      line-height: 1.5;
+      resize: vertical;
+    }
+
+    .form-control:focus {
+      border-color: #0ea5e9;
+      box-shadow: 0 0 0 3px rgba(14, 165, 233, .14);
+    }
+
+    .bootstrap-select>.dropdown-toggle {
+      min-height: 38px;
+      border: 1px solid #cfd9e8;
+      border-radius: 6px;
+      background: #fff;
+      color: #172033;
+      box-shadow: none;
+    }
+
+    .carregando,
+    .carregando2,
+    .carregando3,
     .carregando4 {
-      color: #ff0000;
       display: none;
+      color: #64748b;
+      font-size: .78rem;
+      font-weight: 600;
+    }
+
+    .btn-danger {
+      min-height: 38px;
+      border-color: #0ea5e9;
+      border-radius: 6px;
+      background: #0ea5e9;
+      color: #fff;
+      font-weight: 700;
+      box-shadow: none;
+    }
+
+    .btn-danger:hover {
+      border-color: #0284c7;
+      background: #0284c7;
+    }
+
+    @media (max-width: 767.98px) {
+      .container-fluid {
+        padding-left: 8px;
+        padding-right: 8px;
+      }
+
+      .card-body {
+        padding: 14px !important;
+      }
     }
   </style>
 </head>
@@ -414,7 +543,7 @@ if ($m3_00 == 0) {
           $adc = $pdo->prepare("UPDATE `melhorias` SET `subcategoria`='$subcategoria' WHERE `id`='$atd';");
           if ($adc->execute()) {
             //CRIA NOVO REGISTRO NA TABELA DE INTERA??O INFORMANDO A ALTERA??O          
-            $adc = $pdo->prepare("INSERT INTO `interatividade_melhorias` (`inter_tipo`, `inter_atd`, `inter_user`, `inter_data`, `inter_desc`) VALUES ('9', '$atd', '$user_id', '$agora', 'Editou a SubCategoria: <s>De: $atd_scat_original_nome</s> para $atd_scat_nome.')");
+            $adc = $pdo->prepare("INSERT INTO `interatividade_melhorias` (`inter_tipo`, `inter_atd`, `inter_user`, `inter_data`, `inter_desc`) VALUES ('9', '$atd', '$user_id', '$agora', 'Editou a Subcategoria: <s>De: $atd_scat_original_nome</s> para $atd_scat_nome.')");
             if ($adc->execute()) {
               $mensagem = "<i class=\"fas fa-check\"></i> OK! <br> Classifica??o do Atendimento alterada!";
               $mensagem_cor = "alert-success";
@@ -808,14 +937,20 @@ if ($m3_00 == 0) {
         <div class="col-12 col-sm-12 col-md-11 col-lg-10">
           <div class="card">
             <div class="h6 card-header">
-              <i class="fas fa-headset text-danger"></i> Cadastro de solicita??o de Melhoria
+              <i class="fas fa-headset text-danger"></i> Cadastro de solicitação de Melhoria
             </div>
             <div class="card-body py-3">
               <form action="#" method="POST">
                 <div class="form-row">
                   <div class="form-group col-sm-12 col-md-4">
                     <label class="my-0 small">Cliente:</label>
-                    <select name="cliente" id="cliente" class="form-control form-control-sm selectpicker" data-live-search="true" required="required" tabindex="1">
+                    <select name="cliente"
+                      id="cliente"
+                      class="form-control form-control-sm selectpicker"
+                      data-live-search="true"
+                      data-container="body"
+                      required="required"
+                      tabindex="1">
                       <!-- filtrar -->
                       <option></option>
                       <?php
@@ -898,7 +1033,7 @@ if ($m3_00 == 0) {
 
                   <!-- Este select ser? populado per um Java Script, de acordo com o valor escolhido no select 'cliente'-->
                   <div class="form-group col-sm-6 col-md-2">
-                    <label class="my-0 small">SubCategoria:</label>
+                    <label class="my-0 small">Subcategoria:</label>
                     <span class="carregando3 small">Aguarde, carregando...</span>
                     <select name="subcategoria" id="subcategoria" class="form-control form-control-sm" required="required" tabindex="6">
                       <option></option>
@@ -915,7 +1050,7 @@ if ($m3_00 == 0) {
                   </div>
 
                   <div class="form-group col-sm-6 col-md-2">
-                    <label class="my-0 small">N?vel:</label>
+                    <label class="my-0 small">Nível:</label>
                     <select name="nivel" class="form-control form-control-sm" required="required" tabindex="8">
                       <option></option>
                       <option value="1">1</option>
@@ -930,10 +1065,10 @@ if ($m3_00 == 0) {
                 </div>
 
                 <div class="form-row">
-                  <div class="form-group col-sm-2 col-md-1">
+                  <div class="form-group col-sm-2 col-md-1" hidden>
                     <label class="my-0 small">Recorrente:</label>
                     <select name="recorrente" id="recorrente" class="form-control form-control-sm" required="required" tabindex="9">
-                      <option value="1">N?o</option>
+                      <option value="1" selected>Não</option>
                       <option value="2">Sim</option>
                     </select>
                   </div>
@@ -973,7 +1108,7 @@ if ($m3_00 == 0) {
                 <div class="form-row pt-2">
 
                   <div class="form-group col-sm-6 col-md-6">
-                    <label class="my-0 small">Descri??o de abertura:</label>
+                    <label class="my-0 small">Descrição de abertura:</label>
                     <textarea name="desc_abertura" class="form-control form-control-sm" rows="5" required="required" tabindex="13"></textarea>
                   </div>
 
@@ -981,10 +1116,10 @@ if ($m3_00 == 0) {
                     <div class="form-row">
 
                       <div class="form-group col-sm-12 col-md-6">
-                        <label class="my-0 small">T?cnico:</label>
+                        <label class="my-0 small">Técnico:</label>
                         <select name="tecnico" id="tecnico" class="form-control form-control-sm selectpicker" data-live-search="true" required="required" tabindex="14">
                           <option></option>
-                          <option value="0">N?o determinado</option>
+                          <option value="0">Não determinado</option>
                           <?php
                           if (isset($_SESSION['tipo']) && $_SESSION['tipo'] == 1) {
                             $pdo = ConnectionN3();
@@ -1018,7 +1153,7 @@ if ($m3_00 == 0) {
                       <div class="form-group col-sm-12 col-md-6 pt-3 text-center">
                         <input type="hidden" name="token" value="<?php echo $token; ?>">
                         <input type="hidden" name="action" value="atd_adc">
-                        <button type="submit" class="btn btn-danger btn-sm p-1"><i class="fas fa-plus"></i> Iniciar atendimento</button>
+                        <button type="submit" class="btn btn-danger btn-sm px-3"><i class="fas fa-plus mr-1"></i> Cadastrar melhoria</button>
                       </div>
 
                     </div>
@@ -1576,11 +1711,11 @@ WHERE melhorias.id = '$atd'");
                 ?>
 
                 <div class="form-group col-sm-12">
-                  <h4>Informa??es atendimento #<?php echo $atd; ?></h4>
+                  <h4>Informações atendimento #<?php echo $atd; ?></h4>
                   <p><b>Categoria: </b><?php echo $categoria; ?></p>
-                  <p><b>SubCategoria:</b> <?php echo $subcategoria; ?> </p>
+                  <p><b>Subcategoria:</b> <?php echo $subcategoria; ?> </p>
                   <p><b>Item:</b> <?php echo $item ?? '-' ?> </p>
-                  <p><b>Total de melhorias</b> <small>(?ltimos 3 meses)</small>: <b><?php echo $exibeInsights['total_melhorias']; ?></b></p>
+                  <p><b>Total de melhorias</b> <small>(últimos 3 meses)</small>: <b><?php echo $exibeInsights['total_melhorias']; ?></b></p>
                   <hr />
 
                   <h6>melhorias: </h6>
@@ -1666,11 +1801,11 @@ WHERE melhorias.id = '$atd'");
                 ?>
 
                 <div class="form-group col-sm-12">
-                  <h4>Informa??es atendimento #<?php echo $atd; ?></h4>
+                  <h4>Informações atendimento #<?php echo $atd; ?></h4>
                   <p><b>Categoria: </b><?php echo $categoria; ?></p>
-                  <p><b>SubCategoria:</b> <?php echo $subcategoria; ?> </p>
+                  <p><b>Subcategoria:</b> <?php echo $subcategoria; ?> </p>
                   <p><b>Item:</b> <?php echo $item ?? '-' ?> </p>
-                  <p><b>Total de melhorias</b> <small>(?ltimos 3 meses)</small>: <b><?php echo $exibeInsights['total_melhorias']; ?></b></p>
+                  <p><b>Total de melhorias</b> <small>(últimos 3 meses)</small>: <b><?php echo $exibeInsights['total_melhorias']; ?></b></p>
                   <hr />
 
                   <h6>melhorias: </h6>
@@ -1759,7 +1894,7 @@ WHERE melhorias.id = '$atd'");
 
                 <!-- Este select ser? populado per um Java Script, de acordo com o valor escolhido no select 'cliente'-->
                 <div class="form-group col-sm-6 col-md-3">
-                  <label class="my-0 small">SubCategoria:</label>
+                  <label class="my-0 small">Subcategoria:</label>
                   <span class="carregando3 small">Aguarde, carregando...</span>
                   <select name="subcategoria" id="subcategoria" class="form-control form-control-sm" required="required" tabindex="6">
                     <option value="<?php echo $atd_scat; ?>"><?php echo $scat_nome; ?></option>

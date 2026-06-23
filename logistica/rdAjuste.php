@@ -247,7 +247,7 @@ $tiposChave = $pdo->query("SELECT id, name_type FROM type_keys ORDER BY id")->fe
                                     <th style="width: 150px">Valor</th>
                                     <th>Data</th>
                                     <th>Status</th>
-                                    <th style="width: 140px">Açães</th>
+                                    <th style="width: 140px">Ações</th>
                                 </tr>
                             </thead>
                             <tbody>

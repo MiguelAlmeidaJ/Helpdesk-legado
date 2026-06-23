@@ -3,6 +3,8 @@ session_start();
 include_once("../all/seguranca.php");
 include_once("../all/conect.php");
 include_once("../all/permissoes.php");
+include_once("../all/token.php");
+include_once(__DIR__ . "/lib/list_helpers.php");
 
 if ($m5_01 < 0) {
   header("Location: ../home.php");
@@ -88,6 +90,21 @@ if (isset($_POST['order_dir'])) {
 
 $order_by = $ord . " " . $order_dir;
 
+$projeto_filters = atd_projeto_collect_filters(array_merge($_GET, $_POST), 'projects');
+$f_sts = $projeto_filters['f_sts'];
+$f_sol = $projeto_filters['f_sol'];
+$f_clt = $projeto_filters['f_clt'];
+$f_tec = $projeto_filters['f_tec'];
+$f_id = $projeto_filters['f_id'];
+$ord = $projeto_filters['ord'];
+$order_dir = $projeto_filters['order_dir'];
+$p_sts = implode(',', $projeto_filters['statuses']);
+$p_sol = $f_sol > 0 ? $f_sol : '%';
+$p_clt = $f_clt > 0 ? $f_clt : '%';
+$p_tec = $f_tec !== 'all' ? $f_tec : '%';
+$p_id = $f_id !== '' ? $f_id : '%';
+$order_by = $projeto_filters['order_sql'];
+
 // if ($ord == "id") {
 //   $order_by = "projetos.id ASC";
 // }
@@ -127,9 +144,6 @@ $row = $show->fetch(PDO::FETCH_ASSOC);
 //$sla_n11=$row["sla_n11"];
 
 
-?>
-<?php
-header("Refresh:600");
 ?>
 <?php
 //BUSCA TODOS OS projetos QUE ESTÃO AGENDADOS (STATUS = 0)
@@ -172,6 +186,8 @@ while ($exibe = $show_projeto->fetch(PDO::FETCH_ASSOC)) {
   <link rel="stylesheet" href="../css/progress_bar.css">
   <link rel="stylesheet" href="../css/blink.css">
   <link rel="stylesheet" href="../css/help.css">
+  <link rel="stylesheet" href="../css/bootstrap-datetimepicker.min.css">
+  <link rel="stylesheet" href="css/projeto_modern.css">
   <title>Allterus</title>
 </head>
 
@@ -184,14 +200,14 @@ while ($exibe = $show_projeto->fetch(PDO::FETCH_ASSOC)) {
 </style>
 
 <body>
-  </ /?php include_once("../all/loading.php"); ?>
+  <?php include_once("../all/loading.php"); ?>
   <?php include("../all/sidebar.php"); ?>
-  <div class="container-fluid">
-    <div class="row">
-      <div class="col-md-12 mt-2">
-        <div class="card">
-          <div class="card-header py-1">
-            <form action="#" method="POST">
+  <div class="container-fluid projeto-list-page">
+    <div class="row projeto-list-page-row">
+      <div class="col-md-12 mt-2 projeto-page-wrap">
+        <div class="card projeto-list-shell-card">
+          <div class="card-header py-1 projeto-filter-card-header">
+            <form action="#" method="POST" id="projetosFilterForm" class="projeto-filter-form" data-projeto-ajax-form>
               <div class="form-row align-items-center">
                 <div class="col-auto col-form-label-sm">
                   <label class="my-0"> Cliente:</label>
@@ -333,11 +349,25 @@ while ($exibe = $show_projeto->fetch(PDO::FETCH_ASSOC)) {
                 <div class="col-auto pt-3">
                   <button type="button" class="btn btn-sm btn-outline-info" tabindex="4" onclick="window.location.href='?action=limpar_filtros';">Limpar</button>
                 </div>
+                <?php if ((int)($m5_01 ?? 0) > 0) { ?>
+                  <div class="col-auto pt-3 ml-auto">
+                    <button type="button" class="btn btn-sm btn-outline-success" data-toggle="modal" data-target="#novoProjetoModal">
+                      <i class="fas fa-plus"></i> Novo Projeto
+                    </button>
+                  </div>
+                <?php } ?>
               </div>
             </form>
           </div>
 
-          <div class="card-body p-0">
+          <div class="card-body p-0 projeto-list-card-body">
+            <?php
+            $projetoListResult = atd_projeto_fetch_projects($pdo, $projeto_filters);
+            ?>
+            <div id="atd-projeto-list" class="projeto-list-container" data-projeto-list data-projeto-form="#projetosFilterForm" data-projeto-endpoint="api/projetos_list.php">
+              <?php echo atd_projeto_render_projects_table($projetoListResult['rows'], $projeto_filters, $projetoListResult['pagination']); ?>
+            </div>
+            <?php if (false) { ?>
             <table class="table table-hover small">
               <thead>
                 <tr>
@@ -743,13 +773,196 @@ while ($exibe = $show_projeto->fetch(PDO::FETCH_ASSOC)) {
                 <?php } ?>
               </tbody>
             </table>
+            <?php } ?>
 
           </div>
+      </div>
+    </div>
+  </div>
+  </div>
+  <?php if ((int)($m5_01 ?? 0) > 0) { ?>
+    <div class="modal fade projeto-quick-task-modal" id="novoProjetoModal" tabindex="-1" role="dialog" aria-labelledby="novoProjetoModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-xl" role="document">
+        <div class="modal-content">
+          <form action="projeto.php" method="POST">
+            <div class="modal-header">
+              <h6 class="modal-title" id="novoProjetoModalLabel"><i class="fas fa-plus text-success"></i> Novo Projeto</h6>
+              <button type="button" class="close" data-dismiss="modal" aria-label="Fechar">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+            <div class="modal-body">
+              <div class="form-row">
+                <div class="form-group col-sm-12 col-md-4">
+                  <label class="my-0 small">Cliente:</label>
+                  <select name="cliente" id="modal_projeto_cliente" class="form-control form-control-sm selectpicker" data-live-search="true" required tabindex="1">
+                    <option></option>
+                    <?php
+                    $modalFilterEmpresas = '';
+                    $modalParams = [];
+                    if (isset($_SESSION['tipo'], $_SESSION['empresas']) && (int)$_SESSION['tipo'] === 2 && is_array($_SESSION['empresas']) && count($_SESSION['empresas']) > 0) {
+                      $modalEmpresas = array_values(array_filter(array_map('intval', $_SESSION['empresas'])));
+                      if ($modalEmpresas) {
+                        $modalPlaceholders = [];
+                        foreach ($modalEmpresas as $idx => $empresaId) {
+                          $key = ':empresa_' . $idx;
+                          $modalPlaceholders[] = $key;
+                          $modalParams[$key] = $empresaId;
+                        }
+                        $modalFilterEmpresas = " AND clientes.clt_id IN (" . implode(',', $modalPlaceholders) . ")";
+                      }
+                    }
+                    $modalSql = "SELECT clientes.clt_id, clientes.clt_nomef FROM clientes WHERE clientes.clt_sts = '1'" . $modalFilterEmpresas . " ORDER BY clientes.clt_nomef ASC";
+                    $show_modal_clientes = $pdo->prepare($modalSql);
+                    foreach ($modalParams as $key => $value) {
+                      $show_modal_clientes->bindValue($key, $value, PDO::PARAM_INT);
+                    }
+                    $show_modal_clientes->execute();
+                    while ($exibe = $show_modal_clientes->fetch(PDO::FETCH_ASSOC)) {
+                      $modal_clt_id = (int)$exibe["clt_id"];
+                      $modal_clt_nome = $exibe["clt_nomef"];
+                    ?>
+                      <option value="<?php echo $modal_clt_id; ?>"><?php echo htmlspecialchars($modal_clt_nome, ENT_QUOTES, 'UTF-8'); ?></option>
+                    <?php } ?>
+                  </select>
+                </div>
+
+                <div class="form-group col-sm-6 col-md-4">
+                  <label class="my-0 small">Solicitante:</label>
+                  <span class="modal-projeto-loading modal-projeto-loading-solicitante small">Carregando...</span>
+                  <select name="solicitante" id="modal_projeto_solicitante" class="form-control form-control-sm" required tabindex="2">
+                    <option></option>
+                  </select>
+                </div>
+
+                <div class="form-group col-sm-6 col-md-4">
+                  <label class="my-0 small">Local:</label>
+                  <span class="modal-projeto-loading modal-projeto-loading-local small">Carregando...</span>
+                  <select name="local" id="modal_projeto_local" class="form-control form-control-sm" required tabindex="3">
+                    <option></option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-row pt-2">
+                <div class="form-group col-sm-6 col-md-3">
+                  <label class="my-0 small">Tipo de projeto:</label>
+                  <select name="tipo" class="form-control form-control-sm" tabindex="4">
+                    <option></option>
+                    <option value="1">Falha</option>
+                    <option value="2">Relacionamento</option>
+                    <option value="3">Requisição de Serviços</option>
+                    <option value="4">Requisição de informação</option>
+                    <option value="5">Notificação de monitoramento</option>
+                    <option value="6">Melhorias</option>
+                  </select>
+                </div>
+
+                <div class="form-group col-sm-6 col-md-3">
+                  <label class="my-0 small">Categoria:</label>
+                  <select name="categoria" id="modal_projeto_categoria" class="form-control form-control-sm" tabindex="5">
+                    <option></option>
+                    <?php
+                    $show_modal_cat = $pdo->prepare("SELECT categorias.cat_id, categorias.cat_nome FROM categorias WHERE categorias.cat_sts = '1' AND categorias.cat_setor = '1' ORDER BY categorias.cat_nome ASC");
+                    $show_modal_cat->execute();
+                    while ($exibe = $show_modal_cat->fetch(PDO::FETCH_ASSOC)) {
+                      $modal_cat_id = (int)$exibe["cat_id"];
+                      $modal_cat_nome = $exibe["cat_nome"];
+                    ?>
+                      <option value="<?php echo $modal_cat_id; ?>"><?php echo htmlspecialchars($modal_cat_nome, ENT_QUOTES, 'UTF-8'); ?></option>
+                    <?php } ?>
+                  </select>
+                </div>
+
+                <div class="form-group col-sm-6 col-md-2">
+                  <label class="my-0 small">Sub Categoria:</label>
+                  <span class="modal-projeto-loading modal-projeto-loading-subcategoria small">Carregando...</span>
+                  <select name="subcategoria" id="modal_projeto_subcategoria" class="form-control form-control-sm" tabindex="6">
+                    <option></option>
+                  </select>
+                </div>
+
+                <div class="form-group col-sm-6 col-md-2">
+                  <label class="my-0 small">Item:</label>
+                  <span class="modal-projeto-loading modal-projeto-loading-item small">Carregando...</span>
+                  <select name="item" id="modal_projeto_item" class="form-control form-control-sm" tabindex="7">
+                    <option></option>
+                  </select>
+                </div>
+
+                <div class="form-group col-sm-6 col-md-2">
+                  <label class="my-0 small">Nível:</label>
+                  <select name="nivel" class="form-control form-control-sm" required tabindex="8">
+                    <option></option>
+                    <option value="1">Nível 1</option>
+                    <option value="2">Nível 2</option>
+                    <option value="3">Nível 3</option>
+                    <option value="4">Rotina</option>
+                    <option value="5">Administrativo</option>
+                    <option value="0">NA</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-row pt-2">
+                <div class="form-group col-sm-6 col-md-6">
+                  <label class="my-0 small">Nome do Projeto:</label>
+                  <textarea name="nome_proj" class="form-control form-control-sm" rows="1" tabindex="9"></textarea>
+                </div>
+                <div class="form-group col-sm-6 col-md-6">
+                  <label class="my-0 small">Descrição de abertura:</label>
+                  <textarea name="desc_abertura" class="form-control form-control-sm" rows="1" tabindex="9"></textarea>
+                </div>
+              </div>
+
+              <div class="form-row pt-2">
+                <div class="form-group col-sm-6 col-md-3">
+                  <label class="my-0 small">Técnico:</label>
+                  <select name="tecnico" class="form-control form-control-sm selectpicker" data-live-search="true" tabindex="10">
+                    <option></option>
+                    <option value="0">Não determinado</option>
+                    <?php
+                    $show_modal_tec = $pdo->prepare("SELECT usuarios.user_id, usuarios.user_nome FROM usuarios WHERE usuarios.user_sts = '1' AND usuarios.user_id > '1' AND user_funcao >= '8' AND user_funcao <= '14' ORDER BY usuarios.user_nome ASC");
+                    $show_modal_tec->execute();
+                    while ($exibe = $show_modal_tec->fetch(PDO::FETCH_ASSOC)) {
+                      $modal_user_id = (int)$exibe["user_id"];
+                      $modal_user_nome = $exibe["user_nome"];
+                    ?>
+                      <option value="<?php echo $modal_user_id; ?>"><?php echo htmlspecialchars($modal_user_nome, ENT_QUOTES, 'UTF-8'); ?></option>
+                    <?php } ?>
+                  </select>
+                </div>
+
+                <div class="form-group col-sm-6 col-md-3">
+                  <label class="my-0 small">Forma de projeto:</label>
+                  <select name="forma" class="form-control form-control-sm" tabindex="11">
+                    <option value="1">Remoto</option>
+                    <option value="2">Presencial</option>
+                    <option value="3">Remoto - Plantão</option>
+                    <option value="4">Presencial - Plantão</option>
+                  </select>
+                </div>
+
+                <div class="form-group col-sm-6 col-md-3">
+                  <label class="my-0 small">Abertura:</label>
+                  <input type="text" name="abertura" value="<?php echo date("Y-m-d H:i"); ?>" readonly class="form-control form-control-sm form_datetime" tabindex="12">
+                </div>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <input type="hidden" name="token" value="<?php echo htmlspecialchars($token ?? '', ENT_QUOTES, 'UTF-8'); ?>">
+              <input type="hidden" name="action" value="projeto_adc">
+              <button type="button" class="btn btn-sm btn-secondary" data-dismiss="modal">Fechar</button>
+              <button type="submit" class="btn btn-sm btn-success"><i class="fas fa-plus"></i> Iniciar projeto</button>
+            </div>
+          </form>
         </div>
       </div>
     </div>
-    <!-- MODAL DE AJUDA PARA A LISTA DE ATENDIMENTO -->
-    <div class="modal right fade" id="Help" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+  <?php } ?>
+
+  <!-- MODAL DE AJUDA PARA A LISTA DE ATENDIMENTO -->
+  <div class="modal right fade" id="Help" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
       <div class="modal-dialog" role="document">
         <div class="modal-content">
 
@@ -826,6 +1039,8 @@ while ($exibe = $show_projeto->fetch(PDO::FETCH_ASSOC)) {
   <!--    <script src="../js/bootstrap.bundle.min.js"></script>    -->
   <script src="../js/bootstrap.bundle.min.js"></script>
   <script src="../js/bootstrap-select.min.js"></script>
+  <script src="../js/bootstrap-datetimepicker.js"></script>
+  <script src="js/projeto_list.js"></script>
   <?php if (isset($mensagem)) { ?>
     <script>
       window.setTimeout(function() {
@@ -842,6 +1057,106 @@ while ($exibe = $show_projeto->fetch(PDO::FETCH_ASSOC)) {
     $('.popover-dismiss').popover({
       trigger: 'focus'
     })
+  </script>
+  <script>
+    $(document).ready(function() {
+      $('.selectpicker').selectpicker();
+      $('.modal-projeto-loading').hide();
+      $('.form_datetime').datetimepicker({
+        format: "yyyy-mm-dd hh:ii"
+      });
+
+      $('#modal_projeto_cliente').on('change', function() {
+        var cliente = $(this).val();
+        var $solicitante = $('#modal_projeto_solicitante');
+        var $local = $('#modal_projeto_local');
+
+        $solicitante.html('<option value="">Escolha o solicitante</option>');
+        $local.html('<option value="">Escolha o local</option>');
+
+        if (!cliente) {
+          return;
+        }
+
+        $('.modal-projeto-loading-solicitante').show();
+        $('.modal-projeto-loading-local').show();
+
+        $.getJSON('busca_solicitantes.php?search=', {
+          cliente: cliente,
+          ajax: 'true'
+        }, function(data) {
+          var options = '<option value="">Escolha o solicitante</option>';
+          for (var i = 0; i < data.length; i++) {
+            options += '<option value="' + data[i].id + '">' + data[i].nome + '</option>';
+          }
+          $solicitante.html(options);
+        }).always(function() {
+          $('.modal-projeto-loading-solicitante').hide();
+        });
+
+        $.getJSON('busca_locais.php?search=', {
+          cliente: cliente,
+          ajax: 'true'
+        }, function(data) {
+          var options = '<option value="">Escolha o local</option>';
+          for (var i = 0; i < data.length; i++) {
+            options += '<option value="' + data[i].id + '">' + data[i].nome + '</option>';
+          }
+          $local.html(options);
+        }).always(function() {
+          $('.modal-projeto-loading-local').hide();
+        });
+      });
+
+      $('#modal_projeto_categoria').on('change', function() {
+        var categoria = $(this).val();
+        var $subcategoria = $('#modal_projeto_subcategoria');
+        $('#modal_projeto_item').html('<option value="">Escolha o item</option>');
+        $subcategoria.html('<option value="">Escolha a Subcategoria</option>');
+
+        if (!categoria) {
+          return;
+        }
+
+        $('.modal-projeto-loading-subcategoria').show();
+        $.getJSON('busca_subcategorias.php?search=', {
+          categoria: categoria,
+          ajax: 'true'
+        }, function(data) {
+          var options = '<option value="">Escolha a Subcategoria</option>';
+          for (var i = 0; i < data.length; i++) {
+            options += '<option value="' + data[i].id + '">' + data[i].nome + '</option>';
+          }
+          $subcategoria.html(options);
+        }).always(function() {
+          $('.modal-projeto-loading-subcategoria').hide();
+        });
+      });
+
+      $('#modal_projeto_subcategoria').on('change', function() {
+        var subcategoria = $(this).val();
+        var $item = $('#modal_projeto_item');
+        $item.html('<option value="">Escolha o item</option>');
+
+        if (!subcategoria) {
+          return;
+        }
+
+        $('.modal-projeto-loading-item').show();
+        $.getJSON('busca_itens.php?search=', {
+          subcategoria: subcategoria,
+          ajax: 'true'
+        }, function(data) {
+          var options = '<option value="">Escolha o item</option>';
+          for (var i = 0; i < data.length; i++) {
+            options += '<option value="' + data[i].id + '">' + data[i].nome + '</option>';
+          }
+          $item.html(options);
+        }).always(function() {
+          $('.modal-projeto-loading-item').hide();
+        });
+      });
+    });
   </script>
 </body>
 

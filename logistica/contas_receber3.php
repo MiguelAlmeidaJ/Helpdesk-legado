@@ -877,7 +877,7 @@ foreach ($contas_modal_detalhe as $item) {
                                 <th class="text-center" style="width: 100px;"><?= sortLink('Dt. Ultimo Recebimento', 'valor_recebido', $orderBy, $orderDir) ?></th>
                                 <th><?= sortLink('A Receber', 'saldo', $orderBy, $orderDir) ?></th>
                                 <th class="text-center"><?= sortLink('Status', 'status_id', $orderBy, $orderDir) ?></th>
-                                <th class="text-center" style="width: 160px;">Açães</th>
+                                <th class="text-center" style="width: 160px;">Ações</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -985,7 +985,7 @@ foreach ($contas_modal_detalhe as $item) {
                                     <th class="text-center" style="width: 150px">Valor Recebido</th>
                                     <th class="text-center" style="width: 180px">Agência / Banco</th>
                                     <th>Observação</th>
-                                    <th class="text-center" style="width: 150px">Açães</th>
+                                    <th class="text-center" style="width: 150px">Ações</th>
                                 </tr>
                             </thead>
                             <tbody id="lista_recebimentos_body"></tbody>

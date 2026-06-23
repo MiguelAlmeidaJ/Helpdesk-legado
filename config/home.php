@@ -20,6 +20,18 @@ if ($action == "alterar_senha") {include_once("../all/update_senha.php");}
 
 if ($usar_token=="true") {
   if($action){
+    $configActionPermissions = [
+      'edt_tempo_alerta' => (int)$m4_01,
+      'edt_sla' => (int)$m4_02,
+    ];
+
+    if (isset($configActionPermissions[$action]) && $configActionPermissions[$action] !== 3) {
+      $mensagem = "<i class=\"fas fa-exclamation-triangle\"></i> Você não tem permissão para executar esta ação.";
+      $mensagem_cor = "alert-danger";
+      $log = "false";
+      $action = '';
+    }
+
     if ($action == "alterar_senha") {include_once("../all/update_senha.php");}
     
     if ($action == "edt_tempo_alerta") {

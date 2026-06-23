@@ -64,59 +64,40 @@ $tiposChave = $pdo->query($sqlBuscaTiposChave)->fetchAll(PDO::FETCH_ASSOC);
     <link rel="icon" href="../img/favicon.ico" />
     <link rel="stylesheet" href="../css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
-    <style>
-        body {
-            zoom: 0.9;
-            overflow-x: hidden;
-            width: 100%;
-            background-color: #f4f6f9;
-            font-size: 0.9rem;
-        }
-
-        .card-body {
-            overflow-y: auto;
-            height: 84vh;
-            width: 100%;
-            color: #333;
-        }
-
-        .esconde-secao {
-            display: none;
-        }
-    </style>
+    <link rel="stylesheet" href="css/rd_modern.css">
 </head>
 
 <body>
     <?php include("../all/sidebar.php"); ?>
-    <div class="container-fluid mt-2">
-        <div class="card">
-            <div class="card-header py-2 d-flex justify-content-between align-items-center">
-                <h4 class="m-0">Minhas Despesas</h4>
-                <div class="col-md-8 text-right">
-                    <form method="GET" class="form-inline justify-content-end">
-                        <label class="mr-2 small">De:</label>
-                        <input type="date" name="data_inicio" class="form-control form-control-sm mr-2" value="<?= htmlspecialchars($dataInicio) ?>">
-                        <label class="mr-2 small">Até:</label>
-                        <input type="date" name="data_fim" class="form-control form-control-sm mr-2" value="<?= htmlspecialchars($dataFim) ?>">
-                        <button type="submit" class="btn btn-sm btn-primary mr-2">Filtrar</button>
-                        <a href="rd.php" class="btn btn-sm btn-secondary">Limpar</a>
+    <div class="container-fluid rd-page">
+        <div class="card rd-shell-card">
+            <div class="card-header rd-toolbar">
+                <h4 class="rd-title"><i class="fas fa-receipt"></i> Minhas Despesas</h4>
+                <div class="rd-filter-area">
+                    <form method="GET" class="form-inline rd-filter-form">
+                        <label class="small">De:</label>
+                        <input type="date" name="data_inicio" class="form-control form-control-sm" value="<?= htmlspecialchars($dataInicio) ?>">
+                        <label class="small">Até:</label>
+                        <input type="date" name="data_fim" class="form-control form-control-sm" value="<?= htmlspecialchars($dataFim) ?>">
+                        <button type="submit" class="btn btn-sm btn-primary"><i class="fas fa-filter"></i> Filtrar</button>
+                        <a href="rd.php" class="btn btn-sm btn-secondary"><i class="fas fa-eraser"></i> Limpar</a>
                     </form>
                 </div>
-                <button type="button" class="btn btn-success btn-sm" data-toggle="modal" data-target="#modaladd">
+                <button type="button" class="btn btn-success btn-sm rd-action-btn rd-action-success" data-toggle="modal" data-target="#modaladd">
                     <i class="fas fa-plus"></i> Nova Despesa
                 </button>
             </div>
-            <div class="card-body">
+            <div class="card-body rd-table-container">
                 <?php if (isset($_SESSION['alert_message'])) {
                     $alert = $_SESSION['alert_message'];
                     echo "<div class='alert alert-{$alert['type']}'>{$alert['text']}</div>";
                     unset($_SESSION['alert_message']);
                 } ?>
                 <?php if (empty($despesas)) : ?>
-                    <div class="alert alert-info">Nenhuma despesa encontrada para o período selecionado.</div>
+                    <div class="alert alert-info rd-empty-state">Nenhuma despesa encontrada para o período selecionado.</div>
                 <?php else : ?>
-                    <div class="table-responsive">
-                        <table class="table table-bordered table-striped" width="100%">
+                    <div class="table-responsive rd-table-wrap">
+                        <table class="table table-bordered table-striped rd-table" width="100%">
                             <thead class="thead-light">
                                 <tr>
                                     <th>ID</th>
@@ -127,12 +108,12 @@ $tiposChave = $pdo->query($sqlBuscaTiposChave)->fetchAll(PDO::FETCH_ASSOC);
                                     <th>Anexos</th>
                                     <th>Data</th>
                                     <th>Status</th>
-                                    <th style="width: 140px">Açães</th>
+                                    <th style="width: 140px">Ações</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <?php
-                                // A função agora só cuida das observaçães (remarks)
+                                // A função agora só cuida das observAções (remarks)
                                 function exibirDescricao($remarks)
                                 {
                                     if (!empty($remarks)) {
@@ -220,7 +201,7 @@ $tiposChave = $pdo->query($sqlBuscaTiposChave)->fetchAll(PDO::FETCH_ASSOC);
     </div>
 
     <!-- Modal Adicionar Despesa -->
-    <div class="modal fade" id="modaladd" tabindex="-1">
+    <div class="modal fade rd-modal" id="modaladd" tabindex="-1">
         <div class="modal-dialog" role="document">
             <form class="modal-content" action="addDespesa.php" method="POST">
                 <div class="modal-header">
@@ -291,7 +272,7 @@ $tiposChave = $pdo->query($sqlBuscaTiposChave)->fetchAll(PDO::FETCH_ASSOC);
         </div>
     </div>
 
-    <div class="modal fade" id="editModal" tabindex="-1">
+    <div class="modal fade rd-modal" id="editModal" tabindex="-1">
         <div class="modal-dialog" role="document">
             <form class="modal-content" action="editarRD.php" method="POST">
                 <div class="modal-header">
@@ -367,7 +348,7 @@ $tiposChave = $pdo->query($sqlBuscaTiposChave)->fetchAll(PDO::FETCH_ASSOC);
         </div>
     </div>
 
-    <div class="modal fade" id="excluirModal" tabindex="-1">
+    <div class="modal fade rd-modal" id="excluirModal" tabindex="-1">
         <div class="modal-dialog modal-sm">
             <div class="modal-content">
                 <form action="excluirRD.php" method="POST">
@@ -390,7 +371,7 @@ $tiposChave = $pdo->query($sqlBuscaTiposChave)->fetchAll(PDO::FETCH_ASSOC);
     </div>
 
     <!-- Modal para duplicar despesa -->
-    <div class="modal fade" id="duplicarModal" tabindex="-1">
+    <div class="modal fade rd-modal" id="duplicarModal" tabindex="-1">
         <div class="modal-dialog" role="document">
             <form class="modal-content" action="addDespesa.php" method="POST">
                 <div class="modal-header">

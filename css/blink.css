@@ -1,73 +1,224 @@
-/* 
-correto:
-blinkkkk = #15fe00 = green
-blink = #f9bf00 = yellow
-blinkkk = #e60000 = red
-blinkk = #000000 = black
- */
+/*
+  Sinos de SLA.
+  As classes antigas foram preservadas para manter a regra de negocio:
+  blinkkkk = #15fe00 = verde
+  blink    = #f9bf00 = amarelo
+  blinkkk  = #e60000 = vermelho
+  blinkk   = #000000 = preto
+*/
 
-
-.blink {
-    animation: blink 1.2s infinite;
-    margin :0 auto;
-}
-@keyframes blink {
-    0% {
-        color: #ffffff;
-    }
-    50% {
-        color: #f9bf00;
-    }
-    100% {
-        color: #ffffff;
-    }
-}
-
-
-.blinkk {
-    animation: blinkk 1.2s infinite;
-    margin :0 auto;
-}
-@keyframes blinkk {
-    0% {
-        color: #ffffff;
-    }
-    50% {
-        color: #000000;
-    }
-    100% {
-        color: #ffffff;
-    }
+.sla-bell-alert {
+  --sla-bell-color: #f9bf00;
+  --sla-bell-soft: rgba(249, 191, 0, .12);
+  --sla-bell-shadow: rgba(249, 191, 0, .28);
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  margin: 0 auto;
+  border-radius: 10px;
+  color: var(--sla-bell-color);
+  vertical-align: middle;
 }
 
-.blinkkk {
-    animation: blinkkk 1.2s infinite;
-    margin :0 auto;
-}
-@keyframes blinkkk {
-    0% {
-        color: #ffffff;
-    }
-    50% {
-        color: #e60000;
-    }
-    100% {
-        color: #ffffff;
-    }
+.sla-bell-alert::before {
+  content: "";
+  position: absolute;
+  inset: 3px;
+  border-radius: inherit;
+  background: var(--sla-bell-soft);
+  opacity: .95;
+  transform: scale(.92);
+  transition: transform .18s ease, opacity .18s ease;
 }
 
-.blinkkkk {
-    animation: blinkkkk 1.2s infinite;
-    margin :0 auto;
+.sla-bell-alert::after {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  border: 1px solid var(--sla-bell-color);
+  border-radius: 12px;
+  opacity: 0;
+  transform: scale(.86);
+  animation: slaBellPulse 2.4s ease-out infinite;
+  pointer-events: none;
 }
-@keyframes blinkkkk {
-    0% {
-        color: #ffffff;
-    }
-    50% {
-        color: #15fe00;
-    }
-    100% {
-        color: #ffffff;
-    }
+
+.sla-bell-icon {
+  position: relative;
+  z-index: 1;
+  width: 22px;
+  height: 22px;
+  fill: var(--sla-bell-color);
+  stroke: currentColor;
+  stroke-width: 2.15;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 3px 5px var(--sla-bell-shadow));
+  transform-origin: 50% 12%;
+  animation: slaBellRing 2.4s ease-in-out infinite;
+}
+
+.sla-bell-mark {
+  position: absolute;
+  z-index: 2;
+  top: 2px;
+  right: 1px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 15px;
+  height: 15px;
+  border: 2px solid #fff;
+  border-radius: 999px;
+  background: var(--sla-bell-color);
+  color: #fff;
+  font: 800 10px/1 "Segoe UI", Arial, sans-serif;
+  box-shadow: 0 2px 6px var(--sla-bell-shadow);
+}
+
+.sla-bell-alert:hover::before {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.sla-bell-alert.blink {
+  --sla-bell-color: #f9bf00;
+  --sla-bell-soft: rgba(249, 191, 0, .13);
+  --sla-bell-shadow: rgba(249, 191, 0, .30);
+}
+
+.sla-bell-alert.blinkk {
+  --sla-bell-color: #000000;
+  --sla-bell-soft: rgba(15, 23, 42, .08);
+  --sla-bell-shadow: rgba(15, 23, 42, .24);
+}
+
+.sla-bell-alert.blinkkk {
+  --sla-bell-color: #e60000;
+  --sla-bell-soft: rgba(230, 0, 0, .10);
+  --sla-bell-shadow: rgba(230, 0, 0, .28);
+}
+
+.sla-bell-alert.blinkkkk {
+  --sla-bell-color: #15fe00;
+  --sla-bell-soft: rgba(21, 254, 0, .11);
+  --sla-bell-shadow: rgba(21, 254, 0, .26);
+}
+
+/* Fallback para telas antigas que ainda imprimem o FontAwesome direto. */
+.fa-bell.blink,
+.fa-bell.blinkk,
+.fa-bell.blinkkk,
+.fa-bell.blinkkkk {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  margin: 0 auto;
+  border-radius: 10px;
+  background: rgba(249, 191, 0, .13);
+  --sla-bell-fallback-color: #f9bf00;
+  color: #f9bf00;
+  font-size: 20px !important;
+  animation: slaBellRing 2.4s ease-in-out infinite;
+}
+
+.fa-bell.blink::after,
+.fa-bell.blinkk::after,
+.fa-bell.blinkkk::after,
+.fa-bell.blinkkkk::after {
+  content: "!";
+  position: absolute;
+  top: 1px;
+  right: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  border: 2px solid #fff;
+  border-radius: 999px;
+  background: var(--sla-bell-fallback-color);
+  color: #fff;
+  font: 800 9px/1 "Segoe UI", Arial, sans-serif;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, .18);
+}
+
+.fa-bell.blinkk {
+  background: rgba(15, 23, 42, .08);
+  --sla-bell-fallback-color: #000000;
+  color: #000000;
+}
+
+.fa-bell.blinkkk {
+  background: rgba(230, 0, 0, .10);
+  --sla-bell-fallback-color: #e60000;
+  color: #e60000;
+}
+
+.fa-bell.blinkkkk {
+  background: rgba(21, 254, 0, .11);
+  --sla-bell-fallback-color: #15fe00;
+  color: #15fe00;
+}
+
+@keyframes slaBellRing {
+  0%,
+  72%,
+  100% {
+    transform: rotate(0deg);
+  }
+
+  8% {
+    transform: rotate(-9deg);
+  }
+
+  16% {
+    transform: rotate(8deg);
+  }
+
+  24% {
+    transform: rotate(-5deg);
+  }
+
+  32% {
+    transform: rotate(3deg);
+  }
+
+  42% {
+    transform: rotate(0deg);
+  }
+}
+
+@keyframes slaBellPulse {
+  0% {
+    opacity: .35;
+    transform: scale(.84);
+  }
+
+  58% {
+    opacity: 0;
+    transform: scale(1.24);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(1.24);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sla-bell-alert::after,
+  .sla-bell-icon,
+  .fa-bell.blink,
+  .fa-bell.blinkk,
+  .fa-bell.blinkkk,
+  .fa-bell.blinkkkk {
+    animation: none;
+  }
 }

@@ -1,0 +1,3342 @@
+{
+    "created_at": "2026-06-01T14:43:28+02:00",
+    "database": "nivel3",
+    "tables": {
+        "clientes": [
+            {
+                "id": 14,
+                "changes": {
+                    "clt_nomer": {
+                        "before": "MINI CASH &ndash; Atacado &amp; Varejo de Industrializados LTDA",
+                        "after": "MINI CASH – Atacado & Varejo de Industrializados LTDA"
+                    },
+                    "clt_end": {
+                        "before": "AV DR. JOSE AVELINO DE FREITAS 125 &ndash; ILHA DO LAZARETO",
+                        "after": "AV DR. JOSE AVELINO DE FREITAS 125 – ILHA DO LAZARETO"
+                    },
+                    "clt_city": {
+                        "before": "Al&eacute;m Para&iacute;ba",
+                        "after": "Além Paraíba"
+                    }
+                }
+            },
+            {
+                "id": 15,
+                "changes": {
+                    "clt_nomer": {
+                        "before": "Pactual Comercio de Descart&aacute;veis e Limpeza LTDA",
+                        "after": "Pactual Comercio de Descartáveis e Limpeza LTDA"
+                    },
+                    "clt_end": {
+                        "before": "Estrada da G&aacute;vea, 00696 &ndash; S&atilde;o Conrado",
+                        "after": "Estrada da Gávea, 00696 – São Conrado"
+                    }
+                }
+            },
+            {
+                "id": 18,
+                "changes": {
+                    "clt_nomer": {
+                        "before": "Funda&ccedil;&atilde;o Educacional Al&eacute;m Para&iacute;ba ",
+                        "after": "Fundação Educacional Além Paraíba "
+                    },
+                    "clt_end": {
+                        "before": "Avenida Augusto Per&aacute;cio n50",
+                        "after": "Avenida Augusto Perácio n50"
+                    },
+                    "clt_city": {
+                        "before": "Al&eacute;m Para&iacute;ba",
+                        "after": "Além Paraíba"
+                    }
+                }
+            },
+            {
+                "id": 24,
+                "changes": {
+                    "clt_nomer": {
+                        "before": "Via&ccedil;&atilde;o Treze de Junho LTDA",
+                        "after": "Viação Treze de Junho LTDA"
+                    },
+                    "clt_city": {
+                        "before": "Petr&oacute;polis ",
+                        "after": "Petrópolis "
+                    }
+                }
+            },
+            {
+                "id": 26,
+                "changes": {
+                    "clt_end": {
+                        "before": "R. Gabriel Martins Ferreira, 167, S&atilde;o Jos&eacute;",
+                        "after": "R. Gabriel Martins Ferreira, 167, São José"
+                    },
+                    "clt_city": {
+                        "before": "Al&eacute;m Para&iacute;ba",
+                        "after": "Além Paraíba"
+                    }
+                }
+            },
+            {
+                "id": 30,
+                "changes": {
+                    "clt_end": {
+                        "before": "Rua Bar&atilde;o de Catas Altas, 386 - Centro",
+                        "after": "Rua Barão de Catas Altas, 386 - Centro"
+                    }
+                }
+            },
+            {
+                "id": 33,
+                "changes": {
+                    "clt_nomer": {
+                        "before": "RM Com&eacute;rcio de m&aacute;quinas de Jamapar&aacute; Ltda",
+                        "after": "RM Comércio de máquinas de Jamapará Ltda"
+                    },
+                    "clt_end": {
+                        "before": "RUA PAULINO FERNANDES DA SILVA, 155, JAMAPAR&Aacute;",
+                        "after": "RUA PAULINO FERNANDES DA SILVA, 155, JAMAPARÁ"
+                    }
+                }
+            },
+            {
+                "id": 42,
+                "changes": {
+                    "clt_end": {
+                        "before": "Avenida Governador Valares, 290 - Manoel Hon&oacute;rio ",
+                        "after": "Avenida Governador Valares, 290 - Manoel Honório "
+                    }
+                }
+            },
+            {
+                "id": 46,
+                "changes": {
+                    "clt_city": {
+                        "before": "MURIA&Eacute;",
+                        "after": "MURIAÉ"
+                    }
+                }
+            },
+            {
+                "id": 50,
+                "changes": {
+                    "clt_end": {
+                        "before": "Rua Dezesseis. 200- Area D1-B M&oacute;dulo 1, Codim - Xer&eacute;m",
+                        "after": "Rua Dezesseis. 200- Area D1-B Módulo 1, Codim - Xerém"
+                    }
+                }
+            },
+            {
+                "id": 57,
+                "changes": {
+                    "clt_end": {
+                        "before": "Pra&ccedil;a Presidente Get&uacute;lio Vargas, 148",
+                        "after": "Praça Presidente Getúlio Vargas, 148"
+                    }
+                }
+            },
+            {
+                "id": 58,
+                "changes": {
+                    "clt_nomer": {
+                        "before": "SS Solu&ccedil;&otilde;es",
+                        "after": "SS Soluções"
+                    },
+                    "clt_nomef": {
+                        "before": "SS Solu&ccedil;&otilde;es",
+                        "after": "SS Soluções"
+                    }
+                }
+            },
+            {
+                "id": 61,
+                "changes": {
+                    "clt_end": {
+                        "before": "Rua Wilder Sebasti&atilde;o de Paula, n} 53, Sala 101 - Centro",
+                        "after": "Rua Wilder Sebastião de Paula, n} 53, Sala 101 - Centro"
+                    }
+                }
+            },
+            {
+                "id": 64,
+                "changes": {
+                    "clt_end": {
+                        "before": "Avenida dos Andradas, n&ordm; 547 -  sala 607 - Centro",
+                        "after": "Avenida dos Andradas, nº 547 -  sala 607 - Centro"
+                    }
+                }
+            },
+            {
+                "id": 68,
+                "changes": {
+                    "clt_end": {
+                        "before": "Rua Martins Barbosa n&ordm; 355 - Benfica",
+                        "after": "Rua Martins Barbosa nº 355 - Benfica"
+                    }
+                }
+            },
+            {
+                "id": 71,
+                "changes": {
+                    "clt_nomer": {
+                        "before": "PHARMES - Farmacia de Manipula&ccedil;&atilde;o",
+                        "after": "PHARMES - Farmacia de Manipulação"
+                    }
+                }
+            },
+            {
+                "id": 72,
+                "changes": {
+                    "clt_nomer": {
+                        "before": "DIB 2011 COM&Eacute;RCIO DE ALIMENTOS LTDA",
+                        "after": "DIB 2011 COMÉRCIO DE ALIMENTOS LTDA"
+                    },
+                    "clt_end": {
+                        "before": "Hyvio Naliato, 147, &aacute;rea 2 ",
+                        "after": "Hyvio Naliato, 147, área 2 "
+                    },
+                    "clt_city": {
+                        "before": "Petr&oacute;polis",
+                        "after": "Petrópolis"
+                    }
+                }
+            },
+            {
+                "id": 82,
+                "changes": {
+                    "clt_end": {
+                        "before": "ESTRADA  RIO X BAHIA, SN - AGUA QUENTE, Teres&oacute;polis",
+                        "after": "ESTRADA  RIO X BAHIA, SN - AGUA QUENTE, Teresópolis"
+                    },
+                    "clt_city": {
+                        "before": " Teres&oacute;polis",
+                        "after": " Teresópolis"
+                    }
+                }
+            },
+            {
+                "id": 83,
+                "changes": {
+                    "clt_city": {
+                        "before": "Muria&eacute;",
+                        "after": "Muriaé"
+                    }
+                }
+            },
+            {
+                "id": 84,
+                "changes": {
+                    "clt_city": {
+                        "before": "Teres&oacute;polis ",
+                        "after": "Teresópolis "
+                    }
+                }
+            },
+            {
+                "id": 85,
+                "changes": {
+                    "clt_end": {
+                        "before": "Avenida Getulio Vargas, 203 Sao Felix- Santo Ant&ocirc;nio de P&aacute;dua ",
+                        "after": "Avenida Getulio Vargas, 203 Sao Felix- Santo Antônio de Pádua "
+                    },
+                    "clt_city": {
+                        "before": "- Santo Ant&ocirc;nio de P&aacute;dua cep 28470-00",
+                        "after": "- Santo Antônio de Pádua cep 28470-00"
+                    }
+                }
+            },
+            {
+                "id": 89,
+                "changes": {
+                    "clt_end": {
+                        "before": "BR-393, KM 104 - 10600 - Jamapar&aacute;, Sapucaia - RJ, Brasil",
+                        "after": "BR-393, KM 104 - 10600 - Jamapará, Sapucaia - RJ, Brasil"
+                    }
+                }
+            },
+            {
+                "id": 94,
+                "changes": {
+                    "clt_nomer": {
+                        "before": "Prefeitura de Marip&aacute;",
+                        "after": "Prefeitura de Maripá"
+                    },
+                    "clt_end": {
+                        "before": "R. Lu&iacute;s de Cam&otilde;es",
+                        "after": "R. Luís de Camões"
+                    },
+                    "clt_city": {
+                        "before": "Marip&aacute;",
+                        "after": "Maripá"
+                    }
+                }
+            },
+            {
+                "id": 95,
+                "changes": {
+                    "clt_city": {
+                        "before": "Valen&ccedil;a",
+                        "after": "Valença"
+                    }
+                }
+            },
+            {
+                "id": 98,
+                "changes": {
+                    "clt_city": {
+                        "before": "Al&eacute;m Para&iacute;ba ",
+                        "after": "Além Paraíba "
+                    }
+                }
+            },
+            {
+                "id": 99,
+                "changes": {
+                    "clt_city": {
+                        "before": "Al&eacute;m Para&iacute;ba ",
+                        "after": "Além Paraíba "
+                    }
+                }
+            },
+            {
+                "id": 101,
+                "changes": {
+                    "clt_city": {
+                        "before": "Al&eacute;m Para&iacute;ba ",
+                        "after": "Além Paraíba "
+                    }
+                }
+            },
+            {
+                "id": 103,
+                "changes": {
+                    "clt_city": {
+                        "before": "Al&eacute;m Para&iacute;ba ",
+                        "after": "Além Paraíba "
+                    }
+                }
+            },
+            {
+                "id": 104,
+                "changes": {
+                    "clt_city": {
+                        "before": "Al&eacute;m Para&iacute;ba ",
+                        "after": "Além Paraíba "
+                    }
+                }
+            },
+            {
+                "id": 105,
+                "changes": {
+                    "clt_city": {
+                        "before": "Petr&oacute;polis ",
+                        "after": "Petrópolis "
+                    }
+                }
+            },
+            {
+                "id": 106,
+                "changes": {
+                    "clt_city": {
+                        "before": "Al&eacute;m Para&iacute;ba ",
+                        "after": "Além Paraíba "
+                    }
+                }
+            },
+            {
+                "id": 107,
+                "changes": {
+                    "clt_city": {
+                        "before": "Al&eacute;m Para&iacute;ba ",
+                        "after": "Além Paraíba "
+                    }
+                }
+            },
+            {
+                "id": 109,
+                "changes": {
+                    "clt_city": {
+                        "before": "Al&eacute;m Para&iacute;ba ",
+                        "after": "Além Paraíba "
+                    }
+                }
+            },
+            {
+                "id": 110,
+                "changes": {
+                    "clt_city": {
+                        "before": "Al&eacute;m Para&iacute;ba ",
+                        "after": "Além Paraíba "
+                    }
+                }
+            },
+            {
+                "id": 112,
+                "changes": {
+                    "clt_city": {
+                        "before": "Al&eacute;m Para&iacute;ba",
+                        "after": "Além Paraíba"
+                    }
+                }
+            },
+            {
+                "id": 113,
+                "changes": {
+                    "clt_city": {
+                        "before": "Al&eacute;m Para&iacute;ba ",
+                        "after": "Além Paraíba "
+                    }
+                }
+            },
+            {
+                "id": 114,
+                "changes": {
+                    "clt_city": {
+                        "before": "Al&eacute;m Para&iacute;ba ",
+                        "after": "Além Paraíba "
+                    }
+                }
+            },
+            {
+                "id": 115,
+                "changes": {
+                    "clt_city": {
+                        "before": "Al&eacute;m Para&iacute;ba ",
+                        "after": "Além Paraíba "
+                    }
+                }
+            },
+            {
+                "id": 116,
+                "changes": {
+                    "clt_city": {
+                        "before": "Al&eacute;m Para&iacute;ba ",
+                        "after": "Além Paraíba "
+                    }
+                }
+            },
+            {
+                "id": 117,
+                "changes": {
+                    "clt_city": {
+                        "before": "Al&eacute;m Para&iacute;ba ",
+                        "after": "Além Paraíba "
+                    }
+                }
+            },
+            {
+                "id": 118,
+                "changes": {
+                    "clt_city": {
+                        "before": "Al&eacute;m Para&iacute;ba ",
+                        "after": "Além Paraíba "
+                    }
+                }
+            },
+            {
+                "id": 119,
+                "changes": {
+                    "clt_city": {
+                        "before": "Al&eacute;m Para&iacute;ba ",
+                        "after": "Além Paraíba "
+                    }
+                }
+            },
+            {
+                "id": 120,
+                "changes": {
+                    "clt_nomer": {
+                        "before": "Al&eacute;m do Marmore",
+                        "after": "Além do Marmore"
+                    },
+                    "clt_nomef": {
+                        "before": "Al&eacute;m do Marmore",
+                        "after": "Além do Marmore"
+                    },
+                    "clt_city": {
+                        "before": "Al&eacute;m Para&iacute;ba ",
+                        "after": "Além Paraíba "
+                    }
+                }
+            },
+            {
+                "id": 121,
+                "changes": {
+                    "clt_city": {
+                        "before": "Al&eacute;m Para&iacute;ba ",
+                        "after": "Além Paraíba "
+                    }
+                }
+            },
+            {
+                "id": 122,
+                "changes": {
+                    "clt_city": {
+                        "before": "Al&eacute;m Para&iacute;ba ",
+                        "after": "Além Paraíba "
+                    }
+                }
+            },
+            {
+                "id": 123,
+                "changes": {
+                    "clt_city": {
+                        "before": "Al&eacute;m Para&iacute;ba ",
+                        "after": "Além Paraíba "
+                    }
+                }
+            },
+            {
+                "id": 124,
+                "changes": {
+                    "clt_city": {
+                        "before": "Al&eacute;m Para&iacute;ba ",
+                        "after": "Além Paraíba "
+                    }
+                }
+            },
+            {
+                "id": 125,
+                "changes": {
+                    "clt_city": {
+                        "before": "Al&eacute;m Para&iacute;ba ",
+                        "after": "Além Paraíba "
+                    }
+                }
+            },
+            {
+                "id": 126,
+                "changes": {
+                    "clt_city": {
+                        "before": "Al&eacute;m Para&iacute;ba ",
+                        "after": "Além Paraíba "
+                    }
+                }
+            },
+            {
+                "id": 127,
+                "changes": {
+                    "clt_city": {
+                        "before": "Al&eacute;m Para&iacute;ba ",
+                        "after": "Além Paraíba "
+                    }
+                }
+            },
+            {
+                "id": 128,
+                "changes": {
+                    "clt_city": {
+                        "before": "Al&eacute;m Para&iacute;ba ",
+                        "after": "Além Paraíba "
+                    }
+                }
+            },
+            {
+                "id": 129,
+                "changes": {
+                    "clt_city": {
+                        "before": "Al&eacute;m Para&iacute;ba ",
+                        "after": "Além Paraíba "
+                    }
+                }
+            },
+            {
+                "id": 130,
+                "changes": {
+                    "clt_city": {
+                        "before": "Al&eacute;m Para&iacute;ba ",
+                        "after": "Além Paraíba "
+                    }
+                }
+            },
+            {
+                "id": 131,
+                "changes": {
+                    "clt_city": {
+                        "before": "Al&eacute;m Para&iacute;ba ",
+                        "after": "Além Paraíba "
+                    }
+                }
+            },
+            {
+                "id": 132,
+                "changes": {
+                    "clt_city": {
+                        "before": "Al&eacute;m Para&iacute;ba ",
+                        "after": "Além Paraíba "
+                    }
+                }
+            },
+            {
+                "id": 133,
+                "changes": {
+                    "clt_city": {
+                        "before": "Al&eacute;m Para&iacute;ba ",
+                        "after": "Além Paraíba "
+                    }
+                }
+            },
+            {
+                "id": 134,
+                "changes": {
+                    "clt_nomer": {
+                        "before": "Busdoor: Ampla\/ Bairro da Sa&uacute;de ",
+                        "after": "Busdoor: Ampla\/ Bairro da Saúde "
+                    },
+                    "clt_nomef": {
+                        "before": "Busdoor: Ampla\/ Bairro da Sa&uacute;de ",
+                        "after": "Busdoor: Ampla\/ Bairro da Saúde "
+                    },
+                    "clt_city": {
+                        "before": "Al&eacute;m Para&iacute;ba ",
+                        "after": "Além Paraíba "
+                    }
+                }
+            },
+            {
+                "id": 135,
+                "changes": {
+                    "clt_city": {
+                        "before": "Al&eacute;m Para&iacute;ba ",
+                        "after": "Além Paraíba "
+                    }
+                }
+            },
+            {
+                "id": 136,
+                "changes": {
+                    "clt_city": {
+                        "before": "Al&eacute;m Para&iacute;ba ",
+                        "after": "Além Paraíba "
+                    }
+                }
+            },
+            {
+                "id": 137,
+                "changes": {
+                    "clt_nomer": {
+                        "before": "Al&eacute;m do Marmore ",
+                        "after": "Além do Marmore "
+                    },
+                    "clt_nomef": {
+                        "before": "Al&eacute;m do Marmore ",
+                        "after": "Além do Marmore "
+                    },
+                    "clt_city": {
+                        "before": "Al&eacute;m Para&iacute;ba ",
+                        "after": "Além Paraíba "
+                    }
+                }
+            },
+            {
+                "id": 138,
+                "changes": {
+                    "clt_city": {
+                        "before": "Al&eacute;m Para&iacute;ba ",
+                        "after": "Além Paraíba "
+                    }
+                }
+            },
+            {
+                "id": 139,
+                "changes": {
+                    "clt_city": {
+                        "before": "Al&eacute;m Para&iacute;ba ",
+                        "after": "Além Paraíba "
+                    }
+                }
+            },
+            {
+                "id": 140,
+                "changes": {
+                    "clt_city": {
+                        "before": "Al&eacute;m Para&iacute;ba ",
+                        "after": "Além Paraíba "
+                    }
+                }
+            },
+            {
+                "id": 142,
+                "changes": {
+                    "clt_city": {
+                        "before": "Al&eacute;m Para&iacute;ba ",
+                        "after": "Além Paraíba "
+                    }
+                }
+            },
+            {
+                "id": 143,
+                "changes": {
+                    "clt_city": {
+                        "before": "Al&eacute;m Para&iacute;ba ",
+                        "after": "Além Paraíba "
+                    }
+                }
+            },
+            {
+                "id": 144,
+                "changes": {
+                    "clt_nomer": {
+                        "before": "HP Pap&eacute;is",
+                        "after": "HP Papéis"
+                    },
+                    "clt_nomef": {
+                        "before": "HP Pap&eacute;is",
+                        "after": "HP Papéis"
+                    },
+                    "clt_city": {
+                        "before": "Al&eacute;m Para&iacute;ba ",
+                        "after": "Além Paraíba "
+                    }
+                }
+            },
+            {
+                "id": 145,
+                "changes": {
+                    "clt_city": {
+                        "before": "Al&eacute;m Para&iacute;ba ",
+                        "after": "Além Paraíba "
+                    }
+                }
+            },
+            {
+                "id": 146,
+                "changes": {
+                    "clt_city": {
+                        "before": "Al&eacute;m Para&iacute;ba ",
+                        "after": "Além Paraíba "
+                    }
+                }
+            },
+            {
+                "id": 148,
+                "changes": {
+                    "clt_city": {
+                        "before": "Al&eacute;m Para&iacute;ba ",
+                        "after": "Além Paraíba "
+                    }
+                }
+            },
+            {
+                "id": 149,
+                "changes": {
+                    "clt_end": {
+                        "before": "R. Rab&ecirc;lo Horta, 23 - Centro",
+                        "after": "R. Rabêlo Horta, 23 - Centro"
+                    }
+                }
+            },
+            {
+                "id": 150,
+                "changes": {
+                    "clt_city": {
+                        "before": "Al&eacute;m Para&iacute;ba ",
+                        "after": "Além Paraíba "
+                    }
+                }
+            },
+            {
+                "id": 151,
+                "changes": {
+                    "clt_nomer": {
+                        "before": "Casa do Pobre Padre  Cristov&atilde;o de Almeida Machado",
+                        "after": "Casa do Pobre Padre  Cristovão de Almeida Machado"
+                    },
+                    "clt_nomef": {
+                        "before": "Asilo S&atilde;o Vicente",
+                        "after": "Asilo São Vicente"
+                    }
+                }
+            },
+            {
+                "id": 152,
+                "changes": {
+                    "clt_end": {
+                        "before": " Estrada Cariri,100 P&aacute;tio da Esta&ccedil;&atilde;o",
+                        "after": " Estrada Cariri,100 Pátio da Estação"
+                    },
+                    "clt_city": {
+                        "before": "Tr&ecirc;s Rios",
+                        "after": "Três Rios"
+                    }
+                }
+            },
+            {
+                "id": 154,
+                "changes": {
+                    "clt_end": {
+                        "before": "Pra&ccedil;a da Bandeira",
+                        "after": "Praça da Bandeira"
+                    },
+                    "clt_city": {
+                        "before": "Al&eacute;m Para&iacute;ba",
+                        "after": "Além Paraíba"
+                    }
+                }
+            },
+            {
+                "id": 156,
+                "changes": {
+                    "clt_city": {
+                        "before": "Al&eacute;m Para&iacute;ba",
+                        "after": "Além Paraíba"
+                    }
+                }
+            },
+            {
+                "id": 160,
+                "changes": {
+                    "clt_city": {
+                        "before": "Al&eacute;m Para&iacute;ba",
+                        "after": "Além Paraíba"
+                    }
+                }
+            },
+            {
+                "id": 161,
+                "changes": {
+                    "clt_city": {
+                        "before": "Al&eacute;m Para&iacute;ba",
+                        "after": "Além Paraíba"
+                    }
+                }
+            },
+            {
+                "id": 162,
+                "changes": {
+                    "clt_nomef": {
+                        "before": "Ra&ccedil;a Agro",
+                        "after": "Raça Agro"
+                    }
+                }
+            },
+            {
+                "id": 163,
+                "changes": {
+                    "clt_city": {
+                        "before": "Al&eacute;m Para&iacute;ba ",
+                        "after": "Além Paraíba "
+                    }
+                }
+            },
+            {
+                "id": 164,
+                "changes": {
+                    "clt_city": {
+                        "before": "Al&eacute;m Para&iacute;ba ",
+                        "after": "Além Paraíba "
+                    }
+                }
+            },
+            {
+                "id": 165,
+                "changes": {
+                    "clt_city": {
+                        "before": "Al&eacute;m Para&iacute;ba ",
+                        "after": "Além Paraíba "
+                    }
+                }
+            },
+            {
+                "id": 166,
+                "changes": {
+                    "clt_city": {
+                        "before": "Al&eacute;m Para&iacute;ba ",
+                        "after": "Além Paraíba "
+                    }
+                }
+            },
+            {
+                "id": 167,
+                "changes": {
+                    "clt_city": {
+                        "before": "Al&eacute;m Para&iacute;ba ",
+                        "after": "Além Paraíba "
+                    }
+                }
+            },
+            {
+                "id": 168,
+                "changes": {
+                    "clt_city": {
+                        "before": "Al&eacute;m Para&iacute;ba ",
+                        "after": "Além Paraíba "
+                    }
+                }
+            },
+            {
+                "id": 169,
+                "changes": {
+                    "clt_city": {
+                        "before": "Al&eacute;m Para&iacute;ba ",
+                        "after": "Além Paraíba "
+                    }
+                }
+            },
+            {
+                "id": 170,
+                "changes": {
+                    "clt_city": {
+                        "before": "Al&eacute;m Para&iacute;ba ",
+                        "after": "Além Paraíba "
+                    }
+                }
+            },
+            {
+                "id": 171,
+                "changes": {
+                    "clt_city": {
+                        "before": "Al&eacute;m Para&iacute;ba ",
+                        "after": "Além Paraíba "
+                    }
+                }
+            }
+        ],
+        "pessoas": [
+            {
+                "id": 161,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "H&eacute;lder Genesio",
+                        "after": "Hélder Genesio"
+                    }
+                }
+            },
+            {
+                "id": 173,
+                "changes": {
+                    "pessoa_cargo": {
+                        "before": "N3 - Analista de seguran&ccedil;a",
+                        "after": "N3 - Analista de segurança"
+                    }
+                }
+            },
+            {
+                "id": 588,
+                "changes": {
+                    "pessoa_cargo": {
+                        "before": "Assistente de Opera&ccedil;&atilde;o",
+                        "after": "Assistente de Operação"
+                    }
+                }
+            },
+            {
+                "id": 997,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Cl&eacute;rio Rios",
+                        "after": "Clério Rios"
+                    }
+                }
+            },
+            {
+                "id": 999,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Ana Cl&aacute;udia (Centro dia) ",
+                        "after": "Ana Cláudia (Centro dia) "
+                    }
+                }
+            },
+            {
+                "id": 1000,
+                "changes": {
+                    "pessoa_cargo": {
+                        "before": "Escrit&oacute;rio (loja 2) ",
+                        "after": "Escritório (loja 2) "
+                    }
+                }
+            },
+            {
+                "id": 1007,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Fl&aacute;vio",
+                        "after": "Flávio"
+                    }
+                }
+            },
+            {
+                "id": 1013,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Vit&oacute;ria",
+                        "after": "Vitória"
+                    }
+                }
+            },
+            {
+                "id": 1017,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Br&aacute;ulio ",
+                        "after": "Bráulio "
+                    }
+                }
+            },
+            {
+                "id": 1030,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Matheus Janu&aacute;rio",
+                        "after": "Matheus Januário"
+                    }
+                }
+            },
+            {
+                "id": 1032,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Cl&eacute;rio Rios",
+                        "after": "Clério Rios"
+                    }
+                }
+            },
+            {
+                "id": 1034,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Z&eacute; Renato",
+                        "after": "Zé Renato"
+                    }
+                }
+            },
+            {
+                "id": 1037,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Cl&eacute;rio Rios",
+                        "after": "Clério Rios"
+                    }
+                }
+            },
+            {
+                "id": 1040,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Z&eacute; Renato",
+                        "after": "Zé Renato"
+                    }
+                }
+            },
+            {
+                "id": 1047,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "David Cust&oacute;dio",
+                        "after": "David Custódio"
+                    }
+                }
+            },
+            {
+                "id": 1049,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Yago Mendon&ccedil;a",
+                        "after": "Yago Mendonça"
+                    }
+                }
+            },
+            {
+                "id": 1058,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Felipe Greg&oacute;rio",
+                        "after": "Felipe Gregório"
+                    }
+                }
+            },
+            {
+                "id": 1059,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Cobran&ccedil;a Card&atilde;o",
+                        "after": "Cobrança Cardão"
+                    }
+                }
+            },
+            {
+                "id": 1061,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Thais Kl&ocirc;h",
+                        "after": "Thais Klôh"
+                    }
+                }
+            },
+            {
+                "id": 1062,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "CPD Corr&ecirc;as",
+                        "after": "CPD Corrêas"
+                    }
+                }
+            },
+            {
+                "id": 1064,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Viviane S&aacute;",
+                        "after": "Viviane Sá"
+                    }
+                }
+            },
+            {
+                "id": 1066,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Cl&eacute;rio Rios",
+                        "after": "Clério Rios"
+                    }
+                }
+            },
+            {
+                "id": 1071,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "S&eacute;rgio J&uacute;nior",
+                        "after": "Sérgio Júnior"
+                    }
+                }
+            },
+            {
+                "id": 1080,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Escrit&oacute;rio IMAAJ",
+                        "after": "Escritório IMAAJ"
+                    }
+                }
+            },
+            {
+                "id": 1083,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Andr&eacute; GRF",
+                        "after": "André GRF"
+                    }
+                }
+            },
+            {
+                "id": 1125,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "kalica cobran&ccedil;a ",
+                        "after": "kalica cobrança "
+                    }
+                }
+            },
+            {
+                "id": 1134,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Miri&atilde;",
+                        "after": "Miriã"
+                    }
+                }
+            },
+            {
+                "id": 1141,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Capela Mortu&aacute;ria ",
+                        "after": "Capela Mortuária "
+                    }
+                }
+            },
+            {
+                "id": 1144,
+                "changes": {
+                    "pessoa_cargo": {
+                        "before": "cobran&ccedil;a ",
+                        "after": "cobrança "
+                    }
+                }
+            },
+            {
+                "id": 1160,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Patr&iacute;cia ",
+                        "after": "Patrícia "
+                    }
+                }
+            },
+            {
+                "id": 1166,
+                "changes": {
+                    "pessoa_cargo": {
+                        "before": "Log&iacute;stica ",
+                        "after": "Logística "
+                    }
+                }
+            },
+            {
+                "id": 1169,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Trocas e Devolu&ccedil;&otilde;es ",
+                        "after": "Trocas e Devoluções "
+                    }
+                }
+            },
+            {
+                "id": 1170,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Laborat&oacute;rio  PAULO Ragone ",
+                        "after": "Laboratório  PAULO Ragone "
+                    }
+                }
+            },
+            {
+                "id": 1174,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Mhiry&atilde; Vieira",
+                        "after": "Mhiryã Vieira"
+                    }
+                }
+            },
+            {
+                "id": 1175,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Fabr&iacute;cio Souza",
+                        "after": "Fabrício Souza"
+                    }
+                }
+            },
+            {
+                "id": 1182,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Marco Aur&eacute;lio",
+                        "after": "Marco Aurélio"
+                    }
+                }
+            },
+            {
+                "id": 1212,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Armaz&eacute;m Boca da Ponte ",
+                        "after": "Armazém Boca da Ponte "
+                    }
+                }
+            },
+            {
+                "id": 1214,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Mary Ara&uacute;jo",
+                        "after": "Mary Araújo"
+                    }
+                }
+            },
+            {
+                "id": 1215,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Controladoria Casa Card&atilde;o",
+                        "after": "Controladoria Casa Cardão"
+                    }
+                }
+            },
+            {
+                "id": 1226,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "CPD | Castel&acirc;nea",
+                        "after": "CPD | Castelânea"
+                    }
+                }
+            },
+            {
+                "id": 1230,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Fagner Gon&ccedil;alves",
+                        "after": "Fagner Gonçalves"
+                    }
+                }
+            },
+            {
+                "id": 1232,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Ang&eacute;lica Oliveira ",
+                        "after": "Angélica Oliveira "
+                    }
+                }
+            },
+            {
+                "id": 1243,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Patr&iacute;cia Costa",
+                        "after": "Patrícia Costa"
+                    }
+                }
+            },
+            {
+                "id": 1246,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Escrit&oacute;rio Luzitana",
+                        "after": "Escritório Luzitana"
+                    }
+                }
+            },
+            {
+                "id": 1247,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Escrit&oacute;rio Luzitana",
+                        "after": "Escritório Luzitana"
+                    }
+                }
+            },
+            {
+                "id": 1253,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Ant&ocirc;nio Xavier ",
+                        "after": "Antônio Xavier "
+                    }
+                }
+            },
+            {
+                "id": 1255,
+                "changes": {
+                    "pessoa_cargo": {
+                        "before": "Compras e Manuten&ccedil;&atilde;o ",
+                        "after": "Compras e Manutenção "
+                    }
+                }
+            },
+            {
+                "id": 1275,
+                "changes": {
+                    "pessoa_cargo": {
+                        "before": "Assistente Cont&aacute;bil e Fiscal",
+                        "after": "Assistente Contábil e Fiscal"
+                    }
+                }
+            },
+            {
+                "id": 1283,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Marcelo Bonf&aacute;",
+                        "after": "Marcelo Bonfá"
+                    }
+                }
+            },
+            {
+                "id": 1288,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Vit&oacute;ria",
+                        "after": "Vitória"
+                    }
+                }
+            },
+            {
+                "id": 1292,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Faturamento GRF Distribui&ccedil;&atilde;o.",
+                        "after": "Faturamento GRF Distribuição."
+                    }
+                }
+            },
+            {
+                "id": 1300,
+                "changes": {
+                    "pessoa_cargo": {
+                        "before": "Fonoaudi&oacute;loga ",
+                        "after": "Fonoaudióloga "
+                    }
+                }
+            },
+            {
+                "id": 1343,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "J&eacute;ssica Monsores",
+                        "after": "Jéssica Monsores"
+                    }
+                }
+            },
+            {
+                "id": 1347,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Centro de Distribui&ccedil;&atilde;o &amp; Cestas B&aacute;s",
+                        "after": "Centro de Distribuição & Cestas Bás"
+                    }
+                }
+            },
+            {
+                "id": 1356,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "GRF Distribui&ccedil;&atilde;o - Don Ravello ",
+                        "after": "GRF Distribuição - Don Ravello "
+                    }
+                }
+            },
+            {
+                "id": 1364,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "J&eacute;ssica Braga ",
+                        "after": "Jéssica Braga "
+                    }
+                }
+            },
+            {
+                "id": 1365,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "N&iacute;vel3",
+                        "after": "Nível3"
+                    }
+                }
+            },
+            {
+                "id": 1366,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Cadastro casa card&atilde;o ",
+                        "after": "Cadastro casa cardão "
+                    }
+                }
+            },
+            {
+                "id": 1370,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "J&uacute;lia - venda de pe&ccedil;as",
+                        "after": "Júlia - venda de peças"
+                    }
+                }
+            },
+            {
+                "id": 1371,
+                "changes": {
+                    "pessoa_cargo": {
+                        "before": "Log&iacute;stica ",
+                        "after": "Logística "
+                    }
+                }
+            },
+            {
+                "id": 1377,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Luiz Paulo Pav&atilde;o ",
+                        "after": "Luiz Paulo Pavão "
+                    }
+                }
+            },
+            {
+                "id": 1381,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "RH GRF Distribui&ccedil;&atilde;o SP",
+                        "after": "RH GRF Distribuição SP"
+                    }
+                }
+            },
+            {
+                "id": 1382,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Paulo Rog&eacute;rio ",
+                        "after": "Paulo Rogério "
+                    }
+                }
+            },
+            {
+                "id": 1384,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Fiscal Castel&acirc;nea ",
+                        "after": "Fiscal Castelânea "
+                    }
+                }
+            },
+            {
+                "id": 1388,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Jo&atilde;o Victor Borsari",
+                        "after": "João Victor Borsari"
+                    }
+                }
+            },
+            {
+                "id": 1389,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Vict&oacute;ria Domingues- Viamar",
+                        "after": "Victória Domingues- Viamar"
+                    }
+                }
+            },
+            {
+                "id": 1401,
+                "changes": {
+                    "pessoa_cargo": {
+                        "before": "Finan&ccedil;as ",
+                        "after": "Finanças "
+                    }
+                }
+            },
+            {
+                "id": 1413,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Syntia Est&eacute;fany",
+                        "after": "Syntia Estéfany"
+                    }
+                }
+            },
+            {
+                "id": 1419,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Guilff Al&eacute;m Para&iacute;ba ",
+                        "after": "Guilff Além Paraíba "
+                    }
+                }
+            },
+            {
+                "id": 1420,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "N&iacute;vel 3 TI",
+                        "after": "Nível 3 TI"
+                    }
+                }
+            },
+            {
+                "id": 1441,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Beth&acirc;nia Cabral ",
+                        "after": "Bethânia Cabral "
+                    }
+                }
+            },
+            {
+                "id": 1442,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Renan Salom&atilde;o",
+                        "after": "Renan Salomão"
+                    }
+                }
+            },
+            {
+                "id": 1448,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "N&iacute;vel 3TI",
+                        "after": "Nível 3TI"
+                    }
+                }
+            },
+            {
+                "id": 1449,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Cl&eacute;rio Rios ",
+                        "after": "Clério Rios "
+                    }
+                }
+            },
+            {
+                "id": 1452,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "F&aacute;bio Montezano",
+                        "after": "Fábio Montezano"
+                    }
+                }
+            },
+            {
+                "id": 1453,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Fl&aacute;vio - suporte vendas",
+                        "after": "Flávio - suporte vendas"
+                    }
+                }
+            },
+            {
+                "id": 1454,
+                "changes": {
+                    "pessoa_cargo": {
+                        "before": " Log&iacute;stica",
+                        "after": " Logística"
+                    }
+                }
+            },
+            {
+                "id": 1465,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "N&iacute;vel 3TI",
+                        "after": "Nível 3TI"
+                    }
+                }
+            },
+            {
+                "id": 1466,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Cl&eacute;rio Rios ",
+                        "after": "Clério Rios "
+                    }
+                }
+            },
+            {
+                "id": 1468,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "GRF DISTRIBUI&Ccedil;&Atilde;O_ FINANCEIRO SP",
+                        "after": "GRF DISTRIBUIÇÃO_ FINANCEIRO SP"
+                    }
+                }
+            },
+            {
+                "id": 1473,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Atendimento 3&deg; Andar",
+                        "after": "Atendimento 3° Andar"
+                    }
+                }
+            },
+            {
+                "id": 1491,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Jo&atilde;o Pedro Oliveira ",
+                        "after": "João Pedro Oliveira "
+                    }
+                }
+            },
+            {
+                "id": 1493,
+                "changes": {
+                    "pessoa_cargo": {
+                        "before": "Opera&ccedil;&otilde;es",
+                        "after": "Operações"
+                    }
+                }
+            },
+            {
+                "id": 1494,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "N&iacute;vel 3TI",
+                        "after": "Nível 3TI"
+                    }
+                }
+            },
+            {
+                "id": 1499,
+                "changes": {
+                    "pessoa_cargo": {
+                        "before": "A&ccedil;ougue",
+                        "after": "Açougue"
+                    }
+                }
+            },
+            {
+                "id": 1500,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Designer Gr&aacute;fico",
+                        "after": "Designer Gráfico"
+                    },
+                    "pessoa_cargo": {
+                        "before": "Designer Gr&aacute;fico",
+                        "after": "Designer Gráfico"
+                    }
+                }
+            },
+            {
+                "id": 1504,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "N&iacute;vel 3TI",
+                        "after": "Nível 3TI"
+                    }
+                }
+            },
+            {
+                "id": 1505,
+                "changes": {
+                    "pessoa_cargo": {
+                        "before": "Ger&ecirc;ncia",
+                        "after": "Gerência"
+                    }
+                }
+            },
+            {
+                "id": 1510,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "RH HP INDPUSTRIA DE PAP&Eacute;IS",
+                        "after": "RH HP INDPUSTRIA DE PAPÉIS"
+                    }
+                }
+            },
+            {
+                "id": 1511,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "RH Casa Card&atilde;o",
+                        "after": "RH Casa Cardão"
+                    }
+                }
+            },
+            {
+                "id": 1514,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Cl&eacute;rio ",
+                        "after": "Clério "
+                    }
+                }
+            },
+            {
+                "id": 1517,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Cl&eacute;rio ",
+                        "after": "Clério "
+                    }
+                }
+            },
+            {
+                "id": 1518,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "N&iacute;vel 3TI",
+                        "after": "Nível 3TI"
+                    }
+                }
+            },
+            {
+                "id": 1522,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "N&iacute;vel 3TI",
+                        "after": "Nível 3TI"
+                    }
+                }
+            },
+            {
+                "id": 1523,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Cl&eacute;rio ",
+                        "after": "Clério "
+                    }
+                }
+            },
+            {
+                "id": 1525,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "J&eacute;ssica Soares ",
+                        "after": "Jéssica Soares "
+                    }
+                }
+            },
+            {
+                "id": 1529,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Andr&eacute; Leal",
+                        "after": "André Leal"
+                    }
+                }
+            },
+            {
+                "id": 1532,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Patr&iacute;cia Solidcon",
+                        "after": "Patrícia Solidcon"
+                    }
+                }
+            },
+            {
+                "id": 1535,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Fl&aacute;vio",
+                        "after": "Flávio"
+                    }
+                }
+            },
+            {
+                "id": 1539,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Comercial Pe&ccedil;as",
+                        "after": "Comercial Peças"
+                    }
+                }
+            },
+            {
+                "id": 1543,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Ver&ocirc;nica Kinidel",
+                        "after": "Verônica Kinidel"
+                    }
+                }
+            },
+            {
+                "id": 1550,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "V&acirc;nia",
+                        "after": "Vânia"
+                    }
+                }
+            },
+            {
+                "id": 1555,
+                "changes": {
+                    "pessoa_cargo": {
+                        "before": "Secretaria de sa&uacute;de ",
+                        "after": "Secretaria de saúde "
+                    }
+                }
+            },
+            {
+                "id": 1556,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Val&eacute;ria",
+                        "after": "Valéria"
+                    },
+                    "pessoa_cargo": {
+                        "before": "Coordenadora de Sa&uacute;de ",
+                        "after": "Coordenadora de Saúde "
+                    }
+                }
+            },
+            {
+                "id": 1558,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "J&eacute;ssica Francisca Vieira Ferreira ",
+                        "after": "Jéssica Francisca Vieira Ferreira "
+                    }
+                }
+            },
+            {
+                "id": 1560,
+                "changes": {
+                    "pessoa_cargo": {
+                        "before": "Secret&aacute;ria de Assist&ecirc;ncia social",
+                        "after": "Secretária de Assistência social"
+                    }
+                }
+            },
+            {
+                "id": 1564,
+                "changes": {
+                    "pessoa_cargo": {
+                        "before": " Secret&aacute;ria de educa&ccedil;&atilde;o ",
+                        "after": " Secretária de educação "
+                    }
+                }
+            },
+            {
+                "id": 1567,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Julio C&eacute;sar ",
+                        "after": "Julio César "
+                    }
+                }
+            },
+            {
+                "id": 1569,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Secret. Assist&ecirc;ncia Socia",
+                        "after": "Secret. Assistência Socia"
+                    }
+                }
+            },
+            {
+                "id": 1571,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "&Eacute;rica",
+                        "after": "Érica"
+                    }
+                }
+            },
+            {
+                "id": 1573,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "J&eacute;ssica Monsores",
+                        "after": "Jéssica Monsores"
+                    }
+                }
+            },
+            {
+                "id": 1574,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "J&eacute;ssica Francisca Vieira Ferreira ",
+                        "after": "Jéssica Francisca Vieira Ferreira "
+                    }
+                }
+            },
+            {
+                "id": 1575,
+                "changes": {
+                    "pessoa_cargo": {
+                        "before": "Assistente de administra&ccedil;&atilde;o ",
+                        "after": "Assistente de administração "
+                    }
+                }
+            },
+            {
+                "id": 1578,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Vit&oacute;ria &Aacute;vila ",
+                        "after": "Vitória Ávila "
+                    }
+                }
+            },
+            {
+                "id": 1579,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Ant&ocirc;nio Magno Vieira",
+                        "after": "Antônio Magno Vieira"
+                    }
+                }
+            },
+            {
+                "id": 1580,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Felipe Greg&oacute;rio ",
+                        "after": "Felipe Gregório "
+                    }
+                }
+            },
+            {
+                "id": 1582,
+                "changes": {
+                    "pessoa_cargo": {
+                        "before": "Coordenadora de educa&ccedil;&atilde;o ",
+                        "after": "Coordenadora de educação "
+                    }
+                }
+            },
+            {
+                "id": 1584,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "J&eacute;ssica Pimenta ",
+                        "after": "Jéssica Pimenta "
+                    }
+                }
+            },
+            {
+                "id": 1586,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Jun&atilde;o",
+                        "after": "Junão"
+                    }
+                }
+            },
+            {
+                "id": 1587,
+                "changes": {
+                    "pessoa_cargo": {
+                        "before": "Assistente de supervis&atilde;o  ",
+                        "after": "Assistente de supervisão  "
+                    }
+                }
+            },
+            {
+                "id": 1588,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "St&eacute;fani Petten&aacute;",
+                        "after": "Stéfani Pettená"
+                    }
+                }
+            },
+            {
+                "id": 1590,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "2i Atacad&atilde;o Fl&aacute;vio ",
+                        "after": "2i Atacadão Flávio "
+                    }
+                }
+            },
+            {
+                "id": 1594,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Cl&eacute;rio",
+                        "after": "Clério"
+                    }
+                }
+            },
+            {
+                "id": 1596,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "TD Recep&ccedil;&atilde;o ",
+                        "after": "TD Recepção "
+                    }
+                }
+            },
+            {
+                "id": 1598,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Cath&iacute;a Moreira ",
+                        "after": "Cathía Moreira "
+                    }
+                }
+            },
+            {
+                "id": 1602,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "M&aacute;rcia Interior",
+                        "after": "Márcia Interior"
+                    },
+                    "pessoa_cargo": {
+                        "before": "Entregas Interior: Regi&atilde;o Serrana, Norte, Sul Flumine",
+                        "after": "Entregas Interior: Região Serrana, Norte, Sul Flumine"
+                    }
+                }
+            },
+            {
+                "id": 1608,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "S&eacute;rgio ",
+                        "after": "Sérgio "
+                    }
+                }
+            },
+            {
+                "id": 1610,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Vin&iacute;cius Lopes ",
+                        "after": "Vinícius Lopes "
+                    }
+                }
+            },
+            {
+                "id": 1615,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Ana Fl&aacute;via ",
+                        "after": "Ana Flávia "
+                    }
+                }
+            },
+            {
+                "id": 1621,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Devolu&ccedil;&atilde;o GRF",
+                        "after": "Devolução GRF"
+                    }
+                }
+            },
+            {
+                "id": 1625,
+                "changes": {
+                    "pessoa_cargo": {
+                        "before": "t&eacute;cnico",
+                        "after": "técnico"
+                    }
+                }
+            },
+            {
+                "id": 1626,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Cint&iacute;a Sales",
+                        "after": "Cintía Sales"
+                    }
+                }
+            },
+            {
+                "id": 1638,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Carlos Vin&iacute;cius",
+                        "after": "Carlos Vinícius"
+                    }
+                }
+            },
+            {
+                "id": 1644,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Cobran&ccedil;a Super Vinhos",
+                        "after": "Cobrança Super Vinhos"
+                    }
+                }
+            },
+            {
+                "id": 1646,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Log&iacute;stica Casa Card&atilde;o",
+                        "after": "Logística Casa Cardão"
+                    },
+                    "pessoa_cargo": {
+                        "before": "Log&iacute;stica",
+                        "after": "Logística"
+                    }
+                }
+            },
+            {
+                "id": 1663,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Patr&iacute;cia Pina",
+                        "after": "Patrícia Pina"
+                    }
+                }
+            },
+            {
+                "id": 1665,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Tayn&aacute;",
+                        "after": "Tayná"
+                    }
+                }
+            },
+            {
+                "id": 1669,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Jo&atilde;o Paulo",
+                        "after": "João Paulo"
+                    }
+                }
+            },
+            {
+                "id": 1672,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Ant&ocirc;nio",
+                        "after": "Antônio"
+                    }
+                }
+            },
+            {
+                "id": 1680,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Andr&eacute; Andrade",
+                        "after": "André Andrade"
+                    },
+                    "pessoa_cargo": {
+                        "before": "Cota&ccedil;&atilde;o",
+                        "after": "Cotação"
+                    }
+                }
+            },
+            {
+                "id": 1681,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "D&eacute;bora Bueno",
+                        "after": "Débora Bueno"
+                    }
+                }
+            },
+            {
+                "id": 1683,
+                "changes": {
+                    "pessoa_cargo": {
+                        "before": "Cota&ccedil;&atilde;o",
+                        "after": "Cotação"
+                    }
+                }
+            },
+            {
+                "id": 1690,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Amanda Gon&ccedil;alves",
+                        "after": "Amanda Gonçalves"
+                    }
+                }
+            },
+            {
+                "id": 1695,
+                "changes": {
+                    "pessoa_cargo": {
+                        "before": "Cota&ccedil;&atilde;o",
+                        "after": "Cotação"
+                    }
+                }
+            },
+            {
+                "id": 1699,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Jo&atilde;o",
+                        "after": "João"
+                    }
+                }
+            },
+            {
+                "id": 1706,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "LP Pap&eacute;is",
+                        "after": "LP Papéis"
+                    }
+                }
+            },
+            {
+                "id": 1714,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Ma&iacute;sa ",
+                        "after": "Maísa "
+                    }
+                }
+            },
+            {
+                "id": 1716,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "M&aacute;rcia Val&eacute;ria",
+                        "after": "Márcia Valéria"
+                    }
+                }
+            },
+            {
+                "id": 1721,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Cla&uacute;dia Almeida",
+                        "after": "Claúdia Almeida"
+                    }
+                }
+            },
+            {
+                "id": 1726,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Cl&eacute;rio",
+                        "after": "Clério"
+                    }
+                }
+            },
+            {
+                "id": 1727,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "N&iacute;vel 3TI",
+                        "after": "Nível 3TI"
+                    }
+                }
+            },
+            {
+                "id": 1728,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "N&iacute;vel 3TI",
+                        "after": "Nível 3TI"
+                    }
+                }
+            },
+            {
+                "id": 1738,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Cl&eacute;rio Rios ",
+                        "after": "Clério Rios "
+                    }
+                }
+            },
+            {
+                "id": 1747,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "N&iacute;vel 3 TI",
+                        "after": "Nível 3 TI"
+                    }
+                }
+            },
+            {
+                "id": 1750,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Al&ecirc;",
+                        "after": "Alê"
+                    }
+                }
+            },
+            {
+                "id": 1758,
+                "changes": {
+                    "pessoa_cargo": {
+                        "before": "Gest&atilde;o de pessoas",
+                        "after": "Gestão de pessoas"
+                    }
+                }
+            },
+            {
+                "id": 1762,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Carol Gra&ccedil;a",
+                        "after": "Carol Graça"
+                    }
+                }
+            },
+            {
+                "id": 1763,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "D&eacute;bora Ferreira",
+                        "after": "Débora Ferreira"
+                    }
+                }
+            },
+            {
+                "id": 1767,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Claudia L&uacute;cia",
+                        "after": "Claudia Lúcia"
+                    }
+                }
+            },
+            {
+                "id": 1768,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "D&eacute;bora ",
+                        "after": "Débora "
+                    }
+                }
+            },
+            {
+                "id": 1770,
+                "changes": {
+                    "pessoa_cargo": {
+                        "before": "Cota&ccedil;&atilde;o",
+                        "after": "Cotação"
+                    }
+                }
+            },
+            {
+                "id": 1774,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Rafaela Gon&ccedil;alves",
+                        "after": "Rafaela Gonçalves"
+                    }
+                }
+            },
+            {
+                "id": 1777,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Na&iacute;ra Pereira",
+                        "after": "Naíra Pereira"
+                    }
+                }
+            },
+            {
+                "id": 1778,
+                "changes": {
+                    "pessoa_cargo": {
+                        "before": "Finan&ccedil;as ",
+                        "after": "Finanças "
+                    }
+                }
+            },
+            {
+                "id": 1779,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Andr&eacute; Luis Fonseca",
+                        "after": "André Luis Fonseca"
+                    },
+                    "pessoa_cargo": {
+                        "before": "Cota&ccedil;&atilde;o",
+                        "after": "Cotação"
+                    }
+                }
+            },
+            {
+                "id": 1780,
+                "changes": {
+                    "pessoa_cargo": {
+                        "before": "Cota&ccedil;&atilde;o",
+                        "after": "Cotação"
+                    }
+                }
+            },
+            {
+                "id": 1781,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Vit&oacute;ria Almeida",
+                        "after": "Vitória Almeida"
+                    }
+                }
+            },
+            {
+                "id": 1784,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Fernando Castel&acirc;nea",
+                        "after": "Fernando Castelânea"
+                    }
+                }
+            },
+            {
+                "id": 1789,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Jo&atilde;o Soares",
+                        "after": "João Soares"
+                    }
+                }
+            },
+            {
+                "id": 1793,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Rog&eacute;rio Duarte Remota",
+                        "after": "Rogério Duarte Remota"
+                    }
+                }
+            },
+            {
+                "id": 1794,
+                "changes": {
+                    "pessoa_cargo": {
+                        "before": "Finan&ccedil;as ",
+                        "after": "Finanças "
+                    }
+                }
+            },
+            {
+                "id": 1797,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Maria Let&iacute;cia Reis",
+                        "after": "Maria Letícia Reis"
+                    }
+                }
+            },
+            {
+                "id": 1800,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Ot&aacute;vio Comercial",
+                        "after": "Otávio Comercial"
+                    }
+                }
+            },
+            {
+                "id": 1811,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "N&iacute;vel 3 TI ",
+                        "after": "Nível 3 TI "
+                    }
+                }
+            },
+            {
+                "id": 1812,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Cl&eacute;rio Rios",
+                        "after": "Clério Rios"
+                    }
+                }
+            },
+            {
+                "id": 1827,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "TD- FILIAL RECEP&Ccedil;&Atilde;O",
+                        "after": "TD- FILIAL RECEPÇÃO"
+                    }
+                }
+            },
+            {
+                "id": 1829,
+                "changes": {
+                    "pessoa_cargo": {
+                        "before": "Finan&ccedil;as ",
+                        "after": "Finanças "
+                    }
+                }
+            },
+            {
+                "id": 1830,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Devolu&ccedil;&otilde;es",
+                        "after": "Devoluções"
+                    }
+                }
+            },
+            {
+                "id": 1831,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Finan&ccedil;as",
+                        "after": "Finanças"
+                    },
+                    "pessoa_cargo": {
+                        "before": "Finan&ccedil;as ",
+                        "after": "Finanças "
+                    }
+                }
+            },
+            {
+                "id": 1832,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Karen Bas&iacute;lio",
+                        "after": "Karen Basílio"
+                    }
+                }
+            },
+            {
+                "id": 1833,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Karen Bas&iacute;lio",
+                        "after": "Karen Basílio"
+                    }
+                }
+            },
+            {
+                "id": 1838,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Ang&eacute;lica Gomes",
+                        "after": "Angélica Gomes"
+                    }
+                }
+            },
+            {
+                "id": 1839,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Ang&eacute;lica Gomes",
+                        "after": "Angélica Gomes"
+                    }
+                }
+            },
+            {
+                "id": 1844,
+                "changes": {
+                    "pessoa_cargo": {
+                        "before": "Log&iacute;stica",
+                        "after": "Logística"
+                    }
+                }
+            },
+            {
+                "id": 1846,
+                "changes": {
+                    "pessoa_cargo": {
+                        "before": "Finan&ccedil;as ",
+                        "after": "Finanças "
+                    }
+                }
+            },
+            {
+                "id": 1847,
+                "changes": {
+                    "pessoa_cargo": {
+                        "before": "Finan&ccedil;as ",
+                        "after": "Finanças "
+                    }
+                }
+            },
+            {
+                "id": 1848,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "TD-Sal&atilde;o-Filial-Diego",
+                        "after": "TD-Salão-Filial-Diego"
+                    }
+                }
+            },
+            {
+                "id": 1854,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Diego Nic&aacute;cio",
+                        "after": "Diego Nicácio"
+                    }
+                }
+            },
+            {
+                "id": 1856,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Jo&atilde;o do Financeiro",
+                        "after": "João do Financeiro"
+                    },
+                    "pessoa_cargo": {
+                        "before": "Finan&ccedil;as ",
+                        "after": "Finanças "
+                    }
+                }
+            },
+            {
+                "id": 1860,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Jo&atilde;o",
+                        "after": "João"
+                    }
+                }
+            },
+            {
+                "id": 1864,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "S&acirc;mylla Mendes",
+                        "after": "Sâmylla Mendes"
+                    }
+                }
+            },
+            {
+                "id": 1866,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Jessica Gon&ccedil;alves",
+                        "after": "Jessica Gonçalves"
+                    },
+                    "pessoa_cargo": {
+                        "before": "Cota&ccedil;&atilde;o",
+                        "after": "Cotação"
+                    }
+                }
+            },
+            {
+                "id": 1868,
+                "changes": {
+                    "pessoa_cargo": {
+                        "before": "Cota&ccedil;&atilde;o",
+                        "after": "Cotação"
+                    }
+                }
+            },
+            {
+                "id": 1870,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Ant&ocirc;nio Carlos",
+                        "after": "Antônio Carlos"
+                    }
+                }
+            },
+            {
+                "id": 1871,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Gabriel In&aacute;cio",
+                        "after": "Gabriel Inácio"
+                    }
+                }
+            },
+            {
+                "id": 1873,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Caoline Gon&ccedil;alves ",
+                        "after": "Caoline Gonçalves "
+                    }
+                }
+            },
+            {
+                "id": 1879,
+                "changes": {
+                    "pessoa_cargo": {
+                        "before": "Finan&ccedil;as ",
+                        "after": "Finanças "
+                    }
+                }
+            },
+            {
+                "id": 1881,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "N&iacute;vel 3 TI",
+                        "after": "Nível 3 TI"
+                    }
+                }
+            },
+            {
+                "id": 1882,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Cl&eacute;rio ",
+                        "after": "Clério "
+                    }
+                }
+            },
+            {
+                "id": 1887,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Glic&eacute;rio",
+                        "after": "Glicério"
+                    }
+                }
+            },
+            {
+                "id": 1891,
+                "changes": {
+                    "pessoa_cargo": {
+                        "before": "Cota&ccedil;&atilde;o",
+                        "after": "Cotação"
+                    }
+                }
+            },
+            {
+                "id": 1903,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Jo&atilde;o Victor",
+                        "after": "João Victor"
+                    }
+                }
+            },
+            {
+                "id": 1904,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Jos&eacute; Luiz Aguiar",
+                        "after": "José Luiz Aguiar"
+                    }
+                }
+            },
+            {
+                "id": 1906,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Juliete Ara&uacute;jo ",
+                        "after": "Juliete Araújo "
+                    }
+                }
+            },
+            {
+                "id": 1947,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Denise Pav&atilde;o",
+                        "after": "Denise Pavão"
+                    }
+                }
+            },
+            {
+                "id": 1951,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Bruno Magalh&atilde;es",
+                        "after": "Bruno Magalhães"
+                    }
+                }
+            },
+            {
+                "id": 1954,
+                "changes": {
+                    "pessoa_cargo": {
+                        "before": "CEO Cl&eacute;rio",
+                        "after": "CEO Clério"
+                    }
+                }
+            },
+            {
+                "id": 1955,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Cl&eacute;rio ",
+                        "after": "Clério "
+                    }
+                }
+            },
+            {
+                "id": 1957,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Ari J&uacute;nior",
+                        "after": "Ari Júnior"
+                    }
+                }
+            },
+            {
+                "id": 1966,
+                "changes": {
+                    "pessoa_cargo": {
+                        "before": "Manuten&ccedil;&atilde;o",
+                        "after": "Manutenção"
+                    }
+                }
+            },
+            {
+                "id": 1975,
+                "changes": {
+                    "pessoa_nom": {
+                        "before": "Processa inform&aacute;tica",
+                        "after": "Processa informática"
+                    }
+                }
+            }
+        ],
+        "locais": [
+            {
+                "id": 165,
+                "changes": {
+                    "local_nom": {
+                        "before": "Bela Pra&ccedil;a - Carmo",
+                        "after": "Bela Praça - Carmo"
+                    }
+                }
+            },
+            {
+                "id": 194,
+                "changes": {
+                    "local_nom": {
+                        "before": "Al&eacute;m Para&iacute;ba ",
+                        "after": "Além Paraíba "
+                    },
+                    "local_end": {
+                        "before": "Rodovia BR-393, Km 103, Galp&atilde;o 3, Clube dos 200 - Sapucaia - RJ\t",
+                        "after": "Rodovia BR-393, Km 103, Galpão 3, Clube dos 200 - Sapucaia - RJ\t"
+                    },
+                    "local_city": {
+                        "before": "Al&eacute;m Para&iacute;ba",
+                        "after": "Além Paraíba"
+                    }
+                }
+            },
+            {
+                "id": 195,
+                "changes": {
+                    "local_nom": {
+                        "before": "Corr&ecirc;as ",
+                        "after": "Corrêas "
+                    },
+                    "local_end": {
+                        "before": "Estrada Uni&atilde;o e Ind&uacute;stria -3170",
+                        "after": "Estrada União e Indústria -3170"
+                    },
+                    "local_city": {
+                        "before": "Petr&oacute;polis",
+                        "after": "Petrópolis"
+                    }
+                }
+            },
+            {
+                "id": 196,
+                "changes": {
+                    "local_end": {
+                        "before": "Rua Quissam&atilde; 1931 a 1901",
+                        "after": "Rua Quissamã 1931 a 1901"
+                    },
+                    "local_city": {
+                        "before": "Petr&oacute;polis",
+                        "after": "Petrópolis"
+                    }
+                }
+            },
+            {
+                "id": 197,
+                "changes": {
+                    "local_city": {
+                        "before": "Petr&oacute;polis",
+                        "after": "Petrópolis"
+                    }
+                }
+            },
+            {
+                "id": 198,
+                "changes": {
+                    "local_city": {
+                        "before": "Petr&oacute;polis",
+                        "after": "Petrópolis"
+                    }
+                }
+            },
+            {
+                "id": 199,
+                "changes": {
+                    "local_nom": {
+                        "before": "Castel&acirc;nea",
+                        "after": "Castelânea"
+                    },
+                    "local_city": {
+                        "before": "Petr&oacute;polis",
+                        "after": "Petrópolis"
+                    }
+                }
+            },
+            {
+                "id": 200,
+                "changes": {
+                    "local_end": {
+                        "before": "Av Bar&atilde;o do Rio Branco 3150",
+                        "after": "Av Barão do Rio Branco 3150"
+                    },
+                    "local_city": {
+                        "before": "Petr&oacute;polis",
+                        "after": "Petrópolis"
+                    }
+                }
+            },
+            {
+                "id": 201,
+                "changes": {
+                    "local_city": {
+                        "before": "Petr&oacute;polis",
+                        "after": "Petrópolis"
+                    }
+                }
+            },
+            {
+                "id": 202,
+                "changes": {
+                    "local_nom": {
+                        "before": "DIB Escrit&oacute;rio",
+                        "after": "DIB Escritório"
+                    },
+                    "local_city": {
+                        "before": "Petr&oacute;polis",
+                        "after": "Petrópolis"
+                    }
+                }
+            },
+            {
+                "id": 206,
+                "changes": {
+                    "local_nom": {
+                        "before": "Pharmes Constan&ccedil;a Valadares",
+                        "after": "Pharmes Constança Valadares"
+                    }
+                }
+            },
+            {
+                "id": 207,
+                "changes": {
+                    "local_nom": {
+                        "before": "Pharmes Produ&ccedil;&atilde;o ",
+                        "after": "Pharmes Produção "
+                    }
+                }
+            },
+            {
+                "id": 209,
+                "changes": {
+                    "local_nom": {
+                        "before": "Pharmes - Visita&ccedil;&atilde;o",
+                        "after": "Pharmes - Visitação"
+                    }
+                }
+            },
+            {
+                "id": 215,
+                "changes": {
+                    "local_end": {
+                        "before": "Perto de Estr. Dirindi Ou Santa F&eacute;, 175, S&atilde;o Jos&eacute; do Vale do Rio Preto",
+                        "after": "Perto de Estr. Dirindi Ou Santa Fé, 175, São José do Vale do Rio Preto"
+                    },
+                    "local_city": {
+                        "before": "S&atilde;o Jos&eacute; do Vale do Rio Preto",
+                        "after": "São José do Vale do Rio Preto"
+                    }
+                }
+            },
+            {
+                "id": 217,
+                "changes": {
+                    "local_end": {
+                        "before": "ESTRADA  RIO X BAHIA, SN - AGUA QUENTE, Teres&oacute;polis",
+                        "after": "ESTRADA  RIO X BAHIA, SN - AGUA QUENTE, Teresópolis"
+                    },
+                    "local_city": {
+                        "before": "Teres&oacute;polis ",
+                        "after": "Teresópolis "
+                    }
+                }
+            },
+            {
+                "id": 218,
+                "changes": {
+                    "local_nom": {
+                        "before": "Santo Ant&ocirc;nio - Filial",
+                        "after": "Santo Antônio - Filial"
+                    }
+                }
+            },
+            {
+                "id": 219,
+                "changes": {
+                    "local_nom": {
+                        "before": "Pharmes Niter&oacute;i",
+                        "after": "Pharmes Niterói"
+                    }
+                }
+            },
+            {
+                "id": 222,
+                "changes": {
+                    "local_end": {
+                        "before": "\tRua Coronel Oscar Cortes 64, sala 107 - Porto Novo - Al&eacute;m Para&iacute;ba - MG",
+                        "after": "\tRua Coronel Oscar Cortes 64, sala 107 - Porto Novo - Além Paraíba - MG"
+                    }
+                }
+            },
+            {
+                "id": 224,
+                "changes": {
+                    "local_city": {
+                        "before": "Teres&oacute;polis ",
+                        "after": "Teresópolis "
+                    }
+                }
+            },
+            {
+                "id": 225,
+                "changes": {
+                    "local_end": {
+                        "before": "Perto de Estr. Dirindi Ou Santa F&eacute;, 175, S&atilde;o Jos&eacute; do Vale&nbsp;do&nbsp;Rio&nbsp",
+                        "after": "Perto de Estr. Dirindi Ou Santa Fé, 175, São José do Vale do Rio&nbsp"
+                    },
+                    "local_city": {
+                        "before": " S&atilde;o Jos&eacute; do Vale do Rio Preto",
+                        "after": " São José do Vale do Rio Preto"
+                    }
+                }
+            },
+            {
+                "id": 226,
+                "changes": {
+                    "local_city": {
+                        "before": "Teres&oacute;polis ",
+                        "after": "Teresópolis "
+                    }
+                }
+            },
+            {
+                "id": 227,
+                "changes": {
+                    "local_city": {
+                        "before": " Muria&eacute;",
+                        "after": " Muriaé"
+                    }
+                }
+            },
+            {
+                "id": 228,
+                "changes": {
+                    "local_city": {
+                        "before": " Muria&eacute; ",
+                        "after": " Muriaé "
+                    }
+                }
+            },
+            {
+                "id": 231,
+                "changes": {
+                    "local_city": {
+                        "before": "Santo Ant&ocirc;nio de P&aacute;dua",
+                        "after": "Santo Antônio de Pádua"
+                    }
+                }
+            },
+            {
+                "id": 233,
+                "changes": {
+                    "local_end": {
+                        "before": "Rua Sargento Aquino - N 289 - Olaria- Atr&aacute;s do mercado&nbsp;Mega&nbsp;Box",
+                        "after": "Rua Sargento Aquino - N 289 - Olaria- Atrás do mercado Mega Box"
+                    }
+                }
+            },
+            {
+                "id": 236,
+                "changes": {
+                    "local_end": {
+                        "before": "Rua Capit&atilde;o Godoy, 250",
+                        "after": "Rua Capitão Godoy, 250"
+                    },
+                    "local_city": {
+                        "before": "Al&eacute;m Para&iacute;ba",
+                        "after": "Além Paraíba"
+                    }
+                }
+            },
+            {
+                "id": 237,
+                "changes": {
+                    "local_city": {
+                        "before": "Al&eacute;m Para&iacute;ba",
+                        "after": "Além Paraíba"
+                    }
+                }
+            },
+            {
+                "id": 239,
+                "changes": {
+                    "local_end": {
+                        "before": "Rua Capit&atilde;o Godoy, 250",
+                        "after": "Rua Capitão Godoy, 250"
+                    },
+                    "local_city": {
+                        "before": "Al&eacute;m Para&iacute;ba",
+                        "after": "Além Paraíba"
+                    }
+                }
+            },
+            {
+                "id": 240,
+                "changes": {
+                    "local_end": {
+                        "before": "Rua Capit&atilde;o Godoy, 250",
+                        "after": "Rua Capitão Godoy, 250"
+                    },
+                    "local_city": {
+                        "before": "Al&eacute;m Para&iacute;ba",
+                        "after": "Além Paraíba"
+                    }
+                }
+            },
+            {
+                "id": 241,
+                "changes": {
+                    "local_end": {
+                        "before": "BR-393, KM 104 - 10600 - Jamapar&aacute;, Sapucaia - RJ, Brasil",
+                        "after": "BR-393, KM 104 - 10600 - Jamapará, Sapucaia - RJ, Brasil"
+                    }
+                }
+            },
+            {
+                "id": 242,
+                "changes": {
+                    "local_nom": {
+                        "before": "S&Atilde;O JOS&Eacute;",
+                        "after": "SÃO JOSÉ"
+                    }
+                }
+            },
+            {
+                "id": 250,
+                "changes": {
+                    "local_end": {
+                        "before": "R. Lu&iacute;s de Cam&otilde;es",
+                        "after": "R. Luís de Camões"
+                    },
+                    "local_city": {
+                        "before": "Marip&aacute;",
+                        "after": "Maripá"
+                    }
+                }
+            },
+            {
+                "id": 251,
+                "changes": {
+                    "local_city": {
+                        "before": "Marip&aacute;",
+                        "after": "Maripá"
+                    }
+                }
+            },
+            {
+                "id": 253,
+                "changes": {
+                    "local_city": {
+                        "before": "Valen&ccedil;a",
+                        "after": "Valença"
+                    }
+                }
+            },
+            {
+                "id": 254,
+                "changes": {
+                    "local_city": {
+                        "before": "Valen&ccedil;a",
+                        "after": "Valença"
+                    }
+                }
+            },
+            {
+                "id": 255,
+                "changes": {
+                    "local_city": {
+                        "before": "Valen&ccedil;a",
+                        "after": "Valença"
+                    }
+                }
+            },
+            {
+                "id": 256,
+                "changes": {
+                    "local_end": {
+                        "before": "Avenida Gorvernador Leonel De Moura Brizola, N&ordm; 1490",
+                        "after": "Avenida Gorvernador Leonel De Moura Brizola, Nº 1490"
+                    }
+                }
+            },
+            {
+                "id": 264,
+                "changes": {
+                    "local_city": {
+                        "before": "Petrop&oacute;lis",
+                        "after": "Petropólis"
+                    }
+                }
+            },
+            {
+                "id": 266,
+                "changes": {
+                    "local_nom": {
+                        "before": "UB&Aacute;",
+                        "after": "UBÁ"
+                    },
+                    "local_city": {
+                        "before": "UB&Aacute;",
+                        "after": "UBÁ"
+                    }
+                }
+            },
+            {
+                "id": 272,
+                "changes": {
+                    "local_end": {
+                        "before": "Rua Capit&atilde;o Godoi, 250",
+                        "after": "Rua Capitão Godoi, 250"
+                    },
+                    "local_city": {
+                        "before": "Al&eacute;m Para&iacute;ba",
+                        "after": "Além Paraíba"
+                    }
+                }
+            },
+            {
+                "id": 277,
+                "changes": {
+                    "local_city": {
+                        "before": "Al&eacute;m Para&iacute;ba",
+                        "after": "Além Paraíba"
+                    }
+                }
+            },
+            {
+                "id": 278,
+                "changes": {
+                    "local_city": {
+                        "before": "Al&eacute;m Para&iacute;ba",
+                        "after": "Além Paraíba"
+                    }
+                }
+            },
+            {
+                "id": 279,
+                "changes": {
+                    "local_nom": {
+                        "before": "Iraj&aacute;",
+                        "after": "Irajá"
+                    }
+                }
+            },
+            {
+                "id": 282,
+                "changes": {
+                    "local_nom": {
+                        "before": "Matriz Tr&ecirc;s Rios ",
+                        "after": "Matriz Três Rios "
+                    },
+                    "local_city": {
+                        "before": "Tr&ecirc;s rios ",
+                        "after": "Três rios "
+                    }
+                }
+            },
+            {
+                "id": 284,
+                "changes": {
+                    "local_end": {
+                        "before": "Av. Manoel Ribas 136, Sala 103, Tr. Cond. Marqu&ecirc;s Business Ce, Bairro S&atilde;o Francisco",
+                        "after": "Av. Manoel Ribas 136, Sala 103, Tr. Cond. Marquês Business Ce, Bairro São Francisco"
+                    }
+                }
+            },
+            {
+                "id": 288,
+                "changes": {
+                    "local_nom": {
+                        "before": "LOJA - PRA&Ccedil;A DA BANDEIRA - RJ",
+                        "after": "LOJA - PRAÇA DA BANDEIRA - RJ"
+                    },
+                    "local_city": {
+                        "before": "PRA&Ccedil;A DA BANDEIRA",
+                        "after": "PRAÇA DA BANDEIRA"
+                    }
+                }
+            },
+            {
+                "id": 437,
+                "changes": {
+                    "local_city": {
+                        "before": "Al&eacute;m Para&iacute;ba ",
+                        "after": "Além Paraíba "
+                    }
+                }
+            },
+            {
+                "id": 438,
+                "changes": {
+                    "local_city": {
+                        "before": "Al&eacute;m Para&iacute;ba ",
+                        "after": "Além Paraíba "
+                    }
+                }
+            }
+        ]
+    }
+}

@@ -113,7 +113,7 @@ $categorias = $pdo->query("
     <link rel="stylesheet" href="../fontawesome/css/all.css">
     <link rel="stylesheet" href="../css/bootstrap-select.min.css">
     <link rel="stylesheet" href="https://cdn.datatables.net/1.10.25/css/dataTables.bootstrap4.min.css" />
-    <title>Relatério de Pagamentos</title>
+    <title>Relatório de Pagamentos</title>
     <style>
         body {
             zoom: 0.9;
@@ -164,7 +164,7 @@ $categorias = $pdo->query("
         <div class="card card-primary card-outline">
             <div class="card-header py-2 no-print">
                 <div class="d-flex align-items-center">
-                    <h4 class="m-0 font-weight-bold">Relatério de Pagamentos</h4>
+                    <h4 class="m-0 font-weight-bold"> de Pagamentos</h4>
                     <a href="gestaoRD.php" class="ml-4"><i class="fas fa-home" style="font-size: 25px;" data-toggle="tooltip" title="Home RD"></i></a>
                 </div>
 
@@ -208,7 +208,7 @@ $categorias = $pdo->query("
 
                 <div id="printable">
                     <div class="text-center ">
-                        <h5><b>Relatério de Pagamentos</b></h5>
+                        <h5><b>Relatório de Pagamentos</b></h5>
                         <p>Período de <b><?= date("d/m/Y", strtotime($dataInicio)) ?></b> a <b><?= date("d/m/Y", strtotime($dataFim)) ?></b></p>
                     </div>
 

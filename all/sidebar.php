@@ -24,6 +24,22 @@ if (!function_exists('sidebar_href')) {
     padding-left: 80px;
     box-sizing: border-box;
     overflow-x: hidden;
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  }
+
+  body,
+  input,
+  button,
+  select,
+  optgroup,
+  textarea,
+  .popover,
+  .tooltip,
+  .dropdown-menu,
+  .modal,
+  .card,
+  .table {
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
   }
 
   .modal-header {
@@ -45,6 +61,7 @@ if (!function_exists('sidebar_href')) {
     top: 0;
     bottom: 0;
     left: 0;
+    height: 100dvh;
     width: 80px;
     z-index: 1050;
     display: flex;
@@ -56,6 +73,9 @@ if (!function_exists('sidebar_href')) {
     box-shadow: 0 8px 22px rgba(15, 23, 42, 0.12);
     transition: width 0.22s ease;
     overflow: hidden;
+    contain: layout paint style;
+    transform: translateZ(0);
+    will-change: width;
     font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif !important;
     font-size: 14px !important;
     line-height: 1.2 !important;
@@ -97,45 +117,57 @@ if (!function_exists('sidebar_href')) {
   }
 
   #sidebarHeader {
+    position: relative;
     display: flex;
     align-items: center;
     justify-content: center;
+    flex: 0 0 58px;
     height: 58px;
+    min-height: 58px;
     padding: 10px;
     border-bottom: 1px solid #dbe3ef;
+    overflow: hidden;
   }
 
   #sidebarHeader img {
-    max-width: 100%;
+    display: block;
+    position: absolute;
+    max-width: calc(100% - 20px);
     height: auto;
     object-fit: contain;
+    opacity: 1;
+    transform: translateZ(0);
+    transition: opacity 0.14s ease;
+    will-change: opacity;
   }
 
   .logo-expanded {
-    display: none !important;
+    width: 100px;
+    opacity: 0 !important;
   }
 
   .logo-minimized {
-    display: block !important;
     width: 50px;
   }
 
   #sidebar.sidebar-expanded .logo-minimized {
-    display: none !important;
+    opacity: 0 !important;
   }
 
   #sidebar.sidebar-expanded .logo-expanded {
-    display: block !important;
-    width: 100px;
+    opacity: 1 !important;
   }
 
   #sidebarNav {
-    flex-grow: 1;
+    flex: 1 1 auto;
+    min-height: 0;
     padding: 10px 8px;
     overflow-y: auto;
     overflow-x: hidden;
+    scrollbar-gutter: stable;
     scrollbar-width: thin;
     scrollbar-color: rgba(120, 130, 145, 0.45) transparent;
+    contain: layout paint;
   }
 
   #sidebarNav::-webkit-scrollbar {
@@ -264,13 +296,19 @@ if (!function_exists('sidebar_href')) {
   }
 
   #sidebarFooter {
-    margin-top: auto;
+    flex: 0 0 auto;
     width: 100%;
     padding: 10px 8px 16px;
     border-top: 1px solid #dbe3ef;
     display: flex;
     flex-direction: column;
     gap: 6px;
+    box-sizing: border-box;
+    overflow: hidden;
+  }
+
+  #sidebarFooter .menu-item {
+    margin-bottom: 0;
   }
 
   #userInfo {
@@ -350,8 +388,8 @@ if (!function_exists('sidebar_href')) {
 
 <aside id="sidebar">
   <div id="sidebarHeader">
-    <img src="<?php echo sidebar_href('img/logo_minimized.png'); ?>" alt="N3TI" class="logo-minimized">
-    <img src="<?php echo sidebar_href('img/logo_expanded.png'); ?>" alt="Allterus" class="logo-expanded">
+    <img src="<?php echo sidebar_href('img/logo_sidebar_minimized.png'); ?>" alt="N3TI" class="logo-minimized" width="50" height="48" loading="eager" decoding="async">
+    <img src="<?php echo sidebar_href('img/logo_sidebar_expanded.png'); ?>" alt="Allterus" class="logo-expanded" width="100" height="46" loading="eager" decoding="async">
   </div>
 
   <nav id="sidebarNav">
@@ -525,21 +563,21 @@ if (!function_exists('sidebar_href')) {
       <div class="menu-group" data-menu-group>
         <button class="menu-item menu-toggle" type="button" data-submenu-toggle aria-expanded="false">
           <i class="fas fa-clipboard-list text-xl"></i>
-          <span class="label">Relatorios</span>
+          <span class="label">Relatórios</span>
           <i class="fas fa-chevron-down menu-arrow"></i>
         </button>
         <div class="submenu">
           <?php if ($m8_00 == 2) { ?>
-            <a href="<?php echo sidebar_href('rel/atd_abertos_por_tecnico.php'); ?>" class="menu-subitem"><i class="fas fa-user-tie"></i><span>Atd. abertos por Tecnico</span></a>
+            <a href="<?php echo sidebar_href('rel/atd_abertos_por_tecnico.php'); ?>" class="menu-subitem"><i class="fas fa-user-tie"></i><span>Atd. abertos por Técnico</span></a>
             <a href="<?php echo sidebar_href('rel/atd_total_por_cliente.php'); ?>" class="menu-subitem"><i class="fas fa-headset"></i><span>Atd. total por Cliente</span></a>
-            <a href="<?php echo sidebar_href('rel/atd_total_por_tecnico.php'); ?>" class="menu-subitem"><i class="fas fa-user-tie"></i><span>Atd. total por Tecnico</span></a>
+            <a href="<?php echo sidebar_href('rel/atd_total_por_tecnico.php'); ?>" class="menu-subitem"><i class="fas fa-user-tie"></i><span>Atd. total por Técnico</span></a>
             <a href="<?php echo sidebar_href('rel/atd_total_por_categoria.php'); ?>" class="menu-subitem"><i class="fas fa-tags"></i><span>Atd. total por Categoria</span></a>
-            <a href="<?php echo sidebar_href('rel/atd_tempo_por_tecnico.php'); ?>" class="menu-subitem"><i class="far fa-clock"></i><span>Tempo medio para Atendimento</span></a>
+            <a href="<?php echo sidebar_href('rel/atd_tempo_por_tecnico.php'); ?>" class="menu-subitem"><i class="far fa-clock"></i><span>Tempo médio para Atendimento</span></a>
           <?php } ?>
-          <a href="<?php echo sidebar_href('rel/atd_analitico_por_cliente.php'); ?>" class="menu-subitem"><i class="fas fa-align-justify"></i><span>Atd. Analitico por Cliente</span></a>
-          <a href="<?php echo sidebar_href('rel/atd_analitico_por_tarefa.php'); ?>" class="menu-subitem"><i class="fas fa-tasks"></i><span>Atd. Analitico por Tarefa</span></a>
-          <a href="<?php echo sidebar_href('rel/rel_Unificado.php'); ?>" class="menu-subitem"><i class="fas fa-tasks"></i><span>Relatorio Unificado</span></a>
-          <a href="<?php echo sidebar_href('rel/rel_ti.php'); ?>" class="menu-subitem"><i class="fas fa-tasks"></i><span>Relatorio Somente TI</span></a>
+          <a href="<?php echo sidebar_href('rel/atd_analitico_por_cliente.php'); ?>" class="menu-subitem"><i class="fas fa-align-justify"></i><span>Atd. Analítico por Cliente</span></a>
+          <a href="<?php echo sidebar_href('rel/atd_analitico_por_tarefa.php'); ?>" class="menu-subitem"><i class="fas fa-tasks"></i><span>Atd. Analítico por Tarefa</span></a>
+          <a href="<?php echo sidebar_href('rel/rel_Unificado.php'); ?>" class="menu-subitem"><i class="fas fa-tasks"></i><span>Relatório Unificado</span></a>
+          <a href="<?php echo sidebar_href('rel/rel_ti.php'); ?>" class="menu-subitem"><i class="fas fa-tasks"></i><span>Relatório Somente TI</span></a>
           <?php if ($m8_00 == 2) { ?>
             <a href="<?php echo sidebar_href('rel/rel_tempo_atd.php'); ?>" class="menu-subitem"><i class="fas fa-clock"></i><span>Tempo de Atendimento</span></a>
           <?php } ?>
@@ -583,13 +621,6 @@ if (!function_exists('sidebar_href')) {
         <span class="label">Extratos</span>
       </a>
     <?php } ?>
-
-    <?php if ($m4_00 == 1) { ?>
-      <a href="<?php echo sidebar_href('config/home.php'); ?>" class="menu-item">
-        <i class="fas fa-cogs text-xl"></i>
-        <span class="label">Configuracoes</span>
-      </a>
-    <?php } ?>
   </nav>
 
   <div id="sidebarFooter">
@@ -617,41 +648,65 @@ if (!function_exists('sidebar_href')) {
     var sidebar = document.getElementById('sidebar');
     if (!sidebar) return;
 
+    var menuGroups = Array.prototype.slice.call(sidebar.querySelectorAll('[data-menu-group]'));
+    var submenuToggles = Array.prototype.slice.call(sidebar.querySelectorAll('[data-submenu-toggle]'));
+    var interactiveItems = Array.prototype.slice.call(sidebar.querySelectorAll('.menu-item, .menu-subitem'));
+    var sidebarImages = Array.prototype.slice.call(sidebar.querySelectorAll('img'));
+    var enterEvent = window.PointerEvent ? 'pointerenter' : 'mouseenter';
+    var leaveEvent = window.PointerEvent ? 'pointerleave' : 'mouseleave';
+    var resizeFrame = null;
+
     function getCollapsedWidth() {
       return window.matchMedia('(max-width: 1024px)').matches ? 64 : 80;
     }
 
     function syncSidebarLayout() {
+      resizeFrame = null;
       sidebar.style.zoom = '';
       sidebar.style.transform = '';
       sidebar.style.transformOrigin = '';
       document.body.style.paddingLeft = getCollapsedWidth() + 'px';
     }
 
-    sidebar.addEventListener('mouseenter', function() {
-      sidebar.classList.add('sidebar-expanded');
+    function scheduleSidebarLayout() {
+      if (resizeFrame !== null) return;
+      resizeFrame = requestAnimationFrame(syncSidebarLayout);
+    }
+
+    function warmSidebarImages() {
+      sidebarImages.forEach(function(img) {
+        if (img.decode) {
+          img.decode().catch(function() {});
+        }
+      });
+    }
+
+    sidebar.addEventListener(enterEvent, function() {
+      if (!sidebar.classList.contains('sidebar-expanded')) {
+        sidebar.classList.add('sidebar-expanded');
+      }
     });
 
-    sidebar.addEventListener('mouseleave', function() {
+    sidebar.addEventListener(leaveEvent, function() {
       sidebar.classList.remove('sidebar-expanded');
-      sidebar.querySelectorAll('[data-menu-group]').forEach(function(group) {
+      menuGroups.forEach(function(group) {
         group.classList.remove('open');
       });
-      sidebar.querySelectorAll('[data-submenu-toggle]').forEach(function(toggle) {
+      submenuToggles.forEach(function(toggle) {
         toggle.setAttribute('aria-expanded', 'false');
       });
     });
 
-    sidebar.querySelectorAll('[data-submenu-toggle]').forEach(function(toggle) {
+    submenuToggles.forEach(function(toggle) {
       toggle.addEventListener('click', function() {
         var group = toggle.closest('[data-menu-group]');
         if (!group) return;
         var willOpen = !group.classList.contains('open');
 
-        sidebar.querySelectorAll('[data-menu-group].open').forEach(function(openGroup) {
-          openGroup.classList.remove('open');
+        menuGroups.forEach(function(menuGroup) {
+          menuGroup.classList.remove('open');
         });
-        sidebar.querySelectorAll('[data-submenu-toggle]').forEach(function(btn) {
+        submenuToggles.forEach(function(btn) {
           btn.setAttribute('aria-expanded', 'false');
         });
 
@@ -666,7 +721,7 @@ if (!function_exists('sidebar_href')) {
       });
     });
 
-    sidebar.querySelectorAll('.menu-item, .menu-subitem').forEach(function(item) {
+    interactiveItems.forEach(function(item) {
       item.addEventListener('mouseup', function() {
         if (typeof item.blur === 'function') {
           item.blur();
@@ -674,8 +729,13 @@ if (!function_exists('sidebar_href')) {
       });
     });
 
-    requestAnimationFrame(syncSidebarLayout);
-    window.addEventListener('resize', syncSidebarLayout);
-    window.addEventListener('load', syncSidebarLayout);
+    scheduleSidebarLayout();
+    if ('requestIdleCallback' in window) {
+      requestIdleCallback(warmSidebarImages, { timeout: 1000 });
+    } else {
+      window.setTimeout(warmSidebarImages, 120);
+    }
+    window.addEventListener('resize', scheduleSidebarLayout);
+    window.addEventListener('load', scheduleSidebarLayout);
   })();
 </script>

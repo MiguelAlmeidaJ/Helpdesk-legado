@@ -167,7 +167,7 @@ $despesas = $rds->fetchAll(PDO::FETCH_ASSOC);
                                     <th class="text-center" style="width: 120px">Valor</th>
                                     <th class="text-center">Data</th>
                                     <th class="text-center" style="width: 220px">Status</th>
-                                    <th class="text-center" style="width: 140px">Açães</th>
+                                    <th class="text-center" style="width: 140px">Ações</th>
                                 </tr>
                             </thead>
                             <tbody>

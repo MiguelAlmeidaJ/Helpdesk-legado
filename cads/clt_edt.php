@@ -3,10 +3,16 @@ session_start();
 include_once("../all/permissoes.php");
 if(isset($_POST["id"])){
   include_once("../all/conect.php");
-  $id = $_POST["id"];
+  $id = filter_input(INPUT_POST, 'id', FILTER_SANITIZE_NUMBER_INT);
+
+  function h($value)
+  {
+    return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8');
+  }
   
   $pdo = ConnectionN3();
-  $show = $pdo->prepare("SELECT clientes.* FROM clientes WHERE clientes.clt_id = '$id'");
+  $show = $pdo->prepare("SELECT clientes.* FROM clientes WHERE clientes.clt_id = :id");
+  $show->bindParam(':id', $id, PDO::PARAM_INT);
   $show->execute();
   $row=$show->fetch(PDO::FETCH_ASSOC);
   $clt_nomer=$row["clt_nomer"];
@@ -29,8 +35,8 @@ if(isset($_POST["id"])){
                     <div class="input-group-prepend">
                       <div class="input-group-text"><i class="far fa-user"></i></div>
                     </div> 
-                    <input name="clt_nomer" type="text" class="form-control" required="required" value="<?php echo $clt_nomer; ?>">
-                    <input type="hidden" name="clt_id" value="<?php echo $id;?>">
+                    <input name="clt_nomer" type="text" class="form-control" required="required" value="<?php echo h($clt_nomer); ?>">
+                    <input type="hidden" name="clt_id" value="<?php echo h($id);?>">
                   </div>
                 </div>
               </div>
@@ -42,7 +48,7 @@ if(isset($_POST["id"])){
                     <div class="input-group-prepend">
                       <div class="input-group-text"><i class="far fa-user"></i></div>
                     </div> 
-                    <input name="clt_nomef"  value="<?php echo $clt_nomef; ?>" type="text" class="form-control" required="required">
+                    <input name="clt_nomef"  value="<?php echo h($clt_nomef); ?>" type="text" class="form-control" required="required">
                   </div>
                 </div>
               </div>
@@ -54,8 +60,9 @@ if(isset($_POST["id"])){
                     <div class="input-group-prepend">
                       <div class="input-group-text"><i class="fas fa-paste"></i></div>
                     </div> 
-                    <input type="text" name="clt_cnpj" id="cnpj" onkeyup="FormataCnpj(this,event)" onblur="if(!validarCNPJ(this.value)){alert('O CNPJ informado é inválido'); this.value='';}" maxlength="18"  class="form-control" ng-model="cadastro.cnpj"  value="<?php echo $clt_cnpj; ?>">
+                    <input type="text" name="clt_cnpj" id="cnpj" onkeyup="FormataCnpj(this,event)" maxlength="18"  class="form-control" ng-model="cadastro.cnpj"  value="<?php echo h($clt_cnpj); ?>">
                   </div>
+                  <div class="client-field-error" data-cnpj-error><i class="fas fa-exclamation-circle"></i> O CNPJ informado é inválido.</div>
                 </div>
               </div>
               
@@ -66,7 +73,7 @@ if(isset($_POST["id"])){
                     <div class="input-group-prepend">
                       <div class="input-group-text"><i class="fas fa-route"></i></div>
                     </div> 
-                    <input name="clt_end" type="text" value="<?php echo $clt_end; ?>" class="form-control" required="required">
+                    <input name="clt_end" type="text" value="<?php echo h($clt_end); ?>" class="form-control" required="required">
                   </div>
                 </div>
               </div>
@@ -78,7 +85,7 @@ if(isset($_POST["id"])){
                     <div class="input-group-prepend">
                       <div class="input-group-text"><i class="fas fa-map-marked-alt"></i></div>
                     </div> 
-                    <input name="clt_city" type="text" value="<?php echo $clt_city; ?>" class="form-control" required="required">
+                    <input name="clt_city" type="text" value="<?php echo h($clt_city); ?>" class="form-control" required="required">
                   </div>
                 </div>
               </div>
@@ -131,7 +138,7 @@ if(isset($_POST["id"])){
                     <div class="input-group-prepend">
                       <div class="input-group-text"><i class="fas fa-at"></i></div>
                     </div> 
-                    <input name="clt_mail" type="email" class="form-control" required="required"  value="<?php echo $clt_mail; ?>">
+                    <input name="clt_mail" type="email" class="form-control" required="required"  value="<?php echo h($clt_mail); ?>">
                   </div>
                 </div>
               </div>
@@ -143,7 +150,7 @@ if(isset($_POST["id"])){
                     <div class="input-group-prepend">
                       <div class="input-group-text"><i class="fas fa-mobile-alt"></i></div>
                     </div> 
-                    <input name="clt_tel" value="<?php echo $clt_tel; ?>" type="text" required="required" class="form-control">
+                    <input name="clt_tel" value="<?php echo h($clt_tel); ?>" type="text" required="required" class="form-control">
                   </div>
                 </div>
               </div>

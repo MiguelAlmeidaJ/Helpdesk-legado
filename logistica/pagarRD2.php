@@ -183,7 +183,7 @@ $pendentes = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                                 <th style="width: 10%;">Valor</th>
                                                 <th style="width: 20%; word-break: break-word; white-space: normal;">Descrição Usuário</th>
                                                 <th>Obs Aprovador</th>
-                                                <th style="width: 20%;">Açães</th>
+                                                <th style="width: 20%;">Ações</th>
                                             </tr>
                                         </thead>
                                         <tbody>

@@ -30,7 +30,7 @@ if (is_dir($relatoriosDir)) {
 }
 
 
-// Lógica para Açães em Massa (Download ou Exclusão)
+// Lógica para Ações em Massa (Download ou Exclusão)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao'])) {
 
     // --- LÓGICA PARA DOWNLOAD EM MASSA ---
@@ -96,85 +96,21 @@ $todosClientes = $stmtTodosClientes->fetchAll(PDO::FETCH_ASSOC);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <title>Gerar Relatérios PDF</title>
+    <title>Gerar Relatórios PDF</title>
     <link rel="stylesheet" href="../css/bootstrap.min.css">
     <link rel="stylesheet" href="../fontawesome/css/all.css">
-    <style>
-        body {
-            zoom: 0.9;
-            width: 100%;
-            font-size: 0.9rem;
-        }
-
-        .card-body {
-            padding-top: 5px;
-            padding-left: 10px;
-            padding-right: 10px;
-            overflow-y: auto;
-            height: calc(100vh - 80px);
-            overflow-x: hidden;
-        }
-
-        .card-lista {
-            overflow-y: auto;
-            height: calc(100vh - 200px);
-            /* padding: 10px; */
-        }
-
-        .card .dropdown-menu {
-            padding-top: 300px;
-            max-height: 200px;
-            overflow-y: auto;
-            position: relative;
-            margin-left: 0 !important;
-            margin-right: 0 !important;
-            width: 100%;
-            z-index: 1000;
-        }
-
-        .card-header .btn {
-            padding-top: 3px;
-            padding-bottom: 3px;
-            margin: 0px;
-        }
-
-        .cliente-checkbox,
-        .pdf-checkbox,
-        #selecionar-todos,
-        #selecionar-todos-pdfs {
-            margin-left: 5px;
-            width: 1.1rem;
-            /* Aumenta a largura */
-            height: 1.1rem;
-            /* Aumenta a altura */
-            cursor: pointer;
-            /* Muda o cursor para uma "mãozinha" ao passar o mouse */
-            vertical-align: middle;
-            /* Alinha o checkbox verticalmente com o texto */
-        }
-
-        .pdf-checkbox,
-        #selecionar-todos-pdfs {
-            margin-left : 20px;
-
-        }
-
-        .form-check-label {
-            margin-left: 30px;
-        }
-
-    </style>
+    <link rel="stylesheet" href="css/relatorios_modern.css">
 </head>
 
-<body>
+<body class="rel-legacy-body">
     <?php include("../all/sidebar.php"); ?>
 
-    <div class="container-fluid pt-2">
+    <div class="container-fluid pt-2 rel-page rel-legacy-page">
         <div class="card">
             <div class="card-header py-2">
                 <div class="row">
                     <div class="col-md-6 mt-2 mb-0 ml-2 row">
-                        <h4 class="m-0 font-weight-bold">Gerador de Relatérios</h4>
+                        <h4 class="m-0 font-weight-bold">Gerador de Relatórios</h4>
                     </div>
                 </div>
             </div>
@@ -186,10 +122,10 @@ $todosClientes = $stmtTodosClientes->fetchAll(PDO::FETCH_ASSOC);
                         <div class="form-group col-md-4">
                             <label>Clientes</label>
                             <div class="dropdown">
-                                <div id="clientes-dropdown-label" class="form-control form-control-sm mr-2 dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style="cursor: pointer;">
+                                <div id="clientes-dropdown-label" class="form-control form-control-sm mr-2 dropdown-toggle dropdown-toggle-split rel-clickable" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                     Selecione o(s) cliente(s)
                                 </div>
-                                <div id="clientes-dropdown-menu" class="dropdown-menu p-2" style="width: 100%; max-height: 350px; overflow-y: auto;">
+                                <div id="clientes-dropdown-menu" class="dropdown-menu p-2 rel-dropdown-scroll">
                                     <div class="form-check">
                                         <input class="form-check-input" type="checkbox" id="selecionar-todos">
                                         <label class="form-check-label" for="selecionar-todos">Todos</label>
@@ -213,21 +149,21 @@ $todosClientes = $stmtTodosClientes->fetchAll(PDO::FETCH_ASSOC);
                             <input type="date" id="data_fim" name="data_fim" class="form-control form-control-sm mr-2" value="<?= htmlspecialchars($_GET['data_fim'] ?? $dataFim) ?>">
                         </div>
                         <div class="form-group col-md-2">
-                            <button type="submit" class="btn btn-success btn-block">
-                                <i class="fas fa-cogs"></i> Gerar Relatério
+                            <button type="submit" class="btn btn-success rel-pill-btn btn-block">
+                                <i class="fas fa-cogs"></i> Gerar Relatório
                             </button>
                         </div>
                     </div>
                 </form>
-                <div id="statusGeracao" class="mt-3" style="display:none;"></div>
+                <div id="statusGeracao" class="mt-3 d-none"></div>
 
 
                 <div class="card card-lista mt-1">
                     <form action="" method="POST" id="formAcoesRelatorios" onsubmit="return confirm('Você confirma esta ação para os relatórios selecionados?');">
 
 
-                        <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
-                            <h5 class="m-0 text-center">Relatérios Gerados</h5>
+                        <div class="card-header d-flex justify-content-between align-items-center rel-section-header">
+                            <h5 class="m-0 text-center">Relatórios Gerados</h5>
                             <div class="d-flex align-items-end ">
                                 <?php if (!empty($arquivosPdf)) : ?>
                                     <button type="submit" name="acao" value="download_selecionados" class="btn btn-primary mr-3">
@@ -240,12 +176,12 @@ $todosClientes = $stmtTodosClientes->fetchAll(PDO::FETCH_ASSOC);
                             </div>
                         </div>
 
-                        <table class="table table-hover table-sm">
+                        <table class="table table-hover table-sm rel-table">
                             <thead>
                                 <tr>
-                                    <th style="width: 1px;"><input type="checkbox" id="selecionar-todos-pdfs"></th>
-                                    <th class = "text-left" style="width: 200px;">Nome do Arquivo</th>
-                                    <th class="text-center" style="width: 20px;">Download Individual</th>
+                                    <th class="rel-check-col"><input type="checkbox" id="selecionar-todos-pdfs"></th>
+                                    <th class="text-left rel-file-col">Nome do Arquivo</th>
+                                    <th class="text-center rel-action-col">Download Individual</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -338,7 +274,7 @@ $todosClientes = $stmtTodosClientes->fetchAll(PDO::FETCH_ASSOC);
                     type: 'POST',
                     data: postData, // Use o objeto que criamos em vez do formData
                     success: function(response) {
-                        statusDiv.html('<div class="alert alert-success">Relatério gerado com sucesso! A página será atualizada.</div>');
+                        statusDiv.html('<div class="alert alert-success">Relatório gerado com sucesso! A página será atualizada.</div>');
                         // console.log("Resposta do script:", response);
                         setTimeout(function() {
                             location.reload();
@@ -376,6 +312,7 @@ $todosClientes = $stmtTodosClientes->fetchAll(PDO::FETCH_ASSOC);
             });
         });
     </script>
+    <script src="js/relatorios_modern.js"></script>
 </body>
 
 </html>

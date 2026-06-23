@@ -4,12 +4,19 @@ include_once("../all/seguranca.php");
 include_once("../all/permissoes.php");
 if (isset($_POST["user_id"])) {
   include_once("../all/conect.php");
-  $id = $_POST["user_id"];
+  $id = filter_input(INPUT_POST, 'user_id', FILTER_VALIDATE_INT);
+  if (!$id) {
+    exit;
+  }
 
   $pdo = ConnectionN3();
-  $show = $pdo->prepare("SELECT usuarios.* FROM usuarios WHERE usuarios.user_id = '$id'");
+  $show = $pdo->prepare("SELECT usuarios.* FROM usuarios WHERE usuarios.user_id = :id");
+  $show->bindParam(':id', $id, PDO::PARAM_INT);
   $show->execute();
   $row = $show->fetch(PDO::FETCH_ASSOC);
+  if (!$row) {
+    exit;
+  }
   $user_nom = $row["user_nome"];
   $user_sts = $row["user_sts"];
   $user_funcao = $row["user_funcao"];
@@ -110,8 +117,9 @@ if (isset($_POST["user_id"])) {
     FROM clientes_usuarios cu
     INNER JOIN clientes c ON cu.cliente_id = c.clt_id
     WHERE c.clt_sts = '1'
-    AND cu.usuario_id = " . $id);
+    AND cu.usuario_id = :id");
 
+    $clientesSelecionados->bindParam(':id', $id, PDO::PARAM_INT);
     $clientesSelecionados->execute();
     $rowClientesSelecionados = $clientesSelecionados->fetchAll(PDO::FETCH_ASSOC);
     $idsClientesSelecionados = array_column($rowClientesSelecionados, 'cliente_id');
@@ -138,13 +146,13 @@ if (isset($_POST["user_id"])) {
     $todosClientes->execute();
   }
 ?>
-  <div class="accordion" id="accordionExample">
+  <div class="accordion edit-user-content" id="accordionExample">
     <input name="user_id" value="<?php echo $id; ?>" type="hidden">
 
-    <div class="card">
+    <div class="card edit-user-section">
       <div class="card-header pb-1 pt-2" id="headingOne">
         <!-- <h5 class="mb-0"> -->
-        <button class="btn pt-0 pb-0" type="button" data-toggle="collapse" data-target="#collapse1" aria-expanded="true" aria-controls="collapse1">
+        <button class="btn" type="button" data-toggle="collapse" data-target="#collapse1" aria-expanded="true" aria-controls="collapse1">
           <h6><i class="fas fa-address-card"></i> Informações Cadastrais</h6>
         </button>
         <!-- </h5> -->
@@ -160,7 +168,7 @@ if (isset($_POST["user_id"])) {
                 <div class="input-group-prepend">
                   <div class="input-group-text"><i class="fas fa-address-card"></i></div>
                 </div>
-                <input id="nome" name="user_nome" value="<?php echo $user_nom; ?>" type="text" required class="form-control form-control-sm">
+                <input id="nome" name="user_nome" value="<?php echo htmlspecialchars($user_nom); ?>" type="text" required class="form-control form-control-sm">
               </div>
             </div>
 
@@ -171,7 +179,7 @@ if (isset($_POST["user_id"])) {
                 <div class="input-group-prepend">
                   <div class="input-group-text"><i class="fas fa-user"></i></div>
                 </div>
-                <input id="login" name="user_login" value="<?php echo $user_login; ?>" type="text" required class="form-control form-control-sm">
+                <input id="login" name="user_login" value="<?php echo htmlspecialchars($user_login); ?>" type="text" required class="form-control form-control-sm">
               </div>
             </div>
 
@@ -218,7 +226,7 @@ if (isset($_POST["user_id"])) {
                 <div class="input-group-prepend">
                   <div class="input-group-text"><i class="fas fa-at"></i></div>
                 </div>
-                <input name="user_mail" value="<?php echo $user_mail; ?>" type="text" required class="form-control form-control-sm">
+                <input name="user_mail" value="<?php echo htmlspecialchars($user_mail); ?>" type="email" required class="form-control form-control-sm">
               </div>
             </div>
 
@@ -229,7 +237,7 @@ if (isset($_POST["user_id"])) {
                 <div class="input-group-prepend">
                   <div class="input-group-text"><i class="fas fa-mobile-alt"></i></div>
                 </div>
-                <input name="user_cel" value="<?php echo $user_cel; ?>" type="text" required class="form-control form-control-sm">
+                <input name="user_cel" value="<?php echo htmlspecialchars($user_cel); ?>" type="text" required class="form-control form-control-sm">
               </div>
             </div>
 
@@ -240,19 +248,23 @@ if (isset($_POST["user_id"])) {
                 <div class="input-group-prepend">
                   <div class="input-group-text"><i class="fas fa-link"></i></div>
                 </div>
-                <input name="link" value="<?php echo $link; ?>" type="text" class="form-control form-control-sm">
+                <input name="link" value="<?php echo htmlspecialchars($link); ?>" type="text" class="form-control form-control-sm">
               </div>
             </div>
 
             <!-- Tipo de usuário -->
             <div class="col-12 col-sm-6 col-md-4 col-lg-3">
               <label class="small mb-1 text-left">Tipo de usuário:</label>
-              <div class="input-group">
-                <input type="radio" id="admin" name="tipo_usuario" value="1" <?php echo ($tipo == 1) ? 'checked' : ''; ?>>
-                <label for="admin" style="padding-right: 5px"> Colaborador</label>
+              <div class="user-type-options">
+                <label class="user-type-option" for="admin_edit">
+                  <input type="radio" id="admin_edit" name="tipo_usuario" value="1" <?php echo ($tipo == 1) ? 'checked' : ''; ?>>
+                  <span><i class="fas fa-id-badge"></i> Colaborador</span>
+                </label>
 
-                <input type="radio" id="cliente" name="tipo_usuario" value="2" <?php echo ($tipo == 2) ? 'checked' : ''; ?>>
-                <label for="cliente"> Cliente</label>
+                <label class="user-type-option" for="cliente_edit">
+                  <input type="radio" id="cliente_edit" name="tipo_usuario" value="2" <?php echo ($tipo == 2) ? 'checked' : ''; ?>>
+                  <span><i class="fas fa-building"></i> Cliente</span>
+                </label>
               </div>
             </div>
 
@@ -291,14 +303,13 @@ if (isset($_POST["user_id"])) {
             <div class="col-12 col-sm-6 col-md-4 col-lg-6">
               <label class="small mb-1 text-left">Empresas:</label>
               <div class="input-group">
-                <select class="companiesEdit" name="companiesEdit" multiple="multiple" style="width: 100%; height: 50px" class="form-control form-control-sm">
-                  <option></option>
+                <select class="companiesEdit" name="companiesEdit[]" multiple="multiple" style="width: 100%; height: 50px" class="form-control form-control-sm">
                   <?php
                   while ($rowc = $todosClientes->fetch(PDO::FETCH_ASSOC)) {
                     $client_id = $rowc["clt_id"];
                     $empresa = $rowc["clt_nomer"];
                   ?>
-                    <option value="<?php echo $client_id; ?>"><?php echo $empresa; ?></option>
+                    <option value="<?php echo $client_id; ?>" <?php echo in_array($client_id, $idsClientesSelecionados) ? 'selected' : ''; ?>><?php echo $empresa; ?></option>
                   <?php } ?>
                 </select>
               </div>
@@ -313,10 +324,10 @@ if (isset($_POST["user_id"])) {
 
     <!--  Módulo Usuários -->
     <?php if ($m1_04 == 1) { ?>
-      <div class="card">
+      <div class="card edit-user-section">
         <div class="card-header pb-1 pt-2" id="headingOne">
           <!-- <h5 class="mb-0"> -->
-          <button class="btn pt-0 pb-0" type="button" data-toggle="collapse" data-target="#collapse2" aria-expanded="true" aria-controls="collapse2">
+          <button class="btn" type="button" data-toggle="collapse" data-target="#collapse2" aria-expanded="false" aria-controls="collapse2">
             <h6><i class="text-info fas fa-users"></i> Módulo Usuários</h6>
           </button>
           <!-- </h5> -->
@@ -480,10 +491,10 @@ if (isset($_POST["user_id"])) {
       </div>
 
       <!-- Cadastro -->
-      <div class="card">
+      <div class="card edit-user-section">
         <div class="card-header pb-1 pt-2" id="headingOne">
           <!-- <h5 class="mb-0"> -->
-          <button class="btn pt-0 pb-0" type="button" data-toggle="collapse" data-target="#collapse3" aria-expanded="true" aria-controls="collapse3">
+          <button class="btn" type="button" data-toggle="collapse" data-target="#collapse3" aria-expanded="false" aria-controls="collapse3">
             <h6><i class="fas fa-file-medical"></i> Cadastro</h6>
           </button>
           <!-- </h5> -->
@@ -714,10 +725,10 @@ if (isset($_POST["user_id"])) {
 
 
       <!-- Atendimentos -->
-      <div class="card">
+      <div class="card edit-user-section">
         <div class="card-header pb-1 pt-2" id="headingOne">
           <!-- <h5 class="mb-0"> -->
-          <button class="btn pt-0 pb-0" type="button" data-toggle="collapse" data-target="#collapse4" aria-expanded="true" aria-controls="collapse4">
+          <button class="btn" type="button" data-toggle="collapse" data-target="#collapse4" aria-expanded="false" aria-controls="collapse4">
             <h6><i class="fas fa-headset text-danger"></i> Atendimentos</h6>
           </button>
           <!-- </h5> -->
@@ -844,10 +855,10 @@ if (isset($_POST["user_id"])) {
       </div>
 
       <!-- Atendimentos DevOps -->
-      <div class="card">
+      <div class="card edit-user-section">
         <div class="card-header pb-1 pt-2" id="headingOne">
           <!-- <h5 class="mb-0"> -->
-          <button class="btn pt-0 pb-0" type="button" data-toggle="collapse" data-target="#collapse5" aria-expanded="true" aria-controls="collapse5">
+          <button class="btn" type="button" data-toggle="collapse" data-target="#collapse5" aria-expanded="false" aria-controls="collapse5">
             <h6><i class="fas fa-code text-danger"></i> Atendimentos DevOps</h6>
           </button>
           <!-- </h5> -->
@@ -908,10 +919,10 @@ if (isset($_POST["user_id"])) {
       </div>
 
       <!-- Logistica -->
-      <div class="card">
+      <div class="card edit-user-section">
         <div class="card-header pb-1 pt-2" id="headingOne">
           <!-- <h5 class="mb-0"> -->
-          <button class="btn pt-0 pb-0" type="button" data-toggle="collapse" data-target="#collapse6" aria-expanded="true" aria-controls="collapse6">
+          <button class="btn" type="button" data-toggle="collapse" data-target="#collapse6" aria-expanded="false" aria-controls="collapse6">
             <h6><i class="fas fa-car"></i> Logística</h6>
           </button>
           <!-- </h5> -->
@@ -1014,10 +1025,10 @@ if (isset($_POST["user_id"])) {
       </div>
 
       <!-- Configuração -->
-      <div class="card">
+      <div class="card edit-user-section">
         <div class="card-header pb-1 pt-2" id="headingOne">
           <!-- <h5 class="mb-0"> -->
-          <button class="btn pt-0 pb-0" type="button" data-toggle="collapse" data-target="#collapse7" aria-expanded="true" aria-controls="collapse7">
+          <button class="btn" type="button" data-toggle="collapse" data-target="#collapse7" aria-expanded="false" aria-controls="collapse7">
             <h6><i class="fas fa-cogs"></i> Configuração</h6>
           </button>
           <!-- </h5> -->

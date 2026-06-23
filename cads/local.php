@@ -4,7 +4,12 @@ include_once("../all/permissoes.php");
 if(isset($_POST["id"])){
   include_once("../all/conect.php");
   include_once("../all/token.php");
-  $id = $_POST["id"];
+  $id = filter_input(INPUT_POST, 'id', FILTER_SANITIZE_NUMBER_INT);
+
+  function h($value)
+  {
+    return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8');
+  }
 ?>
    <div class="row">
       <div class="col-md-7 p-1">
@@ -25,7 +30,8 @@ if(isset($_POST["id"])){
                   <tbody>
 <?php
   $pdo = ConnectionN3();
-  $show = $pdo->prepare("SELECT locais.* FROM locais WHERE locais.local_clt = '$id' ORDER BY local_sts DESC, local_nom ASC");
+  $show = $pdo->prepare("SELECT locais.* FROM locais WHERE locais.local_clt = :id ORDER BY local_sts DESC, local_nom ASC");
+  $show->bindParam(':id', $id, PDO::PARAM_INT);
   $show->execute();
   $conta_locais = $show->rowCount();
   if($conta_locais>0){  
@@ -43,15 +49,15 @@ if(isset($_POST["id"])){
                         <?php if($local_sts==0){ ?><i class="fas fa-toggle-off text-muted" title="Inativo"></i><?php } ?>
                       </td>
                       <td>
-                        <?php echo $local_nom; ?>
+                        <?php echo h($local_nom); ?>
                       </td>
                       <td>
-                        <?php echo $local_end; ?> - <?php echo $local_city; ?> - <?php echo $local_uf; ?>
+                        <?php echo h($local_end); ?> - <?php echo h($local_city); ?> - <?php echo h($local_uf); ?>
                       </td>
                       <td>
 <?php if($m2_03==3){ ?>                        
-                      <a data-toggle="modal" href="#modalEdtLocal<?php echo $local_id; ?>" class="btn btn-outline-warning btn-sm"><i class="far fa-edit"></i></a>
-                  <div class="modal fade" id="modalEdtLocal<?php echo $local_id; ?>">
+                      <a data-toggle="modal" href="#modalEdtLocal<?php echo h($local_id); ?>" class="btn btn-outline-warning btn-sm"><i class="far fa-edit"></i></a>
+                  <div class="modal fade" id="modalEdtLocal<?php echo h($local_id); ?>">
                     <div class="modal-dialog">
                       <form method="POST" action="#">
                       <div class="modal-content">
@@ -71,7 +77,7 @@ if(isset($_POST["id"])){
                                     <div class="input-group-prepend">
                                       <div class="input-group-text"><i class="far fa-user"></i></div>
                                     </div> 
-                                    <input name="local_nom" value="<?php echo $local_nom; ?>" type="text" class="form-control" required="required">
+                                    <input name="local_nom" value="<?php echo h($local_nom); ?>" type="text" class="form-control" required="required">
                                   </div>
                                 </div>
                               </div>
@@ -83,7 +89,7 @@ if(isset($_POST["id"])){
                                     <div class="input-group-prepend">
                                       <div class="input-group-text"><i class="fas fa-route"></i></div>
                                     </div> 
-                                    <input name="local_end" type="text"  value="<?php echo $local_end; ?>" class="form-control" required="required">
+                                    <input name="local_end" type="text"  value="<?php echo h($local_end); ?>" class="form-control" required="required">
                                   </div>
                                 </div>
                               </div>
@@ -95,7 +101,7 @@ if(isset($_POST["id"])){
                                     <div class="input-group-prepend">
                                       <div class="input-group-text"><i class="fas fa-map-marked-alt"></i></div>
                                     </div> 
-                                    <input name="local_city" type="text"  value="<?php echo $local_city; ?>"   class="form-control" required="required">
+                                    <input name="local_city" type="text"  value="<?php echo h($local_city); ?>"   class="form-control" required="required">
                                   </div>
                                 </div>
                               </div>
@@ -157,9 +163,9 @@ if(isset($_POST["id"])){
                           </div>
                         </div>
                         <div class="modal-footer">
-                          <input type="hidden" name="local_id" value="<?php echo $local_id; ?>">
+                          <input type="hidden" name="local_id" value="<?php echo h($local_id); ?>">
                           <input type="hidden" name="action" value="edt_local">
-                          <input type="hidden" name="token" value="<?php echo $token;?>">
+                          <input type="hidden" name="token" value="<?php echo h($token);?>">
                           <button type="submit" class="btn btn-outline-danger btn-sm">Editar</button>                            
                         </div>
                       </div>
@@ -270,9 +276,9 @@ if(isset($_POST["id"])){
               
             </div>
             <div class="modal-footer">
-              <input type="hidden" name="local_clt" value="<?php echo $id;?>">
+              <input type="hidden" name="local_clt" value="<?php echo h($id);?>">
               <input type="hidden" name="action" value="new_local">
-              <input type="hidden" name="token" value="<?php echo $token;?>">
+              <input type="hidden" name="token" value="<?php echo h($token);?>">
               <button type="submit" class="btn btn-outline-danger btn-sm">Cadastrar</button>
             </div>
           </form>

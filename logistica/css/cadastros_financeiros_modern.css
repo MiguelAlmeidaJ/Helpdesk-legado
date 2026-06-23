@@ -1,0 +1,357 @@
+html,
+body {
+  max-width: 100%;
+  overflow-x: hidden;
+  box-sizing: border-box;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: inherit;
+}
+
+body {
+  zoom: 1;
+  height: 100vh;
+  min-height: 100vh;
+  margin: 0;
+  overflow: hidden;
+  background: #f6f8fb;
+  color: #0f172a;
+  font-size: 90%;
+}
+
+body,
+body input,
+body button,
+body select,
+body textarea,
+body .card,
+body .table,
+body .modal-content {
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.cadfin-page {
+  height: 100vh;
+  min-height: 0;
+  margin-top: 0 !important;
+  padding: 10px !important;
+  overflow: hidden;
+}
+
+.cadfin-page > .row,
+.cadfin-page > .row > .col-12,
+.cadfin-main-card {
+  height: 100%;
+  min-height: 0;
+}
+
+.cadfin-page > .row {
+  margin-right: 0;
+  margin-left: 0;
+}
+
+.cadfin-page > .row > .col-12 {
+  padding-right: 0;
+  padding-left: 0;
+}
+
+.cadfin-main-card {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #dbe4ef;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 3px 8px rgba(15, 23, 42, .06);
+  overflow: hidden;
+}
+
+.cadfin-toolbar {
+  flex: 0 0 auto;
+  padding: 10px 14px !important;
+  border-bottom: 1px solid #e7edf5;
+  background: #fff;
+}
+
+.cadfin-title {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 0;
+  color: #172033;
+  font-size: 1.08rem;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.cadfin-title::before {
+  content: "\f51e";
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  background: #e0f2fe;
+  color: #0284c7;
+  font-family: "Font Awesome 5 Free";
+  font-size: .9rem;
+  font-weight: 900;
+}
+
+.cadfin-new-btn,
+.cadfin-btn,
+.cadfin-table .btn,
+.cadfin-modal .modal-footer .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 32px;
+  border-radius: 6px;
+  font-size: .76rem;
+  font-weight: 800;
+  line-height: 1;
+  box-shadow: none !important;
+}
+
+.cadfin-new-btn {
+  border-color: #0284c7;
+  background: #0284c7;
+  color: #fff;
+}
+
+.cadfin-new-btn:hover {
+  border-color: #0369a1;
+  background: #0369a1;
+  color: #fff;
+}
+
+.cadfin-tabs {
+  gap: 6px;
+  margin-top: 10px !important;
+  border: 0;
+}
+
+.cadfin-tabs .nav-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 34px;
+  padding: 7px 10px;
+  border: 1px solid #dbe4ef;
+  border-radius: 999px !important;
+  background: #f8fafc;
+  color: #475569;
+  font-size: .78rem;
+  font-weight: 800;
+}
+
+.cadfin-tabs .nav-link:hover {
+  border-color: #bae6fd;
+  background: #f0f9ff;
+  color: #0369a1;
+}
+
+.cadfin-tabs .nav-link.active {
+  border-color: #0284c7;
+  background: #0284c7;
+  color: #fff;
+}
+
+.cadfin-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 0 !important;
+  overflow: hidden;
+  background: #fff;
+}
+
+.cadfin-tab-content {
+  height: 100%;
+  min-height: 0;
+}
+
+.cadfin-tab-content > .tab-pane.active {
+  height: 100%;
+  min-height: 0;
+}
+
+.cadfin-table-wrap {
+  height: 100%;
+  min-height: 0;
+  overflow: auto;
+}
+
+.cadfin-table {
+  margin-bottom: 0 !important;
+  color: #172033;
+  font-size: .84rem !important;
+}
+
+.cadfin-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  padding: 10px 8px;
+  border: 0 !important;
+  border-bottom: 1px solid #dbe4ef !important;
+  background: #f8fafc !important;
+  color: #334155 !important;
+  font-size: .72rem;
+  font-weight: 900;
+  letter-spacing: .035em;
+  text-transform: uppercase;
+}
+
+.cadfin-table tbody td {
+  padding: 9px 8px;
+  border-color: #eef2f7 !important;
+  vertical-align: middle !important;
+}
+
+.cadfin-table tbody tr:hover {
+  background: #f8fafc;
+}
+
+.cadfin-table .badge {
+  min-width: 58px;
+  padding: 5px 8px;
+  border-radius: 999px;
+  font-weight: 800;
+}
+
+.cadfin-actions-cell,
+.cadfin-actions-cell form {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+
+.cadfin-actions-cell .btn {
+  width: 31px;
+  height: 31px;
+  min-height: 31px;
+  padding: 0;
+}
+
+.cadfin-alert {
+  margin: 0 0 10px;
+  border-radius: 8px;
+  font-weight: 700;
+}
+
+.cadfin-modal .modal-dialog {
+  max-width: 560px;
+}
+
+.cadfin-modal .modal-content {
+  border: 0;
+  border-radius: 10px;
+  box-shadow: 0 18px 45px rgba(15, 23, 42, .24);
+  overflow: hidden;
+}
+
+.cadfin-modal .modal-header {
+  align-items: center;
+  min-height: 54px;
+  padding: 13px 16px;
+  border-bottom: 1px solid #e7edf5;
+  background: #fff;
+}
+
+.cadfin-modal .modal-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  color: #172033;
+  font-weight: 900;
+}
+
+.cadfin-modal .modal-title::before {
+  content: "\f067";
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  background: #e0f2fe;
+  color: #0284c7;
+  font-family: "Font Awesome 5 Free";
+  font-size: .82rem;
+  font-weight: 900;
+}
+
+.cadfin-modal[id^="modalEdit"] .modal-title::before {
+  content: "\f044";
+  background: #fef3c7;
+  color: #d97706;
+}
+
+#modalDelete .modal-title::before {
+  content: "\f2ed";
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.cadfin-modal .close {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border-radius: 999px;
+  background: #f1f5f9;
+  color: #475569;
+  opacity: 1;
+}
+
+.cadfin-modal .modal-body {
+  padding: 16px;
+  background: #fbfdff;
+}
+
+.cadfin-modal label {
+  color: #475569;
+  font-size: .78rem;
+  font-weight: 800;
+}
+
+.cadfin-modal .form-control {
+  min-height: 36px;
+  border-color: #d7e1ec;
+  border-radius: 6px;
+  box-shadow: none;
+  font-size: .84rem;
+}
+
+.cadfin-modal .form-control:focus {
+  border-color: #38bdf8;
+  box-shadow: 0 0 0 .16rem rgba(56, 189, 248, .18);
+}
+
+.cadfin-modal .modal-footer {
+  padding: 12px 16px;
+  border-top: 1px solid #e7edf5;
+  background: #fff;
+}
+
+@media (max-width: 992px) {
+  body {
+    overflow: auto;
+  }
+
+  .cadfin-page,
+  .cadfin-main-card,
+  .cadfin-body,
+  .cadfin-tab-content,
+  .cadfin-tab-content > .tab-pane.active,
+  .cadfin-table-wrap {
+    height: auto;
+    overflow: visible;
+  }
+}

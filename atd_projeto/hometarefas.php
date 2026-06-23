@@ -3,6 +3,7 @@ session_start();
 include_once("../all/seguranca.php");
 include_once("../all/conect.php");
 include_once("../all/permissoes.php");
+include_once(__DIR__ . "/lib/list_helpers.php");
 
 
 // STATUS DAS TAREFAS
@@ -121,6 +122,27 @@ if (isset($_POST['order_dir'])) {
 
 $order_by = $ord . " " . $order_dir;
 
+$tarefa_filter_source = array_merge($_GET, $_POST);
+if (isset($_SESSION['allterusN3Id']) && (int)$_SESSION['allterusN3Id'] == 134 && empty($tarefa_filter_source['f_palavra'])) {
+  $tarefa_filter_source['f_palavra'] = 'NET DO BRASIL';
+}
+$tarefa_filters = atd_projeto_collect_filters($tarefa_filter_source, 'tasks');
+$f_sts = $tarefa_filters['f_sts'];
+$f_sol = $tarefa_filters['f_sol'];
+$f_clt = $tarefa_filters['f_clt'];
+$f_tec = $tarefa_filters['f_tec'];
+$f_id = $tarefa_filters['f_id'];
+$f_palavra_raw = $tarefa_filters['f_palavra'];
+$ord = $tarefa_filters['ord'];
+$order_dir = $tarefa_filters['order_dir'];
+$p_sts = implode(',', $tarefa_filters['statuses']);
+$p_sol = $f_sol > 0 ? $f_sol : '%';
+$p_clt = $f_clt > 0 ? $f_clt : '%';
+$p_tec = $f_tec !== 'all' ? $f_tec : '%';
+$p_id = $f_id !== '' ? $f_id : '%';
+$filtro_palavra = '';
+$order_by = $tarefa_filters['order_sql'];
+
 $pdo = ConnectionN3();
 
 $show = $pdo->prepare("SELECT configuracao.* FROM configuracao");
@@ -138,6 +160,7 @@ $sla_n4 = $row["sla_n4"];
 $sla_n5 = $row["sla_n5"];
 
 
+if (false) {
 $count_tarefas = 0;
 
 // Consulta para contar as tarefas
@@ -193,11 +216,7 @@ try {
   error_log("Erro ao buscar a contagem de tarefas: " . $e->getMessage());
   $count_tarefas = 0;
 }
-
-
-?>
-<?php
-header("Refresh:120");
+}
 ?>
 <?php
 //BUSCA TODOS AS TAREFAS QUE ESTÃO AGENDADOS (STATUS = 0)
@@ -227,6 +246,8 @@ while ($exibe = $show_tarefas->fetch(PDO::FETCH_ASSOC)) {
     }
   }
 }
+$tarefaListResult = atd_projeto_fetch_tasks($pdo, $tarefa_filters);
+$count_tarefas = $tarefaListResult['pagination']['total'];
 ?>
 <!doctype html>
 <html lang="pt-BR">
@@ -241,6 +262,8 @@ while ($exibe = $show_tarefas->fetch(PDO::FETCH_ASSOC)) {
   <link rel="stylesheet" href="../css/progress_bar.css">
   <link rel="stylesheet" href="../css/blink.css">
   <link rel="stylesheet" href="../css/help.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+  <link rel="stylesheet" href="css/projeto_modern.css">
   <title>Allterus</title>
 </head>
 <style>
@@ -279,12 +302,12 @@ while ($exibe = $show_tarefas->fetch(PDO::FETCH_ASSOC)) {
   <!-- <?php include_once("../all/loading.php"); ?> -->
   <?php include("../all/sidebar.php"); ?>
 
-  <div class="container-fluid">
-    <div class="row">
-      <div class="col-12 mt-2" style="padding-left: 1px; padding-right: 1px;">
-        <div class="card">
-          <div class="card-header py-1">
-            <form action="#" method="POST">
+  <div class="container-fluid projeto-list-page">
+    <div class="row projeto-list-page-row">
+      <div class="col-12 mt-2 projeto-page-wrap">
+        <div class="card projeto-list-shell-card">
+          <div class="card-header py-1 projeto-filter-card-header">
+            <form action="#" method="POST" id="tarefasFilterForm" class="projeto-filter-form" data-projeto-ajax-form>
               <div class="form-row align-items-center">
 
                 <div class="col-auto col-form-label-sm">
@@ -409,17 +432,20 @@ while ($exibe = $show_tarefas->fetch(PDO::FETCH_ASSOC)) {
                   <button type="button" class="btn btn-sm btn-outline-info" tabindex="4" onclick="window.location.href='?action=limpar_filtros';">Limpar</button>
                 </div>
 
+                <input type="hidden" name="data_1" id="projeto_data_1" value="<?php echo atd_projeto_h($tarefa_filters['data_1'] ?? ''); ?>">
+                <input type="hidden" name="data_2" id="projeto_data_2" value="<?php echo atd_projeto_h($tarefa_filters['data_2'] ?? ''); ?>">
+
                 <?php if (isset($_SESSION['allterusN3Id']) && (int)$_SESSION['allterusN3Id'] !== 134) { ?>
                   <div class="col-auto pt-3">
-                    <a href="./srhometarefas.php" class="btn btn-sm btn-outline-info" tabindex="4">
-                      <i class="fas fa-calendar-alt"></i> Filtro Avançado
-                    </a>
+                    <button type="button" class="btn btn-sm <?php echo (($tarefa_filters['data_1'] ?? '') || ($tarefa_filters['data_2'] ?? '')) ? 'btn-info' : 'btn-outline-info'; ?>" id="btn-projeto-date-range" tabindex="4" title="Filtrar por data de abertura">
+                      <i class="far fa-calendar-alt"></i>
+                      <span id="projeto-date-range-label" class="ml-1">Periodo</span>
+                    </button>
                   </div>
 
                   <div class="col-auto pt-3">
                     <button class="btn btn-sm btn-outline-info" tabindex="4">Total de Tarefas: <?php echo $count_tarefas; ?></button>
                   </div>
-              </div>
 
             <?php } else { ?>
 
@@ -434,7 +460,11 @@ while ($exibe = $show_tarefas->fetch(PDO::FETCH_ASSOC)) {
 
         </div>
 
-        <div class="card-body p-0" style="overflow-x: auto; overflow-y: auto;">
+        <div class="card-body p-0 projeto-list-card-body">
+          <div id="atd-projeto-tarefas-list" class="projeto-list-container" data-projeto-list data-projeto-form="#tarefasFilterForm" data-projeto-endpoint="api/tarefas_list.php">
+            <?php echo atd_projeto_render_tasks_table($tarefaListResult['rows'], $tarefa_filters, $tarefaListResult['pagination']); ?>
+          </div>
+          <?php if (false) { ?>
           <div class="table-container">
             <table class="table table-hover small">
               <thead>
@@ -909,6 +939,7 @@ while ($exibe = $show_tarefas->fetch(PDO::FETCH_ASSOC)) {
               </tbody>
             </table>
           </div>
+          <?php } ?>
         </div>
       </div>
     </div>
@@ -992,6 +1023,9 @@ while ($exibe = $show_tarefas->fetch(PDO::FETCH_ASSOC)) {
   <script src="../js/jquery-3.6.0.min.js"></script>
   <script src="../js/bootstrap.bundle.min.js"></script>
   <script src="../js/bootstrap-select.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/pt.js"></script>
+  <script src="js/projeto_list.js"></script>
 
   <?php if (isset($mensagem)) { ?>
 

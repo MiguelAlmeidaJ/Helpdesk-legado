@@ -32,6 +32,60 @@ $statusMap = [
     55 => "Aprovação DOC"
 ];
 
+function mktShortText(string $text, int $limit = 120): string
+{
+    $text = trim(strip_tags(html_entity_decode($text, ENT_QUOTES, 'UTF-8')));
+    if (function_exists('mb_strimwidth')) {
+        return mb_strimwidth($text, 0, $limit, '...', 'UTF-8');
+    }
+    return strlen($text) > $limit ? substr($text, 0, $limit) . '...' : $text;
+}
+
+function renderMktRows(array $atendimentos): string
+{
+    ob_start();
+    foreach ($atendimentos as $atendimento) : ?>
+        <tr class="mkt-row" data-mkt-id="<?= (int)$atendimento['id'] ?>">
+            <td><strong>#<?= (int)$atendimento['id'] ?></strong></td>
+            <td>
+                <strong><?= htmlspecialchars($atendimento['name'] ?? '') ?></strong>
+                <?php if (!empty($atendimento['description'])) : ?>
+                    <span class="mkt-row-desc"><?= htmlspecialchars(mktShortText($atendimento['description'])) ?></span>
+                <?php endif; ?>
+            </td>
+            <td><strong><?= htmlspecialchars($atendimento['nome_cliente'] ?? '') ?></strong></td>
+            <td>
+                <?php
+                $prio = (int)($atendimento['priority'] ?? 0);
+                $cores = [1 => 'success', 2 => 'warning', 3 => 'custom', 4 => 'danger'];
+                $labels = [1 => 'Baixa', 2 => 'Média', 3 => 'Alta', 4 => 'Urgente'];
+                if ($prio == 0) {
+                    echo '<span class="mkt-badge mkt-badge-muted">NA</span>';
+                } elseif ($prio == 3) {
+                    echo '<span class="mkt-badge mkt-badge-high">Alta</span>';
+                } else {
+                    echo "<span class='mkt-badge mkt-badge-{$cores[$prio]}'>{$labels[$prio]}</span>";
+                }
+                ?>
+            </td>
+            <td><?= htmlspecialchars((string)($atendimento['total_artes'] ?? '')) ?></td>
+            <td><?= htmlspecialchars(trim(($atendimento['nome_tecnico'] ?? '') . ' ' . ($atendimento['sobrenome_tecnico'] ?? ''))) ?></td>
+            <td><?= htmlspecialchars(trim(($atendimento['nome_direcionador'] ?? '') . ' ' . ($atendimento['sobrenome_direcionador'] ?? ''))) ?></td>
+            <td><span class="mkt-status"><?= htmlspecialchars($atendimento['status'] ?? '') ?></span></td>
+            <td><?= htmlspecialchars((string)($atendimento['inicio'] ?? '')) ?></td>
+            <td><?= htmlspecialchars((string)($atendimento['prazo'] ?? '')) ?></td>
+            <td><?= htmlspecialchars((string)($atendimento['finalizado'] ?? '')) ?></td>
+            <td class="align-middle p-1">
+                <form action="mkt_atd.php" method="POST" class="mkt-open-form">
+                    <input type="hidden" name="mkt_atd" value="<?php echo (int)$atendimento['id']; ?>">
+                    <button type="submit" class="btn btn-light btn-sm p-1" title="Abrir"><i class="far fa-folder-open"></i></button>
+                </form>
+            </td>
+        </tr>
+    <?php endforeach;
+    return ob_get_clean();
+}
+
 // Receber filtros enviados via POST
 $idFiltro = $_POST['id'] ?? '';
 $tituloFiltro = $_POST['titulo'] ?? '';
@@ -41,6 +95,10 @@ $prioridadeFiltro = $_POST['prioridade'] ?? '';
 $dataFiltro = $_POST['data_1'] ?? '';
 $tecnicoFiltro = $_POST['tecnico'] ?? '';
 $typeDataFiltro = $_POST['typeDataFiltro'] ?? 1;
+$isAjax = ($_POST['ajax_mode'] ?? '') === 'append';
+$pageSize = 50;
+$page = max(1, (int)($_POST['page'] ?? 1));
+$offset = ($page - 1) * $pageSize;
 
 // Converter data do formato dd/mm/aaaa para yyyy-mm-dd
 if (!empty($dataFiltro)) {
@@ -121,6 +179,22 @@ if (!in_array($order_dir, $order_dir_validas)) {
 
 $orderColumn = $colunas_validas[$ord];
 
+$countQuery = "
+    SELECT COUNT(*) AS total
+    FROM tbltasks t
+    LEFT JOIN tbltask_assigned ta ON t.id = ta.taskid
+    LEFT JOIN tbltask_statuses ts ON t.status = ts.id
+    LEFT JOIN tblcustomfieldsvalues cfv ON t.id = cfv.relid AND cfv.fieldid = 8
+    LEFT JOIN tblstaff s ON ta.staffid = s.staffid
+    LEFT JOIN tblclients c ON t.rel_id = c.userid
+    LEFT JOIN tblstaff d ON t.addedfrom = d.staffid
+    $whereSql
+";
+
+$stmtCount = $pdoMkt->prepare($countQuery);
+$stmtCount->execute($params);
+$count_atendimentos = (int)($stmtCount->fetchColumn() ?: 0);
+
 $query = "
     SELECT t.id, t.name, t.description, c.userid AS id_cliente, c.company AS nome_cliente,
            t.priority, t.status, ts.name AS status, 
@@ -139,15 +213,37 @@ $query = "
     LEFT JOIN tblstaff d ON t.addedfrom = d.staffid
     $whereSql
     ORDER BY $orderColumn $order_dir
+    LIMIT :limit OFFSET :offset
 ";
 
 $stmt = $pdoMkt->prepare($query);
-$stmt->execute($params);
+foreach ($params as $key => $value) {
+    $stmt->bindValue($key, $value);
+}
+$stmt->bindValue(':limit', $pageSize, PDO::PARAM_INT);
+$stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+$stmt->execute();
 
-$count_atendimentos = $stmt->rowCount();
 $todosAtendimentos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+$loadedCount = min($offset + count($todosAtendimentos), $count_atendimentos);
+$hasMore = $loadedCount < $count_atendimentos;
 
-// Carregar opçães para filtros
+if ($isAjax) {
+    header('Content-Type: application/json; charset=utf-8');
+    echo json_encode([
+        'ok' => true,
+        'html' => renderMktRows($todosAtendimentos),
+        'pagination' => [
+            'total' => $count_atendimentos,
+            'loaded' => $loadedCount,
+            'nextPage' => $hasMore ? $page + 1 : null,
+            'hasMore' => $hasMore,
+        ],
+    ]);
+    exit;
+}
+
+// Carregar opções para filtros
 $stmtTodosClientes = $pdoMkt->prepare("SELECT userid, company FROM tblclients ORDER BY company ASC");
 $stmtTodosClientes->execute();
 $todosClientes = $stmtTodosClientes->fetchAll(PDO::FETCH_ASSOC);
@@ -178,9 +274,121 @@ $todosStatus = $stmtTodosStatus->fetchAll(PDO::FETCH_ASSOC);
 
     <style>
         body {
-            zoom: 0.9;
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            zoom: 1;
             width: 100%;
             overflow-x: hidden;
+            background: #f3f6fa;
+        }
+
+        .mkt-page {
+            height: 100vh;
+            height: 100dvh;
+            overflow: hidden;
+            padding: 6px 8px 8px;
+        }
+
+        .mkt-shell {
+            height: calc(100vh - 14px);
+            height: calc(100dvh - 14px);
+            display: flex;
+            flex-direction: column;
+            border: 1px solid #d8e3ef;
+            border-radius: 6px;
+            background: #fff;
+            box-shadow: 0 8px 22px rgba(15, 23, 42, .06);
+            overflow: hidden;
+        }
+
+        .mkt-filter-card {
+            flex: 0 0 auto;
+            border-bottom: 1px solid #d8e3ef;
+            background: #fbfcfe;
+            padding: 10px 12px;
+        }
+
+        .mkt-filter-card label {
+            color: #172033;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .mkt-filter-card .form-control,
+        .mkt-filter-card .btn {
+            border-radius: 4px;
+            box-shadow: none;
+        }
+
+        .mkt-filter-card .bootstrap-select {
+            width: 100% !important;
+        }
+
+        .mkt-filter-card .bootstrap-select>.dropdown-toggle {
+            min-height: 32px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            background: #fff;
+            color: #172033;
+            font-size: 13px;
+            box-shadow: none;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .bootstrap-select .filter-option-inner-inner {
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        body>.bootstrap-select .dropdown-menu,
+        .bs-container.bootstrap-select .dropdown-menu,
+        .bootstrap-select.show .dropdown-menu {
+            z-index: 2055;
+            min-width: 0 !important;
+            max-width: min(420px, calc(100vw - 24px));
+            max-height: 280px !important;
+            overflow: hidden;
+            border: 1px solid #d9e3ef;
+            border-radius: 6px;
+            box-shadow: 0 10px 24px rgba(15, 23, 42, .14);
+        }
+
+        .bs-container.bootstrap-select {
+            width: auto !important;
+            min-width: 0 !important;
+            max-width: calc(100vw - 24px);
+        }
+
+        body>.bootstrap-select .dropdown-menu.inner,
+        .bs-container.bootstrap-select .dropdown-menu.inner,
+        .bootstrap-select .dropdown-menu.inner {
+            max-height: 238px !important;
+            overflow-y: auto !important;
+            overflow-x: hidden !important;
+        }
+
+        .bootstrap-select .dropdown-menu li a,
+        .bootstrap-select .dropdown-item {
+            white-space: normal;
+            line-height: 1.25;
+            padding: 7px 10px;
+            font-size: 13px;
+        }
+
+        .bootstrap-select .bs-searchbox {
+            padding: 8px;
+        }
+
+        .bootstrap-select .bs-searchbox .form-control {
+            min-height: 32px;
+            border-radius: 5px;
+            font-size: 13px;
+        }
+
+        .mkt-list-card {
+            flex: 1 1 auto;
+            min-height: 0;
+            overflow: hidden;
         }
 
         .form-check-label {
@@ -194,25 +402,116 @@ $todosStatus = $stmtTodosStatus->fetchAll(PDO::FETCH_ASSOC);
         }
 
         .table-container {
-            height: 87vh;
+            height: 100%;
             /* Define um limite de altura para a tabela */
             overflow-y: auto;
             /* Habilita o scroll vertical */
-            display: block;
-            border: 1px solid #dee2e6;
+            overflow-x: hidden;
+            border: 0;
+            background: #fff;
         }
 
         table {
-            display: auto;
             width: 100%;
             border-collapse: collapse;
+            table-layout: fixed;
+            margin-bottom: 0 !important;
+        }
+
+        thead th {
+            position: sticky;
+            top: 0;
+            z-index: 2;
+            background: #f8fafc;
+            border-bottom: 1px solid #d8e3ef !important;
+            color: #172033;
+            font-size: 12px;
+            font-weight: 700;
         }
 
         th,
         td {
-            max-width: 200px;
             white-space: normal;
             word-wrap: break-word;
+            vertical-align: middle !important;
+        }
+
+        .mkt-row {
+            height: 72px;
+            cursor: pointer;
+        }
+
+        .mkt-row:hover {
+            background: #f8fbff;
+        }
+
+        .mkt-row-desc {
+            display: block;
+            margin-top: 2px;
+            color: #53677f;
+            font-size: 11px;
+            line-height: 1.25;
+        }
+
+        .mkt-badge,
+        .mkt-status {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 999px;
+            padding: 4px 8px;
+            font-size: 11px;
+            font-weight: 700;
+            line-height: 1;
+            white-space: nowrap;
+        }
+
+        .mkt-status {
+            background: #e8f8fc;
+            color: #075985;
+        }
+
+        .mkt-badge-muted {
+            background: #eef2f7;
+            color: #475569;
+        }
+
+        .mkt-badge-success {
+            background: #dcfce7;
+            color: #15803d;
+        }
+
+        .mkt-badge-warning {
+            background: #fef3c7;
+            color: #a16207;
+        }
+
+        .mkt-badge-high {
+            background: #ffedd5;
+            color: #c2410c;
+        }
+
+        .mkt-badge-danger {
+            background: #ffe4e6;
+            color: #be123c;
+        }
+
+        .mkt-open-form {
+            margin: 0;
+        }
+
+        .mkt-loader {
+            display: none;
+            padding: 12px;
+            text-align: center;
+            color: #53677f;
+            font-size: 12px;
+            border-top: 1px solid #e7edf5;
+            background: #fbfcfe;
+        }
+
+        .mkt-loader.is-visible {
+            display: block;
         }
 
         .form-check-label {
@@ -239,12 +538,12 @@ $todosStatus = $stmtTodosStatus->fetchAll(PDO::FETCH_ASSOC);
 <body>
     <?php include("../all/sidebar.php"); ?>
 
-    <div class="container-fluid">
-        <div class="row">
-            <div class="col-12 mt-2" style="padding-left: 1px; padding-right: 1px;">
-                <div class="card w-100" style="overflow-x: auto;">
-                    <div class="card-header py-1">
-                        <form action="#" method="POST">
+    <div class="container-fluid mkt-page">
+        <div class="row h-100">
+            <div class="col-12 h-100" style="padding-left: 1px; padding-right: 1px;">
+                <div class="mkt-shell">
+                    <div class="mkt-filter-card">
+                        <form action="#" method="POST" id="mktFilterForm">
                             <div class="form-row align-items-center">
                                 <div class="col-auto col-form-label-sm">
                                     <label class="my-0">ID:</label>
@@ -253,7 +552,7 @@ $todosStatus = $stmtTodosStatus->fetchAll(PDO::FETCH_ASSOC);
 
                                 <div class="col-2 col-form-label-sm">
                                     <label class="my-0">Cliente:</label>
-                                    <select class="form-control form-control-sm" name="cliente" id="cliente">
+                                    <select class="form-control form-control-sm selectpicker" data-live-search="true" data-container="body" data-width="100%" name="cliente" id="cliente">
                                         <option value="">Todos</option>
                                         <?php foreach ($todosClientes as $cliente) : ?>
                                             <option value="<?= $cliente['userid'] ?>" <?= (isset($_POST['cliente']) && $_POST['cliente'] == $cliente['userid']) ? 'selected' : '' ?>>
@@ -265,28 +564,18 @@ $todosStatus = $stmtTodosStatus->fetchAll(PDO::FETCH_ASSOC);
 
                                 <div class="col-auto col-form-label-sm">
                                     <label class="my-0">Status:</label>
-                                    <div class="dropdown" style="width: 190px">
-                                        <div class="form-control form-control-sm dropdown-toggle dropdown-toggle-split" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style="cursor: pointer;">
-                                            Selecione
-                                        </div>
-                                        <div class="dropdown-menu p-2" style="width: 190px; border-radius: 4px;">
-                                            <div class="form-check">
-                                                <input class="form-check-input" type="checkbox" id="select-all-status" onclick="toggleAllStatuses()">
-                                                <label class="form-check-label" for="select-all-status">Todos</label>
-                                            </div>
-                                            <?php foreach ($todosStatus as $status) : ?>
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" name="status[]" value="<?= $status['id'] ?>" id="status<?= $status['id'] ?>" <?= (isset($_POST['status']) && in_array($status['id'], $_POST['status'])) ? 'checked' : '' ?>>
-                                                    <label class="form-check-label" for="status<?= $status['id'] ?>"><?= $status['name'] ?></label>
-                                                </div>
-                                            <?php endforeach; ?>
-                                        </div>
-                                    </div>
+                                    <select class="form-control form-control-sm selectpicker" name="status[]" id="status" multiple data-live-search="true" data-actions-box="true" data-selected-text-format="count > 1" data-none-selected-text="Selecione" data-container="body" data-width="100%">
+                                        <?php foreach ($todosStatus as $status) : ?>
+                                            <option value="<?= $status['id'] ?>" <?= (isset($_POST['status']) && is_array($_POST['status']) && in_array($status['id'], $_POST['status'])) ? 'selected' : '' ?>>
+                                                <?= $status['name'] ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
                                 </div>
 
                                 <div class="col-auto col-form-label-sm">
                                     <label class="my-0">Prioridade:</label>
-                                    <select class="form-control form-control-sm" name="prioridade" id="prioridade">
+                                    <select class="form-control form-control-sm selectpicker" data-container="body" data-width="100%" name="prioridade" id="prioridade">
                                         <option value="">Todas</option>
                                         <option value="1" <?= (isset($_POST['prioridade']) && $_POST['prioridade'] == "1") ? 'selected' : '' ?>>Baixa</option>
                                         <option value="2" <?= (isset($_POST['prioridade']) && $_POST['prioridade'] == "2") ? 'selected' : '' ?>>Média</option>
@@ -297,8 +586,8 @@ $todosStatus = $stmtTodosStatus->fetchAll(PDO::FETCH_ASSOC);
                                 </div>
 
                                 <div class="col-auto col-form-label-sm">
-                                    <label class="my-0">Tecnico:</label>
-                                    <select class="form-control form-control-sm" name="tecnico" id="tecnico">
+                                    <label class="my-0">Técnico:</label>
+                                    <select class="form-control form-control-sm selectpicker" data-live-search="true" data-container="body" data-width="100%" name="tecnico" id="tecnico">
                                         <option value="">Todos</option>
                                         <?php foreach ($todosTecnicos as $tecnico) : ?>
                                             <option value="<?= $tecnico['staffid'] ?>" <?= (isset($_POST['tecnico']) && $_POST['tecnico'] == $tecnico['staffid']) ? 'selected' : '' ?>>
@@ -329,7 +618,7 @@ $todosStatus = $stmtTodosStatus->fetchAll(PDO::FETCH_ASSOC);
                         </form>
                     </div>
 
-                    <div class="card-body p-0">
+                    <div class="mkt-list-card">
                         <div class="table-container">
                             <table class="table table-hover small">
                                 <thead>
@@ -376,8 +665,9 @@ $todosStatus = $stmtTodosStatus->fetchAll(PDO::FETCH_ASSOC);
                                         ?>
                                     </tr>
                                 </thead>
-                                <tbody>
-                                    <?php foreach ($todosAtendimentos as $atendimento) : ?>
+                                <tbody id="mktRows">
+                                    <?= renderMktRows($todosAtendimentos) ?>
+                                    <?php if (false) : foreach ($todosAtendimentos as $atendimento) : ?>
                                         <tr>
                                             <td><strong>#<?= $atendimento['id'] ?></strong></td>
                                             <td><?= htmlspecialchars($atendimento['name']) ?></td>
@@ -410,9 +700,12 @@ $todosStatus = $stmtTodosStatus->fetchAll(PDO::FETCH_ASSOC);
                                                 </form>
                                             </td>
                                         </tr>
-                                    <?php endforeach; ?>
+                                    <?php endforeach; endif; ?>
                                 </tbody>
                             </table>
+                            <div id="mktLoader" class="mkt-loader <?= $hasMore ? 'is-visible' : '' ?>">
+                                <?= $hasMore ? 'Role ate o fim para carregar mais atendimentos' : 'Todos os atendimentos foram exibidos' ?>
+                            </div>
                         </div>
                     </div> <!-- card-body -->
                 </div> <!-- card -->
@@ -422,11 +715,58 @@ $todosStatus = $stmtTodosStatus->fetchAll(PDO::FETCH_ASSOC);
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
+    <script src="../js/bootstrap-select.min.js"></script>
 
     <script>
+        function normalizeMktSelects(scope) {
+            if (!window.jQuery || !$.fn.selectpicker) {
+                return;
+            }
+
+            $(scope || document).find('.selectpicker').each(function() {
+                var $select = $(this);
+                $select.attr('data-container', 'body');
+                $select.attr('data-width', '100%');
+
+                if ($select.data('selectpicker')) {
+                    $select.selectpicker('refresh');
+                } else {
+                    $select.selectpicker({
+                        container: 'body',
+                        width: '100%',
+                        dropupAuto: false,
+                        size: 8
+                    });
+                }
+            });
+        }
+
+        normalizeMktSelects(document);
+
+        $(document).on('shown.bs.select', '.selectpicker', function() {
+            var $select = $(this);
+            var $button = $select.parent('.bootstrap-select').find('> button.dropdown-toggle');
+            var $container = $('.bs-container.bootstrap-select').last();
+            var $menu = $container.find('> .dropdown-menu');
+
+            if ($button.length && $menu.length) {
+                var width = Math.min(Math.max($button.outerWidth(), 180), 420, window.innerWidth - 24);
+                $container.css({
+                    width: width,
+                    minWidth: width,
+                    maxWidth: width
+                });
+                $menu.css({
+                    width: width,
+                    minWidth: width,
+                    maxWidth: width
+                });
+            }
+        });
+
         function limparFiltros() {
             // Limpa todos os inputs e selects
-            document.querySelectorAll('form input, form select').forEach(element => {
+            document.querySelectorAll('#mktFilterForm input, #mktFilterForm select').forEach(element => {
                 if (element.type === 'checkbox' || element.type === 'radio') {
                     element.checked = false;
                 } else if (element.tagName === 'SELECT') {
@@ -436,8 +776,9 @@ $todosStatus = $stmtTodosStatus->fetchAll(PDO::FETCH_ASSOC);
                 }
             });
 
+            normalizeMktSelects(document);
 
-            document.querySelector('form').submit();
+            document.getElementById('mktFilterForm').submit();
         }
     </script>
 
@@ -447,6 +788,105 @@ $todosStatus = $stmtTodosStatus->fetchAll(PDO::FETCH_ASSOC);
             const master = document.getElementById("select-all-status");
             checkboxes.forEach(c => c.checked = master.checked);
         }
+    </script>
+
+    <script>
+        (function() {
+            var tableContainer = document.querySelector('.table-container');
+            var rowsContainer = document.getElementById('mktRows');
+            var loader = document.getElementById('mktLoader');
+            var filterForm = document.getElementById('mktFilterForm');
+            var nextPage = <?= $hasMore ? ($page + 1) : 'null' ?>;
+            var loading = false;
+            var hasMore = <?= $hasMore ? 'true' : 'false' ?>;
+
+            function bindRowOpen(scope) {
+                (scope || document).querySelectorAll('.mkt-row').forEach(function(row) {
+                    if (row.dataset.boundOpen === '1') {
+                        return;
+                    }
+                    row.dataset.boundOpen = '1';
+                    row.addEventListener('dblclick', function(event) {
+                        if (event.target.closest('button, form, input, select, textarea, a')) {
+                            return;
+                        }
+                        var id = row.getAttribute('data-mkt-id');
+                        if (!id) {
+                            return;
+                        }
+                        var form = document.createElement('form');
+                        form.method = 'POST';
+                        form.action = 'mkt_atd.php';
+                        var input = document.createElement('input');
+                        input.type = 'hidden';
+                        input.name = 'mkt_atd';
+                        input.value = id;
+                        form.appendChild(input);
+                        document.body.appendChild(form);
+                        form.submit();
+                    });
+                });
+            }
+
+            function setLoader(text, visible) {
+                if (!loader) {
+                    return;
+                }
+                loader.textContent = text;
+                loader.classList.toggle('is-visible', visible);
+            }
+
+            function loadMore() {
+                if (!hasMore || loading || !nextPage || !filterForm || !rowsContainer) {
+                    return;
+                }
+                loading = true;
+                setLoader('Carregando mais atendimentos...', true);
+
+                var data = new FormData(filterForm);
+                data.set('ajax_mode', 'append');
+                data.set('page', String(nextPage));
+
+                fetch('home.php', {
+                    method: 'POST',
+                    body: data,
+                    credentials: 'same-origin'
+                })
+                    .then(function(response) {
+                        return response.json();
+                    })
+                    .then(function(payload) {
+                        if (!payload || !payload.ok) {
+                            throw new Error('Resposta inválida');
+                        }
+                        var temp = document.createElement('tbody');
+                        temp.innerHTML = payload.html || '';
+                        Array.prototype.slice.call(temp.children).forEach(function(row) {
+                            rowsContainer.appendChild(row);
+                        });
+                        bindRowOpen(rowsContainer);
+                        hasMore = !!payload.pagination.hasMore;
+                        nextPage = payload.pagination.nextPage;
+                        setLoader(hasMore ? 'Role ate o fim para carregar mais atendimentos' : 'Todos os atendimentos foram exibidos', true);
+                    })
+                    .catch(function() {
+                        setLoader('Nao foi possivel carregar mais atendimentos.', true);
+                    })
+                    .finally(function() {
+                        loading = false;
+                    });
+            }
+
+            if (tableContainer) {
+                tableContainer.addEventListener('scroll', function() {
+                    if (tableContainer.scrollTop + tableContainer.clientHeight >= tableContainer.scrollHeight - 120) {
+                        loadMore();
+                    }
+                });
+            }
+
+            bindRowOpen(document);
+        })();
     </script>
 </body>
 

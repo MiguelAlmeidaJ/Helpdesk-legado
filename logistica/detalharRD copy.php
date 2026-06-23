@@ -119,7 +119,7 @@ $cats      = $pdo->query("SELECT id, nome FROM categorias_subgrupo WHERE aplicav
     <link rel="stylesheet" href="../fontawesome/css/all.css" />
     <link rel="stylesheet" href="https://cdn.datatables.net/1.10.25/css/dataTables.bootstrap4.min.css" />
     <link rel="stylesheet" href="https://cdn.datatables.net/buttons/1.7.1/css/buttons.bootstrap4.min.css" />
-    <title>Relatério de Pagamentos</title>
+    <title>Relatório de Pagamentos</title>
     <style>
         /* =========================
    RESET CONTROLADO
@@ -367,7 +367,7 @@ $cats      = $pdo->query("SELECT id, nome FROM categorias_subgrupo WHERE aplicav
     ======================== -->
         <div class="header-container">
             <div class="header-text">
-                <h3>Relatério de Pagamentos</h3>
+                <h3>Relatório de Pagamentos</h3>
                 <div class="subtitle">
                     Período de <?= date('d/m/Y', strtotime($dataInicio)) ?>
                     até <?= date('d/m/Y', strtotime($dataFim)) ?>

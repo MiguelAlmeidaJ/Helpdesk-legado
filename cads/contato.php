@@ -4,7 +4,12 @@ include_once("../all/permissoes.php");
 if(isset($_POST["id"])){
   include_once("../all/conect.php");
   include_once("../all/token.php");
-  $id = $_POST["id"];
+  $id = filter_input(INPUT_POST, 'id', FILTER_SANITIZE_NUMBER_INT);
+
+  function h($value)
+  {
+    return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8');
+  }
 ?>
    <div class="row">
       <div class="col-md-7 p-1">
@@ -26,7 +31,8 @@ if(isset($_POST["id"])){
                   <tbody>
 <?php
   $pdo = ConnectionN3();
-  $show = $pdo->prepare("SELECT pessoas.* FROM pessoas WHERE pessoas.pessoa_clt = '$id' ORDER BY pessoa_sts DESC, pessoa_nom ASC");
+  $show = $pdo->prepare("SELECT pessoas.* FROM pessoas WHERE pessoas.pessoa_clt = :id ORDER BY pessoa_sts DESC, pessoa_nom ASC");
+  $show->bindParam(':id', $id, PDO::PARAM_INT);
   $show->execute();
   $conta_pessoas = $show->rowCount();
   if($conta_pessoas>0){  
@@ -44,19 +50,19 @@ if(isset($_POST["id"])){
                         <?php if($pessoa_sts==0){ ?><i class="fas fa-toggle-off text-muted" title="Inativo"></i><?php } ?>
                       </td>
                       <td>
-                        <p class="m-0"><?php echo $pessoa_nom; ?> </p>
-                        <p class="small m-0"><?php echo $pessoa_cargo; ?> </p>
+                        <p class="m-0"><?php echo h($pessoa_nom); ?> </p>
+                        <p class="small m-0"><?php echo h($pessoa_cargo); ?> </p>
                       </td>
                       <td>
-                        <?php echo $pessoa_tel; ?>
+                        <?php echo h($pessoa_tel); ?>
                       </td>
                       <td>
-                        <?php echo $pessoa_mail; ?>
+                        <?php echo h($pessoa_mail); ?>
                       </td>
                       <td>
 <?php if($m2_02==3){ ?>
-                      <a data-toggle="modal" href="#modalEdtPessoa<?php echo $pessoa_id; ?>" class="btn btn-outline-warning btn-sm"><i class="far fa-edit"></i></a>
-                  <div class="modal fade" id="modalEdtPessoa<?php echo $pessoa_id; ?>">
+                      <a data-toggle="modal" href="#modalEdtPessoa<?php echo h($pessoa_id); ?>" class="btn btn-outline-warning btn-sm"><i class="far fa-edit"></i></a>
+                  <div class="modal fade" id="modalEdtPessoa<?php echo h($pessoa_id); ?>">
                     <div class="modal-dialog">
                       <form method="POST" action="#">
                       <div class="modal-content">
@@ -76,7 +82,7 @@ if(isset($_POST["id"])){
                                     <div class="input-group-prepend">
                                       <div class="input-group-text"><i class="far fa-user"></i></div>
                                     </div> 
-                                    <input name="pessoa_nom" value="<?php echo $pessoa_nom; ?>" type="text" class="form-control" required="required">
+                                    <input name="pessoa_nom" value="<?php echo h($pessoa_nom); ?>" type="text" class="form-control" required="required">
                                   </div>
                                 </div>
                               </div>
@@ -87,7 +93,7 @@ if(isset($_POST["id"])){
                                     <div class="input-group-prepend">
                                       <div class="input-group-text"><i class="fas fa-sitemap"></i></div>
                                     </div> 
-                                    <input name="pessoa_cargo" value="<?php echo $pessoa_cargo; ?>" type="text" class="form-control" required="required">
+                                    <input name="pessoa_cargo" value="<?php echo h($pessoa_cargo); ?>" type="text" class="form-control" required="required">
                                   </div>
                                 </div>
                               </div>
@@ -98,7 +104,7 @@ if(isset($_POST["id"])){
                                     <div class="input-group-prepend">
                                       <div class="input-group-text"><i class="fas fa-at"></i></div>
                                     </div> 
-                                    <input name="pessoa_mail" type="email" value="<?php echo $pessoa_mail; ?>" class="form-control" required="required">
+                                    <input name="pessoa_mail" type="email" value="<?php echo h($pessoa_mail); ?>" class="form-control" required="required">
                                   </div>
                                 </div>
                               </div>
@@ -110,7 +116,7 @@ if(isset($_POST["id"])){
                                     <div class="input-group-prepend">
                                       <div class="input-group-text"><i class="fas fa-mobile-alt"></i></div>
                                     </div> 
-                                    <input name="pessoa_tel" value="<?php echo $pessoa_tel; ?>" type="text" required="required" class="form-control">
+                                    <input name="pessoa_tel" value="<?php echo h($pessoa_tel); ?>" type="text" required="required" class="form-control">
                                   </div>
                                 </div>
                               </div>            
@@ -133,9 +139,9 @@ if(isset($_POST["id"])){
                           </div>
                         </div>
                         <div class="modal-footer">
-                          <input type="hidden" name="pessoa_id" value="<?php echo $pessoa_id; ?>">
+                          <input type="hidden" name="pessoa_id" value="<?php echo h($pessoa_id); ?>">
                           <input type="hidden" name="action" value="edt_pessoa">
-                          <input type="hidden" name="token" value="<?php echo $token;?>">
+                          <input type="hidden" name="token" value="<?php echo h($token);?>">
                           <button type="submit" class="btn btn-outline-danger btn-sm">Editar</button>                            
                         </div>
                       </div>
@@ -214,9 +220,9 @@ if(isset($_POST["id"])){
               </div>          
             </div>
             <div class="modal-footer">
-              <input type="hidden" name="pessoa_clt" value="<?php echo $id;?>">
+              <input type="hidden" name="pessoa_clt" value="<?php echo h($id);?>">
               <input type="hidden" name="action" value="new_pessoa">
-              <input type="hidden" name="token" value="<?php echo $token;?>">
+              <input type="hidden" name="token" value="<?php echo h($token);?>">
               <button type="submit" class="btn btn-outline-danger btn-sm">Cadastrar</button>
             </div>
           </form>

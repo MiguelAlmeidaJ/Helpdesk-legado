@@ -236,7 +236,7 @@ foreach ($pendentes as $p) {
                                             <th style="width: 10%;">Valor</th>
                                             <th style="width: 15%;">Descrição Usuário</th>
                                             <th style="width: 15%;">Obs Aprovador</th>
-                                            <th style="width: 20%;">Açães / Obs Pagamento</th>
+                                            <th style="width: 20%;">Ações / Obs Pagamento</th>
                                         </tr>
                                     </thead>
 

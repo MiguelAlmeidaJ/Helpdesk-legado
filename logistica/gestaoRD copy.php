@@ -277,7 +277,7 @@ $usuariosResumo = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                     </div>
                                     <div class="mt-2">
                                         <button id="btnVerPagas" class="btn btn-sm btn-outline-dark">Ver Resumo</button>
-                                        <button id="btnRelatorio" class="btn btn-sm btn-secondary">Relatério</button>
+                                        <button id="btnRelatorio" class="btn btn-sm btn-secondary">Relatório</button>
                                     </div>
                                 </div>
                             </div>

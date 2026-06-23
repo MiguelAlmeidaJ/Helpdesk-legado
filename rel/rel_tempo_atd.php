@@ -61,39 +61,24 @@ $num_atendimentos = $stmt->rowCount();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Relatério de Atendimentos por Tecnico</title>
+    <title>Relatório de Atendimentos por Técnico</title>
     <link rel="stylesheet" href="../css/bootstrap.min.css">
     <link rel="stylesheet" href="../fontawesome/css/all.css">
-    <style>
-            body {
-            zoom: 0.9;
-            width: 100%;
-            overflow-x: hidden;
-        }
-        
-        .container {
-            margin-top: 20px;
-        }
-
-        .text-red {
-    color: blue;
-}
-
-    </style>
+    <link rel="stylesheet" href="css/relatorios_modern.css">
 </head>
-<body>
+<body class="rel-legacy-body">
 <?php include_once("../all/sidebar.php"); ?>
 
 
-<div class="container">
-    <h2 class="text-center">Relatério de Atendimentos por Tecnico</h2>
+<div class="container-fluid rel-page rel-legacy-page">
+    <h2 class="text-center">Relatório de Atendimentos por Técnico</h2>
     <div class="row">
         <div class="col-md-4">
             <form method="GET" action="<?php echo $_SERVER['PHP_SELF']; ?>">
                 <div class="form-group">
-                    <label for="tecnico">Selecione o Tecnico:</label>
+                    <label for="tecnico">Selecione o Técnico:</label>
                     <select class="form-control" id="tecnico" name="tecnico">
-                        <option value="">Todos os Tecnicos</option>
+                        <option value="">Todos os Técnicos</option>
                         <?php while ($row = $tecnicos->fetch(PDO::FETCH_ASSOC)) { ?>
                             <option value="<?php echo $row['user_id']; ?>"
                                 <?php if ($row['user_id'] == $selected_tecnico) echo 'selected'; ?>>
@@ -112,20 +97,20 @@ $num_atendimentos = $stmt->rowCount();
                     <input type="date" class="form-control" id="data_fim" name="data_fim"
                            value="<?php echo $data_fim; ?>">
                 </div>
-                <button type="submit" class="btn btn-primary">Filtrar</button>
+                <button type="submit" class="btn btn-primary rel-pill-btn">Filtrar</button>
             </form>
             <br>
-            <a href="../atd/home.php" class="btn btn-primary">Voltar para Home</a>
+            <a href="../atd/home.php" class="btn btn-primary rel-pill-btn">Voltar para Home</a>
         </div>
         <div class="col-md-8">
             <div class="card">
-                <div class="card-header h4 text-center py-2">
-                    <i class="fas fa-stopwatch"></i> Tempo de Atendimento por Tecnico
+                <div class="card-header h4 text-center py-2 rel-section-header">
+                    <i class="fas fa-stopwatch"></i> Tempo de Atendimento por Técnico
                 </div>
                 <div class="card-body">
-                    <div class="table-responsive">
+                    <div class="table-responsive rel-table-wrap">
                     <h4 class="text-left text-red">Total de Atendimentos: <?php echo $num_atendimentos; ?></h4>
-                        <table class="table table-hover">
+                        <table class="table table-hover rel-table">
                             <thead>
                             <tr>
                                 <th class="text-center">ID do Atendimento</th>
@@ -189,8 +174,8 @@ $num_atendimentos = $stmt->rowCount();
     </div>
 </div>
 
-<script src="../js/bootstrap.min.js"></script>
 <script src="../js/jquery-3.6.0.min.js"></script>
 <script src="../js/bootstrap.bundle.min.js"></script>
+    <script src="js/relatorios_modern.js"></script>
 </body>
 </html>

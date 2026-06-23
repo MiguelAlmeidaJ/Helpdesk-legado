@@ -91,7 +91,7 @@ $clientes = $pdo->query("SELECT clt_id, clt_nomef AS nome FROM clientes GROUP BY
     <link rel="stylesheet" href="../fontawesome/css/all.css" />
     <link rel="stylesheet" href="https://cdn.datatables.net/1.10.25/css/dataTables.bootstrap4.min.css" />
     <link rel="stylesheet" href="https://cdn.datatables.net/buttons/1.7.1/css/buttons.bootstrap4.min.css" />
-    <title>Relatério de Pagamentos</title>
+    <title>Relatório de Pagamentos</title>
     <style>
         body {
             zoom: 0.9;
@@ -146,7 +146,7 @@ $clientes = $pdo->query("SELECT clt_id, clt_nomef AS nome FROM clientes GROUP BY
         <div class="card card-primary card-outline">
             <div class="card-header py-2 no-print">
                 <div class="d-flex align-items-center">
-                    <h4 class="m-0 font-weight-bold">Relatério de Pagamentos</h4>
+                    <h4 class="m-0 font-weight-bold">Relatório de Pagamentos</h4>
                     <a href="gestaoRD.php" class="ml-4"><i class="fas fa-home" style="font-size: 25px;" data-toggle="tooltip" title="Home RD"></i></a>
                 </div>
 
@@ -213,7 +213,7 @@ $clientes = $pdo->query("SELECT clt_id, clt_nomef AS nome FROM clientes GROUP BY
             <div id="printable">
                 <div class="text-center">
                     <h5>
-                        <b>Relatério de Pagamentos</b> - Período de <b><?= date("d/m/Y", strtotime($dataInicio)) ?></b> a <b><?= date("d/m/Y", strtotime($dataFim)) ?></b>
+                        <b>Relatório de Pagamentos</b> - Período de <b><?= date("d/m/Y", strtotime($dataInicio)) ?></b> a <b><?= date("d/m/Y", strtotime($dataFim)) ?></b>
                     </h5>
                 </div>
 
@@ -400,7 +400,7 @@ $clientes = $pdo->query("SELECT clt_id, clt_nomef AS nome FROM clientes GROUP BY
                     extend: 'print',
                     text: '<i class="fa fa-print"></i> Imprimir',
                     className: 'btn btn-secondary btn-sm mr-1 ml-3',
-                    title: 'Relatério de Pagamentos',
+                    title: 'Relatório de Pagamentos',
                     exportOptions: {
                         columns: ':visible'
                     }

@@ -296,52 +296,29 @@ function sortLink($label, $column, $currentOrderBy, $currentOrderDir)
     <link rel="icon" href="../img/favicon.ico">
     <link rel="stylesheet" href="../css/bootstrap.min.css">
     <link rel="stylesheet" href="../fontawesome/css/all.css">
-    <style>
-        body {
-            zoom: 0.9;
-            overflow: hidden;
-        }
-
-        .card-principal {
-            height: calc(100vh - 70px);
-            overflow-y: auto;
-        }
-
-        .table td,
-        .table th {
-            padding: 0.3rem 0.6rem;
-            font-size: 0.9rem;
-            vertical-align: middle;
-        }
-
-        thead a {
-            color: white;
-            text-decoration: none;
-        }
-
-        thead a:hover {
-            color: #ddd;
-        }
-    </style>
+    <link rel="stylesheet" href="css/recorrentes_modern.css">
 </head>
 
 <body>
     <?php include("../all/sidebar.php"); ?>
-    <div class="container-fluid pt-2"> <?= $mensagem ?>
-        <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center py-2">
-                <h5 class="m-0 font-weight-bold">Gestão de Lançamentos Recorrentes</h5>
-                <div class="d-flex align-items-center">
-                    <button class="btn btn-outline-secondary btn-sm" type="button" data-toggle="collapse" data-target="#filtroCollapse"><i class="fas fa-filter"></i> Filtrar</button>
-                    <button type="button" class="btn btn-warning btn-sm ml-2" data-toggle="modal" data-target="#modalAdicionarRecorrencia">
+    <div class="container-fluid pt-2 recorrentes-page">
+        <div class="row">
+            <div class="col-12">
+                <?= $mensagem ?>
+        <div class="card recorrentes-main-card">
+            <div class="card-header d-flex justify-content-between align-items-center py-2 recorrentes-toolbar">
+                <div class="recorrentes-title"><i class="fas fa-sync-alt"></i><h5 class="m-0 font-weight-bold">Gestão de Lançamentos Recorrentes</h5></div>
+                <div class="d-flex align-items-center recorrentes-actions">
+                    <button class="btn btn-outline-secondary btn-sm recorrentes-btn" type="button" data-toggle="collapse" data-target="#filtroCollapse"><i class="fas fa-filter"></i> Filtrar</button>
+                    <button type="button" class="btn btn-warning btn-sm ml-2 recorrentes-btn recorrentes-btn-primary" data-toggle="modal" data-target="#modalAdicionarRecorrencia">
                         <i class="fas fa-plus"></i> Nova Recorrência
                     </button>
                 </div>
             </div>
 
-            <div class="card-body py-2 card-principal">
+            <div class="card-body py-2 card-principal recorrentes-body">
                 <div class="collapse <?= !empty($_GET) ? 'show' : '' ?>" id="filtroCollapse">
-                    <div class="card card-body mb-2 py-2">
+                    <div class="card card-body mb-2 py-2 recorrentes-filter-card">
                         <form method="GET" class="mb-0">
                             <div class="row">
                                 <div class="col-md-2"><label class="small mb-1">Unidade de Negócio</label><select name="filtro_unid_negocio" class="form-control form-control-sm">
@@ -400,9 +377,9 @@ function sortLink($label, $column, $currentOrderBy, $currentOrderDir)
                     </div>
                 </div>
 
-                <div class="table-responsive">
+                <div class="table-responsive recorrentes-table-area">
                     <table class="table table-sm table-bordered table-striped table-hover">
-                        <thead class="thead-dark">
+                        <thead>
                             <tr>
                                 <th><?= sortLink('Cliente/Fornecedor', 'identificador', $orderBy, $orderDir) ?></th>
                                 <th><?= sortLink('Descrição', 'descricao_padrao', $orderBy, $orderDir) ?></th>
@@ -426,12 +403,12 @@ function sortLink($label, $column, $currentOrderBy, $currentOrderDir)
                                         <td><span class="badge badge-<?= $item['tipo'] == 'Pagar' ? 'danger' : 'success' ?>"><?= $item['tipo'] ?></span></td>
                                         <td>R$ <?= number_format($item['valor_padrao'], 2, ',', '.') ?></td>
                                         <td class="text-center"><?= str_pad($item['dia_vencimento'], 2, '0', STR_PAD_LEFT) ?></td>
-                                        <td><?= htmlspecialchars($item['nome_unid']) ?></td>
+                                        <td><span class="recorrentes-muted"><?= htmlspecialchars($item['nome_unid']) ?></span></td>
                                         <td class="text-center">
                                             <span class="badge badge-<?= $item['ativo'] ? 'success' : 'secondary' ?>"><?= $item['ativo'] ? 'Ativo' : 'Inativo' ?></span>
                                         </td>
-                                        <td class="text-center">
-                                            <form method="POST" style="display: inline;">
+                                        <td class="text-center recorrentes-row-actions">
+                                            <form method="POST" class="d-inline">
                                                 <input type="hidden" name="action" value="toggle_status">
                                                 <input type="hidden" name="id" value="<?= $item['id'] ?>">
                                                 <?php if ($item['ativo'] == 1): ?>
@@ -453,19 +430,22 @@ function sortLink($label, $column, $currentOrderBy, $currentOrderDir)
                         </tbody>
                     </table>
                 </div>
+                <div id="recorrentesLoadStatus" class="recorrentes-load-status"></div>
+            </div>
+        </div>
             </div>
         </div>
     </div>
 
     <!-- Modal Adicionar Recorrencia -->
-    <div class="modal fade" id="modalAdicionarRecorrencia" tabindex="-1">
-        <div class="modal-dialog modal-xl">
+    <div class="modal fade recorrentes-modal" id="modalAdicionarRecorrencia" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-xl">
             <div class="modal-content">
                 <form method="POST">
                     <input type="hidden" name="action" value="add_recorrencia">
                     <div class="modal-header">
                         <h5 class="modal-title">Nova Recorrência</h5>
-                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Fechar"><span aria-hidden="true">&times;</span></button>
                     </div>
                     <div class="modal-body">
                         <div class="form-row">
@@ -568,7 +548,7 @@ function sortLink($label, $column, $currentOrderBy, $currentOrderDir)
                         </div>
                         <div class="form-group form-check text-right"><input type="checkbox" class="form-check-input" name="ativo" id="add_ativo" value="1" checked><label class="form-check-label" for="add_ativo"><b>Recorrência Ativa</b></label></div>
                     </div>
-                    <div class="modal-footer"><button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button><button type="submit" class="btn btn-primary">Salvar</button></div>
+                    <div class="modal-footer"><button type="button" class="btn btn-outline-secondary btn-sm" data-dismiss="modal">Cancelar</button><button type="submit" class="btn btn-primary btn-sm">Salvar</button></div>
                 </form>
             </div>
         </div>
@@ -577,15 +557,15 @@ function sortLink($label, $column, $currentOrderBy, $currentOrderDir)
 
 
     <!-- Modal Editar Recorrencia -->
-    <div class="modal fade" id="modalEditarRecorrencia" tabindex="-1">
-        <div class="modal-dialog modal-xl">
+    <div class="modal fade recorrentes-modal" id="modalEditarRecorrencia" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-xl">
             <div class="modal-content">
                 <form method="POST">
                     <input type="hidden" name="action" value="edit_recorrencia">
                     <input type="hidden" name="id" id="edit_recorrencia_id">
                     <div class="modal-header">
                         <h5 class="modal-title">Editar Recorrência</h5>
-                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Fechar"><span aria-hidden="true">&times;</span></button>
                     </div>
                     <div class="modal-body">
                         <div class="form-row">
@@ -691,7 +671,7 @@ function sortLink($label, $column, $currentOrderBy, $currentOrderDir)
                             <label class="form-check-label" for="edit_ativo"><b>Recorrência Ativa</b></label>
                         </div>
                     </div>
-                    <div class="modal-footer"><button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button><button type="submit" class="btn btn-primary">Salvar Alterações</button></div>
+                    <div class="modal-footer"><button type="button" class="btn btn-outline-secondary btn-sm" data-dismiss="modal">Cancelar</button><button type="submit" class="btn btn-primary btn-sm">Salvar Alterações</button></div>
                 </form>
             </div>
         </div>
@@ -699,19 +679,19 @@ function sortLink($label, $column, $currentOrderBy, $currentOrderDir)
 
 
     <!-- Modal Excluir -->
-    <div class="modal fade" id="modalExcluir" tabindex="-1">
-        <div class="modal-dialog modal-sm">
+    <div class="modal fade recorrentes-modal" id="modalExcluir" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
             <div class="modal-content">
                 <form method="POST">
                     <input type="hidden" name="action" value="excluir_recorrencia">
                     <input type="hidden" name="id" id="excluir_id">
                     <div class="modal-header">
-                        <h5 class="modal-title">Confirmar Exclusão</h5><button type="button" class="close" data-dismiss="modal">&times;</button>
+                        <h5 class="modal-title">Confirmar Exclusão</h5><button type="button" class="close" data-dismiss="modal" aria-label="Fechar"><span aria-hidden="true">&times;</span></button>
                     </div>
                     <div class="modal-body">
                         <p>Tem certeza que deseja excluir esta recorrência? Esta ação não pode ser desfeita.</p>
                     </div>
-                    <div class="modal-footer"><button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button><button type="submit" class="btn btn-danger">Excluir</button></div>
+                    <div class="modal-footer"><button type="button" class="btn btn-outline-secondary btn-sm" data-dismiss="modal">Cancelar</button><button type="submit" class="btn btn-danger btn-sm">Excluir</button></div>
                 </form>
             </div>
         </div>
@@ -787,7 +767,7 @@ function sortLink($label, $column, $currentOrderBy, $currentOrderDir)
 
 
             // Eventos para o modal EDITAR
-            $('.btn-edit').on('click', function() {
+            $(document).on('click', '.btn-edit', function() {
                 const data = $(this).data('json');
 
                 // Popula os campos do modal de edição
@@ -826,7 +806,7 @@ function sortLink($label, $column, $currentOrderBy, $currentOrderDir)
 
 
             // Prepara o modal de exclusáo (sem alteração)
-            $('.btn-excluir').on('click', function() {
+            $(document).on('click', '.btn-excluir', function() {
                 $('#excluir_id').val($(this).data('id'));
                 $('#modalExcluir').modal('show');
             });
@@ -881,6 +861,21 @@ function sortLink($label, $column, $currentOrderBy, $currentOrderDir)
                         event.preventDefault(); // Impede o envio
                         alert(`Erro: A soma dos percentuais dever ser igual é 100%.\nTotal atual: ${total}%`);
                     }
+                }
+            });
+
+            function revealRecorrentesRows() {
+                const hiddenRows = $('.recorrentes-extra-row.d-none');
+                hiddenRows.slice(0, 50).removeClass('d-none');
+                const remaining = $('.recorrentes-extra-row.d-none').length;
+                $('#recorrentesLoadStatus').text(remaining > 0 ? `Role para carregar mais ${remaining} recorr?ncia(s).` : '');
+            }
+
+            $('#recorrentesLoadStatus').text($('.recorrentes-extra-row.d-none').length > 0 ? `Role para carregar mais ${$('.recorrentes-extra-row.d-none').length} recorr?ncia(s).` : '');
+            $('.recorrentes-table-area').on('scroll', function() {
+                const el = this;
+                if (el.scrollTop + el.clientHeight >= el.scrollHeight - 80) {
+                    revealRecorrentesRows();
                 }
             });
 

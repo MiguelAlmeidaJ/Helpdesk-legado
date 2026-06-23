@@ -15,7 +15,8 @@ $action = filter_input(INPUT_POST, 'action', FILTER_SANITIZE_FULL_SPECIAL_CHARS)
 
 if ($action == "alterar_senha") {include_once("../all/update_senha.php");}
 
-if (isset($_POST['f_sts'])) {$p_sts = $f_sts = $_POST['f_sts'];} else {$f_sts = 1;}
+if (isset($_POST['f_sts'])) {$p_sts = $f_sts = (int)$_POST['f_sts'];} else {$f_sts = 1;}
+if (!in_array($f_sts, [0, 1, 2, 3, 4, 5, 6], true)) {$f_sts = 1;}
  if(1== $f_sts){$where_sts = "contratos.status = '1'"; } //Vigente
  if(2== $f_sts){$where_sts = "contratos.status = '1' AND contratos.data_termino < '$data_30'"; } //Vigente A vencer em 30 dias
  if(3== $f_sts){$where_sts = "contratos.status = '1' AND contratos.data_termino < '$data_60'"; } //Vigente A vencer em 60 dias
@@ -27,15 +28,17 @@ if (isset($_POST['f_sts'])) {$p_sts = $f_sts = $_POST['f_sts'];} else {$f_sts = 
  
 
 
-if (isset($_POST['f_loc'])) {$f_loc = $p_loc = $_POST['f_loc'];} else {$f_loc = $p_loc = 0;}
-if ($f_loc == 0) {$p_loc = "%"; $p_loc = "%";}
+if (isset($_POST['f_loc'])) {$f_loc = $p_loc = (int)$_POST['f_loc'];} else {$f_loc = $p_loc = 0;}
+$where_loc = "";
+if ($f_loc > 0) {$where_loc = " AND contratos.cliente = :f_loc";}
 
 if (isset($_POST['ord'])) {$ord = $_POST['ord'];} else {$ord = "contrato";}
 if ($ord == "contrato"){$order_by = "contratos.id ASC";}
-if ($ord == "clientes"){$order_by = "clientes.clt_nomer ASC";}
+if ($ord == "clientes" || $ord == "locador"){$order_by = "clientes.clt_nomer ASC";}
 if ($ord == "data_inicio"){$order_by = "contratos.data_inicio DESC";}
 if ($ord == "data_termino"){$order_by = "contratos.data_termino ASC";}
 if ($ord == "valor"){$order_by = "contratos.valor_atual DESC";}
+if (!isset($order_by)) {$order_by = "contratos.id ASC";}
 
 //header("Refresh:60");
 ?>
@@ -67,13 +70,17 @@ if ($ord == "valor"){$order_by = "contratos.valor_atual DESC";}
                       <option value="0">Todos os Locadores</option>
 <?php
 $pdo = ConnectionN3();
-$show = $pdo->prepare("SELECT clientes.clt_nomer, clientes.clt_id FROM cads_locadores WHERE cclientes.clt_sts = '1' ORDER BY clientes.clt_nomer ASC");
+$show = $pdo->prepare("SELECT DISTINCT clientes.clt_nomer, clientes.clt_id
+FROM contratos
+INNER JOIN clientes ON clientes.clt_id = contratos.cliente
+WHERE clientes.clt_sts = '1'
+ORDER BY clientes.clt_nomer ASC");
 $show->execute();
 while($exibe=$show->fetch(PDO::FETCH_ASSOC)){
   $clt_id = $exibe["clt_id"];
   $clt_nomer = $exibe["clt_nomer"];
 ?>
-                      <option value="<?php echo $clt_id; ?>"<?php if ($f_clt == $clt_id){echo " selected";} ?>><?php echo $clt_nomer;?></option>
+                      <option value="<?php echo $clt_id; ?>"<?php if ($f_loc == $clt_id){echo " selected";} ?>><?php echo $clt_nomer;?></option>
 <?php } ?>
                     </select>
                   </div>
@@ -103,7 +110,7 @@ while($exibe=$show->fetch(PDO::FETCH_ASSOC)){
                   <tr>
                     <th class="p-1">
                       <form action="#" method="POST">
-                        <input type="hidden" name="f_clt" value="<?php echo $f_clt; ?>">
+                        <input type="hidden" name="f_loc" value="<?php echo $f_loc; ?>">
                         <input type="hidden" name="f_sts" value="<?php echo $f_sts; ?>">
                         <input type="hidden" name="ord" value="contrato">
                         <button type="submit" class="btn btn-light btn-sm btn-block"><i class="fas fa-sort-amount-down-alt"></i> Contrato</button>
@@ -111,7 +118,7 @@ while($exibe=$show->fetch(PDO::FETCH_ASSOC)){
                     </th>
                     <th class="p-1">
                       <form action="#" method="POST">
-                        <input type="hidden" name="f_clt" value="<?php echo $f_clt; ?>">
+                        <input type="hidden" name="f_loc" value="<?php echo $f_loc; ?>">
                         <input type="hidden" name="f_sts" value="<?php echo $f_sts; ?>">
                         <input type="hidden" name="ord" value="locador">
                         <button type="submit" class="btn btn-light btn-sm btn-block"><i class="fas fa-sort-amount-down-alt"></i> Locador</button>
@@ -119,7 +126,7 @@ while($exibe=$show->fetch(PDO::FETCH_ASSOC)){
                     </th>
                     <th class="p-1">
                       <form action="#" method="POST">
-                        <input type="hidden" name="f_clt" value="<?php echo $f_clt; ?>">
+                        <input type="hidden" name="f_loc" value="<?php echo $f_loc; ?>">
                         <input type="hidden" name="f_sts" value="<?php echo $f_sts; ?>">
                         <input type="hidden" name="ord" value="data_inicio">
                         <button type="submit" class="btn btn-light btn-sm btn-block"><i class="fas fa-sort-amount-down-alt"></i> Início</button>
@@ -127,7 +134,7 @@ while($exibe=$show->fetch(PDO::FETCH_ASSOC)){
                     </th>
                     <th class="p-1">
                       <form action="#" method="POST">
-                        <input type="hidden" name="f_clt" value="<?php echo $f_clt; ?>">
+                        <input type="hidden" name="f_loc" value="<?php echo $f_loc; ?>">
                         <input type="hidden" name="f_sts" value="<?php echo $f_sts; ?>">
                         <input type="hidden" name="ord" value="data_termino">
                         <button type="submit" class="btn btn-light btn-sm btn-block"><i class="fas fa-sort-amount-down-alt"></i> Término</button>
@@ -135,7 +142,7 @@ while($exibe=$show->fetch(PDO::FETCH_ASSOC)){
                     </th>
                     <th class="p-1">
                       <form action="#" method="POST">
-                        <input type="hidden" name="f_clt" value="<?php echo $f_clt; ?>">
+                        <input type="hidden" name="f_loc" value="<?php echo $f_loc; ?>">
                         <input type="hidden" name="f_sts" value="<?php echo $f_sts; ?>">
                         <input type="hidden" name="ord" value="valor">
                         <button type="submit" class="btn btn-light btn-sm btn-block"><i class="fas fa-sort-amount-down-alt"></i> Valor Atual</button>
@@ -165,9 +172,12 @@ INNER JOIN cads_forma_pag ON cads_forma_pag.id = contratos.forma_pag
 INNER JOIN cads_ind_reaju ON cads_ind_reaju.id = contratos.indice_reajuste
 INNER JOIN cads_centro_custo ON cads_centro_custo.id = contratos.centro_custo
 INNER JOIN cads_class_contab ON cads_class_contab.id = contratos.class_contabil
-WHERE $where_sts
+WHERE $where_sts $where_loc
 ORDER BY $order_by
 ");
+if ($f_loc > 0) {
+  $show_contrato->bindParam(':f_loc', $f_loc, PDO::PARAM_INT);
+}
 $show_contrato->execute();
 while($row=$show_contrato->fetch(PDO::FETCH_ASSOC)){
   $contrato=$row["contrato"];
@@ -280,3 +290,4 @@ if(strtotime($hoje) > strtotime($data_termino) && $status == 1){ ?>
 <?php }?>
   </body>
 </html>
+

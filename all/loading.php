@@ -12,6 +12,20 @@
 <div id="loader" class="loader"></div>
 <script>
   window.onload = function(){
-    $(".loader").fadeOut("slow");
+    var loader = document.querySelector(".loader");
+    if (!loader) {
+      return;
+    }
+
+    if (window.jQuery) {
+      jQuery(loader).fadeOut("slow");
+      return;
+    }
+
+    loader.style.transition = "opacity .25s ease";
+    loader.style.opacity = "0";
+    window.setTimeout(function(){
+      loader.style.display = "none";
+    }, 250);
   };
 </script>

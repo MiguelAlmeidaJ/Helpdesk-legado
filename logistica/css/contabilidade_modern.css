@@ -1,0 +1,213 @@
+
+:root {
+  --cont-bg: #f4f7fb;
+  --cont-card: #ffffff;
+  --cont-border: #e2e8f0;
+  --cont-text: #0f172a;
+  --cont-muted: #64748b;
+  --cont-primary: #2563eb;
+  --cont-primary-dark: #1d4ed8;
+  --cont-green: #16a34a;
+}
+
+body {
+  background: var(--cont-bg);
+  height: 100vh;
+  overflow: hidden;
+}
+
+.contabilidade-page {
+  height: calc(100vh - 12px);
+  overflow: hidden;
+}
+
+.contabilidade-main-card {
+  border: 0;
+  border-radius: 18px;
+  box-shadow: 0 18px 45px rgba(15, 23, 42, .10);
+  height: calc(100vh - 24px);
+  overflow: hidden;
+}
+
+.contabilidade-toolbar {
+  background: linear-gradient(135deg, #ffffff, #f8fafc);
+  border-bottom: 1px solid var(--cont-border);
+  gap: 12px;
+}
+
+.contabilidade-title {
+  align-items: center;
+  color: var(--cont-text);
+  display: flex;
+  gap: 10px;
+}
+
+.contabilidade-title i {
+  align-items: center;
+  background: linear-gradient(135deg, var(--cont-primary), var(--cont-primary-dark));
+  border-radius: 12px;
+  color: #fff;
+  display: inline-flex;
+  height: 36px;
+  justify-content: center;
+  width: 36px;
+}
+
+.contabilidade-title h4 { font-size: 1.15rem; }
+
+.contabilidade-filter-form {
+  align-items: center;
+  background: #f8fafc;
+  border: 1px solid var(--cont-border);
+  border-radius: 999px;
+  gap: 6px;
+  padding: 6px 8px 6px 12px;
+}
+
+.contabilidade-filter-form label {
+  color: #475569;
+  font-size: .78rem;
+  font-weight: 800;
+  margin-bottom: 0;
+}
+
+.contabilidade-filter-form .form-control {
+  border-color: var(--cont-border);
+  border-radius: 999px;
+}
+
+.contabilidade-year-input { width: 100px !important; }
+
+.contabilidade-btn {
+  border-radius: 999px;
+  font-weight: 800;
+}
+
+.contabilidade-content-card {
+  border: 0;
+  border-radius: 0;
+  display: flex;
+  flex: 1 1 auto;
+  height: calc(100vh - 96px);
+  min-height: 0;
+  overflow: hidden;
+}
+
+.contabilidade-section-header {
+  background: #fff;
+  border-bottom: 1px solid var(--cont-border);
+  color: var(--cont-text);
+  flex-shrink: 0;
+}
+
+.contabilidade-section-header h5 {
+  font-size: .95rem;
+  font-weight: 900;
+}
+
+.contabilidade-table-area {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+}
+
+.contabilidade-files-area {
+  border-top: 1px solid var(--cont-border);
+}
+
+.contabilidade-table {
+  margin-bottom: 0;
+}
+
+.contabilidade-extrato-table { min-width: 1280px; }
+
+.contabilidade-table thead th {
+  background: #f8fafc;
+  border-bottom: 1px solid var(--cont-border);
+  color: #334155;
+  font-size: .74rem;
+  letter-spacing: .03em;
+  position: sticky;
+  text-transform: uppercase;
+  top: 0;
+  z-index: 2;
+}
+
+.contabilidade-table td,
+.contabilidade-table th {
+  font-size: .82rem;
+  padding: .45rem .55rem;
+  vertical-align: middle;
+}
+
+.contabilidade-table tbody tr:hover { background: #f8fafc; }
+
+.contabilidade-file-name {
+  color: var(--cont-text);
+  font-weight: 800;
+}
+
+.contabilidade-icon-btn {
+  border-radius: 10px;
+  margin: 0 2px;
+}
+
+.contabilidade-value-col { width: 112px; }
+
+.pdf-checkbox,
+#selecionar-todos-pdfs {
+  cursor: pointer;
+  height: 1.05rem;
+  width: 1.05rem;
+}
+
+.contabilidade-load-status {
+  color: var(--cont-muted);
+  flex-shrink: 0;
+  font-size: .78rem;
+  min-height: 22px;
+  padding: 5px 0;
+  text-align: center;
+}
+
+.contabilidade-modal .modal-content {
+  border: 0;
+  border-radius: 18px;
+  box-shadow: 0 24px 80px rgba(15, 23, 42, .24);
+  overflow: hidden;
+}
+
+.contabilidade-modal .modal-header {
+  background: linear-gradient(135deg, #f8fafc, #fff);
+  border-bottom: 1px solid var(--cont-border);
+}
+
+.contabilidade-modal .modal-title {
+  color: var(--cont-text);
+  font-weight: 900;
+}
+
+.contabilidade-modal .modal-footer {
+  background: #f8fafc;
+  border-top: 1px solid var(--cont-border);
+}
+
+.contabilidade-modal .btn { border-radius: 10px; }
+
+body.modal-open {
+  height: 100vh !important;
+  overflow: hidden !important;
+  padding-right: 0 !important;
+}
+
+@media (max-width: 1100px) {
+  .contabilidade-toolbar {
+    align-items: flex-start !important;
+    flex-direction: column;
+  }
+  .contabilidade-filter-form {
+    border-radius: 16px;
+    justify-content: flex-start;
+    width: 100%;
+  }
+}

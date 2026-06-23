@@ -899,7 +899,7 @@ foreach ($agendamentosRaw as $ag) {
                             // Se a exclusáo for bem-sucedida, fecha o modal de exclusáo e exibe uma mensagem
                             $('#modalExcluirAgendamento').modal('hide');
                             alert('Agendamento excluído com sucesso!');
-                            // Aqui você pode atualizar a tabela ou realizar outras açães conforme necessário
+                            // Aqui você pode atualizar a tabela ou realizar outras Ações conforme necessário
 
                             // Recarregar a tela
                             location.reload();

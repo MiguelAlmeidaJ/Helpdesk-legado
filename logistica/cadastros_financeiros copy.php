@@ -199,7 +199,7 @@ $active_tab = $_GET['tab'] ?? 'grupos';
                                     <tr>
                                         <th>Nome</th>
                                         <th class="text-center">Status</th>
-                                        <th class="text-center" width="150px">Açães</th>
+                                        <th class="text-center" width="150px">Ações</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -230,7 +230,7 @@ $active_tab = $_GET['tab'] ?? 'grupos';
                                         <th>Nome</th>
                                         <th>Grupo</th>
                                         <th class="text-center">Status</th>
-                                        <th class="text-center" width="150px">Açães</th>
+                                        <th class="text-center" width="150px">Ações</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -261,7 +261,7 @@ $active_tab = $_GET['tab'] ?? 'grupos';
                                     <tr>
                                         <th>Nome</th>
                                         <th class="text-center">Status</th>
-                                        <th class="text-center" width="150px">Açães</th>
+                                        <th class="text-center" width="150px">Ações</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -291,7 +291,7 @@ $active_tab = $_GET['tab'] ?? 'grupos';
                                     <tr>
                                         <th>Nome</th>
                                         <th class="text-center">Status</th>
-                                        <th class="text-center" width="150px">Açães</th>
+                                        <th class="text-center" width="150px">Ações</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -321,7 +321,7 @@ $active_tab = $_GET['tab'] ?? 'grupos';
                                     <tr>
                                         <th>Forma</th>
                                         <th class="text-center">Status</th>
-                                        <th class="text-center" width="150px">Açães</th>
+                                        <th class="text-center" width="150px">Ações</th>
                                     </tr>
                                 </thead>
                                 <tbody>

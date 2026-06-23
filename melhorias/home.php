@@ -55,7 +55,8 @@ if (isset($_POST['f_id'])) {
 } else {
   $f_id = $p_id = "all";
 }
-if ($f_id == "all") {
+if ($f_id == "" || $f_id == "all") {
+  $f_id = "all";
   $p_id = "%";
 }
 //if (isset($_POST['ord'])) {$ord = $_POST['ord'];} else {$ord = "cliente";}
@@ -97,6 +98,35 @@ $sla_n3 = $row["sla_n3"];
 $sla_n4 = $row["sla_n4"];
 $sla_n5 = $row["sla_n5"];
 $sla_n6 = $row["sla_n12"];
+
+function melhorias_preview_text($text, $length = 200)
+{
+  $text = html_entity_decode((string)$text, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+  $text = trim(preg_replace('/\s+/', ' ', strip_tags($text)));
+
+  if (function_exists('mb_strlen') && function_exists('mb_substr')) {
+    if (mb_strlen($text, 'UTF-8') <= $length) {
+      return $text;
+    }
+    return rtrim(mb_substr($text, 0, $length, 'UTF-8')) . '...';
+  }
+
+  if (strlen($text) <= $length) {
+    return $text;
+  }
+  return rtrim(substr($text, 0, $length)) . '...';
+}
+
+function melhorias_sla_bell($class, $label)
+{
+  return '<span class="sla-bell-alert ' . $class . '" title="' . $label . '" aria-label="' . $label . '">'
+    . '<svg class="sla-bell-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">'
+    . '<path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"></path>'
+    . '<path d="M13.73 21a2 2 0 0 1-3.46 0"></path>'
+    . '</svg>'
+    . '<span class="sla-bell-mark" aria-hidden="true">!</span>'
+    . '</span> ';
+}
 ?>
 <?php
 header("Refresh:60");
@@ -144,26 +174,225 @@ while ($exibe = $show_atd->fetch(PDO::FETCH_ASSOC)) {
   <title>Allterus</title>
 </head>
 <style>
-  body {
-    zoom: 0.9;
-    /* Escala o conteúdo sem alterar o contexto de layout */
-    width: 100%;
-    /* Mantém o layout responsivo */
-    overflow-x: hidden;
-    /* Garante que não haja rolagem horizontal */
+  html {
+    height: 100%;
+    background: #f6f8fb;
+    overflow: hidden;
   }
+
+  body {
+    height: 100vh;
+    width: 100%;
+    margin: 0;
+    background: #f6f8fb;
+    color: #0f172a;
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 90%;
+    overflow: hidden;
+  }
+
+  body input,
+  body button,
+  body select,
+  body textarea {
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  }
+
+  .container-fluid {
+    max-width: 100vw;
+    padding-right: 0;
+    padding-left: 0;
+    overflow: visible;
+  }
+
+  .container-fluid>.row {
+    margin-right: 0;
+    margin-left: 0;
+  }
+
+  .container-fluid>.row>[class*="col-"] {
+    max-width: 100%;
+    padding-right: 0;
+    padding-left: 0;
+  }
+
+  .container-fluid>.row>.col-md-12.mt-2 {
+    margin-top: 0 !important;
+  }
+
+  .card {
+    height: 100vh;
+    border: 1px solid #dbe6f3;
+    border-radius: 0;
+    box-shadow: none;
+    overflow: hidden;
+  }
+
+  .card-body {
+    height: calc(100vh - 62px);
+    overflow: hidden;
+  }
+
+  .card-header {
+    position: relative;
+    z-index: 30;
+    overflow: visible;
+    padding: 12px 14px 10px !important;
+    background: #fff;
+    border-bottom: 1px solid #d9e0ea;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, .05);
+  }
+
+  .card-header form {
+    width: 100%;
+    margin: 0;
+  }
+
+  .card-header .form-row {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: flex-end;
+    gap: 8px;
+    width: 100%;
+    margin: 0;
+  }
+
+  .card-header .form-row>.col-auto.col-form-label-sm {
+    flex: 1 1 0;
+    min-width: 0;
+    max-width: none;
+    padding-right: 0;
+    padding-left: 0;
+  }
+
+  .card-header .form-row>.col-auto.col-form-label-sm.filter-id {
+    flex: .7 1 0;
+    min-width: 110px;
+  }
+
+  .card-header .form-row>.col-auto.pt-3 {
+    flex: 0 0 auto;
+    padding-right: 0;
+    padding-left: 0;
+  }
+
+  .card-header label {
+    color: #1f2937;
+    font-size: .82rem;
+    font-weight: 700;
+  }
+
+  .card-header .form-control {
+    min-height: 34px;
+    border: 1px solid #cfd9e8;
+    border-radius: 5px;
+    color: #172033;
+    box-shadow: none;
+  }
+
+  .card-header .btn {
+    min-height: 34px;
+    border-radius: 5px;
+    font-weight: 700;
+  }
+
   .table-container {
-    max-height: 85vh;
-    /* Define um limite de altura para a tabela */
+    height: 100%;
+    max-height: 100%;
+    max-width: 100vw;
     overflow-y: auto;
-    /* Habilita o scroll vertical */
+    overflow-x: auto;
     display: block;
     border: 1px solid #dee2e6;
+    background: #fff;
+    overscroll-behavior: contain;
   }
+
   table {
-    display: auto;
+    display: table;
     width: 100%;
+    min-width: 1480px;
     border-collapse: collapse;
+    margin-bottom: 0 !important;
+  }
+
+  .table-container thead th {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    background: #fff;
+    border-bottom: 1px solid #d9e0ea;
+  }
+
+  .table-container th,
+  .table-container td {
+    max-width: 210px;
+    white-space: normal;
+    word-wrap: break-word;
+  }
+
+  .table-container tbody tr {
+    height: 126px;
+  }
+
+  .melhoria-abertura-cell {
+    height: 126px;
+    line-height: 1.35;
+    vertical-align: middle !important;
+  }
+
+  .melhoria-abertura-date,
+  .melhoria-abertura-preview {
+    display: block;
+  }
+
+  .melhoria-abertura-date {
+    margin-bottom: 3px;
+    color: #0f172a;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .melhoria-abertura-preview {
+    display: -webkit-box;
+    overflow: hidden;
+    color: #172033;
+    word-break: normal;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 5;
+    line-clamp: 5;
+  }
+
+  .table-container .btn-light {
+    border: 0;
+    border-radius: 5px;
+    background: #f8fafc;
+    color: #0f172a;
+  }
+
+  .table-container tbody tr:hover {
+    background: #f8fbff;
+  }
+
+  .badge {
+    border-radius: 999px;
+    font-weight: 700;
+  }
+
+  @media (max-width: 991.98px) {
+    .table-container {
+      height: calc(100vh - 135px);
+      max-height: calc(100vh - 135px);
+    }
+
+    .card-header .form-row {
+      flex-wrap: wrap;
+    }
+
+    .card-header .form-row>.col-auto.col-form-label-sm {
+      flex: 1 1 220px;
+      max-width: none;
+    }
   }
 </style>
 <body>
@@ -276,45 +505,12 @@ while ($exibe = $show_atd->fetch(PDO::FETCH_ASSOC)) {
                     <?php } ?>
                   </select>
                 </div>
-                <div class="col-auto col-form-label-sm">
-                  <label class="my-0"> ID:</label>
-                  <select name="f_id" class="form-control form-control-sm " data-live-search="true" required="required" tabindex="3">
-                    <option value="all" <?php if ("all" == $f_sts) {
-                                          echo " selected";
-                                        } ?>>Todos</option>
-                    <option value="0" <?php if (0 == $f_sts) {
-                                        echo " selected";
-                                      } ?>>Não determinado</option>
-                    <?php
-                    $filterEmpresas = null;
-                    if (isset($_SESSION['tipo']) && $_SESSION['tipo'] == 2 && isset($_SESSION['empresas']) && count($_SESSION['empresas']) > 0) {
-                      $filterEmpresas .= " WHERE melhorias.cliente IN (" . implode(',', $_SESSION['empresas']) . ")";
-                    }
-                    $pdo = ConnectionN3();
-                    $sql = "SELECT melhorias.id FROM melhorias";
-                    if ($filterEmpresas) {
-                      $sql .= $filterEmpresas;
-                    }
-                    $sql .= " ORDER BY melhorias.id ASC";
-                    $show_clt = $pdo->prepare($sql);
-                    // aqui vamos filtrar pelo usuario logado
-                    $show_clt->execute();
-                    while ($exibe = $show_clt->fetch(PDO::FETCH_ASSOC)) {
-                      $id = $exibe["id"];
-                    ?>
-                      <option value="<?php echo $id; ?>" <?php if ($id == $f_id) {
-                                                            echo " selected";
-                                                          } ?>><?php echo $id; ?></option>
-                    <?php } ?>
-                  </select>
+                <div class="col-auto col-form-label-sm filter-id">
+                  <label class="my-0">ID:</label>
+                  <input type="text" name="f_id" id="f_id" class="form-control form-control-sm" placeholder="Digite o ID" tabindex="3" value="<?php echo $f_id == 'all' ? '' : htmlspecialchars($f_id); ?>">
                 </div>
                 <div class="col-auto pt-3">
-                  <a href="./srhome.php"><i class="fa fa-toggle-on"></i> Desligar</a>
-                </div>
-                <div class="col-auto pt-3">
-                </div>
-                <div class="col-auto pt-3">
-                  <button type="submit" class="btn btn-sm btn-primary" tabindex="4">Filtrar</button>
+                  <button type="submit" class="btn btn-sm btn-primary" tabindex="4"><i class="fas fa-filter mr-1"></i> Filtrar</button>
                 </div>
               </div>
             </form>
@@ -647,11 +843,10 @@ while ($exibe = $show_atd->fetch(PDO::FETCH_ASSOC)) {
                       <?php if ($pessoa_nom != "") { ?> <br> <i class="far fa-user mr-1"></i> <?php echo $pessoa_nom;
                                                                                             } ?>
                     </td>
-                    <td class="align-middle text-left" style="width: 20%">
-                      <?php echo $dt2 = date('H:i', strtotime($atd_hora_abertura)); ?> h
-                      <?php echo $dt1 = date('d/m/y', strtotime($atd_hora_abertura)) . " às " . $dt2; ?>
-                      <br>
-                      <?php echo $atd_desc_abertura; ?>
+                    <td class="align-middle text-left melhoria-abertura-cell" style="width: 20%">
+                      <?php $dt2 = date('H:i', strtotime($atd_hora_abertura)); ?>
+                      <span class="melhoria-abertura-date"><?php echo date('d/m/y', strtotime($atd_hora_abertura)) . " as " . $dt2 . "h"; ?></span>
+                      <span class="melhoria-abertura-preview"><?php echo htmlspecialchars(melhorias_preview_text($atd_desc_abertura, 200)); ?></span>
                     </td>
                     <td class="align-middle text-center" style="width: 20%">
                       <?php echo $cat_nome; ?> <br /> <?php echo $scat_nome; ?> <br /> <?php echo $itens_nome; ?>
@@ -682,25 +877,25 @@ while ($exibe = $show_atd->fetch(PDO::FETCH_ASSOC)) {
                     <td class="align-middle">
                       <?php //se atendimento aberto com mais de 40 minutos e menos de 80 min,sem interação, mostra sino piscando verde
                       if ($atd_status > 1 && $atd_status < 3 && $time_last_inter >= 0 && $time_last_inter < 20) { ?>
-                        <i class="fas fa-bell fa-2x blinkkkk"></i>
+                        <?php echo melhorias_sla_bell('blinkkkk', 'SLA dentro do prazo'); ?>
                       <?php } ?>
                       <?php //se atendimento aberto com mais de 40 minutos e menos de 80 min,sem interação, mostra sino piscando verde
                       if ($atd_status == 1 && $time_last_inter >= 20) { ?>
-                        <i class="fas fa-bell fa-2x blinkk"></i>
+                        <?php echo melhorias_sla_bell('blinkk', 'SLA em estado critico'); ?>
                       <?php } elseif ($atd_status == 1 && $time_last_inter < 20) { ?>
-                        <i class="fas fa-bell fa-2x blinkkkk"></i>
+                        <?php echo melhorias_sla_bell('blinkkkk', 'SLA dentro do prazo'); ?>
                       <?php } ?>
                       <?php //se atendimento aberto com mais de 80 minutos e menos de 120 min,sem interação, mostra sino piscando amarelo
                       if ($atd_status > 1 && $atd_status < 3 && $time_last_inter >= 20 && $time_last_inter < 40) { ?>
-                        <i class="fas fa-bell fa-2x blink"></i>
+                        <?php echo melhorias_sla_bell('blink', 'SLA requer atencao'); ?>
                       <?php } ?>
                       <?php //se atendimento aberto com mais de 120 minutos e menos de 160 min,sem interação, mostra sino piscando vermelho
                       if ($atd_status > 1 && $atd_status < 3 && $time_last_inter >= 40 && $time_last_inter < 60) { ?>
-                        <i class="fas fa-bell fa-2x blinkkk"></i>
+                        <?php echo melhorias_sla_bell('blinkkk', 'SLA em alerta'); ?>
                       <?php } ?>
                       <?php //se atendimento aberto com mais de 160 minutos sem interação, mostra sino piscando preto
                       if ($atd_status > 1 && $atd_status < 3 && $time_last_inter >= 60) { ?>
-                        <i class="fas fa-bell fa-2x blinkk"></i>
+                        <?php echo melhorias_sla_bell('blinkk', 'SLA em estado critico'); ?>
                       <?php } ?>
                       <?php echo $tecnico_nome; ?>
                     </td>

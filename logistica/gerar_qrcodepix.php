@@ -1,32 +1,30 @@
 <?php
+require_once __DIR__ . '/../phpqrcode/qrlib.php';
+require_once __DIR__ . '/qrcodepix_config.php';
 
-// Inclui a biblioteca QR Code
-require_once '../phpqrcode/qrlib.php';
-// Inclui as funções auxiliares que criamos no passo 1
-require_once 'qrcodepix_config.php'; // Ou o nome do arquivo que você salvou as funções
-
-// Pega os dados da URL (via GET)
 $chave_pix = $_GET['chave'] ?? '';
 $valor = (float)($_GET['valor'] ?? 0);
 $nome = $_GET['nome'] ?? 'Pagamento';
-$cidade = $_GET['cidade'] ?? 'NIVEL3TI'; // Idealmente, você teria a cidade do usuário/empresa
-$txid = 'RD' . date('YmdHis') . rand(100, 999); // ID único da transação
+$txid = 'RD' . date('YmdHis') . rand(100, 999);
 
-// Validação básica
 if (empty($chave_pix) || $valor <= 0) {
-    // Você pode gerar uma imagem de erro aqui, se quiser
-    exit("Dados inválidos para gerar o QR Code.");
+    http_response_code(400);
+    exit('Dados inválidos para gerar o QR Code.');
 }
 
-// Monta o payload do PIX
-$payload = montarPayloadPix($chave_pix, $valor, $nome, $cidade, $txid);
+$payload = montarPayloadPix($chave_pix, $valor, $nome, $txid);
+$matrix = QRcode::text($payload, false, QR_ECLEVEL_M, 5, 2);
+$moduleSize = 6;
+$size = count($matrix) * $moduleSize;
 
-// ===== TESTE: imprimir payload e parar =====
-// header('Content-Type: text/plain; charset=UTF-8');
-// echo "Payload gerado para QR Code PIX:\n\n";
-// echo $payload;
-// exit; 
-
-// ===== Geração do QR Code (descomente quando parar de testar) =====
-header('Content-Type: image/png');
-QRcode::png($payload, false, 'M', 5, 2);
+header('Content-Type: image/svg+xml; charset=UTF-8');
+echo '<svg xmlns="http://www.w3.org/2000/svg" width="' . $size . '" height="' . $size . '" viewBox="0 0 ' . $size . ' ' . $size . '" role="img" aria-label="QR Code PIX">';
+echo '<rect width="100%" height="100%" fill="#ffffff"/>';
+foreach ($matrix as $y => $row) {
+    foreach (str_split($row) as $x => $cell) {
+        if ($cell === '1') {
+            echo '<rect x="' . ($x * $moduleSize) . '" y="' . ($y * $moduleSize) . '" width="' . $moduleSize . '" height="' . $moduleSize . '" fill="#000000"/>';
+        }
+    }
+}
+echo '</svg>';

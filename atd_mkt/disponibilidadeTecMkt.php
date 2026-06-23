@@ -771,7 +771,7 @@ foreach ($dadosTecnicos as $campo => $valores) {
 
     <style>
         body {
-            zoom: 0.9;
+            zoom: 1;
             width: 100%;
             overflow-x: hidden;
         }
