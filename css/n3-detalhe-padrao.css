@@ -1,0 +1,469 @@
+﻿/* Padrão visual compartilhado para telas de detalhe (Tarefa e Atendimento) */
+body.n3-detail-page {
+  zoom: 1 !important;
+  min-height: 100vh;
+  min-height: 100dvh;
+  width: 100%;
+  overflow-x: hidden;
+  background: #f3f6fa;
+  color: #212529;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body.n3-detail-page .modal-content,
+body.n3-detail-page .dropdown-menu,
+body.n3-detail-page .card,
+body.n3-detail-page .btn,
+body.n3-detail-page .form-control,
+body.n3-detail-page .bootstrap-select > .dropdown-toggle,
+body.n3-detail-page label,
+body.n3-detail-page p,
+body.n3-detail-page small {
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body.n3-detail-page .container-fluid:not(.task-create-page) {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding-right: 15px;
+  padding-left: 15px;
+}
+
+body.n3-detail-page .container-fluid:not(.task-create-page) > .row.mt-2 {
+  align-items: flex-start;
+  margin-top: .5rem !important;
+}
+
+body.n3-detail-page .container-fluid:not(.task-create-page) > .row.mt-2 > .px-1 {
+  padding-right: .25rem !important;
+  padding-left: .25rem !important;
+}
+
+body.n3-detail-page .card {
+  margin-bottom: 8px;
+  border: 1px solid rgba(0, 0, 0, .125);
+  border-radius: .25rem;
+  background: #fff;
+  box-shadow: none;
+  overflow: hidden;
+}
+
+body.n3-detail-page .card-header,
+body.n3-detail-page .h6.card-header {
+  min-height: auto;
+  display: flex;
+  align-items: center;
+  margin-bottom: 0;
+  padding: .5rem 1.25rem !important;
+  border-bottom: 1px solid rgba(0, 0, 0, .125);
+  background-color: rgba(0, 0, 0, .03);
+  color: #212529;
+  font-size: 1rem;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+body.n3-detail-page .card-header.row,
+body.n3-detail-page .h6.card-header.row {
+  width: 100%;
+  margin-right: 0;
+  margin-left: 0;
+  justify-content: space-between;
+}
+
+body.n3-detail-page .card-header i,
+body.n3-detail-page .h6.card-header i {
+  margin-right: .5rem;
+  font-size: inherit;
+}
+
+body.n3-detail-page .card-body {
+  padding: 1.25rem;
+  background: #fff;
+  color: #212529;
+}
+
+body.n3-detail-page .card-body.pt-1.pl-0.pr-0 {
+  padding-top: .25rem !important;
+  padding-right: 0 !important;
+  padding-left: 0 !important;
+}
+
+body.n3-detail-page .card-body.py-1 {
+  padding-top: .25rem !important;
+  padding-bottom: .25rem !important;
+}
+
+body.n3-detail-page .list-unstyled {
+  margin-bottom: 0;
+}
+
+body.n3-detail-page .card-body li {
+  color: #212529;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+body.n3-detail-page small,
+body.n3-detail-page .small {
+  font-size: 80%;
+  font-weight: 400;
+}
+
+body.n3-detail-page hr {
+  border-top: 1px solid rgba(0, 0, 0, .1);
+}
+
+body.n3-detail-page label,
+body.n3-detail-page .my-0.small {
+  color: #212529;
+  font-size: .875rem;
+  font-weight: 500;
+}
+
+body.n3-detail-page .form-control,
+body.n3-detail-page .form-control-sm,
+body.n3-detail-page textarea,
+body.n3-detail-page select,
+body.n3-detail-page .bootstrap-select > .dropdown-toggle {
+  min-height: calc(1.5em + .5rem + 2px);
+  border: 1px solid #ced4da;
+  border-radius: .2rem;
+  background-color: #fff;
+  color: #495057;
+  font-size: .875rem;
+  line-height: 1.5;
+  box-shadow: none;
+}
+
+body.n3-detail-page textarea.form-control {
+  padding: .25rem .5rem;
+  resize: vertical;
+}
+
+body.n3-detail-page .form-control:focus,
+body.n3-detail-page .form-control-sm:focus,
+body.n3-detail-page .bootstrap-select > .dropdown-toggle:focus {
+  border-color: #80bdff;
+  box-shadow: 0 0 0 .2rem rgba(0, 123, 255, .25);
+  outline: 0;
+}
+
+body.n3-detail-page .btn {
+  min-height: auto;
+  border-radius: .2rem;
+  padding: .25rem .5rem;
+  font-size: .875rem;
+  font-weight: 400;
+  line-height: 1.5;
+  box-shadow: none;
+  transform: none;
+}
+
+body.n3-detail-page .btn-block {
+  display: block;
+  width: 100%;
+}
+
+body.n3-detail-page .dropdown-menu {
+  border: 1px solid rgba(0, 0, 0, .15);
+  border-radius: .25rem;
+  box-shadow: none;
+}
+
+body.n3-detail-page #catalogOptions {
+  position: absolute;
+  top: 100%;
+  margin-left: 170px;
+  z-index: 1000;
+}
+
+body.n3-detail-page .catalog-item {
+  cursor: pointer;
+}
+
+body.n3-detail-page .modal-content {
+  border: 1px solid rgba(0, 0, 0, .2);
+  border-radius: .3rem;
+  box-shadow: none;
+}
+
+body.n3-detail-page .modal-header {
+  align-items: center;
+  padding: 1rem;
+  border-bottom: 1px solid #dee2e6;
+  background: #fff;
+}
+
+body.n3-detail-page .modal-title {
+  color: #212529;
+  font-size: 1rem;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+body.n3-detail-page .modal-body {
+  padding: 1rem;
+  color: #212529;
+}
+
+body.n3-detail-page .modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: .5rem;
+  padding: .75rem;
+  border-top: 1px solid #dee2e6;
+  background: #fff;
+}
+
+body.n3-detail-page.modal-open,
+body.n3-detail-page.modal-open .container-fluid,
+body.n3-detail-page.modal-open .card,
+body.n3-detail-page.modal-open main {
+  filter: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+body.n3-detail-page .modal-backdrop,
+body.n3-detail-page .modal-backdrop.show {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+body.n3-detail-page i[class^="fa"],
+body.n3-detail-page i[class*=" fa-"],
+body.n3-detail-page .fa,
+body.n3-detail-page .fas,
+body.n3-detail-page .far,
+body.n3-detail-page .fal,
+body.n3-detail-page .fab {
+  font-style: normal;
+  font-variant: normal;
+  text-rendering: auto;
+  line-height: 1;
+}
+
+body.n3-detail-page .fa,
+body.n3-detail-page .fas,
+body.n3-detail-page i[class^="fa"],
+body.n3-detail-page i[class*=" fa-"] {
+  font-family: "Font Awesome 5 Free" !important;
+  font-weight: 900;
+}
+
+body.n3-detail-page .far {
+  font-family: "Font Awesome 5 Free" !important;
+  font-weight: 400;
+}
+
+body.n3-detail-page .fab {
+  font-family: "Font Awesome 5 Brands" !important;
+}
+
+body.n3-atendimento-page .tl-content {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 0;
+}
+
+body.n3-atendimento-page #container-anexos {
+  min-height: 0;
+}
+
+@media (max-width: 767.98px) {
+  body.n3-detail-page .container-fluid:not(.task-create-page) {
+    padding-right: 10px;
+    padding-left: 10px;
+  }
+}
+
+/* Header de ações com status alinhado como na tela de tarefa */
+body.n3-detail-page .card-header > .row,
+body.n3-detail-page .h6.card-header > .row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  width: 100%;
+  margin-right: -15px;
+  margin-left: -15px;
+}
+
+body.n3-detail-page .card-header > .row > .col-6,
+body.n3-detail-page .h6.card-header > .row > .col-6 {
+  position: relative;
+  flex: 0 0 50%;
+  max-width: 50%;
+  width: 100%;
+  min-height: 1px;
+  padding-right: 15px;
+  padding-left: 15px;
+}
+
+body.n3-detail-page .card-header > .row > .col-6.px-0,
+body.n3-detail-page .h6.card-header > .row > .col-6.px-0 {
+  padding-right: 0 !important;
+  padding-left: 0 !important;
+}
+
+body.n3-detail-page .card-header > .row > .text-right,
+body.n3-detail-page .h6.card-header > .row > .text-right {
+  text-align: right !important;
+}
+
+body.n3-detail-page .card-header > .row .btn-block,
+body.n3-detail-page .h6.card-header > .row .btn-block {
+  display: block;
+  width: 100%;
+  white-space: nowrap;
+}
+
+/* Timeline do histórico no padrão original */
+body.n3-detail-page .timeline {
+  margin-top: .5rem;
+}
+
+body.n3-detail-page .tl-item {
+  z-index: 2;
+  position: relative;
+  display: flex;
+  border-radius: 3px;
+  font-size: .9em;
+}
+
+body.n3-detail-page .tl-item > * {
+  padding: 8px 5px 10px 10px;
+}
+
+body.n3-detail-page .tl-dot {
+  position: relative;
+  flex: 0 0 auto;
+  border-color: rgba(160, 175, 185, .15);
+}
+
+body.n3-detail-page .tl-dot::before,
+body.n3-detail-page .tl-dot::after {
+  content: '';
+  position: absolute;
+  border-color: inherit;
+  border-width: 2px;
+  border-style: solid;
+  border-radius: 50%;
+  width: 12px;
+  height: 12px;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+body.n3-detail-page .tl-dot::after {
+  width: 0;
+  height: auto;
+  top: 25px;
+  bottom: -15px;
+  border-right-width: 0;
+  border-top-width: 0;
+  border-bottom-width: 0;
+  border-radius: 0;
+}
+
+body.n3-detail-page .tl-item:last-child .tl-dot::after {
+  display: none;
+}
+
+body.n3-detail-page .tl-content {
+  flex: 1 1 auto;
+  min-width: 0;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+body.n3-detail-page .tl-date {
+  display: block;
+  margin-top: 2px;
+  color: #6c757d;
+  font-size: .8em;
+  line-height: 1.3;
+}
+
+body.n3-detail-page .tl-date i {
+  margin-right: 3px;
+}
+
+/* Catálogo: dropdown flutuante fora do card */
+body.n3-detail-page #catalogOptions {
+  position: fixed !important;
+  top: auto;
+  left: auto;
+  right: auto;
+  margin: 0 !important;
+  min-width: 240px;
+  max-width: min(320px, calc(100vw - 24px));
+  max-height: calc(100vh - 24px);
+  overflow-y: auto;
+  z-index: 2080;
+}
+
+body.n3-detail-page #catalogOptions.d-none {
+  display: none !important;
+}
+
+body.n3-detail-page #catalogOptions .dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: normal;
+}
+
+body.n3-detail-page #catalogOptions .dropdown-item i {
+  width: 16px;
+  margin-right: 0;
+  text-align: center;
+}
+
+/* Atendimento: trava scroll indevido do body */
+html:has(body.n3-atendimento-page),
+body.n3-atendimento-page {
+  max-width: 100%;
+  overflow-x: clip !important;
+}
+
+@supports not (overflow: clip) {
+  html:has(body.n3-atendimento-page),
+  body.n3-atendimento-page {
+    overflow-x: hidden !important;
+  }
+}
+
+body.n3-atendimento-page {
+  overflow-y: auto;
+}
+
+body.n3-atendimento-page .container-fluid:not(.task-create-page) {
+  max-width: 100%;
+  overflow-x: clip;
+}
+
+@supports not (overflow: clip) {
+  body.n3-atendimento-page .container-fluid:not(.task-create-page) {
+    overflow-x: hidden;
+  }
+}
+
+body.n3-atendimento-page .container-fluid:not(.task-create-page) > .row {
+  max-width: calc(100% + 30px);
+}
+
+body.n3-atendimento-page img,
+body.n3-atendimento-page table,
+body.n3-atendimento-page textarea,
+body.n3-atendimento-page input,
+body.n3-atendimento-page select {
+  max-width: 100%;
+}

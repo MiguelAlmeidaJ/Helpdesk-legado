@@ -1,6 +1,8 @@
 <?php
 // busca_img_docs.php
+session_start();
 header('Content-Type: application/json; charset=utf-8');
+include_once("../all/seguranca.php");
 include_once("../all/conect.php");
 
 $resposta = [
@@ -47,7 +49,9 @@ try {
         $link_final = '';
 
         if ($item['tipo_item'] === 'documento') {
-            $link_final = $item['caminho'];
+            $caminhoDocumento = str_replace('\\', '/', (string)$item['caminho']);
+            $caminhoDocumento = preg_replace('#^(\.\./)+#', '../', $caminhoDocumento);
+            $link_final = $caminhoDocumento;
         } else if ($item['tipo_item'] === 'imagem_blob') {
             // A MÁGICA ACONTECE AQUI:
             // Cria uma "Data URL" com o conteúdo da imagem em Base64

@@ -281,7 +281,7 @@ if ($m3_00 == 0) {
         $adc->bindParam(':vezes', $vezes);
         $adc->bindParam(':semana', $semana);
 
-        //SE O T?CNICO ESCOLHIDO FOR DIFERENTE DO USU?RIO
+        //SE O T?CNICO ESCOLHIDO FOR DIFERENTE DO Usuário
         //if($tecnico>0 && $tecnico!= $user_id){
         //}
 
@@ -301,7 +301,7 @@ if ($m3_00 == 0) {
           $adc = $pdo->prepare("INSERT INTO `interatividade_melhorias` (`inter_tipo`, `inter_atd`, `inter_user`, `inter_data`, `inter_desc`) VALUES ('1', '$atd', '$user_id', '$agora', '$inter_msg');");
           $adc->execute();
 
-          //SE O T?CNICO ESCOLHIDO FOR DIFERENTE DO USU?RIO
+          //SE O T?CNICO ESCOLHIDO FOR DIFERENTE DO Usuário
           //registra intera??o de direcionamento de atendimento
           if ($tecnico > 0 && $tecnico != $user_id) {
             $show_tec = $pdo->prepare("SELECT usuarios.user_nome FROM usuarios WHERE usuarios.user_id = '$tecnico'");
@@ -344,7 +344,7 @@ if ($m3_00 == 0) {
           $atd_tipo_nome = "Notifica??o de monitoramento";
         }
         if ($tipo == 0) {
-          $atd_tipo_nome = "N?o informado";
+          $atd_tipo_nome = "não informado";
         }
         $categoria = filter_input(INPUT_POST, 'categoria', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         $pdo = ConnectionN3();
@@ -369,7 +369,7 @@ if ($m3_00 == 0) {
 
         $nivel = filter_input(INPUT_POST, 'nivel', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         if ($nivel == 0) {
-          $atd_nivel_nome = "N?o informado";
+          $atd_nivel_nome = "não informado";
         }
         if ($nivel == 1) {
           $atd_nivel_nome = "N?vel 1";
@@ -441,7 +441,7 @@ if ($m3_00 == 0) {
           $atd_tipo_original_nome = "Notifica??o de monitoramento";
         }
         if ($atd_tipo_original == 0) {
-          $atd_tipo_original_nome = "N?o informado";
+          $atd_tipo_original_nome = "não informado";
         }
         $atd_cat_original = $row["categoria"];
         $atd_cat_original_nome = $row["cat_nome"];
@@ -451,7 +451,7 @@ if ($m3_00 == 0) {
         $atd_item_original_nome = $row["itens_nome"];
         $atd_nivel_original = $row["nivel"];
         if ($atd_nivel_original == 0) {
-          $atd_nivel_original_nome = "N?o informado";
+          $atd_nivel_original_nome = "não informado";
         }
         if ($atd_nivel_original == 1) {
           $atd_nivel_original_nome = "N?vel 1";
@@ -629,13 +629,13 @@ if ($m3_00 == 0) {
         }
       }
 
-      //USU?RIO ACEITA INICIAR UM ATENDIMENTO
+      //Usuário ACEITA INICIAR UM ATENDIMENTO
       if ($action == "atd_aceitar") {
         $tecnico = filter_input(INPUT_POST, 'tecnico', FILTER_SANITIZE_NUMBER_INT);
-        //VERIFICA SE TECNICO ATRIBU?DO ? O PR?PRIO USU?RIO
+        //VERIFICA SE TECNICO ATRIBU?DO ? O PR?PRIO Usuário
         //SE VERDADEIRO:
         //1 - muda o status do atendimento para 2 (ATENDIMENTO EM EXECU??O)
-        //2 - registra na tabela de interatividade_melhorias que o usu?rio iniciou o atendimento.
+        //2 - registra na tabela de interatividade_melhorias que o Usuário iniciou o atendimento.
         if ($tecnico == $user_id) {
           $pdo = ConnectionN3();
           $adc = $pdo->prepare("UPDATE `melhorias` SET `tecnico`='$tecnico', `status`='2' WHERE  `id`='$atd';");
@@ -676,7 +676,7 @@ if ($m3_00 == 0) {
         }
       }
 
-      //USU?RIO RETOMA UM ATENDIMENTO
+      //Usuário RETOMA UM ATENDIMENTO
       if ($action == "atd_retomar") {
         $pdo = ConnectionN3();
 
@@ -719,7 +719,7 @@ if ($m3_00 == 0) {
         }
       }
 
-      //USU?RIO RECUSA UM ATENDIMENTO
+      //Usuário RECUSA UM ATENDIMENTO
       if ($action == "atd_recusar") {
         $tecnico = filter_input(INPUT_POST, 'tecnico', FILTER_SANITIZE_NUMBER_INT);
         $inter_desc = filter_input(INPUT_POST, 'inter_desc', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
@@ -728,7 +728,7 @@ if ($m3_00 == 0) {
         //1 - muda o status do atendimento para 1 (aguardando atendimento)
         //1 - registra na tabela de atendimento o novo t?cnico respons?vel 
         //2 - busca o NOME do t?cnico respons?vel
-        //2 - registra na tabela de interatividade_melhorias que o usu?rio direcionou o atendimento.      
+        //2 - registra na tabela de interatividade_melhorias que o Usuário direcionou o atendimento.      
         if ($tecnico != 0) {
           $pdo = ConnectionN3();
           $adc = $pdo->prepare("UPDATE `melhorias` SET `tecnico`='$tecnico', `status`='1' WHERE `id`='$atd';");
@@ -752,7 +752,7 @@ if ($m3_00 == 0) {
         //SE FALSO:
         //1 - muda o status do atendimento para 1 (aguardando atendimento)
         //1 - remove o t?cnico como respons?vel pelo atendimento
-        //2 - registra na tabela de interatividade_melhorias que o usu?rio recusou o atendimento.     
+        //2 - registra na tabela de interatividade_melhorias que o Usuário recusou o atendimento.     
         if ($tecnico == 0) {
           $pdo = ConnectionN3();
           $adc = $pdo->prepare("UPDATE `melhorias` SET `tecnico`='0', `status`='1' WHERE `id`='$atd';");
@@ -862,7 +862,7 @@ if ($m3_00 == 0) {
         }
       }
 
-      //USU?RIO FINALIZA UM ATENDIMENTO
+      //Usuário FINALIZA UM ATENDIMENTO
       if ($action == "atd_finalizar") {
         $desc_fechamento = filter_input(INPUT_POST, 'desc_fechamento', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         $pdo = ConnectionN3();
@@ -926,7 +926,7 @@ if ($m3_00 == 0) {
   ?>
   <?php
   // Verifica de existe o ID de um atendimento setado.
-  // Se n?o houver, exibe a parte de CADASTRO DE NOVO ATENDIMENTO
+  // Se não houver, exibe a parte de CADASTRO DE NOVO ATENDIMENTO
   if (empty($atd)) {
     if ($m3_01 == 0) {
       header("Location: ../index.php");
@@ -1189,7 +1189,7 @@ if ($m3_00 == 0) {
   <?php } ?>
   <?php
   // Verifica de existe o ID de um atendimento setado.
-  // Se n?o houver, exibe a parte de CADASTRO DE NOVO ATENDIMENTO
+  // Se não houver, exibe a parte de CADASTRO DE NOVO ATENDIMENTO
   if (isset($atd)) { ?>
     <?php
     //Busca informa??es do atendimento
@@ -1243,11 +1243,11 @@ WHERE melhorias.id = '$atd'");
       $atd_tipo_nome = "Notifica??o de monitoramento";
     }
     if ($atd_tipo == 0) {
-      $atd_tipo_nome = "N?o informado";
+      $atd_tipo_nome = "não informado";
     }
     $atd_nivel = $row["nivel"];
     if ($atd_nivel == 0) {
-      $atd_nivel_nome = "N?o informado";
+      $atd_nivel_nome = "não informado";
     }
     if ($atd_nivel == 1) {
       $atd_nivel_nome = "N?vel 1";
@@ -1283,7 +1283,7 @@ WHERE melhorias.id = '$atd'");
     $local = $row["local"];
     $local_nom = $row["local_nom"];
     if ($local == 0) {
-      $local_nom = "N?o informado";
+      $local_nom = "não informado";
     }
     $local_end = $row["local_end"];
     $local_city = $row["local_city"];
@@ -1298,7 +1298,7 @@ WHERE melhorias.id = '$atd'");
     $tecnico_nome = $row["tecnico_nome"];
     $tecnico_id = $row["tecnico"];
     if ($tecnico_id == 0) {
-      $tecnico_nome = "N?o Atribu?do";
+      $tecnico_nome = "não Atribu?do";
     }
     ?>
     <div class="container-fluid">
@@ -1425,24 +1425,24 @@ WHERE melhorias.id = '$atd'");
                 <?php
                 //ANALISA E ALTERA REGRAS PARA EXIBI??O DE BOT?ES, MODAIS, ETC DE ACORDO COM O STATUS DO CHAMADO
 
-                //SE N?O HOUVER T?CNICO ATRIBU?DO PARA O ATENDIMENTO
+                //SE não HOUVER T?CNICO ATRIBU?DO PARA O ATENDIMENTO
                 if ($tecnico_id == 0) {
                   $exibe_bt_atd_aceitar = true;
                 }
 
-                //SE O ATENDIMENTO ESTIVER AGUARDANDO E O USU?RIO FOR O T?CNICO
+                //SE O ATENDIMENTO ESTIVER AGUARDANDO E O Usuário FOR O T?CNICO
                 if ($atd_status == 1 && $tecnico_id == $user_id) {
                   $exibe_bt_atd_aceitar = true;
                 }
                 if ($atd_status == 1) {
                   $exibe_bt_atd_espera = true;
                 }
-                //SE O ATENDIMENTO ESTIVER EM ESPERA E O USU?RIO FOR O T?CNICO
+                //SE O ATENDIMENTO ESTIVER EM ESPERA E O Usuário FOR O T?CNICO
                 if ($atd_status == 3 && $tecnico_id == $user_id) {
                   $exibe_bt_atd_retomar = true;
                 }
                 //if($atd_status==5 && $tecnico_id==$user_id){ $exibe_bt_atd_retomar=true; }
-                //SE O ATENDIMENTO ESTIVER EM EXECU??O E O USU?RIO FOR O T?CNICO
+                //SE O ATENDIMENTO ESTIVER EM EXECU??O E O Usuário FOR O T?CNICO
                 if ($atd_status == 2 && $tecnico_id == $user_id) {
                   $exibe_bt_atd_devolver = true;
                   $exibe_bt_atd_espera = true;
@@ -1450,7 +1450,7 @@ WHERE melhorias.id = '$atd'");
                   $exibe_bt_atd_finalizar = true;
                 }
 
-                //ANALISA E ALTERA REGRAS PARA EXIBI??O DE BOT?ES, MODAIS, ETC DE ACORDO COM A PERMISS?O DO USU?RIO
+                //ANALISA E ALTERA REGRAS PARA EXIBI??O DE BOT?ES, MODAIS, ETC DE ACORDO COM A PERMISS?O DO Usuário
                 if ($m3_02 == 0) {
                   $exibe_bt_atd_aceitar = true;
                   $exibe_bt_atd_finalizar = false;
@@ -1472,7 +1472,7 @@ WHERE melhorias.id = '$atd'");
                 }
 
 
-                if ($m3_05 == 2) { //se usu?rio com permiss?o para editar melhorias de terceiros
+                if ($m3_05 == 2) { //se Usuário com permiss?o para editar melhorias de terceiros
                   if ($atd_status == 3) {
                     $exibe_bt_atd_retomar = true;
                   }
@@ -1987,14 +1987,14 @@ WHERE melhorias.id = '$atd'");
               </div>
               <div class="modal-body">
                 <label class="small"><strong>Iniciar o atendimento:</strong></label>
-                <label class="small">Se o t?cnico informado for o pr?prio usu?rio:<br>
+                <label class="small">Se o t?cnico informado for o pr?prio Usuário:<br>
                   <i><strong>a)</strong></i> Este atendimento ficar? sob sua responsabilidade;<br>
                   <i><strong>b)</strong></i> O status do atendimento ser? alterado para <span style="color: #f00;">''Em execu??o''.</span></label>
                 <label class="small pt-1"><strong>Direcionar a outro t?cnico:</strong></label>
-                <label class="small">Se o t?cnico informado <span style="color: #f00;">''N?O''</span> for o pr?prio usu?rio:<br>
+                <label class="small">Se o t?cnico informado <span style="color: #f00;">''não''</span> for o pr?prio Usuário:<br>
                   <i><strong>a)</strong></i> Este atendimento ser? redirecionado para a fila de melhorias do t?cnico informado;<br>
                   <i><strong>b)</strong></i> Este atendimento continuar? com o status <span style="color: #f00;">''Aguardando Atendimento''</span> at? que o t?cnico respons?vel confirme o in?cio da execu??o.</label><br>
-                <label class="small pt-1"><strong>N?o esque?a de informar todas as intera??es com o cliente.</strong></label>
+                <label class="small pt-1"><strong>não esque?a de informar todas as intera??es com o cliente.</strong></label>
                 <div class="form-row">
 
                   <div class="form-group col-sm-12">
@@ -2043,7 +2043,7 @@ WHERE melhorias.id = '$atd'");
             </div>
             <div class="modal-body">
               <label class="small">Confirma??o de retomada do atendimento.</label>
-              <label class="small">Este atendimento estava aguardando o retorno de um terceiro. Ao retomar este atendimento ele ficar? sob sua responsabilidade. N?o esque?a de informar todas as intera??o com o cliente.</label>
+              <label class="small">Este atendimento estava aguardando o retorno de um terceiro. Ao retomar este atendimento ele ficar? sob sua responsabilidade. não esque?a de informar todas as intera??o com o cliente.</label>
             </div>
             <div class="modal-footer">
               <form action="#" method="POST">
@@ -2072,7 +2072,7 @@ WHERE melhorias.id = '$atd'");
                 </button>
               </div>
               <div class="modal-body">
-                <label class="small"><span style="color: #f00;">melhorias <b>Em Espera</b> s?o aqueles que n?o podem ser finalizados, <br>? preciso aguardar o retorno do <b>T?CNICO</b></span> <b> EXTERNO </b><span style="color: #f00;"> da N?vel 3 TI.</span></label>
+                <label class="small"><span style="color: #f00;">melhorias <b>Em Espera</b> s?o aqueles que não podem ser finalizados, <br>? preciso aguardar o retorno do <b>T?CNICO</b></span> <b> EXTERNO </b><span style="color: #f00;"> da N?vel 3 TI.</span></label>
                 <label class="small"><i><b>Ao colocar em espera:</b></i><br> <strong>a)</strong> Este atendimento continuar? sob a sua responsabilidade; <br><strong>b)</strong> O status do atendimento ser? alterado para <b>"Em espera";</b> <strong><br>c)</strong> Ap?s o per?odo de <b>Espera</b>, o status do atendimento ser? alterado para <br><b>"Em Execu??o".</b></label>
                 <div class="form-row">
                   <div class="form-group col-sm-12">
@@ -2165,13 +2165,13 @@ WHERE melhorias.id = '$atd'");
                   <label class="small">Ao confirmar esta tela <span style="color:#f00;"><b>SEM</b></span> <b>informar um t?cnico:</b> <br><b>a)</b> O atendimento voltar? para a fila de atendimento sem um respons?vel; <br> <b>b)</b> Este atendimento continuar? com o status <span style="color: #f00;">''Aguardando Atendimento''</span> at? que um t?cnico o aceite.</label>
                   <label class="small pt-1"><strong>Direcionar atendimento:</strong></label>
                   <label class="small">Ao confirmar esta tela informando um t?cnico respons?vel: <br><b>a)</b> Este atendimento ser? redirecionado para a fila de melhorias do t?cnico informado; <br> <b>b)</b> Este atendimento continuar? com o status <span style="color: #f00;">''Aguardando Atendimento''</span> at? que o t?cnico respons?vel confirme o in?cio da execu??o.</label>
-                  <label class="small pt-1"><strong>N?o esque?a de informar todas as intera??es com o cliente</strong></label>
+                  <label class="small pt-1"><strong>não esque?a de informar todas as intera??es com o cliente</strong></label>
                 </div>
                 <div class="form-row">
                   <div class="form-group col-sm-12">
                     <label class="my-0 small">T?cnico Respons?vel:</label>
                     <select name="tecnico" class="form-control form-control-sm selectpicker" data-live-search="true" required="required" tabindex="9">
-                      <option value="0">N?o atribu?do</option>
+                      <option value="0">não atribu?do</option>
                       <?php
                       $pdo = ConnectionN3();
                       $show_clt = $pdo->prepare("SELECT usuarios.user_id, usuarios.user_nome FROM usuarios WHERE usuarios.user_sts = '1' ORDER BY usuarios.user_nome ASC");
@@ -2290,7 +2290,7 @@ WHERE melhorias.id = '$atd'");
                 <ul>
                   <li class="small">Se voc? for o t?cnico que executar? o atendimento, apenas confirme o seu nome como <em>T?cnico Respos?vel</em>.</li>
                   <li class="small">Quando voc? confirmar seu nome como <em>T?cnico Respos?vel</em> pelo atendimento outras op??es de gest?o do atendimento aparecer?o na sua tela.</li>
-                  <li class="small">Se n?o for voc? quem executar? o atendimento, voc? pode tamb?m informar quem ser? o t?cnico que dever? executar o atendimento.</li>
+                  <li class="small">Se não for voc? quem executar? o atendimento, voc? pode tamb?m informar quem ser? o t?cnico que dever? executar o atendimento.</li>
                   <li class="small">Cada a??o que voc? fizer ser? exibida no <span class="badge badge-light"><i class="fas fa-list-ol"></i> Hist?rico do atendimento</span> com a data/hora e o seu nome.</li>
                 </ul>
               </li>

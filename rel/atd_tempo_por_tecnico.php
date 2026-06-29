@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 session_start();
 include_once("../all/seguranca.php");
 include_once("../all/conect.php");
@@ -7,7 +7,7 @@ include_once("../all/permissoes.php");
 $hoje = date("Y-m-d");
 $agora = date("Y-m-d H:i:s");
 
-//verifico se existe alguma requisição POST chamada action
+//verifico se existe alguma requisiÃ§Ã£o POST chamada action
 $action = filter_input(INPUT_POST, 'action', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
 if ($action == "alterar_senha") {include_once("../all/update_senha.php");}
@@ -29,31 +29,36 @@ header("Refresh:60");
 </head>
 <body class="rel-legacy-body">
 <?php include_once("../all/sidebar.php"); ?>
-<!-- parte acima direcionada ao cabeçalho (incluir e ajustar para necessário)-->
+<!-- parte acima direcionada ao cabeÃ§alho (incluir e ajustar para necessÃ¡rio)-->
 
-<div class="container-fluid rel-page rel-legacy-page">
-    <div class="row">
-        <div class="col-md-12 mt-2">
-            <div class="card">
-                <div class="card-header h4 text-center py-2 rel-section-header">
-                    <i class="fas fa-list-ul"></i> Lista de atendimentos e abertos por técnico
+<div class="container-fluid rel-page rel-legacy-page rel-full-height-page">
+    <div class="card rel-main-card rel-tempo-card">
+        <div class="card-header rel-toolbar">
+            <div class="rel-title">
+                <span class="rel-title-icon"><i class="fas fa-clock"></i></span>
+                <div>
+                    <h4>Tempo médio por técnico</h4>
+                    <small>Resumo de atendimentos abertos, em espera, vencidos e tempo acumulado.</small>
                 </div>
+            </div>
+        </div>
 
-                <div class="card-body p-0">
-                    <table class="table table-hover h2  rel-table">
+        <div class="card-body rel-card-body">
+            <div class="rel-table-wrap rel-tempo-table-wrap">
+                <table class="table table-hover rel-table rel-kpi-table">
                         <thead>
 
                         <tr>
-                            <th class="text-right h4"></th>
-                            <th class="text-center h4">Aberto</th>
-                            <th class="text-center h4">Em espera</th>
-                            <th class="text-center h4">Vencidos</th>
-                            <th class="text-center h4">Tempo Acumulado (h)</th>
+                            <th class="text-left"></th>
+                            <th class="text-center">Aberto</th>
+                            <th class="text-center">Em espera</th>
+                            <th class="text-center">Vencidos</th>
+                            <th class="text-center">Tempo Acumulado (h)</th>
                         </tr>
                         </thead>
                         <tbody>
                         <?php
-                        // Buscando lista de usuários
+                        // Buscando lista de usuÃ¡rios
                         $pdo = ConnectionN3();
                         $filterEmpresas = "";
 
@@ -66,14 +71,14 @@ header("Refresh:60");
                         while ($row = $show_atd->fetch(PDO::FETCH_ASSOC)) {
                             $user_name = $row["user_nome"];
                             $user_id = $row["user_id"];
-                            // Contar chamados em aberto para usuário
+                            // Contar chamados em aberto para usuÃ¡rio
                             $cont_atd = $pdo->prepare("SELECT COUNT(atendimentos.id) AS atendimentos_abertos FROM atendimentos WHERE atendimentos.tecnico = :user_id AND atendimentos.`status` IN (1,2) " . $filterEmpresas);
                             $cont_atd->bindParam(':user_id', $user_id, PDO::PARAM_INT);
                             $cont_atd->execute();
                             $row2 = $cont_atd->fetch(PDO::FETCH_ASSOC);
                             $atd_ab = $row2["atendimentos_abertos"];
 
-                            // Contar chamados em espera para usuário
+                            // Contar chamados em espera para usuÃ¡rio
                             $cont_atd = $pdo->prepare("SELECT COUNT(atendimentos.id) AS atendimentos_espera FROM atendimentos WHERE atendimentos.tecnico = :user_id AND atendimentos.`status`= '3' " . $filterEmpresas);
                             $cont_atd->bindParam(':user_id', $user_id, PDO::PARAM_INT);
                             $cont_atd->execute();
@@ -83,7 +88,7 @@ header("Refresh:60");
                             // Contar chamados vencidos
                             $atd_venc = 0;
                             $tempo_acumulado = 0;
-                            // Buscar cada atendimento aberto do usuário
+                            // Buscar cada atendimento aberto do usuÃ¡rio
                             $show_atd_user = $pdo->prepare("SELECT atendimentos.id, atendimentos.nivel, atendimentos.abertura FROM atendimentos WHERE atendimentos.tecnico = :user_id AND atendimentos.`status` IN (1,2)" . $filterEmpresas);
                             $show_atd_user->bindParam(':user_id', $user_id, PDO::PARAM_INT);
                             $show_atd_user->execute();
@@ -91,7 +96,7 @@ header("Refresh:60");
                                 // Para cada atendimento aberto, verificar:
                                 // ID do atendimento para buscar as esperas que ele teve
                                 $atd_id = $row_user["id"];
-                                // Nível para determinar o prazo de fechamento
+                                // NÃ­vel para determinar o prazo de fechamento
                                 $atd_nivel = $row_user["nivel"];
                                 $sla = 0;
                                 if ($atd_nivel == 1) {
@@ -121,26 +126,26 @@ header("Refresh:60");
                                 $show_espera->execute();
                                 $exibe_espera = $show_espera->fetch(PDO::FETCH_ASSOC);
                                 $espera_tempo_total = $exibe_espera["segundos"];
-                                // Se não tiver retorno, atribui 0 segundos ao tempo de espera
+                                // Se nÃ£o tiver retorno, atribui 0 segundos ao tempo de espera
                                 if ($espera_tempo_total == "") {
                                     $espera_tempo_total = 0;
                                 }
                                 // Soma o tempo total de espera ao prazo para o fechamento do atendimento
                                 $end_date0 = date("Y-m-d H:i:s", strtotime($time_limit_to_close . " +$espera_tempo_total SECOND"));
                                 $end_date = new DateTime($end_date0);
-                                // Calcular se o atendimento está atrasado
+                                // Calcular se o atendimento estÃ¡ atrasado
                                 if ($start_date > $end_date) {
                                     $atd_venc++;
                                 }
 
-                                // Calcular tempo acumulado de atendimentos para o técnico
+                                // Calcular tempo acumulado de atendimentos para o Técnico
                                 $atendimento_abertura = new DateTime($atd_hora_abertura);
                                 $interval = $atendimento_abertura->diff($start_date);
                                 $tempo_acumulado += $interval->h + ($interval->days * 24);
                             }
                             ?>
                             <tr>
-                                <td class="text-right"><?php echo $user_name; ?></td>
+                                <td class="text-left"><span class="rel-user-name"><?php echo $user_name; ?></span></td>
                                 <td class="text-center"><?php echo $atd_ab; ?></td>
                                 <td class="text-center"><?php echo $atd_ep; ?></td>
                                 <td class="text-center <?php if ($atd_venc > 0) { echo "text-danger"; } ?>"><?php echo $atd_venc; ?></td>
@@ -149,24 +154,23 @@ header("Refresh:60");
                         <?php } ?>
                         </tbody>
                     </table>
-                </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- MODAL DE AJUDA PARA A GESTÃO DE UM ATENDIMENTO -->
+<!-- MODAL DE AJUDA PARA A GESTÃƒO DE UM ATENDIMENTO -->
 <div class="modal fade rel-modal" id="Help" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
     <div class="modal-dialog modal-dialog-centered" role="document">
         <div class="modal-content">
 
             <div class="modal-header">
-                <h6 class="modal-title" id="myModalLabel"><i class="far fa-question-circle text-primary"></i> Ajuda com relatórios</h6>
+                <h6 class="modal-title" id="myModalLabel"><i class="far fa-question-circle text-primary"></i> Ajuda com relatÃ³rios</h6>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Fechar"><span aria-hidden="true">&times;</span></button>
             </div>
 
             <div class="modal-body">
-                <p><strong>Relatório de atendimentos abertos por técnico:</strong></p>
+                <p><strong>RelatÃ³rio de atendimentos abertos por Técnico:</strong></p>
                 <p>Em desenvolvimento...</p>
             </div>
 
@@ -198,3 +202,4 @@ header("Refresh:60");
     <script src="js/relatorios_modern.js"></script>
 </body>
 </html>
+

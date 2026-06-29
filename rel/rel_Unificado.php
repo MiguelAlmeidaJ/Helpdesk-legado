@@ -17,39 +17,20 @@ if ($action == "alterar_senha") {
 $ano = date('Y', strtotime('-0 months', strtotime(date('Y-m-d'))));
 $mes = date('m', strtotime('-0 months', strtotime(date('Y-m-d'))));
 //RECEBE INFORMAÇÕES PARA FILTRO
-if (isset($_POST['f_clt'])) {
-  $f_clt = $_POST['f_clt'];
-} else {
-  $f_clt = 0;
+$f_clt = filter_input(INPUT_GET, 'f_clt', FILTER_VALIDATE_INT) ?: 0;
+$f_local = filter_input(INPUT_GET, 'f_local', FILTER_VALIDATE_INT) ?: 0;
+$p_local = $f_local === 0 ? '%' : (string)$f_local;
+$data_1 = filter_input(INPUT_GET, 'data_1', FILTER_SANITIZE_FULL_SPECIAL_CHARS) ?: "$ano-$mes-01";
+$data_2 = filter_input(INPUT_GET, 'data_2', FILTER_SANITIZE_FULL_SPECIAL_CHARS) ?: date("Y-m-d");
+$f_nivel = filter_input(INPUT_GET, 'f_nivel', FILTER_VALIDATE_INT) ?: 0;
+$f_area = filter_input(INPUT_GET, 'f_area', FILTER_SANITIZE_FULL_SPECIAL_CHARS) ?: 'ti';
+if (!in_array($f_area, ['ti', 'devops'], true)) {
+  $f_area = 'ti';
 }
-if (isset($_POST['f_local'])) {
-  $f_local = $p_local = $_POST['f_local'];
-} else {
-  $f_local = 0;
-}
-if ($f_local == 0) {
-  $p_local = "%";
-}
-
-if (isset($_POST['data_1'])) {
-  $data_1 = $_POST['data_1'];
-} else {
-  $data_1 = "$ano-$mes-01";
-}
-if (isset($_POST['data_2'])) {
-  $data_2 = $_POST['data_2'];
-} else {
-  $data_2 = date("Y-m-d");
-}
-if (isset($_POST['f_nivel'])) {
-  $f_nivel = $p_nivel = $_POST['f_nivel'];
-} else {
-  $f_nivel = 0;
-}
+$p_nivel = $f_nivel;
 if ($f_nivel == 0) {
   $p_nivel = "1,2,3,4,5";
 }
-
 
 //header("Refresh:60");
 
@@ -72,7 +53,7 @@ if ($f_nivel == 0) {
 <body class="rel-legacy-body">
   <?php include_once("../all/sidebar.php"); ?>
 
-  <div class="container-fluid rel-page rel-legacy-page">
+  <div class="container-fluid rel-page rel-legacy-page rel-analitico-full-page">
     <div class="row">
       <div class="col-md-12 mt-2">
         <div class="card">
@@ -80,7 +61,7 @@ if ($f_nivel == 0) {
             <div class="card py-0 my-0">
               <div class="card-header my-0 py-2 h6 rel-filter-header" id="headingOne">
                 <button class="btn" data-toggle="collapse" data-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
-                  <i class="fas fa-chart-bar"></i> Relatório de atendimentos por Tecnico
+                  <i class="fas fa-chart-bar"></i> Relatório unificado de atendimentos
                 </button>
               </div>
               <div id="collapseOne" class="collapse show" aria-labelledby="headingOne" data-parent="#accordion">
@@ -88,21 +69,21 @@ if ($f_nivel == 0) {
                   <div class="row">
                     <div class="col-12">
 
-                      <form action="#" method="POST">
-                        <div class="form-row align-items-center">
-                          <div class="col-auto col-form-label-sm">
-                            <label>Cliente:</label>
-                            <select name="f_clt" id="f_clt" class="form-control form-control-sm mb-2 mt-n2 selectpicker" data-live-search="true" required="required" tabindex="1">
-                              <option></option>
+                      <form action="rel_Unificado.php" method="GET" class="rel-modern-filter rel-analitico-filter">
+                        <div class="rel-filter-grid">
+                          <div class="rel-filter-field rel-filter-client">
+                            <label for="f_clt"><i class="fas fa-building"></i> Cliente</label>
+                            <select name="f_clt" id="f_clt" class="form-control form-control-sm selectpicker" data-live-search="true" required="required" tabindex="1">
+                              <option value="">Selecione um cliente</option>
                               <?php
                               $filterEmpresas = null;
                               if (isset($_SESSION['tipo']) && $_SESSION['tipo'] == 2 && isset($_SESSION['empresas']) && count($_SESSION['empresas']) > 0) {
                                 $filterEmpresas .= " AND clientes.clt_id IN (" . implode(',', $_SESSION['empresas']) . ")";
                               }
-                              $sql = "SELECT clientes.clt_id, clientes.clt_nomef FROM clientes WHERE clientes.clt_sts = '1'";;
+                              $sql = "SELECT clientes.clt_id, clientes.clt_nomef FROM clientes WHERE clientes.clt_sts = '1'";
                               if ($filterEmpresas) {
                                 $sql .= $filterEmpresas;
-                              };
+                              }
                               $sql .= " ORDER BY clientes.clt_nomef ASC";
                               $pdo = ConnectionN3();
                               $show_clt = $pdo->prepare($sql);
@@ -111,73 +92,52 @@ if ($f_nivel == 0) {
                                 $clt_id = $exibe["clt_id"];
                                 $clt_nome = $exibe["clt_nomef"];
                               ?>
-                                <option value="<?php echo $clt_id; ?>" <?php if ($f_clt == $clt_id) {
-                                                                          echo " selected ";
-                                                                        } ?>><?php echo $clt_nome; ?></option>
+                                <option value="<?php echo $clt_id; ?>" <?php if ($f_clt == $clt_id) { echo " selected "; } ?>><?php echo htmlspecialchars($clt_nome); ?></option>
                               <?php } ?>
                             </select>
-
                           </div>
 
-
-                          <div class="col-auto col-form-label-sm">
-                            <label>De:</label>
-                            <input id="data_1" name="data_1" type="date" value="<?php echo $data_1; ?>" class="form-control mb-2 mt-n2 form-control-sm">
-                          </div>
-                          <div class="col-auto col-form-label-sm">
-                            <label>a:</label>
-                            <input id="data_2" name="data_2" type="date" value="<?php echo $data_2; ?>" class="form-control mb-2 mt-n2 form-control-sm">
+                          <div class="rel-filter-field">
+                            <label for="data_1"><i class="far fa-calendar-alt"></i> De</label>
+                            <input id="data_1" name="data_1" type="date" value="<?php echo htmlspecialchars($data_1); ?>" class="form-control form-control-sm">
                           </div>
 
+                          <div class="rel-filter-field">
+                            <label for="data_2"><i class="far fa-calendar-check"></i> Até</label>
+                            <input id="data_2" name="data_2" type="date" value="<?php echo htmlspecialchars($data_2); ?>" class="form-control form-control-sm">
+                          </div>
 
-                          <div class="col-auto col-form-label-sm">
-                            <label>Local:</label>
-                            <select name="f_local" id="f_local" class="form-control form-control-sm mb-2 mt-n2 selectpicker" data-live-search="true" required="required" tabindex="1">
-                              <option value="0">Todos</option>
+                          <div class="rel-filter-field">
+                            <label for="f_local"><i class="fas fa-map-marker-alt"></i> Local</label>
+                            <select name="f_local" id="f_local" class="form-control form-control-sm selectpicker" data-live-search="true" tabindex="1" <?php echo $f_clt > 0 ? '' : 'disabled'; ?>>
+                              <option value="0"><?php echo $f_clt > 0 ? 'Todos' : 'Selecione o cliente'; ?></option>
                             </select>
                           </div>
 
-                          <div class="col-auto col-form-label-sm">
-                            <label>Nível:</label>
-                            <select name="f_nivel" class="form-control mb-2 mt-n2 form-control-sm">
-                              <option value="0" <?php if (0 == $f_nivel) {
-                                                  echo " selected";
-                                                } ?>>Todos</option>
-                              <option value="1" <?php if (1 == $f_nivel) {
-                                                  echo " selected";
-                                                } ?>>Nível 1</option>
-                              <option value="2" <?php if (2 == $f_nivel) {
-                                                  echo " selected";
-                                                } ?>>Nível 2</option>
-                              <option value="3" <?php if (3 == $f_nivel) {
-                                                  echo " selected";
-                                                } ?>>Nível 3</option>
-                              <option value="4" <?php if (4 == $f_nivel) {
-                                                  echo " selected";
-                                                } ?>>Rotina</option>
-                              <option value="5" <?php if (5 == $f_nivel) {
-                                                  echo " selected";
-                                                } ?>>Administrativo</option>
+                          <div class="rel-filter-field">
+                            <label for="f_nivel"><i class="fas fa-layer-group"></i> Nível</label>
+                            <select id="f_nivel" name="f_nivel" class="form-control form-control-sm">
+                              <option value="0" <?php if (0 == $f_nivel) { echo " selected"; } ?>>Todos</option>
+                              <option value="1" <?php if (1 == $f_nivel) { echo " selected"; } ?>>Nível 1</option>
+                              <option value="2" <?php if (2 == $f_nivel) { echo " selected"; } ?>>Nível 2</option>
+                              <option value="3" <?php if (3 == $f_nivel) { echo " selected"; } ?>>Nível 3</option>
+                              <option value="4" <?php if (4 == $f_nivel) { echo " selected"; } ?>>Rotina</option>
+                              <option value="5" <?php if (5 == $f_nivel) { echo " selected"; } ?>>Rotina</option>
                             </select>
                           </div>
 
-
-
-                          <div class="col-md-4 mb-2 ml-4">
-                            <button type="submit" class="btn btn-info btn-sm mr-2">Filtrar</button>
-                            <a href="rel_Unificado.php" class="btn btn-outline-secondary btn-sm mr-2 rel-pill-btn">Limpar</a>
-
-                            <!-- <button onclick="baixarPDF()" class="btn btn-danger btn-sm">
-                              <i class="fas fa-file-pdf"></i> Exportar PDF
-                            </button> -->
-
-                            <!-- <button id="btnBaixarPDF" class="btn btn-danger btn-sm">
-    <i class="fas fa-file-pdf"></i> Exportar PDF
-</button> -->
-
-
+                          <div class="rel-filter-field">
+                            <label for="f_area"><i class="fas fa-sitemap"></i> Área</label>
+                            <select id="f_area" name="f_area" class="form-control form-control-sm">
+                              <option value="ti" <?php if ($f_area === 'ti') { echo " selected"; } ?>>Suporte T.I</option>
+                              <option value="devops" <?php if ($f_area === 'devops') { echo " selected"; } ?>>Suporte DevOps</option>
+                            </select>
                           </div>
 
+                          <div class="rel-filter-actions">
+                            <button type="submit" class="btn btn-info rel-pill-btn"><i class="fas fa-filter"></i> Filtrar</button>
+                            <a href="rel_Unificado.php" class="btn btn-outline-secondary rel-clear-btn"><i class="fas fa-eraser"></i> Limpar</a>
+                          </div>
                         </div>
                       </form>
 
@@ -193,9 +153,10 @@ if ($f_nivel == 0) {
       </div>
     </div>
 
-    <div class="row mt-2 mb-2">
-      <div class="col-md-12">
-        <div class="card bg-default">
+    <?php if ($f_area === 'ti') { ?>
+    <div class="row mt-2 mb-0 rel-analitico-result-row">
+      <div class="col-md-12 rel-analitico-result-col">
+        <div class="card bg-default rel-analitico-result-card">
           <div class="card-header py-2 h6 rel-section-header">
             <i class="fas fa-chart-pie"></i>
             Relatório analítico de Atendimentos Por Cliente - Suporte T.I
@@ -230,7 +191,7 @@ if ($f_nivel == 0) {
             <i class="fas fa-chart-pie"></i>
             Total de registros: <?php echo $total["n"] ?>
           </div>
-          <div class="card-body">
+          <div class="card-body rel-analitico-result-body">
             <?php if ($f_clt > 0) { ?>
               <?php
               $pdo = ConnectionN3();
@@ -320,7 +281,7 @@ ORDER BY atendimentos.abertura ASC");
                       </div>
                       <div class="col-md-4 mb-3 px-4">
                         <div class="row py-1 ">
-                          <span class="badge badge-light mx-1"> <i class="fas fa-user-tie mr-1"></i> Tecnico: <?php echo $user_nome; ?> </span>
+                          <span class="badge badge-light mx-1"> <i class="fas fa-user-tie mr-1"></i> Técnico: <?php echo $user_nome; ?> </span>
                         </div>
                         <div class="row py-1">
                           <p>Descrição de abertura: <?php echo $atd_desc_abertura; ?></p>
@@ -358,21 +319,22 @@ ORDER BY atendimentos.abertura ASC");
 
               <?php } ?>
             <?php } else { ?>
-              Não há informações para exibir com os filtros selecionado.
+              Não há informações para exibir com os filtros selecionados.
             <?php } ?>
           </div>
         </div>
       </div>
     </div>
 
-    <div class="pt-5"></div>
+    <?php } ?>
 
-    <div class="row mt-2 mb-2">
-      <div class="col-md-12">
-        <div class="card bg-default">
+    <?php if ($f_area === 'devops') { ?>
+    <div class="row mt-2 mb-0 rel-analitico-result-row">
+      <div class="col-md-12 rel-analitico-result-col">
+        <div class="card bg-default rel-analitico-result-card">
           <div class="card-header py-2 h6 rel-section-header">
             <i class="fas fa-chart-pie"></i>
-            Relatório Analítico de Atendimentos Por Cliente - Suporte DevOps
+            Relatório analítico de Atendimentos Por Cliente - Suporte DevOps
           </div>
           <?php
           $pdo = ConnectionN3();
@@ -485,7 +447,7 @@ ORDER BY tarefas.abertura ASC");
                       </div>
                       <div class="col-md-4 mb-3 px-4">
                         <div class="row py-1 ">
-                          <span class="badge badge-light mx-1"> <i class="fas fa-user-tie mr-1"></i> Tecnico: <?php echo $user_nome; ?> </span>
+                          <span class="badge badge-light mx-1"> <i class="fas fa-user-tie mr-1"></i> Técnico: <?php echo $user_nome; ?> </span>
                         </div>
                         <div class="row py-1">
                           <p>Descrição de abertura: <?php echo $tarefas_desc_abertura; ?></p>
@@ -497,7 +459,7 @@ ORDER BY tarefas.abertura ASC");
                             <span class="badge badge-light mx-1">
                               <i class="far fa-clock text-info mr-1"></i> Fechamento: <?php echo date('d/m/Y H:i', strtotime($tarefas_fechamento)); ?>
                             </span>
-                          </div>tarefas
+                          </div>
                           <div class="row py-1">
                             <p>Descrição de fechamento: <?php echo $tarefas_desc_fechamento; ?></p>
                           </div>
@@ -523,16 +485,18 @@ ORDER BY tarefas.abertura ASC");
 
               <?php } ?>
             <?php } else { ?>
-              Não há informações para exibir com os filtros selecionado.
+              Não há informações para exibir com os filtros selecionados.
             <?php } ?>
           </div>
         </div>
       </div>
     </div>
 
+    <?php } ?>
+
   </div>
 
-  <!-- MODAL DE AJUDA PARA A GESTÃO DE UM ATENDIMENTO -->
+  <!-- MODAL DE AJUDA PARA GESTAO DE ATENDIMENTO -->
   <div class="modal fade rel-modal" id="Help" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
     <div class="modal-dialog modal-dialog-centered" role="document">
       <div class="modal-content">
@@ -569,44 +533,7 @@ ORDER BY tarefas.abertura ASC");
     <script src="../js/bootstrap.bundle.min.js"></script>
 
 
-  <!-- <script>
-  window.onload = function () {
-    document.getElementById("btnBaixarPDF").addEventListener("click", function (event) {
-      event.preventDefault(); // Impede o recarregamento da página
 
-      // Capturar os valores dos campos
-      let cliente = document.getElementById("f_clt") ? document.getElementById("f_clt").value : "";
-      let data1 = document.getElementById("data_1") ? document.getElementById("data_1").value : "";
-      let data2 = document.getElementById("data_2") ? document.getElementById("data_2").value : "";
-      let local = document.getElementById("f_local") ? document.getElementById("f_local").value : "";
-      let nivel = document.getElementById("f_nivel") ? document.getElementById("f_nivel").value : "0";
-
-      // Obtenha o token da sessão de uma forma correta (usando uma variável PHP diretamente no script)
-      let token = "<?php echo isset($_SESSION['token']) ? $_SESSION['token'] : ''; ?>"; 
-
-      // Verificar se algum campo essencial está vazio
-      if (!cliente || !data1 || !data2) {
-          alert("Preencha todos os campos obrigatórios (Cliente e Datas) antes de gerar o PDF!");
-          return;
-      }
-
-      let url = "gerar_pdf.php?f_clt=" + encodeURIComponent(cliente) + 
-                "&data_1=" + encodeURIComponent(data1) + 
-                "&data_2=" + encodeURIComponent(data2) + 
-                "&f_local=" + encodeURIComponent(local) + 
-                "&f_nivel=" + encodeURIComponent(nivel) + 
-                "&token=" + encodeURIComponent(token);
-
-      // Criar um link temporário para iniciar o download
-      let a = document.createElement("a");
-      a.href = url;
-      a.target = "_blank";
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-    });
-  }
-  </script> -->
 
   <script>
     function decodeHtmlEntities(str) {

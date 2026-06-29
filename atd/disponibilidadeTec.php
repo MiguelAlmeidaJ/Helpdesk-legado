@@ -525,7 +525,7 @@ function disp_render_ticket($ticket)
 
     ob_start();
 ?>
-    <a class="ticket-chip <?php echo disp_ticket_class($ticket); ?>" href="atd.php?atd=<?php echo urlencode((string)$ticket['id']); ?>" target="_blank" rel="noopener" title="<?php echo disp_h($title); ?>">
+    <a class="ticket-chip <?php echo disp_ticket_class($ticket); ?>" href="atd_detalhe.php?atd=<?php echo urlencode((string)$ticket['id']); ?>" target="_blank" rel="noopener" title="<?php echo disp_h($title); ?>">
         <span class="ticket-id"><?php echo disp_h(disp_format_atd($ticket['id'])); ?></span>
         <span class="ticket-client"><?php echo disp_h($ticket['cliente']); ?></span>
         <?php if ($meta !== '') : ?>

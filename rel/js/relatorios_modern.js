@@ -1,4 +1,7 @@
 $(function() {
+  if (new URLSearchParams(window.location.search).get('pdf') === '1') {
+    document.body.classList.add('rel-pdf-render');
+  }
   const pdfEnabledPages = new Set([
     'atd_abertos_por_tecnico.php',
     'atd_total_por_cliente.php',
@@ -18,6 +21,10 @@ $(function() {
     return window.location.pathname.split('/').pop() || '';
   }
 
+  function isPdfEnabledPage() {
+    return pdfEnabledPages.has(getCurrentReportPage());
+  }
+
   function isReportFilterForm($form) {
     const id = ($form.attr('id') || '').toLowerCase();
     if (id === 'formacoesrelatorios' || id === 'formgerarrelatorio') {
@@ -26,19 +33,30 @@ $(function() {
     if ($form.closest('#formAcoesRelatorios, #formGerarRelatorio').length) {
       return false;
     }
-    return pdfEnabledPages.has(getCurrentReportPage()) && $form.find('button[type="submit"], input[type="submit"]').length > 0;
+    return isPdfEnabledPage() && $form.find('button[type="submit"], input[type="submit"]').length > 0;
+  }
+
+  function getPrimaryFilterForm() {
+    let $selected = $();
+    $('.rel-legacy-page form, .rel-modern-filter').each(function() {
+      const $form = $(this);
+      if (!$selected.length && isReportFilterForm($form)) {
+        $selected = $form;
+      }
+    });
+    return $selected;
   }
 
   function buildPdfUrl($form) {
     const params = new URLSearchParams();
-    const page = getCurrentReportPage();
+    params.set('pagina', getCurrentReportPage());
 
-    params.set('pagina', page);
     if ($form && $form.length) {
       $form.serializeArray().forEach(function(item) {
-        if (item.name && item.value !== undefined) {
-          params.set(item.name, item.value);
+        if (!item.name || item.value === undefined) {
+          return;
         }
+        params.append(item.name, item.value);
       });
     }
 
@@ -48,9 +66,29 @@ $(function() {
   function createPdfButton(extraClass) {
     return $('<button>', {
       type: 'button',
-      class: 'btn btn-outline-danger rel-pill-btn rel-pdf-btn ' + (extraClass || ''),
-      html: '<i class="fas fa-file-pdf"></i> Gerar PDF'
+      class: 'btn rel-pdf-btn ' + (extraClass || ''),
+      html: '<i class="fas fa-file-pdf"></i><span>Gerar PDF</span>'
     });
+  }
+
+  function normalizeActions($form, $submit) {
+    $submit.addClass('rel-filter-submit-btn');
+
+    $form.find('a, button').each(function() {
+      const $action = $(this);
+      const text = $.trim($action.text()).toLowerCase();
+      if (text === 'limpar' || text === 'limpar filtros') {
+        $action.addClass('rel-clear-btn');
+      }
+    });
+
+    let $actions = $submit.closest('.rel-filter-actions, .rel-actions, .form-actions, .btn-group-actions');
+    if (!$actions.length) {
+      $submit.wrap('<span class="rel-inline-actions"></span>');
+      $actions = $submit.parent();
+    }
+
+    return $actions;
   }
 
   function ensurePdfButton($form) {
@@ -63,41 +101,102 @@ $(function() {
       return;
     }
 
-    $submit.addClass('rel-pill-btn rel-filter-submit-btn');
-    $form.find('a, button').each(function() {
-      const $action = $(this);
-      const text = $.trim($action.text()).toLowerCase();
-      if (text === 'limpar' || text === 'limpar filtros') {
-        $action.addClass('rel-clear-btn');
-      }
-    });
-
-    const $button = createPdfButton();
-
-    let $actions = $submit.closest('.rel-filter-actions, .rel-actions, .form-actions');
-    if (!$actions.length) {
-      $submit.wrap('<span class="rel-inline-actions"></span>');
-      $actions = $submit.parent();
-    }
-    $actions.append($button);
-
+    const $actions = normalizeActions($form, $submit);
+    $actions.append(createPdfButton());
     $form.data('pdf-ready', true);
   }
 
   $('.rel-legacy-page form, .rel-modern-filter').each(function() {
-    const $form = $(this);
-    ensurePdfButton($form);
+    ensurePdfButton($(this));
   });
 
-  if (pdfEnabledPages.has(getCurrentReportPage()) && !$('.rel-pdf-btn').length) {
+  if (isPdfEnabledPage() && !$('.rel-pdf-btn').length) {
     const $toolbar = $('.rel-toolbar').first();
-    if ($toolbar.length) {
-      $toolbar.append(createPdfButton('rel-toolbar-pdf'));
+    const $form = getPrimaryFilterForm();
+    if ($toolbar.length && $form.length) {
+      const $button = createPdfButton('rel-toolbar-pdf');
+      $button.data('target-form', $form);
+      $toolbar.append($button);
     }
   }
 
+  let pdfRequestInProgress = false;
+
+  function resetPdfButtons(originalHtml) {
+    pdfRequestInProgress = false;
+    $('.rel-pdf-btn')
+      .prop('disabled', false)
+      .removeClass('is-loading')
+      .html(originalHtml);
+  }
+
+  function showPdfError(message) {
+    const text = message || 'Não foi possível gerar o PDF. Tente novamente.';
+    window.alert(text);
+  }
+
   $(document).on('click', '.rel-pdf-btn', function() {
-    const $form = $(this).closest('form');
-    window.open(buildPdfUrl($form), '_blank', 'noopener');
+    if (pdfRequestInProgress) {
+      return;
+    }
+
+    const $button = $(this);
+    const originalHtml = $button.html();
+    let $form = $button.closest('form');
+    if (!$form.length && $button.data('target-form')) {
+      $form = $button.data('target-form');
+    }
+    if (!$form.length) {
+      $form = getPrimaryFilterForm();
+    }
+
+    if ($form.length && $form[0] && !$form[0].checkValidity()) {
+      $form[0].reportValidity();
+      return;
+    }
+
+    pdfRequestInProgress = true;
+    $('.rel-pdf-btn')
+      .prop('disabled', true)
+      .addClass('is-loading')
+      .html('<i class="fas fa-spinner fa-spin"></i><span>Gerando...</span>');
+
+    const iframeName = 'relPdfDownloadFrame';
+    let $iframe = $('#' + iframeName);
+    if (!$iframe.length) {
+      $iframe = $('<iframe>', {
+        id: iframeName,
+        name: iframeName,
+        title: 'Download PDF',
+        css: { display: 'none' }
+      }).appendTo('body');
+    }
+
+    $iframe.off('load.relPdf').on('load.relPdf', function() {
+      let responseText = '';
+      try {
+        const iframeDocument = this.contentDocument || this.contentWindow.document;
+        responseText = $.trim($(iframeDocument.body).text());
+      } catch (error) {
+        responseText = '';
+      }
+
+      if (responseText && !responseText.startsWith('%PDF')) {
+        showPdfError(responseText.substring(0, 900));
+      }
+
+      window.setTimeout(function() {
+        resetPdfButtons(originalHtml);
+      }, 1200);
+    });
+
+    window.setTimeout(function() {
+      if (pdfRequestInProgress) {
+        resetPdfButtons(originalHtml);
+      }
+    }, 120000);
+
+    $iframe.attr('src', buildPdfUrl($form));
   });
 });
+

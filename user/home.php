@@ -181,7 +181,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
   if (isset($_POST['action'])  && $_POST['action'] == "edt_user") {
 
+    if (($m1_03 ?? 0) != 1) {
+      n3_forbidden('Voce nao tem permissao para editar usuarios.');
+    }
+
     $user_id = trim($_POST['user_id']);
+    $pdo = ConnectionN3();
+
+    if (($m1_04 ?? 0) != 1) {
+      $stmtPermAtual = $pdo->prepare("SELECT user_modulo_01, user_modulo_02, user_modulo_03, user_modulo_04, user_modulo_05, user_modulo_06, user_modulo_07, user_modulo_08, user_modulo_09 FROM usuarios WHERE user_id = :user_id LIMIT 1");
+      $stmtPermAtual->bindParam(':user_id', $user_id, PDO::PARAM_INT);
+      $stmtPermAtual->execute();
+      $permissoesAtuais = $stmtPermAtual->fetch(PDO::FETCH_ASSOC);
+      if (!$permissoesAtuais) {
+        n3_forbidden('Usuario nao encontrado.', 404);
+      }
+
+      for ($moduloIndex = 1; $moduloIndex <= 9; $moduloIndex++) {
+        $moduleKey = 'user_modulo_' . str_pad((string)$moduloIndex, 2, '0', STR_PAD_LEFT);
+        $moduleValue = str_pad((string)($permissoesAtuais[$moduleKey] ?? ''), 10, '0');
+        for ($permIndex = 0; $permIndex <= 9; $permIndex++) {
+          $_POST['m' . $moduloIndex . '_' . str_pad((string)$permIndex, 2, '0', STR_PAD_LEFT)] = $moduleValue[$permIndex] ?? '0';
+        }
+      }
+    }
+
     $user_sts = trim($_POST['user_sts']);
     $user_nome = trim($_POST['user_nome']);
     $user_mail = trim($_POST['user_mail']);

@@ -37,6 +37,7 @@ if ($m5_00 == 0) {
   <link rel="stylesheet" href="../css/timeline.css">
   <link rel="stylesheet" href="../css/bootstrap-datetimepicker.min.css">
   <link rel="stylesheet" href="css/projeto_modern.css">
+  <link rel="stylesheet" href="../css/n3-detalhe-padrao.css">
 
 
   <title>Allterus</title>
@@ -556,7 +557,7 @@ if ($m5_00 == 0) {
   </style>
 </head>
 
-<body>
+<body class="n3-detail-page n3-tarefa-page">
   <!-- <?php include_once("../all/loading.php"); ?> -->
   <?php include_once("../all/sidebar.php"); ?>
 
@@ -571,6 +572,53 @@ if ($m5_00 == 0) {
 
   if ($action == "alterar_senha") {
     include_once("../all/update_senha.php");
+  }
+
+  if ($action && $action !== "alterar_senha") {
+    $actionTarefaTecnico = null;
+
+    if ($tarefa > 0 && $action !== "tarefa_adc") {
+      $pdoPerm = ConnectionN3();
+      $stmtPerm = $pdoPerm->prepare("SELECT tecnico FROM tarefas WHERE id = :id LIMIT 1");
+      $stmtPerm->execute([':id' => $tarefa]);
+      $permRow = $stmtPerm->fetch(PDO::FETCH_ASSOC);
+      if (!$permRow) {
+        n3_forbidden('Tarefa nao encontrada.', 404);
+      }
+      $actionTarefaTecnico = (int)$permRow['tecnico'];
+    }
+
+    $allowedAction = true;
+    switch ($action) {
+      case 'tarefa_adc':
+        $allowedAction = ((int)$m5_01 >= 2);
+        break;
+      case 'tarefa_edt':
+        $allowedAction = ((int)$m5_01 >= 3 || (int)$m5_05 >= 2);
+        break;
+      case 'tarefa_new_inter':
+      case 'tarefa_porcentagem':
+        $allowedAction = ((int)$m5_00 >= 1);
+        break;
+      case 'tarefa_aceitar':
+      case 'tarefa_retomar':
+      case 'tarefa_finalizar':
+        $allowedAction = n3_can_project_execute_owner_or_manager($actionTarefaTecnico);
+        break;
+      case 'tarefa_espera':
+        $allowedAction = ((int)$m5_03 >= 2 && n3_can_project_execute_owner_or_manager($actionTarefaTecnico));
+        break;
+      case 'tarefa_recusar':
+        $allowedAction = ((int)$m5_04 >= 2 || (int)$m5_05 >= 2);
+        break;
+      default:
+        $allowedAction = false;
+        break;
+    }
+
+    if (!$allowedAction) {
+      n3_forbidden('Voce nao tem permissao para executar esta acao na tarefa.');
+    }
   }
 
   if ($usar_token == "true") {

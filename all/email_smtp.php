@@ -220,7 +220,7 @@ if (!function_exists('n3_send_mail')) {
             }
 
             n3_smtp_command($socket, 'AUTH LOGIN', [334], 'AUTH LOGIN');
-            n3_smtp_command($socket, base64_encode($username), [334], 'SMTP usu?rio');
+            n3_smtp_command($socket, base64_encode($username), [334], 'SMTP Usuário');
             n3_smtp_command($socket, base64_encode($password), [235], 'SMTP senha');
             n3_smtp_command($socket, 'MAIL FROM:<' . $fromEmail . '>', [250], 'MAIL FROM');
             foreach ($recipients as $recipient) {

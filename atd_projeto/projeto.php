@@ -1409,6 +1409,55 @@ if ($m5_00 == 0) {
     include_once("../all/update_senha.php");
   }
 
+  if ($action && $action !== "alterar_senha") {
+    $projeto = (int)$projeto;
+    $actionProjetoTecnico = null;
+
+    if ($projeto > 0 && $action !== "projeto_adc") {
+      $pdoPerm = ConnectionN3();
+      $stmtPerm = $pdoPerm->prepare("SELECT tecnico FROM projetos WHERE id = :id LIMIT 1");
+      $stmtPerm->execute([':id' => $projeto]);
+      $permRow = $stmtPerm->fetch(PDO::FETCH_ASSOC);
+      if (!$permRow) {
+        n3_forbidden('Projeto nao encontrado.', 404);
+      }
+      $actionProjetoTecnico = (int)$permRow['tecnico'];
+    }
+
+    $allowedAction = true;
+    switch ($action) {
+      case 'projeto_adc':
+      case 'new_tarefa':
+        $allowedAction = ((int)$m5_01 >= 2);
+        break;
+      case 'projeto_edt':
+      case 'relacionar_tar':
+        $allowedAction = ((int)$m5_01 >= 3 || (int)$m5_05 >= 2);
+        break;
+      case 'projeto_new_inter':
+        $allowedAction = ((int)$m5_00 >= 1);
+        break;
+      case 'projeto_aceitar':
+      case 'projeto_retomar':
+      case 'projeto_finalizar':
+        $allowedAction = n3_can_project_execute_owner_or_manager($actionProjetoTecnico);
+        break;
+      case 'projeto_espera':
+        $allowedAction = ((int)$m5_03 >= 2 && n3_can_project_execute_owner_or_manager($actionProjetoTecnico));
+        break;
+      case 'projeto_recusar':
+        $allowedAction = ((int)$m5_04 >= 2 || (int)$m5_05 >= 2);
+        break;
+      default:
+        $allowedAction = false;
+        break;
+    }
+
+    if (!$allowedAction) {
+      n3_forbidden('Voce nao tem permissao para executar esta acao no projeto.');
+    }
+  }
+
   if ($usar_token == "true") {
     if ($action) {
       if ($action == "projeto_adc") {
@@ -2928,7 +2977,7 @@ if ($m5_00 == 0) {
                       </td>
                       <td class="align-middle text-center">
                         <?php if ($tarefas_status === 4) { ?>
-                          <button type="button" class="project-task-action-btn is-done" title="Tarefa finalizada" disabled><span class="project-action-check"></span></button>
+                          <span class="project-task-action-empty" title="Tarefa finalizada sem ações disponíveis" aria-label="Tarefa finalizada sem ações disponíveis"></span>
                         <?php } elseif ($tarefas_status === 2) { ?>
                           <form action="tarefa.php" method="POST" class="project-task-action-form">
                             <input type="hidden" name="tarefa" value="<?php echo (int)$tarefa; ?>">

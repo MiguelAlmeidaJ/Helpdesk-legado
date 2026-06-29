@@ -93,10 +93,12 @@ $fileName = $pre_name . $nomeUsuario . '_' . uniqid() . '.pdf';
 $destination = $uploadDir . $fileName;
 
 if (move_uploaded_file($_FILES['pdfFile']['tmp_name'], $destination)) {
-    // Monta a URL dinamicamente
+    // Monta a URL dinamicamente conforme o host onde o sistema estiver publicado
     $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? "https://" : "http://";
-    $host = $_SERVER['HTTP_HOST'];
-    $webPath = 'https://allterus.nivel3ti.com.br/n3ti/' . $baseWebDir . $dirMesAno . $fileName;
+    $host = preg_replace('/[^A-Za-z0-9.\-_:]/', '', $_SERVER['HTTP_HOST'] ?? 'localhost');
+    $scriptDir = trim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'] ?? '')), '/');
+    $basePath = preg_replace('#/logistica$#', '', $scriptDir);
+    $webPath = $protocol . $host . '/' . ($basePath ? $basePath . '/' : '') . $baseWebDir . $dirMesAno . $fileName;
 
     echo json_encode([
         'success' => true,

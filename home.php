@@ -1,5 +1,6 @@
 <?php
-session_start();
+require_once __DIR__ . "/all/session.php";
+n3_session_start();
 
 include_once("./all/seguranca.php");
 include_once("./all/conect.php");

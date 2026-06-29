@@ -247,7 +247,7 @@ $pendentes = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                                 <th>Anexos</th>
                                                 <th style="width: 15%; word-break: break-word; white-space: normal;">Descrição</th>
 
-                                                <th style="width: 20%;">Açães</th>
+                                                <th style="width: 20%;">Ações</th>
                                             </tr>
                                         </thead>
                                         <tbody>

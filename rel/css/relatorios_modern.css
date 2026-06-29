@@ -222,7 +222,7 @@ body.modal-open {
 }
 
 
-/* Compatibilidade para relat?rios legados */
+/* Compatibilidade para relatórios legados */
 .rel-legacy-body {
   background: var(--rel-bg);
   height: 100vh;
@@ -520,7 +520,7 @@ body.modal-open {
 }
 
 
-/* Filtros modernos dos relat?rios anal?ticos */
+/* Filtros modernos dos relatórios analíticos */
 .rel-modern-filter {
   background: #ffffff !important;
   border: 1px solid var(--rel-border) !important;
@@ -829,4 +829,1127 @@ body.modal-open {
   height: 38px !important;
   justify-content: space-between !important;
   padding: 0 12px !important;
+}
+
+/* Ajustes finais do módulo de relatórios */
+.rel-legacy-body,
+.rel-legacy-page,
+.rel-page {
+  background: #f3f6fa;
+}
+
+.rel-page,
+.rel-legacy-page {
+  padding: 12px 14px 14px;
+}
+
+.rel-main-card,
+.rel-legacy-page .card {
+  border: 1px solid #dfe7f1;
+  border-radius: 12px;
+  box-shadow: 0 10px 28px rgba(15, 23, 42, .08);
+}
+
+.rel-toolbar,
+.rel-legacy-page .card-header {
+  background: #fff !important;
+  min-height: 58px;
+  padding: 12px 16px !important;
+}
+
+.rel-title-icon {
+  background: #edf4ff;
+  border-radius: 10px;
+  color: #2454c6;
+  height: 36px;
+  width: 36px;
+}
+
+.rel-title h4,
+.rel-legacy-page .card-header h4,
+.rel-legacy-page .card-header .h4 {
+  color: #172033;
+  font-size: 1rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.rel-title small {
+  color: #667085;
+  font-size: .8rem;
+  font-weight: 400;
+}
+
+.rel-card-body,
+.rel-legacy-page .card-body {
+  padding: 14px;
+}
+
+.rel-legacy-page form:not(#formAcoesRelatorios):not(#formGerarRelatorio),
+.rel-modern-filter,
+.rel-analitico-filter {
+  align-items: end;
+  background: #f8fafc;
+  border: 1px solid #dfe7f1;
+  border-radius: 12px;
+  box-shadow: none;
+  gap: 12px;
+  margin: 0 0 14px;
+  padding: 14px;
+}
+
+.rel-legacy-page label,
+.rel-filter-label,
+.rel-analitico-filter label {
+  color: #344054;
+  font-size: .78rem;
+  font-weight: 600;
+  margin-bottom: 5px;
+}
+
+.rel-legacy-page .form-control,
+.rel-legacy-page .custom-select,
+.rel-modern-filter .form-control,
+.rel-modern-filter .custom-select,
+.rel-analitico-filter .form-control,
+.rel-analitico-filter .custom-select,
+.rel-legacy-page form .bootstrap-select > .dropdown-toggle {
+  background-color: #fff;
+  border: 1px solid #cfd9e6;
+  border-radius: 8px;
+  color: #172033;
+  font-size: .86rem;
+  min-height: 36px;
+}
+
+.rel-legacy-page .form-control:focus,
+.rel-legacy-page .custom-select:focus,
+.rel-modern-filter .form-control:focus,
+.rel-modern-filter .custom-select:focus,
+.rel-analitico-filter .form-control:focus,
+.rel-analitico-filter .custom-select:focus {
+  border-color: #7da2df;
+  box-shadow: 0 0 0 .16rem rgba(37, 99, 235, .12);
+}
+
+.rel-inline-actions,
+.rel-filter-actions,
+.rel-actions,
+.form-actions,
+.rel-legacy-page form .btn-group-actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.rel-legacy-page form button[type="submit"],
+.rel-legacy-page form input[type="submit"],
+.rel-filter-submit-btn,
+.rel-pdf-btn,
+.rel-clear-btn,
+.rel-pill-btn {
+  border-radius: 8px !important;
+  box-shadow: none !important;
+  font-size: .86rem;
+  font-weight: 600;
+  min-height: 36px;
+  padding: 8px 13px !important;
+  transform: none !important;
+}
+
+.rel-legacy-page form button[type="submit"],
+.rel-legacy-page form input[type="submit"],
+.rel-filter-submit-btn {
+  background: #2454c6 !important;
+  border: 1px solid #2454c6 !important;
+}
+
+.rel-legacy-page form button[type="submit"]:hover,
+.rel-legacy-page form input[type="submit"]:hover,
+.rel-filter-submit-btn:hover {
+  background: #1f48aa !important;
+  border-color: #1f48aa !important;
+  filter: none;
+}
+
+.rel-pdf-btn {
+  background: #fff !important;
+  border: 1px solid #dc3545 !important;
+  color: #b4232f !important;
+}
+
+.rel-pdf-btn:hover {
+  background: #fff5f6 !important;
+  color: #9f1f2b !important;
+}
+
+.rel-clear-btn,
+.rel-filter-actions .btn-outline-secondary,
+.rel-legacy-page form a.btn {
+  background: #fff !important;
+  border: 1px solid #cfd9e6 !important;
+  color: #475467 !important;
+}
+
+.rel-clear-btn:hover,
+.rel-filter-actions .btn-outline-secondary:hover,
+.rel-legacy-page form a.btn:hover {
+  background: #f1f5f9 !important;
+  color: #172033 !important;
+}
+
+.rel-table-wrap,
+.rel-legacy-page .table-responsive,
+.rel-legacy-page .rel-table-wrap {
+  border: 1px solid #dfe7f1;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.rel-table,
+.rel-legacy-page table.table {
+  color: #172033;
+  font-size: .86rem;
+  margin-bottom: 0;
+}
+
+.rel-table thead th,
+.rel-legacy-page table.table thead th {
+  background: #f8fafc !important;
+  border-bottom: 1px solid #dfe7f1 !important;
+  color: #475467 !important;
+  font-size: .74rem;
+  font-weight: 700;
+  letter-spacing: .02em;
+  text-transform: uppercase;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.rel-table td,
+.rel-table th,
+.rel-legacy-page table.table td,
+.rel-legacy-page table.table th {
+  border-color: #edf1f6;
+  padding: .58rem .7rem;
+  vertical-align: middle;
+}
+
+.rel-table tbody tr:hover,
+.rel-legacy-page table.table tbody tr:hover {
+  background: #f8fbff;
+}
+
+.rel-count,
+.rel-time-badge,
+.badge {
+  border-radius: 999px;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+.rel-legacy-page [id^="chart"],
+.rel-legacy-page [id*="chart"],
+.rel-legacy-page [id^="piechart"],
+.rel-legacy-page [id^="columnchart"] {
+  border: 1px solid #dfe7f1;
+  border-radius: 12px;
+  box-shadow: none;
+}
+
+.rel-modal .modal-content {
+  border-radius: 12px;
+  box-shadow: 0 22px 54px rgba(15, 23, 42, .22);
+}
+
+.rel-modal .modal-header {
+  background: #fff;
+}
+
+.rel-floating-alert {
+  right: 18px;
+  top: 18px;
+}
+
+@media (max-width: 992px) {
+  body,
+  .rel-legacy-body {
+    height: auto;
+    overflow: auto;
+  }
+
+  .rel-page,
+  .rel-legacy-page {
+    height: auto;
+    overflow: visible;
+  }
+
+  .rel-main-card,
+  .rel-legacy-page > .card,
+  .rel-legacy-page > .row > [class*="col-"] > .card:first-child {
+    max-height: none;
+  }
+
+  .rel-inline-actions,
+  .rel-filter-actions,
+  .rel-actions,
+  .form-actions {
+    justify-content: flex-start;
+  }
+}
+
+/* Filtros dos relatórios totalizadores */
+.rel-total-filter-card {
+  flex-shrink: 0;
+  margin-bottom: 12px;
+}
+
+.rel-total-filter-header {
+  align-items: center;
+  display: flex;
+  min-height: 58px;
+}
+
+.rel-total-filter-form {
+  margin: 0 !important;
+}
+
+.rel-total-filter-grid {
+  align-items: end;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(150px, 180px) minmax(150px, 180px) minmax(150px, 180px) 1fr;
+}
+
+.rel-total-filter-grid .form-group {
+  margin-bottom: 0;
+}
+
+.rel-total-filter-actions {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.rel-total-filter-actions .btn {
+  min-width: 96px;
+}
+
+@media (max-width: 992px) {
+  .rel-total-filter-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .rel-total-filter-actions {
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 576px) {
+  .rel-total-filter-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Página Tempo médio por técnico */
+.rel-full-height-page {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 24px);
+  min-height: 0;
+}
+
+.rel-tempo-card {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.rel-tempo-card .rel-card-body {
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.rel-tempo-table-wrap {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: none !important;
+}
+
+.rel-tempo-card .rel-table th:first-child,
+.rel-tempo-card .rel-table td:first-child {
+  min-width: 260px;
+}
+
+@media (max-width: 992px) {
+  .rel-full-height-page {
+    height: auto;
+  }
+
+  .rel-tempo-table-wrap {
+    max-height: 70vh !important;
+  }
+}
+
+/* Página Analítico por cliente */
+.rel-analitico-full-page {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 24px);
+  min-height: 0;
+}
+
+.rel-analitico-full-page > .row:first-child {
+  flex: 0 0 auto;
+}
+
+.rel-analitico-result-row {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.rel-analitico-result-col {
+  display: flex;
+  min-height: 0;
+}
+
+.rel-analitico-result-card {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  width: 100%;
+}
+
+.rel-analitico-result-card .rel-section-header {
+  flex: 0 0 auto;
+}
+
+.rel-analitico-result-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  padding: 12px 14px;
+}
+
+.rel-analitico-result-body > section {
+  background: #fff;
+  border: 1px solid #e4ebf3;
+  border-radius: 10px;
+  margin-bottom: 10px;
+  padding: 0;
+}
+
+.rel-analitico-result-body > section > .container {
+  max-width: none;
+  padding-left: 14px;
+  padding-right: 14px;
+}
+
+@media (max-width: 992px) {
+  .rel-analitico-full-page {
+    height: auto;
+  }
+
+  .rel-analitico-result-body {
+    max-height: 70vh;
+  }
+}
+
+/* Trava de overflow dos filtros analíticos */
+.rel-analitico-full-page,
+.rel-analitico-full-page .row,
+.rel-analitico-full-page .col-12,
+.rel-analitico-full-page .col-md-12,
+.rel-analitico-filter,
+.rel-analitico-filter .rel-filter-grid,
+.rel-analitico-filter .rel-filter-field {
+  max-width: 100%;
+  min-width: 0;
+}
+
+.rel-analitico-full-page {
+  overflow-x: hidden;
+}
+
+.rel-analitico-filter {
+  box-sizing: border-box;
+  overflow-x: hidden;
+  width: 100%;
+}
+
+.rel-analitico-filter .rel-filter-grid {
+  box-sizing: border-box;
+  grid-template-columns: minmax(220px, 2fr) minmax(135px, 1fr) minmax(135px, 1fr) minmax(180px, 1.2fr) minmax(140px, .9fr) auto;
+  width: 100%;
+}
+
+.rel-analitico-filter .bootstrap-select,
+.rel-analitico-filter .bootstrap-select > .dropdown-toggle,
+.rel-analitico-filter .form-control {
+  max-width: 100%;
+}
+
+.rel-analitico-filter .rel-filter-actions {
+  min-width: 0;
+  white-space: nowrap;
+}
+
+@media (max-width: 1400px) {
+  .rel-analitico-filter .rel-filter-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .rel-analitico-filter .rel-filter-actions {
+    justify-content: flex-start;
+    white-space: normal;
+  }
+}
+
+@media (max-width: 768px) {
+  .rel-analitico-filter .rel-filter-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Renderização enxuta para PDF */
+body.rel-pdf-render {
+  background: #fff !important;
+  height: auto !important;
+  overflow: visible !important;
+}
+
+body.rel-pdf-render .sidebar,
+body.rel-pdf-render #sidebar,
+body.rel-pdf-render .menu-sidebar,
+body.rel-pdf-render .rel-pdf-btn,
+body.rel-pdf-render .rel-clear-btn,
+body.rel-pdf-render .rel-floating-alert,
+body.rel-pdf-render .modal,
+body.rel-pdf-render script + .rel-floating-alert {
+  display: none !important;
+}
+
+body.rel-pdf-render .rel-page,
+body.rel-pdf-render .rel-legacy-page,
+body.rel-pdf-render .rel-full-height-page,
+body.rel-pdf-render .rel-analitico-full-page {
+  height: auto !important;
+  overflow: visible !important;
+  padding: 0 !important;
+}
+
+body.rel-pdf-render .card,
+body.rel-pdf-render .rel-main-card,
+body.rel-pdf-render .rel-analitico-result-card,
+body.rel-pdf-render .rel-tempo-card {
+  border: 1px solid #d8dee8 !important;
+  box-shadow: none !important;
+  max-height: none !important;
+  overflow: visible !important;
+}
+
+body.rel-pdf-render .rel-card-body,
+body.rel-pdf-render .card-body,
+body.rel-pdf-render .rel-analitico-result-body,
+body.rel-pdf-render .rel-table-wrap,
+body.rel-pdf-render .table-responsive {
+  max-height: none !important;
+  overflow: visible !important;
+}
+
+body.rel-pdf-render .rel-modern-filter,
+body.rel-pdf-render .rel-analitico-filter,
+body.rel-pdf-render .rel-total-filter-card {
+  display: none !important;
+}
+
+body.rel-pdf-render .rel-toolbar,
+body.rel-pdf-render .card-header,
+body.rel-pdf-render .rel-section-header {
+  background: #fff !important;
+  color: #111827 !important;
+  min-height: auto !important;
+  padding: 8px 10px !important;
+}
+
+body.rel-pdf-render table,
+body.rel-pdf-render .rel-table {
+  font-size: 10px !important;
+  page-break-inside: auto;
+}
+
+body.rel-pdf-render tr,
+body.rel-pdf-render section {
+  page-break-inside: avoid;
+}
+
+body.rel-pdf-render .badge {
+  box-shadow: none !important;
+}
+
+@media print {
+  .rel-pdf-btn,
+  .rel-clear-btn,
+  .rel-floating-alert,
+  .modal {
+    display: none !important;
+  }
+}
+
+@media print {
+  body,
+  .rel-legacy-body {
+    background: #fff !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  .rel-page,
+  .rel-legacy-page,
+  .rel-full-height-page,
+  .rel-analitico-full-page {
+    height: auto !important;
+    overflow: visible !important;
+    padding: 0 !important;
+  }
+
+  .rel-modern-filter,
+  .rel-analitico-filter,
+  .rel-total-filter-card,
+  .rel-pdf-btn,
+  .rel-clear-btn,
+  .rel-floating-alert,
+  .modal {
+    display: none !important;
+  }
+
+  .card,
+  .rel-main-card,
+  .rel-analitico-result-card,
+  .rel-tempo-card,
+  .rel-card-body,
+  .card-body,
+  .rel-analitico-result-body,
+  .rel-table-wrap,
+  .table-responsive {
+    box-shadow: none !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+}
+
+/* PDF profissional: relatório textual, sem aparência de print da tela */
+@page {
+  size: A4 landscape;
+  margin: 12mm 10mm 12mm 10mm;
+}
+
+html body.rel-pdf-render {
+  margin: 0 !important;
+  padding: 0 !important;
+  padding-left: 0 !important;
+  background: #ffffff !important;
+  color: #111827 !important;
+  font-family: Arial, Helvetica, sans-serif !important;
+  font-size: 10px !important;
+  line-height: 1.35 !important;
+}
+
+html body.rel-pdf-render #sidebar,
+html body.rel-pdf-render #sidebarHeader,
+html body.rel-pdf-render .sidebar,
+html body.rel-pdf-render .menu-sidebar,
+html body.rel-pdf-render nav,
+html body.rel-pdf-render aside,
+html body.rel-pdf-render .rel-modern-filter,
+html body.rel-pdf-render .rel-analitico-filter,
+html body.rel-pdf-render .rel-total-filter-card,
+html body.rel-pdf-render #accordion,
+html body.rel-pdf-render .rel-filter-header,
+html body.rel-pdf-render .rel-pdf-btn,
+html body.rel-pdf-render .rel-clear-btn,
+html body.rel-pdf-render .rel-filter-actions,
+html body.rel-pdf-render .modal,
+html body.rel-pdf-render .alert,
+html body.rel-pdf-render .rel-floating-alert,
+html body.rel-pdf-render script {
+  display: none !important;
+  visibility: hidden !important;
+}
+
+html body.rel-pdf-render .container,
+html body.rel-pdf-render .container-fluid,
+html body.rel-pdf-render .rel-page,
+html body.rel-pdf-render .rel-legacy-page,
+html body.rel-pdf-render .rel-full-height-page,
+html body.rel-pdf-render .rel-analitico-full-page {
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  height: auto !important;
+  min-height: 0 !important;
+  overflow: visible !important;
+}
+
+html body.rel-pdf-render .row {
+  display: block !important;
+  margin: 0 !important;
+}
+
+html body.rel-pdf-render [class^="col-"],
+html body.rel-pdf-render [class*=" col-"],
+html body.rel-pdf-render .rel-analitico-result-col {
+  display: block !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  flex: none !important;
+  padding: 0 !important;
+}
+
+html body.rel-pdf-render .card,
+html body.rel-pdf-render .rel-main-card,
+html body.rel-pdf-render .rel-analitico-result-card,
+html body.rel-pdf-render .rel-tempo-card {
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  background: #fff !important;
+  margin: 0 0 8px 0 !important;
+  max-height: none !important;
+  overflow: visible !important;
+}
+
+html body.rel-pdf-render .card-header,
+html body.rel-pdf-render .rel-section-header {
+  display: block !important;
+  background: #ffffff !important;
+  color: #111827 !important;
+  border: 0 !important;
+  border-bottom: 2px solid #1f4e79 !important;
+  border-radius: 0 !important;
+  padding: 0 0 6px 0 !important;
+  margin: 0 0 8px 0 !important;
+  font-size: 15px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0 !important;
+  text-align: left !important;
+}
+
+html body.rel-pdf-render .card-header + .card-header,
+html body.rel-pdf-render .rel-section-header + .rel-section-header {
+  margin-top: 6px !important;
+  border-bottom: 1px solid #d7dee8 !important;
+  font-size: 11px !important;
+  color: #334155 !important;
+}
+
+html body.rel-pdf-render .card-body,
+html body.rel-pdf-render .rel-card-body,
+html body.rel-pdf-render .rel-analitico-result-body,
+html body.rel-pdf-render .rel-table-wrap,
+html body.rel-pdf-render .table-responsive {
+  padding: 0 !important;
+  margin: 0 !important;
+  max-height: none !important;
+  overflow: visible !important;
+  background: #fff !important;
+}
+
+html body.rel-pdf-render section {
+  display: block !important;
+  border: 1px solid #d7dee8 !important;
+  border-left: 4px solid #1f4e79 !important;
+  border-radius: 0 !important;
+  margin: 0 0 7px 0 !important;
+  padding: 7px 9px !important;
+  background: #ffffff !important;
+  page-break-inside: avoid !important;
+  break-inside: avoid !important;
+}
+
+html body.rel-pdf-render section .container,
+html body.rel-pdf-render section .row,
+html body.rel-pdf-render section [class^="col-"],
+html body.rel-pdf-render section [class*=" col-"] {
+  display: block !important;
+  width: 100% !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+html body.rel-pdf-render .badge {
+  display: inline-block !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  color: #111827 !important;
+  box-shadow: none !important;
+  padding: 0 10px 3px 0 !important;
+  margin: 0 !important;
+  font-size: 9.5px !important;
+  font-weight: 600 !important;
+  white-space: normal !important;
+}
+
+html body.rel-pdf-render p {
+  margin: 3px 0 0 0 !important;
+  color: #1f2937 !important;
+  font-size: 10px !important;
+}
+
+html body.rel-pdf-render i,
+html body.rel-pdf-render .fa,
+html body.rel-pdf-render .fas,
+html body.rel-pdf-render .far {
+  display: none !important;
+}
+
+html body.rel-pdf-render table,
+html body.rel-pdf-render .table,
+html body.rel-pdf-render .rel-table {
+  width: 100% !important;
+  border-collapse: collapse !important;
+  border-spacing: 0 !important;
+  font-size: 9.5px !important;
+  color: #111827 !important;
+  page-break-inside: auto !important;
+}
+
+html body.rel-pdf-render thead {
+  display: table-header-group !important;
+}
+
+html body.rel-pdf-render tfoot {
+  display: table-footer-group !important;
+}
+
+html body.rel-pdf-render th {
+  background: #f1f5f9 !important;
+  color: #111827 !important;
+  border: 1px solid #cbd5e1 !important;
+  padding: 5px 6px !important;
+  font-weight: 700 !important;
+  text-transform: none !important;
+}
+
+html body.rel-pdf-render td {
+  border: 1px solid #e2e8f0 !important;
+  padding: 5px 6px !important;
+  vertical-align: top !important;
+}
+
+html body.rel-pdf-render tr {
+  page-break-inside: avoid !important;
+  break-inside: avoid !important;
+}
+
+html body.rel-pdf-render .text-center {
+  text-align: left !important;
+}
+
+html body.rel-pdf-render .text-red,
+html body.rel-pdf-render .text-primary,
+html body.rel-pdf-render .text-info,
+html body.rel-pdf-render .text-success,
+html body.rel-pdf-render .text-danger {
+  color: #111827 !important;
+}
+
+/* Preview de PDF sem dependência de modal Bootstrap */
+body.rel-pdf-preview-open {
+  overflow: hidden;
+}
+
+.rel-pdf-preview-modal {
+  align-items: center;
+  display: none;
+  inset: 0;
+  justify-content: center;
+  padding: 22px;
+  position: fixed;
+  z-index: 3000;
+}
+
+.rel-pdf-preview-modal.is-open {
+  display: flex;
+}
+
+.rel-pdf-preview-backdrop {
+  background: rgba(15, 23, 42, .62);
+  backdrop-filter: blur(4px);
+  inset: 0;
+  position: absolute;
+}
+
+.rel-pdf-preview-dialog {
+  background: #ffffff;
+  border: 1px solid rgba(203, 213, 225, .9);
+  border-radius: 18px;
+  box-shadow: 0 24px 70px rgba(15, 23, 42, .28);
+  display: flex;
+  flex-direction: column;
+  height: min(90vh, 920px);
+  max-width: 1180px;
+  overflow: hidden;
+  position: relative;
+  width: min(96vw, 1180px);
+  z-index: 1;
+}
+
+.rel-pdf-preview-header {
+  align-items: center;
+  background: linear-gradient(135deg, #f8fbff 0%, #eef5ff 100%);
+  border-bottom: 1px solid #dbe6f4;
+  display: flex;
+  justify-content: space-between;
+  padding: 16px 18px;
+}
+
+.rel-pdf-preview-kicker {
+  color: #2563eb;
+  display: block;
+  font-size: .74rem;
+  font-weight: 700;
+  letter-spacing: .04em;
+  margin-bottom: 2px;
+  text-transform: uppercase;
+}
+
+.rel-pdf-preview-header h5 {
+  color: #172033;
+  font-size: 1rem;
+  font-weight: 700;
+  margin: 0;
+  max-width: 900px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rel-pdf-preview-close {
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  color: #475569;
+  cursor: pointer;
+  display: inline-flex;
+  font-size: 1.5rem;
+  height: 38px;
+  justify-content: center;
+  line-height: 1;
+  transition: .16s ease;
+  width: 38px;
+}
+
+.rel-pdf-preview-close:hover {
+  background: #eef2f7;
+  color: #111827;
+}
+
+.rel-pdf-preview-body {
+  background: #edf2f8;
+  flex: 1;
+  min-height: 0;
+  padding: 12px;
+}
+
+.rel-pdf-preview-body iframe {
+  background: #ffffff;
+  border: 1px solid #dbe3ef;
+  border-radius: 12px;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.65);
+  height: 100%;
+  width: 100%;
+}
+
+.rel-pdf-preview-footer {
+  align-items: center;
+  background: #ffffff;
+  border-top: 1px solid #dbe6f4;
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  padding: 12px 18px;
+}
+
+@media (max-width: 768px) {
+  .rel-pdf-preview-modal {
+    padding: 10px;
+  }
+
+  .rel-pdf-preview-dialog {
+    height: 94vh;
+    width: 100%;
+  }
+
+  .rel-pdf-preview-header h5 {
+    max-width: 70vw;
+  }
+}
+
+/* Evita cortes de conteúdo em PDFs com atendimentos longos */
+html body.rel-pdf-render section,
+html body.rel-pdf-render tr,
+html body.rel-pdf-render .row,
+html body.rel-pdf-render .card,
+html body.rel-pdf-render .card-body,
+html body.rel-pdf-render .rel-analitico-result-body {
+  break-inside: auto !important;
+  page-break-inside: auto !important;
+  overflow: visible !important;
+}
+
+html body.rel-pdf-render p,
+html body.rel-pdf-render span,
+html body.rel-pdf-render td,
+html body.rel-pdf-render div,
+html body.rel-pdf-render .badge {
+  max-width: 100% !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  white-space: normal !important;
+  word-break: break-word !important;
+  overflow-wrap: anywhere !important;
+}
+
+html body.rel-pdf-render .rel-analitico-result-row,
+html body.rel-pdf-render .rel-analitico-result-col,
+html body.rel-pdf-render .rel-analitico-result-card {
+  display: block !important;
+  min-width: 0 !important;
+  width: 100% !important;
+}
+
+/* PDF: retrato, legível, sem esticar colunas */
+@page {
+  size: A4 portrait;
+}
+
+html body.rel-pdf-render {
+  font-size: 9.4px !important;
+}
+
+html body.rel-pdf-render .rel-analitico-result-card,
+html body.rel-pdf-render .rel-analitico-result-body,
+html body.rel-pdf-render section {
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+html body.rel-pdf-render section {
+  padding: 6px 8px !important;
+  page-break-inside: auto !important;
+  break-inside: auto !important;
+}
+
+html body.rel-pdf-render .badge,
+html body.rel-pdf-render p,
+html body.rel-pdf-render td,
+html body.rel-pdf-render span {
+  line-height: 1.38 !important;
+  overflow-wrap: break-word !important;
+  word-break: normal !important;
+  white-space: normal !important;
+}
+
+html body.rel-pdf-render .badge {
+  display: inline !important;
+  margin-right: 8px !important;
+  padding-right: 0 !important;
+}
+
+html body.rel-pdf-render p {
+  display: block !important;
+  margin-top: 4px !important;
+}
+
+html body.rel-pdf-render table,
+html body.rel-pdf-render .rel-table {
+  table-layout: fixed !important;
+}
+
+html body.rel-pdf-render th,
+html body.rel-pdf-render td {
+  padding: 4px 5px !important;
+}
+
+html body.rel-pdf-render section p,
+html body.rel-pdf-render section span,
+html body.rel-pdf-render section .badge,
+html body.rel-pdf-render section div {
+  overflow-wrap: break-word !important;
+  word-break: normal !important;
+}
+
+
+/* Ajuste específico dos filtros do rel_ti */
+.rel-ti-filter {
+  overflow-x: hidden !important;
+  width: 100% !important;
+}
+
+.rel-ti-filter .rel-filter-grid {
+  align-items: end !important;
+  display: grid !important;
+  gap: 12px !important;
+  grid-template-columns: minmax(260px, 1.6fr) 150px 150px minmax(180px, 1fr) 150px auto !important;
+  max-width: 100% !important;
+  overflow-x: hidden !important;
+  width: 100% !important;
+}
+
+.rel-ti-filter .rel-filter-field,
+.rel-ti-filter .rel-filter-actions {
+  min-width: 0 !important;
+}
+
+.rel-ti-filter .bootstrap-select,
+.rel-ti-filter .bootstrap-select > .dropdown-toggle,
+.rel-ti-filter .form-control {
+  max-width: 100% !important;
+  min-width: 0 !important;
+  width: 100% !important;
+}
+
+.rel-ti-filter .rel-filter-actions {
+  align-items: end !important;
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  gap: 8px !important;
+  justify-content: flex-end !important;
+}
+
+.rel-ti-filter .rel-filter-actions .btn {
+  margin: 0 !important;
+  white-space: nowrap !important;
+}
+
+@media (max-width: 1280px) {
+  .rel-ti-filter .rel-filter-grid {
+    grid-template-columns: minmax(240px, 1.4fr) 145px 145px minmax(170px, 1fr) 145px !important;
+  }
+
+  .rel-ti-filter .rel-filter-actions {
+    grid-column: 1 / -1 !important;
+    justify-content: flex-end !important;
+  }
+}
+
+@media (max-width: 900px) {
+  .rel-ti-filter .rel-filter-grid {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  .rel-ti-filter .rel-filter-client,
+  .rel-ti-filter .rel-filter-actions {
+    grid-column: 1 / -1 !important;
+  }
 }

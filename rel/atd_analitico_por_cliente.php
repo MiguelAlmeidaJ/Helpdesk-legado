@@ -62,7 +62,7 @@ $p_nivel = $f_nivel === 0 ? "1,2,3,4,5" : (string)$f_nivel;
   <body class="rel-legacy-body">
 <?php include_once("../all/sidebar.php"); ?>
 
-    <div class="container-fluid rel-page rel-legacy-page">
+    <div class="container-fluid rel-page rel-legacy-page rel-analitico-full-page">
       <div class="row">
         <div class="col-md-12 mt-2">
           <div class="card">
@@ -160,9 +160,9 @@ $p_nivel = $f_nivel === 0 ? "1,2,3,4,5" : (string)$f_nivel;
       </div>
     </div>
       
-      <div class="row mt-2 mb-2">
-        <div class="col-md-12">
-          <div class="card bg-default">
+      <div class="row mt-2 mb-0 rel-analitico-result-row">
+        <div class="col-md-12 rel-analitico-result-col">
+          <div class="card bg-default rel-analitico-result-card">
             <div class="card-header py-2 h6 rel-section-header">
               <i class="fas fa-chart-pie"></i>
               Relatório analítico de Atendimentos Por Cliente
@@ -197,7 +197,7 @@ if ($f_clt > 0) {
               <i class="fas fa-chart-pie"></i>
               Total de registros:  <?php echo $total["n"]?> 
             </div>
-            <div class="card-body">
+            <div class="card-body rel-analitico-result-body">
 <?php if($f_clt>0 && (int)$total["n"] > 0){ ?>
 <?php 
 $pdo = ConnectionN3();
@@ -213,7 +213,7 @@ COALESCE(pessoas.pessoa_nom, 'Não informado') AS pessoa_nom,
 COALESCE(categorias.cat_nome, '') AS cat_nome,
 COALESCE(subcategorias.scat_nome, '') AS scat_nome,
 COALESCE(itens.itens_nome, '') AS itens_nome,
-COALESCE(usuarios.user_nome, 'Sem técnico') AS user_nome,
+COALESCE(usuarios.user_nome, 'Sem Técnico') AS user_nome,
 atendimentos.id, atendimentos.tipo, atendimentos.nivel, atendimentos.forma, atendimentos.desc_abertura, atendimentos.desc_fechamento, atendimentos.abertura, atendimentos.fechamento, atendimentos.`status`
 FROM atendimentos
 INNER JOIN clientes ON clientes.clt_id = atendimentos.cliente
@@ -294,7 +294,7 @@ while($row=$show->fetch(PDO::FETCH_ASSOC)){
       </div>
       <div class="col-md-4 mb-3 px-4">
         <div class="row py-1 ">
-           <span class="badge badge-light mx-1"> <i class="fas fa-user-tie mr-1"></i> Técnico: <?php echo htmlspecialchars($user_nome ?? 'Sem técnico'); ?> </span>
+           <span class="badge badge-light mx-1"> <i class="fas fa-user-tie mr-1"></i> Técnico: <?php echo htmlspecialchars($user_nome ?? 'Sem Técnico'); ?> </span>
         </div>
         <div class="row py-1">
         <p>Descrição de abertura: <?php echo nl2br(htmlspecialchars($atd_desc_abertura ?? '')); ?></p>
@@ -345,7 +345,7 @@ while($row=$show->fetch(PDO::FETCH_ASSOC)){
       
     </div>
 
-<!-- MODAL DE AJUDA PARA A GESTÃO DE UM ATENDIMENTO -->    
+<!-- MODAL DE AJUDA PARA A GESTÃO DE UM ATENDIMENTO -->
 <div class="modal fade rel-modal" id="Help" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
   <div class="modal-dialog modal-dialog-centered" role="document">
     <div class="modal-content">
@@ -358,7 +358,7 @@ while($row=$show->fetch(PDO::FETCH_ASSOC)){
       <div class="modal-body">
         <p><strong>Relatório analítico de atendimentos por cliente:</strong></p>
         <p>Este relatório exibe de forma analítica os atendimentos para um determinado cliente em um determinado período de tempo.</p>
-        <p>São considerados os atendimentos com os seguintes status:</p>
+        <p>SÃ£o considerados os atendimentos com os seguintes status:</p>
         <ul class="list">
           <li><i class="fas fa-hourglass-half"></i> Aguardando Execução</li>
           <li><i class="fas fa-magic"></i> Em Execução</li>
@@ -440,5 +440,6 @@ $(function() {
       <script src="js/relatorios_modern.js"></script>
 </body>
 </html>
+
 
 

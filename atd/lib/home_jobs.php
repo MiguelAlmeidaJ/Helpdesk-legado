@@ -83,7 +83,12 @@ function atd_home_calculate_next_recurrence($dataRecorrencia, $vezesReabrir, $se
     return null;
   }
 
-  $data = new DateTime($dataRecorrencia);
+  try {
+    $data = new DateTime($dataRecorrencia);
+  } catch (Exception $e) {
+    error_log('Data de recorrencia invalida: ' . $dataRecorrencia . ' - ' . $e->getMessage());
+    return null;
+  }
 
   switch ((int)$vezesReabrir) {
     case 1:
@@ -147,6 +152,31 @@ function atd_home_calculate_next_recurrence($dataRecorrencia, $vezesReabrir, $se
 
 function atd_home_process_recurrences($pdo)
 {
+  $lockAcquired = false;
+  try {
+    $lockStmt = $pdo->query("SELECT GET_LOCK('n3ti_atd_recorrencias', 5)");
+    $lockAcquired = ((int)$lockStmt->fetchColumn() === 1);
+  } catch (Exception $e) {
+    error_log('Falha ao obter lock de recorrencia: ' . $e->getMessage());
+  }
+
+  if (!$lockAcquired) {
+    return 0;
+  }
+
+  try {
+    return atd_home_process_recurrences_locked($pdo);
+  } finally {
+    try {
+      $pdo->query("SELECT RELEASE_LOCK('n3ti_atd_recorrencias')");
+    } catch (Exception $e) {
+      error_log('Falha ao liberar lock de recorrencia: ' . $e->getMessage());
+    }
+  }
+}
+
+function atd_home_process_recurrences_locked($pdo)
+{
   $now = date('Y-m-d H:i:s');
   $stmt = $pdo->prepare("
     SELECT id, cliente, pessoa, `local`, tipo, categoria, subcategoria, item,
@@ -164,6 +194,7 @@ function atd_home_process_recurrences($pdo)
   while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
     $nextDate = atd_home_calculate_next_recurrence($row['data_recorrencia'], $row['vezes_reabrir'], $row['semana']);
     if (empty($nextDate)) {
+      error_log('Recorrencia ignorada por regra invalida no atendimento ' . $row['id'] . ' (vezes_reabrir=' . $row['vezes_reabrir'] . ', data=' . $row['data_recorrencia'] . ').');
       continue;
     }
 

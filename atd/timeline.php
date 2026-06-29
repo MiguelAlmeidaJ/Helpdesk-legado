@@ -759,7 +759,7 @@ $ultima_interacao = !empty($interacoes_tecnico) ? end($interacoes_tecnico)['inte
                                                         <i class="fas <?php echo timeline_h($meta['icon']); ?>"></i>
                                                         <span><?php echo timeline_h($meta['label']); ?></span>
                                                     </div>
-                                                    <a class="event-ticket" href="atd.php?atd=<?php echo urlencode((string)$atendimentoId); ?>" target="_blank" rel="noopener">
+                                                    <a class="event-ticket" href="atd_detalhe.php?atd=<?php echo urlencode((string)$atendimentoId); ?>" target="_blank" rel="noopener">
                                                         <i class="fas fa-hashtag"></i><?php echo str_pad((string)$atendimentoId, 5, '0', STR_PAD_LEFT); ?>
                                                     </a>
                                                 </div>

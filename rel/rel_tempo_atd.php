@@ -6,54 +6,62 @@ include_once("../all/permissoes.php");
 
 $pdo = ConnectionN3();
 
-// Verifica se foi selecionado um técnico
-$selected_tecnico = filter_input(INPUT_GET, 'tecnico', FILTER_SANITIZE_NUMBER_INT);
-
-// Verifica e ajusta as datas de início e fim
-$data_inicio = filter_input(INPUT_GET, 'data_inicio', FILTER_SANITIZE_STRING);
-$data_fim = filter_input(INPUT_GET, 'data_fim', FILTER_SANITIZE_STRING);
-
-// Ajusta o formato de exibição e converte para formato SQL
-if (!$data_inicio) {
-    $data_inicio = date('Y-m-d');
-} else {
-    $data_inicio = date('Y-m-d', strtotime(str_replace('-', '/', $data_inicio)));
+$selected_tecnico = filter_input(INPUT_GET, 'tecnico', FILTER_VALIDATE_INT) ?: 0;
+$f_area = filter_input(INPUT_GET, 'f_area', FILTER_SANITIZE_FULL_SPECIAL_CHARS) ?: 'ti';
+if (!in_array($f_area, ['ti', 'devops'], true)) {
+    $f_area = 'ti';
 }
 
-if (!$data_fim) {
-    $data_fim = date('Y-m-d');
-} else {
-    $data_fim = date('Y-m-d', strtotime(str_replace('-', '/', $data_fim)));
-}
+$data_inicio = filter_input(INPUT_GET, 'data_inicio', FILTER_SANITIZE_FULL_SPECIAL_CHARS) ?: date('Y-m-d');
+$data_fim = filter_input(INPUT_GET, 'data_fim', FILTER_SANITIZE_FULL_SPECIAL_CHARS) ?: date('Y-m-d');
+$data_inicio = date('Y-m-d', strtotime(str_replace('-', '/', $data_inicio)));
+$data_fim = date('Y-m-d', strtotime(str_replace('-', '/', $data_fim)));
 
-// Consulta para buscar os tecnicos ativos
-$tecnicos = $pdo->prepare("SELECT user_id, user_nome FROM usuarios WHERE user_sts ='1' AND usuarios.user_funcao IN (5, 6) ORDER BY user_nome ASC");
+$areaLabel = $f_area === 'devops' ? 'Suporte DevOps' : 'Suporte T.I';
+$tabela = $f_area === 'devops' ? 'tarefas' : 'atendimentos';
+$campoNivel = $f_area === 'devops' ? 'tipo' : 'nivel';
+
+$tecnicos = $pdo->prepare("SELECT user_id, user_nome FROM usuarios WHERE user_sts = '1' AND usuarios.user_funcao IN (5, 6) ORDER BY user_nome ASC");
 $tecnicos->execute();
 
-// Consulta SQL para buscar os atendimentos
 $query = "
-    SELECT atendimentos.id, atendimentos.nivel, atendimentos.abertura, atendimentos.status, usuarios.user_nome
-    FROM atendimentos 
-    LEFT JOIN usuarios ON atendimentos.tecnico = usuarios.user_id
-    WHERE 1 ";
+    SELECT {$tabela}.id, {$tabela}.{$campoNivel} AS nivel, {$tabela}.abertura, {$tabela}.status, usuarios.user_nome
+    FROM {$tabela}
+    LEFT JOIN usuarios ON {$tabela}.tecnico = usuarios.user_id
+    WHERE DATE({$tabela}.abertura) BETWEEN :data_inicio AND :data_fim";
 
-if ($selected_tecnico) {
-    $query .= " AND atendimentos.tecnico = :tecnico ";
+if ($selected_tecnico > 0) {
+    $query .= " AND {$tabela}.tecnico = :tecnico";
 }
-$query .= " AND DATE(atendimentos.abertura) BETWEEN :data_inicio AND :data_fim 
-            ORDER BY usuarios.user_nome ASC, atendimentos.abertura ASC";
+
+$query .= " ORDER BY usuarios.user_nome ASC, {$tabela}.abertura ASC";
 
 $stmt = $pdo->prepare($query);
-
-if ($selected_tecnico) {
-    $stmt->bindParam(':tecnico', $selected_tecnico, PDO::PARAM_INT);
+$stmt->bindValue(':data_inicio', $data_inicio, PDO::PARAM_STR);
+$stmt->bindValue(':data_fim', $data_fim, PDO::PARAM_STR);
+if ($selected_tecnico > 0) {
+    $stmt->bindValue(':tecnico', $selected_tecnico, PDO::PARAM_INT);
 }
-$stmt->bindParam(':data_inicio', $data_inicio, PDO::PARAM_STR);
-$stmt->bindParam(':data_fim', $data_fim, PDO::PARAM_STR);
 $stmt->execute();
-
-// Contar o número de atendimentos encontrados
 $num_atendimentos = $stmt->rowCount();
+
+function formatarTempoAtendimento($abertura) {
+    if (!$abertura || $abertura === '-') {
+        return '-';
+    }
+
+    $tempoAtendimento = time() - strtotime($abertura);
+    if ($tempoAtendimento < 0) {
+        $tempoAtendimento = 0;
+    }
+
+    $dias = floor($tempoAtendimento / 86400);
+    $horas = floor(($tempoAtendimento % 86400) / 3600);
+    $minutos = floor(($tempoAtendimento % 3600) / 60);
+    $segundos = $tempoAtendimento % 60;
+
+    return sprintf("%d dias, %02d:%02d:%02d", $dias, $horas, $minutos, $segundos);
+}
 ?>
 
 <!DOCTYPE html>
@@ -61,7 +69,7 @@ $num_atendimentos = $stmt->rowCount();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Relatório de Atendimentos por Técnico</title>
+    <title>Relatório de tempo por técnico</title>
     <link rel="stylesheet" href="../css/bootstrap.min.css">
     <link rel="stylesheet" href="../fontawesome/css/all.css">
     <link rel="stylesheet" href="css/relatorios_modern.css">
@@ -69,100 +77,98 @@ $num_atendimentos = $stmt->rowCount();
 <body class="rel-legacy-body">
 <?php include_once("../all/sidebar.php"); ?>
 
-
-<div class="container-fluid rel-page rel-legacy-page">
-    <h2 class="text-center">Relatório de Atendimentos por Técnico</h2>
+<div class="container-fluid rel-page rel-legacy-page rel-analitico-full-page">
     <div class="row">
-        <div class="col-md-4">
-            <form method="GET" action="<?php echo $_SERVER['PHP_SELF']; ?>">
-                <div class="form-group">
-                    <label for="tecnico">Selecione o Técnico:</label>
-                    <select class="form-control" id="tecnico" name="tecnico">
-                        <option value="">Todos os Técnicos</option>
-                        <?php while ($row = $tecnicos->fetch(PDO::FETCH_ASSOC)) { ?>
-                            <option value="<?php echo $row['user_id']; ?>"
-                                <?php if ($row['user_id'] == $selected_tecnico) echo 'selected'; ?>>
-                                <?php echo $row['user_nome']; ?>
-                            </option>
-                        <?php } ?>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="data_inicio">Data Início:</label>
-                    <input type="date" class="form-control" id="data_inicio" name="data_inicio"
-                           value="<?php echo $data_inicio; ?>">
-                </div>
-                <div class="form-group">
-                    <label for="data_fim">Data Fim:</label>
-                    <input type="date" class="form-control" id="data_fim" name="data_fim"
-                           value="<?php echo $data_fim; ?>">
-                </div>
-                <button type="submit" class="btn btn-primary rel-pill-btn">Filtrar</button>
-            </form>
-            <br>
-            <a href="../atd/home.php" class="btn btn-primary rel-pill-btn">Voltar para Home</a>
-        </div>
-        <div class="col-md-8">
+        <div class="col-md-12 mt-2">
             <div class="card">
-                <div class="card-header h4 text-center py-2 rel-section-header">
-                    <i class="fas fa-stopwatch"></i> Tempo de Atendimento por Técnico
+                <div class="card-header my-0 py-2 h6 rel-filter-header">
+                    <button class="btn" type="button">
+                        <i class="fas fa-stopwatch"></i> Relatório de tempo por técnico
+                    </button>
+                </div>
+                <div class="card-body py-0">
+                    <form method="GET" action="rel_tempo_atd.php" class="rel-modern-filter rel-analitico-filter">
+                        <div class="rel-filter-grid">
+                            <div class="rel-filter-field">
+                                <label for="f_area"><i class="fas fa-sitemap"></i> Área</label>
+                                <select class="form-control form-control-sm" id="f_area" name="f_area">
+                                    <option value="ti" <?php if ($f_area === 'ti') { echo 'selected'; } ?>>Suporte T.I</option>
+                                    <option value="devops" <?php if ($f_area === 'devops') { echo 'selected'; } ?>>Suporte DevOps</option>
+                                </select>
+                            </div>
+
+                            <div class="rel-filter-field">
+                                <label for="tecnico"><i class="fas fa-user-tie"></i> Técnico</label>
+                                <select class="form-control form-control-sm" id="tecnico" name="tecnico">
+                                    <option value="0">Todos os técnicos</option>
+                                    <?php while ($row = $tecnicos->fetch(PDO::FETCH_ASSOC)) { ?>
+                                        <option value="<?php echo $row['user_id']; ?>" <?php if ((int)$row['user_id'] === $selected_tecnico) { echo 'selected'; } ?>>
+                                            <?php echo $row['user_nome']; ?>
+                                        </option>
+                                    <?php } ?>
+                                </select>
+                            </div>
+
+                            <div class="rel-filter-field">
+                                <label for="data_inicio"><i class="far fa-calendar-alt"></i> Data início</label>
+                                <input type="date" class="form-control form-control-sm" id="data_inicio" name="data_inicio" value="<?php echo $data_inicio; ?>">
+                            </div>
+
+                            <div class="rel-filter-field">
+                                <label for="data_fim"><i class="far fa-calendar-check"></i> Data fim</label>
+                                <input type="date" class="form-control form-control-sm" id="data_fim" name="data_fim" value="<?php echo $data_fim; ?>">
+                            </div>
+
+                            <div class="rel-filter-actions">
+                                <button type="submit" class="btn btn-info rel-pill-btn"><i class="fas fa-filter"></i> Filtrar</button>
+                                <a href="rel_tempo_atd.php" class="btn btn-outline-secondary rel-clear-btn"><i class="fas fa-eraser"></i> Limpar</a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-2 mb-0 rel-analitico-result-row">
+        <div class="col-md-12 rel-analitico-result-col">
+            <div class="card bg-default rel-analitico-result-card">
+                <div class="card-header h6 py-2 rel-section-header">
+                    <i class="fas fa-stopwatch"></i> Tempo de atendimento por técnico - <?php echo $areaLabel; ?>
                 </div>
                 <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-2 rel-result-summary">
+                        <h4 class="text-left text-red mb-0">Total de registros: <?php echo $num_atendimentos; ?></h4>
+                        <a href="../atd/home.php" class="btn btn-outline-secondary rel-clear-btn"><i class="fas fa-arrow-left"></i> Voltar para Home</a>
+                    </div>
+
                     <div class="table-responsive rel-table-wrap">
-                    <h4 class="text-left text-red">Total de Atendimentos: <?php echo $num_atendimentos; ?></h4>
                         <table class="table table-hover rel-table">
                             <thead>
                             <tr>
-                                <th class="text-center">ID do Atendimento</th>
-                                <th class="text-center">Nível</th>
+                                <th class="text-center">ID</th>
+                                <th class="text-center"><?php echo $f_area === 'devops' ? 'Tipo' : 'Nível'; ?></th>
+                                <th class="text-center">Técnico</th>
                                 <th class="text-center">Abertura</th>
                                 <th class="text-center">Status</th>
-                                <th class="text-center">Tempo de Atendimento</th>
+                                <th class="text-center">Tempo de atendimento</th>
                             </tr>
                             </thead>
                             <tbody>
-                            <?php while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-                                $atd_id = $row['id'];
-                                $atd_nivel = $row['nivel'];
-                                $atd_abertura = $row['abertura'];
-                                $atd_status = $row['status'];
-                                $user_nome = $row['user_nome'];
-
-                                // Definindo $sla conforme o $atd_nivel
-                                if ($atd_nivel == 1) {
-                                    $sla = 1;
-                                } elseif ($atd_nivel == 2) {
-                                    $sla = 2;
-                                } elseif ($atd_nivel == 3) {
-                                    $sla = 3;
-                                } else {
-                                    $sla = 0; // Caso não seja definido um nível válido, pode tratar aqui conforme sua lógica
-                                }
-
-                                // Calculando tempo de atendimento apenas se houver abertura definida
-                                if ($atd_abertura != '-') {
-                                    // Cálculo do tempo de atendimento
-                                    $time_limit_to_close = date("Y-m-d H:i:s", strtotime($atd_abertura . " +$sla hours"));
-                                    $time_now = date("Y-m-d H:i:s");
-                                    $tempo_atendimento = strtotime($time_now) - strtotime($atd_abertura);
-
-                                    // Formatação do tempo de atendimento
-                                    $dias = floor($tempo_atendimento / (3600 * 24));
-                                    $horas = floor(($tempo_atendimento % (3600 * 24)) / 3600);
-                                    $minutos = floor(($tempo_atendimento % 3600) / 60);
-                                    $segundos = $tempo_atendimento % 60;
-
-                                    $tempo_formatado = sprintf("%d dias, %02d:%02d:%02d", $dias, $horas, $minutos, $segundos);
-                                } else {
-                                    $tempo_formatado = '-';
-                                }
-                                ?>
+                            <?php if ($num_atendimentos > 0) { ?>
+                                <?php while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) { ?>
+                                    <tr>
+                                        <td class="text-center"><?php echo $row['id']; ?></td>
+                                        <td class="text-center"><?php echo $row['nivel']; ?></td>
+                                        <td class="text-center"><?php echo $row['user_nome']; ?></td>
+                                        <td class="text-center"><?php echo $row['abertura']; ?></td>
+                                        <td class="text-center"><?php echo $row['status']; ?></td>
+                                        <td class="text-center"><?php echo formatarTempoAtendimento($row['abertura']); ?></td>
+                                    </tr>
+                                <?php } ?>
+                            <?php } else { ?>
                                 <tr>
-                                    <td class="text-center"><?php echo $atd_id; ?></td>
-                                    <td class="text-center"><?php echo $atd_nivel; ?></td>
-                                    <td class="text-center"><?php echo $atd_abertura; ?></td>
-                                    <td class="text-center"><?php echo $atd_status; ?></td>
-                                    <td class="text-center"><?php echo $tempo_formatado; ?></td>
+                                    <td colspan="6" class="text-center">Não há informações para exibir com os filtros selecionados.</td>
                                 </tr>
                             <?php } ?>
                             </tbody>
@@ -176,6 +182,6 @@ $num_atendimentos = $stmt->rowCount();
 
 <script src="../js/jquery-3.6.0.min.js"></script>
 <script src="../js/bootstrap.bundle.min.js"></script>
-    <script src="js/relatorios_modern.js"></script>
+<script src="js/relatorios_modern.js"></script>
 </body>
 </html>

@@ -11,7 +11,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
   $stmt = $pdo->prepare($sql);
   $stmt->bindValue(":user_id", $user_id);
   $stmt->execute();
-  
+
   if ($stmt->rowCount() > 0) {
     $exibe = $stmt->fetch(PDO::FETCH_ASSOC);
     $senha = $exibe['user_pass'];
@@ -22,20 +22,32 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
   }
 
   // Senhas do formulário
-  $senha_atual  = $_POST['senha_atual'];
-  $n_senha2  = $_POST['n_senha2'];
-  $n_senha1  = $_POST['n_senha1'];
+  $senha_atual = $_POST['senha_atual'];
+  $n_senha2 = $_POST['n_senha2'];
+  $n_senha1 = $_POST['n_senha1'];
 
   // Confere a senha atual
   if (!password_verify($senha_atual, $senha)) {
     $mensagem = "<i class=\"fas fa-exclamation-triangle\"></i> Não foi possível atualizar sua senha de acesso: A senha digitada está incorreta!";
     $mensagem_cor = "alert-danger";
-  } 
+  }
   // Confere se as novas senhas conferem
   else if ($n_senha2 != $n_senha1) {
     $mensagem = "<i class=\"fas fa-exclamation-triangle\"></i> Não foi possível atualizar sua senha de acesso: As senhas digitadas não conferem!";
     $mensagem_cor = "alert-danger";
-  } 
+  }
+  // Confere a força da nova senha
+  else if (
+    strlen($n_senha1) < 12 ||
+    strlen($n_senha1) > 100 ||
+    !preg_match('/[A-Z]/', $n_senha1) ||
+    !preg_match('/[a-z]/', $n_senha1) ||
+    !preg_match('/[0-9]/', $n_senha1) ||
+    !preg_match('/[^a-zA-Z0-9]/', $n_senha1)
+  ) {
+    $mensagem = "<i class=\"fas fa-exclamation-triangle\"></i> Não foi possível atualizar sua senha de acesso: A nova senha deve conter entre 12 e 100 caracteres, com maiúscula, minúscula, número e símbolo.";
+    $mensagem_cor = "alert-danger";
+  }
   // Atualiza a senha
   else {
     $senha2 = password_hash($n_senha1, PASSWORD_DEFAULT);
@@ -52,4 +64,3 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
   }
 }
 ?>
-

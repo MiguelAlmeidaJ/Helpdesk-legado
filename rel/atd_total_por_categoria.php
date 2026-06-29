@@ -15,10 +15,13 @@ if ($action == "alterar_senha") {include_once("../all/update_senha.php");}
 $ano = date('Y', strtotime('-0 months', strtotime(date('Y-m-d'))));
 $mes = date('m', strtotime('-0 months', strtotime(date('Y-m-d'))));
 //RECEBE INFORMAÇÕES PARA FILTRO
-if (isset($_POST['data_1'])){$data_1 = $_POST['data_1'];} else {$data_1 = "$ano-$mes-01";}
-if (isset($_POST['data_2'])){$data_2 = $_POST['data_2'];} else {$data_2 = date("Y-m-d");}
-if (isset($_POST['f_nivel'])){$f_nivel = $p_nivel = $_POST['f_nivel'];} else {$f_nivel = 0;}
-if($f_nivel==0){$p_nivel = "1,2,3";}
+$data_1 = $_GET['data_1'] ?? "$ano-$mes-01";
+$data_2 = $_GET['data_2'] ?? date("Y-m-d");
+$f_nivel = $_GET['f_nivel'] ?? 0;
+$p_nivel = $f_nivel;
+if ($f_nivel == 0) {
+  $p_nivel = "1,2,3";
+}
 
 
 //header("Refresh:60");
@@ -41,54 +44,45 @@ if($f_nivel==0){$p_nivel = "1,2,3";}
 <?php include_once("../all/sidebar.php"); ?>
 
     <div class="container-fluid rel-page rel-legacy-page rel-total-page">
-      <div class="row rel-filter-row">
-        <div class="col-md-12">
-          <div class="card">
-            <div id="accordion">
-              <div class="card py-0 my-0">
-                <div class="card-header my-0 py-2 h6 rel-filter-header" id="headingOne">
-                  <button class="btn" data-toggle="collapse" data-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
-                      <i class="fas fa-chart-bar"></i> Relatório de atendimentos por Categoria
-                  </button>
-                </div>
-                <div id="collapseOne" class="collapse show" aria-labelledby="headingOne" data-parent="#accordion">
-                  <div class="card-body py-0">
-                    <div class="row">
-                      <div class="col-12">
-                        <form action="#" method="POST">
-                          <div class="form-row align-items-center">                         
-                            <div class="col-auto col-form-label-sm">
-                              <label>De:</label>
-                              <input id="dat" name="data_1" type="date" value="<?php echo $data_1; ?>" class="form-control mb-2 mt-n2 form-control-sm">
-                            </div>
-                            <div class="col-auto col-form-label-sm">
-                              <label>a:</label>
-                              <input id="dat" name="data_2" type="date" value="<?php echo $data_2; ?>" class="form-control mb-2 mt-n2 form-control-sm">
-                            </div>
-                            <div class="col-auto col-form-label-sm">
-                              <label>Nível:</label>
-                              <select name="f_nivel" class="form-control mb-2 mt-n2 form-control-sm" tabindex="2">
-                                <option value="0"<?php if(0 == $f_nivel){echo " selected";} ?>>Todos</option>
-                                <option value="1"<?php if(1 == $f_nivel){echo " selected";} ?>>Nível 1</option>
-                                <option value="2"<?php if(2 == $f_nivel){echo " selected";} ?>>Nível 2</option>
-                                <option value="3"<?php if(3 == $f_nivel){echo " selected";} ?>>Nível 3</option>
-                              </select>
-                            </div>
-                            <div class="col-sm-2 col-4">
-                              <button type="submit" class="btn btn-info rel-pill-btn">Filtrar</button>
-                            </div>
-                          </div>
-                        </form>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+      <div class="card rel-total-filter-card">
+        <div class="card-header rel-total-filter-header">
+          <div class="rel-title">
+            <span class="rel-title-icon"><i class="fas fa-chart-bar"></i></span>
+            <div>
+              <h4>Relatório de atendimentos por Categoria</h4>
+              <small>Filtre por período e nível para atualizar o gráfico.</small>
+            </div>
+          </div>
+        </div>
+        <div class="card-body">
+          <form action="" method="GET" class="rel-total-filter-form">
+            <div class="rel-total-filter-grid">
+              <div class="form-group">
+                <label for="data_1">De</label>
+                <input id="data_1" name="data_1" type="date" value="<?php echo htmlspecialchars($data_1); ?>" class="form-control form-control-sm">
+              </div>
+              <div class="form-group">
+                <label for="data_2">Até</label>
+                <input id="data_2" name="data_2" type="date" value="<?php echo htmlspecialchars($data_2); ?>" class="form-control form-control-sm">
+              </div>
+              <div class="form-group">
+                <label for="f_nivel">Nível</label>
+                <select id="f_nivel" name="f_nivel" class="form-control form-control-sm">
+                  <option value="0"<?php if (0 == $f_nivel) { echo " selected"; } ?>>Todos</option>
+                  <option value="1"<?php if (1 == $f_nivel) { echo " selected"; } ?>>Nível 1</option>
+                  <option value="2"<?php if (2 == $f_nivel) { echo " selected"; } ?>>Nível 2</option>
+                  <option value="3"<?php if (3 == $f_nivel) { echo " selected"; } ?>>Nível 3</option>
+                </select>
+              </div>
+              <div class="rel-total-filter-actions">
+                <button type="submit" class="btn btn-primary rel-filter-submit-btn"><i class="fas fa-filter"></i> Filtrar</button>
+                <a href="<?php echo basename($_SERVER['PHP_SELF']); ?>" class="btn btn-outline-secondary rel-clear-btn">Limpar</a>
               </div>
             </div>
+          </form>
         </div>
       </div>
-    </div>
-      
+
       <div class="row rel-chart-row">
         <div class="col-md-12">
           <div class="card bg-default rel-chart-card">
@@ -163,7 +157,7 @@ function drawStacked() {
       
     </div>
 
-<!-- MODAL DE AJUDA PARA A GESTÃO DE UM ATENDIMENTO -->    
+<!-- MODAL DE AJUDA PARA A GESTÃO DE UM ATENDIMENTO -->
 <div class="modal fade rel-modal" id="Help" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
   <div class="modal-dialog modal-dialog-centered" role="document">
     <div class="modal-content">

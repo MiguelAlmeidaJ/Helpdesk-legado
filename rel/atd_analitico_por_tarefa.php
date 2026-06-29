@@ -15,12 +15,11 @@ if ($action == "alterar_senha") {include_once("../all/update_senha.php");}
 $ano = date('Y', strtotime('-0 months', strtotime(date('Y-m-d'))));
 $mes = date('m', strtotime('-0 months', strtotime(date('Y-m-d'))));
 //RECEBE INFORMAÇÕES PARA FILTRO
-if (isset($_POST['f_clt'])){$f_clt = $_POST['f_clt'];} else {$f_clt = 0;}
-if (isset($_POST['f_local'])){$f_local = $p_local =$_POST['f_local'];} else {$f_local = 0;}
-if($f_local==0){$p_local = "%";}
-
-if (isset($_POST['data_1'])){$data_1 = $_POST['data_1'];} else {$data_1 = "$ano-$mes-01";}
-if (isset($_POST['data_2'])){$data_2 = $_POST['data_2'];} else {$data_2 = date("Y-m-d");}
+$f_clt = filter_input(INPUT_GET, 'f_clt', FILTER_VALIDATE_INT) ?: 0;
+$f_local = filter_input(INPUT_GET, 'f_local', FILTER_VALIDATE_INT) ?: 0;
+$p_local = $f_local === 0 ? '%' : (string)$f_local;
+$data_1 = filter_input(INPUT_GET, 'data_1', FILTER_SANITIZE_FULL_SPECIAL_CHARS) ?: "$ano-$mes-01";
+$data_2 = filter_input(INPUT_GET, 'data_2', FILTER_SANITIZE_FULL_SPECIAL_CHARS) ?: date("Y-m-d");
 
 //header("Refresh:60");
 
@@ -41,7 +40,7 @@ if (isset($_POST['data_2'])){$data_2 = $_POST['data_2'];} else {$data_2 = date("
   <body class="rel-legacy-body">
 <?php include_once("../all/sidebar.php"); ?>
 
-    <div class="container-fluid rel-page rel-legacy-page">
+    <div class="container-fluid rel-page rel-legacy-page rel-analitico-full-page">
       <div class="row">
         <div class="col-md-12 mt-2">
           <div class="card">
@@ -49,25 +48,26 @@ if (isset($_POST['data_2'])){$data_2 = $_POST['data_2'];} else {$data_2 = date("
               <div class="card py-0 my-0">
                 <div class="card-header my-0 py-2 h6 rel-filter-header" id="headingOne">
                   <button class="btn" data-toggle="collapse" data-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
-                      <i class="fas fa-chart-bar"></i>  Relatório de Tarefas por Cliente
+                      <i class="fas fa-chart-bar"></i>  Relatório de tarefas por Cliente
                   </button>
                 </div>
                 <div id="collapseOne" class="collapse show" aria-labelledby="headingOne" data-parent="#accordion">
                   <div class="card-body py-0">
                     <div class="row">
                       <div class="col-12">
-                        <form action="#" method="POST">
-                          <div class="form-row align-items-center">                         
-                            <div class="col-auto col-form-label-sm">
-                              <label>Cliente:</label>
-                              <select name="f_clt" id="f_clt"  class="form-control form-control-sm mb-2 mt-n2 selectpicker" data-live-search="true" required="required" tabindex="1">
-                                <option></option>
+                        <form action="atd_analitico_por_tarefa.php" method="GET" class="rel-modern-filter rel-analitico-filter">
+                          <div class="rel-filter-grid">
+                            <div class="rel-filter-field rel-filter-client">
+                              <label for="f_clt"><i class="fas fa-building"></i> Cliente</label>
+                              <select name="f_clt" id="f_clt" class="form-control form-control-sm selectpicker" data-live-search="true" required="required" tabindex="1">
+                                <option value="">Selecione um cliente</option>
                                 <?php
                                 $filterEmpresas = null;
-                               if (isset($_SESSION['tipo']) && $_SESSION['tipo'] == 2 && isset($_SESSION['empresas']) && count($_SESSION['empresas']) > 0) {
-                                  $filterEmpresas .= " AND clientes.clt_id IN (" . implode(',', $_SESSION['empresas']) . ")";}
-                                $sql = "SELECT clientes.clt_id, clientes.clt_nomef FROM clientes WHERE clientes.clt_sts = '1'";;
-                                if ($filterEmpresas) {$sql .= $filterEmpresas;};
+                                if (isset($_SESSION['tipo']) && $_SESSION['tipo'] == 2 && isset($_SESSION['empresas']) && count($_SESSION['empresas']) > 0) {
+                                  $filterEmpresas .= " AND clientes.clt_id IN (" . implode(',', $_SESSION['empresas']) . ")";
+                                }
+                                $sql = "SELECT clientes.clt_id, clientes.clt_nomef FROM clientes WHERE clientes.clt_sts = '1'";
+                                if ($filterEmpresas) {$sql .= $filterEmpresas;}
                                 $sql .= " ORDER BY clientes.clt_nomef ASC";
                                 $pdo = ConnectionN3();
                                 $show_clt = $pdo->prepare($sql);
@@ -75,43 +75,44 @@ if (isset($_POST['data_2'])){$data_2 = $_POST['data_2'];} else {$data_2 = date("
                                 while($exibe=$show_clt->fetch(PDO::FETCH_ASSOC)){
                                   $clt_id = $exibe["clt_id"];
                                   $clt_nome = $exibe["clt_nomef"];
-                                  ?>
-                                      <option value="<?php echo $clt_id; ?>" <?php if($f_clt == $clt_id){echo " selected ";}?>><?php echo $clt_nome;?></option>
-
+                                ?>
+                                  <option value="<?php echo $clt_id; ?>" <?php if($f_clt == $clt_id){echo " selected ";}?>><?php echo htmlspecialchars($clt_nome); ?></option>
                                 <?php } ?>
                               </select>
-                              
                             </div>
-<?php if($f_clt>0){ ?>                            
-                            <div class="col-auto col-form-label-sm">
-                              <label>De:</label>
-                              <input id="dat" name="data_1" type="date" value="<?php echo $data_1; ?>" class="form-control mb-2 mt-n2 form-control-sm">
-                            </div>
-                            <div class="col-auto col-form-label-sm">
-                              <label>a:</label>
-                              <input id="dat" name="data_2" type="date" value="<?php echo $data_2; ?>" class="form-control mb-2 mt-n2 form-control-sm">
-                            </div>
-                            <div class="col-auto col-form-label-sm">
-                              <label>Local:</label>
-                              <select name="f_local" id="f_local"  class="form-control form-control-sm mb-2 mt-n2 selectpicker" data-live-search="true" required="required" tabindex="1">
-                                <option value="0">Todos</option>
-<?php
-$pdo = ConnectionN3();
-$show_clt = $pdo->prepare("SELECT locais.* FROM locais WHERE locais.local_clt = '$f_clt' ORDER BY locais.local_nom ASC");
-$show_clt->execute();
-while($exibe=$show_clt->fetch(PDO::FETCH_ASSOC)){
-  $local_id = $exibe["local_id"];
-  $local_nom = $exibe["local_nom"];
-?>
 
-                                <option value="<?php echo $local_id; ?>" <?php if($f_local == $local_id){echo " selected ";}?>><?php echo $local_nom;?></option>
-<?php } ?>
+                            <div class="rel-filter-field">
+                              <label for="data_1"><i class="far fa-calendar-alt"></i> De</label>
+                              <input id="data_1" name="data_1" type="date" value="<?php echo htmlspecialchars($data_1); ?>" class="form-control form-control-sm">
+                            </div>
+
+                            <div class="rel-filter-field">
+                              <label for="data_2"><i class="far fa-calendar-check"></i> Até</label>
+                              <input id="data_2" name="data_2" type="date" value="<?php echo htmlspecialchars($data_2); ?>" class="form-control form-control-sm">
+                            </div>
+
+                            <div class="rel-filter-field">
+                              <label for="f_local"><i class="fas fa-map-marker-alt"></i> Local</label>
+                              <select name="f_local" id="f_local" class="form-control form-control-sm selectpicker" data-live-search="true" tabindex="1" <?php echo $f_clt > 0 ? '' : 'disabled'; ?>>
+                                <option value="0"><?php echo $f_clt > 0 ? 'Todos' : 'Selecione o cliente'; ?></option>
+                                <?php if($f_clt > 0){ ?>
+                                <?php
+                                $pdo = ConnectionN3();
+                                $show_clt = $pdo->prepare("SELECT locais.* FROM locais WHERE locais.local_clt = :f_clt ORDER BY locais.local_nom ASC");
+                                $show_clt->execute([':f_clt' => $f_clt]);
+                                while($exibe=$show_clt->fetch(PDO::FETCH_ASSOC)){
+                                  $local_id = $exibe["local_id"];
+                                  $local_nom = $exibe["local_nom"];
+                                ?>
+                                  <option value="<?php echo $local_id; ?>" <?php if($f_local == $local_id){echo " selected ";}?>><?php echo htmlspecialchars($local_nom); ?></option>
+                                <?php } ?>
+                                <?php } ?>
                               </select>
                             </div>
-            
-<?php } ?>
-                            <div class="col-sm-2 col-4">
-                              <button type="submit" class="btn btn-info rel-pill-btn">Filtrar</button>
+
+                            <div class="rel-filter-actions">
+                              <button type="submit" class="btn btn-info rel-pill-btn"><i class="fas fa-filter"></i> Filtrar</button>
+                              <a href="atd_analitico_por_tarefa.php" class="btn btn-outline-secondary rel-clear-btn"><i class="fas fa-eraser"></i> Limpar</a>
                             </div>
                           </div>
                         </form>
@@ -125,12 +126,12 @@ while($exibe=$show_clt->fetch(PDO::FETCH_ASSOC)){
       </div>
     </div>
       
-      <div class="row mt-2 mb-2">
-        <div class="col-md-12">
-          <div class="card bg-default">
+      <div class="row mt-2 mb-0 rel-analitico-result-row">
+        <div class="col-md-12 rel-analitico-result-col">
+          <div class="card bg-default rel-analitico-result-card">
             <div class="card-header py-2 h6 rel-section-header">
               <i class="fas fa-chart-pie"></i>
-              Relatório Analítico de Tarefas Por Cliente
+              Relatório analítico de tarefas por Cliente
             </div>
 <?php 
 $pdo = ConnectionN3();
@@ -151,8 +152,7 @@ $total = $qnt->fetch(PDO::FETCH_ASSOC);
     <i class="fas fa-chart-pie"></i>
     Total de registros:  <?php echo $total["n"]?> 
   </div>
-  <div class="card-body">
-           
+  <div class="card-body rel-analitico-result-body">
 <?php if($f_clt>0){ ?>
 <?php 
 $pdo = ConnectionN3();
@@ -238,7 +238,7 @@ while($row=$show->fetch(PDO::FETCH_ASSOC)){
       </div>
       <div class="col-md-4 mb-3 px-4">
         <div class="row py-1 ">
-           <span class="badge badge-light mx-1"> <i class="fas fa-user-tie mr-1"></i> Tecnico: <?php echo $user_nome; ?> </span>
+           <span class="badge badge-light mx-1"> <i class="fas fa-user-tie mr-1"></i> Técnico: <?php echo $user_nome; ?> </span>
         </div>
         <div class="row py-1">
         <p>Descrição de abertura: <?php echo $tarefas_desc_abertura; ?></p>
@@ -285,7 +285,7 @@ while($row=$show->fetch(PDO::FETCH_ASSOC)){
       
     </div>
 
-<!-- MODAL DE AJUDA PARA A GESTÃO DE UM ATENDIMENTO -->    
+<!-- MODAL DE AJUDA PARA GESTAO DE ATENDIMENTO -->
 <div class="modal fade rel-modal" id="Help" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
   <div class="modal-dialog modal-dialog-centered" role="document">
     <div class="modal-content">

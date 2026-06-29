@@ -1,4 +1,5 @@
 <?php
+date_default_timezone_set('America/Sao_Paulo');
 session_start();
 include_once("../all/seguranca.php");
 include_once("../all/conect.php");
@@ -19,41 +20,32 @@ $mes = date('m', strtotime('-0 months', strtotime(date('Y-m-d'))));
 
 $clt = "";
 //RECEBE INFORMAÇÕES PARA FILTRO
-if (isset($_POST['f_clt'])) {
-    $f_clt = $_POST['f_clt'];
-} else {
-    $f_clt = 0;
+$f_clt = filter_input(INPUT_GET, 'f_clt', FILTER_VALIDATE_INT);
+if ($f_clt === null || $f_clt === false) {
+    $f_clt = filter_input(INPUT_POST, 'f_clt', FILTER_VALIDATE_INT) ?: 0;
 }
 
-if (isset($_POST['f_local'])) {
-    $f_local = $p_local = $_POST['f_local'];
-} else {
-    $f_local = 0;
+$f_local = filter_input(INPUT_GET, 'f_local', FILTER_VALIDATE_INT);
+if ($f_local === null || $f_local === false) {
+    $f_local = filter_input(INPUT_POST, 'f_local', FILTER_VALIDATE_INT) ?: 0;
 }
-if ($f_local == 0) {
-    $p_local = "%";
+$p_local = $f_local == 0 ? "%" : (string)$f_local;
+
+$data_1 = filter_input(INPUT_GET, 'data_1', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+if (!$data_1) {
+    $data_1 = filter_input(INPUT_POST, 'data_1', FILTER_SANITIZE_FULL_SPECIAL_CHARS) ?: "$ano-$mes-01";
 }
 
-if (isset($_POST['data_1'])) {
-    $data_1 = $_POST['data_1'];
-} else {
-    $data_1 = "$ano-$mes-01";
-}
-if (isset($_POST['data_2'])) {
-    $data_2 = $_POST['data_2'];
-} else {
-    $data_2 = date("Y-m-d");
-}
-if (isset($_POST['f_nivel'])) {
-    $f_nivel = $p_nivel = $_POST['f_nivel'];
-} else {
-    $f_nivel = 0;
-}
-if ($f_nivel == 0) {
-    $p_nivel = "1,2,3,4,5";
+$data_2 = filter_input(INPUT_GET, 'data_2', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+if (!$data_2) {
+    $data_2 = filter_input(INPUT_POST, 'data_2', FILTER_SANITIZE_FULL_SPECIAL_CHARS) ?: date("Y-m-d");
 }
 
-
+$f_nivel = filter_input(INPUT_GET, 'f_nivel', FILTER_VALIDATE_INT);
+if ($f_nivel === null || $f_nivel === false) {
+    $f_nivel = filter_input(INPUT_POST, 'f_nivel', FILTER_VALIDATE_INT) ?: 0;
+}
+$p_nivel = $f_nivel == 0 ? "1,2,3,4,5" : $f_nivel;
 //header("Refresh:60");
 
 ?>
@@ -556,7 +548,7 @@ ORDER BY atendimentos.abertura ASC");
 
     </div>
 
-    <!-- MODAL DE AJUDA PARA A GESTÃO DE UM ATENDIMENTO -->
+    <!-- MODAL DE AJUDA PARA GESTAO DE ATENDIMENTO -->
     <div class="modal fade rel-modal" id="Help" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
         <div class="modal-dialog modal-dialog-centered" role="document">
             <div class="modal-content">

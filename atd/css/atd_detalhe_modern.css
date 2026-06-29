@@ -1,0 +1,53 @@
+﻿/* Ajustes específicos do detalhe de atendimento.
+   O padrão visual principal fica em ../css/n3-detalhe-padrao.css. */
+
+body.n3-atendimento-page {
+  zoom: 1 !important;
+  overflow-x: hidden;
+}
+
+body.n3-atendimento-page #catalogOptions {
+  position: absolute;
+  top: 100%;
+  margin-left: 170px;
+  z-index: 1000;
+}
+
+body.n3-atendimento-page .catalog-item {
+  cursor: pointer;
+}
+
+body.n3-atendimento-page .carregando,
+body.n3-atendimento-page .carregando2,
+body.n3-atendimento-page .carregando3,
+body.n3-atendimento-page .carregando4 {
+  color: #ff0000;
+  display: none;
+}
+
+body.n3-atendimento-page #container-anexos {
+  min-height: 0;
+}
+
+body.n3-atendimento-page .tl-content {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 0;
+}
+
+body.n3-atendimento-page.modal-open,
+body.n3-atendimento-page.modal-open .container-fluid,
+body.n3-atendimento-page.modal-open .card,
+body.n3-atendimento-page.modal-open main {
+  filter: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+body.n3-atendimento-page .modal-backdrop,
+body.n3-atendimento-page .modal-backdrop.show {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}

@@ -1,4 +1,5 @@
 <?php
+date_default_timezone_set('America/Sao_Paulo');
 session_start();
 include_once("../all/seguranca.php");
 include_once("../all/conect.php");
@@ -26,7 +27,41 @@ $dataFim = $_GET['data_fim'] ?? date('Y-m-t');
 $relatoriosDir = __DIR__ . '/relatorios/';
 $arquivosPdf = [];
 if (is_dir($relatoriosDir)) {
-    $arquivosPdf = glob($relatoriosDir . '*.pdf');
+    foreach (glob($relatoriosDir . '*.pdf') ?: [] as $arquivoPdf) {
+        $arquivosPdf[] = [
+            'path' => $arquivoPdf,
+            'nome' => basename($arquivoPdf),
+            'modificado' => filemtime($arquivoPdf) ?: 0,
+            'tamanho' => filesize($arquivoPdf) ?: 0,
+        ];
+    }
+
+    usort($arquivosPdf, function ($a, $b) {
+        if ($a['modificado'] === $b['modificado']) {
+            return strnatcasecmp($a['nome'], $b['nome']);
+        }
+        return $b['modificado'] <=> $a['modificado'];
+    });
+}
+
+function formatarTamanhoPdf(int $bytes): string
+{
+    if ($bytes >= 1048576) {
+        return number_format($bytes / 1048576, 1, ',', '.') . ' MB';
+    }
+
+    return number_format(max($bytes, 0) / 1024, 0, ',', '.') . ' KB';
+}
+
+function formatarDataArquivoPdf(int $timestamp): string
+{
+    if ($timestamp <= 0) {
+        return '-';
+    }
+
+    return (new DateTime('@' . $timestamp))
+        ->setTimezone(new DateTimeZone('America/Sao_Paulo'))
+        ->format('d/m/Y H:i');
 }
 
 
@@ -65,7 +100,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao'])) {
         }
     }
 
-    // --- LÓGICA PARA EXCLUSÃO EM MASSA (AJUSTADA) ---
+    // --- LOGICA PARA EXCLUSAO EM MASSA (AJUSTADA) ---
     elseif ($_POST['acao'] === 'excluir_selecionados') {
         if (!empty($_POST['arquivos_selecionados']) && is_array($_POST['arquivos_selecionados'])) {
             $arquivosParaExcluir = $_POST['arquivos_selecionados'];
@@ -163,7 +198,7 @@ $todosClientes = $stmtTodosClientes->fetchAll(PDO::FETCH_ASSOC);
 
 
                         <div class="card-header d-flex justify-content-between align-items-center rel-section-header">
-                            <h5 class="m-0 text-center">Relatórios Gerados</h5>
+                            <h5 class="m-0 text-center">Relatórios Gerados <small class="text-muted font-weight-normal">(mais recentes primeiro)</small></h5>
                             <div class="d-flex align-items-end ">
                                 <?php if (!empty($arquivosPdf)) : ?>
                                     <button type="submit" name="acao" value="download_selecionados" class="btn btn-primary mr-3">
@@ -180,24 +215,34 @@ $todosClientes = $stmtTodosClientes->fetchAll(PDO::FETCH_ASSOC);
                             <thead>
                                 <tr>
                                     <th class="rel-check-col"><input type="checkbox" id="selecionar-todos-pdfs"></th>
-                                    <th class="text-left rel-file-col">Nome do Arquivo</th>
-                                    <th class="text-center rel-action-col">Download Individual</th>
+                                    <th class="text-left rel-file-col">Arquivo</th>
+                                    <th class="text-center">Gerado em</th>
+                                    <th class="text-center">Tamanho</th>
+                                    <th class="text-center rel-action-col">Ações</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <?php if (empty($arquivosPdf)) : ?>
                                     <tr>
-                                        <td colspan="3" class="text-center text-muted p-4">Nenhum relatório gerado ainda.</td>
+                                        <td colspan="5" class="text-center text-muted p-4">Nenhum relatório gerado ainda.</td>
                                     </tr>
                                 <?php else : ?>
-                                    <?php foreach ($arquivosPdf as $arquivo) : $nomeBase = basename($arquivo); ?>
+                                    <?php foreach ($arquivosPdf as $arquivo) : $nomeBase = $arquivo['nome']; ?>
                                         <tr>
                                             <td>
-                                                <input type="checkbox" class="pdf-checkbox " name="arquivos_selecionados[]" value="<?= htmlspecialchars($nomeBase) ?>">
+                                                <input type="checkbox" class="pdf-checkbox" name="arquivos_selecionados[]" value="<?= htmlspecialchars($nomeBase) ?>">
                                             </td>
-                                            <td class ="nomeArquivo"><i class="fas fa-file-pdf text-danger"></i> <?= htmlspecialchars($nomeBase) ?></td>
+                                            <td class="nomeArquivo">
+                                                <i class="fas fa-file-pdf text-danger"></i>
+                                                <span><?= htmlspecialchars($nomeBase) ?></span>
+                                            </td>
+                                            <td class="text-center text-muted"><?= formatarDataArquivoPdf((int)$arquivo['modificado']) ?></td>
+                                            <td class="text-center text-muted"><?= formatarTamanhoPdf((int)$arquivo['tamanho']) ?></td>
                                             <td class="text-center">
-                                                <a href="relatorios/<?= urlencode($nomeBase) ?>" class="btn btn-sm btn-primary" download>
+                                                <button type="button" class="btn btn-sm btn-outline-secondary btn-visualizar-pdf mr-1" data-pdf-url="relatorios/<?= urlencode($nomeBase) ?>" data-pdf-nome="<?= htmlspecialchars($nomeBase) ?>" title="Visualizar PDF">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                                <a href="relatorios/<?= urlencode($nomeBase) ?>" class="btn btn-sm btn-primary" download title="Baixar PDF">
                                                     <i class="fas fa-download text-left"></i>
                                                 </a>
                                             </td>
@@ -210,6 +255,30 @@ $todosClientes = $stmtTodosClientes->fetchAll(PDO::FETCH_ASSOC);
 
                     </form>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="rel-pdf-preview-modal" id="modalVisualizarPdf" aria-hidden="true">
+        <div class="rel-pdf-preview-backdrop" data-pdf-preview-close></div>
+        <div class="rel-pdf-preview-dialog" role="dialog" aria-modal="true" aria-labelledby="modalVisualizarPdfLabel">
+            <div class="rel-pdf-preview-header">
+                <div>
+                    <span class="rel-pdf-preview-kicker">Pré-visualização</span>
+                    <h5 id="modalVisualizarPdfLabel">Visualizar PDF</h5>
+                </div>
+                <button type="button" class="rel-pdf-preview-close" data-pdf-preview-close aria-label="Fechar visualização">
+                    &times;
+                </button>
+            </div>
+            <div class="rel-pdf-preview-body">
+                <iframe id="iframeVisualizarPdf" title="Visualização do PDF"></iframe>
+            </div>
+            <div class="rel-pdf-preview-footer">
+                <a id="linkDownloadPreviewPdf" href="#" class="btn btn-primary" download>
+                    <i class="fas fa-download"></i> Baixar PDF
+                </a>
+                <button type="button" class="btn btn-outline-secondary" data-pdf-preview-close>Fechar</button>
             </div>
         </div>
     </div>
@@ -247,7 +316,7 @@ $todosClientes = $stmtTodosClientes->fetchAll(PDO::FETCH_ASSOC);
 
                 var statusDiv = $('#statusGeracao');
 
-                // --- INÍCIO DA ALTERAÇÃO ---
+                // --- INICIO DA ALTERACAO ---
 
                 // 1. Crie um array para guardar os clientes selecionados (ID e Nome)
                 var clientesSelecionados = [];
@@ -267,22 +336,46 @@ $todosClientes = $stmtTodosClientes->fetchAll(PDO::FETCH_ASSOC);
 
                 // console.log("Dados enviados:", postData);
 
-                statusDiv.show().html('<div class="alert alert-info"><i class="fas fa-spinner fa-spin"></i> Gerando relatório, por favor aguarde...</div>');
+                statusDiv.show().html('<div class="alert alert-info"><i class="fas fa-spinner fa-spin"></i> Gerando relatorio, aguarde...</div>');
 
                 $.ajax({
                     url: 'auxPDF.php',
                     type: 'POST',
-                    data: postData, // Use o objeto que criamos em vez do formData
+                    data: postData,
+                    dataType: 'json',
                     success: function(response) {
-                        statusDiv.html('<div class="alert alert-success">Relatório gerado com sucesso! A página será atualizada.</div>');
-                        // console.log("Resposta do script:", response);
-                        setTimeout(function() {
-                            location.reload();
-                        }, 3000);
+                        var detalhes = '';
+                        if (response.errors && response.errors.length) {
+                            detalhes = '<br><small>' + response.errors.join('<br>') + '</small>';
+                        }
+
+                        if (response.success) {
+                            statusDiv.html('<div class="alert alert-success">' + response.message + ' A pagina sera atualizada.</div>');
+                            setTimeout(function() {
+                                location.reload();
+                            }, 1800);
+                            return;
+                        }
+
+                        statusDiv.html('<div class="alert alert-warning"><strong>' + (response.message || 'Relatorio gerado parcialmente.') + '</strong>' + detalhes + '</div>');
+                        if (response.files && response.files.length) {
+                            setTimeout(function() {
+                                location.reload();
+                            }, 3000);
+                        }
                     },
                     error: function(jqXHR, textStatus, errorThrown) {
-                        statusDiv.html('<div class="alert alert-danger"><strong>Erro ao gerar o relatório.</strong></div>');
-                        console.error("Erro AJAX:", textStatus, errorThrown);
+                        var mensagem = 'Erro ao gerar o relatorio.';
+                        if (jqXHR.responseJSON && jqXHR.responseJSON.message) {
+                            mensagem = jqXHR.responseJSON.message;
+                            if (jqXHR.responseJSON.errors && jqXHR.responseJSON.errors.length) {
+                                mensagem += '<br><small>' + jqXHR.responseJSON.errors.join('<br>') + '</small>';
+                            }
+                        } else if (jqXHR.responseText) {
+                            mensagem += '<br><small>' + jqXHR.responseText.substring(0, 800) + '</small>';
+                        }
+                        statusDiv.html('<div class="alert alert-danger"><strong>' + mensagem + '</strong></div>');
+                        console.error("Erro AJAX:", textStatus, errorThrown, jqXHR.responseText);
                     }
                 });
             });
@@ -308,6 +401,35 @@ $todosClientes = $stmtTodosClientes->fetchAll(PDO::FETCH_ASSOC);
                     if ($('.pdf-checkbox:checked').length === $('.pdf-checkbox').length) {
                         $('#selecionar-todos-pdfs').prop('checked', true);
                     }
+                }
+            });
+
+            function abrirPreviewPdf(pdfUrl, pdfNome) {
+                $('#modalVisualizarPdfLabel').text(pdfNome || 'Visualizar PDF');
+                $('#iframeVisualizarPdf').attr('src', pdfUrl + '#toolbar=1&navpanes=0');
+                $('#linkDownloadPreviewPdf').attr('href', pdfUrl);
+                $('#modalVisualizarPdf').addClass('is-open').attr('aria-hidden', 'false');
+                $('body').addClass('rel-pdf-preview-open');
+            }
+
+            function fecharPreviewPdf() {
+                $('#modalVisualizarPdf').removeClass('is-open').attr('aria-hidden', 'true');
+                $('body').removeClass('rel-pdf-preview-open');
+                $('#iframeVisualizarPdf').attr('src', 'about:blank');
+                $('#linkDownloadPreviewPdf').attr('href', '#');
+            }
+
+            $('.btn-visualizar-pdf').on('click', function() {
+                abrirPreviewPdf($(this).data('pdf-url'), $(this).data('pdf-nome'));
+            });
+
+            $('[data-pdf-preview-close]').on('click', function() {
+                fecharPreviewPdf();
+            });
+
+            $(document).on('keydown', function(event) {
+                if (event.key === 'Escape' && $('#modalVisualizarPdf').hasClass('is-open')) {
+                    fecharPreviewPdf();
                 }
             });
         });

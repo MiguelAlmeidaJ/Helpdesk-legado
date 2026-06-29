@@ -474,7 +474,7 @@ function atd_home_render_rows($rows, $config)
     $tecnicoNome = ((int)$row['tecnico'] === 0 || empty($row['tecnico_nome'])) ? 'Nao direcionado' : $row['tecnico_nome'];
     $progress = atd_home_progress_state($row, $config);
 ?>
-    <tr class="atd-row-clickable" data-atd-url="atd.php?atd=<?php echo urlencode((string)$atd); ?>" title="De um duplo clique para abrir o atendimento">
+    <tr class="atd-row-clickable" data-atd-url="atd_detalhe.php?atd=<?php echo urlencode((string)$atd); ?>" title="De um duplo clique para abrir o atendimento">
       <th class="align-middle">
         #<?php echo atd_home_h(str_pad((string)$atd, 5, '0', STR_PAD_LEFT)); ?>
         <?php if ((int)$row['reincidente'] === 1) { ?>

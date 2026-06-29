@@ -7,7 +7,7 @@ include_once("../all/token.php");
 $hoje = date("Y-m-d");
 $agora = date("Y-m-d H:i:s");
 
-//verifico se existe alguma requisição POST chamada action
+//verifico se existe alguma requisicao POST chamada action
 $action = filter_input(INPUT_POST, 'action', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
 if ($action == "alterar_senha") {
@@ -17,41 +17,32 @@ if ($action == "alterar_senha") {
 $ano = date('Y', strtotime('-0 months', strtotime(date('Y-m-d'))));
 $mes = date('m', strtotime('-0 months', strtotime(date('Y-m-d'))));
 //RECEBE INFORMAÇÕES PARA FILTRO
-if (isset($_POST['f_clt'])) {
-  $f_clt = $_POST['f_clt'];
-} else {
-  $f_clt = 0;
-}
-if (isset($_POST['f_local'])) {
-  $f_local = $p_local = $_POST['f_local'];
-} else {
-  $f_local = 0;
-}
-if ($f_local == 0) {
-  $p_local = "%";
+$f_clt = filter_input(INPUT_GET, 'f_clt', FILTER_VALIDATE_INT);
+if ($f_clt === null || $f_clt === false) {
+  $f_clt = filter_input(INPUT_POST, 'f_clt', FILTER_VALIDATE_INT) ?: 0;
 }
 
-if (isset($_POST['data_1'])) {
-  $data_1 = $_POST['data_1'];
-} else {
-  $data_1 = "$ano-$mes-01";
+$f_local = filter_input(INPUT_GET, 'f_local', FILTER_VALIDATE_INT);
+if ($f_local === null || $f_local === false) {
+  $f_local = filter_input(INPUT_POST, 'f_local', FILTER_VALIDATE_INT) ?: 0;
 }
-if (isset($_POST['data_2'])) {
-  $data_2 = $_POST['data_2'];
-} else {
-  $data_2 = date("Y-m-d");
-}
-if (isset($_POST['f_nivel'])) {
-  $f_nivel = $p_nivel = $_POST['f_nivel'];
-} else {
-  $f_nivel = 0;
-}
-if ($f_nivel == 0) {
-  $p_nivel = "1,2,3,4,5";
+$p_local = $f_local == 0 ? "%" : (string)$f_local;
+
+$data_1 = filter_input(INPUT_GET, 'data_1', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+if (!$data_1) {
+  $data_1 = filter_input(INPUT_POST, 'data_1', FILTER_SANITIZE_FULL_SPECIAL_CHARS) ?: "$ano-$mes-01";
 }
 
+$data_2 = filter_input(INPUT_GET, 'data_2', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+if (!$data_2) {
+  $data_2 = filter_input(INPUT_POST, 'data_2', FILTER_SANITIZE_FULL_SPECIAL_CHARS) ?: date("Y-m-d");
+}
 
-
+$f_nivel = filter_input(INPUT_GET, 'f_nivel', FILTER_VALIDATE_INT);
+if ($f_nivel === null || $f_nivel === false) {
+  $f_nivel = filter_input(INPUT_POST, 'f_nivel', FILTER_VALIDATE_INT) ?: 0;
+}
+$p_nivel = $f_nivel == 0 ? "1,2,3,4,5" : $f_nivel;
 
 //header("Refresh:60");
 
@@ -90,12 +81,12 @@ if ($f_nivel == 0) {
                   <div class="row">
                     <div class="col-12">
 
-                      <form action="#" method="POST">
-                        <div class="form-row align-items-center">
-                          <div class="col-auto col-form-label-sm">
-                            <label>Cliente:</label>
-                            <select name="f_clt" id="f_clt" class="form-control form-control-sm mb-2 mt-n2 selectpicker" data-live-search="true" required="required" tabindex="1">
-                              <option></option>
+                      <form action="rel_ti.php" method="GET" class="rel-modern-filter rel-analitico-filter rel-ti-filter">
+                        <div class="rel-filter-grid">
+                          <div class="rel-filter-field rel-filter-client">
+                            <label for="f_clt"><i class="fas fa-building"></i> Cliente</label>
+                            <select name="f_clt" id="f_clt" class="form-control form-control-sm selectpicker" data-live-search="true" required="required" tabindex="1">
+                              <option value="">Selecione um cliente</option>
                               <?php
                               $filterEmpresas = null;
                               if (isset($_SESSION['tipo']) && $_SESSION['tipo'] == 2 && isset($_SESSION['empresas']) && count($_SESSION['empresas']) > 0) {
@@ -122,26 +113,26 @@ if ($f_nivel == 0) {
                           </div>
 
 
-                          <div class="col-auto col-form-label-sm">
-                            <label>De:</label>
-                            <input id="data_1" name="data_1" type="date" value="<?php echo $data_1; ?>" class="form-control mb-2 mt-n2 form-control-sm">
+                          <div class="rel-filter-field">
+                            <label for="data_1"><i class="far fa-calendar-alt"></i> De</label>
+                            <input id="data_1" name="data_1" type="date" value="<?php echo $data_1; ?>" class="form-control form-control-sm">
                           </div>
-                          <div class="col-auto col-form-label-sm">
-                            <label>a:</label>
-                            <input id="data_2" name="data_2" type="date" value="<?php echo $data_2; ?>" class="form-control mb-2 mt-n2 form-control-sm">
+                          <div class="rel-filter-field">
+                            <label for="data_2"><i class="far fa-calendar-check"></i> Até</label>
+                            <input id="data_2" name="data_2" type="date" value="<?php echo $data_2; ?>" class="form-control form-control-sm">
                           </div>
 
 
-                          <div class="col-auto col-form-label-sm">
-                            <label>Local:</label>
-                            <select name="f_local" id="f_local" class="form-control form-control-sm mb-2 mt-n2 selectpicker" data-live-search="true" required="required" tabindex="1">
+                          <div class="rel-filter-field">
+                            <label for="f_local"><i class="fas fa-map-marker-alt"></i> Local</label>
+                            <select name="f_local" id="f_local" class="form-control form-control-sm selectpicker" data-live-search="true" required="required" tabindex="1">
                               <option value="0">Todos</option>
                             </select>
                           </div>
 
-                          <div class="col-auto col-form-label-sm">
-                            <label>Nível:</label>
-                            <select name="f_nivel" class="form-control mb-2 mt-n2 form-control-sm">
+                          <div class="rel-filter-field">
+                            <label for="f_nivel"><i class="fas fa-layer-group"></i> Nível</label>
+                            <select name="f_nivel" id="f_nivel" class="form-control form-control-sm">
                               <option value="0" <?php if (0 == $f_nivel) {
                                                   echo " selected";
                                                 } ?>>Todos</option>
@@ -165,9 +156,9 @@ if ($f_nivel == 0) {
 
 
 
-                          <div class="col-md-4 mb-2 ml-4">
-                            <button type="submit" class="btn btn-info btn-sm mr-2">Filtrar</button>
-                            <a href="rel_Unificado.php" class="btn btn-outline-secondary btn-sm mr-2 rel-pill-btn">Limpar</a>
+                          <div class="rel-filter-actions">
+                            <button type="submit" class="btn btn-info rel-pill-btn"><i class="fas fa-filter"></i> Filtrar</button>
+                            <a href="rel_ti.php" class="btn btn-outline-secondary rel-clear-btn"><i class="fas fa-eraser"></i> Limpar</a>
 
                             <!-- <button onclick="baixarPDF()" class="btn btn-danger btn-sm">
                               <i class="fas fa-file-pdf"></i> Exportar PDF
@@ -535,7 +526,7 @@ if ($f_nivel == 0) {
 
   </div>
 
-  <!-- MODAL DE AJUDA PARA A GESTÃO DE UM ATENDIMENTO -->
+  <!-- MODAL DE AJUDA PARA GESTAO DE ATENDIMENTO -->
   <div class="modal fade rel-modal" id="Help" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
     <div class="modal-dialog modal-dialog-centered" role="document">
       <div class="modal-content">

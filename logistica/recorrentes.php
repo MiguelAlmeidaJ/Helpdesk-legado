@@ -388,7 +388,7 @@ function sortLink($label, $column, $currentOrderBy, $currentOrderDir)
                                 <th><?= sortLink('Dia Venc.', 'dia_vencimento', $orderBy, $orderDir) ?></th>
                                 <th><?= sortLink('Unidade de Negocio', 'unidade_negocio_padrao', $orderBy, $orderDir) ?></th>
                                 <th class="text-center"><?= sortLink('Status', 'ativo', $orderBy, $orderDir) ?></th>
-                                <th class="text-center">Açães</th>
+                                <th class="text-center">Ações</th>
                             </tr>
                         </thead>
                         <tbody>

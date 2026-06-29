@@ -120,11 +120,33 @@
       });
   }
 
+  function clearPeriodFilter() {
+    var campoData1 = document.getElementById('f_date_1');
+    var campoData2 = document.getElementById('f_date_2');
+    var botaoPeriodo = document.getElementById('btn-date-range');
+    var labelPeriodo = document.getElementById('date-range-label');
+
+    if (campoData1) campoData1.value = '';
+    if (campoData2) campoData2.value = '';
+
+    if (botaoPeriodo && botaoPeriodo._flatpickr) {
+      botaoPeriodo._flatpickr.clear();
+      botaoPeriodo._flatpickr.close();
+    }
+
+    if (botaoPeriodo && labelPeriodo && campoData1 && campoData2) {
+      atualizarLabelPeriodo(botaoPeriodo, labelPeriodo, campoData1, campoData2);
+    }
+  }
+
   function clearFilters() {
     if (refreshLoading) return;
+    clearPeriodFilter();
     var body = new URLSearchParams();
     body.set('mode', 'refresh');
     body.set('clear', '1');
+    body.set('f_date_1', '');
+    body.set('f_date_2', '');
     setRefreshBusy(true);
 
     post(body)

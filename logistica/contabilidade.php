@@ -141,7 +141,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'download_excel') {
     exit;
 }
 
-// Lógica de açães em massa para ZIP (seu código original)
+// Lógica de Ações em massa para ZIP (seu código original)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao'])) {
     if (!empty($_POST['arquivos_selecionados']) && is_array($_POST['arquivos_selecionados'])) {
 
