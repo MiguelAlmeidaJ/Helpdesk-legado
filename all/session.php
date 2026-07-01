@@ -43,6 +43,30 @@ if (!function_exists('n3_configure_session')) {
     }
 }
 
+
+if (!function_exists('n3_app_base_url')) {
+    function n3_app_base_url(): string
+    {
+        $documentRoot = realpath($_SERVER['DOCUMENT_ROOT'] ?? '');
+        $appRoot = realpath(dirname(__DIR__));
+
+        if ($documentRoot && $appRoot && strpos($appRoot, $documentRoot) === 0) {
+            $relative = trim(str_replace('\\', '/', substr($appRoot, strlen($documentRoot))), '/');
+            return $relative === '' ? '' : '/' . $relative;
+        }
+
+        $scriptDir = str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'] ?? ''));
+        return rtrim($scriptDir === '/' ? '' : $scriptDir, '/');
+    }
+}
+
+if (!function_exists('n3_app_url')) {
+    function n3_app_url(string $path = ''): string
+    {
+        return n3_app_base_url() . '/' . ltrim($path, '/');
+    }
+}
+
 if (!function_exists('n3_session_start')) {
     function n3_session_start(): void
     {

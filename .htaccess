@@ -1,0 +1,4 @@
+php_value session.save_path "C:/xampp/htdocs/N3TI/storage/sessions"
+php_value session.use_strict_mode 1
+php_value session.use_only_cookies 1
+php_value session.cookie_httponly 1
