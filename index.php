@@ -2,22 +2,7 @@
 require_once __DIR__ . "/all/session.php";
 n3_session_start();
 $isPost = (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST');
-if (!$isPost) {
-  unset(
-    $_SESSION['allterusN3Id'],
-    $_SESSION['allterusN3Nome'],
-    $_SESSION['allterusN3Login'],
-    $_SESSION['allterusN3Modulo1'],
-    $_SESSION['allterusN3Modulo2'],
-    $_SESSION['allterusN3Modulo3'],
-    $_SESSION['allterusN3Modulo4'],
-    $_SESSION['allterusN3Modulo5'],
-    $_SESSION['allterusN3Modulo6'],
-    $_SESSION['allterusN3Modulo7'],
-    $_SESSION['allterusN3Modulo8'],
-    $_SESSION['allterusN3Modulo9']
-  );
-} else {
+if ($isPost) {
   unset($_SESSION['loginErro']);
 }
 
@@ -25,6 +10,16 @@ function n3_index_url(string $path = ''): string
 {
   $basePath = rtrim(dirname($_SERVER['SCRIPT_NAME'] ?? ''), '/\\');
   return ($basePath === '' ? '' : $basePath) . '/' . ltrim($path, '/');
+}
+
+if (
+  !$isPost &&
+  !empty($_SESSION['allterusN3Id']) &&
+  !empty($_SESSION['allterusN3Nome']) &&
+  !empty($_SESSION['allterusN3Login'])
+) {
+  header("Location: " . n3_index_url("home.php"));
+  exit;
 }
 
 include_once("./all/conect.php");

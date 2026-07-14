@@ -79,7 +79,7 @@ if ($m3_00 == 0) {
   <style type="text/css">
     /* usado apenas para formatar a mensagem de espera para os selectbox dependentes - Comentário*/
     body {
-      zoom: 0.9;
+      zoom: 1;
       /* Escala o conteúdo sem alterar o contexto de layout */
       width: 100%;
       /* Mantém o layout responsivo */
@@ -90,6 +90,11 @@ if ($m3_00 == 0) {
     .carregando {
       color: #ff0000;
       display: none;
+    }
+
+    html.n3-selectpicker-open,
+    body.n3-selectpicker-open {
+      overflow-y: hidden !important;
     }
 
     .carregando2 {
@@ -118,6 +123,69 @@ if ($m3_00 == 0) {
     .catalog-item {
       cursor: pointer;
       /* Define o cursor como uma mão ao passar o mouse */
+    }
+    .recurrence-row {
+      align-items: flex-end;
+    }
+
+    .recurrence-row .form-group {
+      margin-bottom: 1rem;
+    }
+
+    .datetimepicker {
+      z-index: 3000 !important;
+      min-width: 240px;
+      box-sizing: border-box;
+      font-size: 13px;
+    }
+
+    .datetimepicker table {
+      width: 100%;
+      table-layout: auto;
+    }
+
+    .datetimepicker table tr td,
+    .datetimepicker table tr th {
+      box-sizing: border-box;
+      width: 30px;
+      height: 26px;
+      padding: 2px 4px;
+      line-height: 22px;
+      white-space: nowrap;
+    }
+
+    .datetimepicker th.switch {
+      width: auto;
+    }
+
+    .bootstrap-select.bs-container {
+      z-index: 3050;
+      max-width: calc(100vw - 16px);
+    }
+
+    .bootstrap-select.bs-container .dropdown-menu {
+      max-height: min(320px, calc(100vh - 24px)) !important;
+      overflow: hidden !important;
+    }
+
+    .bootstrap-select.bs-container .dropdown-menu.inner,
+    .bootstrap-select.bs-container .inner {
+      max-height: min(250px, calc(100vh - 92px)) !important;
+      overflow-y: auto !important;
+    }
+
+    @media (max-width: 991.98px) {
+      .recurrence-row .form-group {
+        flex: 0 0 50%;
+        max-width: 50%;
+      }
+    }
+
+    @media (max-width: 575.98px) {
+      .recurrence-row .form-group {
+        flex: 0 0 100%;
+        max-width: 100%;
+      }
     }
   </style>
 
@@ -1405,7 +1473,7 @@ if ($m3_00 == 0) {
                 <div class="form-row">
                   <div class="form-group col-sm-12 col-md-4">
                     <label class="my-0 small">Cliente:</label>
-                    <select name="cliente" id="cliente" class="form-control form-control-sm selectpicker" data-live-search="true" required="required" tabindex="1">
+                    <select name="cliente" id="cliente" class="form-control form-control-sm selectpicker" data-live-search="true" data-container="body" data-display="static" data-dropup-auto="false" data-size="6" required="required" tabindex="1">
                       <!-- filtrar -->
                       <option></option>
                       <?php
@@ -1523,7 +1591,7 @@ if ($m3_00 == 0) {
 
                 <!-- INICIO modificação acrescenta prioridade do chamado -->
 
-                <div class="form-row">
+                <div class="form-row recurrence-row">
                   <div class="form-group col-sm-6 col-md-2">
                     <label class="my-0 small">Prioridade:</label>
                     <select name="prioridade" class="form-control form-control-sm" tabindex="9">
@@ -1537,7 +1605,7 @@ if ($m3_00 == 0) {
 
                   <!-- FIM modificação acrescenta prioridade do chamado -->
 
-                  <div class="form-group col-sm-2 col-md-1">
+                  <div class="form-group col-sm-6 col-md-1">
                     <label class="my-0 small">Recorrente:</label>
                     <select name="recorrente" id="recorrente" class="form-control form-control-sm" required="required" tabindex="9">
                       <option value="1">Não</option>
@@ -1546,14 +1614,14 @@ if ($m3_00 == 0) {
                   </div>
 
                   <!-- <div class="form-group col-sm-3 col-md-5" id = "recorrente_date" hidden> -->
-                  <div class="form-group col-sm-12 col-md-5" id="recorrente_date" hidden>
+                  <div class="form-group col-sm-6 col-md-4" id="recorrente_date" hidden>
                     <label class="my-0 small">Data de Reabertura:</label>
                     <input type="text" id="abertura_recorrente" name="abertura_recorrente" value="<?php echo date("Y-m-d H:i", strtotime($agora)); ?>" required="required" readonly class="form-control form-control-sm form_datetime" tabindex="10">
                   </div>
                   <!-- </div> -->
 
                   <!-- <div class="form-group col-sm-3 col-md-4" id = "recorrente_datee" hidden> -->
-                  <div class="form-group col-sm-12 col-md-5" id="recorrente_datee" hidden>
+                  <div class="form-group col-sm-6 col-md-4" id="recorrente_datee" hidden>
                     <label class="my-0 small">Periodo:</label>
                     <select name="vezes_reabrir" id="vezes_reabrir" class="form-control form-control-sm" required="required" tabindex="11">
                       <!-- <option value="1">Apenas uma vez</option> -->
@@ -1570,7 +1638,7 @@ if ($m3_00 == 0) {
                     <input type="text" id="semana" name="semana" hidden>
                   </div>
 
-                  <div class="form-group col-sm-4 col-md-1" id="recorrente_dateee" hidden>
+                  <div class="form-group col-sm-6 col-md-1" id="recorrente_dateee" hidden>
                     <label class="my-0 small">Vezes:</label>
                     <input name="vezes" id="vezes" type="number" min="1" max="12" value="1" class="form-control form-control-sm " tabindex="12">
                   </div>
@@ -1591,7 +1659,7 @@ if ($m3_00 == 0) {
 
                       <div class="form-group col-sm-12 col-md-6">
                         <label class="my-0 small">Tecnico:</label>
-                        <select name="tecnico" id="tecnico" class="form-control form-control-sm selectpicker" data-live-search="true" required="required" tabindex="14">
+                        <select name="tecnico" id="tecnico" class="form-control form-control-sm selectpicker" data-live-search="true" data-container="body" data-display="static" data-dropup-auto="false" data-size="6" required="required" tabindex="14">
                           <option></option>
                           <option value="0">Não determinado</option>
                           <?php
@@ -1689,9 +1757,8 @@ if ($m3_00 == 0) {
 
   <script src="../js/jquery-3.6.0.min.js"></script>
   <script src="../js/bootstrap.bundle.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
   <script src="../js/bootstrap-select.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datetimepicker/4.17.47/js/bootstrap-datetimepicker.min.js"></script>
+  <script src="../js/bootstrap-datetimepicker.js" charset="UTF-8"></script>
 
 
 
@@ -1702,6 +1769,213 @@ if ($m3_00 == 0) {
         $(this).remove();
       });
     }, 3000);
+  </script>
+
+  <script>
+    $(function() {
+      $('.selectpicker').selectpicker({
+        container: 'body',
+        display: 'static',
+        dropupAuto: false,
+        size: 6
+      });
+
+      $('.selectpicker')
+        .on('show.bs.select', function() {
+          $('html, body').addClass('n3-selectpicker-open');
+        })
+        .on('hide.bs.select hidden.bs.select', function() {
+          $('html, body').removeClass('n3-selectpicker-open');
+        });
+
+      function refreshSelectpicker($select) {
+        if ($select.hasClass('selectpicker')) {
+          $select.selectpicker('refresh');
+        }
+      }
+
+      function resetSelect($select, placeholder) {
+        $select.empty().append($('<option>', {
+          value: '',
+          text: placeholder || ''
+        }));
+        refreshSelectpicker($select);
+      }
+
+      function fillSelect($select, rows, placeholder) {
+        resetSelect($select, placeholder);
+
+        $.each(rows || [], function(_, row) {
+          $select.append($('<option>', {
+            value: row.id,
+            text: row.nome
+          }));
+        });
+
+        refreshSelectpicker($select);
+      }
+
+      function loadDependentSelect(config) {
+        var requestData = {};
+        requestData[config.param] = config.value;
+
+        config.$loading.show();
+        config.$select.prop('disabled', true);
+
+        $.ajax({
+          url: config.url,
+          type: 'GET',
+          dataType: 'json',
+          data: requestData
+        }).done(function(rows) {
+          fillSelect(config.$select, rows, '');
+        }).fail(function() {
+          resetSelect(config.$select, 'Erro ao carregar');
+        }).always(function() {
+          config.$select.prop('disabled', false);
+          config.$loading.hide();
+          refreshSelectpicker(config.$select);
+        });
+      }
+
+      $('#cliente').on('change', function() {
+        var cliente = $(this).val();
+
+        resetSelect($('#solicitante'), '');
+        resetSelect($('#local'), '');
+
+        if (!cliente) {
+          return;
+        }
+
+        loadDependentSelect({
+          url: 'busca_solicitantes.php',
+          param: 'cliente',
+          value: cliente,
+          $select: $('#solicitante'),
+          $loading: $('.carregando')
+        });
+
+        loadDependentSelect({
+          url: 'busca_locais.php',
+          param: 'cliente',
+          value: cliente,
+          $select: $('#local'),
+          $loading: $('.carregando2')
+        });
+      });
+
+      $('#categoria').on('change', function() {
+        var categoria = $(this).val();
+
+        resetSelect($('#subcategoria'), '');
+        resetSelect($('#item'), '');
+
+        if (!categoria) {
+          return;
+        }
+
+        loadDependentSelect({
+          url: 'busca_subcategorias.php',
+          param: 'categoria',
+          value: categoria,
+          $select: $('#subcategoria'),
+          $loading: $('.carregando3')
+        });
+      });
+
+      $('#subcategoria').on('change', function() {
+        var subcategoria = $(this).val();
+
+        resetSelect($('#item'), '');
+
+        if (!subcategoria) {
+          return;
+        }
+
+        loadDependentSelect({
+          url: 'busca_itens.php',
+          param: 'subcategoria',
+          value: subcategoria,
+          $select: $('#item'),
+          $loading: $('.carregando4')
+        });
+      });
+
+      if ($('#cliente').val()) {
+        $('#cliente').trigger('change');
+      }
+
+      if ($.fn.datetimepicker) {
+        $.fn.datetimepicker.dates['pt-BR'] = {
+          days: ['Domingo', 'Segunda', 'Terca', 'Quarta', 'Quinta', 'Sexta', 'Sabado', 'Domingo'],
+          daysShort: ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab', 'Dom'],
+          daysMin: ['Do', 'Se', 'Te', 'Qa', 'Qi', 'Se', 'Sa', 'Do'],
+          months: ['Janeiro', 'Fevereiro', 'Marco', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'],
+          monthsShort: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'],
+          today: 'Hoje',
+          clear: 'Limpar',
+          meridiem: [],
+          suffix: []
+        };
+
+        $('.form_datetime').datetimepicker({
+          format: 'yyyy-mm-dd hh:ii',
+          language: 'pt-BR',
+          autoclose: true,
+          todayBtn: true,
+          todayHighlight: true,
+          minuteStep: 1,
+          pickerPosition: 'bottom-left',
+          forceParse: false
+        });
+      }
+
+      function setRecurrenceFieldsVisible(visible) {
+        $('#recorrente_date').prop('hidden', !visible);
+        $('#recorrente_datee').prop('hidden', !visible);
+        $('#recorrente_dateee').prop('hidden', !visible);
+
+        if (!visible) {
+          $('#vezes_reabrir').val('0');
+          $('#vezes').val('1');
+          $('#semana').val('');
+          $('#semana_mes_output').text('');
+          return;
+        }
+
+        updateRecurrenceDateInfo();
+      }
+
+      function updateRecurrenceDateInfo() {
+        var aberturaRecorrente = $('#abertura_recorrente').val();
+
+        if (!aberturaRecorrente) {
+          $('#semana_mes_output').text('');
+          $('#semana').val('');
+          return;
+        }
+
+        $.post('recorrente_data.php', {
+          abertura_recorrente: aberturaRecorrente,
+          ajax: 'true'
+        }, function(response) {
+          if (!response || !response.semana_mes || !response.dia_semana) {
+            return;
+          }
+
+          $('#semana_mes_output').text('Toda ' + response.dia_semana + ' na ' + response.semana_mes + ' semana do mes');
+          $('#semana').val(response.semana_mes);
+        }, 'json');
+      }
+
+      $('#recorrente').on('change', function() {
+        setRecurrenceFieldsVisible($(this).val() === '2');
+      });
+
+      $('#abertura_recorrente').on('change dp.change', updateRecurrenceDateInfo);
+      setRecurrenceFieldsVisible($('#recorrente').val() === '2');
+    });
   </script>
 
 </body>

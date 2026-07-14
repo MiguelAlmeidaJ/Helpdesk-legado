@@ -2,10 +2,20 @@
 session_start();
 include_once("../all/seguranca.php");
 include_once("../all/conect.php");
-$cliente = $_REQUEST["cliente"];
+header('Content-Type: application/json; charset=utf-8');
+
+$cliente = filter_input(INPUT_GET, "cliente", FILTER_SANITIZE_NUMBER_INT)
+  ?? filter_input(INPUT_POST, "cliente", FILTER_SANITIZE_NUMBER_INT);
+$locais_post = [];
+
+if (!$cliente) {
+  echo json_encode($locais_post);
+  exit;
+}
+
 $pdo = ConnectionN3();
-$show = $pdo->prepare("SELECT locais.* FROM locais WHERE locais.local_clt = '$cliente' ORDER BY locais.local_nom ASC");
-$show->execute();
+$show = $pdo->prepare("SELECT locais.local_id, locais.local_nom FROM locais WHERE locais.local_clt = :cliente ORDER BY locais.local_nom ASC");
+$show->execute([':cliente' => $cliente]);
 $conta_locais = $show->rowCount();
 if($conta_locais>0){  
 while($row=$show->fetch(PDO::FETCH_ASSOC)){

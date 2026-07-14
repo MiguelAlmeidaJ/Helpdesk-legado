@@ -1,5 +1,9 @@
 <?php
 
+if (!defined('N3_SESSION_LIFETIME')) {
+    define('N3_SESSION_LIFETIME', 60 * 60 * 24 * 365);
+}
+
 if (!function_exists('n3_session_storage_path')) {
     function n3_session_storage_path(): string
     {
@@ -26,20 +30,43 @@ if (!function_exists('n3_configure_session')) {
         ini_set('session.use_strict_mode', '1');
         ini_set('session.use_only_cookies', '1');
         ini_set('session.cookie_httponly', '1');
-        ini_set('session.gc_maxlifetime', '28800');
+        ini_set('session.gc_maxlifetime', (string) N3_SESSION_LIFETIME);
 
         $isHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
             || (($_SERVER['SERVER_PORT'] ?? null) == 443);
 
         if (PHP_VERSION_ID >= 70300) {
             session_set_cookie_params([
-                'lifetime' => 0,
+                'lifetime' => N3_SESSION_LIFETIME,
                 'path' => '/',
                 'secure' => $isHttps,
                 'httponly' => true,
                 'samesite' => 'Lax',
             ]);
         }
+    }
+}
+
+if (!function_exists('n3_session_destroy')) {
+    function n3_session_destroy(): void
+    {
+        n3_session_start();
+        $_SESSION = [];
+
+        if (ini_get('session.use_cookies')) {
+            $params = session_get_cookie_params();
+            setcookie(
+                session_name(),
+                '',
+                time() - 42000,
+                $params['path'] ?? '/',
+                $params['domain'] ?? '',
+                (bool) ($params['secure'] ?? false),
+                (bool) ($params['httponly'] ?? true)
+            );
+        }
+
+        session_destroy();
     }
 }
 

@@ -441,39 +441,6 @@ if (!function_exists('sidebar_href')) {
       <span class="label">Dashboard</span>
     </a>
 
-    <?php if ($showCadastrosMenu) { ?>
-      <div class="menu-group" data-menu-group>
-        <button class="menu-item menu-toggle" type="button" data-submenu-toggle aria-expanded="false">
-          <i class="fas fa-folder-open text-xl"></i>
-          <span class="label">Cadastros</span>
-          <i class="fas fa-chevron-down menu-arrow"></i>
-        </button>
-        <div class="submenu">
-          <?php if ($showCadastroUsuarios) { ?>
-            <a href="<?php echo sidebar_href('user/home.php'); ?>" class="menu-subitem"><i class="fas fa-users"></i><span>Usuarios</span></a>
-          <?php } ?>
-          <?php if ($m2_01 > 0) { ?>
-            <a href="<?php echo sidebar_href('cads/clientes.php'); ?>" class="menu-subitem"><i class="fas fa-building"></i><span>Clientes</span></a>
-          <?php } ?>
-          <?php if ($m2_04 > 0) { ?>
-            <a href="<?php echo sidebar_href('cads/categorias.php'); ?>" class="menu-subitem"><i class="fas fa-tags"></i><span>Categorias</span></a>
-          <?php } ?>
-          <?php if ($m8_04 > 0) { ?>
-            <a href="<?php echo sidebar_href('catlg/catalogo.php'); ?>" class="menu-subitem"><i class="fas fa-book"></i><span>Catalogos</span></a>
-            <a href="<?php echo sidebar_href('catlg/check_catlg.php'); ?>" class="menu-subitem"><i class="fas fa-check"></i><span>Verificacao de Catalogos</span></a>
-          <?php } ?>
-          <?php if ($m7_00 == 1) { ?>
-            <a href="<?php echo sidebar_href('cads_cont/centros_custo.php'); ?>" class="menu-subitem"><i class="fas fa-funnel-dollar"></i><span>Centros de Custo</span></a>
-            <a href="<?php echo sidebar_href('cads_cont/class_contab.php'); ?>" class="menu-subitem"><i class="fas fa-tags"></i><span>Classificacao Contabil</span></a>
-            <a href="<?php echo sidebar_href('cads_cont/ind_reaju.php'); ?>" class="menu-subitem"><i class="fas fa-donate"></i><span>Indices de Reajuste</span></a>
-            <a href="<?php echo sidebar_href('cads_cont/forma_pag.php'); ?>" class="menu-subitem"><i class="fas fa-comments-dollar"></i><span>Formas de Pagamento</span></a>
-            <a href="<?php echo sidebar_href('cads_cont/tipo_despesa.php'); ?>" class="menu-subitem"><i class="fas fa-tag"></i><span>Tipo de Despesa</span></a>
-            <a href="<?php echo sidebar_href('cads_cont/tipo_servi.php'); ?>" class="menu-subitem"><i class="fas fa-tag"></i><span>Tipo de Servico</span></a>
-            <a href="<?php echo sidebar_href('cads_cont/tipo_taxas.php'); ?>" class="menu-subitem"><i class="fas fa-tag"></i><span>Tipo Taxas</span></a>
-          <?php } ?>
-        </div>
-      </div>
-    <?php } ?>
 
     <?php if ($m3_00 == 1) { ?>
       <div class="menu-group" data-menu-group>
@@ -485,30 +452,11 @@ if (!function_exists('sidebar_href')) {
         <div class="submenu">
           <a href="<?php echo sidebar_href('atd/home.php'); ?>" class="menu-subitem"><i class="fas fa-list-ul"></i><span>Lista de Atendimentos</span></a>
           <?php if ($m8_01 > 0) { ?>
-            <a href="<?php echo sidebar_href('atd/disponibilidadeTec.php'); ?>" class="menu-subitem"><i class="fas fa-user-clock"></i><span>Disponibilidade Tecnica</span></a>
+            <a href="<?php echo sidebar_href('atd/disponibilidade/'); ?>" class="menu-subitem"><i class="fas fa-user-clock"></i><span>Disponibilidade Tecnica</span></a>
             <a href="<?php echo sidebar_href('atd/timeline.php'); ?>" class="menu-subitem"><i class="far fa-clock"></i><span>Timeline</span></a>
           <?php } ?>
           <?php if ($m3_01 > 0) { ?>
             <a href="<?php echo sidebar_href('atd/atd.php'); ?>" class="menu-subitem"><i class="fas fa-plus"></i><span>Novo Atendimento</span></a>
-          <?php } ?>
-          <?php if ($m3_06 > 0) { ?>
-            <a href="<?php echo sidebar_href('player/radio.php'); ?>" target="_blank" class="menu-subitem"><i class="fas fa-play"></i><span>Radio</span></a>
-          <?php } ?>
-        </div>
-      </div>
-    <?php } ?>
-
-    <?php if ($m4_00 == 1) { ?>
-      <div class="menu-group" data-menu-group>
-        <button class="menu-item menu-toggle" type="button" data-submenu-toggle aria-expanded="false">
-          <i class="fas fa-code-branch text-xl"></i>
-          <span class="label">Melhorias</span>
-          <i class="fas fa-chevron-down menu-arrow"></i>
-        </button>
-        <div class="submenu">
-          <a href="<?php echo sidebar_href('melhorias/home.php'); ?>" class="menu-subitem"><i class="fas fa-list-ul"></i><span>Lista de Melhorias</span></a>
-          <?php if ($m4_01 > 0) { ?>
-            <a href="<?php echo sidebar_href('melhorias/atd.php'); ?>" class="menu-subitem"><i class="fas fa-plus"></i><span>Nova Melhoria</span></a>
           <?php } ?>
         </div>
       </div>
@@ -536,7 +484,7 @@ if (!function_exists('sidebar_href')) {
       </div>
     <?php } ?>
 
-    <?php if ($m7_00 > 0) { ?>
+    <?php if ($m8_00 > 0) { ?>
       <div class="menu-group" data-menu-group>
         <button class="menu-item menu-toggle" type="button" data-submenu-toggle aria-expanded="false">
           <i class="fas fa-bullhorn text-xl"></i>
@@ -544,16 +492,42 @@ if (!function_exists('sidebar_href')) {
           <i class="fas fa-chevron-down menu-arrow"></i>
         </button>
         <div class="submenu">
-          <a href="<?php echo sidebar_href('atd_mkt/analisePeriodoMkt.php'); ?>" class="menu-subitem"><i class="fas fa-chart-line"></i><span>Analise por Periodo</span></a>
-          <a href="<?php echo sidebar_href('atd_mkt/disponibilidadeTecMkt.php'); ?>" class="menu-subitem"><i class="fas fa-user-clock"></i><span>Disponibilidade Tecnica</span></a>
-          <?php if ($m7_01 > 0) { ?>
-            <a href="<?php echo sidebar_href('atd_mkt/home.php'); ?>" class="menu-subitem"><i class="fas fa-list-ul"></i><span>Lista de Tarefas</span></a>
+          <a href="<?php echo sidebar_href('atd_3andar/home.php'); ?>" class="menu-subitem"><i class="fas fa-list-ul"></i><span>Lista de Tarefas</span></a>
+          <?php if ($m8_01 > 0) { ?>
+            <a href="<?php echo sidebar_href('atd_3andar/tarefa.php'); ?>" class="menu-subitem"><i class="fas fa-plus"></i><span>Criar Nova Tarefa</span></a>
           <?php } ?>
         </div>
       </div>
     <?php } ?>
 
-    <?php if (($m6_00 ?? 0) == 1) { ?>
+    <?php if ($m9_00 > 0) { ?>
+      <div class="menu-group" data-menu-group>
+        <button class="menu-item menu-toggle" type="button" data-submenu-toggle aria-expanded="false">
+          <i class="fas fa-truck text-xl"></i>
+          <span class="label">Logistica</span>
+          <i class="fas fa-chevron-down menu-arrow"></i>
+        </button>
+        <div class="submenu">
+          <?php if ($m9_01 > 0) { ?>
+            <a href="<?php echo sidebar_href('logistica/agendaVeiculos.php'); ?>" class="menu-subitem"><i class="fas fa-car"></i><span>Agenda Veiculos</span></a>
+            <a href="<?php echo sidebar_href('logistica/rdPainel.php'); ?>" class="menu-subitem"><i class="fas fa-wallet"></i><span>RD</span></a>
+          <?php } ?>
+          <?php if ($m9_02 > 1) { ?>
+            <a href="<?php echo sidebar_href('logistica/gestaoRD.php'); ?>" class="menu-subitem"><i class="fas fa-cogs"></i><span>Gestao RDs</span></a>
+            <a href="<?php echo sidebar_href('logistica/analiseRD.php'); ?>" class="menu-subitem"><i class="fas fa-chart-line"></i><span>Analise Comparativa RDs</span></a>
+            <a href="<?php echo sidebar_href('logistica/detalharRD.php'); ?>" class="menu-subitem"><i class="fas fa-clipboard-list"></i><span>Relatorio RDs</span></a>
+            <a href="<?php echo sidebar_href('logistica/cadastros_financeiros.php'); ?>" class="menu-subitem"><i class="fas fa-pencil-alt"></i><span>Cadastro Dados RD</span></a>
+            <a href="<?php echo sidebar_href('logistica/contas_receber.php'); ?>" class="menu-subitem"><i class="fas fa-arrow-circle-up"></i><span>Contas a Receber - Competencia</span></a>
+            <a href="<?php echo sidebar_href('logistica/contas_receber_fluxo.php'); ?>" class="menu-subitem"><i class="fas fa-arrow-circle-up"></i><span>Contas a Receber - Fluxo</span></a>
+            <a href="<?php echo sidebar_href('logistica/contas_pagar.php'); ?>" class="menu-subitem"><i class="fas fa-arrow-circle-down"></i><span>Contas a Pagar</span></a>
+            <a href="<?php echo sidebar_href('logistica/recorrentes.php'); ?>" class="menu-subitem"><i class="fas fa-sync-alt"></i><span>Lancamentos Recorrentes</span></a>
+            <a href="<?php echo sidebar_href('logistica/contabilidade.php'); ?>" class="menu-subitem"><i class="fas fa-calculator"></i><span>Contabilidade</span></a>
+          <?php } ?>
+        </div>
+      </div>
+    <?php } ?>
+
+    <!-- <?php if (($m6_00 ?? 0) == 1) { ?>
       <div class="menu-group" data-menu-group>
         <button class="menu-item menu-toggle" type="button" data-submenu-toggle aria-expanded="false">
           <i class="fab fa-medapps text-xl"></i>
@@ -600,7 +574,7 @@ if (!function_exists('sidebar_href')) {
           <a href="<?php echo sidebar_href('ativos/patrimonios_insert.php'); ?>" class="menu-subitem"><i class="fas fa-plus"></i><span>Adicionar Patrimonio</span></a>
         </div>
       </div>
-    <?php } ?>
+    <?php } ?> -->
 
     <?php if ($m8_00 > 0) { ?>
       <div class="menu-group" data-menu-group>
@@ -631,32 +605,44 @@ if (!function_exists('sidebar_href')) {
       </div>
     <?php } ?>
 
-    <?php if ($m9_00 > 0) { ?>
+    <?php if ($showCadastrosMenu) { ?>
       <div class="menu-group" data-menu-group>
         <button class="menu-item menu-toggle" type="button" data-submenu-toggle aria-expanded="false">
-          <i class="fas fa-truck text-xl"></i>
-          <span class="label">Logistica</span>
+          <i class="fas fa-folder-open text-xl"></i>
+          <span class="label">Cadastros</span>
           <i class="fas fa-chevron-down menu-arrow"></i>
         </button>
         <div class="submenu">
-          <?php if ($m9_01 > 0) { ?>
-            <a href="<?php echo sidebar_href('logistica/agendaVeiculos.php'); ?>" class="menu-subitem"><i class="fas fa-car"></i><span>Agenda Veiculos</span></a>
-            <a href="<?php echo sidebar_href('logistica/rdPainel.php'); ?>" class="menu-subitem"><i class="fas fa-wallet"></i><span>RD</span></a>
+          <?php if ($showCadastroUsuarios) { ?>
+            <a href="<?php echo sidebar_href('user/home.php'); ?>" class="menu-subitem"><i class="fas fa-users"></i><span>Usuarios</span></a>
           <?php } ?>
-          <?php if ($m9_02 > 1) { ?>
-            <a href="<?php echo sidebar_href('logistica/gestaoRD.php'); ?>" class="menu-subitem"><i class="fas fa-cogs"></i><span>Gestao RDs</span></a>
-            <a href="<?php echo sidebar_href('logistica/analiseRD.php'); ?>" class="menu-subitem"><i class="fas fa-chart-line"></i><span>Analise Comparativa RDs</span></a>
-            <a href="<?php echo sidebar_href('logistica/detalharRD.php'); ?>" class="menu-subitem"><i class="fas fa-clipboard-list"></i><span>Relatorio RDs</span></a>
-            <a href="<?php echo sidebar_href('logistica/cadastros_financeiros.php'); ?>" class="menu-subitem"><i class="fas fa-pencil-alt"></i><span>Cadastro Dados RD</span></a>
-            <a href="<?php echo sidebar_href('logistica/contas_receber.php'); ?>" class="menu-subitem"><i class="fas fa-arrow-circle-up"></i><span>Contas a Receber - Competencia</span></a>
-            <a href="<?php echo sidebar_href('logistica/contas_receber_fluxo.php'); ?>" class="menu-subitem"><i class="fas fa-arrow-circle-up"></i><span>Contas a Receber - Fluxo</span></a>
-            <a href="<?php echo sidebar_href('logistica/contas_pagar.php'); ?>" class="menu-subitem"><i class="fas fa-arrow-circle-down"></i><span>Contas a Pagar</span></a>
-            <a href="<?php echo sidebar_href('logistica/recorrentes.php'); ?>" class="menu-subitem"><i class="fas fa-sync-alt"></i><span>Lancamentos Recorrentes</span></a>
-            <a href="<?php echo sidebar_href('logistica/contabilidade.php'); ?>" class="menu-subitem"><i class="fas fa-calculator"></i><span>Contabilidade</span></a>
+          <?php if ($m2_01 > 0) { ?>
+            <a href="<?php echo sidebar_href('cads/clientes.php'); ?>" class="menu-subitem"><i class="fas fa-building"></i><span>Clientes</span></a>
+          <?php } ?>
+          <?php if ($m2_04 > 0) { ?>
+            <a href="<?php echo sidebar_href('cads/categorias.php'); ?>" class="menu-subitem"><i class="fas fa-tags"></i><span>Categorias</span></a>
+          <?php } ?>
+          <?php if ($m8_04 > 0) { ?>
+            <a href="<?php echo sidebar_href('catlg/catalogo.php'); ?>" class="menu-subitem"><i class="fas fa-book"></i><span>Catalogos</span></a>
+            <a href="<?php echo sidebar_href('catlg/check_catlg.php'); ?>" class="menu-subitem"><i class="fas fa-check"></i><span>Verificacao de Catalogos</span></a>
+          <?php } ?>
+          <?php if ($m7_00 == 1) { ?>
+            <a href="<?php echo sidebar_href('cads_cont/centros_custo.php'); ?>" class="menu-subitem"><i class="fas fa-funnel-dollar"></i><span>Centros de Custo</span></a>
+            <a href="<?php echo sidebar_href('cads_cont/class_contab.php'); ?>" class="menu-subitem"><i class="fas fa-tags"></i><span>Classificacao Contabil</span></a>
+            <a href="<?php echo sidebar_href('cads_cont/ind_reaju.php'); ?>" class="menu-subitem"><i class="fas fa-donate"></i><span>Indices de Reajuste</span></a>
+            <a href="<?php echo sidebar_href('cads_cont/forma_pag.php'); ?>" class="menu-subitem"><i class="fas fa-comments-dollar"></i><span>Formas de Pagamento</span></a>
+            <a href="<?php echo sidebar_href('cads_cont/tipo_despesa.php'); ?>" class="menu-subitem"><i class="fas fa-tag"></i><span>Tipo de Despesa</span></a>
+            <a href="<?php echo sidebar_href('cads_cont/tipo_servi.php'); ?>" class="menu-subitem"><i class="fas fa-tag"></i><span>Tipo de Servico</span></a>
+            <a href="<?php echo sidebar_href('cads_cont/tipo_taxas.php'); ?>" class="menu-subitem"><i class="fas fa-tag"></i><span>Tipo Taxas</span></a>
           <?php } ?>
         </div>
       </div>
     <?php } ?>
+
+    <a href="<?php echo sidebar_href('radio.php'); ?>" class="menu-item">
+      <i class="fas fa-play text-xl"></i>
+      <span class="label">Rádio</span>
+    </a>
 
     <?php if ($m9_09 > 0) { ?>
       <a href="<?php echo sidebar_href('logistica/contabilidade.php'); ?>" class="menu-item">
@@ -679,7 +665,7 @@ if (!function_exists('sidebar_href')) {
       <i class="fas fa-user-cog text-xl"></i>
       <span class="label">Senha</span>
     </button>
-    <a href="<?php echo sidebar_href('index.php'); ?>" class="menu-item">
+    <a href="<?php echo sidebar_href('logout.php'); ?>" class="menu-item">
       <i class="fas fa-sign-out-alt text-xl"></i>
       <span class="label">Sair</span>
     </a>

@@ -37,6 +37,7 @@ function atd_home_sort_columns()
     'forma' => 'atendimentos.forma',
     'tecnico' => 'usuarios.user_nome',
     'status' => 'atendimentos.`status`',
+    'sla' => 'sla_ordem',
   ];
 }
 
@@ -52,7 +53,7 @@ function atd_home_default_filters()
     'f_palavra' => '',
     'f_tipo' => [],
     'f_tec' => [],
-    'ord' => 'status',
+    'ord' => 'sla',
     'order_dir' => 'ASC',
   ];
 }
@@ -290,6 +291,92 @@ function atd_home_get_config($pdo)
   ];
 }
 
+function atd_home_sla_level_minutes_sql()
+{
+  return "CASE
+    WHEN atendimentos.nivel <= 1 THEN (SELECT COALESCE(sla_n1, 0) FROM configuracao LIMIT 1)
+    WHEN atendimentos.nivel = 2 THEN (SELECT COALESCE(sla_n2, 0) FROM configuracao LIMIT 1)
+    WHEN atendimentos.nivel = 3 THEN (SELECT COALESCE(sla_n3, 0) FROM configuracao LIMIT 1)
+    WHEN atendimentos.nivel = 4 THEN (SELECT COALESCE(sla_n4, 0) FROM configuracao LIMIT 1)
+    WHEN atendimentos.nivel = 5 THEN (SELECT COALESCE(sla_n5, 0) FROM configuracao LIMIT 1)
+    WHEN atendimentos.nivel = 6 THEN (SELECT COALESCE(sla_n12, sla_n6, 0) FROM configuracao LIMIT 1)
+    ELSE (SELECT COALESCE(sla_n1, 0) FROM configuracao LIMIT 1)
+  END";
+}
+
+function atd_home_sla_wait_seconds_sql()
+{
+  return "COALESCE((
+    SELECT SUM(CASE WHEN espera.espera_end IS NOT NULL THEN TIMESTAMPDIFF(SECOND, espera.espera_start, espera.espera_end) ELSE 0 END)
+    FROM espera
+    WHERE espera.espera_atd = atendimentos.id
+  ), 0)";
+}
+
+function atd_home_sla_remaining_seconds_sql()
+{
+  $levelMinutesSql = atd_home_sla_level_minutes_sql();
+  $waitSecondsSql = atd_home_sla_wait_seconds_sql();
+  $nowSql = atd_home_sql_now();
+
+  return "TIMESTAMPDIFF(SECOND, $nowSql, DATE_ADD(atendimentos.abertura, INTERVAL (($levelMinutesSql * 60) + $waitSecondsSql) SECOND))";
+}
+
+function atd_home_sql_now()
+{
+  return "'" . date('Y-m-d H:i:s') . "'";
+}
+
+function atd_home_sla_order_sql()
+{
+  $bellOrderSql = atd_home_sla_bell_order_sql();
+
+  return "CASE
+    WHEN atendimentos.`status` = 1 THEN 0
+    WHEN atendimentos.`status` = 2 THEN 1 + $bellOrderSql
+    WHEN atendimentos.`status` = 5 THEN 10
+    WHEN atendimentos.`status` = 3 THEN 11
+    WHEN atendimentos.`status` = 4 THEN 12
+    WHEN atendimentos.`status` = 0 THEN 13
+    ELSE 14
+  END";
+}
+
+function atd_home_sla_bell_minutes_sql()
+{
+  $nowSql = atd_home_sql_now();
+
+  return "COALESCE(TIMESTAMPDIFF(MINUTE,
+    CASE
+      WHEN atendimentos.subcategoria = 97 THEN (
+        SELECT MAX(inter_any.inter_data)
+        FROM interatividade inter_any
+        WHERE inter_any.inter_tipo > 0
+          AND inter_any.inter_atd = atendimentos.id
+      )
+      ELSE (
+        SELECT MAX(inter_start.inter_data)
+        FROM interatividade inter_start
+        WHERE inter_start.inter_tipo IN (1, 6)
+          AND inter_start.inter_atd = atendimentos.id
+      )
+    END,
+    $nowSql
+  ), 0)";
+}
+
+function atd_home_sla_bell_order_sql()
+{
+  $minutesSql = atd_home_sla_bell_minutes_sql();
+
+  return "CASE
+    WHEN $minutesSql >= (SELECT COALESCE(sla_n3, 0) FROM configuracao LIMIT 1) THEN 0
+    WHEN $minutesSql >= (SELECT COALESCE(sla_n2, 0) FROM configuracao LIMIT 1) THEN 1
+    WHEN $minutesSql >= (SELECT COALESCE(sla_n1, 0) FROM configuracao LIMIT 1) THEN 2
+    ELSE 3
+  END";
+}
+
 function atd_home_fetch_total($pdo, $filters)
 {
   $where = atd_home_build_where($filters);
@@ -486,6 +573,12 @@ function atd_home_fetch_rows($pdo, $filters, $page, $pageSize)
   $sortColumns = atd_home_sort_columns();
   $orderSql = $sortColumns[$filters['ord']] ?? $sortColumns['status'];
   $orderDir = $filters['order_dir'] === 'DESC' ? 'DESC' : 'ASC';
+  $slaRemainingSql = atd_home_sla_remaining_seconds_sql();
+  $slaOrderSql = atd_home_sla_order_sql();
+  $slaBellOrderSql = atd_home_sla_bell_order_sql();
+  $orderBySql = $filters['ord'] === 'sla'
+    ? "sla_ordem ASC, sla_restante_segundos ASC, atendimentos.id ASC"
+    : "$orderSql $orderDir, atendimentos.id ASC";
 
   $sql = "
     SELECT atendimentos.id, atendimentos.cliente, atendimentos.`area`, atendimentos.`tipo`, atendimentos.`local`,
@@ -497,6 +590,9 @@ function atd_home_fetch_rows($pdo, $filters, $page, $pageSize)
            locais.local_nom, locais.local_end, locais.local_city, locais.local_uf,
            categorias.cat_nome, subcategorias.scat_nome, itens.itens_nome,
            usuarios.user_nome AS tecnico_nome, usuarios.user_cel AS tecnico_tel, usuarios.user_mail AS tecnico_mail,
+           $slaRemainingSql AS sla_restante_segundos,
+           $slaOrderSql AS sla_ordem,
+           $slaBellOrderSql AS sla_bell_ordem,
            0 AS espera_segundos,
            NULL AS espera_ultima_id,
            NULL AS espera_ultima_start,
@@ -505,7 +601,7 @@ function atd_home_fetch_rows($pdo, $filters, $page, $pageSize)
            NULL AS ultima_inter_inicio_data
     " . atd_home_rows_from_sql() . "
     " . $where['sql'] . "
-    ORDER BY $orderSql $orderDir, atendimentos.id ASC
+    ORDER BY $orderBySql
     LIMIT :limit OFFSET :offset
   ";
 

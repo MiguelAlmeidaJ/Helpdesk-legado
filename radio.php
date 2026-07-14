@@ -42,7 +42,6 @@
         }
 
         body {
-            zoom: 0.9;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             background-color: var(--bg-color);
             color: var(--text-color);

@@ -1,0 +1,205 @@
+﻿/* Listas, chips, status e tooltips */
+
+.tecnico-item li {
+    list-style: none;
+}
+
+.tecnico-item {
+    position: relative;
+    display: block;
+    margin: 0 0 8px;
+    padding: 9px 10px 9px 26px;
+    border: 1px solid #eef2f7;
+    border-radius: 8px;
+    background: #f9fafb;
+    color: #111827;
+}
+
+.tecnico-item:last-child {
+    margin-bottom: 0;
+}
+
+.tecnico-item::before {
+    content: "";
+    position: absolute;
+    top: 14px;
+    left: 10px;
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    background: #6b7280;
+}
+
+.tecnico-item span {
+    display: inline-block;
+    margin-right: 4px;
+    font-weight: 800;
+}
+
+.tecnico-livre {
+    border-color: #bbf7d0;
+    background: #f0fdf4;
+    color: #166534;
+}
+
+.tecnico-livre::before {
+    background: #16a34a;
+}
+
+.tecnico-ocupado {
+    border-color: #fecaca;
+    background: #fff1f2;
+    color: #991b1b;
+}
+
+.tecnico-ocupado::before {
+    background: #dc2626;
+}
+
+.tecnico-agendado {
+    border-color: #bfdbfe;
+    background: #eff6ff;
+}
+
+.tecnico-agendado::before {
+    background: #2563eb;
+}
+
+.tecnico-concluido {
+    border-color: #bfdbfe;
+    background: #f8fbff;
+}
+
+.tecnico-concluido::before {
+    background: #2563eb;
+}
+
+.ids-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-top: 7px;
+    color: #111827 !important;
+}
+
+.atd-list form {
+    display: inline-flex !important;
+    margin: 0;
+}
+
+.atd-list form a,
+.atendimento-container form a {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    min-height: 24px;
+    padding: 3px 8px !important;
+    border: 1px solid #d1d5db;
+    border-radius: 999px;
+    background: #ffffff;
+    color: #111827 !important;
+    font-size: 12px !important;
+    font-weight: 700;
+    line-height: 1;
+    text-decoration: none !important;
+    transition: background-color 0.18s ease, border-color 0.18s ease, color 0.18s ease;
+}
+
+.atd-list form a:hover,
+.atendimento-container form a:hover {
+    border-color: #2563eb;
+    background: #eff6ff;
+    color: #1d4ed8 !important;
+}
+
+.espera-group {
+    margin-bottom: 25px;
+    padding: 10px !important;
+    border: 1px solid #fde68a !important;
+    border-radius: 8px;
+    background: #fffbeb;
+}
+
+.espera-group-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.espera-group-title strong {
+    color: #92400e;
+    font-size: 13px;
+}
+
+.espera-group-title span {
+    flex: 0 0 auto;
+    padding: 3px 8px;
+    border-radius: 999px;
+    background: #f59e0b;
+    color: #ffffff;
+    font-size: 11px;
+    font-weight: 800;
+}
+
+.espera-group ul {
+    margin: 0 !important;
+    padding-left: 0 !important;
+}
+
+.espera-group li {
+    margin: 0 0 8px !important;
+    padding: 8px 0 0 !important;
+    border-top: 1px solid rgba(245, 158, 11, 0.22);
+    line-height: 1.5;
+}
+
+.espera-group li:first-child {
+    border-top: 0;
+    padding-top: 0 !important;
+}
+
+.atendimento-container {
+    position: relative;
+    display: inline-flex;
+    margin: 6px 8px 0 0;
+    padding-right: 0;
+}
+
+.alerta-espera {
+    position: absolute;
+    top: -8px;
+    right: -7px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 17px;
+    height: 17px;
+    border: 2px solid #ffffff;
+    border-radius: 50%;
+    background-color: #e11d48;
+    color: white;
+    font-size: 10px;
+    font-weight: 800;
+    box-shadow: 0 2px 6px rgba(15, 23, 42, 0.22);
+}
+
+.tooltip.custom-tooltip {
+    padding: 8px;
+    border: 1px solid #d1d5db !important;
+    border-radius: 7px;
+    background-color: #ffffff !important;
+    color: #111827 !important;
+    font-size: 13px !important;
+    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.16) !important;
+}
+
+.tooltip.bs-tooltip-top .arrow::before {
+    border-top-color: #ffffff !important;
+}
+
+.tooltip.bs-tooltip-bottom .arrow::before {
+    border-bottom-color: #ffffff !important;
+}
+

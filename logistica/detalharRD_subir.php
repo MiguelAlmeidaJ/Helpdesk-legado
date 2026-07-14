@@ -42,12 +42,13 @@ $params = [
 $filtroSQL = "";
 
 // if ($usuario['type'] == 0) {
-// OSVALDO/CLERIO/CLERISTOM
-if ($usuario['user_id'] != 3 && $usuario['user_id'] != 4 && $usuario['user_id'] != 96) {
+// OSVALDO/CLERIO/ESTEFANY
+if ($usuario['user_id'] != 3 && $usuario['user_id'] != 4 && $usuario['user_id'] != 178 && $usuario['user_id'] != 143 && $usuario['user_id'] != 157) {
     $filtroSQL .= " AND r.user_id = :user_id_logado ";
     $params[':user_id_logado'] = $usuario['user_id'];
 } else {
     if (!empty($user_id_filter)) {
+
         $filtroSQL .= " AND r.user_id = :user_id_filter ";
         $params[':user_id_filter'] = $user_id_filter;
     }

@@ -27,7 +27,7 @@ if ($action === 'alterar_senha') {
 
 $pdo = ConnectionN3();
 atd_home_run_jobs($pdo);
-$filters = atd_home_normalize_filters(null, false);
+$filters = atd_home_normalize_filters(['ord' => 'sla', 'order_dir' => 'ASC'], false);
 $state = atd_home_load_state($pdo, $filters, isset($_GET['page']) ? (int)$_GET['page'] : 1);
 ?>
 <!doctype html>
@@ -161,6 +161,33 @@ $state = atd_home_load_state($pdo, $filters, isset($_GET['page']) ? (int)$_GET['
       max-width: 200px;
       white-space: normal;
       word-wrap: break-word;
+    }
+
+    .table-container thead th {
+      vertical-align: middle;
+    }
+
+    .table-container thead th .btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      min-height: 36px;
+      padding: 5px 6px;
+      line-height: 1.1;
+      white-space: normal;
+      word-break: keep-all;
+      overflow-wrap: normal;
+    }
+
+    .table-container thead th .btn i {
+      flex: 0 0 auto;
+    }
+
+    .table-container tr>*:nth-child(1) {
+      white-space: nowrap;
+      word-break: normal;
+      overflow-wrap: normal;
     }
 
     .atd-row-clickable {
@@ -390,9 +417,10 @@ $state = atd_home_load_state($pdo, $filters, isset($_GET['page']) ? (int)$_GET['
     .status-card-bar {
       position: relative;
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+      grid-template-columns: repeat(7, minmax(0, 1fr));
       gap: 16px;
       padding: 12px 12px 14px;
+      overflow: hidden;
       background: #fff;
       border-bottom: 1px solid #e9ecef;
     }
@@ -431,11 +459,13 @@ $state = atd_home_load_state($pdo, $filters, isset($_GET['page']) ? (int)$_GET['
 
     .status-card-form {
       margin: 0;
+      min-width: 0;
     }
 
     .status-card-btn {
       width: 100%;
       min-height: 78px;
+      padding: 8px 6px;
       border: 1px solid #e9ecef;
       border-radius: 8px;
       background: #fff;
@@ -479,6 +509,7 @@ $state = atd_home_load_state($pdo, $filters, isset($_GET['page']) ? (int)$_GET['
         min-width: 0;
         white-space: normal;
         line-height: 1.15;
+        font-size: .82rem;
       }
 
       .table-container th,
@@ -488,24 +519,24 @@ $state = atd_home_load_state($pdo, $filters, isset($_GET['page']) ? (int)$_GET['
       }
 
       .table-container tr>*:nth-child(1) {
-        width: 5%;
+        width: 5.5%;
       }
 
       .table-container tr>*:nth-child(2) {
-        width: 14%;
+        width: 13%;
       }
 
       .table-container tr>*:nth-child(3) {
-        width: 24%;
+        width: 21%;
         max-width: none;
       }
 
       .table-container tr>*:nth-child(4) {
-        width: 8%;
+        width: 7%;
       }
 
       .table-container tr>*:nth-child(5) {
-        width: 11%;
+        width: 10%;
       }
 
       .table-container tr>*:nth-child(6) {
@@ -513,7 +544,60 @@ $state = atd_home_load_state($pdo, $filters, isset($_GET['page']) ? (int)$_GET['
       }
 
       .table-container tr>*:nth-child(7) {
+        width: 8%;
+      }
+
+      .table-container tr>*:nth-child(8) {
+        width: 6%;
+      }
+
+      .table-container tr>*:nth-child(9) {
+        width: 10.5%;
+      }
+
+      .table-container tr>*:nth-child(10) {
         width: 7%;
+      }
+
+      .table-container tr>*:nth-child(11) {
+        width: 7%;
+      }
+    }
+
+    @media (max-width: 1365.98px) {
+      .table-container thead th .btn {
+        gap: 3px;
+        min-height: 34px;
+        padding: 4px 3px;
+        font-size: .74rem;
+      }
+
+      .table-container tr>*:nth-child(1) {
+        width: 5.5%;
+      }
+
+      .table-container tr>*:nth-child(2) {
+        width: 12.5%;
+      }
+
+      .table-container tr>*:nth-child(3) {
+        width: 20%;
+      }
+
+      .table-container tr>*:nth-child(4) {
+        width: 7%;
+      }
+
+      .table-container tr>*:nth-child(5) {
+        width: 10%;
+      }
+
+      .table-container tr>*:nth-child(6) {
+        width: 5%;
+      }
+
+      .table-container tr>*:nth-child(7) {
+        width: 8.5%;
       }
 
       .table-container tr>*:nth-child(8) {
@@ -525,11 +609,11 @@ $state = atd_home_load_state($pdo, $filters, isset($_GET['page']) ? (int)$_GET['
       }
 
       .table-container tr>*:nth-child(10) {
-        width: 8%;
+        width: 7.5%;
       }
 
       .table-container tr>*:nth-child(11) {
-        width: 8%;
+        width: 7%;
       }
     }
 
@@ -555,19 +639,43 @@ $state = atd_home_load_state($pdo, $filters, isset($_GET['page']) ? (int)$_GET['
       }
 
       .status-card-bar {
-        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
         gap: 10px;
         padding: 10px;
       }
 
       .status-card-btn {
         min-height: 68px;
+        padding: 7px 4px;
+      }
+
+      .status-card-total {
+        font-size: 1rem;
+      }
+
+      .status-card-label {
+        font-size: .62rem;
       }
     }
 
     @media (max-width: 991.98px) {
       .status-card-bar {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 6px;
+        padding: 8px 6px;
+      }
+
+      .status-card-btn {
+        min-height: 58px;
+        padding: 6px 2px;
+        border-radius: 6px;
+      }
+
+      .status-card-total {
+        font-size: .88rem;
+      }
+
+      .status-card-label {
+        font-size: .52rem;
+        line-height: 1.05;
       }
 
       .filters-toolbar {
@@ -681,9 +789,21 @@ $state = atd_home_load_state($pdo, $filters, isset($_GET['page']) ? (int)$_GET['
 
     @media (max-width: 575.98px) {
       .status-card-bar {
-        grid-template-columns: 1fr;
-        gap: 8px;
-        padding: 8px;
+        gap: 4px;
+        padding: 6px 4px;
+      }
+
+      .status-card-btn {
+        min-height: 50px;
+        padding: 4px 1px;
+      }
+
+      .status-card-total {
+        font-size: .76rem;
+      }
+
+      .status-card-label {
+        font-size: .45rem;
       }
 
       .filters-toolbar .form-row>.col-auto.col-form-label-sm,

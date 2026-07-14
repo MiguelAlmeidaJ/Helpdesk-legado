@@ -1,5 +1,9 @@
 <?php
 
+if (session_status() !== PHP_SESSION_ACTIVE) {
+    session_start();
+}
+
 if (!function_exists('n3_session_value')) {
     function n3_session_value(string $key, $default = '')
     {
@@ -68,6 +72,25 @@ if (!function_exists('n3_can_project_execute_owner_or_manager')) {
     }
 }
 
+if (!function_exists('n3_can_task3A_execute_owner_or_manager')) {
+    function n3_can_task3A_execute_owner_or_manager($tecnicoId = null): bool
+    {
+        global $m8_00, $m8_02, $m8_05, $user_id;
+        
+        // Gestor/admin do Marketing pode agir em qualquer tarefa
+        if ((int)($m8_05 ?? 0) >= 2) {
+            return true;
+        }
+
+        // Usuário com acesso ao Marketing pode agir na própria tarefa
+        if ((int)($m8_00 ?? 0) >= 1 && (int)$tecnicoId === (int)$user_id) {
+            return true;
+        }
+
+        return false;
+    }
+}
+
 $user_id = n3_session_value('allterusN3Id');
 $user_nome = n3_session_value('allterusN3Nome');
 $user_login = n3_session_value('allterusN3Login');
@@ -81,11 +104,7 @@ $user_modulo_06 = n3_session_value('allterusN3Modulo6');
 $user_modulo_07 = n3_session_value('allterusN3Modulo7');
 $user_modulo_08 = n3_session_value('allterusN3Modulo8');
 $user_modulo_09 = n3_session_value('allterusN3Modulo9');
-     
 
-if (session_status() !== PHP_SESSION_ACTIVE) {
-    session_start();
-}
 if ($user_id === '' || $user_id === null) {
     header("Location: ../index.php");
     die();
@@ -145,14 +164,15 @@ $m7_03 = n3_perm_char($user_modulo_07, 3); //COLOCAR PROJETOS EM ESPERA (0:Sem a
 $m7_04 = n3_perm_char($user_modulo_07, 4); //RECUSRAR PROJETOS (0:Sem acesso; 2:Permitido)
 $m7_05 = n3_perm_char($user_modulo_07, 5); //EDITAR PROJETOSATENDIMENTOS DE TERCEIROS (0:Sem acesso; 2:Permitido)
 
-//Marketing
-$m8_00 = n3_perm_char($user_modulo_08, 0); //ACESSAR MÓDULO PROJETOS (0: Desabilitado; 1:Habilitado)
-$m8_01 = n3_perm_char($user_modulo_08, 1); //CADASTRO DE PROJETOS (0: Desabilitado; 2:Cadastro; 3:cadastro e edição)
-$m8_02 = n3_perm_char($user_modulo_08, 2); //EXECUTAR PROJETOS (0:Sem acesso; 2:Aceitar + Finalizar)
-$m8_03 = n3_perm_char($user_modulo_08, 3); //COLOCAR PROJETOS EM ESPERA (0:Sem acesso; 2:Permitido)
-$m8_04 = n3_perm_char($user_modulo_08, 4); //TER ACESSO AOS CATALOGOS (0:Sem acesso; 1:TI - Apenas visualizar; 2:TI - visualizar e editar, 3:DevOps - Apenas visualizar, 4:DevOps - visualizar e editar, 5:Todos - Apenas visualizar, 6:Todos - visualizar e editar)
-$m8_05 = n3_perm_char($user_modulo_08, 5); //
-
+//MARKETING
+$m8_00 = n3_perm_char($user_modulo_08, 0); //ACESSAR MÓDULO MARKETING (0: Desabilitado; 1:Habilitado; 2:Habilitado completo)
+$m8_01 = n3_perm_char($user_modulo_08, 1); //CADASTRAR TAREFAS DE MARKETING (0: Sem acesso; 2: Cadastro; 3: Cadastro e edição)
+$m8_02 = n3_perm_char($user_modulo_08, 2); //EXECUTAR TAREFAS DE MARKETING (0: Sem acesso; 2: Aceitar + Finalizar)
+$m8_03 = n3_perm_char($user_modulo_08, 3); //COLOCAR TAREFAS DE MARKETING EM ESPERA (0: Sem acesso; 2: Permitido)
+$m8_04 = n3_perm_char($user_modulo_08, 4); //RECUSAR TAREFAS DE MARKETING / CATÁLOGOS, conforme uso atual
+$m8_05 = n3_perm_char($user_modulo_08, 5); //EDITAR TAREFAS DE TERCEIROS NO MARKETING
+// Usuário Padrão = 1222000000
+// Usuário Atendimento = 1322000000
 
 //VEICULOS
 $m9_00 = n3_perm_char($user_modulo_09, 0); //ACESSAR MÓDULO AGENDA (0: Desabilitado; 1:Habilitado)
@@ -165,8 +185,5 @@ $m9_06 = n3_perm_char($user_modulo_09, 6);
 $m9_07 = n3_perm_char($user_modulo_09, 7); 
 $m9_08 = n3_perm_char($user_modulo_09, 8); 
 $m9_09 = n3_perm_char($user_modulo_09, 9); //Contabilidade
-
-
-
 
 ?>

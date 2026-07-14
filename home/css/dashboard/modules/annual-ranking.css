@@ -1,0 +1,186 @@
+  .annual-ranking-grid {
+    flex: 0 0 auto;
+  }
+
+  .annual-ranking-intro {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .75rem;
+    margin: auto 0 .65rem;
+    padding: .55rem .75rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background: #f7f7f7;
+  }
+
+  .annual-ranking-intro h6 {
+    margin: 0;
+    color: #212529;
+    font-weight: 700;
+  }
+
+  .annual-ranking-intro span {
+    color: #405167;
+    font-size: .82rem;
+  }
+
+  .annual-ranking-intro i {
+    color: #f59e0b;
+  }
+
+  @keyframes pulse {
+    0% {
+      /* Tamanho normal e inclinado */
+      transform: scale(1) rotate(-15deg);
+    }
+
+    50% {
+      /* Aumenta o tamanho e mantÃ©m a inclinaÃ§Ã£o */
+      transform: scale(1.5) rotate(-15deg);
+    }
+
+    100% {
+      /* Volta ao normal, mantendo a inclinaÃ§Ã£o */
+      transform: scale(1) rotate(-15deg);
+    }
+  }
+
+  /* 2. Aplica a animaÃ§Ã£o (esta parte nÃ£o muda) */
+  .crown-pulse {
+    display: inline-block;
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  .annual-card {
+    height: 100%;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background: #fff;
+    overflow: hidden;
+  }
+
+  .annual-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .5rem;
+    padding: .55rem .75rem;
+    background: #fff;
+  }
+
+  .annual-card-title {
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+    margin: 0;
+    color: #212529;
+    font-size: .88rem;
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+
+  .annual-card-title i {
+    color: #f59e0b;
+  }
+
+  .annual-card-year {
+    color: #405167;
+    font-size: .75rem;
+    font-weight: 600;
+  }
+
+  .annual-card-body {
+    padding: .95rem 1rem .95rem;
+  }
+
+  .annual-first {
+    display: flex;
+    grid-template-columns: 34px minmax(0, 1fr);
+    align-items: center;
+    gap: .65rem;
+    min-height: 64px;
+    padding-bottom: .8rem;
+    justify-content: center;
+    border-bottom: 1px solid #eee;
+  }
+
+  .annual-medal {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    font-size: 1.65rem;
+    line-height: 1;
+  }
+
+  .annual-name {
+    margin: 0;
+    overflow: hidden;
+    color: #111827;
+    font-size: 1.12rem;
+    font-weight: 700;
+    line-height: 1.2;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .annual-total {
+    margin: .15rem 0 0;
+    color: #405167;
+    font-size: .78rem;
+  }
+
+  .annual-runners {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0;
+    padding-top: .35rem;
+  }
+
+  .annual-runner {
+    display: grid;
+    grid-template-columns: 24px minmax(0, 1fr);
+    align-items: center;
+    gap: .4rem;
+    min-height: 50px;
+    padding: .55rem .35rem;
+    background: #fff;
+  }
+
+  .annual-runner-rank {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    font-size: 1.15rem;
+    line-height: 1;
+  }
+
+  .annual-runner-name {
+    margin: 0;
+    overflow: hidden;
+    color: #111827;
+    font-size: .84rem;
+    font-weight: 700;
+    text-overflow: ellipsis;
+    white-space: normal;
+  }
+
+  .annual-runner-total {
+    color: #405167;
+    font-size: .72rem;
+  }
+
+  .annual-empty {
+    display: flex;
+    min-height: 112px;
+    align-items: center;
+    justify-content: center;
+    color: #405167;
+    font-size: .85rem;
+    text-align: center;
+  }
+

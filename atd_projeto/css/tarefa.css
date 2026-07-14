@@ -1,0 +1,509 @@
+body {
+    zoom: 1;
+    width: 100%;
+    overflow-x: hidden;
+}
+
+.carregando {
+    color: #ff0000;
+    display: none;
+}
+
+.carregando2 {
+    color: #ff0000;
+    display: none;
+}
+
+.carregando3 {
+    color: #ff0000;
+    display: none;
+}
+
+.carregando4 {
+    color: #ff0000;
+    display: none;
+}
+
+#catalogOptions {
+    position: absolute;
+    top: 100%;
+    /* Posiciona o menu abaixo do botão */
+    margin-left: 170px;
+    z-index: 1000;
+}
+
+.catalog-item {
+    cursor: pointer;
+    /* Define o cursor como uma mão ao passar o mouse */
+}
+
+body,
+body .modal-content,
+body .dropdown-menu {
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    min-height: 100vh;
+    min-height: 100dvh;
+    background: #f3f6fa;
+}
+
+.task-create-page {
+    min-height: calc(100vh - 12px);
+    min-height: calc(100dvh - 12px);
+    padding: 8px 10px;
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.task-create-card {
+    max-width: 1320px;
+    margin: 0 auto;
+    border: 1px solid #d8e3ef;
+    border-radius: 8px;
+    background: #fff;
+    box-shadow: 0 10px 28px rgba(15, 23, 42, .07);
+    overflow: hidden;
+}
+
+.task-create-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 18px;
+    border-bottom: 1px solid #e3ebf5;
+    background: #fbfcfe;
+    font-size: 0;
+}
+
+.task-create-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0;
+    color: #0f172a;
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: 0;
+}
+
+.task-create-title i {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 999px;
+    background: #e8f8fc;
+    color: #169bb5;
+    font-size: 14px;
+}
+
+.task-create-subtitle {
+    margin: 3px 0 0 42px;
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.task-create-body {
+    padding: 16px 18px 18px;
+}
+
+.task-form-section {
+    padding: 14px;
+    border: 1px solid #e1e8f2;
+    border-radius: 7px;
+    background: #fff;
+    margin-bottom: 12px;
+}
+
+.task-form-section-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 0 12px;
+    color: #172033;
+    font-size: 14px;
+    font-weight: 800;
+}
+
+.task-form-section-title i {
+    color: #169bb5;
+    font-size: 13px;
+}
+
+.task-create-card label {
+    color: #334155;
+    font-size: 12px;
+    font-weight: 700;
+    margin-bottom: 5px !important;
+}
+
+.task-create-card .form-control,
+.task-create-card .form-control-sm,
+.task-create-card .bootstrap-select>.dropdown-toggle {
+    min-height: 36px;
+    border: 1px solid #cfd9e6;
+    border-radius: 5px;
+    color: #172033;
+    font-size: 13px;
+    box-shadow: none;
+}
+
+.task-create-card textarea.form-control {
+    min-height: 96px;
+    resize: vertical;
+    line-height: 1.45;
+    padding: 10px 11px;
+}
+
+.task-create-card textarea[name="nome_tarefa"] {
+    min-height: 42px;
+}
+
+.task-create-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    padding-top: 2px;
+}
+
+.task-create-actions .btn {
+    min-height: 36px;
+    border-radius: 5px;
+    padding: 7px 16px;
+    font-weight: 700;
+}
+
+.task-date-field {
+    max-width: 330px;
+}
+
+.task-date-field .form-control {
+    height: 36px;
+    max-width: 100%;
+    background-color: #fff !important;
+    cursor: pointer;
+}
+
+.datetimepicker.dropdown-menu {
+    position: absolute !important;
+    width: 220px !important;
+    min-width: 220px !important;
+    max-width: calc(100vw - 24px) !important;
+    z-index: 2070 !important;
+    box-sizing: border-box;
+    border: 1px solid #d9e3ef;
+    border-radius: 6px;
+    box-shadow: 0 12px 28px rgba(15, 23, 42, .18);
+}
+
+.datetimepicker table {
+    width: 100%;
+}
+
+.task-loading-label {
+    display: none;
+    margin-left: 6px;
+    color: #64748b;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.modal:not(#Help) .modal-dialog {
+    max-width: min(760px, calc(100vw - 32px));
+    margin: 1.25rem auto;
+}
+
+#tarefa_edt .modal-dialog {
+    max-width: min(920px, calc(100vw - 32px));
+}
+
+#modalImagem .modal-dialog {
+    max-width: min(1040px, calc(100vw - 32px));
+}
+
+.modal:not(#Help) .modal-content {
+    border: 1px solid #dbe4ef;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #fff;
+    box-shadow: 0 22px 58px rgba(15, 23, 42, .28);
+}
+
+.modal:not(#Help) .modal-header {
+    min-height: 56px;
+    padding: 14px 18px;
+    border-bottom: 1px solid #e7edf5;
+    background: #fff;
+    color: #172033;
+    align-items: center;
+}
+
+.modal:not(#Help) .modal-title {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    margin: 0;
+    color: #172033;
+    font-size: 1rem;
+    font-weight: 800;
+    letter-spacing: 0;
+    line-height: 1.2;
+}
+
+.modal:not(#Help) .modal-title i {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 30px;
+    width: 30px;
+    height: 30px;
+    margin: 0 !important;
+    border-radius: 999px;
+    background: #e8f8fc;
+    color: #169bb5 !important;
+    font-size: .9rem;
+}
+
+#tarefa_aceitar .modal-title i,
+#tarefa_retomar .modal-title i {
+    background: #f0fdf4;
+    color: #16a34a !important;
+}
+
+#tarefa_espera .modal-title i,
+#tarefa_porcentagem .modal-title i {
+    background: #fff7ed;
+    color: #d97706 !important;
+}
+
+#tarefa_recusar .modal-title i {
+    background: #fff1f2;
+    color: #dc2626 !important;
+}
+
+.modal:not(#Help) .modal-header .close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    margin: 0 0 0 auto;
+    padding: 0;
+    border-radius: 999px;
+    color: #64748b;
+    opacity: 1;
+    text-shadow: none;
+    transition: background .15s ease, color .15s ease;
+}
+
+.modal:not(#Help) .modal-header .close:hover {
+    background: #f1f5f9;
+    color: #172033;
+    text-decoration: none;
+}
+
+.modal:not(#Help) .modal-body {
+    padding: 18px 20px !important;
+    background: #fff;
+    color: #263244;
+    font-size: .9rem;
+    line-height: 1.45;
+}
+
+.modal:not(#Help) .modal-body .form-row {
+    margin-right: -6px;
+    margin-left: -6px;
+}
+
+.modal:not(#Help) .modal-body .form-group {
+    margin-bottom: 13px;
+    padding-right: 6px;
+    padding-left: 6px;
+}
+
+.modal:not(#Help) .modal-body label,
+.modal:not(#Help) .modal-body .my-0.small {
+    display: block;
+    margin-bottom: 5px !important;
+    color: #334155;
+    font-size: .84rem;
+    font-weight: 600;
+    line-height: 1.2;
+}
+
+.modal:not(#Help) .modal-body>label.small,
+.modal:not(#Help) .modal-body .form-row>label.small {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid #e1e8f2;
+    border-radius: 7px;
+    background: #f8fafc;
+    color: #334155;
+    line-height: 1.45;
+}
+
+.modal:not(#Help) .modal-body .form-control,
+.modal:not(#Help) .modal-body .form-control-sm,
+.modal:not(#Help) .modal-body .bootstrap-select>.dropdown-toggle {
+    min-height: 36px;
+    border: 1px solid #cfd9e6;
+    border-radius: 5px;
+    background-color: #fff;
+    color: #172033;
+    font-size: .88rem;
+    box-shadow: none;
+}
+
+.modal:not(#Help) .modal-body textarea.form-control,
+.modal:not(#Help) .modal-body textarea {
+    min-height: 118px;
+    padding: 10px 11px;
+    line-height: 1.45;
+    resize: vertical;
+}
+
+.modal:not(#Help) .modal-body .form-control:focus,
+.modal:not(#Help) .modal-body .form-control-sm:focus,
+.modal:not(#Help) .modal-body .bootstrap-select>.dropdown-toggle:focus {
+    border-color: #74a7e8;
+    box-shadow: 0 0 0 3px rgba(13, 110, 253, .12);
+    outline: none !important;
+}
+
+.modal:not(#Help) .modal-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    padding: 13px 18px;
+    border-top: 1px solid #e7edf5;
+    background: #fbfcfe;
+}
+
+.modal:not(#Help) .modal-footer form {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    width: 100%;
+    margin: 0;
+}
+
+.modal:not(#Help) .modal-footer .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 96px;
+    min-height: 36px;
+    border-radius: 5px;
+    padding: 7px 14px;
+    font-weight: 700;
+    box-shadow: none;
+}
+
+.bootstrap-select .dropdown-menu,
+.dropdown-menu {
+    border: 1px solid #d9e3ef;
+    border-radius: 6px;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, .14);
+    z-index: 2055;
+}
+
+.bootstrap-select {
+    width: 100% !important;
+}
+
+.bootstrap-select>.dropdown-toggle {
+    width: 100%;
+    min-height: 36px;
+    padding-right: 32px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.bootstrap-select>.dropdown-toggle:after {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    margin: 0;
+}
+
+body>.bootstrap-select .dropdown-menu,
+.bs-container.bootstrap-select .dropdown-menu,
+.bootstrap-select.show .dropdown-menu {
+    max-width: min(420px, calc(100vw - 24px));
+    min-width: 0 !important;
+    max-height: 280px !important;
+    overflow: hidden;
+}
+
+.bs-container.bootstrap-select {
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: calc(100vw - 24px);
+}
+
+body>.bootstrap-select .dropdown-menu.inner,
+.bs-container.bootstrap-select .dropdown-menu.inner,
+.bootstrap-select .dropdown-menu.inner {
+    max-height: 238px !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+}
+
+.bootstrap-select .dropdown-menu li a,
+.bootstrap-select .dropdown-item {
+    white-space: normal;
+    line-height: 1.25;
+    padding: 7px 10px;
+    font-size: 13px;
+}
+
+.bootstrap-select .filter-option-inner-inner {
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.bootstrap-select .bs-searchbox {
+    padding: 8px;
+}
+
+.bootstrap-select .bs-searchbox .form-control {
+    min-height: 32px;
+    border-radius: 5px;
+    font-size: 13px;
+}
+
+body.modal-open>.bootstrap-select .dropdown-menu,
+body>.bootstrap-select.show .dropdown-menu {
+    z-index: 2065;
+}
+
+@media (max-width: 767.98px) {
+
+    .modal:not(#Help) .modal-dialog,
+    #tarefa_edt .modal-dialog,
+    #modalImagem .modal-dialog {
+        max-width: calc(100vw - 16px);
+        margin: .5rem auto;
+    }
+
+    .modal:not(#Help) .modal-body {
+        padding: 14px !important;
+    }
+
+    .modal:not(#Help) .modal-footer {
+        flex-direction: column-reverse;
+        align-items: stretch;
+    }
+
+    .modal:not(#Help) .modal-footer .btn,
+    .modal:not(#Help) .modal-footer form {
+        width: 100%;
+    }
+}

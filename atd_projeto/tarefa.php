@@ -6,6 +6,9 @@ include_once("../all/seguranca.php");
 include_once("../all/conect.php");
 include_once("../all/permissoes.php");
 include_once("../all/token.php");
+
+$pdo = ConnectionN3();
+
 $hoje = date("Y-m-d");
 $agora = date("Y-m-d H:i:s");
 
@@ -17,6 +20,33 @@ $exibe_bt_tarefa_espera = false;
 $exibe_bt_tarefa_finalizar = false;
 $exibe_bt_tarefa_retomar = false;
 
+/**
+ * Normalização de variáveis vindas dos includes.
+ * Evita alerta do Intelephense e previne erro caso algum include falhe.
+ */
+$user_id_logado = (int)($_SESSION['allterusN3Id'] ?? 0);
+$user_nome_logado = $_SESSION['allterusN3Nome'] ?? '';
+
+$user_id = $user_id_logado;
+$user_nome = $user_nome_logado;
+$user_login = $user_login ?? ($_SESSION['allterusN3Login'] ?? '');
+
+$usar_token = $usar_token ?? 'false';
+$token = $token ?? '';
+
+$m3_00 = (int)($m3_00 ?? 0);
+$m3_01 = (int)($m3_01 ?? 0);
+$m3_02 = (int)($m3_02 ?? 0);
+$m3_03 = (int)($m3_03 ?? 0);
+$m3_04 = (int)($m3_04 ?? 0);
+$m3_05 = (int)($m3_05 ?? 0);
+
+$m5_00 = (int)($m5_00 ?? 0);
+$m5_01 = (int)($m5_01 ?? 0);
+$m5_02 = (int)($m5_02 ?? 0);
+$m5_03 = (int)($m5_03 ?? 0);
+$m5_04 = (int)($m5_04 ?? 0);
+$m5_05 = (int)($m5_05 ?? 0);
 if ($m5_00 == 0) {
   header("Location: ../home.php");
 }
@@ -36,530 +66,31 @@ if ($m5_00 == 0) {
   <link rel="stylesheet" href="../css/bootstrap-select.min.css">
   <link rel="stylesheet" href="../css/timeline.css">
   <link rel="stylesheet" href="../css/bootstrap-datetimepicker.min.css">
+  <link rel="stylesheet" href="css/tarefa.css">
   <link rel="stylesheet" href="css/projeto_modern.css">
   <link rel="stylesheet" href="../css/n3-detalhe-padrao.css">
 
-
   <title>Allterus</title>
-  <style type="text/css">
-    /* usado apenas para formatar a mensagem de espera para os selectbox dependentes */
-
-    body {
-      zoom: 1;
-      /* Escala o conteúdo sem alterar o contexto de layout */
-      width: 100%;
-      /* Mantém o layout responsivo */
-      overflow-x: hidden;
-      /* Garante que não haja rolagem horizontal */
-    }
-
-    .carregando {
-      color: #ff0000;
-      display: none;
-    }
-
-    .carregando2 {
-      color: #ff0000;
-      display: none;
-    }
-
-    .carregando3 {
-      color: #ff0000;
-      display: none;
-    }
-
-    .carregando4 {
-      color: #ff0000;
-      display: none;
-    }
-
-    #catalogOptions {
-      position: absolute;
-      top: 100%;
-      /* Posiciona o menu abaixo do botão */
-      margin-left: 170px;
-      z-index: 1000;
-    }
-
-    .catalog-item {
-      cursor: pointer;
-      /* Define o cursor como uma mão ao passar o mouse */
-    }
-    body,
-    body .modal-content,
-    body .dropdown-menu {
-      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-    }
-
-    body {
-      min-height: 100vh;
-      min-height: 100dvh;
-      background: #f3f6fa;
-    }
-
-    .task-create-page {
-      min-height: calc(100vh - 12px);
-      min-height: calc(100dvh - 12px);
-      padding: 8px 10px;
-      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-    }
-
-    .task-create-card {
-      max-width: 1320px;
-      margin: 0 auto;
-      border: 1px solid #d8e3ef;
-      border-radius: 8px;
-      background: #fff;
-      box-shadow: 0 10px 28px rgba(15, 23, 42, .07);
-      overflow: hidden;
-    }
-
-    .task-create-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      padding: 14px 18px;
-      border-bottom: 1px solid #e3ebf5;
-      background: #fbfcfe;
-      font-size: 0;
-    }
-
-    .task-create-title {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin: 0;
-      color: #0f172a;
-      font-size: 18px;
-      font-weight: 800;
-      letter-spacing: 0;
-    }
-
-    .task-create-title i {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 32px;
-      height: 32px;
-      border-radius: 999px;
-      background: #e8f8fc;
-      color: #169bb5;
-      font-size: 14px;
-    }
-
-    .task-create-subtitle {
-      margin: 3px 0 0 42px;
-      color: #64748b;
-      font-size: 12px;
-      font-weight: 500;
-    }
-
-    .task-create-body {
-      padding: 16px 18px 18px;
-    }
-
-    .task-form-section {
-      padding: 14px;
-      border: 1px solid #e1e8f2;
-      border-radius: 7px;
-      background: #fff;
-      margin-bottom: 12px;
-    }
-
-    .task-form-section-title {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin: 0 0 12px;
-      color: #172033;
-      font-size: 14px;
-      font-weight: 800;
-    }
-
-    .task-form-section-title i {
-      color: #169bb5;
-      font-size: 13px;
-    }
-
-    .task-create-card label {
-      color: #334155;
-      font-size: 12px;
-      font-weight: 700;
-      margin-bottom: 5px !important;
-    }
-
-    .task-create-card .form-control,
-    .task-create-card .form-control-sm,
-    .task-create-card .bootstrap-select>.dropdown-toggle {
-      min-height: 36px;
-      border: 1px solid #cfd9e6;
-      border-radius: 5px;
-      color: #172033;
-      font-size: 13px;
-      box-shadow: none;
-    }
-
-    .task-create-card textarea.form-control {
-      min-height: 96px;
-      resize: vertical;
-      line-height: 1.45;
-      padding: 10px 11px;
-    }
-
-    .task-create-card textarea[name="nome_tarefa"] {
-      min-height: 42px;
-    }
-
-    .task-create-actions {
-      display: flex;
-      align-items: center;
-      justify-content: flex-end;
-      gap: 8px;
-      padding-top: 2px;
-    }
-
-    .task-create-actions .btn {
-      min-height: 36px;
-      border-radius: 5px;
-      padding: 7px 16px;
-      font-weight: 700;
-    }
-
-    .task-date-field {
-      max-width: 330px;
-    }
-
-    .task-date-field .form-control {
-      height: 36px;
-      max-width: 100%;
-      background-color: #fff !important;
-      cursor: pointer;
-    }
-
-    .datetimepicker.dropdown-menu {
-      position: absolute !important;
-      width: 220px !important;
-      min-width: 220px !important;
-      max-width: calc(100vw - 24px) !important;
-      z-index: 2070 !important;
-      box-sizing: border-box;
-      border: 1px solid #d9e3ef;
-      border-radius: 6px;
-      box-shadow: 0 12px 28px rgba(15, 23, 42, .18);
-    }
-
-    .datetimepicker table {
-      width: 100%;
-    }
-
-    .task-loading-label {
-      display: none;
-      margin-left: 6px;
-      color: #64748b;
-      font-size: 11px;
-      font-weight: 600;
-    }
-
-    .modal:not(#Help) .modal-dialog {
-      max-width: min(760px, calc(100vw - 32px));
-      margin: 1.25rem auto;
-    }
-
-    #tarefa_edt .modal-dialog {
-      max-width: min(920px, calc(100vw - 32px));
-    }
-
-    #modalImagem .modal-dialog {
-      max-width: min(1040px, calc(100vw - 32px));
-    }
-
-    .modal:not(#Help) .modal-content {
-      border: 1px solid #dbe4ef;
-      border-radius: 8px;
-      overflow: hidden;
-      background: #fff;
-      box-shadow: 0 22px 58px rgba(15, 23, 42, .28);
-    }
-
-    .modal:not(#Help) .modal-header {
-      min-height: 56px;
-      padding: 14px 18px;
-      border-bottom: 1px solid #e7edf5;
-      background: #fff;
-      color: #172033;
-      align-items: center;
-    }
-
-    .modal:not(#Help) .modal-title {
-      display: inline-flex;
-      align-items: center;
-      gap: 9px;
-      margin: 0;
-      color: #172033;
-      font-size: 1rem;
-      font-weight: 800;
-      letter-spacing: 0;
-      line-height: 1.2;
-    }
-
-    .modal:not(#Help) .modal-title i {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      flex: 0 0 30px;
-      width: 30px;
-      height: 30px;
-      margin: 0 !important;
-      border-radius: 999px;
-      background: #e8f8fc;
-      color: #169bb5 !important;
-      font-size: .9rem;
-    }
-
-    #tarefa_aceitar .modal-title i,
-    #tarefa_retomar .modal-title i {
-      background: #f0fdf4;
-      color: #16a34a !important;
-    }
-
-    #tarefa_espera .modal-title i,
-    #tarefa_porcentagem .modal-title i {
-      background: #fff7ed;
-      color: #d97706 !important;
-    }
-
-    #tarefa_recusar .modal-title i {
-      background: #fff1f2;
-      color: #dc2626 !important;
-    }
-
-    .modal:not(#Help) .modal-header .close {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 32px;
-      height: 32px;
-      margin: 0 0 0 auto;
-      padding: 0;
-      border-radius: 999px;
-      color: #64748b;
-      opacity: 1;
-      text-shadow: none;
-      transition: background .15s ease, color .15s ease;
-    }
-
-    .modal:not(#Help) .modal-header .close:hover {
-      background: #f1f5f9;
-      color: #172033;
-      text-decoration: none;
-    }
-
-    .modal:not(#Help) .modal-body {
-      padding: 18px 20px !important;
-      background: #fff;
-      color: #263244;
-      font-size: .9rem;
-      line-height: 1.45;
-    }
-
-    .modal:not(#Help) .modal-body .form-row {
-      margin-right: -6px;
-      margin-left: -6px;
-    }
-
-    .modal:not(#Help) .modal-body .form-group {
-      margin-bottom: 13px;
-      padding-right: 6px;
-      padding-left: 6px;
-    }
-
-    .modal:not(#Help) .modal-body label,
-    .modal:not(#Help) .modal-body .my-0.small {
-      display: block;
-      margin-bottom: 5px !important;
-      color: #334155;
-      font-size: .84rem;
-      font-weight: 600;
-      line-height: 1.2;
-    }
-
-    .modal:not(#Help) .modal-body > label.small,
-    .modal:not(#Help) .modal-body .form-row > label.small {
-      width: 100%;
-      padding: 12px 14px;
-      border: 1px solid #e1e8f2;
-      border-radius: 7px;
-      background: #f8fafc;
-      color: #334155;
-      line-height: 1.45;
-    }
-
-    .modal:not(#Help) .modal-body .form-control,
-    .modal:not(#Help) .modal-body .form-control-sm,
-    .modal:not(#Help) .modal-body .bootstrap-select>.dropdown-toggle {
-      min-height: 36px;
-      border: 1px solid #cfd9e6;
-      border-radius: 5px;
-      background-color: #fff;
-      color: #172033;
-      font-size: .88rem;
-      box-shadow: none;
-    }
-
-    .modal:not(#Help) .modal-body textarea.form-control,
-    .modal:not(#Help) .modal-body textarea {
-      min-height: 118px;
-      padding: 10px 11px;
-      line-height: 1.45;
-      resize: vertical;
-    }
-
-    .modal:not(#Help) .modal-body .form-control:focus,
-    .modal:not(#Help) .modal-body .form-control-sm:focus,
-    .modal:not(#Help) .modal-body .bootstrap-select>.dropdown-toggle:focus {
-      border-color: #74a7e8;
-      box-shadow: 0 0 0 3px rgba(13, 110, 253, .12);
-      outline: none !important;
-    }
-
-    .modal:not(#Help) .modal-footer {
-      display: flex;
-      align-items: center;
-      justify-content: flex-end;
-      gap: 8px;
-      padding: 13px 18px;
-      border-top: 1px solid #e7edf5;
-      background: #fbfcfe;
-    }
-
-    .modal:not(#Help) .modal-footer form {
-      display: flex;
-      justify-content: flex-end;
-      gap: 8px;
-      width: 100%;
-      margin: 0;
-    }
-
-    .modal:not(#Help) .modal-footer .btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      min-width: 96px;
-      min-height: 36px;
-      border-radius: 5px;
-      padding: 7px 14px;
-      font-weight: 700;
-      box-shadow: none;
-    }
-
-    .bootstrap-select .dropdown-menu,
-    .dropdown-menu {
-      border: 1px solid #d9e3ef;
-      border-radius: 6px;
-      box-shadow: 0 10px 24px rgba(15, 23, 42, .14);
-      z-index: 2055;
-    }
-
-    .bootstrap-select {
-      width: 100% !important;
-    }
-
-    .bootstrap-select>.dropdown-toggle {
-      width: 100%;
-      min-height: 36px;
-      padding-right: 32px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .bootstrap-select>.dropdown-toggle:after {
-      position: absolute;
-      right: 12px;
-      top: 50%;
-      transform: translateY(-50%);
-      margin: 0;
-    }
-
-    body>.bootstrap-select .dropdown-menu,
-    .bs-container.bootstrap-select .dropdown-menu,
-    .bootstrap-select.show .dropdown-menu {
-      max-width: min(420px, calc(100vw - 24px));
-      min-width: 0 !important;
-      max-height: 280px !important;
-      overflow: hidden;
-    }
-
-    .bs-container.bootstrap-select {
-      width: auto !important;
-      min-width: 0 !important;
-      max-width: calc(100vw - 24px);
-    }
-
-    body>.bootstrap-select .dropdown-menu.inner,
-    .bs-container.bootstrap-select .dropdown-menu.inner,
-    .bootstrap-select .dropdown-menu.inner {
-      max-height: 238px !important;
-      overflow-y: auto !important;
-      overflow-x: hidden !important;
-    }
-
-    .bootstrap-select .dropdown-menu li a,
-    .bootstrap-select .dropdown-item {
-      white-space: normal;
-      line-height: 1.25;
-      padding: 7px 10px;
-      font-size: 13px;
-    }
-
-    .bootstrap-select .filter-option-inner-inner {
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .bootstrap-select .bs-searchbox {
-      padding: 8px;
-    }
-
-    .bootstrap-select .bs-searchbox .form-control {
-      min-height: 32px;
-      border-radius: 5px;
-      font-size: 13px;
-    }
-
-    body.modal-open>.bootstrap-select .dropdown-menu,
-    body>.bootstrap-select.show .dropdown-menu {
-      z-index: 2065;
-    }
-
-    @media (max-width: 767.98px) {
-      .modal:not(#Help) .modal-dialog,
-      #tarefa_edt .modal-dialog,
-      #modalImagem .modal-dialog {
-        max-width: calc(100vw - 16px);
-        margin: .5rem auto;
-      }
-
-      .modal:not(#Help) .modal-body {
-        padding: 14px !important;
-      }
-
-      .modal:not(#Help) .modal-footer {
-        flex-direction: column-reverse;
-        align-items: stretch;
-      }
-
-      .modal:not(#Help) .modal-footer .btn,
-      .modal:not(#Help) .modal-footer form {
-        width: 100%;
-      }
-    }
-  </style>
 </head>
 
 <body class="n3-detail-page n3-tarefa-page">
   <!-- <?php include_once("../all/loading.php"); ?> -->
   <?php include_once("../all/sidebar.php"); ?>
+
+  <?php if (!empty($_SESSION['mensagem'])): ?>
+    <div class="container-fluid mt-3">
+      <div class="alert <?php echo $_SESSION['mensagem_cor'] ?? 'alert-info'; ?> alert-dismissible fade show" role="alert">
+        <?php echo $_SESSION['mensagem']; ?>
+        <button type="button" class="close" data-dismiss="alert" aria-label="Fechar">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+    </div>
+    <?php
+      unset($_SESSION['mensagem']);
+      unset($_SESSION['mensagem_cor']);
+    ?>
+  <?php endif; ?>
 
 
   <?php
@@ -603,7 +134,13 @@ if ($m5_00 == 0) {
       case 'tarefa_aceitar':
       case 'tarefa_retomar':
       case 'tarefa_finalizar':
-        $allowedAction = n3_can_project_execute_owner_or_manager($actionTarefaTecnico);
+        $allowedAction = (
+          (int)$m5_05 >= 2 ||
+          (
+            (int)$m5_02 >= 2 &&
+            (int)$actionTarefaTecnico === (int)$user_id_logado
+          )
+        );
         break;
       case 'tarefa_espera':
         $allowedAction = ((int)$m5_03 >= 2 && n3_can_project_execute_owner_or_manager($actionTarefaTecnico));
@@ -616,8 +153,22 @@ if ($m5_00 == 0) {
         break;
     }
 
+    $_SESSION['mensagem'] =
+      "DEBUG permissao: tecnico_tarefa={$actionTarefaTecnico} | user_id={$user_id} | user_id_logado={$user_id_logado} | m5_02={$m5_02} | m5_05={$m5_05} | action={$action}";
+    $_SESSION['mensagem_cor'] = "alert-warning";
+
     if (!$allowedAction) {
-      n3_forbidden('Voce nao tem permissao para executar esta acao na tarefa.');
+      $_SESSION['mensagem'] = "<i class=\"fas fa-exclamation-triangle\"></i> Você não tem permissão para executar esta ação na tarefa.";
+      $_SESSION['mensagem_cor'] = "alert-danger";
+
+      $redirect_url = !empty($tarefa) ? 'tarefa.php?tarefa=' . urlencode((string)$tarefa) : 'tarefa.php';
+
+      if (ob_get_length()) {
+        ob_clean();
+      }
+
+      header('Location: ' . $redirect_url);
+      exit;
     }
   }
 
@@ -672,9 +223,6 @@ if ($m5_00 == 0) {
           $reincidente = 0;
         }
 
-        //INICIA PROCESSO DE GRAVAÇÃO DO TAREFA NA BASE DE DADOS
-        $pdo = ConnectionN3();
-
         // var_dump($_POST);
         // exit;
 
@@ -706,7 +254,6 @@ if ($m5_00 == 0) {
           $log = "true";
 
           //cadastra abertura do tarefa na tabela de interatividade
-          $pdo = ConnectionN3();
           $adc = $pdo->prepare("INSERT INTO `inter_tarefa` (`inter_tipo`, `inter_tarefa`, `inter_user`, `inter_data`, `inter_desc`) VALUES ('1', '$tarefa', '$user_id', '$agora', '$inter_msg');");
           $adc->execute();
 
@@ -755,14 +302,12 @@ if ($m5_00 == 0) {
 
         $categoria = filter_input(INPUT_POST, 'categoria', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
-        $pdo = ConnectionN3();
         $show_cat = $pdo->prepare("SELECT categorias.cat_nome FROM categorias WHERE categorias.cat_id = '$categoria'");
         $show_cat->execute();
         $row = $show_cat->fetch(PDO::FETCH_ASSOC);
         $tarefa_cat_nome = $row["cat_nome"];
 
         $subcategoria = filter_input(INPUT_POST, 'subcategoria', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-        $pdo = ConnectionN3();
         $show_scat = $pdo->prepare("SELECT subcategorias.scat_nome FROM subcategorias WHERE subcategorias.scat_id = '$subcategoria'");
         $show_scat->execute();
 
@@ -776,12 +321,8 @@ if ($m5_00 == 0) {
           // echo "<script> console.log(" . json_encode("row 228:" . $tarefa_scat_nome) . ") </script>";
         }
 
-        // $tarefa_scat_nome = $row["scat_nome"];
-        // echo "<script> console.log(". json_encode("row 232:" .$tarefa_scat_nome).") </script>";
-
 
         $item = filter_input(INPUT_POST, 'item', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-        $pdo = ConnectionN3();
         $show_itens = $pdo->prepare("SELECT itens.itens_nome FROM itens WHERE itens.itens_id = :item"); // Usando bind para evitar SQL Injection
         $show_itens->bindParam(':item', $item, PDO::PARAM_INT); // Bind do parâmetro para maior segurança
         $show_itens->execute();
@@ -834,7 +375,7 @@ if ($m5_00 == 0) {
         $desc_abertura = htmlspecialchars(filter_input(INPUT_POST, 'desc_abertura'), ENT_QUOTES, 'UTF-8');
 
         //BUSCA A CLASSIFICAÇÃO ORIGINAL PARA COMPARAR COM A NOVA CLASSIFICAÇÃO
-        $pdo = ConnectionN3();
+        
         $show_tarefa = $pdo->prepare("SELECT tarefas.`tipo`, tarefas.`nivel`, tarefas.`forma`, tarefas.`item`, tarefas.`categoria`,tarefas.`subcategoria`,
         tarefas.`dias`, tarefas.desc_abertura,
         categorias.cat_nome,
@@ -923,7 +464,7 @@ if ($m5_00 == 0) {
         //SE DIFERENTE:
         if ($tipo != $tarefa_tipo_original) {
           //ALTERA O CÓDIGO DO TIPO NA TABELA DE tarefas
-          $pdo = ConnectionN3();
+          
           $adc = $pdo->prepare("UPDATE `tarefas` SET `tipo`='$tipo' WHERE `id`='$tarefa';");
           if ($adc->execute()) {
             //CRIA NOVO REGISTRO NA TABELA DE INTERAÇÃO INFORMANDO A ALTERAÇÃO          
@@ -940,7 +481,7 @@ if ($m5_00 == 0) {
         //SE DIFERENTE:
         if ($nivel != $tarefa_nivel_original) {
           //ALTERA O CÓDIGO DO NÍVEL NA TABELA DE tarefas
-          $pdo = ConnectionN3();
+          
           $adc = $pdo->prepare("UPDATE `tarefas` SET `nivel`='$nivel' WHERE `id`='$tarefa';");
           if ($adc->execute()) {
             //CRIA NOVO REGISTRO NA TABELA DE INTERAÇÃO INFORMANDO A ALTERAÇÃO          
@@ -956,7 +497,7 @@ if ($m5_00 == 0) {
         //SE DIFERENTE:
         if ($categoria != $tarefa_cat_original) {
           //ALTERA O CÓDIGO DA CATEGORIA NA TABELA DE tarefas
-          $pdo = ConnectionN3();
+          
           $adc = $pdo->prepare("UPDATE `tarefas` SET `categoria`='$categoria' WHERE `id`='$tarefa';");
           if ($adc->execute()) {
             //CRIA NOVO REGISTRO NA TABELA DE INTERAÇÃO INFORMANDO A ALTERAÇÃO          
@@ -973,7 +514,7 @@ if ($m5_00 == 0) {
         //SE DIFERENTE:
         if ($subcategoria != $tarefa_scat_original) {
           //ALTERA O CÓDIGO DA CATEGORIA NA TABELA DE TAREFAS
-          $pdo = ConnectionN3();
+          
           $adc = $pdo->prepare("UPDATE `tarefas` SET `subcategoria`='$subcategoria' WHERE `id`='$tarefa';");
           if ($adc->execute()) {
             //CRIA NOVO REGISTRO NA TABELA DE INTERAÇÃO INFORMANDO A ALTERAÇÃO          
@@ -990,7 +531,7 @@ if ($m5_00 == 0) {
         //SE DIFERENTE:
         if ($item != $tarefa_item_original) {
           //ALTERA O CÓDIGO DA CATEGORIA NA TABELA DE TAREFAS
-          $pdo = ConnectionN3();
+          
           $adc = $pdo->prepare("UPDATE `tarefas` SET `item`='$item' WHERE `id`='$tarefa';");
           if ($adc->execute()) {
             //CRIA NOVO REGISTRO NA TABELA DE INTERAÇÃO INFORMANDO A ALTERAÇÃO          
@@ -1007,7 +548,7 @@ if ($m5_00 == 0) {
         if ($forma != $tarefa_forma_original) {
 
           //ALTERA O CÓDIGO DA FORMA DE ATENDIMENTO NA TABELA DE TAREFAS
-          $pdo = ConnectionN3();
+          
           $adc = $pdo->prepare("UPDATE `tarefas` SET `forma`='$forma' WHERE `id`='$tarefa';");
           if ($adc->execute()) {
             //CRIA NOVO REGISTRO NA TABELA DE INTERAÇÃO INFORMANDO A ALTERAÇÃO          
@@ -1023,7 +564,7 @@ if ($m5_00 == 0) {
         //SE DIFERENTE:
         if ($desc_abertura != $tarefa_desc_abertura_original) {
           //ALTERA O CÓDIGO DA desc_abertura DE ATENDIMENTO NA TABELA DE TAREFAS
-          $pdo = ConnectionN3();
+          
           $adc = $pdo->prepare("UPDATE `tarefas` SET `desc_abertura`='$desc_abertura' WHERE `id`='$tarefa';");
           if ($adc->execute()) {
             //CRIA NOVO REGISTRO NA TABELA DE INTERAÇÃO INFORMANDO A ALTERAÇÃO          
@@ -1057,7 +598,7 @@ if ($m5_00 == 0) {
       //REGISTRAR NOVA INTERAÇÃO
       if ($action == "tarefa_new_inter") {
         $inter_desc = htmlspecialchars(filter_input(INPUT_POST, 'inter_desc', FILTER_DEFAULT), ENT_QUOTES, 'UTF-8');
-        $pdo = ConnectionN3();
+        
         $adc = $pdo->prepare("INSERT INTO `inter_tarefa` (`inter_tipo`, `inter_tarefa`, `inter_user`, `inter_data`, `inter_desc`) VALUES ('7', :tarefa, '$user_id', '$agora', :inter_desc);");
         $adc->bindParam(':inter_desc', $inter_desc);
         $adc->bindParam(':tarefa', $tarefa);
@@ -1077,8 +618,8 @@ if ($m5_00 == 0) {
         //SE VERDADEIRO:
         //1 - muda o status da tarefa para 2 (ATENDIMENTO EM EXECUÇÃO)
         //2 - registra na tabela de interatividade que o usuário iniciou o atendimento.
-        if ($tecnico == $user_id) {
-          $pdo = ConnectionN3();
+        if ((int)$tecnico === (int)$user_id_logado) {
+          
           $adc = $pdo->prepare("UPDATE `tarefas` SET `tecnico`='$tecnico', `status`='2' WHERE  `id`='$tarefa';");
           if ($adc->execute()) {
             $adc = $pdo->prepare("INSERT INTO `inter_tarefa` (`inter_tipo`, `inter_tarefa`, `inter_user`, `inter_data`, `inter_desc`) VALUES ('2', '$tarefa', '$user_id', '$agora', 'Iniciou a tarefa.')");
@@ -1093,8 +634,8 @@ if ($m5_00 == 0) {
         //1 - registra na tabela de atendimento o novo técnico responsável 
         //2 - busca o NOME do técnico responsável
         //3 - registra na tabela de interatividade a atribuição do chamando
-        if ($tecnico != $user_id) {
-          $pdo = ConnectionN3();
+        if ((int)$tecnico !== (int)$user_id_logado) {
+          
           $adc = $pdo->prepare("UPDATE `tarefas` SET `tecnico`='$tecnico', `status`='1' WHERE  `id`='$tarefa';");
           if ($adc->execute()) {
             $show_tec = $pdo->prepare("SELECT usuarios.user_nome FROM usuarios WHERE usuarios.user_id = '$tecnico'");
@@ -1119,7 +660,7 @@ if ($m5_00 == 0) {
 
       //USUÁRIO RETOMA UM ATENDIMENTO
       if ($action == "tarefa_retomar") {
-        $pdo = ConnectionN3();
+        
 
         //altera o status da tarefa para 2 (Em execução)
         $edt = $pdo->prepare("UPDATE `tarefas` SET `status`='2' WHERE  `id`='$tarefa';");
@@ -1164,7 +705,7 @@ if ($m5_00 == 0) {
         //2 - busca o NOME do técnico responsável
         //2 - registra na tabela de interatividade que o usuário direcionou o atendimento.      
         if ($tecnico != 0) {
-          $pdo = ConnectionN3();
+          
           $adc = $pdo->prepare("UPDATE `tarefas` SET `tecnico`='$tecnico', `status`='1' WHERE `id`='$tarefa';");
           if ($adc->execute()) {
 
@@ -1188,7 +729,7 @@ if ($m5_00 == 0) {
         //1 - remove o técnico como responsável pelo atendimento
         //2 - registra na tabela de interatividade que o usuário recusou o atendimento.     
         if ($tecnico == 0) {
-          $pdo = ConnectionN3();
+          
           $adc = $pdo->prepare("UPDATE `tarefas` SET `tecnico`='0', `status`='1' WHERE `id`='$tarefa';");
           if ($adc->execute()) {
 
@@ -1209,7 +750,7 @@ if ($m5_00 == 0) {
         $espera_desc = htmlspecialchars(filter_input(INPUT_POST, 'espera_desc', FILTER_DEFAULT), ENT_QUOTES, 'UTF-8');
         $espera_prev = htmlspecialchars(filter_input(INPUT_POST, 'espera_prev',  FILTER_DEFAULT), ENT_QUOTES, 'UTF-8');
         $espera_prev_br = date('d/m/Y H:i', strtotime($espera_prev));
-        $pdo = ConnectionN3();
+        
         //altera status da tarefa para 3 (Em espera)
         $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $edt = $pdo->prepare("UPDATE `tarefas` SET `status`='3' WHERE  `id`='$tarefa';");
@@ -1251,7 +792,7 @@ if ($m5_00 == 0) {
         $porcentagem = filter_input(INPUT_POST, 'porcentagem', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         // $porcentagem_total = $porcentagem_atual + $porcentagem;
         if ($porcentagem <= 100 && $porcentagem >= 0) {
-          $pdo = ConnectionN3();
+          
           $edt = $pdo->prepare("UPDATE `tarefas` SET `porcentagem`='$porcentagem' WHERE  `id`='$tarefa';");
           $edt->execute();
         } else {
@@ -1263,15 +804,15 @@ if ($m5_00 == 0) {
       //USUÁRIO FINALIZA UM ATENDIMENTO
       if ($action == "tarefa_finalizar") {
         $desc_fechamento = $_POST['desc_fechamento'];
-        $pdo = ConnectionN3();
+        
         $adc = $pdo->prepare("UPDATE `tarefas` SET `desc_fechamento`=:desc_fechamento, `fechamento`=:fechamento, `status`='4' WHERE  `id`='$tarefa';");
         $adc->bindParam(':desc_fechamento', $desc_fechamento);
         $adc->bindParam(':fechamento', $agora);
-        $pdo = ConnectionN3();
+        
         $edt = $pdo->prepare("UPDATE `tarefas` SET `porcentagem`='100' WHERE  `id`='$tarefa';");
         $edt->execute();
         if ($adc->execute()) {
-          $pdo = ConnectionN3();
+          
           $adc = $pdo->prepare("INSERT INTO `inter_tarefa` (`inter_tipo`, `inter_tarefa`, `inter_user`, `inter_data`, `inter_desc`) VALUES ('8', '$tarefa', '$user_id', '$agora', 'Finalizou o atendimento. <br> Descrição: $desc_fechamento');");
           if ($adc->execute()) {
             $mensagem = "<i class=\"fas fa-check\"></i> ótimo! <br> O que mais temos para hoje?!";
@@ -1348,7 +889,7 @@ if ($m5_00 == 0) {
                     <select name="cliente" id="cliente" class="form-control form-control-sm selectpicker" data-live-search="true" data-container="body" data-width="100%" tabindex="1">
                       <option></option>
                       <?php
-                      $pdo = ConnectionN3();
+                      
 
                       // Define a consulta SQL base
                       $sql = "SELECT clientes.clt_id, clientes.clt_nomef FROM clientes WHERE clientes.clt_sts = '1'";
@@ -1422,7 +963,7 @@ if ($m5_00 == 0) {
                     <select name="categoria" id="categoria" class="form-control form-control-sm selectpicker" data-live-search="true" data-container="body" data-width="100%" required="required" tabindex="5">
                       <option></option>
                       <?php
-                      $pdo = ConnectionN3();
+                      
                       $show_clt = $pdo->prepare("SELECT categorias.cat_id, categorias.cat_nome FROM categorias WHERE categorias.cat_sts = '1' AND categorias.cat_setor = '1' ORDER BY categorias.cat_nome ASC");
                       $show_clt->execute();
                       while ($exibe = $show_clt->fetch(PDO::FETCH_ASSOC)) {
@@ -1490,7 +1031,7 @@ if ($m5_00 == 0) {
                           <option></option>
                           <option value="0">Não determinado</option>
                           <?php
-                          $pdo = ConnectionN3();
+                          
                           $show_clt = $pdo->prepare("SELECT usuarios.user_id, usuarios.user_nome FROM usuarios WHERE usuarios.user_sts = '1' AND usuarios.user_id > '1' AND user_funcao >= '8' AND user_funcao <= '14' ORDER BY usuarios.user_nome ASC");
                           $show_clt->execute();
                           while ($exibe = $show_clt->fetch(PDO::FETCH_ASSOC)) {
@@ -1587,7 +1128,7 @@ if ($m5_00 == 0) {
     <?php
     //Busca informações da tarefa
 
-    $pdo = ConnectionN3();
+    
     $show_tarefa = $pdo->prepare("SELECT tarefas.`area`, tarefas.id_projeto, tarefas.`nome_tarefa`, tarefas.`tipo`, tarefas.`categoria`, tarefas.`subcategoria`, tarefas.`item`, 
     tarefas.`local`, tarefas.dias, tarefas.forma, tarefas.desc_abertura, tarefas.nivel,
     tarefas.desc_fechamento, tarefas.abertura, tarefas.fechamento, tarefas.reincidente, tarefas.`status`, tarefas.`tecnico`,
@@ -2344,7 +1885,7 @@ if ($m5_00 == 0) {
 
               <div class="timeline">
                 <?php
-                $pdo = ConnectionN3();
+                
                 $show_inter = $pdo->prepare("SELECT inter_tarefa.*, usuarios.user_nome FROM inter_tarefa INNER JOIN usuarios ON usuarios.user_id = inter_tarefa.inter_user WHERE inter_tarefa.inter_tarefa = '$tarefa' AND inter_tarefa.inter_tipo > '0' ORDER BY inter_id DESC");
                 $show_inter->execute();
                 while ($exibe = $show_inter->fetch(PDO::FETCH_ASSOC)) {
@@ -2483,7 +2024,7 @@ if ($m5_00 == 0) {
                   <select name="categoria" id="categoria" class="form-control form-control-sm selectpicker" data-live-search="true" data-container="body" data-width="100%" required="required" tabindex="5">
                     <option></option>
                     <?php
-                    $pdo = ConnectionN3();
+                    
                     $show_clt = $pdo->prepare("SELECT categorias.cat_id, categorias.cat_nome FROM categorias WHERE categorias.cat_sts = '1' AND categorias.cat_setor = '1' ORDER BY categorias.cat_nome ASC");
                     $show_clt->execute();
                     while ($exibe = $show_clt->fetch(PDO::FETCH_ASSOC)) {
@@ -2602,16 +2143,18 @@ if ($m5_00 == 0) {
                     <label class="my-0 small">Técnico responsável:</label>
                     <select name="tecnico" class="form-control form-control-sm selectpicker" data-live-search="true" data-container="body" data-width="100%" required="required" tabindex="9">
                       <?php
-                      $pdo = ConnectionN3();
+                      
                       $show_clt = $pdo->prepare("SELECT usuarios.user_id, usuarios.user_nome FROM usuarios WHERE usuarios.user_sts = '1' ORDER BY usuarios.user_nome ASC");
                       $show_clt->execute();
                       while ($exibe = $show_clt->fetch(PDO::FETCH_ASSOC)) {
                         $tecnico_id = $exibe["user_id"];
                         $tecnico_nome = $exibe["user_nome"];
                       ?>
-                        <option value="<?php echo $tecnico_id; ?>" <?php if ($tecnico_id == $user_id) {
-                                                                      echo " selected";
-                                                                    } ?>><?php echo $tecnico_nome; ?></option>
+                        <option value="<?php echo $tecnico_id; ?>" <?php if ((int)$tecnico_id === (int)$user_id_logado) {
+                          echo " selected";
+                        } ?>>
+                          <?php echo $tecnico_nome; ?>
+                        </option>
                       <?php } ?>
                     </select>
                   </div>
@@ -2776,7 +2319,7 @@ if ($m5_00 == 0) {
                     <select name="tecnico" class="form-control form-control-sm selectpicker" data-live-search="true" data-container="body" data-width="100%" required="required" tabindex="9">
                       <option value="0">Não atribuído</option>
                       <?php
-                      $pdo = ConnectionN3();
+                      
                       $show_clt = $pdo->prepare("SELECT usuarios.user_id, usuarios.user_nome FROM usuarios WHERE usuarios.user_sts = '1' ORDER BY usuarios.user_nome ASC");
                       $show_clt->execute();
                       while ($exibe = $show_clt->fetch(PDO::FETCH_ASSOC)) {
@@ -3137,7 +2680,7 @@ if ($m5_00 == 0) {
   #################################################################################################
   if (isset($possui_projeto)) {
 
-    $pdo = ConnectionN3();
+    
     $show_tarefa = $pdo->prepare("
 SELECT tarefas.id_projeto, tarefas.nome_tarefa, tarefas.tarefas_relacionadas, tarefas.porcentagem, tarefas.status
 FROM tarefas 
@@ -3283,52 +2826,52 @@ WHERE tarefas.id = '$tarefa'");
         ###############################################################
 
         if ($data_real_inicio != $iniciotar) {
-          $pdo = ConnectionN3();
+          
           $adc = $pdo->prepare("UPDATE `gantt` SET `inicio_tarefa`='$data_real_inicio' WHERE `id_tarefa`='$tarefa';");
           $adc->execute();
         }
         if ($status != $statstar) {
-          $pdo = ConnectionN3();
+          
           $adc = $pdo->prepare("UPDATE `gantt` SET `status_tarefa`='$status' WHERE `id_tarefa`='$tarefa';");
           $adc->execute();
         }
         if ($dependtar != $depend) {
-          $pdo = ConnectionN3();
+          
           $adc = $pdo->prepare("UPDATE `gantt` SET `dependencia_tarefa`='$depend' WHERE `id_tarefa`='$tarefa';");
           $adc->execute();
         }
         if ($porcenttar != $porcent) {
-          $pdo = ConnectionN3();
+          
           $adc = $pdo->prepare("UPDATE `gantt` SET `porcentagem_tarefa`='$porcent' WHERE `id_tarefa`='$tarefa';");
           $adc->execute();
         }
 
         if ($tipo != $tipotar) {
-          $pdo = ConnectionN3();
+          
           $adc = $pdo->prepare("UPDATE `gantt` SET `tipo_tarefa`='$tipo' WHERE `id_tarefa`='$tarefa';");
           $adc->execute();
         }
 
         if ($data_real_espera != $esperatar) {
-          $pdo = ConnectionN3();
+          
           $adc = $pdo->prepare("UPDATE `gantt` SET `espera_tarefa`='$data_real_espera' WHERE `id_tarefa`='$tarefa';");
           $adc->execute();
         }
 
         if (($data_real_retomou != $retomoutar) and ($data_real_retomou != NULL)) {
-          $pdo = ConnectionN3();
+          
           $adc = $pdo->prepare("UPDATE `gantt` SET `retomou_tarefa`='$data_real_retomou' WHERE `id_tarefa`='$tarefa';");
           $adc->execute();
         }
 
         if (($data_real_finalizou != $finalizoutar) and ($data_real_finalizou != NULL)) {
-          $pdo = ConnectionN3();
+          
           $adc = $pdo->prepare("UPDATE `gantt` SET `finalizou_tarefa`='$data_real_finalizou' WHERE `id_tarefa`='$tarefa';");
           $adc->execute();
         }
 
         if (($nometar != $nome_tarefa)) {
-          $pdo = ConnectionN3();
+          
           $adc = $pdo->prepare("UPDATE `gantt` SET `nome_tarefa`='$nome_tarefa' WHERE `id_tarefa`='$tarefa';");
           $adc->execute();
         }
@@ -3336,7 +2879,7 @@ WHERE tarefas.id = '$tarefa'");
       // } elseif (($tipo != NULL and ($tipo == 2 or $tipo == 5 or $tipo == 6)) and $projeto_id != NULL) {
     } elseif (isset($tipo) && ($tipo == 2 || $tipo == 5 || $tipo == 6) && $projeto_id != null) {
 
-      $pdo = ConnectionN3();
+      
       $adc = $pdo->prepare("INSERT INTO `gantt` (`id_projeto`, `id_tarefa`, `inicio_tarefa`,  `espera_tarefa`, `retomou_tarefa`, `retomou_anterior`, `finalizou_tarefa`, `tipo_tarefa`, `nome_tarefa`, `porcentagem_tarefa`, `dependencia_tarefa`, `status_tarefa`) VALUES (:id_projeto, :id_tarefa,  :inicio_tarefa, :espera_tarefa, :retomou_tarefa, :retomou_anterior, :finalizou_tarefa, :tipo_tarefa,:nome_tarefa,:porcentagem_tarefa,:dependencia_tarefa,:status_tarefa);");
       $adc->bindParam(':id_projeto', $projeto_id);
       $adc->bindParam(':id_tarefa', $tarefa);
@@ -3399,7 +2942,7 @@ WHERE tarefas.id = '$tarefa'");
           $totaltarS = $intervalotar->s;
 
 
-          $pdo = ConnectionN3();
+          
           $adc = $pdo->prepare("UPDATE `gantt` SET `horas_total`='$totaltarH' WHERE `id_tarefa`='$tarefa';");
           $adc->execute();
           $adc = $pdo->prepare("UPDATE `gantt` SET `minutos_total`='$totaltarM' WHERE `id_tarefa`='$tarefa';");
@@ -3461,8 +3004,6 @@ WHERE tarefas.id = '$tarefa'");
             $tempo_esperaH += 1;
           }
 
-
-          $pdo = ConnectionN3();
           $adc = $pdo->prepare("UPDATE `gantt` SET `hora_espera`='$tempo_esperaH' WHERE `id_tarefa`='$tarefa';");
           $adc->execute();
           $adc = $pdo->prepare("UPDATE `gantt` SET `minutos_espera`='$tempo_esperaM' WHERE `id_tarefa`='$tarefa';");
@@ -3470,13 +3011,11 @@ WHERE tarefas.id = '$tarefa'");
           $adc = $pdo->prepare("UPDATE `gantt` SET `segundos_espera`='$tempo_esperaS' WHERE `id_tarefa`='$tarefa';");
           $adc->execute();
 
-
           /* var_dump($tempo_esperaH);
   var_dump($tempo_esperaM);
   var_dump($tempo_esperaS); */
 
           if (($data_real_retomou != $retomouAnt)) {
-            $pdo = ConnectionN3();
             $adc = $pdo->prepare("UPDATE `gantt` SET `retomou_anterior`='$data_real_retomou' WHERE `id_tarefa`='$tarefa';");
             $adc->execute();
           }
@@ -3484,12 +3023,6 @@ WHERE tarefas.id = '$tarefa'");
       }
     }
   ?>
-
-
-
-
-
-
 
   <?php
     /* $statsproj = 0; */
@@ -3542,12 +3075,12 @@ WHERE tarefas.id = '$tarefa'");
       }
       if ($contador == $contatar && $contatar != 0 && $statsproj != 4) {
         $desc_fechamento = "Todas as tarefas finalizadas";
-        $pdo = ConnectionN3();
+        
         $adc = $pdo->prepare("UPDATE `projetos` SET `desc_fechamento`=:desc_fechamento, `fechamento`=:fechamento, `status`='4' WHERE  `id`='$id_projeto';");
         $adc->bindParam(':desc_fechamento', $desc_fechamento);
         $adc->bindParam(':fechamento', $agora);
         if ($adc->execute()) {
-          $pdo = ConnectionN3();
+          
           $adc = $pdo->prepare("INSERT INTO `inter_projeto` (`inter_tipo`, `inter_projeto`, `inter_user`, `inter_data`, `inter_desc`) VALUES ('8', '$projeto_id', '$user_id', '$agora', 'Finalizou o projeto. <br> Descrição: $desc_fechamento');");
           if ($adc->execute()) {
             $mensagem = "<i class=\"fas fa-check\"></i> ótimo! <br> O que mais temos para hoje?!";
@@ -3561,7 +3094,7 @@ WHERE tarefas.id = '$tarefa'");
 
       if ($contarexecucao == 0  && $conta_tarefass != 0 && $statsproj != 3  && $statsproj != 4 && $statsproj != 1 && $contarespera != 0) {
         $espera_desc = "Todas as tarefas em espera";
-        $pdo = ConnectionN3();
+        
         $edt = $pdo->prepare("UPDATE `projetos` SET `status`='3' WHERE  `id`='$projeto_id';");
         if ($edt->execute()) {
           //insere registro de espera na tabela de espera
@@ -3585,7 +3118,7 @@ WHERE tarefas.id = '$tarefa'");
           $mensagem_cor = "alert-danger";
         }
       } elseif ($statsproj != 4 && $statsproj != 2 && $contarexecucao >= 1) {
-        $pdo = ConnectionN3();
+        
 
         //altera o status do projeto para 2 (Em execução)
         $edt = $pdo->prepare("UPDATE `projetos` SET `status`='2' WHERE  `id`='$projeto_id';");

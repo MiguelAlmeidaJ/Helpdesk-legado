@@ -1,0 +1,54 @@
+          <div class="col-lg-3 col-md-6 col-sm-12 mb-0">
+            <?php
+            if (!empty($podio_ti)) :
+              $primeiro_ti = $podio_ti[0] ?? null;
+              $segundo_ti  = $podio_ti[1] ?? null;
+              $terceiro_ti = $podio_ti[2] ?? null;
+            ?>
+              <div class="annual-card">
+                <div class="annual-card-header">
+                  <h6 class="annual-card-title"><i class="fas fa-trophy"></i>TI</h6>
+                  <span class="annual-card-year"><?= $ranking_trimestral_periodo ?></span>
+                </div>
+                <div class="annual-card-body">
+                  <?php if ($primeiro_ti) : ?>
+                    <div class="annual-first">
+                      <span class="annual-medal">&#129351;</span>
+                      <div>
+                        <p class="annual-name"><?= htmlspecialchars($primeiro_ti['nome_tecnico']) ?></p>
+                        <p class="annual-total"><?= $primeiro_ti['total'] ?> atendimentos</p>
+                      </div>
+                    </div>
+                  <?php endif; ?>
+                  <div class="annual-runners">
+                    <?php if ($segundo_ti) : ?>
+                      <div class="annual-runner">
+                        <span class="annual-runner-rank">&#129352;</span>
+                        <div>
+                          <p class="annual-runner-name"><?= htmlspecialchars($segundo_ti['nome_tecnico']) ?></p>
+                          <span class="annual-runner-total"><?= $segundo_ti['total'] ?> atendimentos</span>
+                        </div>
+                      </div>
+                    <?php endif; ?>
+                    <?php if ($terceiro_ti) : ?>
+                      <div class="annual-runner">
+                        <span class="annual-runner-rank">&#129353;</span>
+                        <div>
+                          <p class="annual-runner-name"><?= htmlspecialchars($terceiro_ti['nome_tecnico']) ?></p>
+                          <span class="annual-runner-total"><?= $terceiro_ti['total'] ?> atendimentos</span>
+                        </div>
+                      </div>
+                    <?php endif; ?>
+                  </div>
+                </div>
+              </div>
+            <?php else : ?>
+              <div class="annual-card">
+                <div class="annual-card-header">
+                  <h6 class="annual-card-title"><i class="fas fa-trophy"></i>TI</h6>
+                  <span class="annual-card-year"><?= $ranking_trimestral_periodo ?></span>
+                </div>
+                <div class="annual-empty">Nenhum registro no trimestre.</div>
+              </div>
+            <?php endif; ?>
+          </div>

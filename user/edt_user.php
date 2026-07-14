@@ -101,6 +101,7 @@ if (isset($_POST["user_id"])) {
   $user_m8_02 = $user_mod_08[2]; //Relatório de indisponibilidade tecnica (0: Desabilitado; 1:Habilitado relatorio para clientes, 2:Habilitado todos os relatorios da nivel3)
   $user_m8_03 = $user_mod_08[3]; //Relatório de indisponibilidade tecnica (0: Desabilitado; 1:Habilitado relatorio para clientes, 2:Habilitado todos os relatorios da nivel3)
   $user_m8_04 = $user_mod_08[4]; //Ver Catálogos de clientes (0: Desabilitado; 1:Habilitado visualizar catálogos, 2:Habilitado visualizar e editar catálogos)
+  $user_m8_05 = $user_mod_08[5]; //Ver Catálogos de clientes (0: Desabilitado; 1:Habilitado visualizar catálogos, 2:Habilitado visualizar e editar catálogos)
 
   //VEICULOS
   $user_m9_00 = $user_mod_09[0]; //VEICULOS - ACESSAR PAINEL DE RDS
@@ -320,10 +321,8 @@ if (isset($_POST["user_id"])) {
       </div>
     </div>
 
-
-
     <!--  Módulo Usuários -->
-    <?php if ($m1_04 == 1) { ?>
+    <?php if ((int)$m1_04 >= 1 || (int)$user_modulo_01[4] >= 1) { ?>
       <div class="card edit-user-section">
         <div class="card-header pb-1 pt-2" id="headingOne">
           <!-- <h5 class="mb-0"> -->
@@ -723,7 +722,6 @@ if (isset($_POST["user_id"])) {
         </div>
       </div>
 
-
       <!-- Atendimentos -->
       <div class="card edit-user-section">
         <div class="card-header pb-1 pt-2" id="headingOne">
@@ -913,6 +911,114 @@ if (isset($_POST["user_id"])) {
                 </div>
               </div>
 
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Marketing -->
+      <div class="card edit-user-section">
+        <div class="card-header pb-1 pt-2" id="headingMarketing">
+          <button class="btn" type="button" data-toggle="collapse" data-target="#collapseMarketing" aria-expanded="false" aria-controls="collapseMarketing">
+            <h6><i class="fas fa-bullhorn text-primary"></i> Marketing</h6>
+          </button>
+        </div>
+
+        <div id="collapseMarketing" class="collapse" aria-labelledby="headingMarketing" data-parent="#accordionExample">
+          <div class="card-body">
+            <div class="form-group row">
+
+              <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+                <span class="form-text text-muted">Acesso ao módulo:</span>
+                <div class="input-group">
+                  <div class="input-group-prepend">
+                    <div class="input-group-text">
+                      <i class="fas fa-key"></i>
+                    </div>
+                  </div>
+                  <select name="m8_00" required class="custom-select">
+                    <option value="0" <?php if ($user_m8_00 == 0) echo "selected"; ?>>Desabilitado</option>
+                    <option value="1" <?php if ($user_m8_00 == 1) echo "selected"; ?>>Habilitado</option>
+                    <option value="2" <?php if ($user_m8_00 == 2) echo "selected"; ?>>Habilitado completo</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+                <span class="form-text text-muted">Cadastrar tarefas:</span>
+                <div class="input-group">
+                  <div class="input-group-prepend">
+                    <div class="input-group-text">
+                      <i class="fas fa-plus"></i>
+                    </div>
+                  </div>
+                  <select name="m8_01" required class="custom-select">
+                    <option value="0" <?php if ($user_m8_01 == 0) echo "selected"; ?>>Sem acesso</option>
+                    <option value="2" <?php if ($user_m8_01 == 2) echo "selected"; ?>>Cadastrar</option>
+                    <option value="3" <?php if ($user_m8_01 == 3) echo "selected"; ?>>Cadastrar + Editar</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+                <span class="form-text text-muted">Executar tarefas:</span>
+                <div class="input-group">
+                  <div class="input-group-prepend">
+                    <div class="input-group-text">
+                      <i class="fas fa-check"></i>
+                    </div>
+                  </div>
+                  <select name="m8_02" required class="custom-select">
+                    <option value="0" <?php if ($user_m8_02 == 0) echo "selected"; ?>>Sem acesso</option>
+                    <option value="2" <?php if ($user_m8_02 == 2) echo "selected"; ?>>Aceitar + Finalizar</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+                <span class="form-text text-muted">Colocar em espera:</span>
+                <div class="input-group">
+                  <div class="input-group-prepend">
+                    <div class="input-group-text">
+                      <i class="far fa-pause-circle"></i>
+                    </div>
+                  </div>
+                  <select name="m8_03" required class="custom-select">
+                    <option value="0" <?php if ($user_m8_03 == 0) echo "selected"; ?>>Sem acesso</option>
+                    <option value="2" <?php if ($user_m8_03 == 2) echo "selected"; ?>>Permitido</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+                <span class="form-text text-muted">Recusar tarefas / Catálogos:</span>
+                <div class="input-group">
+                  <div class="input-group-prepend">
+                    <div class="input-group-text">
+                      <i class="fas fa-times"></i>
+                    </div>
+                  </div>
+                  <select name="m8_04" required class="custom-select">
+                    <option value="0" <?php if ($user_m8_04 == 0) echo "selected"; ?>>Sem acesso</option>
+                    <option value="1" <?php if ($user_m8_04 == 1) echo "selected"; ?>>Permitido</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+                <span class="form-text text-muted">Gerir tarefas de terceiros:</span>
+                <div class="input-group">
+                  <div class="input-group-prepend">
+                    <div class="input-group-text">
+                      <i class="fas fa-user-shield"></i>
+                    </div>
+                  </div>
+                  <select name="m8_05" required class="custom-select">
+                    <option value="0" <?php if ($user_m8_05 == 0) echo "selected"; ?>>Sem acesso</option>
+                    <option value="1" <?php if ($user_m8_05 == 1) echo "selected"; ?>>Permitido</option>
+                  </select>
+                </div>
+              </div>
             </div>
           </div>
         </div>

@@ -1,0 +1,191 @@
+  @media (max-height: 880px) and (min-width: 992px) {
+    body.home-dashboard>.card.shadow>.card-body {
+      max-height: calc(100vh - 49px);
+      overflow-y: auto;
+    }
+
+    .monthly-ranking-row>[class*="col-"]>.card {
+      height: 500px !important;
+    }
+
+    .monthly-ranking-row .atd-list {
+      height: 436px !important;
+    }
+
+    .monthly-ranking-row>[class*="col-"] {
+      margin-bottom: .35rem !important;
+    }
+
+    .monthly-ranking-row+hr {
+      margin-top: .2rem !important;
+      margin-bottom: .2rem !important;
+    }
+
+    .annual-ranking-intro {
+      margin: auto 0 .45rem;
+      padding: .45rem .7rem;
+    }
+
+    .annual-card-body {
+      padding: .75rem .85rem;
+    }
+
+    .annual-first {
+      min-height: 56px;
+      padding-bottom: .55rem;
+    }
+
+    .annual-runner {
+      min-height: 42px;
+      padding-top: .4rem;
+      padding-bottom: .4rem;
+    }
+  }
+
+  @media (max-height: 760px) and (min-width: 992px) {
+    .monthly-ranking-row>[class*="col-"]>.card {
+      height: 420px !important;
+    }
+
+    .monthly-ranking-row .atd-list {
+      height: 356px !important;
+    }
+
+    .monthly-ranking-row>[class*="col-"] {
+      margin-bottom: .2rem !important;
+    }
+
+    .monthly-ranking-row+hr {
+      margin-top: .15rem !important;
+      margin-bottom: .15rem !important;
+    }
+
+    .annual-ranking-intro {
+      margin: auto 0 .35rem;
+      padding: .35rem .65rem;
+    }
+
+    .annual-card-header {
+      padding: .4rem .65rem;
+    }
+
+    .annual-card-body {
+      padding: .55rem .75rem;
+    }
+
+    .annual-first {
+      min-height: 48px;
+      padding-bottom: .4rem;
+    }
+
+    .annual-medal {
+      font-size: 1.45rem;
+    }
+
+    .annual-name {
+      font-size: 1rem;
+    }
+
+    .annual-runners {
+      padding-top: .2rem;
+    }
+
+    .annual-runner {
+      min-height: 36px;
+      padding-top: .3rem;
+      padding-bottom: .3rem;
+    }
+  }
+
+  @media (max-height: 680px) and (min-width: 992px) {
+    .monthly-ranking-row>[class*="col-"]>.card {
+      height: 360px !important;
+    }
+
+    .monthly-ranking-row .atd-list {
+      height: 296px !important;
+    }
+
+    .monthly-ranking-row>[class*="col-"] {
+      margin-bottom: .15rem !important;
+    }
+
+    .monthly-ranking-row+hr {
+      margin-top: .1rem !important;
+      margin-bottom: .1rem !important;
+    }
+
+    .annual-ranking-intro {
+      margin: auto 0 .3rem;
+    }
+
+    .annual-ranking-intro span {
+      display: none;
+    }
+
+    .annual-card-body {
+      padding: .45rem .65rem;
+    }
+
+    .annual-first {
+      min-height: 42px;
+    }
+
+    .annual-runner {
+      min-height: 32px;
+    }
+  }
+
+  @media (max-width: 991.98px) {
+    html {
+      height: auto;
+      overflow: auto;
+    }
+
+    body.home-dashboard {
+      height: auto;
+      min-height: 100vh !important;
+      overflow-y: auto;
+    }
+
+    body.home-dashboard>.card.shadow {
+      height: auto;
+      min-height: 100vh;
+      overflow: visible;
+    }
+
+    body.home-dashboard>.card.shadow>.card-body {
+      display: block;
+      max-height: none;
+      overflow: visible;
+    }
+
+    .monthly-ranking-row>[class*="col-"]>.card {
+      height: 380px !important;
+    }
+
+    .monthly-ranking-row .atd-list {
+      height: 316px !important;
+    }
+
+    .annual-ranking-intro {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .annual-ranking-grid>[class*="col-"] {
+      margin-bottom: .75rem !important;
+    }
+
+    .ranking-period-form {
+      justify-content: flex-start;
+      margin-top: .5rem;
+    }
+
+    .ranking-range-picker {
+      left: 0;
+      right: auto;
+      width: min(340px, calc(100vw - 120px));
+    }
+  }
+
