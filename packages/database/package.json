@@ -2,15 +2,18 @@
   "name": "@helpdesk/database",
   "version": "0.0.0",
   "private": true,
-  "type": "module",
+  "type": "commonjs",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "scripts": {
+    "build": "pnpm db:generate && tsc -p tsconfig.build.json",
     "db:pull": "pnpm db:pull:nivel3 && pnpm db:pull:n3rd",
     "db:pull:nivel3": "prisma db pull --config=prisma/nivel3/prisma.config.ts",
     "db:pull:n3rd": "prisma db pull --config=prisma/n3rd/prisma.config.ts",
     "db:generate": "pnpm db:generate:nivel3 && pnpm db:generate:n3rd",
-    "db:generate:nivel3": "prisma generate --config=prisma/nivel3/prisma.config.ts",
-    "db:generate:n3rd": "prisma generate --config=prisma/n3rd/prisma.config.ts",
-    "typecheck": "tsc --noEmit"
+    "db:generate:nivel3": "prisma generate --no-hints --config=prisma/nivel3/prisma.config.ts",
+    "db:generate:n3rd": "prisma generate --no-hints --config=prisma/n3rd/prisma.config.ts",
+    "typecheck": "pnpm db:generate && tsc --noEmit"
   },
   "dependencies": {
     "@prisma/adapter-mariadb": "7.10.0",

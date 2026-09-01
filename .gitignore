@@ -17,6 +17,7 @@ out/
 
 # Prisma generated clients
 packages/database/generated/
+packages/database/src/generated/
 
 # Local database dumps (may contain production data)
 docker/mysql/init/legacy-*.sql

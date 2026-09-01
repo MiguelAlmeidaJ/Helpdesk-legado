@@ -3,13 +3,18 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
+    "predev": "pnpm --filter @helpdesk/database build",
     "dev": "nest start --watch",
+    "prebuild": "pnpm --filter @helpdesk/database build",
     "build": "nest build",
     "start": "node dist/main.js",
+    "pretypecheck": "pnpm --filter @helpdesk/database build",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@helpdesk/database": "workspace:*",
     "@nestjs/common": "^11.0.0",
+    "@nestjs/config": "4.0.4",
     "@nestjs/core": "^11.0.0",
     "@nestjs/platform-express": "^11.0.0",
     "reflect-metadata": "^0.2.2",
