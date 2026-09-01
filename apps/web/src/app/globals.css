@@ -143,6 +143,13 @@ a {
   font-size: 13px;
 }
 
+.tickets-header-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
 .tickets-content {
   width: min(1500px, 100%);
   margin: 0 auto;
@@ -429,6 +436,10 @@ a {
   .tickets-content {
     padding-left: 14px;
     padding-right: 14px;
+  }
+
+  .tickets-total {
+    display: none;
   }
 
   .tickets-title-row {

@@ -161,8 +161,6 @@ export class AccessController {
 
   @Post('logout')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @UseGuards(LegacySessionGuard)
-  @ApiSecurity(LEGACY_SESSION_SECURITY)
   @ApiOperation({
     summary: 'Encerrar sessão',
     description:

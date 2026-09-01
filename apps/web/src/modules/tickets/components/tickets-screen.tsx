@@ -1,6 +1,7 @@
 "use client";
 
 import type {
+  CurrentUserResponse,
   TicketFilterOption,
   TicketListItem,
   TicketListResponse,
@@ -13,6 +14,7 @@ import {
   useMemo,
   useState,
 } from 'react';
+import { SessionUserMenu } from '../../access/components/session-user-menu';
 import { ApiError } from '../../../shared/api/api-client';
 import {
   fetchTickets,
@@ -111,7 +113,7 @@ function buildQuery(
 function errorMessage(error: unknown): string {
   if (error instanceof ApiError) {
     if (error.status === 401) {
-      return 'Sua sessão não foi reconhecida pela API. Entre no Helpdesk legado usando o mesmo hostname e tente novamente.';
+      return 'Sua sessão expirou ou deixou de ser válida. Entre novamente para continuar.';
     }
 
     if (error.status === 403) {
@@ -163,7 +165,11 @@ function StatusCards({
   );
 }
 
-export function TicketsScreen() {
+export function TicketsScreen({
+  currentUser,
+}: {
+  currentUser: CurrentUserResponse;
+}) {
   const [query, setQuery] = useState<TicketListQuery>({
     page: 1,
     limit: 50,
@@ -247,7 +253,10 @@ export function TicketsScreen() {
           <strong>Helpdesk</strong>
           <span>Nova plataforma</span>
         </Link>
-        <span className="tickets-total">{totalLabel}</span>
+        <div className="tickets-header-actions">
+          <span className="tickets-total">{totalLabel}</span>
+          <SessionUserMenu user={currentUser} />
+        </div>
       </header>
 
       <div className="tickets-content">
