@@ -1,6 +1,8 @@
 import type {
+  TicketFilterOptions,
   TicketListFilters,
   TicketListItem,
+  TicketStatusCard,
 } from '@helpdesk/contracts';
 
 export interface TicketsReadRepositoryQuery {
@@ -14,6 +16,8 @@ export interface TicketsReadRepositoryQuery {
 export interface TicketsReadRepositoryResult {
   data: TicketListItem[];
   total: number;
+  statusCards: TicketStatusCard[];
+  options: TicketFilterOptions;
 }
 
 export abstract class TicketsReadRepository {

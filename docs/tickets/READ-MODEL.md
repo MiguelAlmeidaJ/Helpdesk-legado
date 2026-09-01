@@ -1,6 +1,6 @@
 # Tickets read model
 
-The first migrated ticket endpoint is:
+The migrated ticket list endpoint is:
 
 ```text
 GET /api/tickets
@@ -28,10 +28,16 @@ cross-sector visibility.
 
 ## Legacy parity covered
 
-The first read slice preserves:
+The read model preserves:
 
 - default page size of 50;
 - default statuses 1, 2, 3 and 5;
+- default SLA ordering;
+- SLA remaining time and bell/order values;
+- accumulated completed waiting time;
+- latest waiting record and SLA activity timestamp;
+- status-card totals;
+- client/requester/technician filter options;
 - client filter;
 - requester filter;
 - ticket id lookup;
@@ -60,13 +66,14 @@ type=0,1,2
 technicianId=4,5
 openedFrom=2026-08-01
 openedTo=2026-09-01
-sort=openedAt
-direction=desc
+sort=sla
+direction=asc
 ```
 
 Allowed sort values:
 
 ```text
+sla
 id
 client
 openedAt
@@ -76,20 +83,54 @@ technician
 status
 ```
 
-## Not migrated yet
+## Status cards
 
-The legacy home endpoint also performs or returns:
+The response includes the legacy status groups:
 
-- automatic refresh jobs;
-- SLA ordering/calculation;
-- waiting/activity hydration;
-- status cards;
-- filter-option lists;
-- rendered HTML.
+```text
+Aguardando   -> 1
+Em execução  -> 2
+Em espera    -> 3
+Concluído    -> 5
+Finalizado   -> 4
+Agendados    -> 0
+Todos        -> 0,1,2,3,4
+```
 
-Those concerns are intentionally left for the next parity slices. They do not
-belong in the first JSON repository/controller implementation.
+Like the PHP implementation, card totals preserve the active non-status filters
+while evaluating the full status set.
 
-`atd/api/home_list.php` must remain until the Next.js ticket screen has replaced
-the legacy page and the remaining read-model behavior required by that screen
-has reached parity.
+## Filter options
+
+The response also includes:
+
+```text
+options.clients
+options.requesters
+options.technicians
+```
+
+Client options respect the legacy external-client visibility rule.
+Requester options are loaded only when a client is selected.
+Technicians use the same active/function filter as the PHP home.
+
+## Automatic jobs are not GET behavior
+
+The legacy refresh endpoint mutates data while loading the page:
+
+- activates scheduled tickets whose opening time has arrived;
+- resumes waiting tickets;
+- creates recurring tickets.
+
+The Nest `GET /api/tickets` deliberately does not copy this behavior.
+Those mutations must move to an explicit scheduled/background worker before
+`atd/lib/home_jobs.php` can be retired.
+
+## Still pending before PHP list retirement
+
+- Next.js ticket list screen;
+- explicit replacement for the automatic ticket jobs;
+- parity validation with representative production-like records;
+- removal of legacy HTML rendering/navigation consumers.
+
+`atd/api/home_list.php` remains until the Next.js screen is cut over.

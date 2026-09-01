@@ -63,6 +63,8 @@ export class ListTickets {
           result.total === 0 ? 0 : Math.ceil(result.total / input.limit),
       },
       filters: input.filters,
+      statusCards: result.statusCards,
+      options: result.options,
     };
   }
 }

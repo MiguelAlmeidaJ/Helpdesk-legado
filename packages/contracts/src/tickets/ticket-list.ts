@@ -2,6 +2,7 @@ import type { PaginatedResponse } from '../common/pagination';
 import type { TicketStatus } from './ticket-status';
 
 export type TicketListSort =
+  | 'sla'
   | 'id'
   | 'client'
   | 'openedAt'
@@ -31,6 +32,19 @@ export interface TicketListParty {
   name: string | null;
 }
 
+export interface TicketListSla {
+  remainingSeconds: number | null;
+  order: number;
+  bellOrder: number;
+  waitSeconds: number;
+  lastActivityAt: string | null;
+  latestWait: {
+    id: number | null;
+    startedAt: string | null;
+    scheduledResumeAt: string | null;
+  };
+}
+
 export interface TicketListItem {
   id: number;
   status: TicketStatus;
@@ -50,8 +64,38 @@ export interface TicketListItem {
   subcategory: TicketListParty;
   item: TicketListParty;
   technician: TicketListParty;
+  sla: TicketListSla;
+}
+
+export type TicketStatusCardKey =
+  | 'waiting'
+  | 'inProgress'
+  | 'onHold'
+  | 'completed'
+  | 'finished'
+  | 'scheduled'
+  | 'all';
+
+export interface TicketStatusCard {
+  key: TicketStatusCardKey;
+  label: string;
+  statuses: TicketStatus[];
+  total: number;
+}
+
+export interface TicketFilterOption {
+  id: number;
+  name: string;
+}
+
+export interface TicketFilterOptions {
+  clients: TicketFilterOption[];
+  requesters: TicketFilterOption[];
+  technicians: TicketFilterOption[];
 }
 
 export interface TicketListResponse extends PaginatedResponse<TicketListItem> {
   filters: TicketListFilters;
+  statusCards: TicketStatusCard[];
+  options: TicketFilterOptions;
 }

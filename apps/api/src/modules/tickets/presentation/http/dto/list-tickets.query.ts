@@ -22,6 +22,7 @@ const DEFAULT_STATUSES = [
 const DEFAULT_TYPES = [0, 1, 2, 3, 4, 5, 6];
 
 const ALLOWED_SORTS = new Set<TicketListSort>([
+  'sla',
   'id',
   'client',
   'openedAt',
@@ -138,7 +139,7 @@ function sortValue(value: unknown): TicketListSort {
   const text = textValue(value) as TicketListSort | undefined;
 
   if (!text) {
-    return 'openedAt';
+    return 'sla';
   }
 
   if (!ALLOWED_SORTS.has(text)) {
@@ -152,7 +153,7 @@ function directionValue(value: unknown): SortDirection {
   const text = textValue(value)?.toLowerCase();
 
   if (!text) {
-    return 'desc';
+    return 'asc';
   }
 
   if (text !== 'asc' && text !== 'desc') {
