@@ -1,13 +1,20 @@
+import Link from 'next/link';
+
 export default function HomePage() {
   return (
-    <main className="shell">
-      <section className="card">
+    <main className="landing-shell">
+      <section className="landing-card">
         <span className="eyebrow">Helpdesk</span>
-        <h1>Nova plataforma em construção</h1>
+        <h1>Nova plataforma</h1>
         <p>
-          O frontend Next.js e a API NestJS já estão isolados no monorepo. O legado PHP continuará
-          funcionando enquanto os módulos são migrados de forma incremental.
+          A migração está acontecendo módulo por módulo. A primeira experiência
+          operacional disponível no Next.js é a consulta de atendimentos.
         </p>
+        <div className="landing-actions">
+          <Link className="button button-primary" href="/tickets">
+            Abrir atendimentos
+          </Link>
+        </div>
       </section>
     </main>
   );
