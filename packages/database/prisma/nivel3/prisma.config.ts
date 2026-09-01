@@ -1,10 +1,12 @@
-import 'dotenv/config';
+import { config } from 'dotenv';
 import { defineConfig } from 'prisma/config';
 
+config({ path: '../../.env' });
+
 export default defineConfig({
-  schema: 'prisma/nivel3/schema.prisma',
+  schema: './schema.prisma',
   migrations: {
-    path: 'prisma/nivel3/migrations',
+    path: './migrations',
   },
   datasource: {
     url: process.env.NIVEL3_DATABASE_URL ?? '',

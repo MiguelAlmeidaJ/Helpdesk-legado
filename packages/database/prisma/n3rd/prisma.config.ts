@@ -1,10 +1,12 @@
-import 'dotenv/config';
+import { config } from 'dotenv';
 import { defineConfig } from 'prisma/config';
 
+config({ path: '../../.env' });
+
 export default defineConfig({
-  schema: 'prisma/n3rd/schema.prisma',
+  schema: './schema.prisma',
   migrations: {
-    path: 'prisma/n3rd/migrations',
+    path: './migrations',
   },
   datasource: {
     url: process.env.N3RD_DATABASE_URL ?? '',
