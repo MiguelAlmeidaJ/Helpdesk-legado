@@ -10,7 +10,10 @@
     "build": "turbo build",
     "typecheck": "turbo typecheck",
     "db:pull": "pnpm --filter @helpdesk/database db:pull",
-    "db:generate": "pnpm --filter @helpdesk/database db:generate"
+    "db:generate": "pnpm --filter @helpdesk/database db:generate",
+    "docker:up": "docker compose up --build",
+    "docker:down": "docker compose down --remove-orphans",
+    "docker:reset": "docker compose down -v --remove-orphans"
   },
   "devDependencies": {
     "turbo": "2.10.12",

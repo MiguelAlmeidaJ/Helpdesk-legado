@@ -30,3 +30,6 @@ pnpm-debug.log*
 .DS_Store
 .idea/
 .vscode/
+
+*.patch
+Dump_Helpdesk_RD.sql

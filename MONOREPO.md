@@ -6,20 +6,38 @@ This repository is being migrated incrementally from the legacy PHP application 
 
 - `apps/api`: NestJS API. New business logic and database access belong here.
 - `apps/web`: Next.js frontend. It must consume the API instead of accessing the database directly.
-- `packages/database`: isolated Prisma configuration for the existing `nivel3`, `mkt`, and `n3rd` MySQL databases.
+- `packages/database`: isolated Prisma configuration for the existing `nivel3` and `n3rd` databases.
 - `packages/typescript-config`: shared TypeScript compiler defaults.
 - Existing PHP directories remain untouched during the migration.
+- Marketing data is part of the main database today (tables related to `terc_andar`); there is no separate `mkt` Prisma datasource.
 
-## Local setup
+## Local environment with Docker
+
+The repository expects a local dump named `Dump_Helpdesk_RD.sql` at the project root. The dump is intentionally ignored by Git because it may contain production data.
+
+Docker runs the database on host port `3307`, leaving `3306` free for XAMPP/MySQL.
 
 ```bash
 cp .env.example .env
 corepack enable
 pnpm install
-pnpm dev
+
+docker compose up --build
 ```
 
-The web app runs on port `3000` and the Nest API defaults to port `3001`.
+Or:
+
+```bash
+pnpm docker:up
+```
+
+Services:
+
+```text
+web       http://localhost:3000
+api       http://localhost:3001/api
+database  127.0.0.1:3307
+```
 
 Health check:
 
@@ -27,17 +45,38 @@ Health check:
 GET http://localhost:3001/api/health
 ```
 
-## Existing databases
+The SQL dump is executed only when the Docker database volume is initialized for the first time. If the dump changes and you intentionally want a fresh local database:
 
-Set the three existing MySQL URLs in `.env`:
-
-```dotenv
-NIVEL3_DATABASE_URL=mysql://user:password@host:3306/nivel3
-MKT_DATABASE_URL=mysql://user:password@host:3306/mkt
-N3RD_DATABASE_URL=mysql://user:password@host:3306/n3rd
+```bash
+pnpm docker:reset
+pnpm docker:up
 ```
 
-The first database operation should be introspection, not migration:
+`docker:reset` removes the local Docker database volume. Never use that command against production.
+
+## Database URLs
+
+For local commands executed on the host:
+
+```dotenv
+NIVEL3_DATABASE_URL=mysql://root:helpdesk@127.0.0.1:3307/nivel3
+N3RD_DATABASE_URL=mysql://root:helpdesk@127.0.0.1:3307/n3rd
+```
+
+Inside Docker, Compose overrides the host in those URLs to `database:3306`.
+
+On the server, Docker is not required. Keep the same variable names and point them to the MySQL/MariaDB instance used by XAMPP, for example:
+
+```dotenv
+NIVEL3_DATABASE_URL=mysql://root@127.0.0.1:3306/nivel3
+N3RD_DATABASE_URL=mysql://root@127.0.0.1:3306/n3rd
+```
+
+Use the actual server credentials instead of committing passwords to Git.
+
+## Prisma introspection
+
+The first database operation is introspection, not migration:
 
 ```bash
 pnpm db:pull

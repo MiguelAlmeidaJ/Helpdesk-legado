@@ -4,13 +4,11 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "db:pull": "pnpm db:pull:nivel3 && pnpm db:pull:mkt && pnpm db:pull:n3rd",
+    "db:pull": "pnpm db:pull:nivel3 && pnpm db:pull:n3rd",
     "db:pull:nivel3": "prisma db pull --config=prisma/nivel3/prisma.config.ts",
-    "db:pull:mkt": "prisma db pull --config=prisma/mkt/prisma.config.ts",
     "db:pull:n3rd": "prisma db pull --config=prisma/n3rd/prisma.config.ts",
-    "db:generate": "pnpm db:generate:nivel3 && pnpm db:generate:mkt && pnpm db:generate:n3rd",
+    "db:generate": "pnpm db:generate:nivel3 && pnpm db:generate:n3rd",
     "db:generate:nivel3": "prisma generate --config=prisma/nivel3/prisma.config.ts",
-    "db:generate:mkt": "prisma generate --config=prisma/mkt/prisma.config.ts",
     "db:generate:n3rd": "prisma generate --config=prisma/n3rd/prisma.config.ts",
     "typecheck": "tsc --noEmit"
   },
