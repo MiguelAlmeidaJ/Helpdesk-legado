@@ -1,0 +1,10 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../../generated/nivel3"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+// Existing models will be populated with `pnpm db:pull:nivel3`.

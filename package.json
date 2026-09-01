@@ -1,0 +1,19 @@
+{
+  "name": "helpdesk-monorepo",
+  "private": true,
+  "packageManager": "pnpm@11.24.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "typecheck": "turbo typecheck",
+    "db:pull": "pnpm --filter @helpdesk/database db:pull",
+    "db:generate": "pnpm --filter @helpdesk/database db:generate"
+  },
+  "devDependencies": {
+    "turbo": "2.10.12",
+    "typescript": "^5.9.0"
+  }
+}
