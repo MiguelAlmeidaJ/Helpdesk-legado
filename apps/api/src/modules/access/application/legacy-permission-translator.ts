@@ -108,13 +108,6 @@ export function translateLegacySession(
   );
   pushGrant(
     grants,
-    AppPermission.TicketsAudit,
-    permissionLevel(tickets, 5),
-    2,
-    PermissionScope.All,
-  );
-  pushGrant(
-    grants,
     AppPermission.TicketsRadio,
     permissionLevel(tickets, 6),
     1,
@@ -126,9 +119,7 @@ export function translateLegacySession(
     name: session.name,
     login: session.login,
     functionId: session.functionId,
-
-    // The legacy session does not encode the new role/sector model reliably.
-    // Do not guess role assignments from tipo_usuario, user_funcao or module strings.
+    accessSource: 'legacy',
     roleAssignments: [],
     grants,
   };

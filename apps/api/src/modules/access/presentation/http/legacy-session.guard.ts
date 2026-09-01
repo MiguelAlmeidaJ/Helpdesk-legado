@@ -5,7 +5,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { translateLegacySession } from '../../application/legacy-permission-translator';
+import { ResolveAuthenticatedUser } from '../../application/resolve-authenticated-user';
 import { LegacyPhpSessionRepository } from '../../infrastructure/legacy-php-session.repository';
 import type { AuthenticatedRequest } from './authenticated-request';
 import { readCookie } from './cookie';
@@ -14,6 +14,7 @@ import { readCookie } from './cookie';
 export class LegacySessionGuard implements CanActivate {
   constructor(
     private readonly sessions: LegacyPhpSessionRepository,
+    private readonly resolveUser: ResolveAuthenticatedUser,
     private readonly config: ConfigService,
   ) {}
 
@@ -34,7 +35,13 @@ export class LegacySessionGuard implements CanActivate {
       throw new UnauthorizedException('Sessão inválida ou expirada.');
     }
 
-    request.user = translateLegacySession(legacySession);
+    const user = await this.resolveUser.execute(legacySession);
+
+    if (!user) {
+      throw new UnauthorizedException('Usuário inativo ou não encontrado.');
+    }
+
+    request.user = user;
 
     return true;
   }

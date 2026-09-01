@@ -11,6 +11,7 @@
     "typecheck": "turbo typecheck",
     "db:pull": "pnpm --filter @helpdesk/database db:pull",
     "db:generate": "pnpm --filter @helpdesk/database db:generate",
+    "access:audit": "pnpm --filter @helpdesk/database access:audit",
     "docker:up": "docker compose up -d database",
     "docker:down": "docker compose down --remove-orphans",
     "docker:reset": "docker compose down -v --remove-orphans",

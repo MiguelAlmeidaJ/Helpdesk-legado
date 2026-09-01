@@ -1,3 +1,4 @@
+export * from './auth/access-source';
 export * from './auth/app-permission';
 export * from './auth/current-user';
 export * from './auth/permission-grant';

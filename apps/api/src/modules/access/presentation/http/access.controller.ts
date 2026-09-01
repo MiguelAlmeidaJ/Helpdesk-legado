@@ -23,6 +23,7 @@ export class AccessController {
       name: user.name,
       login: user.login,
       functionId: user.functionId,
+      accessSource: user.accessSource,
       roleAssignments: [...user.roleAssignments],
       grants: [...user.grants],
     };

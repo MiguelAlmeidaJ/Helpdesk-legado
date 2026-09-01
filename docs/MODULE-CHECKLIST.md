@@ -61,4 +61,6 @@ Copy this checklist into the working issue/PR description when migrating a modul
 - [ ] Keep rollback path documented.
 - [ ] Monitor logs/errors after cutover.
 - [ ] Mark phase in `docs/MIGRATION-MAP.md`.
-- [ ] Remove PHP code only after the new path is proven and rollback is no longer needed.
+- [ ] Identify the exact PHP files/endpoints made obsolete by the cutover.
+- [ ] Remove obsolete PHP files in the same cutover/retirement change once rollback no longer depends on them.
+- [ ] Remove dead includes, links, AJAX calls and navigation references that pointed to deleted PHP files.
