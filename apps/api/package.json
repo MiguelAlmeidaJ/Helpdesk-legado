@@ -12,6 +12,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@helpdesk/contracts": "workspace:*",
     "@helpdesk/database": "workspace:*",
     "@nestjs/common": "^11.0.0",
     "@nestjs/config": "4.0.4",
