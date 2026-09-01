@@ -18,6 +18,10 @@ out/
 # Prisma generated clients
 packages/database/generated/
 
+# Local database dumps (may contain production data)
+docker/mysql/init/legacy-*.sql
+docker/mysql/init/legacy-*.sql.gz
+
 # Logs
 *.log
 pnpm-debug.log*
