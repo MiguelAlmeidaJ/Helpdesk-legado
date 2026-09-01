@@ -33,6 +33,7 @@ module.exports = {
         NODE_ENV: 'production',
         PORT: apiPort,
         WEB_ORIGIN: process.env.WEB_ORIGIN,
+        SWAGGER_ENABLED: process.env.SWAGGER_ENABLED,
         NIVEL3_DATABASE_URL: process.env.NIVEL3_DATABASE_URL,
         N3RD_DATABASE_URL: process.env.N3RD_DATABASE_URL,
         DB_CONNECTION_LIMIT: process.env.DB_CONNECTION_LIMIT,

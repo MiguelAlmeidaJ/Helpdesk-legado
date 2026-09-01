@@ -4,6 +4,11 @@ import {
   Inject,
   ServiceUnavailableException,
 } from '@nestjs/common';
+import {
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import type {
   N3rdDatabaseClient,
   Nivel3DatabaseClient,
@@ -13,6 +18,7 @@ import {
   NIVEL3_DATABASE,
 } from '../database/database.constants';
 
+@ApiTags('health')
 @Controller('health')
 export class HealthController {
   constructor(
@@ -23,6 +29,19 @@ export class HealthController {
   ) {}
 
   @Get()
+  @ApiOperation({
+    summary: 'Verificar saúde da API',
+    description:
+      'Valida a disponibilidade da API e das conexões com nivel3 e n3rd.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'API e bancos de dados disponíveis.',
+  })
+  @ApiResponse({
+    status: 503,
+    description: 'Um ou mais bancos de dados estão indisponíveis.',
+  })
   async check() {
     const [nivel3, n3rd] = await Promise.all([
       this.checkNivel3(),
