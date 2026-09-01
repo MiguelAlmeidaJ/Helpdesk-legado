@@ -20,7 +20,14 @@ export async function apiRequest<T>(
 ): Promise<T> {
   const response = await fetch(
     `${apiBaseUrl()}/${path.replace(/^\//, '')}`,
-    init,
+    {
+      ...init,
+      credentials: init?.credentials ?? 'include',
+      headers: {
+        Accept: 'application/json',
+        ...init?.headers,
+      },
+    },
   );
 
   const text = await response.text();

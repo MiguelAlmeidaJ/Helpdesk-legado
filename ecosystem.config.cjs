@@ -36,6 +36,8 @@ module.exports = {
         NIVEL3_DATABASE_URL: process.env.NIVEL3_DATABASE_URL,
         N3RD_DATABASE_URL: process.env.N3RD_DATABASE_URL,
         DB_CONNECTION_LIMIT: process.env.DB_CONNECTION_LIMIT,
+        LEGACY_SESSION_COOKIE: process.env.LEGACY_SESSION_COOKIE,
+        LEGACY_SESSION_PATH: process.env.LEGACY_SESSION_PATH,
       }),
     },
     {
