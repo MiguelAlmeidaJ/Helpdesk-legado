@@ -1,5 +1,7 @@
 import type {
+  ConcludeTicketRequest,
   CreateTicketInteractionRequest,
+  FinalizeTicketRequest,
   PutTicketOnHoldRequest,
   RejectTicketRequest,
   TicketAssignmentOptionsResponse,
@@ -135,5 +137,27 @@ export async function putTicketOnHold(
 export async function resumeTicket(ticketId: number): Promise<void> {
   await apiRequest<null>(`tickets/${ticketId}/resume`, {
     method: 'POST',
+  });
+}
+
+export async function concludeTicket(
+  ticketId: number,
+  input: ConcludeTicketRequest,
+): Promise<void> {
+  await apiRequest<null>(`tickets/${ticketId}/workflow/conclude`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(input),
+  });
+}
+
+export async function finalizeTicket(
+  ticketId: number,
+  input: FinalizeTicketRequest,
+): Promise<void> {
+  await apiRequest<null>(`tickets/${ticketId}/workflow/finalize`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(input),
   });
 }

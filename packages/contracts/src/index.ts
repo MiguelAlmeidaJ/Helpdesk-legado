@@ -13,3 +13,4 @@ export * from './tickets/ticket-interaction';
 export * from './tickets/ticket-list';
 export * from './tickets/ticket-rejection';
 export * from './tickets/ticket-status';
+export * from './tickets/ticket-workflow';

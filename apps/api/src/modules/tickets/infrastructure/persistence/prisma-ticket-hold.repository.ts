@@ -218,7 +218,7 @@ export class PrismaTicketHoldRepository extends TicketHoldRepository {
   }
 
   private async lockVisibleTicket(
-    transaction: Nivel3DatabaseClient,
+    transaction: Pick<Nivel3DatabaseClient, '$queryRawUnsafe'>,
     ticketId: number,
     actorUserId: number,
     ownerTechnicianId: number | undefined,
@@ -257,7 +257,7 @@ export class PrismaTicketHoldRepository extends TicketHoldRepository {
   }
 
   private async lockActiveHold(
-    transaction: Nivel3DatabaseClient,
+    transaction: Pick<Nivel3DatabaseClient, '$queryRawUnsafe'>,
     ticketId: number,
   ): Promise<ActiveHoldRow | null> {
     const rows = await transaction.$queryRawUnsafe<ActiveHoldRow[]>(

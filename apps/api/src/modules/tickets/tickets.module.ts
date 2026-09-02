@@ -1,11 +1,14 @@
 import { Module } from '@nestjs/common';
 import { AccessModule } from '../access/access.module';
 import { AddTicketInteraction } from './application/add-ticket-interaction';
+import { ConcludeTicket } from './application/conclude-ticket';
+import { FinalizeTicket } from './application/finalize-ticket';
 import { GetTicketDetail } from './application/get-ticket-detail';
 import { ListTicketAssignmentOptions } from './application/list-ticket-assignment-options';
 import { ListTicketRejectionOptions } from './application/list-ticket-rejection-options';
 import { ListTickets } from './application/list-tickets';
 import { TicketAssignmentRepository } from './application/ports/ticket-assignment.repository';
+import { TicketCloseRepository } from './application/ports/ticket-close.repository';
 import { TicketDetailRepository } from './application/ports/ticket-detail.repository';
 import { TicketHoldRepository } from './application/ports/ticket-hold.repository';
 import { TicketInteractionRepository } from './application/ports/ticket-interaction.repository';
@@ -16,18 +19,22 @@ import { RejectTicket } from './application/reject-ticket';
 import { ResumeTicket } from './application/resume-ticket';
 import { UpdateTicketAssignment } from './application/update-ticket-assignment';
 import { PrismaTicketAssignmentRepository } from './infrastructure/persistence/prisma-ticket-assignment.repository';
+import { PrismaTicketCloseRepository } from './infrastructure/persistence/prisma-ticket-close.repository';
 import { PrismaTicketDetailRepository } from './infrastructure/persistence/prisma-ticket-detail.repository';
 import { PrismaTicketHoldRepository } from './infrastructure/persistence/prisma-ticket-hold.repository';
 import { PrismaTicketInteractionRepository } from './infrastructure/persistence/prisma-ticket-interaction.repository';
 import { PrismaTicketRejectionRepository } from './infrastructure/persistence/prisma-ticket-rejection.repository';
 import { PrismaTicketsReadRepository } from './infrastructure/persistence/prisma-tickets-read.repository';
+import { TicketWorkflowController } from './presentation/http/ticket-workflow.controller';
 import { TicketsController } from './presentation/http/tickets.controller';
 
 @Module({
   imports: [AccessModule],
-  controllers: [TicketsController],
+  controllers: [TicketsController, TicketWorkflowController],
   providers: [
     AddTicketInteraction,
+    ConcludeTicket,
+    FinalizeTicket,
     GetTicketDetail,
     ListTicketAssignmentOptions,
     ListTicketRejectionOptions,
@@ -36,30 +43,13 @@ import { TicketsController } from './presentation/http/tickets.controller';
     RejectTicket,
     ResumeTicket,
     UpdateTicketAssignment,
-    {
-      provide: TicketAssignmentRepository,
-      useClass: PrismaTicketAssignmentRepository,
-    },
-    {
-      provide: TicketHoldRepository,
-      useClass: PrismaTicketHoldRepository,
-    },
-    {
-      provide: TicketRejectionRepository,
-      useClass: PrismaTicketRejectionRepository,
-    },
-    {
-      provide: TicketInteractionRepository,
-      useClass: PrismaTicketInteractionRepository,
-    },
-    {
-      provide: TicketDetailRepository,
-      useClass: PrismaTicketDetailRepository,
-    },
-    {
-      provide: TicketsReadRepository,
-      useClass: PrismaTicketsReadRepository,
-    },
+    { provide: TicketAssignmentRepository, useClass: PrismaTicketAssignmentRepository },
+    { provide: TicketCloseRepository, useClass: PrismaTicketCloseRepository },
+    { provide: TicketHoldRepository, useClass: PrismaTicketHoldRepository },
+    { provide: TicketRejectionRepository, useClass: PrismaTicketRejectionRepository },
+    { provide: TicketInteractionRepository, useClass: PrismaTicketInteractionRepository },
+    { provide: TicketDetailRepository, useClass: PrismaTicketDetailRepository },
+    { provide: TicketsReadRepository, useClass: PrismaTicketsReadRepository },
   ],
 })
 export class TicketsModule {}
