@@ -10,4 +10,5 @@ export * from './tickets/ticket-assignment';
 export * from './tickets/ticket-detail';
 export * from './tickets/ticket-interaction';
 export * from './tickets/ticket-list';
+export * from './tickets/ticket-rejection';
 export * from './tickets/ticket-status';

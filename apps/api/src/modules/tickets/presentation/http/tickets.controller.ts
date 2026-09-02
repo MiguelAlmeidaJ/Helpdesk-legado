@@ -26,8 +26,10 @@ import {
   AppPermission,
   type TicketAssignmentOptionsResponse,
   type CreateTicketInteractionRequest,
+  type RejectTicketRequest,
   type TicketDetailResponse,
   type TicketListResponse,
+  type TicketRejectionOptionsResponse,
   type UpdateTicketAssignmentRequest,
 } from '@helpdesk/contracts';
 import { LEGACY_SESSION_SECURITY } from '../../../../core/openapi/openapi.constants';
@@ -39,7 +41,9 @@ import { RequirePermissions } from '../../../access/presentation/http/require-pe
 import { AddTicketInteraction } from '../../application/add-ticket-interaction';
 import { GetTicketDetail } from '../../application/get-ticket-detail';
 import { ListTicketAssignmentOptions } from '../../application/list-ticket-assignment-options';
+import { ListTicketRejectionOptions } from '../../application/list-ticket-rejection-options';
 import { ListTickets } from '../../application/list-tickets';
+import { RejectTicket } from '../../application/reject-ticket';
 import { UpdateTicketAssignment } from '../../application/update-ticket-assignment';
 import { parseTicketListQuery } from './dto/list-tickets.query';
 
@@ -85,6 +89,42 @@ function assignmentTechnicianId(body: unknown): number {
   return technicianId;
 }
 
+function rejectionRequest(body: unknown): RejectTicketRequest {
+  if (!body || typeof body !== 'object') {
+    throw new BadRequestException('Corpo da requisição inválido.');
+  }
+
+  const technicianId = (body as Record<string, unknown>).technicianId;
+  const reason = (body as Record<string, unknown>).reason;
+
+  if (
+    typeof technicianId !== 'number' ||
+    !Number.isSafeInteger(technicianId) ||
+    technicianId < 0
+  ) {
+    throw new BadRequestException(
+      'technicianId deve ser zero ou um inteiro positivo.',
+    );
+  }
+
+  if (typeof reason !== 'string') {
+    throw new BadRequestException('reason é obrigatório.');
+  }
+
+  const normalizedReason = reason.trim();
+
+  if (normalizedReason.length < 1 || normalizedReason.length > 10_000) {
+    throw new BadRequestException(
+      'reason deve ter entre 1 e 10000 caracteres.',
+    );
+  }
+
+  return {
+    technicianId,
+    reason: normalizedReason,
+  };
+}
+
 @ApiTags('tickets')
 @Controller('tickets')
 @UseGuards(LegacySessionGuard, PermissionsGuard)
@@ -97,6 +137,8 @@ export class TicketsController {
     private readonly addTicketInteraction: AddTicketInteraction,
     private readonly listAssignmentOptions: ListTicketAssignmentOptions,
     private readonly updateTicketAssignment: UpdateTicketAssignment,
+    private readonly listRejectionOptions: ListTicketRejectionOptions,
+    private readonly rejectTicket: RejectTicket,
   ) {}
 
   @Get()
@@ -270,6 +312,38 @@ export class TicketsController {
     return this.listAssignmentOptions.execute(user);
   }
 
+  @Get('rejection/technicians')
+  @RequirePermissions(
+    AppPermission.TicketsRead,
+    AppPermission.TicketsReject,
+  )
+  @ApiOperation({
+    summary: 'Listar destinos para recusa ou direcionamento',
+    description:
+      'Retorna Não atribuído e os usuários ativos que podem receber o atendimento após uma recusa.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Destinos disponíveis para a operação.',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Sessão ausente, inválida ou expirada.',
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Usuário sem permissão para recusar atendimentos.',
+  })
+  async rejectionTechnicians(
+    @CurrentUser() user: AuthenticatedUser | undefined,
+  ): Promise<TicketRejectionOptionsResponse> {
+    if (!user) {
+      throw new UnauthorizedException('Usuário não autenticado.');
+    }
+
+    return this.listRejectionOptions.execute(user);
+  }
+
   @Get(':id')
   @ApiOperation({
     summary: 'Obter detalhe do atendimento',
@@ -379,6 +453,87 @@ export class TicketsController {
       user,
       ticketId,
       technicianId: assignmentTechnicianId(body),
+    });
+  }
+
+  @Post(':id/rejection')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @RequirePermissions(
+    AppPermission.TicketsRead,
+    AppPermission.TicketsReject,
+  )
+  @ApiOperation({
+    summary: 'Recusar ou redirecionar atendimento em execução',
+    description:
+      'Devolve o atendimento para aguardando execução, sem responsável ou direcionado a outro usuário, e registra a justificativa na timeline.',
+  })
+  @ApiParam({
+    name: 'id',
+    type: Number,
+    example: 1234,
+    description: 'ID do atendimento.',
+  })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['technicianId', 'reason'],
+      properties: {
+        technicianId: {
+          type: 'integer',
+          minimum: 0,
+          description:
+            '0 devolve para a fila sem responsável; outro ID direciona o atendimento.',
+          example: 0,
+        },
+        reason: {
+          type: 'string',
+          minLength: 1,
+          maxLength: 10000,
+          example: 'Necessário atendimento por técnico de infraestrutura.',
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 204,
+    description: 'Atendimento devolvido para aguardando execução.',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Destino ou justificativa inválidos.',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Sessão ausente, inválida ou expirada.',
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Usuário sem permissão ou fora do escopo operacional.',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Atendimento não encontrado ou fora do escopo do usuário.',
+  })
+  @ApiResponse({
+    status: 409,
+    description: 'Atendimento não está mais em execução.',
+  })
+  async reject(
+    @CurrentUser() user: AuthenticatedUser | undefined,
+    @Param('id', ParseIntPipe) ticketId: number,
+    @Body() body: RejectTicketRequest,
+  ): Promise<void> {
+    if (!user) {
+      throw new UnauthorizedException('Usuário não autenticado.');
+    }
+
+    const request = rejectionRequest(body);
+
+    await this.rejectTicket.execute({
+      user,
+      ticketId,
+      technicianId: request.technicianId,
+      reason: request.reason,
     });
   }
 

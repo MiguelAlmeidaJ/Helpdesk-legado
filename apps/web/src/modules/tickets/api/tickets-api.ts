@@ -1,8 +1,10 @@
 import type {
   CreateTicketInteractionRequest,
+  RejectTicketRequest,
   TicketAssignmentOptionsResponse,
   TicketDetailResponse,
   TicketListResponse,
+  TicketRejectionOptionsResponse,
   UpdateTicketAssignmentRequest,
 } from '@helpdesk/contracts';
 import { apiRequest } from '../../../shared/api/api-client';
@@ -90,6 +92,25 @@ export async function updateTicketAssignment(
 ): Promise<void> {
   await apiRequest<null>(`tickets/${ticketId}/assignment`, {
     method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(input),
+  });
+}
+
+export async function fetchTicketRejectionTechnicians(): Promise<TicketRejectionOptionsResponse> {
+  return apiRequest<TicketRejectionOptionsResponse>(
+    'tickets/rejection/technicians',
+  );
+}
+
+export async function rejectTicket(
+  ticketId: number,
+  input: RejectTicketRequest,
+): Promise<void> {
+  await apiRequest<null>(`tickets/${ticketId}/rejection`, {
+    method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
