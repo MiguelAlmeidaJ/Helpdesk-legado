@@ -7,6 +7,7 @@ import {
   HttpStatus,
   Param,
   ParseIntPipe,
+  Patch,
   Post,
   Query,
   UnauthorizedException,
@@ -23,9 +24,11 @@ import {
 } from '@nestjs/swagger';
 import {
   AppPermission,
+  type TicketAssignmentOptionsResponse,
   type CreateTicketInteractionRequest,
   type TicketDetailResponse,
   type TicketListResponse,
+  type UpdateTicketAssignmentRequest,
 } from '@helpdesk/contracts';
 import { LEGACY_SESSION_SECURITY } from '../../../../core/openapi/openapi.constants';
 import type { AuthenticatedUser } from '../../../access/domain/authenticated-user';
@@ -35,7 +38,9 @@ import { PermissionsGuard } from '../../../access/presentation/http/permissions.
 import { RequirePermissions } from '../../../access/presentation/http/require-permissions.decorator';
 import { AddTicketInteraction } from '../../application/add-ticket-interaction';
 import { GetTicketDetail } from '../../application/get-ticket-detail';
+import { ListTicketAssignmentOptions } from '../../application/list-ticket-assignment-options';
 import { ListTickets } from '../../application/list-tickets';
+import { UpdateTicketAssignment } from '../../application/update-ticket-assignment';
 import { parseTicketListQuery } from './dto/list-tickets.query';
 
 function interactionDescription(body: unknown): string {
@@ -60,6 +65,26 @@ function interactionDescription(body: unknown): string {
   return normalized;
 }
 
+function assignmentTechnicianId(body: unknown): number {
+  if (!body || typeof body !== 'object') {
+    throw new BadRequestException('Corpo da requisição inválido.');
+  }
+
+  const technicianId = (body as Record<string, unknown>).technicianId;
+
+  if (
+    typeof technicianId !== 'number' ||
+    !Number.isSafeInteger(technicianId) ||
+    technicianId < 1
+  ) {
+    throw new BadRequestException(
+      'technicianId deve ser um inteiro positivo.',
+    );
+  }
+
+  return technicianId;
+}
+
 @ApiTags('tickets')
 @Controller('tickets')
 @UseGuards(LegacySessionGuard, PermissionsGuard)
@@ -70,6 +95,8 @@ export class TicketsController {
     private readonly listTickets: ListTickets,
     private readonly getTicketDetail: GetTicketDetail,
     private readonly addTicketInteraction: AddTicketInteraction,
+    private readonly listAssignmentOptions: ListTicketAssignmentOptions,
+    private readonly updateTicketAssignment: UpdateTicketAssignment,
   ) {}
 
   @Get()
@@ -211,6 +238,38 @@ export class TicketsController {
     });
   }
 
+  @Get('assignment/technicians')
+  @RequirePermissions(
+    AppPermission.TicketsRead,
+    AppPermission.TicketsExecute,
+  )
+  @ApiOperation({
+    summary: 'Listar técnicos para início ou direcionamento',
+    description:
+      'Retorna os técnicos disponíveis respeitando o escopo operacional do usuário.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Técnicos disponíveis para a operação.',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Sessão ausente, inválida ou expirada.',
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Usuário sem permissão para executar atendimentos.',
+  })
+  async assignmentTechnicians(
+    @CurrentUser() user: AuthenticatedUser | undefined,
+  ): Promise<TicketAssignmentOptionsResponse> {
+    if (!user) {
+      throw new UnauthorizedException('Usuário não autenticado.');
+    }
+
+    return this.listAssignmentOptions.execute(user);
+  }
+
   @Get(':id')
   @ApiOperation({
     summary: 'Obter detalhe do atendimento',
@@ -250,6 +309,76 @@ export class TicketsController {
     return this.getTicketDetail.execute({
       user,
       ticketId,
+    });
+  }
+
+  @Patch(':id/assignment')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @RequirePermissions(
+    AppPermission.TicketsRead,
+    AppPermission.TicketsExecute,
+  )
+  @ApiOperation({
+    summary: 'Iniciar ou direcionar atendimento',
+    description:
+      'Ao selecionar o próprio usuário, inicia o atendimento. Ao selecionar outro usuário, mantém o atendimento aguardando e altera o técnico responsável.',
+  })
+  @ApiParam({
+    name: 'id',
+    type: Number,
+    example: 1234,
+    description: 'ID do atendimento.',
+  })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['technicianId'],
+      properties: {
+        technicianId: {
+          type: 'integer',
+          minimum: 1,
+          example: 15,
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 204,
+    description: 'Atendimento iniciado ou direcionado.',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Técnico ausente, inválido ou inativo.',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Sessão ausente, inválida ou expirada.',
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Usuário sem permissão ou fora do escopo operacional.',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Atendimento não encontrado ou fora do escopo do usuário.',
+  })
+  @ApiResponse({
+    status: 409,
+    description: 'Atendimento não está mais aguardando execução.',
+  })
+  async assignment(
+    @CurrentUser() user: AuthenticatedUser | undefined,
+    @Param('id', ParseIntPipe) ticketId: number,
+    @Body() body: UpdateTicketAssignmentRequest,
+  ): Promise<void> {
+    if (!user) {
+      throw new UnauthorizedException('Usuário não autenticado.');
+    }
+
+    await this.updateTicketAssignment.execute({
+      user,
+      ticketId,
+      technicianId: assignmentTechnicianId(body),
     });
   }
 

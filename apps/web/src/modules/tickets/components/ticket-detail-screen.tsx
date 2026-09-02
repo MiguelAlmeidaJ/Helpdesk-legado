@@ -13,6 +13,7 @@ import {
 } from 'react';
 import { SessionUserMenu } from '../../access/components/session-user-menu';
 import { AppSidebar } from '../../../shared/navigation/app-sidebar';
+import { TicketAssignmentActions } from './ticket-assignment-actions';
 import { ApiError } from '../../../shared/api/api-client';
 import {
   createTicketInteraction,
@@ -200,6 +201,11 @@ export function TicketDetailScreen({
         {ticket ? (
           <div className={styles.layout}>
             <div className={styles.main}>
+              <TicketAssignmentActions
+                currentUser={currentUser}
+                onUpdated={setTicket}
+                ticket={ticket}
+              />
               <section className={styles.card}>
                 <div className={styles.cardHeader}>
                   <h2>Atendimento</h2>
