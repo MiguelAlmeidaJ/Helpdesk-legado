@@ -7,6 +7,7 @@ import {
   type DueTicketHold,
   type ResumeDueTicketHoldInput,
 } from '../../application/ports/due-ticket-hold.repository';
+import { enqueueTicketNotification } from '../outbox/enqueue-ticket-notification';
 
 interface DueTicketHoldRow {
   ticket_id: number;
@@ -136,6 +137,13 @@ export class PrismaDueTicketHoldRepository extends DueTicketHoldRepository {
          VALUES (6, ?, 1, NOW(), ?)`,
         input.ticketId,
         'Status do atendimento alterado automaticamente para Em Execucao.',
+      );
+
+      await enqueueTicketNotification(
+        transaction,
+        'ticket.resumed',
+        input.ticketId,
+        { actorUserId: 1, automatic: true },
       );
 
       return true;

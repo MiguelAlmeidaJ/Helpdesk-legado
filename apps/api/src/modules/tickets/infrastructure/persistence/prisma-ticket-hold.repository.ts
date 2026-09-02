@@ -9,6 +9,7 @@ import {
   type ResumeTicketPersistenceInput,
   type ResumeTicketPersistenceResult,
 } from '../../application/ports/ticket-hold.repository';
+import { enqueueTicketNotification } from '../outbox/enqueue-ticket-notification';
 
 interface VisibilityRow {
   tipo_usuario: number;
@@ -119,6 +120,18 @@ export class PrismaTicketHoldRepository extends TicketHoldRepository {
         ].join('\n'),
       );
 
+      await enqueueTicketNotification(
+        transaction,
+        'ticket.on_hold',
+        input.ticketId,
+        {
+          actorUserId: input.actorUserId,
+          cause: input.cause,
+          description: input.description,
+          forecastAt: input.forecastAt.toISOString(),
+        },
+      );
+
       return 'updated';
     });
   }
@@ -186,6 +199,13 @@ export class PrismaTicketHoldRepository extends TicketHoldRepository {
         input.ticketId,
         input.actorUserId,
         'Retomou o atendimento.',
+      );
+
+      await enqueueTicketNotification(
+        transaction,
+        'ticket.resumed',
+        input.ticketId,
+        { actorUserId: input.actorUserId },
       );
 
       return 'updated';

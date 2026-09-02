@@ -33,10 +33,17 @@ module.exports = {
         NODE_ENV: 'production',
         PORT: apiPort,
         WEB_ORIGIN: process.env.WEB_ORIGIN,
+        WEB_PUBLIC_URL: process.env.WEB_PUBLIC_URL,
         SWAGGER_ENABLED: process.env.SWAGGER_ENABLED,
         API_SESSION_COOKIE: process.env.API_SESSION_COOKIE,
         API_SESSION_TTL_DAYS: process.env.API_SESSION_TTL_DAYS,
         SESSION_COOKIE_SECURE: process.env.SESSION_COOKIE_SECURE,
+        SMTP_HOST: process.env.SMTP_HOST,
+        SMTP_PORT: process.env.SMTP_PORT,
+        SMTP_SECURE: process.env.SMTP_SECURE,
+        SMTP_USER: process.env.SMTP_USER,
+        SMTP_PASS: process.env.SMTP_PASS,
+        SMTP_FROM: process.env.SMTP_FROM,
         NIVEL3_DATABASE_URL: process.env.NIVEL3_DATABASE_URL,
         N3RD_DATABASE_URL: process.env.N3RD_DATABASE_URL,
         DB_CONNECTION_LIMIT: process.env.DB_CONNECTION_LIMIT,
@@ -59,6 +66,19 @@ module.exports = {
         NIVEL3_DATABASE_URL: process.env.NIVEL3_DATABASE_URL,
         N3RD_DATABASE_URL: process.env.N3RD_DATABASE_URL,
         DB_CONNECTION_LIMIT: process.env.DB_CONNECTION_LIMIT,
+        WEB_PUBLIC_URL: process.env.WEB_PUBLIC_URL,
+        SMTP_HOST: process.env.SMTP_HOST,
+        SMTP_PORT: process.env.SMTP_PORT,
+        SMTP_SECURE: process.env.SMTP_SECURE,
+        SMTP_USER: process.env.SMTP_USER,
+        SMTP_PASS: process.env.SMTP_PASS,
+        SMTP_FROM: process.env.SMTP_FROM,
+        TICKET_NOTIFICATION_EMAIL_ENABLED:
+          process.env.TICKET_NOTIFICATION_EMAIL_ENABLED ?? 'false',
+        TICKET_NOTIFICATION_EMAIL_INTERVAL_MS:
+          process.env.TICKET_NOTIFICATION_EMAIL_INTERVAL_MS ?? '30000',
+        TICKET_NOTIFICATION_EMAIL_BATCH_SIZE:
+          process.env.TICKET_NOTIFICATION_EMAIL_BATCH_SIZE ?? '50',
         TICKET_HOLD_AUTO_RESUME_ENABLED:
           process.env.TICKET_HOLD_AUTO_RESUME_ENABLED ?? 'true',
         TICKET_HOLD_AUTO_RESUME_INTERVAL_MS:

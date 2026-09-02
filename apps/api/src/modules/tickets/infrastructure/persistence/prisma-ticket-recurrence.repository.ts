@@ -7,6 +7,7 @@ import {
   type AdvanceTicketRecurrenceInput,
   type DueTicketRecurrence,
 } from '../../application/ports/ticket-recurrence.repository';
+import { enqueueTicketNotification } from '../outbox/enqueue-ticket-notification';
 
 interface DueTicketRecurrenceRow {
   ticket_id: number;
@@ -195,6 +196,18 @@ export class PrismaTicketRecurrenceRepository extends TicketRecurrenceRepository
         newTicketId,
         current.recurrence_at,
         'Chamado aberto automaticamente conforme regra de recorrencia.',
+      );
+
+      await enqueueTicketNotification(
+        transaction,
+        'ticket.opened',
+        newTicketId,
+        {
+          actorUserId: 1,
+          automatic: true,
+          openingAt: current.recurrence_at.replace(' ', 'T'),
+          status: TicketStatus.Scheduled,
+        },
       );
 
       return true;

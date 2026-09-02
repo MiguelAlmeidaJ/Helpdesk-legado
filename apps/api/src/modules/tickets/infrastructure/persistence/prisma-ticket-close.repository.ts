@@ -8,6 +8,7 @@ import {
   type FinalizeTicketPersistenceInput,
   type TicketClosePersistenceResult,
 } from '../../application/ports/ticket-close.repository';
+import { enqueueTicketNotification } from '../outbox/enqueue-ticket-notification';
 
 interface VisibilityRow { tipo_usuario: number; }
 interface ClientScopeRow { cliente_id: number; }
@@ -74,6 +75,15 @@ export class PrismaTicketCloseRepository extends TicketCloseRepository {
         input.actorUserId,
         `Colocou o atendimento como concluído.\nDescrição: ${input.description}`,
       );
+      await enqueueTicketNotification(
+        transaction,
+        'ticket.concluded',
+        input.ticketId,
+        {
+          actorUserId: input.actorUserId,
+          description: input.description,
+        },
+      );
       return 'updated';
     });
   }
@@ -131,6 +141,15 @@ export class PrismaTicketCloseRepository extends TicketCloseRepository {
         input.ticketId,
         input.actorUserId,
         `Finalizou o atendimento.\nDescrição: ${input.description}`,
+      );
+      await enqueueTicketNotification(
+        transaction,
+        'ticket.finalized',
+        input.ticketId,
+        {
+          actorUserId: input.actorUserId,
+          description: input.description,
+        },
       );
       return 'updated';
     });

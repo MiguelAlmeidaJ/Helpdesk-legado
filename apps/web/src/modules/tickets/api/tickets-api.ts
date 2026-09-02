@@ -256,6 +256,14 @@ export function fetchTicketLocations(clientId: number): Promise<TicketCatalogOpt
   return apiRequest<TicketCatalogOption[]>(`tickets/create/locations?clientId=${clientId}`);
 }
 
+export function fetchTicketCreateSubcategories(categoryId: number): Promise<TicketCatalogOption[]> {
+  return apiRequest<TicketCatalogOption[]>(`tickets/create/subcategories?categoryId=${categoryId}`);
+}
+
+export function fetchTicketCreateItems(subcategoryId: number): Promise<TicketCatalogOption[]> {
+  return apiRequest<TicketCatalogOption[]>(`tickets/create/items?subcategoryId=${subcategoryId}`);
+}
+
 export function createTicket(input: CreateTicketRequest): Promise<CreateTicketResponse> {
   return apiRequest<CreateTicketResponse>('tickets', {
     method: 'POST',

@@ -23,6 +23,7 @@ export const TICKET_LEVELS: TicketCatalogOption[] = [
   { id: 3, name: 'Nível 3' },
   { id: 4, name: 'Rotina' },
   { id: 5, name: 'Administrativo' },
+  { id: 6, name: 'Tarefa' },
 ];
 
 export const TICKET_PRIORITIES: TicketCatalogOption[] = [
