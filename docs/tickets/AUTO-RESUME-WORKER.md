@@ -1,10 +1,41 @@
-# Automatic resume worker
+# Ticket automation worker cutover
 
-The legacy ticket home currently calls `atd_home_run_jobs($pdo)` on every
-request. The same job set can also be executed from
-`atd/jobs/run_home_jobs.php`.
+The automatic ticket jobs are now owned by the NestJS worker:
 
-The legacy automatic wait-resume behavior is:
+```text
+helpdesk-ticket-worker
+apps/api/dist/worker.js
+```
+
+The legacy `atd/home.php` no longer executes `atd_home_run_jobs($pdo)`.
+`atd/jobs/run_home_jobs.php` remains only as a compatibility no-op so an
+unknown server cron does not execute the old database mutations after cutover.
+
+The old implementations under `atd/lib/home_jobs.php` remain temporarily as
+rollback reference and can be removed after the server cron configuration is
+audited.
+
+## Jobs migrated
+
+### Scheduled ticket activation
+
+Legacy parity:
+
+```text
+atendimentos.status = 0
+atendimentos.abertura <= current time
+status 0 -> 1
+interatividade.inter_tipo = 1
+interatividade.inter_user = 1
+description = Status do atendimento alterado automaticamente para Aguardando Execucao.
+```
+
+The NestJS worker uses database time (`NOW()`) and rechecks the ticket under
+`FOR UPDATE` before updating it.
+
+### Automatic wait resume
+
+Legacy parity:
 
 ```text
 latest wait forecast <= current time
@@ -15,91 +46,84 @@ interatividade.inter_user = 1
 description = Status do atendimento alterado automaticamente para Em Execucao.
 ```
 
-Unlike the manual resume path, this automatic legacy path does not send an
-e-mail.
+The migrated path intentionally also requires the latest wait to still be open
+(`espera_end IS NULL`). The legacy automatic path did not send e-mail, so the
+worker does not send e-mail either.
 
-## New worker
+### Recurring ticket generation
 
-The NestJS migration introduces a dedicated process:
+Parents are eligible when:
 
 ```text
-helpdesk-ticket-worker
-apps/api/dist/worker.js
+recorrente = 2
+data_recorrencia IS NOT NULL
+vezes > 0
+data_recorrencia <= NOW()
 ```
 
-It is intentionally separate from the HTTP API so increasing API instances in
-the future does not multiply the scheduler.
+Supported legacy recurrence rules remain:
 
-The worker is managed by the existing PM2 ecosystem and is kept alive even
-when automatic resume is disabled.
+```text
+1 = daily
+6 = weekly
+2 = monthly
+3 = every 3 months
+4 = every 6 months
+5 = yearly
+7 = same weekday occurrence in the next month
+```
 
-## Feature flag
+Rule 7 preserves the legacy `semana` behavior, including `Ultima`.
 
-Automatic resume is disabled by default:
+Each parent is processed transactionally. The worker locks the current parent
+row, verifies that `data_recorrencia` still matches the candidate, advances the
+parent date, decrements `vezes`, creates the scheduled child, and creates the
+type-1 system interaction.
+
+The old PHP code used a MariaDB named lock around the recurrence batch. The
+NestJS implementation instead protects every recurrence with a row lock plus a
+compare-on-current-`data_recorrencia` update. This avoids duplicate children
+even if two worker processes accidentally select the same parent.
+
+## Configuration
+
+The PM2 ecosystem enables all three jobs by default after this cutover:
 
 ```dotenv
-TICKET_HOLD_AUTO_RESUME_ENABLED=false
+TICKET_HOLD_AUTO_RESUME_ENABLED=true
 TICKET_HOLD_AUTO_RESUME_INTERVAL_MS=60000
 TICKET_HOLD_AUTO_RESUME_BATCH_SIZE=100
+
+TICKET_SCHEDULED_ACTIVATION_ENABLED=true
+TICKET_SCHEDULED_ACTIVATION_INTERVAL_MS=60000
+TICKET_SCHEDULED_ACTIVATION_BATCH_SIZE=100
+
+TICKET_RECURRENCE_ENABLED=true
+TICKET_RECURRENCE_INTERVAL_MS=60000
+TICKET_RECURRENCE_BATCH_SIZE=100
 ```
 
-Do not enable `TICKET_HOLD_AUTO_RESUME_ENABLED` in a shared or production
-environment while the legacy PHP waiting job is still active.
+An explicit value in the server `.env` overrides the PM2 default. After
+changing any value, run the normal PM2 restart with updated environment.
 
-Changing the flag requires a PM2 restart with updated environment variables.
+## Operational validation
 
-## Processing rules
-
-The worker uses database time (`NOW()`) and only selects tickets where:
+After deployment:
 
 ```text
-atendimentos.status = 3
-latest espera.espera_end IS NULL
-latest espera.espera_prev IS NOT NULL
-latest espera.espera_prev <= NOW()
+helpdesk-api            online
+helpdesk-ticket-worker  online
+helpdesk-web            online
 ```
 
-For every candidate it starts a transaction and locks the ticket and wait rows
-with `FOR UPDATE`. It then rechecks the state before writing.
+Check the worker log and validate:
 
-A successful automatic resume performs atomically:
+- one due scheduled ticket changes from 0 to 1 and receives interaction type 1;
+- one overdue active wait changes from 3 to 2, closes `espera_end`, and receives
+  interaction type 6;
+- one controlled recurrence advances the parent and creates exactly one
+  scheduled child.
 
-```text
-atendimentos.status = 2
-espera.espera_end = NOW()
-interatividade.inter_tipo = 6
-interatividade.inter_user = 1
-```
-
-This preserves the legacy system-user convention.
-
-If two worker processes accidentally observe the same candidate, the second
-process waits for the row lock and then skips the ticket after seeing that it
-is no longer in status 3.
-
-## Intentional hardening
-
-The PHP implementation chooses the latest wait row but does not require
-`espera_end IS NULL`.
-
-The NestJS worker requires the latest wait row to still be open. A ticket in
-status 3 with no active wait is treated as inconsistent and is not silently
-resumed.
-
-## Deployment stage
-
-This patch installs the worker but does not perform the production cutover.
-
-The safe sequence is:
-
-1. deploy and build this patch with the feature flag still `false`;
-2. verify `helpdesk-ticket-worker` is online and logging that auto-resume is
-   disabled;
-3. retire only the legacy PHP waiting-resume execution while keeping the other
-   legacy jobs active;
-4. set `TICKET_HOLD_AUTO_RESUME_ENABLED=true`;
-5. restart PM2 with updated environment;
-6. validate one controlled overdue wait and its interaction type 6.
-
-Scheduled-ticket activation and recurring-ticket generation remain legacy
-responsibilities for now.
+If the server still has a cron calling `atd/jobs/run_home_jobs.php`, it can be
+removed after confirming the worker is healthy. The compatibility runner is a
+no-op and will not mutate the database.

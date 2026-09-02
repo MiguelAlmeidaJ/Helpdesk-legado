@@ -5,7 +5,6 @@ include_once("../all/seguranca.php");
 include_once("../all/conect.php");
 include_once("../all/permissoes.php");
 include_once(__DIR__ . "/lib/home_data.php");
-include_once(__DIR__ . "/lib/home_jobs.php");
 include_once(__DIR__ . "/lib/home_render.php");
 
 if (!isset($m3_00) || (int)$m3_00 === 0) {
@@ -26,7 +25,6 @@ if ($action === 'alterar_senha') {
 }
 
 $pdo = ConnectionN3();
-atd_home_run_jobs($pdo);
 $filters = atd_home_normalize_filters(['ord' => 'sla', 'order_dir' => 'ASC'], false);
 $state = atd_home_load_state($pdo, $filters, isset($_GET['page']) ? (int)$_GET['page'] : 1);
 ?>
