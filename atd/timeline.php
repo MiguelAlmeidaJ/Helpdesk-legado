@@ -1,4 +1,10 @@
 <?php
+require_once __DIR__ . '/../all/app_url.php';
+
+header('Location: ' . allterus_web_url('/tickets/timeline'), true, 302);
+exit;
+__halt_compiler();
+
 if (session_status() !== PHP_SESSION_ACTIVE) {
     session_start();
 }

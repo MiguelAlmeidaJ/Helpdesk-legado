@@ -45,6 +45,7 @@ export function translateLegacySession(
   const grants: PermissionGrant[] = [];
   const users = session.modules[1];
   const tickets = session.modules[3];
+  const ticketAudit = session.modules[8];
 
   pushGrant(
     grants,
@@ -140,6 +141,14 @@ export function translateLegacySession(
     grants,
     AppPermission.TicketsRadio,
     permissionLevel(tickets, 6),
+    1,
+    PermissionScope.All,
+  );
+
+  pushGrant(
+    grants,
+    AppPermission.TicketsAudit,
+    permissionLevel(ticketAudit, 0),
     1,
     PermissionScope.All,
   );

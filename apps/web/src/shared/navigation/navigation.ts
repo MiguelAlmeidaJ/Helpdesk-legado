@@ -37,9 +37,15 @@ export const APP_NAVIGATION_SECTIONS: NavigationSection[] = [
       {
         id: 'tickets-availability',
         label: 'Disponibilidade Técnica',
-        status: 'planned',
+        href: '/tickets/availability',
+        status: 'available',
       },
-      { id: 'tickets-timeline', label: 'Timeline', status: 'planned' },
+      {
+        id: 'tickets-timeline',
+        label: 'Timeline',
+        href: '/tickets/timeline',
+        status: 'available',
+      },
       { id: 'tickets-new', label: 'Novo Atendimento', href: '/tickets/new', status: 'available' },
     ],
   },

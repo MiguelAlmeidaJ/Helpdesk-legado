@@ -9,12 +9,14 @@ import type {
   TicketAssignmentOptionsResponse,
   TicketAttachment,
   TicketAttachmentKind,
+  TicketAvailabilityResponse,
   TicketAttachmentsResponse,
   TicketCatalogOption,
   TicketClassificationCatalogsResponse,
   TicketCreateCatalogsResponse,
   TicketDetailResponse,
   TicketListResponse,
+  TicketTimelineResponse,
   TicketRejectionOptionsResponse,
   UpdateTicketAssignmentRequest,
   UpdateTicketClassificationRequest,
@@ -270,4 +272,18 @@ export function createTicket(input: CreateTicketRequest): Promise<CreateTicketRe
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(input),
   });
+}
+
+export function fetchTicketTimeline(
+  limit = 200,
+): Promise<TicketTimelineResponse> {
+  return apiRequest<TicketTimelineResponse>(
+    `tickets/audit/timeline?limit=${limit}`,
+  );
+}
+
+export function fetchTicketAvailability(): Promise<TicketAvailabilityResponse> {
+  return apiRequest<TicketAvailabilityResponse>(
+    'tickets/availability/dashboard',
+  );
 }

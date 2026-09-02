@@ -1,4 +1,10 @@
 <?php
+require_once __DIR__ . '/../../all/app_url.php';
+
+header('Location: ' . allterus_web_url('/tickets/availability/waiting-report'), true, 302);
+exit;
+__halt_compiler();
+
 session_start();
 ob_start();
 include_once("../../all/seguranca.php");

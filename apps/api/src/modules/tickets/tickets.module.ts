@@ -6,6 +6,8 @@ import { ConcludeTicket } from './application/conclude-ticket';
 import { FinalizeTicket } from './application/finalize-ticket';
 import { GetTicketClassificationCatalogs } from './application/get-ticket-classification-catalogs';
 import { GetTicketDetail } from './application/get-ticket-detail';
+import { GetTicketAvailability } from './application/get-ticket-availability';
+import { GetTicketTimeline } from './application/get-ticket-timeline';
 import { ListTicketAssignmentOptions } from './application/list-ticket-assignment-options';
 import { ListTicketRejectionOptions } from './application/list-ticket-rejection-options';
 import { ListTickets } from './application/list-tickets';
@@ -17,6 +19,8 @@ import { TicketCloseRepository } from './application/ports/ticket-close.reposito
 import { TicketDetailRepository } from './application/ports/ticket-detail.repository';
 import { TicketHoldRepository } from './application/ports/ticket-hold.repository';
 import { TicketInteractionRepository } from './application/ports/ticket-interaction.repository';
+import { TicketAvailabilityRepository } from './application/ports/ticket-availability.repository';
+import { TicketTimelineRepository } from './application/ports/ticket-timeline.repository';
 import { TicketRejectionRepository } from './application/ports/ticket-rejection.repository';
 import { TicketsReadRepository } from './application/ports/tickets-read.repository';
 import { PutTicketOnHold } from './application/put-ticket-on-hold';
@@ -33,9 +37,13 @@ import { PrismaTicketCloseRepository } from './infrastructure/persistence/prisma
 import { PrismaTicketDetailRepository } from './infrastructure/persistence/prisma-ticket-detail.repository';
 import { PrismaTicketHoldRepository } from './infrastructure/persistence/prisma-ticket-hold.repository';
 import { PrismaTicketInteractionRepository } from './infrastructure/persistence/prisma-ticket-interaction.repository';
+import { PrismaTicketAvailabilityRepository } from './infrastructure/persistence/prisma-ticket-availability.repository';
+import { PrismaTicketTimelineRepository } from './infrastructure/persistence/prisma-ticket-timeline.repository';
 import { PrismaTicketRejectionRepository } from './infrastructure/persistence/prisma-ticket-rejection.repository';
 import { PrismaTicketsReadRepository } from './infrastructure/persistence/prisma-tickets-read.repository';
 import { TicketAttachmentsController } from './presentation/http/ticket-attachments.controller';
+import { TicketAvailabilityController } from './presentation/http/ticket-availability.controller';
+import { TicketTimelineController } from './presentation/http/ticket-timeline.controller';
 import { TicketCreateController } from './presentation/http/ticket-create.controller';
 import { TicketClassificationController } from './presentation/http/ticket-classification.controller';
 import { TicketWorkflowController } from './presentation/http/ticket-workflow.controller';
@@ -49,6 +57,8 @@ import { TicketsController } from './presentation/http/tickets.controller';
     TicketClassificationController,
     TicketAttachmentsController,
     TicketCreateController,
+    TicketAvailabilityController,
+    TicketTimelineController,
   ],
   providers: [
     AddTicketInteraction,
@@ -57,6 +67,8 @@ import { TicketsController } from './presentation/http/tickets.controller';
     FinalizeTicket,
     GetTicketClassificationCatalogs,
     GetTicketDetail,
+    GetTicketAvailability,
+    GetTicketTimeline,
     ListTicketAssignmentOptions,
     ListTicketRejectionOptions,
     ListTickets,
@@ -74,6 +86,8 @@ import { TicketsController } from './presentation/http/tickets.controller';
     { provide: TicketHoldRepository, useClass: PrismaTicketHoldRepository },
     { provide: TicketRejectionRepository, useClass: PrismaTicketRejectionRepository },
     { provide: TicketInteractionRepository, useClass: PrismaTicketInteractionRepository },
+    { provide: TicketAvailabilityRepository, useClass: PrismaTicketAvailabilityRepository },
+    { provide: TicketTimelineRepository, useClass: PrismaTicketTimelineRepository },
     { provide: TicketDetailRepository, useClass: PrismaTicketDetailRepository },
     { provide: TicketsReadRepository, useClass: PrismaTicketsReadRepository },
   ],

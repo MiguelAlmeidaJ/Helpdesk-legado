@@ -15,6 +15,7 @@ const TICKET_PERMISSION = {
   hold: 'atendimentos.colocar_espera',
   reject: 'atendimentos.recusar',
   manageOthers: 'atendimentos.editar_terceiros',
+  audit: 'atendimentos.auditar',
 } as const;
 
 const USER_PERMISSION = {
@@ -98,6 +99,14 @@ export function translateRbacAccess(
     AppPermission.TicketsReject,
     permissions.has(TICKET_PERMISSION.reject),
     operationalScope,
+  );
+
+  addGrant(
+    grants,
+    AppPermission.TicketsAudit,
+    permissions.has(TICKET_PERMISSION.audit) ||
+      permissions.has(TICKET_PERMISSION.manageOthers),
+    PermissionScope.All,
   );
 
   return {
