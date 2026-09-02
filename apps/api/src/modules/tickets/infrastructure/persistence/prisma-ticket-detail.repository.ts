@@ -4,6 +4,7 @@ import {
   TicketStatus,
   type TicketDetailCode,
   type TicketDetailResponse,
+  type TicketHoldInfo,
   type TicketInteraction,
 } from '@helpdesk/contracts';
 import type { Nivel3DatabaseClient } from '@helpdesk/database';
@@ -67,6 +68,16 @@ interface InteractionRow {
   inter_desc: string | null;
   user_id: number;
   user_nome: string;
+}
+
+interface HoldRow {
+  espera_id: number;
+  espera_user: number;
+  espera_start: Date | string | null;
+  espera_prev: Date | string;
+  espera_causa: string;
+  espera_desc: string;
+  user_nome: string | null;
 }
 
 const TYPE_LABELS: Record<number, string> = {
@@ -240,7 +251,10 @@ export class PrismaTicketDetailRepository extends TicketDetailRepository {
       return null;
     }
 
-    const interactions = await this.fetchInteractions(row.id);
+    const [interactions, hold] = await Promise.all([
+      this.fetchInteractions(row.id),
+      this.fetchActiveHold(row.id),
+    ]);
     const status = validStatus(row.status);
 
     return {
@@ -299,6 +313,7 @@ export class PrismaTicketDetailRepository extends TicketDetailRepository {
         phone: row.tecnico_tel,
         email: row.tecnico_mail,
       },
+      hold,
       interactions,
     };
   }
@@ -326,6 +341,46 @@ export class PrismaTicketDetailRepository extends TicketDetailRepository {
     );
 
     return clients.map((client) => client.cliente_id);
+  }
+
+  private async fetchActiveHold(
+    ticketId: number,
+  ): Promise<TicketHoldInfo | null> {
+    const rows = await this.database.$queryRawUnsafe<HoldRow[]>(
+      `SELECT
+         e.espera_id,
+         e.espera_user,
+         e.espera_start,
+         e.espera_prev,
+         e.espera_causa,
+         e.espera_desc,
+         u.user_nome
+       FROM espera e
+       LEFT JOIN usuarios u ON u.user_id = e.espera_user
+       WHERE e.espera_atd = ?
+         AND e.espera_end IS NULL
+       ORDER BY e.espera_id DESC
+       LIMIT 1`,
+      ticketId,
+    );
+
+    const row = rows[0];
+
+    if (!row) {
+      return null;
+    }
+
+    return {
+      id: row.espera_id,
+      startedAt: toIsoString(row.espera_start),
+      forecastAt: toIsoString(row.espera_prev) ?? String(row.espera_prev),
+      cause: row.espera_causa,
+      description: row.espera_desc,
+      user: {
+        id: row.espera_user,
+        name: row.user_nome,
+      },
+    };
   }
 
   private async fetchInteractions(

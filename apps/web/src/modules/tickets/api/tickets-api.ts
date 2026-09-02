@@ -1,5 +1,6 @@
 import type {
   CreateTicketInteractionRequest,
+  PutTicketOnHoldRequest,
   RejectTicketRequest,
   TicketAssignmentOptionsResponse,
   TicketDetailResponse,
@@ -115,5 +116,24 @@ export async function rejectTicket(
       'Content-Type': 'application/json',
     },
     body: JSON.stringify(input),
+  });
+}
+
+export async function putTicketOnHold(
+  ticketId: number,
+  input: PutTicketOnHoldRequest,
+): Promise<void> {
+  await apiRequest<null>(`tickets/${ticketId}/hold`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(input),
+  });
+}
+
+export async function resumeTicket(ticketId: number): Promise<void> {
+  await apiRequest<null>(`tickets/${ticketId}/resume`, {
+    method: 'POST',
   });
 }

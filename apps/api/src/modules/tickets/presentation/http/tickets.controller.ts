@@ -24,10 +24,13 @@ import {
 } from '@nestjs/swagger';
 import {
   AppPermission,
-  type TicketAssignmentOptionsResponse,
+  TICKET_HOLD_CAUSES,
   type CreateTicketInteractionRequest,
+  type PutTicketOnHoldRequest,
   type RejectTicketRequest,
+  type TicketAssignmentOptionsResponse,
   type TicketDetailResponse,
+  type TicketHoldCause,
   type TicketListResponse,
   type TicketRejectionOptionsResponse,
   type UpdateTicketAssignmentRequest,
@@ -43,7 +46,9 @@ import { GetTicketDetail } from '../../application/get-ticket-detail';
 import { ListTicketAssignmentOptions } from '../../application/list-ticket-assignment-options';
 import { ListTicketRejectionOptions } from '../../application/list-ticket-rejection-options';
 import { ListTickets } from '../../application/list-tickets';
+import { PutTicketOnHold } from '../../application/put-ticket-on-hold';
 import { RejectTicket } from '../../application/reject-ticket';
+import { ResumeTicket } from '../../application/resume-ticket';
 import { UpdateTicketAssignment } from '../../application/update-ticket-assignment';
 import { parseTicketListQuery } from './dto/list-tickets.query';
 
@@ -125,6 +130,65 @@ function rejectionRequest(body: unknown): RejectTicketRequest {
   };
 }
 
+interface ParsedHoldRequest {
+  forecastAt: Date;
+  cause: TicketHoldCause;
+  description: string;
+}
+
+function holdRequest(body: unknown): ParsedHoldRequest {
+  if (!body || typeof body !== 'object') {
+    throw new BadRequestException('Corpo da requisição inválido.');
+  }
+
+  const request = body as Record<string, unknown>;
+  const forecastAt = request.forecastAt;
+  const cause = request.cause;
+  const description = request.description;
+
+  if (typeof forecastAt !== 'string') {
+    throw new BadRequestException('forecastAt é obrigatório.');
+  }
+
+  const forecastDate = new Date(forecastAt);
+
+  if (Number.isNaN(forecastDate.getTime())) {
+    throw new BadRequestException('forecastAt deve ser uma data válida.');
+  }
+
+  if (forecastDate.getTime() <= Date.now()) {
+    throw new BadRequestException('forecastAt deve estar no futuro.');
+  }
+
+  if (
+    typeof cause !== 'string' ||
+    !TICKET_HOLD_CAUSES.includes(cause as TicketHoldCause)
+  ) {
+    throw new BadRequestException('cause é inválida.');
+  }
+
+  if (typeof description !== 'string') {
+    throw new BadRequestException('description é obrigatório.');
+  }
+
+  const normalizedDescription = description.trim();
+
+  if (
+    normalizedDescription.length < 1 ||
+    normalizedDescription.length > 10_000
+  ) {
+    throw new BadRequestException(
+      'description deve ter entre 1 e 10000 caracteres.',
+    );
+  }
+
+  return {
+    forecastAt: forecastDate,
+    cause: cause as TicketHoldCause,
+    description: normalizedDescription,
+  };
+}
+
 @ApiTags('tickets')
 @Controller('tickets')
 @UseGuards(LegacySessionGuard, PermissionsGuard)
@@ -139,6 +203,8 @@ export class TicketsController {
     private readonly updateTicketAssignment: UpdateTicketAssignment,
     private readonly listRejectionOptions: ListTicketRejectionOptions,
     private readonly rejectTicket: RejectTicket,
+    private readonly putTicketOnHold: PutTicketOnHold,
+    private readonly resumeTicket: ResumeTicket,
   ) {}
 
   @Get()
@@ -534,6 +600,142 @@ export class TicketsController {
       ticketId,
       technicianId: request.technicianId,
       reason: request.reason,
+    });
+  }
+
+  @Post(':id/hold')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @RequirePermissions(
+    AppPermission.TicketsRead,
+    AppPermission.TicketsHold,
+  )
+  @ApiOperation({
+    summary: 'Colocar atendimento em espera',
+    description:
+      'Registra a espera, muda o atendimento para Em espera e adiciona a ação à timeline.',
+  })
+  @ApiParam({
+    name: 'id',
+    type: Number,
+    example: 1234,
+    description: 'ID do atendimento.',
+  })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['forecastAt', 'cause', 'description'],
+      properties: {
+        forecastAt: {
+          type: 'string',
+          format: 'date-time',
+          example: '2026-09-02T18:00:00.000Z',
+        },
+        cause: {
+          type: 'string',
+          enum: [...TICKET_HOLD_CAUSES],
+          example: 'Cliente',
+        },
+        description: {
+          type: 'string',
+          minLength: 1,
+          maxLength: 10000,
+          example: 'Aguardando retorno do solicitante com evidências.',
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 204,
+    description: 'Atendimento colocado em espera.',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Previsão, causa ou descrição inválidas.',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Sessão ausente, inválida ou expirada.',
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Usuário sem permissão ou fora do escopo operacional.',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Atendimento não encontrado ou fora do escopo do usuário.',
+  })
+  @ApiResponse({
+    status: 409,
+    description: 'Estado incompatível ou espera já ativa.',
+  })
+  async hold(
+    @CurrentUser() user: AuthenticatedUser | undefined,
+    @Param('id', ParseIntPipe) ticketId: number,
+    @Body() body: PutTicketOnHoldRequest,
+  ): Promise<void> {
+    if (!user) {
+      throw new UnauthorizedException('Usuário não autenticado.');
+    }
+
+    const request = holdRequest(body);
+
+    await this.putTicketOnHold.execute({
+      user,
+      ticketId,
+      forecastAt: request.forecastAt,
+      cause: request.cause,
+      description: request.description,
+    });
+  }
+
+  @Post(':id/resume')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @RequirePermissions(
+    AppPermission.TicketsRead,
+    AppPermission.TicketsHold,
+  )
+  @ApiOperation({
+    summary: 'Retomar atendimento em espera',
+    description:
+      'Fecha a espera ativa, volta o atendimento para Em execução e registra a retomada na timeline.',
+  })
+  @ApiParam({
+    name: 'id',
+    type: Number,
+    example: 1234,
+    description: 'ID do atendimento.',
+  })
+  @ApiResponse({
+    status: 204,
+    description: 'Atendimento retomado.',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Sessão ausente, inválida ou expirada.',
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Usuário sem permissão ou fora do escopo operacional.',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Atendimento não encontrado ou fora do escopo do usuário.',
+  })
+  @ApiResponse({
+    status: 409,
+    description: 'Atendimento fora de espera ou registro de espera ausente.',
+  })
+  async resume(
+    @CurrentUser() user: AuthenticatedUser | undefined,
+    @Param('id', ParseIntPipe) ticketId: number,
+  ): Promise<void> {
+    if (!user) {
+      throw new UnauthorizedException('Usuário não autenticado.');
+    }
+
+    await this.resumeTicket.execute({
+      user,
+      ticketId,
     });
   }
 

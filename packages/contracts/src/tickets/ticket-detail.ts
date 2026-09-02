@@ -1,3 +1,4 @@
+import type { TicketHoldInfo } from './ticket-hold';
 import type { TicketStatus } from './ticket-status';
 
 export interface TicketDetailCode {
@@ -70,5 +71,6 @@ export interface TicketDetailResponse {
     item: TicketDetailReference;
   };
   technician: TicketDetailTechnician;
+  hold: TicketHoldInfo | null;
   interactions: TicketInteraction[];
 }

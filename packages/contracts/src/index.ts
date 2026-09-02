@@ -8,6 +8,7 @@ export * from './auth/user-role';
 export * from './common/pagination';
 export * from './tickets/ticket-assignment';
 export * from './tickets/ticket-detail';
+export * from './tickets/ticket-hold';
 export * from './tickets/ticket-interaction';
 export * from './tickets/ticket-list';
 export * from './tickets/ticket-rejection';

@@ -14,6 +14,7 @@ import {
 import { SessionUserMenu } from '../../access/components/session-user-menu';
 import { AppSidebar } from '../../../shared/navigation/app-sidebar';
 import { TicketAssignmentActions } from './ticket-assignment-actions';
+import { TicketHoldActions } from './ticket-hold-actions';
 import { TicketRejectionActions } from './ticket-rejection-actions';
 import { ApiError } from '../../../shared/api/api-client';
 import {
@@ -208,6 +209,11 @@ export function TicketDetailScreen({
                 ticket={ticket}
               />
               <TicketRejectionActions
+                currentUser={currentUser}
+                onUpdated={setTicket}
+                ticket={ticket}
+              />
+              <TicketHoldActions
                 currentUser={currentUser}
                 onUpdated={setTicket}
                 ticket={ticket}
