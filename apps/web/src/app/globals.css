@@ -353,6 +353,16 @@ a {
   font-weight: 800;
 }
 
+.ticket-id-link {
+  color: #1f5fa8;
+  text-decoration: none;
+}
+
+.ticket-id-link:hover,
+.ticket-id-link:focus-visible {
+  text-decoration: underline;
+}
+
 .ticket-main {
   display: grid;
   gap: 3px;

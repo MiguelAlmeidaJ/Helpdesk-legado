@@ -1,4 +1,7 @@
-import type { TicketListResponse } from '@helpdesk/contracts';
+import type {
+  TicketDetailResponse,
+  TicketListResponse,
+} from '@helpdesk/contracts';
 import { apiRequest } from '../../../shared/api/api-client';
 
 export interface TicketListQuery {
@@ -46,6 +49,15 @@ export async function fetchTickets(
   append(params, 'direction', query.direction);
 
   return apiRequest<TicketListResponse>(`tickets?${params.toString()}`, {
+    signal,
+  });
+}
+
+export async function fetchTicketDetail(
+  ticketId: number,
+  signal?: AbortSignal,
+): Promise<TicketDetailResponse> {
+  return apiRequest<TicketDetailResponse>(`tickets/${ticketId}`, {
     signal,
   });
 }

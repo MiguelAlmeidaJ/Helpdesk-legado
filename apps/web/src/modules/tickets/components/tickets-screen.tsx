@@ -436,7 +436,14 @@ export function TicketsScreen({
               <tbody>
                 {(result?.data ?? []).map((ticket) => (
                   <tr key={ticket.id}>
-                    <td className="ticket-id">#{ticket.id}</td>
+                    <td className="ticket-id">
+                      <Link
+                        className="ticket-id-link"
+                        href={`/tickets/${ticket.id}`}
+                      >
+                        #{ticket.id}
+                      </Link>
+                    </td>
                     <td>
                       <div className="ticket-main">
                         <strong>

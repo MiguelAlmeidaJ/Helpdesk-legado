@@ -1,12 +1,15 @@
 import {
   Controller,
   Get,
+  Param,
+  ParseIntPipe,
   Query,
   UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
 import {
   ApiOperation,
+  ApiParam,
   ApiQuery,
   ApiResponse,
   ApiSecurity,
@@ -14,6 +17,7 @@ import {
 } from '@nestjs/swagger';
 import {
   AppPermission,
+  type TicketDetailResponse,
   type TicketListResponse,
 } from '@helpdesk/contracts';
 import { LEGACY_SESSION_SECURITY } from '../../../../core/openapi/openapi.constants';
@@ -22,6 +26,7 @@ import { CurrentUser } from '../../../access/presentation/http/current-user.deco
 import { LegacySessionGuard } from '../../../access/presentation/http/legacy-session.guard';
 import { PermissionsGuard } from '../../../access/presentation/http/permissions.guard';
 import { RequirePermissions } from '../../../access/presentation/http/require-permissions.decorator';
+import { GetTicketDetail } from '../../application/get-ticket-detail';
 import { ListTickets } from '../../application/list-tickets';
 import { parseTicketListQuery } from './dto/list-tickets.query';
 
@@ -31,7 +36,10 @@ import { parseTicketListQuery } from './dto/list-tickets.query';
 @RequirePermissions(AppPermission.TicketsRead)
 @ApiSecurity(LEGACY_SESSION_SECURITY)
 export class TicketsController {
-  constructor(private readonly listTickets: ListTickets) {}
+  constructor(
+    private readonly listTickets: ListTickets,
+    private readonly getTicketDetail: GetTicketDetail,
+  ) {}
 
   @Get()
   @ApiOperation({
@@ -169,6 +177,48 @@ export class TicketsController {
       page: parsed.page,
       limit: parsed.limit,
       filters: parsed.filters,
+    });
+  }
+
+  @Get(':id')
+  @ApiOperation({
+    summary: 'Obter detalhe do atendimento',
+    description:
+      'Retorna os dados normalizados do atendimento e sua timeline de interações.',
+  })
+  @ApiParam({
+    name: 'id',
+    type: Number,
+    example: 1234,
+    description: 'ID do atendimento.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Detalhe do atendimento.',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Sessão ausente, inválida ou expirada.',
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Usuário sem tickets.read para o escopo solicitado.',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Atendimento não encontrado ou fora do escopo do usuário.',
+  })
+  async detail(
+    @CurrentUser() user: AuthenticatedUser | undefined,
+    @Param('id', ParseIntPipe) ticketId: number,
+  ): Promise<TicketDetailResponse> {
+    if (!user) {
+      throw new UnauthorizedException('Usuário não autenticado.');
+    }
+
+    return this.getTicketDetail.execute({
+      user,
+      ticketId,
     });
   }
 }
