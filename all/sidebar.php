@@ -450,13 +450,13 @@ if (!function_exists('sidebar_href')) {
           <i class="fas fa-chevron-down menu-arrow"></i>
         </button>
         <div class="submenu">
-          <a href="<?php echo sidebar_href('atd/home.php'); ?>" class="menu-subitem"><i class="fas fa-list-ul"></i><span>Lista de Atendimentos</span></a>
+          <a href="<?php echo htmlspecialchars(allterus_web_url('/tickets'), ENT_QUOTES, 'UTF-8'); ?>" class="menu-subitem"><i class="fas fa-list-ul"></i><span>Lista de Atendimentos</span></a>
           <?php if ($m8_01 > 0) { ?>
             <a href="<?php echo sidebar_href('atd/disponibilidade/'); ?>" class="menu-subitem"><i class="fas fa-user-clock"></i><span>Disponibilidade Tecnica</span></a>
             <a href="<?php echo sidebar_href('atd/timeline.php'); ?>" class="menu-subitem"><i class="far fa-clock"></i><span>Timeline</span></a>
           <?php } ?>
           <?php if ($m3_01 > 0) { ?>
-            <a href="<?php echo sidebar_href('atd/atd.php'); ?>" class="menu-subitem"><i class="fas fa-plus"></i><span>Novo Atendimento</span></a>
+            <a href="<?php echo htmlspecialchars(allterus_web_url('/tickets/new'), ENT_QUOTES, 'UTF-8'); ?>" class="menu-subitem"><i class="fas fa-plus"></i><span>Novo Atendimento</span></a>
           <?php } ?>
         </div>
       </div>
@@ -614,7 +614,7 @@ if (!function_exists('sidebar_href')) {
         </button>
         <div class="submenu">
           <?php if ($showCadastroUsuarios) { ?>
-            <a href="<?php echo sidebar_href('user/home.php'); ?>" class="menu-subitem"><i class="fas fa-users"></i><span>Usuarios</span></a>
+            <a href="<?php echo htmlspecialchars(allterus_web_url('/users'), ENT_QUOTES, 'UTF-8'); ?>" class="menu-subitem"><i class="fas fa-users"></i><span>Usuários</span></a>
           <?php } ?>
           <?php if ($m2_01 > 0) { ?>
             <a href="<?php echo sidebar_href('cads/clientes.php'); ?>" class="menu-subitem"><i class="fas fa-building"></i><span>Clientes</span></a>
@@ -661,10 +661,10 @@ if (!function_exists('sidebar_href')) {
       <i class="far fa-question-circle text-xl"></i>
       <span class="label">Help</span>
     </button>
-    <button class="menu-item" type="button" data-toggle="modal" data-target="#modalSenha">
+    <a href="<?php echo htmlspecialchars(allterus_web_url('/account/password'), ENT_QUOTES, 'UTF-8'); ?>" class="menu-item">
       <i class="fas fa-user-cog text-xl"></i>
       <span class="label">Senha</span>
-    </button>
+    </a>
     <a href="<?php echo sidebar_href('logout.php'); ?>" class="menu-item">
       <i class="fas fa-sign-out-alt text-xl"></i>
       <span class="label">Sair</span>

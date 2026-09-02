@@ -98,4 +98,14 @@ export class ApiSessionRepository {
       tokenHash(token),
     );
   }
+
+  async revokeAllForUser(userId: number, reason: string): Promise<void> {
+    await this.database.$executeRawUnsafe(
+      `UPDATE api_sessions
+       SET revoked_at = NOW(), revoke_reason = ?
+       WHERE user_id = ? AND revoked_at IS NULL`,
+      reason,
+      userId,
+    );
+  }
 }

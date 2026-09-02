@@ -16,3 +16,5 @@ export * from './tickets/ticket-status';
 export * from './tickets/ticket-workflow';
 export * from './tickets/ticket-classification';
 export * from './tickets/ticket-attachment';
+export * from './tickets/ticket-create';
+export * from './users/user';

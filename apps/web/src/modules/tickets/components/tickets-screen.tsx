@@ -1,11 +1,12 @@
 "use client";
 
-import type {
-  CurrentUserResponse,
-  TicketFilterOption,
-  TicketListItem,
-  TicketListResponse,
-  TicketStatusCard,
+import {
+  AppPermission,
+  type CurrentUserResponse,
+  type TicketFilterOption,
+  type TicketListItem,
+  type TicketListResponse,
+  type TicketStatusCard,
 } from '@helpdesk/contracts';
 import Link from 'next/link';
 import {
@@ -273,6 +274,15 @@ export function TicketsScreen({
               NestJS.
             </p>
           </div>
+          {currentUser.grants.some(
+            (grant) =>
+              grant.permission === AppPermission.SystemAdmin ||
+              grant.permission === AppPermission.TicketsCreate,
+          ) ? (
+            <Link className="button button-primary" href="/tickets/new">
+              Novo atendimento
+            </Link>
+          ) : null}
         </div>
 
         {result ? (

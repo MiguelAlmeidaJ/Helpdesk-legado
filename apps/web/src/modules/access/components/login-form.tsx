@@ -1,6 +1,7 @@
 "use client";
 
 import type { FormEvent } from 'react';
+import Link from 'next/link';
 import { useState } from 'react';
 import { ApiError, apiRequest } from '../../../shared/api/api-client';
 import styles from './login-form.module.css';
@@ -90,9 +91,12 @@ export function LoginForm({ nextPath }: { nextPath: string }) {
           </button>
         </form>
 
+        <Link className={styles.recoveryLink} href="/forgot-password">
+          Esqueci minha senha
+        </Link>
+
         <p className={styles.note}>
-          Durante a migração, sessões PHP já existentes continuam aceitas pela
-          API. O novo login cria uma sessão própria do NestJS.
+          O login cria uma sessão segura e própria da nova plataforma.
         </p>
       </section>
     </main>

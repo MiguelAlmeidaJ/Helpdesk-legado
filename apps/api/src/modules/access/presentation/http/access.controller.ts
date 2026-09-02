@@ -21,7 +21,14 @@ import {
 } from '@nestjs/swagger';
 import type { CurrentUserResponse } from '@helpdesk/contracts';
 import { LEGACY_SESSION_SECURITY } from '../../../../core/openapi/openapi.constants';
+import {
+  isStrongPassword,
+  PASSWORD_POLICY_MESSAGE,
+} from '../../../../core/security/password-policy';
 import { AuthenticateWithPassword } from '../../application/authenticate-with-password';
+import { ChangePassword } from '../../application/change-password';
+import { RequestPasswordReset } from '../../application/request-password-reset';
+import { ResetPassword } from '../../application/reset-password';
 import type { AuthenticatedUser } from '../../domain/authenticated-user';
 import { ApiSessionRepository } from '../../infrastructure/api-session.repository';
 import { CurrentUser } from './current-user.decorator';
@@ -65,7 +72,7 @@ function currentUserResponse(user: AuthenticatedUser): CurrentUserResponse {
 
 function stringField(
   body: unknown,
-  field: 'login' | 'password',
+  field: 'login' | 'password' | 'email' | 'token' | 'currentPassword' | 'newPassword',
   maxLength: number,
 ): string {
   if (!body || typeof body !== 'object') {
@@ -92,9 +99,32 @@ function stringField(
 export class AccessController {
   constructor(
     private readonly authenticate: AuthenticateWithPassword,
+    private readonly changePassword: ChangePassword,
+    private readonly requestPasswordReset: RequestPasswordReset,
+    private readonly resetPassword: ResetPassword,
     private readonly apiSessions: ApiSessionRepository,
     private readonly config: ConfigService,
   ) {}
+
+  private clearSessionCookies(response: CookieResponse): void {
+    const nativeCookie =
+      this.config.get<string>('API_SESSION_COOKIE')?.trim() ||
+      'HELPDESK_SESSION';
+    const legacyCookie =
+      this.config.get<string>('LEGACY_SESSION_COOKIE')?.trim() || 'PHPSESSID';
+    const secure =
+      this.config.get<string>('SESSION_COOKIE_SECURE')?.trim().toLowerCase() ===
+      'true';
+    const options = {
+      httpOnly: true,
+      path: '/',
+      sameSite: 'lax' as const,
+      secure,
+    };
+
+    response.clearCookie(nativeCookie, options);
+    response.clearCookie(legacyCookie, options);
+  }
 
   @Post('login')
   @HttpCode(HttpStatus.OK)
@@ -174,26 +204,81 @@ export class AccessController {
     const nativeCookie =
       this.config.get<string>('API_SESSION_COOKIE')?.trim() ||
       'HELPDESK_SESSION';
-    const legacyCookie =
-      this.config.get<string>('LEGACY_SESSION_COOKIE')?.trim() || 'PHPSESSID';
     const nativeToken = readCookie(cookieHeader, nativeCookie);
-    const secure =
-      this.config.get<string>('SESSION_COOKIE_SECURE')?.trim().toLowerCase() ===
-      'true';
 
     if (nativeToken) {
       await this.apiSessions.revoke(nativeToken, 'logout');
     }
 
-    const options = {
-      httpOnly: true,
-      path: '/',
-      sameSite: 'lax' as const,
-      secure,
-    };
+    this.clearSessionCookies(response);
+  }
 
-    response.clearCookie(nativeCookie, options);
-    response.clearCookie(legacyCookie, options);
+  @Post('password/forgot')
+  @HttpCode(HttpStatus.ACCEPTED)
+  @ApiOperation({ summary: 'Solicitar recuperação de senha' })
+  @ApiResponse({
+    status: 202,
+    description: 'Solicitação processada sem revelar se o e-mail existe.',
+  })
+  async forgotPassword(@Body() body: unknown): Promise<void> {
+    const email = stringField(body, 'email', 100).toLowerCase();
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      throw new BadRequestException('E-mail inválido.');
+    }
+
+    await this.requestPasswordReset.execute(email);
+  }
+
+  @Post('password/reset')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Redefinir senha com token de recuperação' })
+  @ApiResponse({ status: 204, description: 'Senha redefinida.' })
+  @ApiResponse({ status: 400, description: 'Token ou senha inválidos.' })
+  async completePasswordReset(@Body() body: unknown): Promise<void> {
+    const token = stringField(body, 'token', 200);
+    const password = stringField(body, 'password', 100);
+
+    if (!/^[a-f0-9]{64}$/i.test(token)) {
+      throw new BadRequestException('Token inválido ou expirado.');
+    }
+
+    if (!isStrongPassword(password)) {
+      throw new BadRequestException(PASSWORD_POLICY_MESSAGE);
+    }
+
+    if (!(await this.resetPassword.execute(token, password))) {
+      throw new BadRequestException('Token inválido ou expirado.');
+    }
+  }
+
+  @Post('password/change')
+  @UseGuards(LegacySessionGuard)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Alterar a senha do usuário autenticado' })
+  @ApiResponse({ status: 204, description: 'Senha alterada e sessões revogadas.' })
+  @ApiResponse({ status: 401, description: 'Senha atual inválida.' })
+  async updatePassword(
+    @Body() body: unknown,
+    @CurrentUser() user: AuthenticatedUser | undefined,
+    @Res({ passthrough: true }) response: CookieResponse,
+  ): Promise<void> {
+    if (!user) {
+      throw new UnauthorizedException('Usuário não autenticado.');
+    }
+
+    const currentPassword = stringField(body, 'currentPassword', 200);
+    const newPassword = stringField(body, 'newPassword', 100);
+
+    if (!isStrongPassword(newPassword)) {
+      throw new BadRequestException(PASSWORD_POLICY_MESSAGE);
+    }
+
+    if (!(await this.changePassword.execute(user.id, currentPassword, newPassword))) {
+      throw new UnauthorizedException('Senha atual inválida.');
+    }
+
+    this.clearSessionCookies(response);
   }
 
   @Get('me')

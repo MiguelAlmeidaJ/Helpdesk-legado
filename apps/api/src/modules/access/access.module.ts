@@ -1,9 +1,14 @@
 import { Module } from '@nestjs/common';
 import { AuthenticateWithPassword } from './application/authenticate-with-password';
+import { ChangePassword } from './application/change-password';
+import { RequestPasswordReset } from './application/request-password-reset';
+import { ResetPassword } from './application/reset-password';
 import { ResolveAuthenticatedUser } from './application/resolve-authenticated-user';
 import { AccessIdentityRepository } from './infrastructure/access-identity.repository';
 import { ApiSessionRepository } from './infrastructure/api-session.repository';
 import { LegacyPhpSessionRepository } from './infrastructure/legacy-php-session.repository';
+import { PasswordRecoveryRepository } from './infrastructure/password-recovery.repository';
+import { PasswordResetMailer } from './infrastructure/password-reset-mailer';
 import { RbacAccessRepository } from './infrastructure/rbac-access.repository';
 import { AccessController } from './presentation/http/access.controller';
 import { LegacySessionGuard } from './presentation/http/legacy-session.guard';
@@ -16,6 +21,11 @@ const accessProviders = [
   RbacAccessRepository,
   ResolveAuthenticatedUser,
   AuthenticateWithPassword,
+  ChangePassword,
+  RequestPasswordReset,
+  ResetPassword,
+  PasswordRecoveryRepository,
+  PasswordResetMailer,
   LegacySessionGuard,
   PermissionsGuard,
 ];

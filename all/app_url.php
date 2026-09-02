@@ -104,3 +104,39 @@ if (!function_exists('allterus_app_href')) {
     return allterus_relative_url(allterus_app_url($path));
   }
 }
+
+if (!function_exists('allterus_env_value')) {
+  function allterus_env_value($name, $default = '')
+  {
+    $environment = getenv((string)$name);
+    if ($environment !== false && trim((string)$environment) !== '') {
+      return trim((string)$environment);
+    }
+
+    $path = dirname(__DIR__) . DIRECTORY_SEPARATOR . '.env';
+    if (!is_readable($path)) {
+      return $default;
+    }
+
+    foreach (file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) ?: [] as $line) {
+      $line = trim((string)$line);
+      if ($line === '' || $line[0] === '#' || strpos($line, '=') === false) {
+        continue;
+      }
+      [$key, $value] = array_map('trim', explode('=', $line, 2));
+      if ($key === $name) {
+        return trim($value, "\"'");
+      }
+    }
+
+    return $default;
+  }
+}
+
+if (!function_exists('allterus_web_url')) {
+  function allterus_web_url($path = '')
+  {
+    $origin = rtrim((string)allterus_env_value('WEB_PUBLIC_URL', allterus_env_value('WEB_ORIGIN', 'http://localhost:3000')), '/');
+    return $origin . '/' . ltrim((string)$path, '/');
+  }
+}

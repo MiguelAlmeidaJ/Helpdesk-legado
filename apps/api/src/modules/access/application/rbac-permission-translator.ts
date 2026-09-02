@@ -17,6 +17,13 @@ const TICKET_PERMISSION = {
   manageOthers: 'atendimentos.editar_terceiros',
 } as const;
 
+const USER_PERMISSION = {
+  read: 'usuarios.visualizar',
+  create: 'usuarios.criar',
+  edit: 'usuarios.editar',
+  manageAccess: 'usuarios.editar_acesso',
+} as const;
+
 function addGrant(
   grants: PermissionGrant[],
   permission: AppPermission,
@@ -34,6 +41,11 @@ export function translateRbacAccess(
 ): AuthenticatedUser {
   const permissions = snapshot.permissionSlugs;
   const grants: PermissionGrant[] = [];
+
+  addGrant(grants, AppPermission.UsersRead, permissions.has(USER_PERMISSION.read), PermissionScope.All);
+  addGrant(grants, AppPermission.UsersCreate, permissions.has(USER_PERMISSION.create), PermissionScope.All);
+  addGrant(grants, AppPermission.UsersEdit, permissions.has(USER_PERMISSION.edit), PermissionScope.All);
+  addGrant(grants, AppPermission.UsersManageAccess, permissions.has(USER_PERMISSION.manageAccess), PermissionScope.All);
 
   const operationalScope = permissions.has(TICKET_PERMISSION.manageOthers)
     ? PermissionScope.All

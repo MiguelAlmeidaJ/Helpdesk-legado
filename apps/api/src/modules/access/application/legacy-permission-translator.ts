@@ -43,7 +43,37 @@ export function translateLegacySession(
   session: LegacyUserSession,
 ): AuthenticatedUser {
   const grants: PermissionGrant[] = [];
+  const users = session.modules[1];
   const tickets = session.modules[3];
+
+  pushGrant(
+    grants,
+    AppPermission.UsersRead,
+    permissionLevel(users, 1),
+    1,
+    PermissionScope.All,
+  );
+  pushGrant(
+    grants,
+    AppPermission.UsersCreate,
+    permissionLevel(users, 2),
+    1,
+    PermissionScope.All,
+  );
+  pushGrant(
+    grants,
+    AppPermission.UsersEdit,
+    permissionLevel(users, 3),
+    1,
+    PermissionScope.All,
+  );
+  pushGrant(
+    grants,
+    AppPermission.UsersManageAccess,
+    permissionLevel(users, 4),
+    1,
+    PermissionScope.All,
+  );
 
   const canManageOthers = permissionLevel(tickets, 5) >= 2;
   const operationalScope = canManageOthers

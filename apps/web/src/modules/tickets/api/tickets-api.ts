@@ -1,5 +1,7 @@
 import type {
   ConcludeTicketRequest,
+  CreateTicketRequest,
+  CreateTicketResponse,
   CreateTicketInteractionRequest,
   FinalizeTicketRequest,
   PutTicketOnHoldRequest,
@@ -10,6 +12,7 @@ import type {
   TicketAttachmentsResponse,
   TicketCatalogOption,
   TicketClassificationCatalogsResponse,
+  TicketCreateCatalogsResponse,
   TicketDetailResponse,
   TicketListResponse,
   TicketRejectionOptionsResponse,
@@ -239,4 +242,24 @@ export async function deleteTicketAttachment(
     `tickets/${ticketId}/attachments/${kind}/${attachmentId}`,
     { method: 'DELETE' },
   );
+}
+
+export function fetchTicketCreateCatalogs(): Promise<TicketCreateCatalogsResponse> {
+  return apiRequest<TicketCreateCatalogsResponse>('tickets/create/catalogs');
+}
+
+export function fetchTicketRequesters(clientId: number): Promise<TicketCatalogOption[]> {
+  return apiRequest<TicketCatalogOption[]>(`tickets/create/requesters?clientId=${clientId}`);
+}
+
+export function fetchTicketLocations(clientId: number): Promise<TicketCatalogOption[]> {
+  return apiRequest<TicketCatalogOption[]>(`tickets/create/locations?clientId=${clientId}`);
+}
+
+export function createTicket(input: CreateTicketRequest): Promise<CreateTicketResponse> {
+  return apiRequest<CreateTicketResponse>('tickets', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(input),
+  });
 }

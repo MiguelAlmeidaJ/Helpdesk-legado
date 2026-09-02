@@ -102,6 +102,24 @@
   font-size: 13px;
 }
 
+.success {
+  padding: 11px 12px;
+  border: 1px solid #b9dcc7;
+  border-radius: 8px;
+  background: #f3fbf6;
+  color: #24613b;
+  font-size: 13px;
+}
+
+.recoveryLink,
+.backLink {
+  display: inline-block;
+  margin-top: 16px;
+  color: #1f5fa8;
+  font-size: 13px;
+  font-weight: 700;
+}
+
 .note {
   margin-top: 22px;
   padding-top: 18px;

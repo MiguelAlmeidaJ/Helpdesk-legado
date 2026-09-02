@@ -21,6 +21,11 @@ interface IdentityRow {
   user_modulo_09: string;
 }
 
+interface RecoveryIdentityRow {
+  user_id: number;
+  user_mail: string;
+}
+
 export interface AccessCredential {
   session: LegacyUserSession;
   passwordHash: string;
@@ -87,6 +92,30 @@ export class AccessIdentityRepository {
     );
 
     return this.toCredential(rows[0]);
+  }
+
+  async findActiveByEmail(
+    email: string,
+  ): Promise<{ id: number; email: string } | null> {
+    const rows = await this.database.$queryRawUnsafe<RecoveryIdentityRow[]>(
+      `SELECT user_id, user_mail
+       FROM usuarios
+       WHERE LOWER(user_mail) = LOWER(?)
+         AND user_sts = 1
+       LIMIT 1`,
+      email,
+    );
+    const row = rows[0];
+
+    return row ? { id: row.user_id, email: row.user_mail } : null;
+  }
+
+  async updatePassword(userId: number, passwordHash: string): Promise<void> {
+    await this.database.$executeRawUnsafe(
+      `UPDATE usuarios SET user_pass = ? WHERE user_id = ? AND user_sts = 1`,
+      passwordHash,
+      userId,
+    );
   }
 
   async recordLogin(userId: number): Promise<void> {

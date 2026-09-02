@@ -13,7 +13,9 @@ export enum AppPermission {
   TicketsRadio = 'tickets.radio',
 
   UsersRead = 'users.read',
-  UsersManage = 'users.manage',
+  UsersCreate = 'users.create',
+  UsersEdit = 'users.edit',
+  UsersManageAccess = 'users.manage-access',
 
   FinanceRead = 'finance.read',
   FinanceManage = 'finance.manage',

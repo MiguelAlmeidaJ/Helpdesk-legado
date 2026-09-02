@@ -100,7 +100,8 @@
   font-size: 11px;
 }
 
-.popover button {
+.popover button,
+.actionLink {
   width: 100%;
   min-height: 38px;
   margin-top: 10px;
@@ -112,7 +113,15 @@
   cursor: pointer;
 }
 
-.popover button:hover {
+.actionLink {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+
+.popover button:hover,
+.actionLink:hover {
   background: #f7f9fb;
 }
 

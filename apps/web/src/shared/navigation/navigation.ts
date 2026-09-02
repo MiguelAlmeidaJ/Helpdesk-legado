@@ -40,7 +40,7 @@ export const APP_NAVIGATION_SECTIONS: NavigationSection[] = [
         status: 'planned',
       },
       { id: 'tickets-timeline', label: 'Timeline', status: 'planned' },
-      { id: 'tickets-new', label: 'Novo Atendimento', status: 'planned' },
+      { id: 'tickets-new', label: 'Novo Atendimento', href: '/tickets/new', status: 'available' },
     ],
   },
   {
@@ -128,7 +128,7 @@ export const APP_NAVIGATION_SECTIONS: NavigationSection[] = [
     label: 'Cadastros',
     shortLabel: 'CD',
     items: [
-      { id: 'users', label: 'Usuários', status: 'planned' },
+      { id: 'users', label: 'Usuários', href: '/users', status: 'available' },
       { id: 'clients', label: 'Clientes', status: 'planned' },
       { id: 'categories', label: 'Categorias', status: 'planned' },
       { id: 'catalogs', label: 'Catálogos', status: 'planned' },

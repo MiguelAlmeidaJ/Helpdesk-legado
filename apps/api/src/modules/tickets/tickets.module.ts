@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { AccessModule } from '../access/access.module';
 import { AddTicketInteraction } from './application/add-ticket-interaction';
+import { CreateTicket } from './application/create-ticket';
 import { ConcludeTicket } from './application/conclude-ticket';
 import { FinalizeTicket } from './application/finalize-ticket';
 import { GetTicketClassificationCatalogs } from './application/get-ticket-classification-catalogs';
@@ -10,6 +11,7 @@ import { ListTicketRejectionOptions } from './application/list-ticket-rejection-
 import { ListTickets } from './application/list-tickets';
 import { TicketAssignmentRepository } from './application/ports/ticket-assignment.repository';
 import { TicketAttachmentRepository } from './application/ports/ticket-attachment.repository';
+import { TicketCreateRepository } from './application/ports/ticket-create.repository';
 import { TicketClassificationRepository } from './application/ports/ticket-classification.repository';
 import { TicketCloseRepository } from './application/ports/ticket-close.repository';
 import { TicketDetailRepository } from './application/ports/ticket-detail.repository';
@@ -25,6 +27,7 @@ import { UpdateTicketAssignment } from './application/update-ticket-assignment';
 import { UpdateTicketClassification } from './application/update-ticket-classification';
 import { PrismaTicketAssignmentRepository } from './infrastructure/persistence/prisma-ticket-assignment.repository';
 import { PrismaTicketAttachmentRepository } from './infrastructure/persistence/prisma-ticket-attachment.repository';
+import { PrismaTicketCreateRepository } from './infrastructure/persistence/prisma-ticket-create.repository';
 import { PrismaTicketClassificationRepository } from './infrastructure/persistence/prisma-ticket-classification.repository';
 import { PrismaTicketCloseRepository } from './infrastructure/persistence/prisma-ticket-close.repository';
 import { PrismaTicketDetailRepository } from './infrastructure/persistence/prisma-ticket-detail.repository';
@@ -33,6 +36,7 @@ import { PrismaTicketInteractionRepository } from './infrastructure/persistence/
 import { PrismaTicketRejectionRepository } from './infrastructure/persistence/prisma-ticket-rejection.repository';
 import { PrismaTicketsReadRepository } from './infrastructure/persistence/prisma-tickets-read.repository';
 import { TicketAttachmentsController } from './presentation/http/ticket-attachments.controller';
+import { TicketCreateController } from './presentation/http/ticket-create.controller';
 import { TicketClassificationController } from './presentation/http/ticket-classification.controller';
 import { TicketWorkflowController } from './presentation/http/ticket-workflow.controller';
 import { TicketsController } from './presentation/http/tickets.controller';
@@ -44,9 +48,11 @@ import { TicketsController } from './presentation/http/tickets.controller';
     TicketWorkflowController,
     TicketClassificationController,
     TicketAttachmentsController,
+    TicketCreateController,
   ],
   providers: [
     AddTicketInteraction,
+    CreateTicket,
     ConcludeTicket,
     FinalizeTicket,
     GetTicketClassificationCatalogs,
@@ -62,6 +68,7 @@ import { TicketsController } from './presentation/http/tickets.controller';
     UpdateTicketClassification,
     { provide: TicketAssignmentRepository, useClass: PrismaTicketAssignmentRepository },
     { provide: TicketAttachmentRepository, useClass: PrismaTicketAttachmentRepository },
+    { provide: TicketCreateRepository, useClass: PrismaTicketCreateRepository },
     { provide: TicketClassificationRepository, useClass: PrismaTicketClassificationRepository },
     { provide: TicketCloseRepository, useClass: PrismaTicketCloseRepository },
     { provide: TicketHoldRepository, useClass: PrismaTicketHoldRepository },

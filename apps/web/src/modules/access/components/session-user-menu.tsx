@@ -4,6 +4,7 @@ import {
   USER_ROLE_LABELS,
   type CurrentUserResponse,
 } from '@helpdesk/contracts';
+import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import { ApiError, apiRequest } from '../../../shared/api/api-client';
 import styles from './session-user-menu.module.css';
@@ -85,6 +86,10 @@ export function SessionUserMenu({ user }: { user: CurrentUserResponse }) {
         </div>
 
         {error ? <div className={styles.error} role="alert">{error}</div> : null}
+
+        <Link className={styles.actionLink} href="/account/password">
+          Alterar senha
+        </Link>
 
         <button disabled={loggingOut} onClick={logout} type="button">
           {loggingOut ? 'Saindo…' : 'Sair'}
