@@ -45,6 +45,29 @@ module.exports = {
       }),
     },
     {
+      name: 'helpdesk-ticket-worker',
+      cwd: root,
+      script: path.join(root, 'apps/api/dist/worker.js'),
+      interpreter: 'node',
+      instances: 1,
+      exec_mode: 'fork',
+      autorestart: true,
+      watch: false,
+      max_memory_restart: '384M',
+      env: definedEnv({
+        NODE_ENV: 'production',
+        NIVEL3_DATABASE_URL: process.env.NIVEL3_DATABASE_URL,
+        N3RD_DATABASE_URL: process.env.N3RD_DATABASE_URL,
+        DB_CONNECTION_LIMIT: process.env.DB_CONNECTION_LIMIT,
+        TICKET_HOLD_AUTO_RESUME_ENABLED:
+          process.env.TICKET_HOLD_AUTO_RESUME_ENABLED ?? 'false',
+        TICKET_HOLD_AUTO_RESUME_INTERVAL_MS:
+          process.env.TICKET_HOLD_AUTO_RESUME_INTERVAL_MS ?? '60000',
+        TICKET_HOLD_AUTO_RESUME_BATCH_SIZE:
+          process.env.TICKET_HOLD_AUTO_RESUME_BATCH_SIZE ?? '100',
+      }),
+    },
+    {
       name: 'helpdesk-web',
       cwd: path.join(root, 'apps/web'),
       script: path.join(root, 'apps/web/node_modules/next/dist/bin/next'),
