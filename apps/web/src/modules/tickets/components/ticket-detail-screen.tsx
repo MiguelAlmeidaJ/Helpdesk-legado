@@ -6,11 +6,18 @@ import type {
   TicketInteraction,
 } from '@helpdesk/contracts';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import {
+  type FormEvent,
+  useEffect,
+  useState,
+} from 'react';
 import { SessionUserMenu } from '../../access/components/session-user-menu';
 import { AppSidebar } from '../../../shared/navigation/app-sidebar';
 import { ApiError } from '../../../shared/api/api-client';
-import { fetchTicketDetail } from '../api/tickets-api';
+import {
+  createTicketInteraction,
+  fetchTicketDetail,
+} from '../api/tickets-api';
 import styles from './ticket-detail-screen.module.css';
 
 function formatDate(value: string | null): string {
@@ -88,6 +95,10 @@ export function TicketDetailScreen({
   const [ticket, setTicket] = useState<TicketDetailResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [interactionOpen, setInteractionOpen] = useState(false);
+  const [interactionDescription, setInteractionDescription] = useState('');
+  const [interactionSaving, setInteractionSaving] = useState(false);
+  const [interactionFeedback, setInteractionFeedback] = useState<string | null>(null);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -109,6 +120,53 @@ export function TicketDetailScreen({
 
     return () => controller.abort();
   }, [ticketId]);
+
+  async function submitInteraction(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    const description = interactionDescription.trim();
+
+    if (!description) {
+      setInteractionFeedback('Descreva a interação antes de salvar.');
+      return;
+    }
+
+    setInteractionSaving(true);
+    setInteractionFeedback(null);
+
+    try {
+      await createTicketInteraction(ticketId, { description });
+
+      setInteractionDescription('');
+      setInteractionOpen(false);
+      setInteractionFeedback('Interação adicionada ao histórico.');
+
+      try {
+        const updatedTicket = await fetchTicketDetail(ticketId);
+        setTicket(updatedTicket);
+      } catch {
+        setInteractionFeedback(
+          'Interação adicionada, mas não foi possível atualizar o histórico. Recarregue a página.',
+        );
+      }
+    } catch (reason: unknown) {
+      if (reason instanceof ApiError && reason.status === 401) {
+        setInteractionFeedback('Sua sessão expirou. Entre novamente.');
+      } else if (reason instanceof ApiError && reason.status === 404) {
+        setInteractionFeedback(
+          'Atendimento não encontrado ou fora do seu escopo.',
+        );
+      } else if (reason instanceof ApiError) {
+        setInteractionFeedback(
+          `Não foi possível salvar a interação (erro ${reason.status}).`,
+        );
+      } else {
+        setInteractionFeedback('Não foi possível conectar à API.');
+      }
+    } finally {
+      setInteractionSaving(false);
+    }
+  }
 
   return (
     <main className={styles.page}>
@@ -293,8 +351,65 @@ export function TicketDetailScreen({
             <aside className={styles.timelineCard}>
               <div className={styles.cardHeader}>
                 <h2>Histórico</h2>
-                <span>{ticket.interactions.length} registros</span>
+                <div className={styles.timelineHeaderActions}>
+                  <span>{ticket.interactions.length} registros</span>
+                  <button
+                    className={styles.newInteractionButton}
+                    onClick={() => {
+                      setInteractionOpen((current) => !current);
+                      setInteractionFeedback(null);
+                    }}
+                    type="button"
+                  >
+                    {interactionOpen ? 'Cancelar' : 'Nova interação'}
+                  </button>
+                </div>
               </div>
+
+              {interactionOpen ? (
+                <form
+                  className={styles.interactionForm}
+                  onSubmit={submitInteraction}
+                >
+                  <label htmlFor="ticket-interaction">
+                    Descrição da interação
+                  </label>
+                  <textarea
+                    autoFocus
+                    disabled={interactionSaving}
+                    id="ticket-interaction"
+                    maxLength={10000}
+                    onChange={(event) =>
+                      setInteractionDescription(event.target.value)
+                    }
+                    placeholder="Descreva o contato, orientação ou atualização..."
+                    required
+                    rows={5}
+                    value={interactionDescription}
+                  />
+                  <div className={styles.interactionFormFooter}>
+                    <small>
+                      {interactionDescription.length.toLocaleString('pt-BR')}
+                      /10.000
+                    </small>
+                    <button
+                      disabled={
+                        interactionSaving ||
+                        interactionDescription.trim().length === 0
+                      }
+                      type="submit"
+                    >
+                      {interactionSaving ? 'Salvando…' : 'Adicionar'}
+                    </button>
+                  </div>
+                </form>
+              ) : null}
+
+              {interactionFeedback ? (
+                <div className={styles.interactionFeedback}>
+                  {interactionFeedback}
+                </div>
+              ) : null}
 
               <div className={styles.timeline}>
                 {ticket.interactions.length === 0 ? (

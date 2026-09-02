@@ -128,6 +128,107 @@
   font-size: 11px;
 }
 
+.timelineHeaderActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.newInteractionButton {
+  min-height: 30px;
+  padding: 0 9px;
+  border: 1px solid #1f5fa8;
+  border-radius: 7px;
+  background: #ffffff;
+  color: #1f5fa8;
+  font-size: 10px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.newInteractionButton:hover {
+  background: #eaf2fb;
+}
+
+.interactionForm {
+  display: grid;
+  gap: 7px;
+  padding: 13px 16px;
+  border-bottom: 1px solid #edf1f4;
+  background: #fbfcfd;
+}
+
+.interactionForm label {
+  color: #52606d;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.interactionForm textarea {
+  width: 100%;
+  resize: vertical;
+  min-height: 96px;
+  padding: 10px;
+  border: 1px solid #cbd5df;
+  border-radius: 8px;
+  outline: none;
+  background: #ffffff;
+  color: #263746;
+  font: inherit;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.interactionForm textarea:focus {
+  border-color: #1f5fa8;
+  box-shadow: 0 0 0 3px rgba(31, 95, 168, 0.1);
+}
+
+.interactionFormFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.interactionFormFooter small {
+  color: #84919d;
+  font-size: 9px;
+}
+
+.interactionFormFooter button {
+  min-height: 32px;
+  padding: 0 11px;
+  border: 1px solid #1f5fa8;
+  border-radius: 7px;
+  background: #1f5fa8;
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.interactionFormFooter button:hover {
+  background: #194f8d;
+}
+
+.interactionFormFooter button:disabled,
+.interactionForm textarea:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.interactionFeedback {
+  padding: 9px 16px;
+  border-bottom: 1px solid #edf1f4;
+  background: #f5f8fa;
+  color: #52606d;
+  font-size: 10px;
+  line-height: 1.45;
+}
+
 .cardBody {
   padding: 16px;
 }

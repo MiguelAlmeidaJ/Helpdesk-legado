@@ -1,4 +1,5 @@
 import type {
+  CreateTicketInteractionRequest,
   TicketDetailResponse,
   TicketListResponse,
 } from '@helpdesk/contracts';
@@ -59,5 +60,18 @@ export async function fetchTicketDetail(
 ): Promise<TicketDetailResponse> {
   return apiRequest<TicketDetailResponse>(`tickets/${ticketId}`, {
     signal,
+  });
+}
+
+export async function createTicketInteraction(
+  ticketId: number,
+  input: CreateTicketInteractionRequest,
+): Promise<void> {
+  await apiRequest<null>(`tickets/${ticketId}/interactions`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(input),
   });
 }

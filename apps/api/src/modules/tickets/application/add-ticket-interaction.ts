@@ -2,35 +2,33 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import type { TicketDetailResponse } from '@helpdesk/contracts';
 import type { AuthenticatedUser } from '../../access/domain/authenticated-user';
-import { TicketDetailRepository } from './ports/ticket-detail.repository';
+import { TicketInteractionRepository } from './ports/ticket-interaction.repository';
 import { resolveTicketReadAccess } from './ticket-read-access';
 
-export interface GetTicketDetailInput {
+export interface AddTicketInteractionInput {
   user: AuthenticatedUser;
   ticketId: number;
+  description: string;
 }
 
 @Injectable()
-export class GetTicketDetail {
-  constructor(private readonly repository: TicketDetailRepository) {}
+export class AddTicketInteraction {
+  constructor(private readonly repository: TicketInteractionRepository) {}
 
-  async execute(input: GetTicketDetailInput): Promise<TicketDetailResponse> {
+  async execute(input: AddTicketInteractionInput): Promise<void> {
     const access = resolveTicketReadAccess(input.user);
-
-    const ticket = await this.repository.findById({
+    const created = await this.repository.create({
       ticketId: input.ticketId,
       userId: input.user.id,
+      description: input.description,
       ownerTechnicianId: access.ownerTechnicianId,
     });
 
-    if (!ticket) {
+    if (!created) {
       throw new NotFoundException(
         'Atendimento não encontrado ou fora do seu escopo.',
       );
     }
-
-    return ticket;
   }
 }

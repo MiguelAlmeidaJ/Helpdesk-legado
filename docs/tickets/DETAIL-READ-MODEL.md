@@ -1,9 +1,10 @@
-# Ticket detail read model
+# Ticket detail
 
-The migrated read-only detail routes are:
+The migrated detail routes start with:
 
 ```text
 GET /api/tickets/:id
+POST /api/tickets/:id/interactions
 /tickets/:id
 ```
 
@@ -37,11 +38,17 @@ Legacy external users (`tipo_usuario = 2`) are restricted through
 A hidden/out-of-scope ticket returns 404 so the endpoint does not confirm the
 existence of records outside the user's visibility.
 
+## New interaction
+
+The first migrated write operation is a plain-text interaction. It preserves
+the legacy `inter_tipo = 7` behavior and records the authenticated user and
+server timestamp. The endpoint applies the same ticket visibility rules as the
+detail route before inserting the interaction.
+
 ## Intentionally not migrated yet
 
 This slice does not implement:
 
-- new interaction writes;
 - accepting/direction;
 - waiting/resume;
 - reject;

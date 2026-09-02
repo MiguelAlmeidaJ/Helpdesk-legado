@@ -1,13 +1,19 @@
 import {
+  BadRequestException,
+  Body,
   Controller,
   Get,
+  HttpCode,
+  HttpStatus,
   Param,
   ParseIntPipe,
+  Post,
   Query,
   UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
 import {
+  ApiBody,
   ApiOperation,
   ApiParam,
   ApiQuery,
@@ -17,6 +23,7 @@ import {
 } from '@nestjs/swagger';
 import {
   AppPermission,
+  type CreateTicketInteractionRequest,
   type TicketDetailResponse,
   type TicketListResponse,
 } from '@helpdesk/contracts';
@@ -26,9 +33,32 @@ import { CurrentUser } from '../../../access/presentation/http/current-user.deco
 import { LegacySessionGuard } from '../../../access/presentation/http/legacy-session.guard';
 import { PermissionsGuard } from '../../../access/presentation/http/permissions.guard';
 import { RequirePermissions } from '../../../access/presentation/http/require-permissions.decorator';
+import { AddTicketInteraction } from '../../application/add-ticket-interaction';
 import { GetTicketDetail } from '../../application/get-ticket-detail';
 import { ListTickets } from '../../application/list-tickets';
 import { parseTicketListQuery } from './dto/list-tickets.query';
+
+function interactionDescription(body: unknown): string {
+  if (!body || typeof body !== 'object') {
+    throw new BadRequestException('Corpo da requisição inválido.');
+  }
+
+  const description = (body as Record<string, unknown>).description;
+
+  if (typeof description !== 'string') {
+    throw new BadRequestException('description é obrigatório.');
+  }
+
+  const normalized = description.trim();
+
+  if (normalized.length < 1 || normalized.length > 10_000) {
+    throw new BadRequestException(
+      'description deve ter entre 1 e 10000 caracteres.',
+    );
+  }
+
+  return normalized;
+}
 
 @ApiTags('tickets')
 @Controller('tickets')
@@ -39,6 +69,7 @@ export class TicketsController {
   constructor(
     private readonly listTickets: ListTickets,
     private readonly getTicketDetail: GetTicketDetail,
+    private readonly addTicketInteraction: AddTicketInteraction,
   ) {}
 
   @Get()
@@ -219,6 +250,69 @@ export class TicketsController {
     return this.getTicketDetail.execute({
       user,
       ticketId,
+    });
+  }
+
+  @Post(':id/interactions')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({
+    summary: 'Adicionar interação ao atendimento',
+    description:
+      'Registra uma interação textual de tipo 7 no histórico do atendimento, preservando o escopo de leitura atual.',
+  })
+  @ApiParam({
+    name: 'id',
+    type: Number,
+    example: 1234,
+    description: 'ID do atendimento.',
+  })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['description'],
+      properties: {
+        description: {
+          type: 'string',
+          minLength: 1,
+          maxLength: 10000,
+          example: 'Solicitante confirmou que o acesso voltou ao normal.',
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 204,
+    description: 'Interação adicionada ao histórico.',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Descrição ausente ou inválida.',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Sessão ausente, inválida ou expirada.',
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Usuário sem tickets.read para o escopo solicitado.',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Atendimento não encontrado ou fora do escopo do usuário.',
+  })
+  async addInteraction(
+    @CurrentUser() user: AuthenticatedUser | undefined,
+    @Param('id', ParseIntPipe) ticketId: number,
+    @Body() body: CreateTicketInteractionRequest,
+  ): Promise<void> {
+    if (!user) {
+      throw new UnauthorizedException('Usuário não autenticado.');
+    }
+
+    await this.addTicketInteraction.execute({
+      user,
+      ticketId,
+      description: interactionDescription(body),
     });
   }
 }
