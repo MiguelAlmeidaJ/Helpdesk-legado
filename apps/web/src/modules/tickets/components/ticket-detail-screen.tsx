@@ -14,6 +14,8 @@ import {
 import { SessionUserMenu } from '../../access/components/session-user-menu';
 import { AppSidebar } from '../../../shared/navigation/app-sidebar';
 import { TicketAssignmentActions } from './ticket-assignment-actions';
+import { TicketAttachmentsPanel } from './ticket-attachments-panel';
+import { TicketClassificationEditor } from './ticket-classification-editor';
 import { TicketHoldActions } from './ticket-hold-actions';
 import { TicketCloseActions } from './ticket-close-actions';
 import { TicketRejectionActions } from './ticket-rejection-actions';
@@ -220,6 +222,16 @@ export function TicketDetailScreen({
                 ticket={ticket}
               />
               <TicketCloseActions
+                currentUser={currentUser}
+                onUpdated={setTicket}
+                ticket={ticket}
+              />
+              <TicketClassificationEditor
+                currentUser={currentUser}
+                onUpdated={setTicket}
+                ticket={ticket}
+              />
+              <TicketAttachmentsPanel
                 currentUser={currentUser}
                 onUpdated={setTicket}
                 ticket={ticket}

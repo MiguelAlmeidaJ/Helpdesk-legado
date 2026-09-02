@@ -5,10 +5,16 @@ import type {
   PutTicketOnHoldRequest,
   RejectTicketRequest,
   TicketAssignmentOptionsResponse,
+  TicketAttachment,
+  TicketAttachmentKind,
+  TicketAttachmentsResponse,
+  TicketCatalogOption,
+  TicketClassificationCatalogsResponse,
   TicketDetailResponse,
   TicketListResponse,
   TicketRejectionOptionsResponse,
   UpdateTicketAssignmentRequest,
+  UpdateTicketClassificationRequest,
 } from '@helpdesk/contracts';
 import { apiRequest } from '../../../shared/api/api-client';
 
@@ -160,4 +166,77 @@ export async function finalizeTicket(
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(input),
   });
+}
+
+export function ticketAttachmentContentUrl(
+  ticketId: number,
+  kind: TicketAttachmentKind,
+  attachmentId: number,
+): string {
+  const base = (
+    process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001/api'
+  ).replace(/\/$/, '');
+  return `${base}/tickets/${ticketId}/attachments/${kind}/${attachmentId}/content`;
+}
+
+export async function fetchTicketClassificationCatalogs(): Promise<TicketClassificationCatalogsResponse> {
+  return apiRequest<TicketClassificationCatalogsResponse>(
+    'tickets/catalogs/classification',
+  );
+}
+
+export async function fetchTicketSubcategories(
+  categoryId: number,
+): Promise<TicketCatalogOption[]> {
+  return apiRequest<TicketCatalogOption[]>(
+    `tickets/catalogs/classification/subcategories?categoryId=${categoryId}`,
+  );
+}
+
+export async function fetchTicketItems(
+  subcategoryId: number,
+): Promise<TicketCatalogOption[]> {
+  return apiRequest<TicketCatalogOption[]>(
+    `tickets/catalogs/classification/items?subcategoryId=${subcategoryId}`,
+  );
+}
+
+export async function updateTicketClassification(
+  ticketId: number,
+  input: UpdateTicketClassificationRequest,
+): Promise<void> {
+  await apiRequest<null>(`tickets/${ticketId}/classification`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(input),
+  });
+}
+
+export async function fetchTicketAttachments(
+  ticketId: number,
+): Promise<TicketAttachmentsResponse> {
+  return apiRequest<TicketAttachmentsResponse>(`tickets/${ticketId}/attachments`);
+}
+
+export async function uploadTicketAttachment(
+  ticketId: number,
+  file: File,
+): Promise<TicketAttachment> {
+  const form = new FormData();
+  form.set('file', file);
+  return apiRequest<TicketAttachment>(`tickets/${ticketId}/attachments`, {
+    method: 'POST',
+    body: form,
+  });
+}
+
+export async function deleteTicketAttachment(
+  ticketId: number,
+  kind: TicketAttachmentKind,
+  attachmentId: number,
+): Promise<void> {
+  await apiRequest<null>(
+    `tickets/${ticketId}/attachments/${kind}/${attachmentId}`,
+    { method: 'DELETE' },
+  );
 }
