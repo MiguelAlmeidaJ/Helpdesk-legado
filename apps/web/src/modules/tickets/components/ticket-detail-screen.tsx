@@ -8,6 +8,7 @@ import type {
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { SessionUserMenu } from '../../access/components/session-user-menu';
+import { AppSidebar } from '../../../shared/navigation/app-sidebar';
 import { ApiError } from '../../../shared/api/api-client';
 import { fetchTicketDetail } from '../api/tickets-api';
 import styles from './ticket-detail-screen.module.css';
@@ -112,10 +113,13 @@ export function TicketDetailScreen({
   return (
     <main className={styles.page}>
       <header className={styles.header}>
-        <Link className={styles.brand} href="/">
-          <strong>Helpdesk</strong>
-          <span>Nova plataforma</span>
-        </Link>
+        <div className={styles.headerLeft}>
+          <AppSidebar />
+          <Link className={styles.brand} href="/dashboard">
+            <strong>Helpdesk</strong>
+            <span>Nova plataforma</span>
+          </Link>
+        </div>
         <SessionUserMenu user={currentUser} />
       </header>
 

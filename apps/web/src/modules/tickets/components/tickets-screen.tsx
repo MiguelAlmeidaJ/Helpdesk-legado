@@ -14,6 +14,7 @@ import {
   useMemo,
   useState,
 } from 'react';
+import { AppSidebar } from '../../../shared/navigation/app-sidebar';
 import { SessionUserMenu } from '../../access/components/session-user-menu';
 import { ApiError } from '../../../shared/api/api-client';
 import {
@@ -249,10 +250,13 @@ export function TicketsScreen({
   return (
     <main className="tickets-page">
       <header className="tickets-header">
-        <Link className="tickets-brand" href="/">
-          <strong>Helpdesk</strong>
-          <span>Nova plataforma</span>
-        </Link>
+        <div className="tickets-header-left">
+          <AppSidebar />
+          <Link className="tickets-brand" href="/dashboard">
+            <strong>Helpdesk</strong>
+            <span>Nova plataforma</span>
+          </Link>
+        </div>
         <div className="tickets-header-actions">
           <span className="tickets-total">{totalLabel}</span>
           <SessionUserMenu user={currentUser} />
