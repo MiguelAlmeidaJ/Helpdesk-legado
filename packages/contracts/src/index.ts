@@ -24,3 +24,4 @@ export * from './dashboard/dashboard';
 export * from './logistics/vehicle-agenda';
 export * from './logistics/expense-dashboard';
 export * from './logistics/expense-management';
+export * from './logistics/expense-admin-dashboard';
