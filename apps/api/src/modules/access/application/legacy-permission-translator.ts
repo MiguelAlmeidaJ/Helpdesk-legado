@@ -168,6 +168,13 @@ export function translateLegacySession(
     2,
     PermissionScope.All,
   );
+  pushGrant(
+    grants,
+    AppPermission.LogisticsExpensesRead,
+    permissionLevel(logistics, 0),
+    1,
+    PermissionScope.Own,
+  );
 
   return {
     id: session.id,

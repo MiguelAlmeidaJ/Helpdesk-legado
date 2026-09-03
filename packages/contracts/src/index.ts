@@ -22,3 +22,4 @@ export * from './tickets/ticket-timeline';
 export * from './tickets/ticket-availability';
 export * from './dashboard/dashboard';
 export * from './logistics/vehicle-agenda';
+export * from './logistics/expense-dashboard';
