@@ -8,8 +8,8 @@ if (fs.existsSync(envPath)) {
   process.loadEnvFile(envPath);
 }
 
-const apiPort = String(process.env.PORT || 3001);
-const webPort = String(process.env.WEB_PORT || 3000);
+const apiPort = String(process.env.PORT || 4004);
+const webPort = String(process.env.WEB_PORT || 4204);
 
 function definedEnv(values) {
   return Object.fromEntries(

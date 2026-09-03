@@ -8,11 +8,11 @@ The legacy PHP Helpdesk is being migrated incrementally to a modular TypeScript 
 Browser
   |
   v
-apps/web (Next.js :3000)
+apps/web (Next.js :4204)
   |
   | HTTP
   v
-apps/api (NestJS :3001)
+apps/api (NestJS :4004)
   |
   +--> packages/database --> nivel3
   |
@@ -97,9 +97,9 @@ pnpm pm2:start
 Endpoints:
 
 ```text
-web       http://localhost:3000
-api       http://localhost:3001/api
-health    http://localhost:3001/api/health
+web       http://localhost:4204
+api       http://localhost:4004/api
+health    http://localhost:4004/api/health
 database  127.0.0.1:3307
 ```
 

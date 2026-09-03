@@ -1,4 +1,4 @@
-const DEFAULT_API_URL = 'http://localhost:3001/api';
+const DEFAULT_API_URL = 'http://localhost:4004/api';
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
 
 export class ApiError extends Error {

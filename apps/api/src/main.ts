@@ -8,13 +8,13 @@ async function bootstrap() {
   app.enableShutdownHooks();
   app.setGlobalPrefix('api');
   app.enableCors({
-    origin: process.env.WEB_ORIGIN ?? 'http://localhost:3000',
+    origin: process.env.WEB_ORIGIN ?? 'http://localhost:4204',
     credentials: true,
   });
 
   setupOpenApi(app);
 
-  const port = Number(process.env.PORT ?? 3001);
+  const port = Number(process.env.PORT ?? 4004);
   await app.listen(port);
 }
 
