@@ -97,7 +97,9 @@ export function ExpenseDashboardScreen({
             <h1>Minhas Despesas</h1>
             <p>{data?.userName ?? 'Usuário autenticado'}</p>
           </div>
-          <span className={styles.readOnlyBadge}>Painel nativo</span>
+          <Link className={styles.readOnlyBadge} href="/logistics/expenses/manage">
+            Gerenciar despesas
+          </Link>
         </section>
 
         <section className={styles.filters}>
@@ -123,7 +125,7 @@ export function ExpenseDashboardScreen({
             </button>
           </form>
           <small>
-            Cadastro e edição de despesas continuam no fluxo legado nesta etapa.
+            Cadastro e edição de despesas já estão disponíveis no fluxo nativo.
           </small>
         </section>
 
