@@ -451,9 +451,9 @@ if (!function_exists('sidebar_href')) {
         </button>
         <div class="submenu">
           <a href="<?php echo htmlspecialchars(allterus_web_url('/tickets'), ENT_QUOTES, 'UTF-8'); ?>" class="menu-subitem"><i class="fas fa-list-ul"></i><span>Lista de Atendimentos</span></a>
-          <?php if ($m8_01 > 0) { ?>
-            <a href="<?php echo sidebar_href('atd/disponibilidade/'); ?>" class="menu-subitem"><i class="fas fa-user-clock"></i><span>Disponibilidade Tecnica</span></a>
-            <a href="<?php echo sidebar_href('atd/timeline.php'); ?>" class="menu-subitem"><i class="far fa-clock"></i><span>Timeline</span></a>
+          <?php if ($m8_00 > 0) { ?>
+            <a href="<?php echo htmlspecialchars(allterus_web_url('/tickets/availability'), ENT_QUOTES, 'UTF-8'); ?>" class="menu-subitem"><i class="fas fa-user-clock"></i><span>Disponibilidade Tecnica</span></a>
+            <a href="<?php echo htmlspecialchars(allterus_web_url('/tickets/timeline'), ENT_QUOTES, 'UTF-8'); ?>" class="menu-subitem"><i class="far fa-clock"></i><span>Timeline</span></a>
           <?php } ?>
           <?php if ($m3_01 > 0) { ?>
             <a href="<?php echo htmlspecialchars(allterus_web_url('/tickets/new'), ENT_QUOTES, 'UTF-8'); ?>" class="menu-subitem"><i class="fas fa-plus"></i><span>Novo Atendimento</span></a>

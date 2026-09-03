@@ -544,7 +544,7 @@ ORDER BY tarefas.abertura ASC");
     $(document).ready(function() {
       function carregarLocais(clienteId, localSelecionado = null) {
         $.ajax({
-          url: '../atd/busca_locais.php',
+          url: 'busca_locais.php',
           method: 'GET',
           data: {
             cliente: clienteId
