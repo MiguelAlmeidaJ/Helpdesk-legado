@@ -35,18 +35,29 @@ const removedRuntimePaths = [
   'user/edt_user.php',
   'reset_senha.php',
   'enviar_email_recuperacao.php',
+  'home/partials/dashboard/bootstrap.php',
+  'home/partials/dashboard/content.php',
+  'home/partials/dashboard/head.php',
+  'home/partials/dashboard/rankings/data/devops-quarterly.php',
+  'home/partials/dashboard/rankings/data/mkt-quarterly.php',
+  'home/partials/dashboard/rankings/data/period.php',
+  'home/partials/dashboard/rankings/data/qa-quarterly.php',
+  'home/partials/dashboard/rankings/data/ti-quarterly.php',
+  'home/partials/dashboard/rankings/views/monthly/devops.php',
+  'home/partials/dashboard/rankings/views/monthly/mkt.php',
+  'home/partials/dashboard/rankings/views/monthly/qa.php',
+  'home/partials/dashboard/rankings/views/monthly/ti.php',
+  'home/partials/dashboard/rankings/views/quarterly/devops.php',
+  'home/partials/dashboard/rankings/views/quarterly/mkt.php',
+  'home/partials/dashboard/rankings/views/quarterly/qa.php',
+  'home/partials/dashboard/rankings/views/quarterly/ti.php',
+  'home/partials/dashboard/rankings/views/summary.php',
+  'home/partials/dashboard/scripts.php',
 ];
 
-const retirementCandidates = [
-  'atd/busca_itens.php',
-  'atd/busca_locais.php',
-  'atd/busca_solicitantes.php',
-  'atd/busca_subcategorias.php',
-  'atd/recorrente.php',
-  'atd/recorrente_data.php',
-  'atd/srhome.php',
-  'atd/timeline.php',
-  'atd/disponibilidade/index.php',
+const retiredDirectories = [
+  { label: 'atd/', prefix: 'atd/' },
+  { label: 'home/', prefix: 'home/' },
 ];
 
 const tracked = execFileSync(
@@ -69,7 +80,10 @@ const runtimeFiles = tracked.filter(
     runtimeExtensions.has(path.extname(file).toLowerCase()),
 );
 
-const remainingAtdFiles = tracked.filter((file) => file.startsWith('atd/'));
+const retiredDirectoryState = retiredDirectories.map((directory) => ({
+  ...directory,
+  files: tracked.filter((file) => file.startsWith(directory.prefix)),
+}));
 
 function normalizedTarget(value) {
   const normalized = path.posix
@@ -156,12 +170,21 @@ for (const [dir, count] of [...byRoot.entries()].sort((a, b) => b[1] - a[1])) {
   console.log(`  ${String(count).padStart(4)}  ${dir}`);
 }
 
-console.log('\nPasta legada atd/:');
-if (remainingAtdFiles.length === 0) {
-  console.log('  REMOVED atd/ (0 arquivos)');
-} else {
-  console.log(`  KEEP    atd/ (${remainingAtdFiles.length} arquivo(s))`);
-  for (const file of remainingAtdFiles) {
+console.log('\nDiretórios legados aposentados:');
+let remainingRetiredFiles = 0;
+
+for (const directory of retiredDirectoryState) {
+  remainingRetiredFiles += directory.files.length;
+
+  if (directory.files.length === 0) {
+    console.log(`  REMOVED ${directory.label} (0 arquivos)`);
+    continue;
+  }
+
+  console.log(
+    `  KEEP    ${directory.label} (${directory.files.length} arquivo(s))`,
+  );
+  for (const file of directory.files) {
     console.log(`          <- ${file}`);
   }
 }
@@ -181,29 +204,13 @@ for (const target of removedRuntimePaths) {
   printReferences(refs);
 }
 
-console.log('\nCandidatos de aposentadoria em atd/:');
-for (const target of retirementCandidates) {
-  if (!tracked.includes(target)) {
-    console.log(`  REMOVED ${target}`);
-    continue;
-  }
-
-  const refs = references(target, new Set([target]));
-  if (refs.length === 0) {
-    console.log(`  ORPHAN  ${target}`);
-  } else {
-    console.log(`  KEEP    ${target}`);
-    printReferences(refs);
-  }
-}
-
-if (remainingAtdFiles.length > 0 || dangling > 0) {
+if (remainingRetiredFiles > 0 || dangling > 0) {
   console.error(
-    `\nFalha: ${remainingAtdFiles.length} arquivo(s) ainda restam em atd/ e ${dangling} referência(s) canônica(s) apontam para PHP removido.`,
+    `\nFalha: ${remainingRetiredFiles} arquivo(s) ainda restam em diretórios aposentados e ${dangling} referência(s) canônica(s) apontam para PHP removido.`,
   );
   process.exitCode = 2;
 } else {
   console.log(
-    '\nOK: pasta atd/ aposentada e nenhum runtime rastreado aponta para endpoints PHP removidos.',
+    '\nOK: diretórios aposentados vazios e nenhum runtime rastreado aponta para endpoints PHP removidos.',
   );
 }

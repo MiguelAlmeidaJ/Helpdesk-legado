@@ -36,6 +36,10 @@ mantidas para evitar alterar o ranking durante o corte.
 `home.php` deixa de executar o dashboard PHP e passa a ser apenas um redirect
 para `/dashboard`. O sidebar PHP também aponta diretamente para a rota Next.
 
-Os arquivos em `home/partials/dashboard/` ficam temporariamente preservados
-para rollback até o smoke test do novo painel. Depois do teste, podem ser
-apagados junto dos estilos exclusivos em `home/css/`.
+Após o smoke test do painel Nest/Next, o dashboard PHP é aposentado
+fisicamente: `home/partials/dashboard/` e os estilos exclusivos em `home/css/`
+são removidos do repositório.
+
+`home.php` permanece temporariamente como bridge de URL para `/dashboard`
+enquanto outros módulos PHP ainda podem apontar para a Home antiga. Esse bridge
+não contém consultas nem regra de negócio do dashboard.
