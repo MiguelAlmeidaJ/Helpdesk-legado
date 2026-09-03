@@ -67,3 +67,27 @@ Continuam no legado nesta etapa:
 
 Não há cutover de `gestaoRD.php` no `0039a`. O próximo corte pode construir a
 UI nativa sobre este read model antes de migrar os workflows de escrita.
+
+## Web (`0039b`)
+
+O painel administrativo passa a ter a rota nativa:
+
+```text
+/logistics/expenses/admin
+```
+
+A tela consome exclusivamente os endpoints do `0039a` e preserva a leitura do
+painel legado com:
+
+- filtro por período;
+- alternância entre status `1`, `2` e `4`;
+- cards de aguardando aprovação, aprovadas e pagas;
+- resumos por categoria, cliente e colaborador;
+- expansão sob demanda dos detalhes de cada agrupamento.
+
+O item `Gestão RDs` fica disponível na navegação nativa. A página faz uma
+checagem inicial de `LogisticsExpensesAdminRead` (ou `SystemAdmin`) e a API
+continua sendo a autoridade de autorização para todas as leituras.
+
+O `0039b` ainda não redireciona `gestaoRD.php`: aprovação, pagamento,
+relatórios e ajustes administrativos permanecem no PHP até os próximos cortes.

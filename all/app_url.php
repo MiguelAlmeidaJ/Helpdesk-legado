@@ -136,7 +136,7 @@ if (!function_exists('allterus_env_value')) {
 if (!function_exists('allterus_web_url')) {
   function allterus_web_url($path = '')
   {
-    $origin = rtrim((string)allterus_env_value('WEB_PUBLIC_URL', allterus_env_value('WEB_ORIGIN', 'http://localhost:3000')), '/');
+    $origin = rtrim((string)allterus_env_value('WEB_PUBLIC_URL', allterus_env_value('WEB_ORIGIN', 'http://localhost:4204')), '/');
     return $origin . '/' . ltrim((string)$path, '/');
   }
 }

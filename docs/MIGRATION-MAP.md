@@ -24,8 +24,8 @@ This file is the migration control board. Update it in the same pull request tha
 | master-data | `cads` | `nivel3` | planned | Clients, people, locations and generic registrations should later be split only if rules justify it. |
 | finance | `cont`, `cads_cont` | `nivel3` | planned | Accounting/receivables/payables grouping to validate during inventory. |
 | documents | `docs`, `docs_mkt`, `documentos` | `nivel3` | planned | Consolidate document handling rather than preserving folder variants. |
-| logistics | `logistica` | `nivel3` | web | Vehicle agenda and personal RD already have native paths; the administrative RD read model is available in NestJS while financial workflows remain legacy. |
-| rd | legacy RD flows | `nivel3` | web | Personal RD is in native cutover; `0039a` adds the administrative read model. Approval, payment, reporting and management adjustments remain legacy. |
+| logistics | `logistica` | `nivel3` | web | Vehicle agenda and personal RD have native paths; the administrative RD dashboard now has NestJS read APIs and a Next.js UI while financial workflows remain legacy. |
+| rd | legacy RD flows | `nivel3` | web | Personal RD is in native cutover; `0039a` adds the administrative read model and `0039b` adds `/logistics/expenses/admin`. Approval, payment, reporting and management adjustments remain legacy. |
 | marketing | legacy marketing/`terc_andar` flows | `nivel3` | planned | No separate `mkt` database. Reassess boundary after ticket/third-floor inventory. |
 
 ## Current migration order

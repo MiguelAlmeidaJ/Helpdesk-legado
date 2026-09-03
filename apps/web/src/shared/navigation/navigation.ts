@@ -95,7 +95,12 @@ export const APP_NAVIGATION_SECTIONS: NavigationSection[] = [
         href: '/logistics/expenses',
         status: 'available',
       },
-      { id: 'rd-management', label: 'Gestão RDs', status: 'planned' },
+      {
+        id: 'rd-management',
+        label: 'Gestão RDs',
+        href: '/logistics/expenses/admin',
+        status: 'available',
+      },
       {
         id: 'rd-comparison',
         label: 'Análise Comparativa RDs',

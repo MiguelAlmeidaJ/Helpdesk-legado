@@ -2,7 +2,7 @@ import type { CurrentUserResponse } from '@helpdesk/contracts';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 
-const DEFAULT_INTERNAL_API_URL = 'http://127.0.0.1:3001/api';
+const DEFAULT_INTERNAL_API_URL = 'http://127.0.0.1:4004/api';
 
 function internalApiUrl(): string {
   return (
