@@ -24,6 +24,7 @@ const LOGISTICS_PERMISSION = {
   expensesRead: 'logistica.rd.visualizar',
   expensesManage: 'logistica.rd.gerenciar',
   expensesAdminRead: 'logistica.rd.admin.visualizar',
+  expensesApprove: 'logistica.rd.aprovar',
 } as const;
 
 const USER_PERMISSION = {
@@ -161,6 +162,14 @@ export function translateRbacAccess(
     grants,
     AppPermission.LogisticsExpensesAdminRead,
     permissions.has(LOGISTICS_PERMISSION.expensesAdminRead) ||
+      permissionLevel(legacyLogistics, 2) >= 2,
+    PermissionScope.All,
+  );
+
+  addGrant(
+    grants,
+    AppPermission.LogisticsExpensesApprove,
+    permissions.has(LOGISTICS_PERMISSION.expensesApprove) ||
       permissionLevel(legacyLogistics, 2) >= 2,
     PermissionScope.All,
   );
