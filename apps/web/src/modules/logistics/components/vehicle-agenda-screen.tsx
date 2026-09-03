@@ -101,12 +101,18 @@ const emptySchedule = (
 
 export function VehicleAgendaScreen({
   currentUser,
+  initialMonth,
+  initialYear,
+  autoPrint = false,
 }: {
   currentUser: CurrentUserResponse;
+  initialMonth?: number;
+  initialYear?: number;
+  autoPrint?: boolean;
 }) {
   const now = new Date();
-  const [month, setMonth] = useState(now.getMonth() + 1);
-  const [year, setYear] = useState(now.getFullYear());
+  const [month, setMonth] = useState(initialMonth ?? now.getMonth() + 1);
+  const [year, setYear] = useState(initialYear ?? now.getFullYear());
   const [agenda, setAgenda] = useState<Awaited<ReturnType<typeof getVehicleAgenda>> | null>(null);
   const [loading, setLoading] = useState(true);
   const [feedback, setFeedback] = useState('');
@@ -114,6 +120,7 @@ export function VehicleAgendaScreen({
   const [creating, setCreating] = useState<CreateVehicleAgendaScheduleRequest | null>(null);
   const [copiedId, setCopiedId] = useState<number | null>(null);
   const [showVehicles, setShowVehicles] = useState(false);
+  const [printTriggered, setPrintTriggered] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -130,6 +137,13 @@ export function VehicleAgendaScreen({
   useEffect(() => {
     void load();
   }, [load]);
+
+  useEffect(() => {
+    if (!autoPrint || !agenda || loading || printTriggered) return;
+
+    setPrintTriggered(true);
+    window.requestAnimationFrame(() => window.print());
+  }, [agenda, autoPrint, loading, printTriggered]);
 
   const days = useMemo(() => daysInMonth(year, month), [year, month]);
   const schedules = useMemo(() => {

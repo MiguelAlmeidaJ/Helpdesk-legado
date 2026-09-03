@@ -50,6 +50,18 @@ vinculados em `clientes_usuarios`.
 
 ## Retirement
 
-`logistica/agendaVeiculos.php` e `logistica/relatorioAgenda.php` permanecem
-neste patch apenas como rollback. Após smoke funcional, o próximo corte
-redireciona os deep links antigos e remove os runtimes PHP.
+Após o smoke funcional da implementação Nest/Next, a lógica operacional de
+`logistica/agendaVeiculos.php` e `logistica/relatorioAgenda.php` foi removida.
+
+Os dois caminhos permanecem somente como bridges mínimos para preservar links
+antigos e favoritos. Eles dependem apenas de `all/app_url.php` e redirecionam
+para `/logistics/vehicles/agenda`, preservando `mes` e `ano` como
+`month` e `year` quando presentes. O antigo relatório adiciona `print=1`, e a
+tela Next dispara a impressão somente depois de carregar os dados.
+
+O sidebar PHP aponta diretamente para a rota Next. O stylesheet legado
+`logistica/css/agenda_modern.css` foi removido por não possuir outros
+consumidores.
+
+Os bridges podem ser apagados fisicamente junto com os demais bridges PHP
+quando a aplicação legada deixar de ser servida.

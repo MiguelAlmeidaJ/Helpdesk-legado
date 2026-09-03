@@ -509,7 +509,7 @@ if (!function_exists('sidebar_href')) {
         </button>
         <div class="submenu">
           <?php if ($m9_01 > 0) { ?>
-            <a href="<?php echo sidebar_href('logistica/agendaVeiculos.php'); ?>" class="menu-subitem"><i class="fas fa-car"></i><span>Agenda Veiculos</span></a>
+            <a href="<?php echo htmlspecialchars(allterus_web_url('/logistics/vehicles/agenda'), ENT_QUOTES, 'UTF-8'); ?>" class="menu-subitem"><i class="fas fa-car"></i><span>Agenda Veiculos</span></a>
             <a href="<?php echo sidebar_href('logistica/rdPainel.php'); ?>" class="menu-subitem"><i class="fas fa-wallet"></i><span>RD</span></a>
           <?php } ?>
           <?php if ($m9_02 > 1) { ?>
