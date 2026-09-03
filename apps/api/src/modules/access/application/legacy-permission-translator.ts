@@ -46,6 +46,7 @@ export function translateLegacySession(
   const users = session.modules[1];
   const tickets = session.modules[3];
   const ticketAudit = session.modules[8];
+  const logistics = session.modules[9];
 
   pushGrant(
     grants,
@@ -150,6 +151,21 @@ export function translateLegacySession(
     AppPermission.TicketsAudit,
     permissionLevel(ticketAudit, 0),
     1,
+    PermissionScope.All,
+  );
+
+  pushGrant(
+    grants,
+    AppPermission.LogisticsVehicleAgendaRead,
+    permissionLevel(logistics, 1),
+    1,
+    PermissionScope.All,
+  );
+  pushGrant(
+    grants,
+    AppPermission.LogisticsVehicleAgendaManage,
+    permissionLevel(logistics, 1),
+    2,
     PermissionScope.All,
   );
 

@@ -18,12 +18,22 @@ const TICKET_PERMISSION = {
   audit: 'atendimentos.auditar',
 } as const;
 
+const LOGISTICS_PERMISSION = {
+  vehicleAgendaRead: 'logistica.agenda.visualizar',
+  vehicleAgendaManage: 'logistica.agenda.gerenciar',
+} as const;
+
 const USER_PERMISSION = {
   read: 'usuarios.visualizar',
   create: 'usuarios.criar',
   edit: 'usuarios.editar',
   manageAccess: 'usuarios.editar_acesso',
 } as const;
+
+function permissionLevel(moduleValue: string, index: number): number {
+  const value = moduleValue[index];
+  return value && /^\d$/.test(value) ? Number(value) : 0;
+}
 
 function addGrant(
   grants: PermissionGrant[],
@@ -106,6 +116,28 @@ export function translateRbacAccess(
     AppPermission.TicketsAudit,
     permissions.has(TICKET_PERMISSION.audit) ||
       permissions.has(TICKET_PERMISSION.manageOthers),
+    PermissionScope.All,
+  );
+
+  const legacyLogistics = session.modules[9];
+  const canReadVehicleAgenda =
+    permissions.has(LOGISTICS_PERMISSION.vehicleAgendaRead) ||
+    permissions.has(LOGISTICS_PERMISSION.vehicleAgendaManage) ||
+    permissionLevel(legacyLogistics, 1) >= 1;
+  const canManageVehicleAgenda =
+    permissions.has(LOGISTICS_PERMISSION.vehicleAgendaManage) ||
+    permissionLevel(legacyLogistics, 1) >= 2;
+
+  addGrant(
+    grants,
+    AppPermission.LogisticsVehicleAgendaRead,
+    canReadVehicleAgenda,
+    PermissionScope.All,
+  );
+  addGrant(
+    grants,
+    AppPermission.LogisticsVehicleAgendaManage,
+    canManageVehicleAgenda,
     PermissionScope.All,
   );
 

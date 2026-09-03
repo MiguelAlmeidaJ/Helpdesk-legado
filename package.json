@@ -13,6 +13,7 @@
     "db:generate": "pnpm --filter @helpdesk/database db:generate",
     "access:audit": "pnpm --filter @helpdesk/database access:audit",
     "legacy:audit": "node scripts/audit-legacy-php.mjs",
+    "legacy:shell-audit": "node scripts/audit-legacy-shell.mjs",
     "docker:up": "docker compose up -d database",
     "docker:down": "docker compose down --remove-orphans",
     "docker:reset": "docker compose down -v --remove-orphans",

@@ -83,7 +83,12 @@ export const APP_NAVIGATION_SECTIONS: NavigationSection[] = [
     label: 'Logística',
     shortLabel: 'LG',
     items: [
-      { id: 'vehicles-agenda', label: 'Agenda Veículos', status: 'planned' },
+      {
+        id: 'vehicles-agenda',
+        label: 'Agenda Veículos',
+        href: '/logistics/vehicles/agenda',
+        status: 'available',
+      },
       { id: 'rd', label: 'RD', status: 'planned' },
       { id: 'rd-management', label: 'Gestão RDs', status: 'planned' },
       {
