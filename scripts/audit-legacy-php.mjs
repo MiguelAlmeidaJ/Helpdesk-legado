@@ -15,13 +15,10 @@ const runtimeExtensions = new Set([
   '.htm',
 ]);
 
-const compatibilityBridges = [
+const removedRuntimePaths = [
   'atd/home.php',
   'atd/atd.php',
   'atd/atd_detalhe.php',
-];
-
-const removedRuntimePaths = [
   'atd/add_arquivos.php',
   'atd/add_image.php',
   'atd/busca_img_docs.php',
@@ -71,6 +68,8 @@ const runtimeFiles = tracked.filter(
     file !== self &&
     runtimeExtensions.has(path.extname(file).toLowerCase()),
 );
+
+const remainingAtdFiles = tracked.filter((file) => file.startsWith('atd/'));
 
 function normalizedTarget(value) {
   const normalized = path.posix
@@ -157,19 +156,14 @@ for (const [dir, count] of [...byRoot.entries()].sort((a, b) => b[1] - a[1])) {
   console.log(`  ${String(count).padStart(4)}  ${dir}`);
 }
 
-console.log('\nBridges de compatibilidade para o Next:');
-let missingBridges = 0;
-
-for (const target of compatibilityBridges) {
-  if (!tracked.includes(target)) {
-    missingBridges += 1;
-    console.log(`  MISSING ${target}`);
-    continue;
+console.log('\nPasta legada atd/:');
+if (remainingAtdFiles.length === 0) {
+  console.log('  REMOVED atd/ (0 arquivos)');
+} else {
+  console.log(`  KEEP    atd/ (${remainingAtdFiles.length} arquivo(s))`);
+  for (const file of remainingAtdFiles) {
+    console.log(`          <- ${file}`);
   }
-
-  const refs = references(target, new Set([target]));
-  console.log(`  BRIDGE  ${target} (${refs.length} consumidor(es))`);
-  printReferences(refs);
 }
 
 console.log('\nReferências para endpoints PHP já removidos:');
@@ -203,13 +197,13 @@ for (const target of retirementCandidates) {
   }
 }
 
-if (missingBridges > 0 || dangling > 0) {
+if (remainingAtdFiles.length > 0 || dangling > 0) {
   console.error(
-    `\nFalha: ${missingBridges} bridge(s) ausente(s) e ${dangling} referência(s) canônica(s) apontando para PHP removido.`,
+    `\nFalha: ${remainingAtdFiles.length} arquivo(s) ainda restam em atd/ e ${dangling} referência(s) canônica(s) apontam para PHP removido.`,
   );
   process.exitCode = 2;
 } else {
   console.log(
-    '\nOK: bridges presentes e nenhum runtime rastreado aponta para endpoints PHP removidos.',
+    '\nOK: pasta atd/ aposentada e nenhum runtime rastreado aponta para endpoints PHP removidos.',
   );
 }
