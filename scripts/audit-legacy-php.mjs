@@ -53,6 +53,10 @@ const removedRuntimePaths = [
   'home/partials/dashboard/rankings/views/quarterly/ti.php',
   'home/partials/dashboard/rankings/views/summary.php',
   'home/partials/dashboard/scripts.php',
+  'logistica/addDespesa.php',
+  'logistica/editarRD.php',
+  'logistica/excluirRD.php',
+  'logistica/recebe_upload.php',
 ];
 
 const retiredDirectories = [

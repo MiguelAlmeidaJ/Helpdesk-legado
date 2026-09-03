@@ -460,15 +460,17 @@ export class ExpenseManagementRepository {
   }
 
   async attachmentContent(
+    userId: number,
     expenseId: number,
     attachmentKey: string,
   ): Promise<AttachmentContent | null> {
     const rows = await this.database.$queryRawUnsafe<{ anexos: string | null }[]>(
       `SELECT anexos
        FROM running_balance
-       WHERE id = ?
+       WHERE id = ? AND user_id = ? AND aj = 1
        LIMIT 1`,
       expenseId,
+      userId,
     );
     const attachments = parseAttachments(rows[0]?.anexos ?? null);
     const index = this.attachmentIndex(attachments, attachmentKey);

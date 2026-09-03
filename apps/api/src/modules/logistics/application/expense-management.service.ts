@@ -112,8 +112,12 @@ export class ExpenseManagementService {
     }
   }
 
-  async attachmentContent(expenseId: number, key: string) {
-    const content = await this.repository.attachmentContent(expenseId, key);
+  async attachmentContent(userId: number, expenseId: number, key: string) {
+    const content = await this.repository.attachmentContent(
+      userId,
+      expenseId,
+      key,
+    );
     if (!content) throw new NotFoundException('Anexo não encontrado.');
     return content;
   }

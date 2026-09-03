@@ -275,10 +275,13 @@ export class ExpenseManagementController {
   @RequirePermissions(AppPermission.LogisticsExpensesRead)
   @ApiOperation({ summary: 'Abrir comprovante PDF de RD' })
   async attachmentContent(
+    @CurrentUser() user: AuthenticatedUser | undefined,
     @Param('id', ParseIntPipe) expenseId: number,
     @Param('key') rawKey: string,
   ): Promise<StreamableFile> {
+    if (!user) throw new UnauthorizedException('Usuário não autenticado.');
     const content = await this.expenses.attachmentContent(
+      user.id,
       expenseId,
       attachmentKey(rawKey),
     );

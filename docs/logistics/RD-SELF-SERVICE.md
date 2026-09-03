@@ -55,17 +55,32 @@ edição/exclusão. A implementação nativa exige simultaneamente:
 
 Isso corrige acesso horizontal por ID sem alterar a regra funcional da tela.
 
-## Transição
+## Retirada do autosserviço PHP
 
-Este patch não remove os PHPs ainda. Permanecem para rollback:
+O corte `0038b` aposenta o runtime de autosserviço depois do smoke nativo.
+Os deep links passam a ser bridges mínimos:
 
-- `logistica/rdPainel.php`;
-- `logistica/rd.php`;
+- `logistica/rdPainel.php` -> `/logistics/expenses`;
+- `logistica/rd.php` -> `/logistics/expenses/manage`;
+- `logistica/rd3.php` -> `/logistics/expenses/manage`;
+- `logistica/rd_subistituido.php` -> `/logistics/expenses/manage`.
+
+Foram removidos os writers/upload exclusivos do autosserviço:
+
 - `logistica/addDespesa.php`;
 - `logistica/editarRD.php`;
 - `logistica/excluirRD.php`;
 - `logistica/recebe_upload.php`.
 
-Depois do smoke de criação, edição, exclusão, duplicação e PDFs, o próximo
-corte transforma os dois deep links de tela em bridges e remove os endpoints
-PHP de escrita/upload.
+Os CSS `logistica/css/rd_modern.css` e
+`logistica/css/rd_painel_modern.css` também foram removidos por não terem
+mais consumidores. O menu PHP de Logística aponta diretamente para o painel
+Next.
+
+Os fluxos administrativos de RD continuam no legado nesta etapa, incluindo
+`gestaoRD.php`, `aprovarRD.php`, `pagarRD.php`, `analiseRD.php`,
+`detalharRD.php` e o fluxo gerencial de ajustes.
+
+O mesmo corte endurece a leitura de comprovantes nativos: o download agora
+exige que `running_balance.user_id` seja o usuário autenticado, preservando
+o escopo `Own` da permissão de RD.
