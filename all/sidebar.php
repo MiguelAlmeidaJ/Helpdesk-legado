@@ -436,7 +436,7 @@ if (!function_exists('sidebar_href')) {
   </div>
 
   <nav id="sidebarNav">
-    <a href="<?php echo sidebar_href('home.php'); ?>" class="menu-item">
+    <a href="<?php echo htmlspecialchars(allterus_web_url('/dashboard'), ENT_QUOTES, 'UTF-8'); ?>" class="menu-item">
       <i class="fas fa-chart-line text-xl"></i>
       <span class="label">Dashboard</span>
     </a>

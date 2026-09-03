@@ -20,3 +20,4 @@ export * from './tickets/ticket-create';
 export * from './users/user';
 export * from './tickets/ticket-timeline';
 export * from './tickets/ticket-availability';
+export * from './dashboard/dashboard';
