@@ -434,7 +434,8 @@
   margin-top: auto;
 }
 
-.metricActions .approvalLink {
+.metricActions .approvalLink,
+.metricActions .paymentLink {
   display: inline-flex;
   align-items: center;
   min-height: 40px;

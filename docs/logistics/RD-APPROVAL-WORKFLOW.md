@@ -38,12 +38,15 @@ Ao aprovar:
 
 1. `running_balance.status` passa de `1` para `2`;
 2. `date_updated` recebe `NOW()`;
-3. é criada uma linha em `approvement` com o usuário aprovador, data, PIX e
-   tipo de PIX copiados da própria RD e a observação da aprovação.
+3. `aprovador_id` recebe o usuário autenticado;
+4. `remark_aprov` recebe a observação da aprovação (máximo de 255 caracteres).
 
-A recusa preserva o comportamento legado e move o status de `1` para `3`. O
-PHP atual não grava uma linha em `approvement` para recusas, então este corte
-não introduz essa alteração de esquema/semântica.
+A persistência usa os campos administrativos já existentes em `running_balance`.
+A tabela `approvement` referenciada por uma versão do PHP legado não existe no
+schema atual de `nivel3`, portanto o fluxo nativo não depende dela.
+
+A recusa preserva o comportamento legado e move o status de `1` para `3`, sem
+inventar um registro de auditoria separado que não existe no banco atual.
 
 ## Categoria e comprovante
 

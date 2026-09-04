@@ -187,19 +187,14 @@ export class ExpenseApprovalRepository {
 
       await transaction.$executeRawUnsafe(
         `UPDATE running_balance
-         SET status = 2, date_updated = NOW()
+         SET status = 2,
+             date_updated = NOW(),
+             aprovador_id = ?,
+             remark_aprov = ?
          WHERE id = ? AND status = 1 AND aj = 1`,
-        expenseId,
-      );
-      await transaction.$executeRawUnsafe(
-        `INSERT INTO approvement
-           (balance_id, user_id, \`date\`, approved, remarks, pix, pix_type)
-         VALUES (?, ?, NOW(), 1, ?, ?, ?)`,
-        expenseId,
         approverId,
         remarks || 'Aprovado',
-        row.pix,
-        integerOrNull(row.pix_type),
+        expenseId,
       );
 
       return { kind: 'approved', items: [this.item(row)] } as const;
@@ -237,24 +232,18 @@ export class ExpenseApprovalRepository {
         return { kind: 'not-pending', ids: notPending } as const;
       }
 
-      await transaction.$executeRawUnsafe(
-        `UPDATE running_balance
-         SET status = 2, date_updated = NOW()
-         WHERE id IN (${placeholders}) AND status = 1 AND aj = 1`,
-        ...ids,
-      );
-
       for (const row of rows) {
         const id = numberValue(row.id);
         await transaction.$executeRawUnsafe(
-          `INSERT INTO approvement
-             (balance_id, user_id, \`date\`, approved, remarks, pix, pix_type)
-           VALUES (?, ?, NOW(), 1, ?, ?, ?)`,
-          id,
+          `UPDATE running_balance
+           SET status = 2,
+               date_updated = NOW(),
+               aprovador_id = ?,
+               remark_aprov = ?
+           WHERE id = ? AND status = 1 AND aj = 1`,
           approverId,
           remarksById.get(id) || 'Aprovado',
-          row.pix,
-          integerOrNull(row.pix_type),
+          id,
         );
       }
 

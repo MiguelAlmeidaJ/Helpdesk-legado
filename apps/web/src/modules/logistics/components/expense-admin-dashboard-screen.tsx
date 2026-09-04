@@ -195,6 +195,12 @@ export function ExpenseAdminDashboardScreen({
       grant.permission === AppPermission.LogisticsExpensesApprove,
   );
 
+  const canPay = currentUser.grants.some(
+    (grant) =>
+      grant.permission === AppPermission.SystemAdmin ||
+      grant.permission === AppPermission.LogisticsExpensesPay,
+  );
+
   const loadSummary = useCallback(
     async (
       nextStart?: string,
@@ -315,10 +321,10 @@ export function ExpenseAdminDashboardScreen({
         </section>
 
         <section className={styles.notice}>
-          <strong>Aprovação e recusa já estão no fluxo nativo.</strong>
+          <strong>Aprovação, recusa e pagamento já estão no fluxo nativo.</strong>
           <span>
-            Pagamento, relatório e ajustes gerenciais continuam no legado até
-            os próximos cortes da migração.
+            Relatório e ajustes gerenciais continuam no legado até os próximos
+            cortes da migração.
           </span>
         </section>
 
@@ -394,13 +400,23 @@ export function ExpenseAdminDashboardScreen({
                   {summary.totals.globalApprovedCount} lançamento(s) no total ·{' '}
                   {currency.format(summary.totals.periodApproved)} no período
                 </small>
-                <button
-                  disabled={loading}
-                  onClick={() => selectStatus(2)}
-                  type="button"
-                >
-                  Ver resumo
-                </button>
+                <div className={styles.metricActions}>
+                  <button
+                    disabled={loading}
+                    onClick={() => selectStatus(2)}
+                    type="button"
+                  >
+                    Ver resumo
+                  </button>
+                  {canPay ? (
+                    <Link
+                      className={styles.paymentLink}
+                      href="/logistics/expenses/admin/payments"
+                    >
+                      Pagar despesas
+                    </Link>
+                  ) : null}
+                </div>
               </article>
 
               <article data-active={status === 4}>

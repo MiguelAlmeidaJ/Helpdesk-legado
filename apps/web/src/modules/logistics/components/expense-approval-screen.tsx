@@ -291,7 +291,7 @@ export function ExpenseApprovalScreen({
                       <td className={styles.decision}>
                         <textarea
                           disabled={busy}
-                          maxLength={5000}
+                          maxLength={255}
                           onChange={(event) =>
                             setRemarks((current) => ({
                               ...current,

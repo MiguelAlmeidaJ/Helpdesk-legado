@@ -5,23 +5,17 @@ import {
   Get,
   HttpCode,
   HttpStatus,
-  NotFoundException,
   Param,
   ParseIntPipe,
   Post,
-  StreamableFile,
   UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
-import {
-  ApiOperation,
-  ApiSecurity,
-  ApiTags,
-} from '@nestjs/swagger';
+import { ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import {
   AppPermission,
-  type LogisticsExpenseApprovalRequest,
-  type LogisticsExpenseBatchApprovalRequest,
+  type LogisticsExpenseBatchPaymentRequest,
+  type LogisticsExpensePaymentRequest,
 } from '@helpdesk/contracts';
 import { LEGACY_SESSION_SECURITY } from '../../../../core/openapi/openapi.constants';
 import type { AuthenticatedUser } from '../../../access/domain/authenticated-user';
@@ -29,7 +23,7 @@ import { CurrentUser } from '../../../access/presentation/http/current-user.deco
 import { LegacySessionGuard } from '../../../access/presentation/http/legacy-session.guard';
 import { PermissionsGuard } from '../../../access/presentation/http/permissions.guard';
 import { RequirePermissions } from '../../../access/presentation/http/require-permissions.decorator';
-import { ExpenseApprovalService } from '../../application/expense-approval.service';
+import { ExpensePaymentService } from '../../application/expense-payment.service';
 
 function remarks(value: unknown): string {
   if (value === undefined || value === null) return '';
@@ -43,7 +37,7 @@ function remarks(value: unknown): string {
   return normalized;
 }
 
-function approvalBody(value: unknown): LogisticsExpenseApprovalRequest {
+function paymentBody(value: unknown): LogisticsExpensePaymentRequest {
   if (value === undefined || value === null) return {};
   if (typeof value !== 'object' || Array.isArray(value)) {
     throw new BadRequestException('Corpo da requisição inválido.');
@@ -52,7 +46,7 @@ function approvalBody(value: unknown): LogisticsExpenseApprovalRequest {
   return { remarks: remarks(body.remarks) };
 }
 
-function batchBody(value: unknown): LogisticsExpenseBatchApprovalRequest {
+function batchBody(value: unknown): LogisticsExpenseBatchPaymentRequest {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
     throw new BadRequestException('Corpo da requisição inválido.');
   }
@@ -81,102 +75,59 @@ function batchBody(value: unknown): LogisticsExpenseBatchApprovalRequest {
   return { items };
 }
 
-function attachmentKey(value: string): string {
-  let decoded: string;
-  try {
-    decoded = decodeURIComponent(value);
-  } catch {
-    throw new BadRequestException('Identificador de anexo inválido.');
-  }
-  if (
-    !/^(?:legacy-\d+|[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})$/i.test(
-      decoded,
-    )
-  ) {
-    throw new BadRequestException('Identificador de anexo inválido.');
-  }
-  return decoded;
-}
-
-function safeFileName(value: string): string {
-  return value.replace(/[\r\n"\\]/g, '_').slice(0, 180) || 'comprovante.pdf';
-}
-
 @ApiTags('logistics-expenses')
-@Controller('logistics/expenses/admin/approvals')
+@Controller('logistics/expenses/admin/payments')
 @UseGuards(LegacySessionGuard, PermissionsGuard)
 @ApiSecurity(LEGACY_SESSION_SECURITY)
-@RequirePermissions(AppPermission.LogisticsExpensesApprove)
-export class ExpenseApprovalController {
-  constructor(private readonly approvals: ExpenseApprovalService) {}
+@RequirePermissions(AppPermission.LogisticsExpensesPay)
+export class ExpensePaymentController {
+  constructor(private readonly payments: ExpensePaymentService) {}
 
   @Get()
-  @ApiOperation({ summary: 'Listar RDs aguardando aprovação' })
+  @ApiOperation({ summary: 'Listar RDs aprovadas aguardando pagamento' })
   queue(@CurrentUser() user: AuthenticatedUser | undefined) {
     if (!user) throw new UnauthorizedException('Usuário não autenticado.');
-    return this.approvals.queue();
+    return this.payments.queue();
   }
 
-
-  @Get(':id/attachments/:key/content')
-  @ApiOperation({ summary: 'Abrir comprovante de uma RD aguardando aprovação' })
-  async attachmentContent(
-    @CurrentUser() user: AuthenticatedUser | undefined,
-    @Param('id', ParseIntPipe) expenseId: number,
-    @Param('key') rawKey: string,
-  ): Promise<StreamableFile> {
-    if (!user) throw new UnauthorizedException('Usuário não autenticado.');
-
-    const content = await this.approvals.attachmentContent(
-      expenseId,
-      attachmentKey(rawKey),
-    );
-    if (!content) {
-      throw new NotFoundException('Comprovante não encontrado.');
-    }
-
-    return new StreamableFile(content.data, {
-      type: content.mimeType,
-      disposition: `inline; filename="${safeFileName(content.name)}"`,
-    });
-  }
-
-  @Post('batch/approve')
+  @Post('batch/pay')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Aprovar um lote de RDs pendentes' })
-  approveBatch(
+  @ApiOperation({ summary: 'Registrar pagamento de um lote de RDs aprovadas' })
+  payBatch(
     @CurrentUser() user: AuthenticatedUser | undefined,
     @Body() rawBody: unknown,
   ) {
     if (!user) throw new UnauthorizedException('Usuário não autenticado.');
     const body = batchBody(rawBody);
-    return this.approvals.approveBatch(
+    return this.payments.payBatch(
       user.id,
       body.items.map((item) => ({ id: item.id, remarks: item.remarks ?? '' })),
     );
   }
 
-  @Post(':id/approve')
+  @Post(':id/pay')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Aprovar uma RD pendente' })
-  approve(
+  @ApiOperation({ summary: 'Registrar pagamento de uma RD aprovada' })
+  pay(
     @CurrentUser() user: AuthenticatedUser | undefined,
     @Param('id', ParseIntPipe) expenseId: number,
     @Body() rawBody?: unknown,
   ) {
     if (!user) throw new UnauthorizedException('Usuário não autenticado.');
-    const body = approvalBody(rawBody);
-    return this.approvals.approve(user.id, expenseId, body.remarks ?? '');
+    const body = paymentBody(rawBody);
+    return this.payments.pay(user.id, expenseId, body.remarks ?? '');
   }
 
   @Post(':id/reject')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Recusar uma RD pendente' })
+  @ApiOperation({ summary: 'Recusar pagamento de uma RD aprovada' })
   reject(
     @CurrentUser() user: AuthenticatedUser | undefined,
     @Param('id', ParseIntPipe) expenseId: number,
+    @Body() rawBody?: unknown,
   ) {
     if (!user) throw new UnauthorizedException('Usuário não autenticado.');
-    return this.approvals.reject(expenseId);
+    const body = paymentBody(rawBody);
+    return this.payments.reject(user.id, expenseId, body.remarks ?? '');
   }
 }
