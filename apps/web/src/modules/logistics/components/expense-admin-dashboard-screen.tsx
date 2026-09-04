@@ -36,6 +36,12 @@ interface DetailState {
   error?: string;
 }
 
+export interface ExpenseAdminDashboardInitialFilters {
+  startDate?: string;
+  endDate?: string;
+  status?: LogisticsExpenseAdminStatus;
+}
+
 function errorMessage(reason: unknown, fallback: string): string {
   if (
     reason &&
@@ -174,14 +180,18 @@ function BreakdownPanel({
 
 export function ExpenseAdminDashboardScreen({
   currentUser,
+  initialFilters,
 }: {
   currentUser: CurrentUserResponse;
+  initialFilters?: ExpenseAdminDashboardInitialFilters;
 }) {
   const [summary, setSummary] =
     useState<LogisticsExpenseAdminDashboardResponse | null>(null);
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
-  const [status, setStatus] = useState<LogisticsExpenseAdminStatus>(4);
+  const [startDate, setStartDate] = useState(initialFilters?.startDate ?? '');
+  const [endDate, setEndDate] = useState(initialFilters?.endDate ?? '');
+  const [status, setStatus] = useState<LogisticsExpenseAdminStatus>(
+    initialFilters?.status ?? 4,
+  );
   const [loading, setLoading] = useState(true);
   const [feedback, setFeedback] = useState('');
   const [openDetail, setOpenDetail] = useState<string | null>(null);
@@ -234,8 +244,17 @@ export function ExpenseAdminDashboardScreen({
   );
 
   useEffect(() => {
-    void loadSummary();
-  }, [loadSummary]);
+    void loadSummary(
+      initialFilters?.startDate,
+      initialFilters?.endDate,
+      initialFilters?.status ?? 4,
+    );
+  }, [
+    initialFilters?.endDate,
+    initialFilters?.startDate,
+    initialFilters?.status,
+    loadSummary,
+  ]);
 
   function apply(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -321,10 +340,10 @@ export function ExpenseAdminDashboardScreen({
         </section>
 
         <section className={styles.notice}>
-          <strong>Aprovação, recusa e pagamento já estão no fluxo nativo.</strong>
+          <strong>Fluxo administrativo de RD totalmente nativo.</strong>
           <span>
-            Relatório, edição administrativa e análise comparativa também estão
-            no fluxo nativo.
+            As entradas PHP antigas agora existem apenas como bridges ou
+            tombstones de compatibilidade.
           </span>
         </section>
 
