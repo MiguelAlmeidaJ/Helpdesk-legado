@@ -1,0 +1,382 @@
+.page {
+  min-height: 100vh;
+  background: #f3f6f8;
+  color: #263746;
+}
+
+.header {
+  position: sticky;
+  z-index: 20;
+  top: 0;
+  min-height: 58px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 0 24px;
+  border-bottom: 1px solid #dfe6ec;
+  background: rgba(255, 255, 255, 0.97);
+  backdrop-filter: blur(10px);
+}
+
+.headerLeft {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.brand {
+  display: grid;
+  color: inherit;
+  text-decoration: none;
+}
+
+.brand strong {
+  font-size: 15px;
+}
+
+.brand span {
+  color: #778692;
+  font-size: 10px;
+}
+
+.content {
+  width: min(1440px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 24px 0 48px;
+}
+
+.hero {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 14px;
+  padding: 20px 22px;
+  border: 1px solid #dce4ea;
+  border-radius: 14px;
+  background: #fff;
+}
+
+.hero h1 {
+  margin: 2px 0;
+  font-size: 30px;
+}
+
+.hero p {
+  margin: 0;
+  color: #6f7e89;
+  font-size: 12px;
+}
+
+.eyebrow {
+  color: #607586;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+}
+
+.ticketsLink,
+.filters button {
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 13px;
+  border: 1px solid #ccd7df;
+  border-radius: 8px;
+  background: #fff;
+  color: #354755;
+  font-size: 10px;
+  font-weight: 800;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.filters {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 18px;
+  padding: 12px 14px;
+  border: 1px solid #dce4ea;
+  border-radius: 11px;
+  background: #fff;
+}
+
+.filters form,
+.quickRanges {
+  display: flex;
+  align-items: end;
+  gap: 8px;
+}
+
+.filters label {
+  display: grid;
+  gap: 4px;
+  color: #72808b;
+  font-size: 9px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.filters input {
+  min-height: 36px;
+  padding: 0 9px;
+  border: 1px solid #ccd7df;
+  border-radius: 7px;
+  background: #fff;
+  color: #263746;
+  font: inherit;
+}
+
+.quickRanges button {
+  min-height: 32px;
+}
+
+.section {
+  margin-top: 20px;
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 10px;
+}
+
+.sectionHeader h2 {
+  margin: 2px 0 0;
+  font-size: 17px;
+}
+
+.sectionHeader small {
+  color: #82909a;
+  font-size: 9px;
+}
+
+.rankingGrid,
+.podiumGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.rankingCard,
+.podiumCard {
+  overflow: hidden;
+  border: 1px solid #dce4ea;
+  border-radius: 11px;
+  background: #fff;
+}
+
+.rankingCard > header,
+.podiumCard > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 11px 12px;
+  border-bottom: 1px solid #edf1f4;
+  background: #f9fbfc;
+}
+
+.rankingCard header > div {
+  min-width: 0;
+}
+
+.rankingCard header span,
+.podiumCard header span {
+  color: #7b8994;
+  font-size: 8px;
+  font-weight: 900;
+  letter-spacing: .08em;
+}
+
+.rankingCard h3,
+.podiumCard h3 {
+  margin: 1px 0 0;
+  font-size: 12px;
+}
+
+.rankingCard header strong {
+  font-size: 21px;
+}
+
+.rankingList {
+  max-height: 410px;
+  overflow-y: auto;
+  padding: 6px 11px 10px;
+}
+
+.rankingRow {
+  padding: 9px 0;
+  border-bottom: 1px solid #edf1f4;
+}
+
+.rankingRow:last-child {
+  border-bottom: 0;
+}
+
+.rankingName {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr) auto;
+  gap: 6px;
+  align-items: center;
+}
+
+.rankingName span {
+  color: #9b7b2a;
+  font-size: 10px;
+  text-align: center;
+}
+
+.rankingName strong {
+  overflow: hidden;
+  font-size: 10px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rankingName b {
+  font-size: 11px;
+}
+
+.barTrack {
+  height: 7px;
+  margin: 5px 0 0 30px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #e9eef2;
+}
+
+.barFill {
+  height: 100%;
+  border-radius: inherit;
+  background: #597c9f;
+}
+
+.rankingCard[data-ranking="devops"] .barFill {
+  background: #876c55;
+}
+
+.rankingCard[data-ranking="mkt"] .barFill {
+  background: #5d8868;
+}
+
+.rankingCard[data-ranking="qa"] .barFill {
+  background: #74678e;
+}
+
+.rankingRow small {
+  display: block;
+  margin: 4px 0 0 30px;
+  color: #84919b;
+  font-size: 8px;
+}
+
+.podiumCard ol {
+  display: grid;
+  gap: 0;
+  margin: 0;
+  padding: 5px 11px 9px;
+  list-style: none;
+}
+
+.podiumCard li {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr) auto;
+  gap: 7px;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid #edf1f4;
+}
+
+.podiumCard li:last-child {
+  border-bottom: 0;
+}
+
+.podiumCard li span {
+  color: #8c762d;
+  font-size: 9px;
+  font-weight: 900;
+}
+
+.podiumCard li strong {
+  overflow: hidden;
+  font-size: 10px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.podiumCard li b {
+  font-size: 11px;
+}
+
+.notice,
+.error {
+  margin-bottom: 14px;
+  padding: 12px 14px;
+  border: 1px solid #dce4ea;
+  border-radius: 9px;
+  background: #fff;
+  font-size: 11px;
+}
+
+.error {
+  border-color: #e5caca;
+}
+
+.empty {
+  margin: 0;
+  padding: 12px 2px;
+  color: #86939d;
+  font-size: 9px;
+}
+
+@media (max-width: 1100px) {
+  .rankingGrid,
+  .podiumGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .filters {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 680px) {
+  .header {
+    padding: 0 12px;
+  }
+
+  .content {
+    width: calc(100% - 20px);
+  }
+
+  .hero,
+  .sectionHeader {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .filters form,
+  .quickRanges {
+    align-items: stretch;
+    flex-wrap: wrap;
+  }
+
+  .filters label {
+    flex: 1 1 130px;
+  }
+
+  .rankingGrid,
+  .podiumGrid {
+    grid-template-columns: 1fr;
+  }
+}

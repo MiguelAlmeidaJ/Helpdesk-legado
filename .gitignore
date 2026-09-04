@@ -1,0 +1,36 @@
+# Node / TypeScript monorepo
+node_modules/
+.pnpm-store/
+.turbo/
+dist/
+coverage/
+*.tsbuildinfo
+
+# Next.js
+.next/
+out/
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Prisma generated clients
+packages/database/generated/
+packages/database/src/generated/
+
+# Local database dumps (may contain production data)
+docker/mysql/init/legacy-*.sql
+docker/mysql/init/legacy-*.sql.gz
+
+# Logs
+*.log
+pnpm-debug.log*
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+
+*.patch
+Dump_Helpdesk_RD.sql

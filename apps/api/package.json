@@ -1,0 +1,37 @@
+{
+  "name": "@helpdesk/api",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "predev": "pnpm --filter @helpdesk/database build",
+    "dev": "nest start --watch",
+    "prebuild": "pnpm --filter @helpdesk/database build",
+    "build": "nest build",
+    "start": "node dist/main.js",
+    "pretypecheck": "pnpm --filter @helpdesk/database build",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@helpdesk/contracts": "workspace:*",
+    "@helpdesk/database": "workspace:*",
+    "@nestjs/common": "^11.0.0",
+    "@nestjs/config": "4.0.4",
+    "@nestjs/core": "^11.0.0",
+    "@nestjs/platform-express": "^11.0.0",
+    "@nestjs/swagger": "11.4.7",
+    "bcryptjs": "3.0.3",
+    "nodemailer": "^9.1.0",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.2"
+  },
+  "devDependencies": {
+    "@nestjs/cli": "^11.0.0",
+    "@nestjs/schematics": "^11.0.0",
+    "@types/node": "^22.0.0",
+    "@types/nodemailer": "^8.0.1",
+    "ts-loader": "^9.5.2",
+    "ts-node": "^10.9.2",
+    "tsconfig-paths": "^4.2.0",
+    "typescript": "^5.9.0"
+  }
+}

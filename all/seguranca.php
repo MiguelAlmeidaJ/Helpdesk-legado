@@ -1,6 +1,8 @@
 <?php
 require_once __DIR__ . '/session.php';
 n3_session_start();
+require_once __DIR__ . '/native_api_session.php';
+n3_hydrate_native_api_session();
 
 
 ob_start();
@@ -33,7 +35,7 @@ if (
   $_SESSION['allterusN3Modulo9']
   );
   $_SESSION['loginErro'] = "Área restrita para usuários cadastrados.";
-  header("Location: " . n3_app_url("index.php"));
+  header('Location: ' . allterus_web_url('/login'));
   exit();
 }
 ?>

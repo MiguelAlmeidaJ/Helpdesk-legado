@@ -1,4 +1,9 @@
 <?php
+http_response_code(410);
+header('Content-Type: text/plain; charset=UTF-8');
+echo 'A edição administrativa de RD foi migrada para o fluxo nativo. Nenhuma alteração foi gravada.';
+exit;
+
 session_start();
 include_once("../all/seguranca.php");
 include_once("../all/conect.php");

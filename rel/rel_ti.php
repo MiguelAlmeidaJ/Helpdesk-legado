@@ -611,7 +611,7 @@ $p_nivel = $f_nivel == 0 ? "1,2,3,4,5" : $f_nivel;
     $(document).ready(function() {
       function carregarLocais(clienteId, localSelecionado = null) {
         $.ajax({
-          url: '../atd/busca_locais.php',
+          url: 'busca_locais.php',
           method: 'GET',
           data: {
             cliente: clienteId

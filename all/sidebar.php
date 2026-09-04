@@ -436,7 +436,7 @@ if (!function_exists('sidebar_href')) {
   </div>
 
   <nav id="sidebarNav">
-    <a href="<?php echo sidebar_href('home.php'); ?>" class="menu-item">
+    <a href="<?php echo htmlspecialchars(allterus_web_url('/dashboard'), ENT_QUOTES, 'UTF-8'); ?>" class="menu-item">
       <i class="fas fa-chart-line text-xl"></i>
       <span class="label">Dashboard</span>
     </a>
@@ -450,13 +450,13 @@ if (!function_exists('sidebar_href')) {
           <i class="fas fa-chevron-down menu-arrow"></i>
         </button>
         <div class="submenu">
-          <a href="<?php echo sidebar_href('atd/home.php'); ?>" class="menu-subitem"><i class="fas fa-list-ul"></i><span>Lista de Atendimentos</span></a>
-          <?php if ($m8_01 > 0) { ?>
-            <a href="<?php echo sidebar_href('atd/disponibilidade/'); ?>" class="menu-subitem"><i class="fas fa-user-clock"></i><span>Disponibilidade Tecnica</span></a>
-            <a href="<?php echo sidebar_href('atd/timeline.php'); ?>" class="menu-subitem"><i class="far fa-clock"></i><span>Timeline</span></a>
+          <a href="<?php echo htmlspecialchars(allterus_web_url('/tickets'), ENT_QUOTES, 'UTF-8'); ?>" class="menu-subitem"><i class="fas fa-list-ul"></i><span>Lista de Atendimentos</span></a>
+          <?php if ($m8_00 > 0) { ?>
+            <a href="<?php echo htmlspecialchars(allterus_web_url('/tickets/availability'), ENT_QUOTES, 'UTF-8'); ?>" class="menu-subitem"><i class="fas fa-user-clock"></i><span>Disponibilidade Tecnica</span></a>
+            <a href="<?php echo htmlspecialchars(allterus_web_url('/tickets/timeline'), ENT_QUOTES, 'UTF-8'); ?>" class="menu-subitem"><i class="far fa-clock"></i><span>Timeline</span></a>
           <?php } ?>
           <?php if ($m3_01 > 0) { ?>
-            <a href="<?php echo sidebar_href('atd/atd.php'); ?>" class="menu-subitem"><i class="fas fa-plus"></i><span>Novo Atendimento</span></a>
+            <a href="<?php echo htmlspecialchars(allterus_web_url('/tickets/new'), ENT_QUOTES, 'UTF-8'); ?>" class="menu-subitem"><i class="fas fa-plus"></i><span>Novo Atendimento</span></a>
           <?php } ?>
         </div>
       </div>
@@ -509,8 +509,8 @@ if (!function_exists('sidebar_href')) {
         </button>
         <div class="submenu">
           <?php if ($m9_01 > 0) { ?>
-            <a href="<?php echo sidebar_href('logistica/agendaVeiculos.php'); ?>" class="menu-subitem"><i class="fas fa-car"></i><span>Agenda Veiculos</span></a>
-            <a href="<?php echo sidebar_href('logistica/rdPainel.php'); ?>" class="menu-subitem"><i class="fas fa-wallet"></i><span>RD</span></a>
+            <a href="<?php echo htmlspecialchars(allterus_web_url('/logistics/vehicles/agenda'), ENT_QUOTES, 'UTF-8'); ?>" class="menu-subitem"><i class="fas fa-car"></i><span>Agenda Veiculos</span></a>
+            <a href="<?php echo htmlspecialchars(allterus_web_url('/logistics/expenses'), ENT_QUOTES, 'UTF-8'); ?>" class="menu-subitem"><i class="fas fa-wallet"></i><span>RD</span></a>
           <?php } ?>
           <?php if ($m9_02 > 1) { ?>
             <a href="<?php echo sidebar_href('logistica/gestaoRD.php'); ?>" class="menu-subitem"><i class="fas fa-cogs"></i><span>Gestao RDs</span></a>
@@ -614,7 +614,7 @@ if (!function_exists('sidebar_href')) {
         </button>
         <div class="submenu">
           <?php if ($showCadastroUsuarios) { ?>
-            <a href="<?php echo sidebar_href('user/home.php'); ?>" class="menu-subitem"><i class="fas fa-users"></i><span>Usuarios</span></a>
+            <a href="<?php echo htmlspecialchars(allterus_web_url('/users'), ENT_QUOTES, 'UTF-8'); ?>" class="menu-subitem"><i class="fas fa-users"></i><span>Usuários</span></a>
           <?php } ?>
           <?php if ($m2_01 > 0) { ?>
             <a href="<?php echo sidebar_href('cads/clientes.php'); ?>" class="menu-subitem"><i class="fas fa-building"></i><span>Clientes</span></a>
@@ -661,10 +661,10 @@ if (!function_exists('sidebar_href')) {
       <i class="far fa-question-circle text-xl"></i>
       <span class="label">Help</span>
     </button>
-    <button class="menu-item" type="button" data-toggle="modal" data-target="#modalSenha">
+    <a href="<?php echo htmlspecialchars(allterus_web_url('/account/password'), ENT_QUOTES, 'UTF-8'); ?>" class="menu-item">
       <i class="fas fa-user-cog text-xl"></i>
       <span class="label">Senha</span>
-    </button>
+    </a>
     <a href="<?php echo sidebar_href('logout.php'); ?>" class="menu-item">
       <i class="fas fa-sign-out-alt text-xl"></i>
       <span class="label">Sair</span>

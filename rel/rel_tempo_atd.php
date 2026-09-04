@@ -3,6 +3,7 @@ session_start();
 include_once("../all/seguranca.php");
 include_once("../all/conect.php");
 include_once("../all/permissoes.php");
+include_once("../all/app_url.php");
 
 $pdo = ConnectionN3();
 
@@ -139,7 +140,7 @@ function formatarTempoAtendimento($abertura) {
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center mb-2 rel-result-summary">
                         <h4 class="text-left text-red mb-0">Total de registros: <?php echo $num_atendimentos; ?></h4>
-                        <a href="../atd/home.php" class="btn btn-outline-secondary rel-clear-btn"><i class="fas fa-arrow-left"></i> Voltar para Home</a>
+                        <a href="<?php echo htmlspecialchars(allterus_web_url('/tickets'), ENT_QUOTES, 'UTF-8'); ?>" class="btn btn-outline-secondary rel-clear-btn"><i class="fas fa-arrow-left"></i> Voltar para Atendimentos</a>
                     </div>
 
                     <div class="table-responsive rel-table-wrap">

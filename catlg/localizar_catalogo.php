@@ -3,6 +3,7 @@ session_start();
 include_once("../all/conect.php");
 include_once("../all/seguranca.php");
 include_once("../all/permissoes.php");
+include_once("../all/app_url.php");
 
 // Habilitar debug para encontrar erros
 error_reporting(E_ALL);
@@ -83,7 +84,9 @@ ob_end_clean();
 
 // Modificar aqui para incluir o atd_id na resposta
 echo json_encode([
-    "url" => "../atd/atd.php",
+    "url" => ((int)$atd_id > 0
+        ? allterus_web_url('/tickets/' . rawurlencode((string)(int)$atd_id))
+        : allterus_web_url('/tickets')),
     "status" => "reload",
     "message" => "Nenhum catálogo encontrado nesta categoria.",
     "alert_type" => "alert-danger",
