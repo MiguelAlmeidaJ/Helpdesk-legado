@@ -85,3 +85,25 @@ Ainda permanecem no legado nesta etapa:
 
 O próximo corte deve conectar a UI Next ao workflow acima e somente depois
 fazer o cutover da tela PHP de aprovação.
+
+
+## Web e cutover (`0040b`)
+
+A fila de aprovação passa a ter a rota nativa:
+
+```text
+/logistics/expenses/admin/approvals
+```
+
+A tela permite aprovação individual, recusa e aprovação em lote de até 100
+RDs por operação. O lote usa a transação atômica entregue no `0040a`.
+
+Os comprovantes são abertos por um proxy Next e por um endpoint administrativo
+protegido por `LogisticsExpensesApprove`. O endpoint pessoal de anexos continua
+com escopo `Own`; ele não foi relaxado para atender o fluxo administrativo.
+
+`logistica/aprovarRD.php` passa a redirecionar para a rota Next. A implementação
+PHP antiga fica temporariamente abaixo do `exit` durante o smoke/cutover e pode
+ser removida em um corte de aposentadoria depois da paridade operacional.
+
+Pagamento (`pagarRD.php`) continua legado e será tratado no `0041`.

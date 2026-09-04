@@ -1,12 +1,13 @@
 "use client";
 
-import type {
-  CurrentUserResponse,
-  LogisticsExpenseAdminBreakdownItem,
-  LogisticsExpenseAdminDashboardResponse,
-  LogisticsExpenseAdminDetailsResponse,
-  LogisticsExpenseAdminGroup,
-  LogisticsExpenseAdminStatus,
+import {
+  AppPermission,
+  type CurrentUserResponse,
+  type LogisticsExpenseAdminBreakdownItem,
+  type LogisticsExpenseAdminDashboardResponse,
+  type LogisticsExpenseAdminDetailsResponse,
+  type LogisticsExpenseAdminGroup,
+  type LogisticsExpenseAdminStatus,
 } from '@helpdesk/contracts';
 import Link from 'next/link';
 import { FormEvent, useCallback, useEffect, useState } from 'react';
@@ -188,6 +189,12 @@ export function ExpenseAdminDashboardScreen({
     {},
   );
 
+  const canApprove = currentUser.grants.some(
+    (grant) =>
+      grant.permission === AppPermission.SystemAdmin ||
+      grant.permission === AppPermission.LogisticsExpensesApprove,
+  );
+
   const loadSummary = useCallback(
     async (
       nextStart?: string,
@@ -308,10 +315,10 @@ export function ExpenseAdminDashboardScreen({
         </section>
 
         <section className={styles.notice}>
-          <strong>Etapa de leitura administrativa.</strong>
+          <strong>Aprovação e recusa já estão no fluxo nativo.</strong>
           <span>
-            Aprovação, pagamento, relatório e ajustes gerenciais continuam no
-            fluxo legado até os próximos cortes da migração.
+            Pagamento, relatório e ajustes gerenciais continuam no legado até
+            os próximos cortes da migração.
           </span>
         </section>
 
@@ -361,13 +368,23 @@ export function ExpenseAdminDashboardScreen({
                   No período: {currency.format(summary.totals.periodPending)} ·{' '}
                   {summary.totals.periodPendingCount} lançamento(s)
                 </small>
-                <button
-                  disabled={loading}
-                  onClick={() => selectStatus(1)}
-                  type="button"
-                >
-                  Ver resumo
-                </button>
+                <div className={styles.metricActions}>
+                  <button
+                    disabled={loading}
+                    onClick={() => selectStatus(1)}
+                    type="button"
+                  >
+                    Ver resumo
+                  </button>
+                  {canApprove ? (
+                    <Link
+                      className={styles.approvalLink}
+                      href="/logistics/expenses/admin/approvals"
+                    >
+                      Aprovar despesas
+                    </Link>
+                  ) : null}
+                </div>
               </article>
 
               <article data-active={status === 2}>

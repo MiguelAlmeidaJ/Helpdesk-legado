@@ -1,3 +1,5 @@
+import { readFile } from 'node:fs/promises';
+import path from 'node:path';
 import { Inject, Injectable } from '@nestjs/common';
 import type {
   LogisticsExpenseApprovalAttachment,
@@ -12,6 +14,14 @@ interface AttachmentJson {
   nome?: string;
   fileName?: string;
   storagePath?: string;
+  url?: string;
+  mimeType?: string;
+}
+
+export interface ExpenseApprovalAttachmentContent {
+  name: string;
+  mimeType: string;
+  data: Buffer;
 }
 
 interface ApprovalRow {
@@ -120,6 +130,39 @@ export class ExpenseApprovalRepository {
       totalAmount: items.reduce((sum, item) => sum + item.amount, 0),
       items,
     };
+  }
+
+
+  async attachmentContent(
+    expenseId: number,
+    attachmentKey: string,
+  ): Promise<ExpenseApprovalAttachmentContent | null> {
+    const rows = await this.database.$queryRawUnsafe<{ anexos: string | null }[]>(
+      `SELECT anexos
+       FROM running_balance
+       WHERE id = ? AND status = 1 AND aj = 1
+       LIMIT 1`,
+      expenseId,
+    );
+    const attachments = parseAttachments(rows[0]?.anexos ?? null);
+    const attachment = this.attachment(attachments, attachmentKey);
+    if (!attachment) return null;
+
+    const physical = this.physicalPath(attachment);
+    if (!physical) return null;
+
+    try {
+      return {
+        name:
+          attachment.nome ??
+          attachment.fileName ??
+          `comprovante-${expenseId}.pdf`,
+        mimeType: attachment.mimeType ?? 'application/pdf',
+        data: await readFile(physical),
+      };
+    } catch {
+      return null;
+    }
   }
 
   approve(
@@ -269,6 +312,59 @@ export class ExpenseApprovalRepository {
       attachments: this.attachments(attachments),
       receiptRequiredMissing: categoryId === 43 && attachments.length === 0,
     };
+  }
+
+
+  private attachment(
+    attachments: AttachmentJson[],
+    key: string,
+  ): AttachmentJson | undefined {
+    if (key.startsWith('legacy-')) {
+      const index = Number(key.slice('legacy-'.length));
+      if (
+        Number.isSafeInteger(index) &&
+        index >= 0 &&
+        index < attachments.length &&
+        !attachments[index]?.id
+      ) {
+        return attachments[index];
+      }
+      return undefined;
+    }
+
+    return attachments.find((attachment) => attachment.id === key);
+  }
+
+  private uploadRoot(): string {
+    return path.resolve(
+      process.env.RD_UPLOAD_DIR?.trim() || path.join(process.cwd(), 'uploads_rd'),
+    );
+  }
+
+  private safeStoragePath(relative: string): string | null {
+    const root = this.uploadRoot();
+    const candidate = path.resolve(root, relative);
+    return candidate !== root && candidate.startsWith(`${root}${path.sep}`)
+      ? candidate
+      : null;
+  }
+
+  private physicalPath(attachment: AttachmentJson): string | null {
+    if (attachment.storagePath) {
+      return this.safeStoragePath(attachment.storagePath);
+    }
+    if (!attachment.url) return null;
+
+    try {
+      const pathname = new URL(attachment.url, 'http://legacy.local').pathname;
+      const marker = '/uploads_rd/';
+      const index = pathname.toLowerCase().indexOf(marker);
+      if (index < 0) return null;
+      const relative = decodeURIComponent(pathname.slice(index + marker.length));
+      return this.safeStoragePath(relative);
+    } catch {
+      return null;
+    }
   }
 
   private attachments(

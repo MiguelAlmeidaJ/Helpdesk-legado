@@ -27,6 +27,10 @@ export class ExpenseApprovalService {
     return this.repository.queue();
   }
 
+  attachmentContent(expenseId: number, attachmentKey: string) {
+    return this.repository.attachmentContent(expenseId, attachmentKey);
+  }
+
   async approve(
     approverId: number,
     expenseId: number,

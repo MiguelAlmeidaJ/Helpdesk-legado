@@ -5,9 +5,11 @@ import {
   Get,
   HttpCode,
   HttpStatus,
+  NotFoundException,
   Param,
   ParseIntPipe,
   Post,
+  StreamableFile,
   UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
@@ -79,6 +81,27 @@ function batchBody(value: unknown): LogisticsExpenseBatchApprovalRequest {
   return { items };
 }
 
+function attachmentKey(value: string): string {
+  let decoded: string;
+  try {
+    decoded = decodeURIComponent(value);
+  } catch {
+    throw new BadRequestException('Identificador de anexo inválido.');
+  }
+  if (
+    !/^(?:legacy-\d+|[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})$/i.test(
+      decoded,
+    )
+  ) {
+    throw new BadRequestException('Identificador de anexo inválido.');
+  }
+  return decoded;
+}
+
+function safeFileName(value: string): string {
+  return value.replace(/[\r\n"\\]/g, '_').slice(0, 180) || 'comprovante.pdf';
+}
+
 @ApiTags('logistics-expenses')
 @Controller('logistics/expenses/admin/approvals')
 @UseGuards(LegacySessionGuard, PermissionsGuard)
@@ -92,6 +115,30 @@ export class ExpenseApprovalController {
   queue(@CurrentUser() user: AuthenticatedUser | undefined) {
     if (!user) throw new UnauthorizedException('Usuário não autenticado.');
     return this.approvals.queue();
+  }
+
+
+  @Get(':id/attachments/:key/content')
+  @ApiOperation({ summary: 'Abrir comprovante de uma RD aguardando aprovação' })
+  async attachmentContent(
+    @CurrentUser() user: AuthenticatedUser | undefined,
+    @Param('id', ParseIntPipe) expenseId: number,
+    @Param('key') rawKey: string,
+  ): Promise<StreamableFile> {
+    if (!user) throw new UnauthorizedException('Usuário não autenticado.');
+
+    const content = await this.approvals.attachmentContent(
+      expenseId,
+      attachmentKey(rawKey),
+    );
+    if (!content) {
+      throw new NotFoundException('Comprovante não encontrado.');
+    }
+
+    return new StreamableFile(content.data, {
+      type: content.mimeType,
+      disposition: `inline; filename="${safeFileName(content.name)}"`,
+    });
   }
 
   @Post('batch/approve')
