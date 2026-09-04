@@ -27,3 +27,4 @@ export * from './logistics/expense-management';
 export * from './logistics/expense-admin-dashboard';
 export * from './logistics/expense-approval';
 export * from './logistics/expense-payment';
+export * from './logistics/expense-paid-report';

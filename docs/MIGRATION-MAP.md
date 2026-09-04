@@ -24,8 +24,8 @@ This file is the migration control board. Update it in the same pull request tha
 | master-data | `cads` | `nivel3` | planned | Clients, people, locations and generic registrations should later be split only if rules justify it. |
 | finance | `cont`, `cads_cont` | `nivel3` | planned | Accounting/receivables/payables grouping to validate during inventory. |
 | documents | `docs`, `docs_mkt`, `documentos` | `nivel3` | planned | Consolidate document handling rather than preserving folder variants. |
-| logistics | `logistica` | `nivel3` | web | Vehicle agenda, personal RD and the administrative dashboard are native; approval and payment are in native cutover. Reporting and management adjustments remain legacy. |
-| rd | legacy RD flows | `nivel3` | web | Personal RD is native; `0040` migrates approval/recusal, `0041a` adds transactional payment writes and `0041b` adds the native payment UI/cutover. Reporting and management adjustments remain legacy. |
+| logistics | `logistica` | `nivel3` | web | Vehicle agenda, personal RD and the administrative dashboard are native; approval and payment are in native cutover, and `0042a` adds a native paid-report preview. Management adjustments and final report cutover remain legacy. |
+| rd | legacy RD flows | `nivel3` | web | Personal RD is native; `0040` migrates approval/recusal, `0041a` adds transactional payment writes, `0041b` adds the native payment UI/cutover and `0042a` adds `/logistics/expenses/admin/report` without cutting over `detalharRD.php`. Management adjustments remain legacy. |
 | marketing | legacy marketing/`terc_andar` flows | `nivel3` | planned | No separate `mkt` database. Reassess boundary after ticket/third-floor inventory. |
 
 ## Current migration order

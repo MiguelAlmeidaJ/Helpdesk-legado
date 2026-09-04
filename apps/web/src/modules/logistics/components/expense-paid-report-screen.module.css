@@ -1,0 +1,304 @@
+.page {
+  min-height: 100vh;
+  background: #f4f6f8;
+  color: #17212b;
+}
+
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  min-height: 64px;
+  padding: 8px 24px;
+  background: #fff;
+  border-bottom: 1px solid #dfe5eb;
+}
+
+.headerLeft,
+.hero,
+.reportHeader,
+.reportActions,
+.filterActions,
+.pagination {
+  display: flex;
+  align-items: center;
+}
+
+.headerLeft {
+  gap: 14px;
+}
+
+.brand {
+  display: flex;
+  flex-direction: column;
+  color: inherit;
+  text-decoration: none;
+}
+
+.brand strong {
+  font-size: 1rem;
+}
+
+.brand span,
+.eyebrow,
+.reportHeader span {
+  color: #667481;
+  font-size: 0.78rem;
+}
+
+.content {
+  width: min(1500px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 24px 0 48px;
+}
+
+.hero {
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 16px;
+}
+
+.hero h1 {
+  margin: 4px 0 6px;
+  font-size: clamp(1.7rem, 3vw, 2.35rem);
+}
+
+.hero p {
+  margin: 0;
+  color: #667481;
+}
+
+.backLink {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  padding: 0 14px;
+  color: #243b53;
+  font-weight: 700;
+  text-decoration: none;
+  background: #fff;
+  border: 1px solid #cbd5df;
+  border-radius: 8px;
+}
+
+.notice,
+.feedback {
+  margin-bottom: 16px;
+  padding: 12px 14px;
+  background: #fff;
+  border: 1px solid #dfe5eb;
+  border-radius: 10px;
+}
+
+.notice {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.notice span {
+  color: #667481;
+}
+
+.filters {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(150px, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 16px;
+  background: #fff;
+  border: 1px solid #dfe5eb;
+  border-radius: 10px;
+}
+
+.filters label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.filters input,
+.filters select,
+.filters button,
+.reportActions button,
+.pagination button {
+  min-height: 40px;
+  padding: 8px 10px;
+  font: inherit;
+  border: 1px solid #cbd5df;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.categoryField select {
+  min-height: 92px;
+}
+
+.filterActions {
+  align-self: end;
+  gap: 8px;
+}
+
+.filterActions button:first-child,
+.reportActions button:first-child {
+  color: #fff;
+  font-weight: 800;
+  background: #2563a7;
+  border-color: #2563a7;
+}
+
+.reportCard {
+  overflow: hidden;
+  background: #fff;
+  border: 1px solid #dfe5eb;
+  border-radius: 10px;
+}
+
+.reportHeader {
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px;
+  border-bottom: 1px solid #dfe5eb;
+}
+
+.reportHeader > div:first-child {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.reportHeader strong {
+  font-size: 1.4rem;
+}
+
+.reportActions,
+.pagination {
+  gap: 8px;
+}
+
+.tableWrap {
+  overflow-x: auto;
+}
+
+.tableWrap table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.86rem;
+}
+
+.tableWrap th,
+.tableWrap td {
+  padding: 10px 9px;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid #e7ebef;
+}
+
+.tableWrap thead th {
+  white-space: nowrap;
+  background: #f7f9fb;
+}
+
+.tableWrap tbody tr:hover {
+  background: #fafcfd;
+}
+
+.tableWrap th:last-child,
+.tableWrap td:last-child {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.tableWrap tfoot th {
+  font-weight: 800;
+  background: #f7f9fb;
+}
+
+.emptyCell {
+  padding: 30px !important;
+  text-align: center !important;
+  color: #667481;
+}
+
+.printOnlyRow {
+  display: none;
+}
+
+.pagination {
+  justify-content: center;
+  padding: 14px;
+}
+
+.pagination button:disabled,
+.filters button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+@media (max-width: 900px) {
+  .filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .hero,
+  .reportHeader {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 560px) {
+  .header {
+    padding: 8px 12px;
+  }
+
+  .content {
+    width: min(100% - 20px, 1500px);
+  }
+
+  .filters {
+    grid-template-columns: 1fr;
+  }
+
+  .filterActions,
+  .reportActions {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+}
+
+@media print {
+  .header,
+  .hero .backLink,
+  .notice,
+  .filters,
+  .reportActions,
+  .pagination {
+    display: none;
+  }
+
+  .page,
+  .reportCard {
+    background: #fff;
+    border: 0;
+  }
+
+  .content {
+    width: 100%;
+    padding: 0;
+  }
+
+  .tableWrap {
+    overflow: visible;
+  }
+
+  .printOnlyRow {
+    display: table-row;
+  }
+}
