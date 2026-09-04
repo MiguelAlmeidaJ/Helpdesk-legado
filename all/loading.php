@@ -1,3 +1,7 @@
+<?php
+require __DIR__ . '/../legacy/bridge/loading.php';
+return;
+?>
 <style>
   .loader {
     position: fixed;

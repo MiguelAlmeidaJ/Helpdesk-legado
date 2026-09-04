@@ -1,6 +1,4 @@
 <?php
-require __DIR__ . '/../legacy/bridge/app_url.php';
-return;
 if (!function_exists('allterus_normalize_prefix')) {
   function allterus_normalize_prefix($prefix)
   {
@@ -23,7 +21,7 @@ if (!function_exists('allterus_app_base_path')) {
     }
 
     $docRoot = isset($_SERVER['DOCUMENT_ROOT']) ? realpath((string)$_SERVER['DOCUMENT_ROOT']) : false;
-    $appRoot = realpath(dirname(__DIR__));
+    $appRoot = realpath(dirname(__DIR__, 2));
 
     if ($docRoot !== false && $appRoot !== false) {
       $docRoot = str_replace('\\', '/', rtrim($docRoot, '\\/'));
@@ -115,7 +113,7 @@ if (!function_exists('allterus_env_value')) {
       return trim((string)$environment);
     }
 
-    $path = dirname(__DIR__) . DIRECTORY_SEPARATOR . '.env';
+    $path = dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . '.env';
     if (!is_readable($path)) {
       return $default;
     }

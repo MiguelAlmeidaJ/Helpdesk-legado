@@ -1,6 +1,4 @@
 <?php
-require __DIR__ . '/../legacy/bridge/update_pass.php';
-return;
 if (!isset($user_id)) {
     header("Location: ../index.php");
     die();

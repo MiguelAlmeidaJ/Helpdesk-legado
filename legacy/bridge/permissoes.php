@@ -1,10 +1,7 @@
 <?php
-require __DIR__ . '/../legacy/bridge/permissoes.php';
-return;
 
-if (session_status() !== PHP_SESSION_ACTIVE) {
-    session_start();
-}
+require_once __DIR__ . '/session.php';
+n3_session_start();
 
 if (!function_exists('n3_session_value')) {
     function n3_session_value(string $key, $default = '')

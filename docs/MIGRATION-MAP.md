@@ -17,7 +17,7 @@ This file is the migration control board. Update it in the same pull request tha
 
 | Target module | Legacy source | Primary DB | Phase | Notes |
 | --- | --- | --- | --- | --- |
-| platform | `all`, root bootstrap/config | `nivel3` | inventory | Auth/session/permissions, configuration and technical foundations. |
+| platform | `all`, root bootstrap/config | `nivel3` | refactor | Through `0043c`, every file under `all/` is compatibility-only: implementations live in `legacy/bridge/`; `0043d` rewrites remaining includes/entry points and removes `all/`. |
 | tickets | `atd`, `atd_facility`, `atd_projeto`, `atd_3andar`, parts of `atd_mkt` | `nivel3` | web | Read API and first Next.js list UI available; legacy remains authoritative until jobs/detail/workflows reach parity and cutover. |
 | assets | `ativos` | `nivel3` | planned | Inventory/assets and related assignments. |
 | catalog | `catlg` | `nivel3` | planned | Catalog/service information; ownership must be confirmed during inventory. |

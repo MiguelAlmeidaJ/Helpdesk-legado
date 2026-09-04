@@ -1,6 +1,4 @@
 <?php
-require __DIR__ . '/../legacy/bridge/conect.php';
-return;
 require_once __DIR__ . '/app_url.php';
 
 if (!function_exists('n3_database_connection_from_url')) {

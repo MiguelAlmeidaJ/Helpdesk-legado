@@ -1,6 +1,4 @@
 <?php
-require __DIR__ . '/../legacy/bridge/sidebar.php';
-return;
 include_once(__DIR__ . "/app_url.php");
 include_once(__DIR__ . "/permissoes.php");
 

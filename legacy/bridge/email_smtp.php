@@ -1,6 +1,4 @@
 <?php
-require __DIR__ . '/../legacy/bridge/email_smtp.php';
-return;
 if (!function_exists('n3_send_mail')) {
     function n3_smtp_config()
     {
@@ -9,7 +7,7 @@ if (!function_exists('n3_send_mail')) {
             return $config;
         }
 
-        $configPath = dirname(__DIR__) . '/config/email_smtp.php';
+        $configPath = dirname(__DIR__, 2) . '/config/email_smtp.php';
         $config = file_exists($configPath) ? require $configPath : [];
         return $config;
     }

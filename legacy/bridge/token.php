@@ -1,8 +1,6 @@
 <?php
-require __DIR__ . '/../legacy/bridge/token.php';
-return;
 
-include_once("../all/permissoes.php");
+include_once(__DIR__ . "/permissoes.php");
 
 //VERIFICO SE HÁ TOKEN SETADO PARA A PÁGINA
 if (isset($_POST['token'])) {
