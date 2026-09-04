@@ -28,3 +28,4 @@ export * from './logistics/expense-admin-dashboard';
 export * from './logistics/expense-approval';
 export * from './logistics/expense-payment';
 export * from './logistics/expense-paid-report';
+export * from './logistics/expense-comparison';

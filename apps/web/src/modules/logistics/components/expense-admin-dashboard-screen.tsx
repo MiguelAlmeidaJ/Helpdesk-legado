@@ -323,8 +323,8 @@ export function ExpenseAdminDashboardScreen({
         <section className={styles.notice}>
           <strong>Aprovação, recusa e pagamento já estão no fluxo nativo.</strong>
           <span>
-            Relatório e edição administrativa também estão no fluxo nativo;
-            a análise comparativa permanece no legado.
+            Relatório, edição administrativa e análise comparativa também estão
+            no fluxo nativo.
           </span>
         </section>
 
@@ -436,6 +436,12 @@ export function ExpenseAdminDashboardScreen({
                     href="/logistics/expenses/admin/report"
                   >
                     Relatório de pagamentos
+                  </Link>
+                  <Link
+                    className={styles.reportLink}
+                    href="/logistics/expenses/admin/analysis"
+                  >
+                    Análise comparativa
                   </Link>
                 </div>
               </article>

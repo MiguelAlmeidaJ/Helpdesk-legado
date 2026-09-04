@@ -1,4 +1,14 @@
 <?php
+require_once __DIR__ . '/../all/app_url.php';
+
+$params = array_merge($_GET, $_POST);
+$target = allterus_web_url('/logistics/expenses/admin/analysis');
+if (!empty($params)) {
+    $target .= '?' . http_build_query($params, '', '&', PHP_QUERY_RFC3986);
+}
+header('Location: ' . $target, true, 302);
+exit;
+
 // ARQUIVO ATUALIZADO NOVO FINANCEIRO
 
 session_start();
