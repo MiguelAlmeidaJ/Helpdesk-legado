@@ -1,4 +1,8 @@
-import type { LogisticsExpensePaidReportResponse } from '@helpdesk/contracts';
+import type {
+  LogisticsExpensePaidAdminEditResponse,
+  LogisticsExpensePaidReportResponse,
+  UpdateLogisticsExpensePaidAdminRequest,
+} from '@helpdesk/contracts';
 import { apiRequest } from '../../../shared/api/api-client';
 
 export interface ExpensePaidReportFilters {
@@ -24,4 +28,24 @@ export function getExpensePaidReport(
   return apiRequest<LogisticsExpensePaidReportResponse>(
     `logistics/expenses/admin/report${query ? `?${query}` : ''}`,
   );
+}
+
+
+export function getExpensePaidAdminEdit(
+  expenseId: number,
+): Promise<LogisticsExpensePaidAdminEditResponse> {
+  return apiRequest<LogisticsExpensePaidAdminEditResponse>(
+    `logistics/expenses/admin/report/${expenseId}/edit`,
+  );
+}
+
+export function updateExpensePaidAdmin(
+  expenseId: number,
+  request: UpdateLogisticsExpensePaidAdminRequest,
+): Promise<void> {
+  return apiRequest<void>(`logistics/expenses/admin/report/${expenseId}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(request),
+  });
 }

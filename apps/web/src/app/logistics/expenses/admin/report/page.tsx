@@ -29,6 +29,21 @@ function categoryIds(value: SearchValue): number[] {
     .filter((entry): entry is number => entry !== undefined))];
 }
 
+function legacyCategoryValues(
+  params: Record<string, SearchValue>,
+): string[] {
+  return Object.entries(params)
+    .filter(
+      ([key]) =>
+        key === 'category_id' ||
+        key === 'category_id[]' ||
+        /^category_id\[\d+\]$/.test(key),
+    )
+    .flatMap(([, value]) =>
+      Array.isArray(value) ? value : value ? [value] : [],
+    );
+}
+
 function canRead(user: CurrentUserResponse): boolean {
   return user.grants.some(
     (grant) =>
@@ -53,7 +68,9 @@ export default async function ExpensePaidReportPage({
     endDate: first(params.endDate) ?? first(params.date_end),
     userId: positiveInteger(first(params.userId) ?? first(params.user_id)),
     clientName: first(params.clientName) ?? first(params.cliente_nome),
-    categoryIds: categoryIds(params.categoryId ?? params.category_id),
+    categoryIds: categoryIds(
+      params.categoryId ?? legacyCategoryValues(params),
+    ),
   };
 
   return (

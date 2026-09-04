@@ -39,3 +39,40 @@ export interface LogisticsExpensePaidReportResponse {
   totalAmount: number;
   items: LogisticsExpensePaidReportItem[];
 }
+
+export type LogisticsExpensePaidCategoryCatalog = 'legacy' | 'current';
+
+export interface LogisticsExpensePaidAdminEditExpense {
+  id: number;
+  paidAt: string;
+  userId: number;
+  userName: string;
+  amount: number;
+  categoryId: number | null;
+  categoryName: string;
+  categoryCatalog: LogisticsExpensePaidCategoryCatalog;
+  clientId: number | null;
+  clientName: string;
+  pixTypeId: number | null;
+  pixTypeName: string;
+  pix: string;
+  remarks: string;
+}
+
+export interface LogisticsExpensePaidAdminEditResponse {
+  expense: LogisticsExpensePaidAdminEditExpense;
+  options: {
+    categories: LogisticsExpensePaidReportFilterOption[];
+    clients: LogisticsExpensePaidReportFilterOption[];
+    pixTypes: LogisticsExpensePaidReportFilterOption[];
+  };
+}
+
+export interface UpdateLogisticsExpensePaidAdminRequest {
+  amount: number;
+  categoryId: number;
+  clientId: number | null;
+  pixTypeId: number | null;
+  pix: string;
+  remarks: string;
+}

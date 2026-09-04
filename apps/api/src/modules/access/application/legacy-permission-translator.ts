@@ -192,6 +192,14 @@ export function translateLegacySession(
 
   pushGrant(
     grants,
+    AppPermission.LogisticsExpensesAdminManage,
+    permissionLevel(logistics, 2),
+    2,
+    PermissionScope.All,
+  );
+
+  pushGrant(
+    grants,
     AppPermission.LogisticsExpensesApprove,
     permissionLevel(logistics, 2),
     2,

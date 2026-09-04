@@ -323,8 +323,8 @@ export function ExpenseAdminDashboardScreen({
         <section className={styles.notice}>
           <strong>Aprovação, recusa e pagamento já estão no fluxo nativo.</strong>
           <span>
-            Relatório e ajustes gerenciais continuam no legado até os próximos
-            cortes da migração.
+            Relatório e edição administrativa também estão no fluxo nativo;
+            a análise comparativa permanece no legado.
           </span>
         </section>
 
@@ -423,13 +423,21 @@ export function ExpenseAdminDashboardScreen({
                 <span>Pagas</span>
                 <strong>{currency.format(summary.totals.periodPaid)}</strong>
                 <small>Total pago no período selecionado</small>
-                <button
-                  disabled={loading}
-                  onClick={() => selectStatus(4)}
-                  type="button"
-                >
-                  Ver resumo
-                </button>
+                <div className={styles.metricActions}>
+                  <button
+                    disabled={loading}
+                    onClick={() => selectStatus(4)}
+                    type="button"
+                  >
+                    Ver resumo
+                  </button>
+                  <Link
+                    className={styles.reportLink}
+                    href="/logistics/expenses/admin/report"
+                  >
+                    Relatório de pagamentos
+                  </Link>
+                </div>
               </article>
             </section>
 

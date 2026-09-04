@@ -1,14 +1,24 @@
 import {
   BadRequestException,
+  Body,
   Controller,
   ForbiddenException,
   Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  ParseIntPipe,
+  Patch,
   Query,
   UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
 import { ApiOperation, ApiQuery, ApiSecurity, ApiTags } from '@nestjs/swagger';
-import { AppPermission, PermissionScope } from '@helpdesk/contracts';
+import {
+  AppPermission,
+  PermissionScope,
+  type UpdateLogisticsExpensePaidAdminRequest,
+} from '@helpdesk/contracts';
 import { LEGACY_SESSION_SECURITY } from '../../../../core/openapi/openapi.constants';
 import type { AuthenticatedUser } from '../../../access/domain/authenticated-user';
 import { CurrentUser } from '../../../access/presentation/http/current-user.decorator';
@@ -98,6 +108,85 @@ function reportScope(user: AuthenticatedUser): PermissionScope {
     : PermissionScope.Own;
 }
 
+function requireAdminManageAll(user: AuthenticatedUser): void {
+  if (
+    user.grants.some((grant) => grant.permission === AppPermission.SystemAdmin)
+  ) {
+    return;
+  }
+  const grant = user.grants.find(
+    (candidate) =>
+      candidate.permission === AppPermission.LogisticsExpensesAdminManage,
+  );
+  if (grant?.scope !== PermissionScope.All) {
+    throw new ForbiddenException(
+      'A edição administrativa de RD exige escopo total.',
+    );
+  }
+}
+
+function bodyInteger(
+  value: unknown,
+  field: string,
+  nullable = false,
+): number | null {
+  if (nullable && (value === null || value === undefined || value === '')) {
+    return null;
+  }
+  const parsed =
+    typeof value === 'number'
+      ? value
+      : typeof value === 'string'
+        ? Number(value)
+        : Number.NaN;
+  if (!Number.isSafeInteger(parsed) || parsed < 1) {
+    throw new BadRequestException(`${field} inválido.`);
+  }
+  return parsed;
+}
+
+function bodyText(
+  value: unknown,
+  field: string,
+  maximum: number,
+): string {
+  if (value === undefined || value === null) return '';
+  if (typeof value !== 'string') {
+    throw new BadRequestException(`${field} inválido.`);
+  }
+  const normalized = value.trim();
+  if (normalized.length > maximum) {
+    throw new BadRequestException(
+      `${field} deve ter no máximo ${maximum} caracteres.`,
+    );
+  }
+  return normalized;
+}
+
+function editBody(value: unknown): UpdateLogisticsExpensePaidAdminRequest {
+  if (!value || typeof value !== 'object') {
+    throw new BadRequestException('Corpo da requisição inválido.');
+  }
+  const body = value as Record<string, unknown>;
+  const amount = Number(body.amount);
+  if (
+    !Number.isFinite(amount) ||
+    amount <= 0 ||
+    amount > 99_999_999.99
+  ) {
+    throw new BadRequestException('amount inválido.');
+  }
+
+  return {
+    amount,
+    categoryId: bodyInteger(body.categoryId, 'categoryId') as number,
+    clientId: bodyInteger(body.clientId, 'clientId', true),
+    pixTypeId: bodyInteger(body.pixTypeId, 'pixTypeId', true),
+    pix: bodyText(body.pix, 'pix', 255),
+    remarks: bodyText(body.remarks, 'remarks', 5000),
+  };
+}
+
 @ApiTags('logistics-expenses')
 @Controller('logistics/expenses/admin/report')
 @UseGuards(LegacySessionGuard, PermissionsGuard)
@@ -145,5 +234,31 @@ export class ExpensePaidReportController {
       clientName: clientName(rawClientName),
       categoryIds: categoryIds(rawCategoryIds),
     });
+  }
+
+  @Get(':id/edit')
+  @RequirePermissions(AppPermission.LogisticsExpensesAdminManage)
+  @ApiOperation({ summary: 'Carregar uma RD paga para edição administrativa' })
+  edit(
+    @CurrentUser() user: AuthenticatedUser | undefined,
+    @Param('id', ParseIntPipe) expenseId: number,
+  ) {
+    if (!user) throw new UnauthorizedException('Usuário não autenticado.');
+    requireAdminManageAll(user);
+    return this.reportService.edit(expenseId);
+  }
+
+  @Patch(':id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @RequirePermissions(AppPermission.LogisticsExpensesAdminManage)
+  @ApiOperation({ summary: 'Editar dados administrativos de uma RD paga' })
+  update(
+    @CurrentUser() user: AuthenticatedUser | undefined,
+    @Param('id', ParseIntPipe) expenseId: number,
+    @Body() body: unknown,
+  ): Promise<void> {
+    if (!user) throw new UnauthorizedException('Usuário não autenticado.');
+    requireAdminManageAll(user);
+    return this.reportService.update(expenseId, editBody(body));
   }
 }

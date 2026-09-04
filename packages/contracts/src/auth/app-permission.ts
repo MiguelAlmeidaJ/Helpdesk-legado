@@ -22,6 +22,7 @@ export enum AppPermission {
   LogisticsExpensesRead = 'logistics.expenses.read',
   LogisticsExpensesManage = 'logistics.expenses.manage',
   LogisticsExpensesAdminRead = 'logistics.expenses.admin.read',
+  LogisticsExpensesAdminManage = 'logistics.expenses.admin.manage',
   LogisticsExpensesApprove = 'logistics.expenses.approve',
   LogisticsExpensesPay = 'logistics.expenses.pay',
 

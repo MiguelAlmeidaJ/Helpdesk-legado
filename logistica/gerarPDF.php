@@ -1,4 +1,14 @@
 <?php
+require_once __DIR__ . '/../all/app_url.php';
+
+$query = http_build_query($_GET, '', '&', PHP_QUERY_RFC3986);
+$target = allterus_web_url('/logistics/expenses/admin/report');
+if ($query !== '') {
+    $target .= '?' . $query;
+}
+header('Location: ' . $target, true, 302);
+exit;
+
 session_start();
 include_once("../all/seguranca.php");
 include_once("../all/conect.php");

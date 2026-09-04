@@ -1,8 +1,10 @@
 import { Inject, Injectable } from '@nestjs/common';
 import {
   PermissionScope,
+  type LogisticsExpensePaidAdminEditResponse,
   type LogisticsExpensePaidReportFilterOption,
   type LogisticsExpensePaidReportResponse,
+  type UpdateLogisticsExpensePaidAdminRequest,
 } from '@helpdesk/contracts';
 import type { Nivel3DatabaseClient } from '@helpdesk/database';
 import { NIVEL3_DATABASE } from '../../../core/database/database.constants';
@@ -25,6 +27,40 @@ interface PaidReportRow {
   client_name: string | null;
   remarks: string | null;
   amount: bigint | number | string | null;
+}
+
+interface PaidAdminEditRow {
+  id: bigint | number | string;
+  paid_at: string;
+  user_id: bigint | number | string;
+  user_name: string | null;
+  amount: bigint | number | string | null;
+  category_id: bigint | number | string | null;
+  category_name: string | null;
+  legacy_catalog: bigint | number | string | null;
+  clt_id: bigint | number | string | null;
+  client_name: string | null;
+  pix_type: bigint | number | string | null;
+  pix_type_name: string | null;
+  pix: string | null;
+  remarks: string | null;
+  status: bigint | number | string | null;
+  aj: bigint | number | string | null;
+}
+
+interface MutablePaidExpenseRow {
+  id: bigint | number | string;
+  status: bigint | number | string | null;
+  aj: bigint | number | string | null;
+  legacy_catalog: bigint | number | string | null;
+  category_id: bigint | number | string | null;
+  clt_id: bigint | number | string | null;
+  client_name: string | null;
+  pix_type: bigint | number | string | null;
+}
+
+interface NameRow {
+  name: string | null;
 }
 
 interface OptionRow {
@@ -154,6 +190,206 @@ export class ExpensePaidReportRepository {
     };
   }
 
+  async edit(
+    expenseId: number,
+  ): Promise<LogisticsExpensePaidAdminEditResponse | 'not-found' | 'locked'> {
+    const rows = await this.database.$queryRawUnsafe<PaidAdminEditRow[]>(
+      `SELECT
+         r.id,
+         DATE_FORMAT(COALESCE(r.date_updated, r.date_created), '%Y-%m-%dT%H:%i:%s') AS paid_at,
+         r.user_id,
+         COALESCE(u.user_nome, CONCAT('Usuário #', r.user_id)) AS user_name,
+         r.amount,
+         r.category_id,
+         COALESCE(
+           CASE
+             WHEN r.date_created < '2025-10-01 00:00:00' THEN legacy_category.categories
+             ELSE current_category.nome
+           END,
+           CONCAT('Categoria #', r.category_id)
+         ) AS category_name,
+         CASE WHEN r.date_created < '2025-10-01 00:00:00' THEN 1 ELSE 0 END
+           AS legacy_catalog,
+         r.clt_id,
+         COALESCE(NULLIF(r.cliente, ''), 'Sem cliente') AS client_name,
+         r.pix_type,
+         COALESCE(tk.name_type, CONCAT('Tipo #', r.pix_type)) AS pix_type_name,
+         r.pix,
+         r.remarks,
+         r.status,
+         r.aj
+       FROM running_balance r
+       LEFT JOIN usuarios u ON u.user_id = r.user_id
+       LEFT JOIN category legacy_category ON legacy_category.id = r.category_id
+       LEFT JOIN categorias_subgrupo current_category ON current_category.id = r.category_id
+       LEFT JOIN type_keys tk ON tk.id = r.pix_type
+       WHERE r.id = ?
+       LIMIT 1`,
+      expenseId,
+    );
+    const row = rows[0];
+    if (!row || numberValue(row.aj) !== 1) return 'not-found';
+    if (numberValue(row.status) !== 4) return 'locked';
+
+    const categoryCatalog =
+      numberValue(row.legacy_catalog) === 1 ? 'legacy' : 'current';
+    const [categoryRows, clientRows, pixTypeRows] = await Promise.all([
+      this.adminCategoryOptions(categoryCatalog === 'legacy'),
+      this.adminClientOptions(),
+      this.adminPixTypeOptions(),
+    ]);
+    const categoryId = integerOrNull(row.category_id);
+    const clientId = integerOrNull(row.clt_id);
+    const pixTypeId = integerOrNull(row.pix_type);
+
+    return {
+      expense: {
+        id: numberValue(row.id),
+        paidAt: row.paid_at,
+        userId: numberValue(row.user_id),
+        userName: row.user_name ?? 'Usuário não identificado',
+        amount: numberValue(row.amount),
+        categoryId,
+        categoryName: row.category_name ?? 'Categoria não identificada',
+        categoryCatalog,
+        clientId,
+        clientName: row.client_name ?? 'Sem cliente',
+        pixTypeId,
+        pixTypeName: row.pix_type_name ?? 'Não informado',
+        pix: row.pix ?? '',
+        remarks: row.remarks ?? '',
+      },
+      options: {
+        categories: this.withCurrentOption(
+          this.options(categoryRows),
+          categoryId,
+          row.category_name,
+        ),
+        clients: this.withCurrentOption(
+          this.options(clientRows),
+          clientId,
+          row.client_name,
+        ),
+        pixTypes: this.withCurrentOption(
+          this.options(pixTypeRows),
+          pixTypeId,
+          row.pix_type_name,
+        ),
+      },
+    };
+  }
+
+  async update(
+    expenseId: number,
+    request: UpdateLogisticsExpensePaidAdminRequest,
+  ): Promise<
+    | 'updated'
+    | 'not-found'
+    | 'locked'
+    | 'invalid-category'
+    | 'invalid-client'
+    | 'invalid-pix-type'
+  > {
+    return this.database.$transaction(async (transaction) => {
+      const rows = await transaction.$queryRawUnsafe<MutablePaidExpenseRow[]>(
+        `SELECT
+           id,
+           status,
+           aj,
+           CASE WHEN date_created < '2025-10-01 00:00:00' THEN 1 ELSE 0 END
+             AS legacy_catalog,
+           category_id,
+           clt_id,
+           cliente AS client_name,
+           pix_type
+         FROM running_balance
+         WHERE id = ?
+         LIMIT 1
+         FOR UPDATE`,
+        expenseId,
+      );
+      const row = rows[0];
+      if (!row || numberValue(row.aj) !== 1) return 'not-found' as const;
+      if (numberValue(row.status) !== 4) return 'locked' as const;
+
+      const currentCategoryId = integerOrNull(row.category_id);
+      if (request.categoryId !== currentCategoryId) {
+        const categoryRows =
+          numberValue(row.legacy_catalog) === 1
+            ? await transaction.$queryRawUnsafe<NameRow[]>(
+                `SELECT categories AS name
+                 FROM category
+                 WHERE id = ? AND status = 1
+                 LIMIT 1`,
+                request.categoryId,
+              )
+            : await transaction.$queryRawUnsafe<NameRow[]>(
+                `SELECT nome AS name
+                 FROM categorias_subgrupo
+                 WHERE id = ?
+                   AND status = 1
+                   AND aplicavel IN ('Ambos', 'RD')
+                 LIMIT 1`,
+                request.categoryId,
+              );
+        if (!categoryRows[0]) return 'invalid-category' as const;
+      }
+
+      let clientId = integerOrNull(row.clt_id);
+      let clientName = row.client_name ?? '';
+      if (request.clientId !== null) {
+        const clients = await transaction.$queryRawUnsafe<NameRow[]>(
+          `SELECT clt_nomef AS name
+           FROM clientes
+           WHERE clt_id = ?
+           LIMIT 1`,
+          request.clientId,
+        );
+        const client = clients[0];
+        if (!client) return 'invalid-client' as const;
+        clientId = request.clientId;
+        clientName = client.name ?? '';
+      }
+
+      let pixTypeId = integerOrNull(row.pix_type);
+      if (request.pixTypeId !== null) {
+        const pixTypes = await transaction.$queryRawUnsafe<NameRow[]>(
+          `SELECT name_type AS name
+           FROM type_keys
+           WHERE id = ?
+           LIMIT 1`,
+          request.pixTypeId,
+        );
+        if (!pixTypes[0]) return 'invalid-pix-type' as const;
+        pixTypeId = request.pixTypeId;
+      }
+
+      await transaction.$executeRawUnsafe(
+        `UPDATE running_balance
+         SET amount = ?,
+             category_id = ?,
+             pix_type = ?,
+             pix = ?,
+             clt_id = ?,
+             cliente = ?,
+             remarks = ?
+         WHERE id = ?
+           AND status = 4
+           AND aj = 1`,
+        request.amount,
+        request.categoryId,
+        pixTypeId,
+        request.pix.trim(),
+        clientId,
+        clientName,
+        request.remarks.trim(),
+        expenseId,
+      );
+
+      return 'updated' as const;
+    });
+  }
+
   private async period(
     startDate: string | undefined,
     endDate: string | undefined,
@@ -281,6 +517,57 @@ export class ExpensePaidReportRepository {
       end,
       ...actor.params,
     );
+  }
+
+  private adminCategoryOptions(legacy: boolean): Promise<OptionRow[]> {
+    if (legacy) {
+      return this.database.$queryRawUnsafe<OptionRow[]>(
+        `SELECT CAST(id AS CHAR) AS value, categories AS label
+         FROM category
+         WHERE status = 1
+         ORDER BY categories ASC`,
+      );
+    }
+    return this.database.$queryRawUnsafe<OptionRow[]>(
+      `SELECT CAST(id AS CHAR) AS value, nome AS label
+       FROM categorias_subgrupo
+       WHERE status = 1
+         AND aplicavel IN ('Ambos', 'RD')
+       ORDER BY nome ASC`,
+    );
+  }
+
+  private adminClientOptions(): Promise<OptionRow[]> {
+    return this.database.$queryRawUnsafe<OptionRow[]>(
+      `SELECT CAST(clt_id AS CHAR) AS value, clt_nomef AS label
+       FROM clientes
+       ORDER BY clt_nomef ASC`,
+    );
+  }
+
+  private adminPixTypeOptions(): Promise<OptionRow[]> {
+    return this.database.$queryRawUnsafe<OptionRow[]>(
+      `SELECT CAST(id AS CHAR) AS value, name_type AS label
+       FROM type_keys
+       ORDER BY id ASC`,
+    );
+  }
+
+  private withCurrentOption(
+    options: LogisticsExpensePaidReportFilterOption[],
+    value: number | null,
+    label: string | null,
+  ): LogisticsExpensePaidReportFilterOption[] {
+    if (value === null || options.some((option) => option.value === String(value))) {
+      return options;
+    }
+    return [
+      {
+        value: String(value),
+        label: label ?? `#${value}`,
+      },
+      ...options,
+    ];
   }
 
   private options(rows: OptionRow[]): LogisticsExpensePaidReportFilterOption[] {

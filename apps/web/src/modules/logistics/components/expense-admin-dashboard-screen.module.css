@@ -435,7 +435,8 @@
 }
 
 .metricActions .approvalLink,
-.metricActions .paymentLink {
+.metricActions .paymentLink,
+.metricActions .reportLink {
   display: inline-flex;
   align-items: center;
   min-height: 40px;
