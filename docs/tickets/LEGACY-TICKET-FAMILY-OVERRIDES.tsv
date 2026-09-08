@@ -1,0 +1,25 @@
+# 0044a manual classification overrides
+#
+# Format (TAB-separated):
+# path	classification	native_owner	retirement_prerequisite	note
+#
+# Valid classifications:
+# MIGRATE_READ | MIGRATE_WRITE | MIGRATE_UI | REPORT | BRIDGE_ONLY | REDIRECT | DEAD | UNKNOWN
+#
+# Rules:
+# - path must point to an existing PHP file in the checkout;
+# - path may add a ticket-related rel/ PHP missed by the content heuristic;
+# - native_owner, retirement_prerequisite and note may be left empty;
+# - DEAD and REDIRECT must only be used with concrete reachability/cutover evidence;
+# - ConnectionMkt() remains nivel3 data; do not use an override to create a mkt datasource.
+#
+# Example (remove the leading # and keep literal TABs between columns):
+# rel/legacy_ticket_report.php	REPORT	tickets/reporting	native report parity + cutover	confirmed ticket report
+
+atd_3andar/lib/permission_fallback.php	BRIDGE_ONLY	tickets	RBAC nativo cobre permissoes m8_* e nenhum PHP depende do fallback	compatibilidade temporaria entre sessao PHP e permissoes legadas
+atd_3andar/lib/tarefa_ui_rules.php	MIGRATE_UI	tickets	politicas de transicao/autorizacao na API + visibilidade equivalente na Next UI	regras legadas de exibicao de aceitar devolver espera finalizar e retomar
+atd_3andar/views/detail/tarefa_acoes.php	MIGRATE_UI	tickets	detalhe nativo da tarefa + comandos nativos + autorizacao equivalente na API	UI de status dados operacionais e botoes de acao da tarefa
+atd_3andar/views/detail/tarefa_sidebar_cliente.php	MIGRATE_UI	tickets	detalhe nativo expoe cliente contato local e classificacao + edicao nativa	sidebar de contexto e classificacao da tarefa
+atd_3andar/views/detail/tarefa_timeline.php	MIGRATE_UI	tickets	API nativa de timeline + componente Next equivalente	renderizacao do historico consumindo n3_tarefa3_fetch_timeline
+atd_3andar/views/partials/alerts.php	BRIDGE_ONLY	tickets	nenhuma tela PHP restante depende de flash em sessao	adaptador visual de mensagens flash armazenadas na sessao PHP
+atd_3andar/views/tarefa_detail.php	MIGRATE_UI	tickets	API nativa de detalhe/timeline + tela Next + comandos nativos	orquestrador da tela legada de detalhe da tarefa
