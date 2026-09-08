@@ -118,3 +118,70 @@ export interface TicketProjectTaskFinalizeRequest {
 export interface TicketProjectTaskProgressRequest {
   progress: number;
 }
+
+export interface TicketProjectCreateRequest {
+  name: string;
+  clientId: number;
+  requesterId: number;
+  locationId: number;
+  typeId: number;
+  categoryId: number;
+  subcategoryId: number;
+  itemId: number;
+  levelId: number;
+  formId: number;
+  openingDescription: string;
+  openingAt: string;
+  technicianId: number;
+}
+
+export interface TicketProjectCreateResponse {
+  id: number;
+  status: TicketProjectStatus;
+}
+
+export interface TicketProjectUpdateRequest {
+  typeId: number;
+  categoryId: number;
+  subcategoryId: number;
+  itemId: number;
+  levelId: number;
+  formId: number;
+  openingDescription: string;
+}
+
+export interface TicketProjectTaskCreateRequest {
+  name: string;
+  requesterId: number;
+  locationId: number;
+  typeId: number;
+  categoryId: number;
+  subcategoryId: number;
+  itemId: number;
+  levelId: number;
+  formId: number;
+  openingDescription: string;
+  openingAt: string;
+  technicianId: number;
+  days: number;
+  dependencyTaskId: number;
+}
+
+export interface TicketProjectTaskCreateResponse {
+  id: number;
+  status: TicketProjectStatus;
+}
+
+export interface TicketProjectTaskUpdateRequest {
+  typeId: number;
+  categoryId: number;
+  subcategoryId: number;
+  itemId: number;
+  levelId: number;
+  formId: number;
+  openingDescription: string;
+}
+
+export interface TicketProjectTaskDependencyRequest {
+  dependencyTaskId: number;
+}

@@ -1,14 +1,10 @@
-# 0044c — comandos nativos do workflow de tarefas de projeto
+# 0044c — comandos nativos da família projeto/tarefa
 
-O `0044c` inicia a migração das escritas restantes da família Tickets sem
-adicionar novos consumidores de `legacy/bridge/` e sem alterar o comportamento
-dos PHPs legados.
+O `0044c` migra as escritas restantes da família Tickets em subcortes, sem
+adicionar novos consumidores de `legacy/bridge/` e sem alterar os PHPs ainda
+necessários para parity/cutover.
 
-Este corte cobre somente o workflow operacional de `atd_projeto/tarefa.php`.
-Criação e edição estrutural continuam explicitamente pendentes antes do cutover
-da UI.
-
-## Comandos cobertos
+## 0044c — workflow operacional da tarefa
 
 | Ação legada | API nativa |
 | --- | --- |
@@ -20,65 +16,124 @@ da UI.
 | `tarefa_finalizar` | `POST /tickets/projects/tasks/:taskId/finalize` |
 | `tarefa_porcentagem` | `PATCH /tickets/projects/tasks/:taskId/progress` |
 
-As operações usam o banco `nivel3` e as tabelas existentes `tarefas`,
-`inter_tarefa`, `espera_tarefas`, `projetos` e `inter_projeto`.
+As transições usam transação e `SELECT ... FOR UPDATE` sobre a tarefa. A API é
+a autoridade de autorização e de estado; a futura UI Next apenas reflete essas
+regras.
 
-## Autoridade e concorrência
-
-As regras de autorização não ficam na futura UI Next. Cada comando passa pelos
-grants nativos de Tickets e volta a conferir escopo no repositório antes da
-escrita.
-
-As transições usam transação e `SELECT ... FOR UPDATE` sobre a tarefa para que
-o estado seja validado no mesmo boundary da alteração.
-
-Regras relevantes deste corte:
+Regras relevantes:
 
 - iniciar/direcionar exige tarefa em status `1`;
-- uma dependência em `tarefas_relacionadas` precisa estar finalizada;
-- espera exige status `2` e não aceita uma espera ativa duplicada;
+- dependência em `tarefas_relacionadas` precisa estar finalizada antes do início;
+- espera exige status `2` e não aceita espera ativa duplicada;
 - retomada exige status `3` e fecha a espera ativa;
 - recusa/redirecionamento exige status `2`;
-- finalização por escopo próprio exige status `2`;
-- usuários com escopo operacional amplo podem finalizar status `2` ou `3`;
-- finalizar uma tarefa em espera fecha o registro de espera ativo;
-- finalizar grava `porcentagem = 100`;
-- ao finalizar a última tarefa aberta, o projeto é encerrado com a mesma
-  intenção do legado (`Todas as tarefas finalizadas`);
-- percentual manual aceita `0..100` e não altera tarefa já finalizada.
+- finalização grava `porcentagem = 100`;
+- finalizar a última tarefa aberta encerra o projeto com a intenção legada
+  `Todas as tarefas finalizadas`.
 
-A visibilidade por cliente para usuários parceiros e a restrição histórica do
-usuário `134` seguem o mesmo boundary usado pelo read model nativo.
+## 0044c2 — criação e estrutura de projetos/tarefas
 
-## Escritas deliberadamente fora deste corte
+Este subcorte substitui as escritas estruturais que estavam embutidas em
+`atd_projeto/projeto.php` e `atd_projeto/tarefa.php`.
+
+| Ação legada | API nativa |
+| --- | --- |
+| `projeto_adc` | `POST /tickets/projects` |
+| `projeto_edt` | `PATCH /tickets/projects/:projectId` |
+| `new_tarefa` | `POST /tickets/projects/:projectId/tasks` |
+| `tarefa_edt` | `PATCH /tickets/projects/tasks/:taskId` |
+| `relacionar_tar` | `PATCH /tickets/projects/tasks/:taskId/dependency` |
+
+### Criação
+
+A API preserva os comportamentos funcionais necessários do legado:
+
+- abertura futura cria projeto/tarefa com status `0` (agendado);
+- abertura atual ou passada cria com status `1` (aguardando);
+- reincidência continua sendo calculada pela existência de registro com mesmo
+  cliente/categoria/subcategoria nos 30 dias anteriores;
+- a abertura é registrada em `inter_projeto`/`inter_tarefa` com `inter_tipo=1`;
+- direcionamento inicial para outro técnico registra `inter_tipo=4`;
+- tarefas criadas dentro de um projeto herdam o cliente do projeto em vez de
+  confiar em um `cliente` arbitrário enviado pela UI;
+- solicitante/local/classificação/técnico são validados contra registros ativos
+  e contra as relações de cliente/categoria/subcategoria.
+
+Um projeto finalizado não aceita novas tarefas.
+
+### Edição estrutural
+
+Projeto e tarefa são atualizados atomicamente em uma única transação. O patch
+não replica a sequência PHP de vários `UPDATE`s independentes; ele grava o
+estado estrutural em um único comando e registra um `inter_tipo=9` resumindo as
+alterações.
+
+Campos cobertos:
+
+- tipo;
+- categoria;
+- subcategoria;
+- item;
+- nível;
+- forma;
+- descrição de abertura.
+
+Nome, prazo em dias, datas, técnico e status não entram silenciosamente na
+edição estrutural. Esses valores só mudam por comandos explícitos.
+
+### Dependências
+
+`dependencyTaskId=0` representa ausência de dependência. Uma dependência maior
+que zero precisa:
+
+- existir;
+- pertencer ao mesmo projeto;
+- não apontar para a própria tarefa;
+- não criar ciclo na cadeia de `tarefas_relacionadas`.
+
+A validação da cadeia ocorre dentro da transação e bloqueia os registros
+percorridos com `FOR UPDATE`.
+
+## Escopo e concorrência
+
+As mutações reaplicam no repositório:
+
+- escopo de cliente para usuário parceiro;
+- escopo `Own` dos grants nativos para edição;
+- restrição histórica do usuário `134` nas mutações de tarefa existentes;
+- locks antes de validar e alterar projeto/tarefa/dependência.
+
+A criação de projeto valida o cliente diretamente. A criação de tarefa bloqueia
+o projeto e deriva dele o cliente usado na nova tarefa.
+
+## Escritas ainda deliberadamente pendentes
 
 Ainda **não** são consideradas migradas:
 
-- `tarefa_adc` — criação de tarefa de projeto;
-- `tarefa_edt` — edição/classificação;
-- alteração de `tarefas_relacionadas`;
+- workflow próprio de `projetos` (`projeto_new_inter`, aceite/direcionamento,
+  espera, retomada, recusa e finalização manual);
 - writes de anexos/imagens em `atd_projeto`;
-- comandos próprios de `projetos`;
-- ativação automática de tarefas agendadas que ainda ocorre em páginas PHP;
+- ativação automática de projetos/tarefas agendados que ainda ocorre em páginas
+  PHP;
 - demais writes encontrados em `atd_facility`, `atd_mkt` e `melhorias`.
 
-Esses itens permanecem no estágio `0044c` e precisam de cortes adicionais antes
-do `0044d`.
+Esses itens permanecem no estágio `0044c` antes do `0044d`.
 
 ## Invariantes
 
-1. Nenhum endpoint deste patch chama PHP.
+1. Nenhum endpoint destes subcortes chama PHP.
 2. Nenhum código novo depende de `legacy/bridge/`.
 3. Nenhum datasource `mkt` é criado.
-4. Toda escrita deste patch acontece via API Nest no `nivel3`.
-5. A UI Next não será tratada como boundary de autorização.
-6. Os PHPs permanecem executáveis até parity/cutover; este patch não os apaga.
+4. Toda escrita nova acontece via API Nest no `nivel3`.
+5. A UI Next não é boundary de autorização.
+6. Os PHPs continuam executáveis até parity/cutover; estes patches não os
+   apagam.
 
-## Validação
+## Validação do 0044c2
 
 ```bash
-git apply --check 0044c-ticket-project-task-workflow-commands.patch
-git apply 0044c-ticket-project-task-workflow-commands.patch
+git apply --check 0044c2-ticket-project-structural-commands.patch
+git apply 0044c2-ticket-project-structural-commands.patch
 
 git diff --check
 pnpm typecheck
@@ -87,4 +142,4 @@ pnpm build
 bash scripts/audit-ticket-family-legacy.sh --check
 ```
 
-Depois dos gates, o commit pode ser feito manualmente.
+Depois dos gates, o commit é manual.
