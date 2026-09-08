@@ -1,7 +1,7 @@
 <?php
-require_once __DIR__ . "/all/session.php";
-require_once __DIR__ . '/all/app_url.php';
-require_once __DIR__ . '/all/conect.php';
+require_once __DIR__ . '/legacy/bridge/session.php';
+require_once __DIR__ . '/legacy/bridge/app_url.php';
+require_once __DIR__ . '/legacy/bridge/conect.php';
 
 $cookieName = (string)allterus_env_value('API_SESSION_COOKIE', 'HELPDESK_SESSION');
 $token = isset($_COOKIE[$cookieName]) ? (string)$_COOKIE[$cookieName] : '';

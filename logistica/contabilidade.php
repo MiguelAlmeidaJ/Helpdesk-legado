@@ -5,9 +5,9 @@ ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
 session_start();
-include_once("../all/seguranca.php");
-include_once("../all/conect.php");
-include_once("../all/permissoes.php");
+include_once("../legacy/bridge/seguranca.php");
+include_once("../legacy/bridge/conect.php");
+include_once("../legacy/bridge/permissoes.php");
 
 if ($m8_00 == 0) {
     header("Location: ../home.php");
@@ -198,7 +198,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao'])) {
 </head>
 
 <body>
-    <?php include("../all/sidebar.php"); ?>
+    <?php include("../legacy/bridge/sidebar.php"); ?>
     <div class="container-fluid pt-2 contabilidade-page">
         <div class="card contabilidade-main-card">
             <div class="card-header py-2 d-flex justify-content-between align-items-center contabilidade-toolbar">

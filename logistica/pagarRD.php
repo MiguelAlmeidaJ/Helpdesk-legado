@@ -1,13 +1,13 @@
 <?php
-require_once __DIR__ . '/../all/app_url.php';
+require_once __DIR__ . '/../legacy/bridge/app_url.php';
 
 header('Location: ' . allterus_web_url('/logistics/expenses/admin/payments'), true, 302);
 exit;
 
 session_start();
-include_once("../all/seguranca.php");
-include_once("../all/conect.php");
-include_once("../all/permissoes.php");
+include_once("../legacy/bridge/seguranca.php");
+include_once("../legacy/bridge/conect.php");
+include_once("../legacy/bridge/permissoes.php");
 
 // Verificação de permissões
 if ($m9_02 < 3) {
@@ -189,7 +189,7 @@ foreach ($pendentes as $p) {
 </head>
 
 <body>
-    <?php include("../all/sidebar.php"); ?>
+    <?php include("../legacy/bridge/sidebar.php"); ?>
 
     <div class="container-fluid px-3 mt-2 pagar-rd-page">
         <div class="row">

@@ -1,7 +1,7 @@
 <?php
 session_start();
-include_once("../all/seguranca.php");
-include_once("../all/conect.php");
+include_once("../legacy/bridge/seguranca.php");
+include_once("../legacy/bridge/conect.php");
 $categoria= $_REQUEST["categoria"];
 $pdo = ConnectionN3();
 $show = $pdo->prepare("SELECT subcategorias.scat_id, subcategorias.scat_nome FROM subcategorias WHERE subcategorias.scat_cat = '$categoria' AND subcategorias.scat_sts = '1' ORDER BY subcategorias.scat_nome ASC");

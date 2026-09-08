@@ -1,8 +1,8 @@
 <?php
 session_start();
-include_once("../all/seguranca.php");
-include_once("../all/conect.php");
-include_once("../all/permissoes.php");
+include_once("../legacy/bridge/seguranca.php");
+include_once("../legacy/bridge/conect.php");
+include_once("../legacy/bridge/permissoes.php");
 
 // Verificação de permissões
 if ($m9_02 < 3) {
@@ -199,7 +199,7 @@ foreach ($pendentes as $p) {
 </head>
 
 <body>
-    <?php include("../all/sidebar.php"); ?>
+    <?php include("../legacy/bridge/sidebar.php"); ?>
 
     <div class="container-fluid px-3 mt-2">
         <div class="row">

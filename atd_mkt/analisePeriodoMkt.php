@@ -1,8 +1,8 @@
 <?php
 session_start();
-include_once("../all/seguranca.php");
-include_once("../all/conect.php");
-include_once("../all/permissoes.php");
+include_once("../legacy/bridge/seguranca.php");
+include_once("../legacy/bridge/conect.php");
+include_once("../legacy/bridge/permissoes.php");
 
 if ($m7_00 == 0) {
     header("Location: ../home.php");
@@ -164,7 +164,7 @@ $maxArtesFeitas = max(array_column($dados, 'artes_feitas') ?: [1]); // evita err
 </head>
 
 <body style="margin: 0; overflow: hidden;">
-    <?php include("../all/sidebar.php"); ?>
+    <?php include("../legacy/bridge/sidebar.php"); ?>
 
     <div class="container-fluid">
         <div class="row" style="height: 100vh;">

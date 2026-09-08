@@ -1,7 +1,7 @@
 <?php
 session_start();
-include_once("../all/seguranca.php");
-include_once("../all/conect.php");
+include_once("../legacy/bridge/seguranca.php");
+include_once("../legacy/bridge/conect.php");
 
 // if ($m9_02 == 0) {
 //     header("Location: ../home.php");

@@ -1,8 +1,8 @@
 <?php
 session_start();
-include_once("../all/seguranca.php");
-include_once("../all/conect.php");
-include_once("../all/permissoes.php");
+include_once("../legacy/bridge/seguranca.php");
+include_once("../legacy/bridge/conect.php");
+include_once("../legacy/bridge/permissoes.php");
 
 // if ($m9_04 < 2) { header("Location: ../home.php"); exit; }
 
@@ -153,7 +153,7 @@ $active_tab = $_GET['tab'] ?? 'grupos';
 </head>
 
 <body>
-    <?php include("../all/sidebar.php"); ?>
+    <?php include("../legacy/bridge/sidebar.php"); ?>
     <div class="container-fluid pt-2 cadfin-page">
         <div class="row">
             <div class="col-12">

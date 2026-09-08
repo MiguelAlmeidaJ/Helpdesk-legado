@@ -1,10 +1,10 @@
 <?php
 
 session_start();
-include_once("../all/seguranca.php");
-include_once("../all/conect.php");
-include_once("../all/permissoes.php");
-include_once("../all/token.php");
+include_once("../legacy/bridge/seguranca.php");
+include_once("../legacy/bridge/conect.php");
+include_once("../legacy/bridge/permissoes.php");
+include_once("../legacy/bridge/token.php");
 $hoje = date("Y-m-d");
 $agora = date("Y-m-d H:i:s");
 
@@ -200,8 +200,8 @@ if ($m3_00 == 0) {
 </head>
 
 <body>
-  </ /?php include_once("../all/loading.php"); ?>
-  <?php include_once("../all/sidebar.php"); ?>
+  </ /?php include_once("../legacy/bridge/loading.php"); ?>
+  <?php include_once("../legacy/bridge/sidebar.php"); ?>
   <?php
   //verifico se existe alguma requisi??o POST chamada action
   $action = filter_input(INPUT_POST, 'action', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
@@ -210,7 +210,7 @@ if ($m3_00 == 0) {
   $atd = filter_input(INPUT_POST, 'atd', FILTER_SANITIZE_NUMBER_INT);
 
   if ($action == "alterar_senha") {
-    include_once("../all/update_senha.php");
+    include_once("../legacy/bridge/update_senha.php");
   }
 
   if ($usar_token == "true") {
@@ -2335,7 +2335,7 @@ WHERE melhorias.id = '$atd'");
       </div>
     </div>
   <?php } ?>
-  <?php include_once("../all/update_pass.php"); ?>
+  <?php include_once("../legacy/bridge/update_pass.php"); ?>
   <script src="../js/bootstrap.min.js"></script>
   <script src="../js/jquery-3.6.0.min.js"></script>
   <!-- bootstrap.bundle e bootstrap-select s?o necess?rios para seja poss?vel pesquisar por nome no select cliente-->

@@ -1,8 +1,8 @@
 <?php
 date_default_timezone_set('America/Sao_Paulo');
 session_start();
-include_once("../all/seguranca.php");
-include_once("../all/permissoes.php");
+include_once("../legacy/bridge/seguranca.php");
+include_once("../legacy/bridge/permissoes.php");
 
 header('Content-Type: application/json; charset=utf-8');
 

@@ -1,10 +1,10 @@
 <?php
 session_start();
 ob_start();
-include_once("../all/seguranca.php");
-include_once("../all/conect.php");
-include_once("../all/permissoes.php");
-include_once("../all/token.php");
+include_once("../legacy/bridge/seguranca.php");
+include_once("../legacy/bridge/conect.php");
+include_once("../legacy/bridge/permissoes.php");
+include_once("../legacy/bridge/token.php");
 
 
 $hoje = date("Y-m-d");
@@ -1395,7 +1395,7 @@ if ($m5_00 == 0) {
 </head>
 
 <body>
-  <?php include_once("../all/sidebar.php"); ?>
+  <?php include_once("../legacy/bridge/sidebar.php"); ?>
   <?php
   //verifico se existe alguma requisição POST chamada action
   $action = filter_input(INPUT_POST, 'action', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
@@ -1406,7 +1406,7 @@ if ($m5_00 == 0) {
 
 
   if ($action == "alterar_senha") {
-    include_once("../all/update_senha.php");
+    include_once("../legacy/bridge/update_senha.php");
   }
 
   if ($action && $action !== "alterar_senha") {
@@ -3990,7 +3990,7 @@ if ($m5_00 == 0) {
   </div>
 
 
-  <?php include_once("../all/update_pass.php"); ?>
+  <?php include_once("../legacy/bridge/update_pass.php"); ?>
   <script src="../js/bootstrap.min.js"></script>
   <script src="../js/jquery-3.6.0.min.js"></script>
   <script src="../js/bootstrap.bundle.min.js"></script>

@@ -1,9 +1,9 @@
 <?php
 session_start();
-include_once("../all/seguranca.php");
-include_once("../all/conect.php");
-include_once("../all/permissoes.php");
-include_once("../all/app_url.php");
+include_once("../legacy/bridge/seguranca.php");
+include_once("../legacy/bridge/conect.php");
+include_once("../legacy/bridge/permissoes.php");
+include_once("../legacy/bridge/app_url.php");
 
 $pdo = ConnectionN3();
 
@@ -76,7 +76,7 @@ function formatarTempoAtendimento($abertura) {
     <link rel="stylesheet" href="css/relatorios_modern.css">
 </head>
 <body class="rel-legacy-body">
-<?php include_once("../all/sidebar.php"); ?>
+<?php include_once("../legacy/bridge/sidebar.php"); ?>
 
 <div class="container-fluid rel-page rel-legacy-page rel-analitico-full-page">
     <div class="row">

@@ -1,8 +1,8 @@
 <?php
 session_start();
-include_once("../all/seguranca.php");
-include_once("../all/conect.php");
-include_once("../all/permissoes.php");
+include_once("../legacy/bridge/seguranca.php");
+include_once("../legacy/bridge/conect.php");
+include_once("../legacy/bridge/permissoes.php");
 
 if ($m7_00 == 0) {
     header("Location: ../home.php");
@@ -929,7 +929,7 @@ foreach ($dadosTecnicos as $campo => $valores) {
 </head>
 
 <body style="margin: 0; overflow: hidden;">
-    <?php include("../all/sidebar.php"); ?>
+    <?php include("../legacy/bridge/sidebar.php"); ?>
 
     <div class="container-fluid" style="height: 100vh; width: 100%;">
         <div class="card-main" style="padding: 0; height: 100%; width: 100%;">

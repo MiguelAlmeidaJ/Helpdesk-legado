@@ -1,7 +1,7 @@
 <?php
 session_start();
-include_once("../all/seguranca.php");
-include_once("../all/permissoes.php");
+include_once("../legacy/bridge/seguranca.php");
+include_once("../legacy/bridge/permissoes.php");
 
 $allowedPages = [
     'atd_abertos_por_tecnico.php',

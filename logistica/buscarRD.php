@@ -12,7 +12,7 @@ exit;
 session_start();
 header('Content-Type: application/json'); // Define o tipo de resposta como JSON
 
-include_once("../all/conect.php");
+include_once("../legacy/bridge/conect.php");
 // Removi os includes de segurança e permissão, pois esta é uma busca de dados.
 // Se precisar deles, pode adicionar novamente.
 

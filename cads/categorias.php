@@ -1,9 +1,9 @@
 <?php
 session_start();
-include_once("../all/seguranca.php");
-include_once("../all/conect.php");
-include_once("../all/permissoes.php");
-include_once("../all/token.php");
+include_once("../legacy/bridge/seguranca.php");
+include_once("../legacy/bridge/conect.php");
+include_once("../legacy/bridge/permissoes.php");
+include_once("../legacy/bridge/token.php");
 $hoje = date("Y-m-d");
 $flashMessage = $_SESSION['category_flash'] ?? null;
 unset($_SESSION['category_flash']);
@@ -63,7 +63,7 @@ if ($usar_token == "true") {
     }
 
     if ($action == "alterar_senha") {
-      include_once("../all/update_senha.php");
+      include_once("../legacy/bridge/update_senha.php");
     }
 
     if ($action == "new_cat") {
@@ -814,8 +814,8 @@ if ($usar_token == "true") {
 </style>
 
 <body class="category-dashboard">
-  <?php include_once("../all/loading.php"); ?>
-  <?php include_once("../all/sidebar.php"); ?>
+  <?php include_once("../legacy/bridge/loading.php"); ?>
+  <?php include_once("../legacy/bridge/sidebar.php"); ?>
   <div class="container-fluid category-page">
     <div class="row">
       <div class="col-md-12">
@@ -1052,7 +1052,7 @@ if ($usar_token == "true") {
     </div>
   <?php } ?>
 
-  <?php include_once("../all/update_pass.php"); ?>
+  <?php include_once("../legacy/bridge/update_pass.php"); ?>
   <script src="../js/jquery-3.6.0.min.js"></script>
   <script src="../js/bootstrap.min.js"></script>
 

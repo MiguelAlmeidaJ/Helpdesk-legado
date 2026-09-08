@@ -1,10 +1,10 @@
 <?php
 date_default_timezone_set('America/Sao_Paulo');
 session_start();
-include_once("../all/seguranca.php");
-include_once("../all/conect.php");
-include_once("../all/permissoes.php");
-include_once("../all/token.php");
+include_once("../legacy/bridge/seguranca.php");
+include_once("../legacy/bridge/conect.php");
+include_once("../legacy/bridge/permissoes.php");
+include_once("../legacy/bridge/token.php");
 $hoje = date("Y-m-d");
 $agora = date("Y-m-d H:i:s");
 
@@ -12,7 +12,7 @@ $agora = date("Y-m-d H:i:s");
 $action = filter_input(INPUT_POST, 'action', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
 if ($action == "alterar_senha") {
-    include_once("../all/update_senha.php");
+    include_once("../legacy/bridge/update_senha.php");
 }
 
 $ano = date('Y', strtotime('-0 months', strtotime(date('Y-m-d'))));
@@ -65,7 +65,7 @@ $p_nivel = $f_nivel == 0 ? "1,2,3,4,5" : $f_nivel;
 </head>
 
 <body class="rel-legacy-body">
-    <?php include_once("../all/sidebar.php"); ?>
+    <?php include_once("../legacy/bridge/sidebar.php"); ?>
 
     <div class="container-fluid rel-page rel-legacy-page">
         <div class="row no-print">
@@ -580,7 +580,7 @@ ORDER BY atendimentos.abertura ASC");
     </div>
 
 
-    <?php include_once("../all/update_pass.php"); ?>
+    <?php include_once("../legacy/bridge/update_pass.php"); ?>
     <script src="../js/jquery-3.6.0.min.js"></script>
         <script src="../js/bootstrap.bundle.min.js"></script>
 

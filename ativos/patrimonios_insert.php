@@ -1,8 +1,8 @@
 <?php
 session_start();
-include_once("../all/seguranca.php");
-include_once("../all/conect.php");
-include_once("../all/permissoes.php");
+include_once("../legacy/bridge/seguranca.php");
+include_once("../legacy/bridge/conect.php");
+include_once("../legacy/bridge/permissoes.php");
 include_once("../ativos/ativos_conect.php");
 
 function loadTecnicos($pdo) {
@@ -137,7 +137,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     </style>
 </head>
 <body>
-<?php include("../all/sidebar.php"); ?>
+<?php include("../legacy/bridge/sidebar.php"); ?>
     <div class="container-fluid">
         <div class="row">
         <div class="col-md-12">

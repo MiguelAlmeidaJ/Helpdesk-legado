@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . '/../all/app_url.php';
+require_once __DIR__ . '/../legacy/bridge/app_url.php';
 
 $params = array_merge($_GET, $_POST);
 $target = allterus_web_url('/logistics/expenses/admin/analysis');
@@ -12,9 +12,9 @@ exit;
 // ARQUIVO ATUALIZADO NOVO FINANCEIRO
 
 session_start();
-include_once("../all/seguranca.php");
-include_once("../all/conect.php");
-include_once("../all/permissoes.php");
+include_once("../legacy/bridge/seguranca.php");
+include_once("../legacy/bridge/conect.php");
+include_once("../legacy/bridge/permissoes.php");
 
 if ($m9_02 < 2) {
     header("Location: ../home.php");
@@ -140,7 +140,7 @@ $labelPeriodo2 = "Período 2 <br>(" . formatarDataBR($data1Periodo2) . " até " 
 </head>
 
 <body>
-    <?php include("../all/sidebar.php"); ?>
+    <?php include("../legacy/bridge/sidebar.php"); ?>
 
     <div class="container-fluid pt-2">
         <div class="card shadow-sm">

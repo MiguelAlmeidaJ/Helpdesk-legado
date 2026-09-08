@@ -2,10 +2,10 @@
 session_start();
 ob_start();
 
-include_once("../all/seguranca.php");
-include_once("../all/conect.php");
-include_once("../all/permissoes.php");
-include_once("../all/token.php");
+include_once("../legacy/bridge/seguranca.php");
+include_once("../legacy/bridge/conect.php");
+include_once("../legacy/bridge/permissoes.php");
+include_once("../legacy/bridge/token.php");
 
 include_once(__DIR__ . "/lib/tarefa_helpers.php");
 include_once(__DIR__ . "/lib/tarefa_permissions.php");
@@ -70,7 +70,7 @@ $tarefa = (int)$requestTarefa['tarefa'];
 </head>
 <body class="n3-detail-page n3-tarefa-page">
   <!-- <?php include_once("../all/loading.php"); ?> -->
-  <?php include_once("../all/sidebar.php"); ?>
+  <?php include_once("../legacy/bridge/sidebar.php"); ?>
 
   <?php
   if (empty($tarefa)) {
@@ -82,7 +82,7 @@ $tarefa = (int)$requestTarefa['tarefa'];
   include __DIR__ . "/views/partials/alerts.php";
   ?>
 
-  <?php include_once("../all/update_pass.php"); ?>
+  <?php include_once("../legacy/bridge/update_pass.php"); ?>
 
   <?php include __DIR__ . "/views/partials/scripts.php"; ?>
   <?php include __DIR__ . "/views/partials/quick_modal.php"; ?>

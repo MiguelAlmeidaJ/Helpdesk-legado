@@ -1,9 +1,9 @@
 
 <?php
 session_start();
-include_once("../all/seguranca.php");
-include_once("../all/conect.php");
-include_once("../all/permissoes.php");
+include_once("../legacy/bridge/seguranca.php");
+include_once("../legacy/bridge/conect.php");
+include_once("../legacy/bridge/permissoes.php");
 include_once("../ativos/ativos_conect.php");
 
 // Verifica se os parâmetros recebidos por get e atribui valores a variáveis
@@ -209,7 +209,7 @@ $data_cadastro = date('d/m/Y H:i:s', strtotime($cadastro));
     </style>
 </head>
 <body>
-    <?php include("../all/sidebar.php"); ?>      
+    <?php include("../legacy/bridge/sidebar.php"); ?>      
     <div class="container-fluid">
       <div class="row">
         <div class="row mt-1 justify-content-md-center col-md-12">

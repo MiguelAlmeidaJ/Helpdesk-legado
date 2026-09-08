@@ -1,14 +1,14 @@
 <?php
-require_once __DIR__ . '/../all/app_url.php';
+require_once __DIR__ . '/../legacy/bridge/app_url.php';
 
 header('Location: ' . allterus_web_url('/logistics/expenses/admin/approvals'), true, 302);
 exit;
 
 session_start();
-include_once("../all/seguranca.php");
-include_once("../all/conect.php");
-include_once("../all/permissoes.php");
-include_once("../all/email_smtp.php");
+include_once("../legacy/bridge/seguranca.php");
+include_once("../legacy/bridge/conect.php");
+include_once("../legacy/bridge/permissoes.php");
+include_once("../legacy/bridge/email_smtp.php");
 
 // Verificação de permissão de acesso à página
 if ($m9_02 < 2) {
@@ -214,7 +214,7 @@ $pendentes = $stmt->fetchAll(PDO::FETCH_ASSOC);
 </head>
 
 <body>
-    <?php include("../all/sidebar.php"); ?>
+    <?php include("../legacy/bridge/sidebar.php"); ?>
 
     <div class="container-fluid mt-2">
         <div class="row">

@@ -1,8 +1,8 @@
 <?php
 session_start();
-include_once("../../all/seguranca.php");
-include_once("../../all/conect.php");
-include_once("../../all/permissoes.php");
+include_once("../../legacy/bridge/seguranca.php");
+include_once("../../legacy/bridge/conect.php");
+include_once("../../legacy/bridge/permissoes.php");
 include_once("../lib/detail_tasks.php");
 
 header('Content-Type: application/json; charset=utf-8');

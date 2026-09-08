@@ -1,5 +1,5 @@
 <?php
-include_once("../all/conect.php");
+include_once("../legacy/bridge/conect.php");
 
 // Conexão com o banco de dados
 $pdo = ConnectionN3();

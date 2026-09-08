@@ -1,10 +1,10 @@
 <?php
-require_once __DIR__ . "/all/session.php";
+require_once __DIR__ . "/legacy/bridge/session.php";
 n3_session_start();
 
-include_once("./all/seguranca.php");
-include_once("./all/conect.php");
-include_once("./all/permissoes.php");
+include_once("./legacy/bridge/seguranca.php");
+include_once("./legacy/bridge/conect.php");
+include_once("./legacy/bridge/permissoes.php");
 $data = date("Y-m-d");
 
 //VERIFICA SE HÃ¡ REQUISICAO PARA SER EXECUTADA
@@ -12,7 +12,7 @@ if (isset($_POST['action'])) {
   $action  = $_POST['action'];
   //SE A REQUISIÃ‡ÃƒO FOR PARA ALTERAR SENHA
   if ($action == "alterar_senha") {
-    include_once("all/update_senha.php");
+    include_once("legacy/bridge/update_senha.php");
   }
 }
 
@@ -689,8 +689,8 @@ $data_d7 =  date('Y-m-d', strtotime($data . ' -7 days'));
 </style>
 
 <body class="home-dashboard">
-  <?php include_once("./all/loading_home.php"); ?>
-  <?php include_once("all/sidebar.php"); ?>
+  <?php include_once("./legacy/bridge/loading_home.php"); ?>
+  <?php include_once("legacy/bridge/sidebar.php"); ?>
 
 
   <?php
@@ -1446,7 +1446,7 @@ $data_d7 =  date('Y-m-d', strtotime($data . ' -7 days'));
       <?php } ?>
       <script src="./js/jquery-3.6.0.min.js"></script>
       <script src="./js/bootstrap.min.js"></script>
-      <?php include_once("./all/update_pass.php"); ?>
+      <?php include_once("./legacy/bridge/update_pass.php"); ?>
       <?php if (isset($mensagem)) { ?>
         <script>
           window.setTimeout(function() {

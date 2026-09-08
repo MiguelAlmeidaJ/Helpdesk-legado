@@ -1,8 +1,8 @@
 <?php
 session_start();
-include_once("../all/permissoes.php");
+include_once("../legacy/bridge/permissoes.php");
 if(isset($_POST["id"])){
-  include_once("../all/conect.php");
+  include_once("../legacy/bridge/conect.php");
   $id = filter_input(INPUT_POST, 'id', FILTER_SANITIZE_NUMBER_INT);
 
   function h($value)

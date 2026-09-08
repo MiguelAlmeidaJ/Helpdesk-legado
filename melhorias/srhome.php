@@ -1,9 +1,9 @@
 <?php
 /* session_cache_limiter('public');  */// works too
 session_start();
-include_once("../all/seguranca.php");
-include_once("../all/conect.php");
-include_once("../all/permissoes.php");
+include_once("../legacy/bridge/seguranca.php");
+include_once("../legacy/bridge/conect.php");
+include_once("../legacy/bridge/permissoes.php");
 
 if($m3_00==0){header("Location: ../index.php");}
 
@@ -12,7 +12,7 @@ $agora = date("Y-m-d H:i:s");
 $mensagem = filter_input(INPUT_POST, 'mensagem', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
 $action = filter_input(INPUT_POST, 'action', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-if ($action == "alterar_senha") {include_once("../all/update_senha.php");}
+if ($action == "alterar_senha") {include_once("../legacy/bridge/update_senha.php");}
 
 if (isset($_POST['f_sts'])) {$p_sts = $f_sts = $_POST['f_sts'];} else {$f_sts = 11;}
 if ($f_sts == 10) {$p_sts = "0,1,2,3,4";}
@@ -97,8 +97,8 @@ while($exibe=$show_atd->fetch(PDO::FETCH_ASSOC)){
     <title>Allterus</title>
   </head>
   <body>
-<?php include_once("../all/loading.php"); ?>
-<?php include("../all/sidebar.php"); ?>      
+<?php include_once("../legacy/bridge/loading.php"); ?>
+<?php include("../legacy/bridge/sidebar.php"); ?>      
     <div class="container-fluid">
       <div class="row">
         <div class="col-md-12 mt-2">
@@ -625,7 +625,7 @@ if($atd_status>0 && $atd_status<3 && $time_last_inter>$tempo_alerta){ ?>
   </div>
 </div>
 <?php } ?>
-<?php include_once("../all/update_pass.php"); ?>
+<?php include_once("../legacy/bridge/update_pass.php"); ?>
     <script src="../js/bootstrap.min.js"></script>
     <script src="../js/jquery-3.6.0.min.js"></script>
 <!--    <script src="../js/bootstrap.bundle.min.js"></script>    -->

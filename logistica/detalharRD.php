@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . '/../all/app_url.php';
+require_once __DIR__ . '/../legacy/bridge/app_url.php';
 
 $query = http_build_query($_GET, '', '&', PHP_QUERY_RFC3986);
 $target = allterus_web_url('/logistics/expenses/admin/report');
@@ -12,9 +12,9 @@ exit;
 // ARQUIVO ATUALIZADO NOVO FINANCEIRO
 
 session_start();
-include_once("../all/seguranca.php");
-include_once("../all/conect.php");
-include_once("../all/permissoes.php");
+include_once("../legacy/bridge/seguranca.php");
+include_once("../legacy/bridge/conect.php");
+include_once("../legacy/bridge/permissoes.php");
 
 if ($m9_02 < 2) {
     header("Location: ../home.php");
@@ -130,7 +130,7 @@ $category_label = empty($category_id_filter) ? 'Selecione' : count($category_id_
 </head>
 
 <body>
-    <?php include("../all/sidebar.php"); ?>
+    <?php include("../legacy/bridge/sidebar.php"); ?>
     <div class="container-fluid mt-2 detalhar-rd-page">
         <div class="row">
             <div class="col-12">

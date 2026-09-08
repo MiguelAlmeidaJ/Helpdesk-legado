@@ -1,9 +1,9 @@
 <?php
 session_start();
-include_once("../all/seguranca.php");
-include_once("../all/conect.php");
-include_once("../all/permissoes.php");
-include_once("../all/token.php");
+include_once("../legacy/bridge/seguranca.php");
+include_once("../legacy/bridge/conect.php");
+include_once("../legacy/bridge/permissoes.php");
+include_once("../legacy/bridge/token.php");
 include_once(__DIR__ . "/lib/list_helpers.php");
 
 if ($m5_01 < 0) {
@@ -15,7 +15,7 @@ $mensagem = filter_input(INPUT_POST, 'mensagem', FILTER_SANITIZE_FULL_SPECIAL_CH
 
 $action = filter_input(INPUT_POST, 'action', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 if ($action == "alterar_senha") {
-  include_once("../all/update_senha.php");
+  include_once("../legacy/bridge/update_senha.php");
 }
 
 // Verifica se a ação é limpar
@@ -200,8 +200,8 @@ while ($exibe = $show_projeto->fetch(PDO::FETCH_ASSOC)) {
 </style>
 
 <body>
-  <?php include_once("../all/loading.php"); ?>
-  <?php include("../all/sidebar.php"); ?>
+  <?php include_once("../legacy/bridge/loading.php"); ?>
+  <?php include("../legacy/bridge/sidebar.php"); ?>
   <div class="container-fluid projeto-list-page">
     <div class="row projeto-list-page-row">
       <div class="col-md-12 mt-2 projeto-page-wrap">
@@ -1033,7 +1033,7 @@ while ($exibe = $show_projeto->fetch(PDO::FETCH_ASSOC)) {
       </div>
     </div>
   <?php } ?>
-  <?php include_once("../all/update_pass.php"); ?>
+  <?php include_once("../legacy/bridge/update_pass.php"); ?>
   <script src="../js/bootstrap.min.js"></script>
   <script src="../js/jquery-3.6.0.min.js"></script>
   <!--    <script src="../js/bootstrap.bundle.min.js"></script>    -->

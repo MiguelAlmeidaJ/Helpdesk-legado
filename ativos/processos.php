@@ -1,8 +1,8 @@
 <?php
 session_start();
-include_once("../all/seguranca.php");
-include_once("../all/conect.php");
-include_once("../all/permissoes.php");
+include_once("../legacy/bridge/seguranca.php");
+include_once("../legacy/bridge/conect.php");
+include_once("../legacy/bridge/permissoes.php");
 include_once("../ativos/ativos_conect.php");
 
 // Verifica se os parâmetros recebidos por get e atribui valores a variáveis
@@ -124,7 +124,7 @@ $hora_da_coleta = $stmtColeta->fetchColumn();
 
 <body>
     <?php
-    include("../all/sidebar.php");
+    include("../legacy/bridge/sidebar.php");
 
     // Verificar se foi passado o id_ativo
     $id_ativo = filter_input(INPUT_GET, 'id', FILTER_SANITIZE_NUMBER_INT);

@@ -1,9 +1,9 @@
 <?php
 session_start();
-include_once("../all/seguranca.php");
-include_once("../all/conect.php");
-include_once("../all/permissoes.php");
-include_once("../all/token.php");
+include_once("../legacy/bridge/seguranca.php");
+include_once("../legacy/bridge/conect.php");
+include_once("../legacy/bridge/permissoes.php");
+include_once("../legacy/bridge/token.php");
 $hoje = date("Y-m-d");
 
 
@@ -16,7 +16,7 @@ if (!isset($_SESSION['allterusN3func']) || !in_array($funcao_do_usuario, $funcoe
 }
 
 $action = filter_input(INPUT_POST, 'action', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-if ($action == "alterar_senha") {include_once("../all/update_senha.php");}
+if ($action == "alterar_senha") {include_once("../legacy/bridge/update_senha.php");}
 
 if ($usar_token=="true") {
   if($action){
@@ -32,7 +32,7 @@ if ($usar_token=="true") {
       $action = '';
     }
 
-    if ($action == "alterar_senha") {include_once("../all/update_senha.php");}
+    if ($action == "alterar_senha") {include_once("../legacy/bridge/update_senha.php");}
     
     if ($action == "edt_tempo_alerta") {
       $tempo_alerta = filter_input(INPUT_POST, 'tempo_alerta', FILTER_SANITIZE_NUMBER_INT);
@@ -111,8 +111,8 @@ body {
 
   </style>
   <body>
-<?php include_once("../all/loading.php"); ?>
-<?php include("../all/sidebar.php"); ?>
+<?php include_once("../legacy/bridge/loading.php"); ?>
+<?php include("../legacy/bridge/sidebar.php"); ?>
     <div class="container-fluid">
       <div class="row">
         
@@ -260,7 +260,7 @@ body {
   </div>
 </div>
 <?php }?>
-<?php include_once("../all/update_pass.php"); ?>
+<?php include_once("../legacy/bridge/update_pass.php"); ?>
     <script src="../js/jquery-3.6.0.min.js"></script>
     <script src="../js/bootstrap.min.js"></script>
 <!--    <script src="../js/bootstrap.bundle.min.js"></script>    -->

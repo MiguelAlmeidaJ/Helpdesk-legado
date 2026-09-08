@@ -12,7 +12,7 @@ function n3_tarefa3_process_request(
   $tarefa = (int)($_POST['tarefa'] ?? $_GET['tarefa'] ?? 0);
 
   if ($action === "alterar_senha") {
-    include_once(__DIR__ . "/../../all/update_senha.php");
+    include_once(__DIR__ . "/../../legacy/bridge/update_senha.php");
   }
 
   $mensagem = null;

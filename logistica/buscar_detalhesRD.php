@@ -10,7 +10,7 @@ exit;
 // ARQUIVO ATUALIZADO NOVO FINANCEIRO
 
 session_start();
-include_once("../all/conect.php");
+include_once("../legacy/bridge/conect.php");
 
 
 header('Content-Type: application/json');

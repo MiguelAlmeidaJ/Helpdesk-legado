@@ -1,8 +1,8 @@
 <?php
 session_start();
-include_once("../all/seguranca.php");
-include_once("../all/conect.php");
-include_once("../all/permissoes.php");
+include_once("../legacy/bridge/seguranca.php");
+include_once("../legacy/bridge/conect.php");
+include_once("../legacy/bridge/permissoes.php");
 
 if ($m8_00 == 0) {
     header("Location: ../home.php");
@@ -338,7 +338,7 @@ foreach ($agendamentosRaw as $ag) {
 </head>
 
 <body>
-    <?php include("../all/sidebar.php"); ?>
+    <?php include("../legacy/bridge/sidebar.php"); ?>
     <div class="container-fluid mt-2">
         <div class="card">
             <div class="card-header py-2 d-flex justify-content-between align-items-center">

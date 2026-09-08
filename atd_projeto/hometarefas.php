@@ -1,8 +1,8 @@
 <?php
 session_start();
-include_once("../all/seguranca.php");
-include_once("../all/conect.php");
-include_once("../all/permissoes.php");
+include_once("../legacy/bridge/seguranca.php");
+include_once("../legacy/bridge/conect.php");
+include_once("../legacy/bridge/permissoes.php");
 include_once(__DIR__ . "/lib/list_helpers.php");
 
 
@@ -31,7 +31,7 @@ $mensagem = filter_input(INPUT_POST, 'mensagem', FILTER_SANITIZE_FULL_SPECIAL_CH
 
 $action = filter_input(INPUT_POST, 'action', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 if ($action == "alterar_senha") {
-  include_once("../all/update_senha.php");
+  include_once("../legacy/bridge/update_senha.php");
 }
 
 if (isset($_POST['f_sts'])) {
@@ -300,7 +300,7 @@ $count_tarefas = $tarefaListResult['pagination']['total'];
 <body>
 
   <!-- <?php include_once("../all/loading.php"); ?> -->
-  <?php include("../all/sidebar.php"); ?>
+  <?php include("../legacy/bridge/sidebar.php"); ?>
 
   <div class="container-fluid projeto-list-page">
     <div class="row projeto-list-page-row">
@@ -1017,7 +1017,7 @@ $count_tarefas = $tarefaListResult['pagination']['total'];
     </div>
   <?php } ?>
 
-  <?php include_once("../all/update_pass.php"); ?>
+  <?php include_once("../legacy/bridge/update_pass.php"); ?>
 
   <script src="../js/bootstrap.min.js"></script>
   <script src="../js/jquery-3.6.0.min.js"></script>

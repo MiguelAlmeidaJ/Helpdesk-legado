@@ -1,8 +1,8 @@
 <?php
 session_start();
-include_once("../all/seguranca.php");
-include_once("../all/conect.php");
-include_once("../all/permissoes.php");
+include_once("../legacy/bridge/seguranca.php");
+include_once("../legacy/bridge/conect.php");
+include_once("../legacy/bridge/permissoes.php");
 
 $hoje = date("Y-m-d");
 $data_30 =  date('Y-m-d', strtotime($hoje. ' -30 days'));
@@ -13,7 +13,7 @@ $data_90 =  date('Y-m-d', strtotime($hoje. ' -90 days'));
 
 $action = filter_input(INPUT_POST, 'action', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
-if ($action == "alterar_senha") {include_once("../all/update_senha.php");}
+if ($action == "alterar_senha") {include_once("../legacy/bridge/update_senha.php");}
 
 //if (isset($_POST['f_sts'])) {$p_sts = $f_sts = $_POST['f_sts'];} else {$f_sts = 1;}
 // if(1== $f_sts){$where_sts = "contratos.status = '1'"; } //Vigente
@@ -74,8 +74,8 @@ if ($ord == "status") {$orderby = "custos.status DESC";}
     <title>Allterus</title>
   </head>
   <body>
-<?php include_once("../all/loading.php"); ?>
-<?php include("../all/sidebar.php"); ?>
+<?php include_once("../legacy/bridge/loading.php"); ?>
+<?php include("../legacy/bridge/sidebar.php"); ?>
     <div class="container-fluid">
       <div class="row">
         <div class="col-md-12 mt-2 px-1">
@@ -580,7 +580,7 @@ $custo_clas_cont = $row_class["categoria"];
   </div>
 </div>
 <?php }?>
-<?php include_once("../all/update_pass.php"); ?>
+<?php include_once("../legacy/bridge/update_pass.php"); ?>
     <script src="../js/jquery-3.6.0.min.js"></script>
     <script src="../js/bootstrap.min.js"></script>
     <script src="../js/bootstrap.bundle.min.js"></script>    

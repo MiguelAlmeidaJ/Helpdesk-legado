@@ -1,9 +1,9 @@
 <?php
 session_start();
-include_once("../all/seguranca.php");
-include_once("../all/conect.php");
-include_once("../all/permissoes.php");
-//include_once("../all/token.php");
+include_once("../legacy/bridge/seguranca.php");
+include_once("../legacy/bridge/conect.php");
+include_once("../legacy/bridge/permissoes.php");
+//include_once("../legacy/bridge/token.php");
 $hoje = date("Y-m-d");
 $agora = date("Y-m-d H:i:s");
 
@@ -11,7 +11,7 @@ $agora = date("Y-m-d H:i:s");
 $action = filter_input(INPUT_POST, 'action', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
 if ($action == "alterar_senha") {
-    include_once("../all/update_senha.php");
+    include_once("../legacy/bridge/update_senha.php");
 }
 
 header("Refresh:60");
@@ -29,7 +29,7 @@ header("Refresh:60");
     <title>Atendimentos Abertos por Técnico</title>
 </head>
 <body>
-<?php include_once("../all/sidebar.php"); ?>
+<?php include_once("../legacy/bridge/sidebar.php"); ?>
 <!-- parte acima direcionada ao cabeçalho (incluir e ajustar para necessário)-->
 
 <div class="container-fluid rel-page">
@@ -195,7 +195,7 @@ header("Refresh:60");
     </div>
 </div>
 
-<?php include_once("../all/update_pass.php"); ?>
+<?php include_once("../legacy/bridge/update_pass.php"); ?>
 <script src="../js/jquery-3.6.0.min.js"></script>
 <script src="../js/bootstrap.bundle.min.js"></script>
 

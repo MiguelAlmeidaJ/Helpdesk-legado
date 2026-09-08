@@ -1,8 +1,8 @@
 <?php
 session_start();
-include_once("../all/seguranca.php");
-include_once("../all/conect.php");
-include_once("../all/permissoes.php");
+include_once("../legacy/bridge/seguranca.php");
+include_once("../legacy/bridge/conect.php");
+include_once("../legacy/bridge/permissoes.php");
 
 // TODO: Altere esta permissão para a da Gerência (ex: $m9_02 ou $m9_03)
 if ($m9_00 == 0 || !isset($_SESSION['allterusN3Id'])) {
@@ -204,7 +204,7 @@ $tiposChave = $pdo->query("SELECT id, name_type FROM type_keys ORDER BY id")->fe
 </head>
 
 <body>
-    <?php include("../all/sidebar.php"); ?>
+    <?php include("../legacy/bridge/sidebar.php"); ?>
     <div class="container-fluid mt-2">
         <div class="card">
             <div class="card-header py-2 d-flex justify-content-between align-items-center">

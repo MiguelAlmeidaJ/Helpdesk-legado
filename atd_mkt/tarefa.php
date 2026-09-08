@@ -1,10 +1,10 @@
 <?php
 
 session_start();
-include_once("../all/seguranca.php");
-include_once("../all/conect.php");
-include_once("../all/permissoes.php");
-include_once("../all/token.php");
+include_once("../legacy/bridge/seguranca.php");
+include_once("../legacy/bridge/conect.php");
+include_once("../legacy/bridge/permissoes.php");
+include_once("../legacy/bridge/token.php");
 $hoje = date("Y-m-d");
 $agora = date("Y-m-d H:i:s");
 //REGRA PARA EXIBIÇÃO DE BOTÕES, MODAIS, ETC
@@ -52,8 +52,8 @@ if($m8_00==0){header("Location: ../index.php");}
     </style>
   </head>
   <body>
-<?php include_once("../all/loading.php"); ?>
-<?php include_once("../all/sidebar.php"); ?>
+<?php include_once("../legacy/bridge/loading.php"); ?>
+<?php include_once("../legacy/bridge/sidebar.php"); ?>
 <?php 
 //verifico se existe alguma requisição POST chamada action
 $action = filter_input(INPUT_POST, 'action', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
@@ -61,7 +61,7 @@ $action = filter_input(INPUT_POST, 'action', FILTER_SANITIZE_FULL_SPECIAL_CHARS)
 //verifico se existe alguma requisição via post cahamda tarefa
 $tarefa = filter_input(INPUT_POST, 'tarefa', FILTER_SANITIZE_NUMBER_INT);
 
-if ($action == "alterar_senha") {include_once("../all/update_senha.php");}
+if ($action == "alterar_senha") {include_once("../legacy/bridge/update_senha.php");}
 
 if ($usar_token=="true") {
   if($action){
@@ -2016,7 +2016,7 @@ $show_folder = $pdo->prepare("SELECT ged_folder_mkt.* FROM ged_folder_mkt WHERE 
   </div>
 </div>
 <?php }?>
-<?php include_once("../all/update_pass.php"); ?>
+<?php include_once("../legacy/bridge/update_pass.php"); ?>
     <script src="../js/bootstrap.min.js"></script>
     <script src="../js/jquery-3.6.0.min.js"></script>    
 <!-- bootstrap.bundle e bootstrap-select são necessários para seja possível pesquisar por nome no select cliente-->    

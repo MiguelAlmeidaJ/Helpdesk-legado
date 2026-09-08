@@ -1,8 +1,8 @@
 <?php
 session_start();
-include_once("../all/seguranca.php");
-include_once("../all/conect.php");
-include_once("../all/permissoes.php");
+include_once("../legacy/bridge/seguranca.php");
+include_once("../legacy/bridge/conect.php");
+include_once("../legacy/bridge/permissoes.php");
 $data = date("Y-m-d");
 
 //VERIFICA SE Há REQUISICAO PARA SER EXECUTADA
@@ -27,8 +27,8 @@ $data_d7 =  date('Y-m-d', strtotime($data. ' -7 days'));
     <title>Allterus</title>
   </head>
   <body>
-<?php include_once("../all/loading_home.php"); ?>
-    <?php include_once("../all/sidebar.php"); ?>
+<?php include_once("../legacy/bridge/loading_home.php"); ?>
+    <?php include_once("../legacy/bridge/sidebar.php"); ?>
     <div class="container-fluid mt-2">
 
         <div class="row">
@@ -370,7 +370,7 @@ $matriz = "
 <?php }?>
     <script src="../js/jquery-3.6.0.min.js"></script>    
     <script src="../js/bootstrap.min.js"></script>
-    <?php include_once("../all/update_pass.php"); ?>
+    <?php include_once("../legacy/bridge/update_pass.php"); ?>
 <?php if (isset($mensagem)){ ?>
     <script>
       window.setTimeout(function() {

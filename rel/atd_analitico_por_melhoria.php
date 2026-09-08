@@ -1,16 +1,16 @@
 <?php
 session_start();
-include_once("../all/seguranca.php");
-include_once("../all/conect.php");
-include_once("../all/permissoes.php");
-//include_once("../all/token.php");
+include_once("../legacy/bridge/seguranca.php");
+include_once("../legacy/bridge/conect.php");
+include_once("../legacy/bridge/permissoes.php");
+//include_once("../legacy/bridge/token.php");
 $hoje = date("Y-m-d");
 $agora = date("Y-m-d H:i:s");
 
 //verifico se existe alguma requisição POST chamada action
 $action = filter_input(INPUT_POST, 'action', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
-if ($action == "alterar_senha") {include_once("../all/update_senha.php");}
+if ($action == "alterar_senha") {include_once("../legacy/bridge/update_senha.php");}
 
 $ano = date('Y', strtotime('-0 months', strtotime(date('Y-m-d'))));
 $mes = date('m', strtotime('-0 months', strtotime(date('Y-m-d'))));
@@ -42,7 +42,7 @@ if($f_nivel==0){$p_nivel = "1,2,3,4,5";}
     <title>Allterus</title>
   </head>
   <body class="rel-legacy-body">
-<?php include_once("../all/sidebar.php"); ?>
+<?php include_once("../legacy/bridge/sidebar.php"); ?>
 
     <div class="container-fluid rel-page rel-legacy-page">
       <div class="row">
@@ -338,7 +338,7 @@ while($row=$show->fetch(PDO::FETCH_ASSOC)){
 </div> 
 
 
-<?php include_once("../all/update_pass.php"); ?>
+<?php include_once("../legacy/bridge/update_pass.php"); ?>
         <script src="../js/jquery-3.6.0.min.js"></script>
     <script src="../js/bootstrap.bundle.min.js"></script>
     

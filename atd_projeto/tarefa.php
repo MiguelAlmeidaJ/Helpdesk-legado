@@ -2,10 +2,10 @@
 
 session_start();
 ob_start();
-include_once("../all/seguranca.php");
-include_once("../all/conect.php");
-include_once("../all/permissoes.php");
-include_once("../all/token.php");
+include_once("../legacy/bridge/seguranca.php");
+include_once("../legacy/bridge/conect.php");
+include_once("../legacy/bridge/permissoes.php");
+include_once("../legacy/bridge/token.php");
 
 $pdo = ConnectionN3();
 
@@ -75,7 +75,7 @@ if ($m5_00 == 0) {
 
 <body class="n3-detail-page n3-tarefa-page">
   <!-- <?php include_once("../all/loading.php"); ?> -->
-  <?php include_once("../all/sidebar.php"); ?>
+  <?php include_once("../legacy/bridge/sidebar.php"); ?>
 
   <?php if (!empty($_SESSION['mensagem'])): ?>
     <div class="container-fluid mt-3">
@@ -102,7 +102,7 @@ if ($m5_00 == 0) {
 
 
   if ($action == "alterar_senha") {
-    include_once("../all/update_senha.php");
+    include_once("../legacy/bridge/update_senha.php");
   }
 
   if ($action && $action !== "alterar_senha") {
@@ -2451,7 +2451,7 @@ if ($m5_00 == 0) {
       </div>
     </div>
   <?php } ?>
-  <?php include_once("../all/update_pass.php"); ?>
+  <?php include_once("../legacy/bridge/update_pass.php"); ?>
 
 
 
