@@ -94,6 +94,42 @@ que zero precisa:
 A validação da cadeia ocorre dentro da transação e bloqueia os registros
 percorridos com `FOR UPDATE`.
 
+## 0044c3 — workflow operacional do projeto
+
+Este subcorte substitui as mutações de estado ainda embutidas em
+`atd_projeto/projeto.php`.
+
+| Ação legada | API nativa |
+| --- | --- |
+| `projeto_new_inter` | `POST /tickets/projects/:projectId/interactions` |
+| `projeto_aceitar` | `PATCH /tickets/projects/:projectId/assignment` |
+| `projeto_espera` | `POST /tickets/projects/:projectId/hold` |
+| `projeto_retomar` | `POST /tickets/projects/:projectId/resume` |
+| `projeto_recusar` | `POST /tickets/projects/:projectId/reject` |
+| `projeto_finalizar` | `POST /tickets/projects/:projectId/finalize` |
+
+As transições usam o mesmo boundary nativo das tarefas: autorização por grants,
+escopo de cliente, escopo `Own`, transação e `SELECT ... FOR UPDATE` sobre o
+projeto.
+
+Regras deste subcorte:
+
+- iniciar/direcionar exige projeto em status `1`;
+- iniciar para o próprio usuário muda para status `2`;
+- direcionar para outro técnico mantém status `1`;
+- espera exige status `2` e rejeita espera ativa duplicada;
+- retomada exige status `3` e fecha a espera ativa em `espera_projeto`;
+- recusa/redirecionamento exige status `2`;
+- finalização por escopo próprio exige status `2`;
+- usuários com escopo operacional amplo podem finalizar status `2` ou `3`;
+- finalizar um projeto em espera fecha o registro ativo antes do encerramento;
+- interações continuam usando `inter_tipo=7`, atribuição `2/4`, espera `5`,
+  retomada `6`, recusa `3/4` e finalização `8`.
+
+O PHP legado de retomada consulta a tabela `espera` embora a entrada seja criada
+em `espera_projeto`. A API implementa a intenção do domínio e encerra a espera
+na tabela correta, evitando perpetuar esse defeito de persistência.
+
 ## Escopo e concorrência
 
 As mutações reaplicam no repositório:
@@ -110,8 +146,6 @@ o projeto e deriva dele o cliente usado na nova tarefa.
 
 Ainda **não** são consideradas migradas:
 
-- workflow próprio de `projetos` (`projeto_new_inter`, aceite/direcionamento,
-  espera, retomada, recusa e finalização manual);
 - writes de anexos/imagens em `atd_projeto`;
 - ativação automática de projetos/tarefas agendados que ainda ocorre em páginas
   PHP;
@@ -129,11 +163,11 @@ Esses itens permanecem no estágio `0044c` antes do `0044d`.
 6. Os PHPs continuam executáveis até parity/cutover; estes patches não os
    apagam.
 
-## Validação do 0044c2
+## Validação do 0044c3
 
 ```bash
-git apply --check 0044c2-ticket-project-structural-commands.patch
-git apply 0044c2-ticket-project-structural-commands.patch
+git apply --check 0044c3-ticket-project-workflow-commands.patch
+git apply 0044c3-ticket-project-workflow-commands.patch
 
 git diff --check
 pnpm typecheck

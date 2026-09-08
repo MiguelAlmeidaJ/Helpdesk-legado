@@ -12,6 +12,7 @@ import { ListTicketAssignmentOptions } from './application/list-ticket-assignmen
 import { ListTicketRejectionOptions } from './application/list-ticket-rejection-options';
 import { ListTicketProjects } from './application/list-ticket-projects';
 import { TicketProjectStructure } from './application/ticket-project-structure';
+import { TicketProjectWorkflow } from './application/ticket-project-workflow';
 import { TicketProjectTaskWorkflow } from './application/ticket-project-task-workflow';
 import { ListTickets } from './application/list-tickets';
 import { TicketAssignmentRepository } from './application/ports/ticket-assignment.repository';
@@ -22,6 +23,7 @@ import { TicketCloseRepository } from './application/ports/ticket-close.reposito
 import { TicketDetailRepository } from './application/ports/ticket-detail.repository';
 import { TicketHoldRepository } from './application/ports/ticket-hold.repository';
 import { TicketInteractionRepository } from './application/ports/ticket-interaction.repository';
+import { TicketProjectCommandRepository } from './application/ports/ticket-project-command.repository';
 import { TicketProjectReadRepository } from './application/ports/ticket-project-read.repository';
 import { TicketProjectStructureRepository } from './application/ports/ticket-project-structure.repository';
 import { TicketProjectTaskCommandRepository } from './application/ports/ticket-project-task-command.repository';
@@ -43,6 +45,7 @@ import { PrismaTicketCloseRepository } from './infrastructure/persistence/prisma
 import { PrismaTicketDetailRepository } from './infrastructure/persistence/prisma-ticket-detail.repository';
 import { PrismaTicketHoldRepository } from './infrastructure/persistence/prisma-ticket-hold.repository';
 import { PrismaTicketInteractionRepository } from './infrastructure/persistence/prisma-ticket-interaction.repository';
+import { PrismaTicketProjectCommandRepository } from './infrastructure/persistence/prisma-ticket-project-command.repository';
 import { PrismaTicketProjectReadRepository } from './infrastructure/persistence/prisma-ticket-project-read.repository';
 import { PrismaTicketProjectStructureRepository } from './infrastructure/persistence/prisma-ticket-project-structure.repository';
 import { PrismaTicketProjectTaskCommandRepository } from './infrastructure/persistence/prisma-ticket-project-task-command.repository';
@@ -55,6 +58,7 @@ import { TicketAvailabilityController } from './presentation/http/ticket-availab
 import { TicketTimelineController } from './presentation/http/ticket-timeline.controller';
 import { TicketProjectsController } from './presentation/http/ticket-projects.controller';
 import { TicketProjectStructureController } from './presentation/http/ticket-project-structure.controller';
+import { TicketProjectWorkflowController } from './presentation/http/ticket-project-workflow.controller';
 import { TicketProjectTaskWorkflowController } from './presentation/http/ticket-project-task-workflow.controller';
 import { TicketCreateController } from './presentation/http/ticket-create.controller';
 import { TicketClassificationController } from './presentation/http/ticket-classification.controller';
@@ -73,6 +77,7 @@ import { TicketsController } from './presentation/http/tickets.controller';
     TicketTimelineController,
     TicketProjectsController,
     TicketProjectStructureController,
+    TicketProjectWorkflowController,
     TicketProjectTaskWorkflowController,
   ],
   providers: [
@@ -88,6 +93,7 @@ import { TicketsController } from './presentation/http/tickets.controller';
     ListTicketRejectionOptions,
     ListTicketProjects,
     TicketProjectStructure,
+    TicketProjectWorkflow,
     TicketProjectTaskWorkflow,
     ListTickets,
     PutTicketOnHold,
@@ -104,6 +110,7 @@ import { TicketsController } from './presentation/http/tickets.controller';
     { provide: TicketHoldRepository, useClass: PrismaTicketHoldRepository },
     { provide: TicketRejectionRepository, useClass: PrismaTicketRejectionRepository },
     { provide: TicketInteractionRepository, useClass: PrismaTicketInteractionRepository },
+    { provide: TicketProjectCommandRepository, useClass: PrismaTicketProjectCommandRepository },
     { provide: TicketProjectReadRepository, useClass: PrismaTicketProjectReadRepository },
     { provide: TicketProjectStructureRepository, useClass: PrismaTicketProjectStructureRepository },
     { provide: TicketProjectTaskCommandRepository, useClass: PrismaTicketProjectTaskCommandRepository },
