@@ -92,3 +92,29 @@ export interface TicketProjectTaskListResponse
   filters: TicketProjectTaskFilters;
   options: TicketFilterOptions;
 }
+
+export interface TicketProjectTaskInteractionRequest {
+  description: string;
+}
+
+export interface TicketProjectTaskAssignmentRequest {
+  technicianId: number;
+}
+
+export interface TicketProjectTaskHoldRequest {
+  forecastAt: string;
+  description: string;
+}
+
+export interface TicketProjectTaskRejectionRequest {
+  technicianId: number;
+  reason: string;
+}
+
+export interface TicketProjectTaskFinalizeRequest {
+  description: string;
+}
+
+export interface TicketProjectTaskProgressRequest {
+  progress: number;
+}
