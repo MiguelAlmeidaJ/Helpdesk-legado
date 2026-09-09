@@ -1,0 +1,41 @@
+# 0044f — PHPs fisicamente aposentados da familia Tickets
+#
+# Format (TAB-separated):
+# path	retired_cut	native_owner	evidence
+#
+# Estes paths devem permanecer ausentes do checkout. O audit falha se qualquer um reaparecer.
+atd_3andar/api/projeto_tarefas_list.php	0044f	tickets/marketing	0044e marcou DEAD apos cutover Next/Nest; 0044f remove o tombstone 410
+atd_3andar/api/tarefas_list.php	0044f	tickets/marketing	0044e marcou DEAD apos cutover Next/Nest; 0044f remove o tombstone 410
+atd_3andar/busca_locais.php	0044f	tickets/marketing	0044e marcou DEAD apos cutover Next/Nest; 0044f remove o tombstone 410
+atd_3andar/busca_solicitantes.php	0044f	tickets/marketing	0044e marcou DEAD apos cutover Next/Nest; 0044f remove o tombstone 410
+atd_3andar/lib/detail_tasks.php	0044f	tickets/marketing	0044e marcou DEAD apos cutover Next/Nest; 0044f remove o tombstone 410
+atd_3andar/lib/list_helpers.php	0044f	tickets/marketing	0044e marcou DEAD apos cutover Next/Nest; 0044f remove o tombstone 410
+atd_3andar/lib/permission_fallback.php	0044f	tickets/marketing	0044e marcou DEAD apos cutover Next/Nest; 0044f remove o tombstone 410
+atd_3andar/lib/tarefa_actions.php	0044f	tickets/marketing	0044e marcou DEAD apos cutover Next/Nest; 0044f remove o tombstone 410
+atd_3andar/lib/tarefa_controller.php	0044f	tickets/marketing	0044e marcou DEAD apos cutover Next/Nest; 0044f remove o tombstone 410
+atd_3andar/lib/tarefa_helpers.php	0044f	tickets/marketing	0044e marcou DEAD apos cutover Next/Nest; 0044f remove o tombstone 410
+atd_3andar/lib/tarefa_permissions.php	0044f	tickets/marketing	0044e marcou DEAD apos cutover Next/Nest; 0044f remove o tombstone 410
+atd_3andar/lib/tarefa_queries.php	0044f	tickets/marketing	0044e marcou DEAD apos cutover Next/Nest; 0044f remove o tombstone 410
+atd_3andar/lib/tarefa_ui_rules.php	0044f	tickets/marketing	0044e marcou DEAD apos cutover Next/Nest; 0044f remove o tombstone 410
+atd_3andar/views/detail/tarefa_acoes.php	0044f	tickets/marketing	0044e marcou DEAD apos cutover Next/Nest; 0044f remove o tombstone 410
+atd_3andar/views/detail/tarefa_sidebar_cliente.php	0044f	tickets/marketing	0044e marcou DEAD apos cutover Next/Nest; 0044f remove o tombstone 410
+atd_3andar/views/detail/tarefa_timeline.php	0044f	tickets/marketing	0044e marcou DEAD apos cutover Next/Nest; 0044f remove o tombstone 410
+atd_3andar/views/partials/alerts.php	0044f	tickets/marketing	0044e marcou DEAD apos cutover Next/Nest; 0044f remove o tombstone 410
+atd_3andar/views/partials/head.php	0044f	tickets/marketing	0044e marcou DEAD apos cutover Next/Nest; 0044f remove o tombstone 410
+atd_3andar/views/partials/quick_modal.php	0044f	tickets/marketing	0044e marcou DEAD apos cutover Next/Nest; 0044f remove o tombstone 410
+atd_3andar/views/partials/scripts.php	0044f	tickets/marketing	0044e marcou DEAD apos cutover Next/Nest; 0044f remove o tombstone 410
+atd_3andar/views/tarefa_create.php	0044f	tickets/marketing	0044e marcou DEAD apos cutover Next/Nest; 0044f remove o tombstone 410
+atd_3andar/views/tarefa_detail.php	0044f	tickets/marketing	0044e marcou DEAD apos cutover Next/Nest; 0044f remove o tombstone 410
+atd_3andar/views/tarefa_modals.php	0044f	tickets/marketing	0044e marcou DEAD apos cutover Next/Nest; 0044f remove o tombstone 410
+atd_projeto/add_image_tarefa.php	0044f	tickets/devops	0044e marcou DEAD apos cutover Next/Nest; 0044f remove o tombstone 410
+atd_projeto/api/projeto_tarefas_list.php	0044f	tickets/devops	0044e marcou DEAD apos cutover Next/Nest; 0044f remove o tombstone 410
+atd_projeto/api/projetos_list.php	0044f	tickets/devops	0044e marcou DEAD apos cutover Next/Nest; 0044f remove o tombstone 410
+atd_projeto/api/tarefas_list.php	0044f	tickets/devops	0044e marcou DEAD apos cutover Next/Nest; 0044f remove o tombstone 410
+atd_projeto/busca_itens.php	0044f	tickets/devops	0044e marcou DEAD apos cutover Next/Nest; 0044f remove o tombstone 410
+atd_projeto/busca_locais.php	0044f	tickets/devops	0044e marcou DEAD apos cutover Next/Nest; 0044f remove o tombstone 410
+atd_projeto/busca_solicitantes.php	0044f	tickets/devops	0044e marcou DEAD apos cutover Next/Nest; 0044f remove o tombstone 410
+atd_projeto/busca_subcategorias.php	0044f	tickets/devops	0044e marcou DEAD apos cutover Next/Nest; 0044f remove o tombstone 410
+atd_projeto/delete_image_tarefa.php	0044f	tickets/devops	0044e marcou DEAD apos cutover Next/Nest; 0044f remove o tombstone 410
+atd_projeto/edit_image_tarefa.php	0044f	tickets/devops	0044e marcou DEAD apos cutover Next/Nest; 0044f remove o tombstone 410
+atd_projeto/lib/list_helpers.php	0044f	tickets/devops	0044e marcou DEAD apos cutover Next/Nest; 0044f remove o tombstone 410
+atd_projeto/lib/projeto_detail_tasks.php	0044f	tickets/devops	0044e marcou DEAD apos cutover Next/Nest; 0044f remove o tombstone 410

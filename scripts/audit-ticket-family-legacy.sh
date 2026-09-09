@@ -19,6 +19,7 @@ esac
 
 DOC="docs/tickets/LEGACY-TICKET-FAMILY-INVENTORY.md"
 OVERRIDES="docs/tickets/LEGACY-TICKET-FAMILY-OVERRIDES.tsv"
+RETIRED="docs/tickets/LEGACY-TICKET-FAMILY-RETIRED.tsv"
 BEGIN_MARKER='<!-- BEGIN GENERATED 0044A -->'
 END_MARKER='<!-- END GENERATED 0044A -->'
 MODULE_DIRS=(atd_3andar atd_facility atd_projeto atd_mkt melhorias)
@@ -29,9 +30,11 @@ FILES_TXT="$TMP_DIR/files.txt"
 ROWS_TXT="$TMP_DIR/rows.txt"
 GENERATED="$TMP_DIR/generated.md"
 CALLER_INDEX="$TMP_DIR/callers.tsv"
+RETIRED_PATHS="$TMP_DIR/retired.txt"
 : > "$FILES_TXT"
 : > "$ROWS_TXT"
 : > "$CALLER_INDEX"
+: > "$RETIRED_PATHS"
 
 for dir in "${MODULE_DIRS[@]}"; do
   if [[ -d "$dir" ]]; then
@@ -52,6 +55,10 @@ fi
 
 if [[ ! -f "$OVERRIDES" ]]; then
   echo "erro: arquivo de overrides ausente: $OVERRIDES" >&2
+  exit 2
+fi
+if [[ ! -f "$RETIRED" ]]; then
+  echo "erro: manifesto de PHPs aposentados ausente: $RETIRED" >&2
   exit 2
 fi
 
@@ -83,6 +90,37 @@ while IFS=$'\t' read -r override_path override_class _rest; do
   fi
   printf '%s\n' "$override_path" >> "$FILES_TXT"
 done < "$OVERRIDES"
+
+# Paths fisicamente aposentados nao podem reaparecer nem continuar como override ativo.
+while IFS=$'\t' read -r retired_path retired_cut retired_owner _rest; do
+  retired_path="${retired_path%$'\r'}"
+  retired_cut="${retired_cut%$'\r'}"
+  retired_owner="${retired_owner%$'\r'}"
+
+  [[ -n "${retired_path:-}" ]] || continue
+  [[ "$retired_path" == \#* ]] && continue
+  if [[ "$retired_path" != *.php ]]; then
+    echo "erro: manifesto de aposentadoria deve apontar para PHP: $retired_path" >&2
+    exit 2
+  fi
+  if [[ -z "${retired_cut:-}" || -z "${retired_owner:-}" ]]; then
+    echo "erro: manifesto de aposentadoria incompleto para $retired_path" >&2
+    exit 2
+  fi
+  if [[ -e "$retired_path" ]]; then
+    echo "erro: PHP fisicamente aposentado reapareceu no checkout: $retired_path" >&2
+    exit 2
+  fi
+  if grep -Fxq "$retired_path" "$RETIRED_PATHS"; then
+    echo "erro: path duplicado em $RETIRED: $retired_path" >&2
+    exit 2
+  fi
+  if awk -F '\t' -v path="$retired_path" '$0 !~ /^#/ && $1 == path { found=1 } END { exit !found }' "$OVERRIDES"; then
+    echo "erro: path aposentado tambem consta em overrides ativos: $retired_path" >&2
+    exit 2
+  fi
+  printf '%s\n' "$retired_path" >> "$RETIRED_PATHS"
+done < "$RETIRED"
 
 LC_ALL=C sort -u "$FILES_TXT" -o "$FILES_TXT"
 
