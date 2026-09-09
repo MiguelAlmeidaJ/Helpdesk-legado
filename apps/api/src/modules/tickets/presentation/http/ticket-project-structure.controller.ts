@@ -31,7 +31,7 @@ import { LEGACY_SESSION_SECURITY } from '../../../../core/openapi/openapi.consta
 import type { AuthenticatedUser } from '../../../access/domain/authenticated-user';
 import { CurrentUser } from '../../../access/presentation/http/current-user.decorator';
 import { LegacySessionGuard } from '../../../access/presentation/http/legacy-session.guard';
-import { PermissionsGuard } from '../../../access/presentation/http/permissions.guard';
+import { DevOpsPermissionsGuard } from '../../types/devops/devops-permissions.guard';
 import { RequirePermissions } from '../../../access/presentation/http/require-permissions.decorator';
 import { TicketProjectStructure } from '../../application/ticket-project-structure';
 import { normalizeLegacyLocalDateTime } from '../../domain/legacy-local-date-time';
@@ -175,7 +175,7 @@ function dependencyRequest(body: unknown): TicketProjectTaskDependencyRequest {
 
 @ApiTags('ticket-project-structure')
 @Controller('tickets/projects')
-@UseGuards(LegacySessionGuard, PermissionsGuard)
+@UseGuards(LegacySessionGuard, DevOpsPermissionsGuard)
 @ApiSecurity(LEGACY_SESSION_SECURITY)
 export class TicketProjectStructureController {
   constructor(private readonly structure: TicketProjectStructure) {}

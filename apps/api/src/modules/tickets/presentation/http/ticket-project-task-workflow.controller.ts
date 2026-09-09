@@ -32,7 +32,7 @@ import { LEGACY_SESSION_SECURITY } from '../../../../core/openapi/openapi.consta
 import type { AuthenticatedUser } from '../../../access/domain/authenticated-user';
 import { CurrentUser } from '../../../access/presentation/http/current-user.decorator';
 import { LegacySessionGuard } from '../../../access/presentation/http/legacy-session.guard';
-import { PermissionsGuard } from '../../../access/presentation/http/permissions.guard';
+import { DevOpsPermissionsGuard } from '../../types/devops/devops-permissions.guard';
 import { RequirePermissions } from '../../../access/presentation/http/require-permissions.decorator';
 import { TicketProjectTaskWorkflow } from '../../application/ticket-project-task-workflow';
 import { normalizeLegacyLocalDateTime } from '../../domain/legacy-local-date-time';
@@ -163,7 +163,7 @@ function progressRequest(body: unknown): TicketProjectTaskProgressRequest {
 
 @ApiTags('tickets')
 @Controller('tickets/projects/tasks')
-@UseGuards(LegacySessionGuard, PermissionsGuard)
+@UseGuards(LegacySessionGuard, DevOpsPermissionsGuard)
 @RequirePermissions(AppPermission.TicketsRead)
 @ApiSecurity(LEGACY_SESSION_SECURITY)
 export class TicketProjectTaskWorkflowController {

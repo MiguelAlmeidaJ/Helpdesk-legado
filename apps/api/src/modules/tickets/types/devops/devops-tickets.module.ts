@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { AccessModule } from '../../../access/access.module';
+import { TicketTypeAccessModule } from '../../ticket-type-access.module';
 import { ListTicketProjects } from '../../application/list-ticket-projects';
 import { TicketProjectStructure } from '../../application/ticket-project-structure';
 import { TicketProjectScheduleActivation } from '../../application/ticket-project-schedule-activation';
@@ -24,9 +25,10 @@ import { TicketProjectStructureController } from '../../presentation/http/ticket
 import { TicketProjectWorkflowController } from '../../presentation/http/ticket-project-workflow.controller';
 import { TicketProjectTaskImagesController } from '../../presentation/http/ticket-project-task-images.controller';
 import { TicketProjectTaskWorkflowController } from '../../presentation/http/ticket-project-task-workflow.controller';
+import { DevOpsPermissionsGuard } from './devops-permissions.guard';
 
 @Module({
-  imports: [AccessModule],
+  imports: [AccessModule, TicketTypeAccessModule],
   controllers: [
     TicketProjectsController,
     TicketProjectStructureController,
@@ -42,6 +44,7 @@ import { TicketProjectTaskWorkflowController } from '../../presentation/http/tic
     TicketProjectWorkflow,
     TicketProjectTaskImages,
     TicketProjectTaskWorkflow,
+    DevOpsPermissionsGuard,
     { provide: TicketProjectCommandRepository, useClass: PrismaTicketProjectCommandRepository },
     { provide: TicketProjectReadRepository, useClass: PrismaTicketProjectReadRepository },
     { provide: TicketProjectScheduleActivationRepository, useClass: PrismaTicketProjectScheduleActivationRepository },
