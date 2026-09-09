@@ -16,13 +16,6 @@
 # Example (remove the leading # and keep literal TABs between columns):
 # rel/legacy_ticket_report.php	REPORT	tickets/reporting	native report parity + cutover	confirmed ticket report
 
-atd_3andar/lib/permission_fallback.php	BRIDGE_ONLY	tickets	RBAC nativo cobre permissoes m8_* e nenhum PHP depende do fallback	compatibilidade temporaria entre sessao PHP e permissoes legadas
-atd_3andar/lib/tarefa_ui_rules.php	MIGRATE_UI	tickets	politicas de transicao/autorizacao na API + visibilidade equivalente na Next UI	regras legadas de exibicao de aceitar devolver espera finalizar e retomar
-atd_3andar/views/detail/tarefa_acoes.php	MIGRATE_UI	tickets	detalhe nativo da tarefa + comandos nativos + autorizacao equivalente na API	UI de status dados operacionais e botoes de acao da tarefa
-atd_3andar/views/detail/tarefa_sidebar_cliente.php	MIGRATE_UI	tickets	detalhe nativo expoe cliente contato local e classificacao + edicao nativa	sidebar de contexto e classificacao da tarefa
-atd_3andar/views/detail/tarefa_timeline.php	MIGRATE_UI	tickets	API nativa de timeline + componente Next equivalente	renderizacao do historico consumindo n3_tarefa3_fetch_timeline
-atd_3andar/views/partials/alerts.php	BRIDGE_ONLY	tickets	nenhuma tela PHP restante depende de flash em sessao	adaptador visual de mensagens flash armazenadas na sessao PHP
-atd_3andar/views/tarefa_detail.php	MIGRATE_UI	tickets	API nativa de detalhe/timeline + tela Next + comandos nativos	orquestrador da tela legada de detalhe da tarefa
 atd_facility/agenda.php	REDIRECT	logistics	rota Next /logistics/vehicles/agenda disponivel	compatibilidade redireciona agenda de veiculos para Logistics
 atd_facility/atd.php	REDIRECT	tickets	Facility desativado; remover bookmarks/callers	tombstone redireciona para /tickets sem bridge ou SQL
 atd_facility/home.php	REDIRECT	tickets	Facility desativado; remover bookmarks/callers	tombstone redireciona para /tickets sem bridge ou SQL
@@ -31,3 +24,47 @@ atd_facility/busca_itens.php	DEAD	tickets	0 callers apos tombstone Facility	endp
 atd_facility/busca_locais.php	DEAD	tickets	0 callers apos tombstone Facility	endpoint auxiliar responde HTTP 410 sem bridge ou SQL
 atd_facility/busca_solicitantes.php	DEAD	tickets	0 callers apos tombstone Facility	endpoint auxiliar responde HTTP 410 sem bridge ou SQL
 atd_facility/busca_subcategorias.php	DEAD	tickets	0 callers apos tombstone Facility	endpoint auxiliar responde HTTP 410 sem bridge ou SQL
+
+atd_projeto/home.php	REDIRECT	tickets/devops	Next modular + API Nest com paridade operacional	303 para /tickets/devops/projects; sem sessao bridge ou SQL
+atd_projeto/hometarefas.php	REDIRECT	tickets/devops	Next modular + API Nest com paridade operacional	303 para /tickets/devops; sem sessao bridge ou SQL
+atd_projeto/dash_pro.php	REDIRECT	tickets/devops	Next modular + API Nest com paridade operacional	303 para /tickets/devops/projects; sem sessao bridge ou SQL
+atd_projeto/projeto.php	REDIRECT	tickets/devops	Next modular + API Nest com paridade operacional	303 para /tickets/devops/projects[/<id>] ou /tickets/devops/projects/new; sem sessao bridge ou SQL
+atd_projeto/tarefa.php	REDIRECT	tickets/devops	Next modular + API Nest com paridade operacional	303 para /tickets/devops/<id> ou /tickets/new?type=devops; sem sessao bridge ou SQL
+atd_3andar/home.php	REDIRECT	tickets/marketing	Next modular + API Nest com paridade operacional	303 para /tickets/marketing; sem sessao bridge ou SQL
+atd_3andar/dash_pro.php	REDIRECT	tickets/marketing	Next modular + API Nest com paridade operacional	303 para /tickets/marketing; sem sessao bridge ou SQL
+atd_3andar/tarefa.php	REDIRECT	tickets/marketing	Next modular + API Nest com paridade operacional	303 para /tickets/marketing/<id> ou /tickets/new?type=marketing; sem sessao bridge ou SQL
+atd_3andar/api/projeto_tarefas_list.php	DEAD	tickets/marketing	entrypoints PHP redirecionados e nenhum caller qualificado restante	HTTP 410; comportamento correspondente pertence ao Next/Nest
+atd_3andar/api/tarefas_list.php	DEAD	tickets/marketing	entrypoints PHP redirecionados e nenhum caller qualificado restante	HTTP 410; comportamento correspondente pertence ao Next/Nest
+atd_3andar/busca_locais.php	DEAD	tickets/marketing	entrypoints PHP redirecionados e nenhum caller qualificado restante	HTTP 410; comportamento correspondente pertence ao Next/Nest
+atd_3andar/busca_solicitantes.php	DEAD	tickets/marketing	entrypoints PHP redirecionados e nenhum caller qualificado restante	HTTP 410; comportamento correspondente pertence ao Next/Nest
+atd_3andar/lib/detail_tasks.php	DEAD	tickets/marketing	entrypoints PHP redirecionados e nenhum caller qualificado restante	HTTP 410; comportamento correspondente pertence ao Next/Nest
+atd_3andar/lib/list_helpers.php	DEAD	tickets/marketing	entrypoints PHP redirecionados e nenhum caller qualificado restante	HTTP 410; comportamento correspondente pertence ao Next/Nest
+atd_3andar/lib/permission_fallback.php	DEAD	tickets/marketing	entrypoints PHP redirecionados e nenhum caller qualificado restante	HTTP 410; comportamento correspondente pertence ao Next/Nest
+atd_3andar/lib/tarefa_actions.php	DEAD	tickets/marketing	entrypoints PHP redirecionados e nenhum caller qualificado restante	HTTP 410; comportamento correspondente pertence ao Next/Nest
+atd_3andar/lib/tarefa_controller.php	DEAD	tickets/marketing	entrypoints PHP redirecionados e nenhum caller qualificado restante	HTTP 410; comportamento correspondente pertence ao Next/Nest
+atd_3andar/lib/tarefa_helpers.php	DEAD	tickets/marketing	entrypoints PHP redirecionados e nenhum caller qualificado restante	HTTP 410; comportamento correspondente pertence ao Next/Nest
+atd_3andar/lib/tarefa_permissions.php	DEAD	tickets/marketing	entrypoints PHP redirecionados e nenhum caller qualificado restante	HTTP 410; comportamento correspondente pertence ao Next/Nest
+atd_3andar/lib/tarefa_queries.php	DEAD	tickets/marketing	entrypoints PHP redirecionados e nenhum caller qualificado restante	HTTP 410; comportamento correspondente pertence ao Next/Nest
+atd_3andar/lib/tarefa_ui_rules.php	DEAD	tickets/marketing	entrypoints PHP redirecionados e nenhum caller qualificado restante	HTTP 410; comportamento correspondente pertence ao Next/Nest
+atd_3andar/views/detail/tarefa_acoes.php	DEAD	tickets/marketing	entrypoints PHP redirecionados e nenhum caller qualificado restante	HTTP 410; comportamento correspondente pertence ao Next/Nest
+atd_3andar/views/detail/tarefa_sidebar_cliente.php	DEAD	tickets/marketing	entrypoints PHP redirecionados e nenhum caller qualificado restante	HTTP 410; comportamento correspondente pertence ao Next/Nest
+atd_3andar/views/detail/tarefa_timeline.php	DEAD	tickets/marketing	entrypoints PHP redirecionados e nenhum caller qualificado restante	HTTP 410; comportamento correspondente pertence ao Next/Nest
+atd_3andar/views/partials/alerts.php	DEAD	tickets/marketing	entrypoints PHP redirecionados e nenhum caller qualificado restante	HTTP 410; comportamento correspondente pertence ao Next/Nest
+atd_3andar/views/partials/head.php	DEAD	tickets/marketing	entrypoints PHP redirecionados e nenhum caller qualificado restante	HTTP 410; comportamento correspondente pertence ao Next/Nest
+atd_3andar/views/partials/quick_modal.php	DEAD	tickets/marketing	entrypoints PHP redirecionados e nenhum caller qualificado restante	HTTP 410; comportamento correspondente pertence ao Next/Nest
+atd_3andar/views/partials/scripts.php	DEAD	tickets/marketing	entrypoints PHP redirecionados e nenhum caller qualificado restante	HTTP 410; comportamento correspondente pertence ao Next/Nest
+atd_3andar/views/tarefa_create.php	DEAD	tickets/marketing	entrypoints PHP redirecionados e nenhum caller qualificado restante	HTTP 410; comportamento correspondente pertence ao Next/Nest
+atd_3andar/views/tarefa_detail.php	DEAD	tickets/marketing	entrypoints PHP redirecionados e nenhum caller qualificado restante	HTTP 410; comportamento correspondente pertence ao Next/Nest
+atd_3andar/views/tarefa_modals.php	DEAD	tickets/marketing	entrypoints PHP redirecionados e nenhum caller qualificado restante	HTTP 410; comportamento correspondente pertence ao Next/Nest
+atd_projeto/add_image_tarefa.php	DEAD	tickets/devops	entrypoints PHP redirecionados e nenhum caller qualificado restante	HTTP 410; comportamento correspondente pertence ao Next/Nest
+atd_projeto/api/projeto_tarefas_list.php	DEAD	tickets/devops	entrypoints PHP redirecionados e nenhum caller qualificado restante	HTTP 410; comportamento correspondente pertence ao Next/Nest
+atd_projeto/api/projetos_list.php	DEAD	tickets/devops	entrypoints PHP redirecionados e nenhum caller qualificado restante	HTTP 410; comportamento correspondente pertence ao Next/Nest
+atd_projeto/api/tarefas_list.php	DEAD	tickets/devops	entrypoints PHP redirecionados e nenhum caller qualificado restante	HTTP 410; comportamento correspondente pertence ao Next/Nest
+atd_projeto/busca_itens.php	DEAD	tickets/devops	entrypoints PHP redirecionados e nenhum caller qualificado restante	HTTP 410; comportamento correspondente pertence ao Next/Nest
+atd_projeto/busca_locais.php	DEAD	tickets/devops	entrypoints PHP redirecionados e nenhum caller qualificado restante	HTTP 410; comportamento correspondente pertence ao Next/Nest
+atd_projeto/busca_solicitantes.php	DEAD	tickets/devops	entrypoints PHP redirecionados e nenhum caller qualificado restante	HTTP 410; comportamento correspondente pertence ao Next/Nest
+atd_projeto/busca_subcategorias.php	DEAD	tickets/devops	entrypoints PHP redirecionados e nenhum caller qualificado restante	HTTP 410; comportamento correspondente pertence ao Next/Nest
+atd_projeto/delete_image_tarefa.php	DEAD	tickets/devops	entrypoints PHP redirecionados e nenhum caller qualificado restante	HTTP 410; comportamento correspondente pertence ao Next/Nest
+atd_projeto/edit_image_tarefa.php	DEAD	tickets/devops	entrypoints PHP redirecionados e nenhum caller qualificado restante	HTTP 410; comportamento correspondente pertence ao Next/Nest
+atd_projeto/lib/list_helpers.php	DEAD	tickets/devops	entrypoints PHP redirecionados e nenhum caller qualificado restante	HTTP 410; comportamento correspondente pertence ao Next/Nest
+atd_projeto/lib/projeto_detail_tasks.php	DEAD	tickets/devops	entrypoints PHP redirecionados e nenhum caller qualificado restante	HTTP 410; comportamento correspondente pertence ao Next/Nest

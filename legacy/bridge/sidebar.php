@@ -471,14 +471,14 @@ if (!function_exists('sidebar_href')) {
         </button>
         <div class="submenu">
           <?php if ($m5_01 > 0) { ?>
-            <a href="<?php echo sidebar_href('atd_projeto/home.php'); ?>" class="menu-subitem"><i class="fas fa-list-ul"></i><span>Lista de Projetos</span></a>
+            <a href="<?php echo htmlspecialchars(allterus_web_url('/tickets/devops/projects'), ENT_QUOTES, 'UTF-8'); ?>" class="menu-subitem"><i class="fas fa-list-ul"></i><span>Lista de Projetos</span></a>
           <?php } ?>
-          <a href="<?php echo sidebar_href('atd_projeto/hometarefas.php'); ?>" class="menu-subitem"><i class="fas fa-list-ul"></i><span>Lista de Tarefas</span></a>
+          <a href="<?php echo htmlspecialchars(allterus_web_url('/tickets/devops'), ENT_QUOTES, 'UTF-8'); ?>" class="menu-subitem"><i class="fas fa-list-ul"></i><span>Lista de Tarefas</span></a>
           <?php if ($m5_01 > 1) { ?>
-            <a href="<?php echo sidebar_href('atd_projeto/projeto.php'); ?>" class="menu-subitem"><i class="fas fa-plus"></i><span>Novo Projeto</span></a>
+            <a href="<?php echo htmlspecialchars(allterus_web_url('/tickets/devops/projects/new'), ENT_QUOTES, 'UTF-8'); ?>" class="menu-subitem"><i class="fas fa-plus"></i><span>Novo Projeto</span></a>
           <?php } ?>
           <?php if ($m5_00 > 1) { ?>
-            <a href="<?php echo sidebar_href('atd_projeto/tarefa.php'); ?>" class="menu-subitem"><i class="fas fa-plus"></i><span>Nova Tarefa</span></a>
+            <a href="<?php echo htmlspecialchars(allterus_web_url('/tickets/new?type=devops'), ENT_QUOTES, 'UTF-8'); ?>" class="menu-subitem"><i class="fas fa-plus"></i><span>Nova Tarefa</span></a>
           <?php } ?>
         </div>
       </div>
@@ -492,9 +492,9 @@ if (!function_exists('sidebar_href')) {
           <i class="fas fa-chevron-down menu-arrow"></i>
         </button>
         <div class="submenu">
-          <a href="<?php echo sidebar_href('atd_3andar/home.php'); ?>" class="menu-subitem"><i class="fas fa-list-ul"></i><span>Lista de Tarefas</span></a>
+          <a href="<?php echo htmlspecialchars(allterus_web_url('/tickets/marketing'), ENT_QUOTES, 'UTF-8'); ?>" class="menu-subitem"><i class="fas fa-list-ul"></i><span>Lista de Tarefas</span></a>
           <?php if ($m8_01 > 0) { ?>
-            <a href="<?php echo sidebar_href('atd_3andar/tarefa.php'); ?>" class="menu-subitem"><i class="fas fa-plus"></i><span>Criar Nova Tarefa</span></a>
+            <a href="<?php echo htmlspecialchars(allterus_web_url('/tickets/new?type=marketing'), ENT_QUOTES, 'UTF-8'); ?>" class="menu-subitem"><i class="fas fa-plus"></i><span>Criar Nova Tarefa</span></a>
           <?php } ?>
         </div>
       </div>

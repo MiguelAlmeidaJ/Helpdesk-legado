@@ -1,18 +1,8 @@
 <?php
-$quick_modal = $_SESSION['tarefa_quick_modal'] ?? '';
-unset($_SESSION['tarefa_quick_modal']);
-
-$allowed_quick_modals = ['tarefa_aceitar', 'tarefa_retomar', 'tarefa_finalizar'];
-?>
-
-<?php if (in_array($quick_modal, $allowed_quick_modals, true)) { ?>
-  <script>
-    $(function() {
-      var quickModal = '#<?php echo $quick_modal; ?>';
-
-      if ($(quickModal).length) {
-        $(quickModal).modal('show');
-      }
-    });
-  </script>
-<?php } ?>
+http_response_code(410);
+header('Content-Type: application/json; charset=utf-8');
+echo json_encode([
+    'error' => 'legacy_ticket_surface_retired',
+    'message' => 'Esta superficie PHP foi aposentada. Use a aplicacao Next.js.',
+], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+exit;
