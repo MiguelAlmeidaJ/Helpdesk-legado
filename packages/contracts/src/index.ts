@@ -33,3 +33,4 @@ export * from './logistics/expense-approval';
 export * from './logistics/expense-payment';
 export * from './logistics/expense-paid-report';
 export * from './logistics/expense-comparison';
+export * from './reports/ticket-client-totals';

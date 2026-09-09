@@ -129,7 +129,12 @@ export const APP_NAVIGATION_SECTIONS: NavigationSection[] = [
     label: 'Relatórios',
     shortLabel: 'RL',
     items: [
-      { id: 'report-client-total', label: 'Atd. total por Cliente', status: 'planned' },
+      {
+        id: 'report-client-total',
+        label: 'Atd. total por Cliente',
+        href: '/reports/tickets/by-client',
+        status: 'available',
+      },
       { id: 'report-client-daily', label: 'Atd. diário por Cliente', status: 'planned' },
       { id: 'report-requester', label: 'Atd. por Solicitante', status: 'planned' },
       { id: 'report-tech-total', label: 'Atd. total por Técnico', status: 'planned' },

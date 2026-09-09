@@ -19,6 +19,7 @@ This file is the migration control board. Update it in the same pull request tha
 | --- | --- | --- | --- | --- |
 | platform | retired `all/`; compatibility in `legacy/bridge` | `nivel3` | retired | `0043f` retires the `all/` directory after `0043e` rewrote all 703 executable references. Residual PHP compatibility lives only in `legacy/bridge/`; native Nest/Next remains authoritative. |
 | tickets | `atd`, `atd_facility`, `atd_projeto`, `atd_3andar`, parts of `atd_mkt` | `nivel3` | web | Read API and first Next.js list UI available; legacy remains authoritative until jobs/detail/workflows reach parity and cutover. |
+| reports | `rel` | `nivel3` | web | `0045a` starts the native reports context with ticket totals by client. Remaining `rel/*.php` stays authoritative until each report reaches parity and is retired individually. |
 | assets | `ativos` | `nivel3` | planned | Inventory/assets and related assignments. |
 | catalog | `catlg` | `nivel3` | planned | Catalog/service information; ownership must be confirmed during inventory. |
 | master-data | `cads` | `nivel3` | planned | Clients, people, locations and generic registrations should later be split only if rules justify it. |
