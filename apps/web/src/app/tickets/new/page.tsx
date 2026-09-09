@@ -1,10 +1,36 @@
 import type { Metadata } from 'next';
 import { requireAuthenticatedUser } from '../../../modules/access/server/current-user';
+import { ModularTicketCreateScreen } from '../../../modules/tickets/components/modular-ticket-create-screen';
 import { TicketCreateScreen } from '../../../modules/tickets/components/ticket-create-screen';
 
-export const metadata: Metadata = { title: 'Novo atendimento · Helpdesk' };
+export const metadata: Metadata = { title: 'Novo ticket · Helpdesk' };
 
-export default async function NewTicketPage() {
+interface NewTicketPageProps {
+  searchParams: Promise<{
+    type?: string | string[];
+  }>;
+}
+
+export default async function NewTicketPage({
+  searchParams,
+}: NewTicketPageProps) {
   const currentUser = await requireAuthenticatedUser('/tickets/new');
-  return <TicketCreateScreen currentUser={currentUser} />;
+  const params = await searchParams;
+  const requestedType = Array.isArray(params.type) ? params.type[0] : params.type;
+
+  if (requestedType === 'atendimento') {
+    return <TicketCreateScreen currentUser={currentUser} />;
+  }
+
+  const initialType =
+    requestedType === 'devops' || requestedType === 'marketing'
+      ? requestedType
+      : undefined;
+
+  return (
+    <ModularTicketCreateScreen
+      currentUser={currentUser}
+      initialType={initialType}
+    />
+  );
 }
