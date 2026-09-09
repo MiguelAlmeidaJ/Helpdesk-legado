@@ -1,5 +1,11 @@
 # 0044c6 — comandos nativos do atendimento Facility
 
+> **Status após 0044c7:** Facility foi desativado como tipo de ticket. O
+> `TicketFacilityController` e seus providers deixaram de ser registrados no
+> `TicketsModule`, portanto as rotas abaixo não ficam expostas em runtime. Os
+> arquivos do 0044c6 permanecem temporariamente no repositório apenas para uma
+> remoção rastreável no corte de aposentadoria de Facility.
+
 Este subcorte migra para a API Nest as escritas concentradas em
 `atd_facility/atd.php`. A tabela legada `facility` continua sendo usada como
 persistência durante a migração, mas a autoridade de autorização e de transição

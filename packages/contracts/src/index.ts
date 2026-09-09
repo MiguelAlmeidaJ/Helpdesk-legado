@@ -22,6 +22,7 @@ export * from './tickets/ticket-attachment';
 export * from './tickets/ticket-create';
 export * from './users/user';
 export * from './tickets/ticket-timeline';
+export * from './tickets/ticket-type';
 export * from './tickets/ticket-availability';
 export * from './dashboard/dashboard';
 export * from './logistics/vehicle-agenda';
