@@ -1,22 +1,22 @@
 import { Inject, Injectable } from '@nestjs/common';
 import type {
-  TicketClientTotalsReportResponse,
-  TicketClientTotalsReportRow,
+  TicketTechnicianTotalsReportResponse,
+  TicketTechnicianTotalsReportRow,
 } from '@helpdesk/contracts';
 import type { Nivel3DatabaseClient } from '@helpdesk/database';
 import { NIVEL3_DATABASE } from '../../../core/database/database.constants';
 import {
-  TicketClientTotalsReportRepository,
-  type TicketClientTotalsReportQuery,
-} from '../application/ports/ticket-client-totals-report.repository';
+  TicketTechnicianTotalsReportRepository,
+  type TicketTechnicianTotalsReportQuery,
+} from '../application/ports/ticket-technician-totals-report.repository';
 import {
   appendNumberInFilter,
   resolveTicketReportVisibility,
 } from './ticket-report-visibility';
 
 interface ReportRow {
-  client_id: number;
-  client_name: string | null;
+  technician_id: number;
+  technician_name: string | null;
   level_1: bigint | number | string;
   level_2: bigint | number | string;
   level_3: bigint | number | string;
@@ -24,7 +24,7 @@ interface ReportRow {
 }
 
 @Injectable()
-export class PrismaTicketClientTotalsReportRepository extends TicketClientTotalsReportRepository {
+export class PrismaTicketTechnicianTotalsReportRepository extends TicketTechnicianTotalsReportRepository {
   constructor(
     @Inject(NIVEL3_DATABASE)
     private readonly database: Nivel3DatabaseClient,
@@ -33,8 +33,8 @@ export class PrismaTicketClientTotalsReportRepository extends TicketClientTotals
   }
 
   async get(
-    query: TicketClientTotalsReportQuery,
-  ): Promise<TicketClientTotalsReportResponse> {
+    query: TicketTechnicianTotalsReportQuery,
+  ): Promise<TicketTechnicianTotalsReportResponse> {
     const visibility = await resolveTicketReportVisibility(
       this.database,
       query.userId,
@@ -60,17 +60,17 @@ export class PrismaTicketClientTotalsReportRepository extends TicketClientTotals
 
     const rows = await this.database.$queryRawUnsafe<ReportRow[]>(
       `SELECT
-         c.clt_id AS client_id,
-         c.clt_nomer AS client_name,
+         u.user_id AS technician_id,
+         u.user_nome AS technician_name,
          SUM(CASE WHEN a.nivel = 1 THEN 1 ELSE 0 END) AS level_1,
          SUM(CASE WHEN a.nivel = 2 THEN 1 ELSE 0 END) AS level_2,
          SUM(CASE WHEN a.nivel = 3 THEN 1 ELSE 0 END) AS level_3,
-         COUNT(*) AS total
+         COUNT(a.id) AS total
        FROM atendimentos a
-       INNER JOIN clientes c ON c.clt_id = a.cliente
+       INNER JOIN usuarios u ON a.tecnico = u.user_id
        WHERE ${where.join(' AND ')}
-       GROUP BY c.clt_id, c.clt_nomer
-       ORDER BY total DESC, c.clt_nomer ASC`,
+       GROUP BY u.user_id, u.user_nome
+       ORDER BY total DESC, u.user_nome ASC`,
       ...params,
     );
 
@@ -88,8 +88,8 @@ export class PrismaTicketClientTotalsReportRepository extends TicketClientTotals
   }
 
   private emptyResponse(
-    query: TicketClientTotalsReportQuery,
-  ): TicketClientTotalsReportResponse {
+    query: TicketTechnicianTotalsReportQuery,
+  ): TicketTechnicianTotalsReportResponse {
     return {
       period: {
         startDate: query.startDate,
@@ -101,10 +101,10 @@ export class PrismaTicketClientTotalsReportRepository extends TicketClientTotals
     };
   }
 
-  private mapRow(row: ReportRow): TicketClientTotalsReportRow {
+  private mapRow(row: ReportRow): TicketTechnicianTotalsReportRow {
     return {
-      clientId: row.client_id,
-      clientName: row.client_name?.trim() || 'Sem identificação',
+      technicianId: row.technician_id,
+      technicianName: row.technician_name?.trim() || 'Sem identificação',
       level1: Number(row.level_1 ?? 0),
       level2: Number(row.level_2 ?? 0),
       level3: Number(row.level_3 ?? 0),

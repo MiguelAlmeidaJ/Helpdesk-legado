@@ -137,7 +137,12 @@ export const APP_NAVIGATION_SECTIONS: NavigationSection[] = [
       },
       { id: 'report-client-daily', label: 'Atd. diário por Cliente', status: 'planned' },
       { id: 'report-requester', label: 'Atd. por Solicitante', status: 'planned' },
-      { id: 'report-tech-total', label: 'Atd. total por Técnico', status: 'planned' },
+      {
+        id: 'report-tech-total',
+        label: 'Atd. total por Técnico',
+        href: '/reports/tickets/by-technician',
+        status: 'available',
+      },
       { id: 'report-tech-daily', label: 'Atd. diário por Técnico', status: 'planned' },
       { id: 'report-category-total', label: 'Atd. total por Categoria', status: 'planned' },
       { id: 'report-average-time', label: 'Tempo médio para Atendimento', status: 'planned' },
