@@ -91,39 +91,27 @@ exigindo evidência funcional.
 
 ## Snapshot gerado
 
-Fingerprint do inventario: `c5e043f4bd80d220ec549d03768d091adbf9115fcbb8a6efaeab9cef83ba7752`.
+Fingerprint do inventario: `7c6999f44263a7b0e1656565dd21ef9f6f9cf8f17bc7357e9ae47532fb8c15d0`.
 
 | Metrica | Quantidade |
 | --- | ---: |
-| PHP no escopo | 53 |
+| PHP no escopo | 35 |
 | MIGRATE_READ | 8 |
 | MIGRATE_WRITE | 7 |
 | MIGRATE_UI | 5 |
-| REPORT | 15 |
+| REPORT | 13 |
 | BRIDGE_ONLY | 2 |
-| REDIRECT | 12 |
-| DEAD | 4 |
+| REDIRECT | 0 |
+| DEAD | 0 |
 | UNKNOWN | 0 |
-| classificacoes com override manual | 16 |
-| arquivos com dependencia de bridge/conexao legada | 37 |
+| classificacoes com override manual | 0 |
+| arquivos com dependencia de bridge/conexao legada | 35 |
 | arquivos com `ConnectionMkt()` | 5 |
 
 ### Inventario por arquivo
 
 | Caminho | superficie HTTP? | metodos | SELECT | escrita SQL | sessao | conexoes | tabelas detectadas | referencias PHP | callers conhecidos | classificacao / owner / pre-requisito | decisao | hash |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| `atd_3andar/dash_pro.php` | yes | - | no | no | no | - | - | - | legacy/bridge/sidebar.php | REDIRECT / tickets/marketing / Next modular + API Nest com paridade operacional | override: 303 para /tickets/marketing; sem sessao bridge ou SQL | `734125762009` |
-| `atd_3andar/home.php` | yes | - | no | no | no | - | - | - | .env.example, CHAGELOG.txt, atd_mkt/analisePeriodoMkt.php, atd_mkt/disponibilidadeTecMkt.php, atd_mkt/home.php, atd_mkt/srhomemkt.php, config/home.php, home_old.php | REDIRECT / tickets/marketing / Next modular + API Nest com paridade operacional | override: 303 para /tickets/marketing; sem sessao bridge ou SQL | `734125762009` |
-| `atd_3andar/rel_analitico_tarefas.php` | yes | POST | yes | no | yes | ConnectionN3 | clientes, usuarios, tarefas_terc_andar, locais, pessoas, tipos_terc_andar, categorias_terc_andar, subcategorias_terc_andar, niveis_terc_andar, itens | ../legacy/bridge/seguranca.php, ../legacy/bridge/conect.php, ../legacy/bridge/permissoes.php, ../legacy/bridge/token.php, ../legacy/bridge/update_senha.php, ../legacy/bridge/sidebar.php, ../legacy/bridge/update_pass.php | - | REPORT / tickets / domain report ownership + parity + cutover | auto: - | `bac14102eda8` |
-| `atd_3andar/tarefa.php` | yes | GET, POST | no | no | no | - | - | - | atd_mkt/hometarefas.php, atd_mkt/projeto.php, packages/contracts/src/tickets/ticket-project.ts | REDIRECT / tickets/marketing / Next modular + API Nest com paridade operacional | override: 303 para /tickets/marketing/<id> ou /tickets/new?type=marketing; sem sessao bridge ou SQL | `9c19b7757422` |
-| `atd_facility/agenda.php` | yes | - | no | no | no | - | - | - | - | REDIRECT / logistics / rota Next /logistics/vehicles/agenda disponivel | override: compatibilidade redireciona agenda de veiculos para Logistics | `fbdee641a9c0` |
-| `atd_facility/atd.php` | yes | - | no | no | no | - | - | - | ativos/home.php, legacy/bridge/sidebar.php, melhorias/home.php, melhorias/srhome.php | REDIRECT / tickets / Facility desativado; remover bookmarks/callers | override: tombstone redireciona para /tickets sem bridge ou SQL | `9e262d8e5c98` |
-| `atd_facility/busca_itens.php` | yes | - | no | no | no | - | - | - | atd_mkt/projeto.php, atd_mkt/tarefa.php, melhorias/atd.php | DEAD / tickets / 0 callers apos tombstone Facility | override: endpoint auxiliar responde HTTP 410 sem bridge ou SQL | `a5ad6496dfd3` |
-| `atd_facility/busca_locais.php` | yes | - | no | no | no | - | - | - | atd_3andar/js/tarefa-create.js, atd_mkt/projeto.php, atd_mkt/tarefa.php, melhorias/atd.php, rel/rel_Unificado.php, rel/rel_Unificado_Id.php, rel/rel_ti.php | DEAD / tickets / 0 callers apos tombstone Facility | override: endpoint auxiliar responde HTTP 410 sem bridge ou SQL | `a5ad6496dfd3` |
-| `atd_facility/busca_solicitantes.php` | yes | - | no | no | no | - | - | - | atd_3andar/js/tarefa-create.js, atd_mkt/projeto.php, atd_mkt/tarefa.php, melhorias/atd.php | DEAD / tickets / 0 callers apos tombstone Facility | override: endpoint auxiliar responde HTTP 410 sem bridge ou SQL | `a5ad6496dfd3` |
-| `atd_facility/busca_subcategorias.php` | yes | - | no | no | no | - | - | - | atd_mkt/projeto.php, atd_mkt/tarefa.php, melhorias/atd.php | DEAD / tickets / 0 callers apos tombstone Facility | override: endpoint auxiliar responde HTTP 410 sem bridge ou SQL | `a5ad6496dfd3` |
-| `atd_facility/dash_pro.php` | yes | - | no | no | no | - | - | - | legacy/bridge/sidebar.php | REDIRECT / tickets / Facility desativado; remover bookmarks/callers | override: tombstone redireciona para /tickets sem bridge ou SQL | `9e262d8e5c98` |
-| `atd_facility/home.php` | yes | - | no | no | no | - | - | - | .env.example, CHAGELOG.txt, atd_mkt/analisePeriodoMkt.php, atd_mkt/disponibilidadeTecMkt.php, atd_mkt/home.php, atd_mkt/srhomemkt.php, config/home.php, home_old.php | REDIRECT / tickets / Facility desativado; remover bookmarks/callers | override: tombstone redireciona para /tickets sem bridge ou SQL | `9e262d8e5c98` |
 | `atd_mkt/analisePeriodoMkt.php` | yes | POST | yes | no | yes | ConnectionMkt | tblstaff, tblfiles, tbltasks, tbltask_assigned, tblcustomfieldsvalues | ../legacy/bridge/seguranca.php, ../legacy/bridge/conect.php, ../legacy/bridge/permissoes.php, ../home.php, ../legacy/bridge/sidebar.php | - | MIGRATE_UI / tickets (nivel3) / read/API parity + Next UI + cutover | auto: - | `014cb1f26805` |
 | `atd_mkt/busca_itens.php` | no | - | yes | no | yes | ConnectionN3 | itens | ../legacy/bridge/seguranca.php, ../legacy/bridge/conect.php | atd_mkt/projeto.php, atd_mkt/tarefa.php, melhorias/atd.php | MIGRATE_READ / tickets (nivel3) / native read contract + caller cutover | auto: - | `b28408a1bc5d` |
 | `atd_mkt/busca_locais.php` | no | - | yes | no | yes | ConnectionN3 | locais | ../legacy/bridge/seguranca.php, ../legacy/bridge/conect.php | atd_3andar/js/tarefa-create.js, atd_mkt/projeto.php, atd_mkt/tarefa.php, melhorias/atd.php, rel/rel_Unificado.php, rel/rel_Unificado_Id.php, rel/rel_ti.php | MIGRATE_READ / tickets (nivel3) / native read contract + caller cutover | auto: - | `2343442e3cb0` |
@@ -137,12 +125,6 @@ Fingerprint do inventario: `c5e043f4bd80d220ec549d03768d091adbf9115fcbb8a6efaeab
 | `atd_mkt/projeto.php` | yes | POST, FILES | yes | yes | yes | ConnectionN3 | proj_mkt, inter_proj_mkt, usuarios, categorias, subcategorias | ../legacy/bridge/seguranca.php, ../legacy/bridge/conect.php, ../legacy/bridge/permissoes.php, ../legacy/bridge/token.php, ../index.php, ../legacy/bridge/loading.php, ../legacy/bridge/sidebar.php, ../legacy/bridge/update_senha.php, tarefa.php, ../legacy/bridge/update_pass.php | - | MIGRATE_WRITE / tickets (nivel3) / native command + read parity + Next UI + cutover | auto: - | `dd9fe8b74df7` |
 | `atd_mkt/srhomemkt.php` | yes | POST | yes | no | yes | ConnectionMkt | AS, tbltasks, tbltask_assigned, tbltask_statuses, tblcustomfieldsvalues, tblstaff, tblclients | ../legacy/bridge/seguranca.php, ../legacy/bridge/conect.php, ../legacy/bridge/permissoes.php, ../home.php, ../legacy/bridge/sidebar.php, ./home.php, mkt_atd.php | - | MIGRATE_UI / tickets (nivel3) / read/API parity + Next UI + cutover | auto: - | `4fd2cb1e1dc5` |
 | `atd_mkt/tarefa.php` | yes | POST, FILES | yes | yes | yes | ConnectionN3 | tarefas_mkt, inter_tarefa_mkt, usuarios, categorias, subcategorias | ../legacy/bridge/seguranca.php, ../legacy/bridge/conect.php, ../legacy/bridge/permissoes.php, ../legacy/bridge/token.php, ../index.php, ../legacy/bridge/loading.php, ../legacy/bridge/sidebar.php, ../legacy/bridge/update_senha.php, ../legacy/bridge/update_pass.php, busca_solicitantes.php, busca_locais.php | atd_mkt/hometarefas.php, atd_mkt/projeto.php, packages/contracts/src/tickets/ticket-project.ts | MIGRATE_WRITE / tickets (nivel3) / native command + read parity + Next UI + cutover | auto: - | `e6b9a0f50b7a` |
-| `atd_projeto/dash_pro.php` | yes | - | no | no | no | - | - | - | legacy/bridge/sidebar.php | REDIRECT / tickets/devops / Next modular + API Nest com paridade operacional | override: 303 para /tickets/devops/projects; sem sessao bridge ou SQL | `c3abca5d937c` |
-| `atd_projeto/home.php` | yes | - | no | no | no | - | - | - | .env.example, CHAGELOG.txt, atd_mkt/analisePeriodoMkt.php, atd_mkt/disponibilidadeTecMkt.php, atd_mkt/home.php, atd_mkt/srhomemkt.php, config/home.php, home_old.php | REDIRECT / tickets/devops / Next modular + API Nest com paridade operacional | override: 303 para /tickets/devops/projects; sem sessao bridge ou SQL | `c3abca5d937c` |
-| `atd_projeto/hometarefas.php` | yes | - | no | no | no | - | - | - | - | REDIRECT / tickets/devops / Next modular + API Nest com paridade operacional | override: 303 para /tickets/devops; sem sessao bridge ou SQL | `3cdd76246fb2` |
-| `atd_projeto/projeto.php` | yes | GET, POST | no | no | no | - | - | - | - | REDIRECT / tickets/devops / Next modular + API Nest com paridade operacional | override: 303 para /tickets/devops/projects[/<id>] ou /tickets/devops/projects/new; sem sessao bridge ou SQL | `3ae876c5fec6` |
-| `atd_projeto/rel_analitico_tarefas.php` | yes | POST | yes | no | yes | ConnectionN3 | clientes, usuarios, tarefas, locais, pessoas, categorias, subcategorias, itens | ../legacy/bridge/seguranca.php, ../legacy/bridge/conect.php, ../legacy/bridge/permissoes.php, ../legacy/bridge/token.php, ../legacy/bridge/update_senha.php, ../legacy/bridge/sidebar.php, ../legacy/bridge/update_pass.php | - | REPORT / tickets / domain report ownership + parity + cutover | auto: - | `09c7a500badd` |
-| `atd_projeto/tarefa.php` | yes | GET, POST | no | no | no | - | - | - | atd_mkt/hometarefas.php, atd_mkt/projeto.php, packages/contracts/src/tickets/ticket-project.ts | REDIRECT / tickets/devops / Next modular + API Nest com paridade operacional | override: 303 para /tickets/devops/<id> ou /tickets/new?type=devops; sem sessao bridge ou SQL | `f74f47d7d0df` |
 | `melhorias/atd.php` | yes | POST | yes | yes | yes | ConnectionN3 | melhorias, interatividade_melhorias, usuarios, categorias, subcategorias, itens | ../legacy/bridge/seguranca.php, ../legacy/bridge/conect.php, ../legacy/bridge/permissoes.php, ../legacy/bridge/token.php, ../index.php, ../legacy/bridge/loading.php, ../legacy/bridge/sidebar.php, ../legacy/bridge/update_senha.php, ../legacy/bridge/update_pass.php, busca_solicitantes.php, busca_locais.php | ativos/home.php, legacy/bridge/sidebar.php, melhorias/home.php, melhorias/srhome.php | MIGRATE_WRITE / tickets / native command + read parity + Next UI + cutover | auto: - | `e103813fccc0` |
 | `melhorias/busca_itens.php` | no | - | yes | no | yes | ConnectionN3 | itens | ../legacy/bridge/seguranca.php, ../legacy/bridge/conect.php | atd_mkt/projeto.php, atd_mkt/tarefa.php, melhorias/atd.php | MIGRATE_READ / tickets / native read contract + caller cutover | auto: - | `b28408a1bc5d` |
 | `melhorias/busca_locais.php` | no | - | yes | no | yes | ConnectionN3 | locais | ../legacy/bridge/seguranca.php, ../legacy/bridge/conect.php | atd_3andar/js/tarefa-create.js, atd_mkt/projeto.php, atd_mkt/tarefa.php, melhorias/atd.php, rel/rel_Unificado.php, rel/rel_Unificado_Id.php, rel/rel_ti.php | MIGRATE_READ / tickets / native read contract + caller cutover | auto: - | `fe0b5921f371` |

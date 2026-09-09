@@ -123,7 +123,7 @@ export function DevOpsTicketsScreen({ currentUser }: { currentUser: CurrentUserR
       <div className="tickets-content">
         <div className="tickets-title-row">
           <div><span className="eyebrow">Tickets · DevOps</span><h1>DevOps</h1><p>Tickets operacionais sem SLA, avulsos ou agrupados em projetos.</p></div>
-          <div className="tickets-header-actions"><Link className="button" href="/tickets/devops/projects">Projetos</Link><Link className="button button-primary" href="/tickets/new?type=devops">Novo ticket</Link></div>
+          <div className="tickets-header-actions"><Link className="button" href="/tickets/devops/reports/tasks">Relatório</Link><Link className="button" href="/tickets/devops/projects">Projetos</Link><Link className="button button-primary" href="/tickets/new?type=devops">Novo ticket</Link></div>
         </div>
 
         <form className="filters-panel" onSubmit={submit}>

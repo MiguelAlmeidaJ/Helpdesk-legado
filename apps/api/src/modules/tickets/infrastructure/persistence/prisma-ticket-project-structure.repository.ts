@@ -90,7 +90,7 @@ type TransactionClient = Pick<
 
 type QueryClient = Pick<Nivel3DatabaseClient, '$queryRawUnsafe'>;
 
-const TECHNICIAN_FUNCTIONS = [1, 2, 3, 4, 5, 6, 7, 9, 10, 11, 12, 13, 14];
+const TECHNICIAN_FUNCTIONS = [8, 9, 10, 11, 12, 13, 14];
 const TYPE_IDS = new Set([0, 1, 2, 3, 4, 5, 6]);
 const LEVEL_IDS = new Set([0, 1, 2, 3, 4, 5, 6]);
 const FORM_IDS = new Set([1, 2, 3, 4]);

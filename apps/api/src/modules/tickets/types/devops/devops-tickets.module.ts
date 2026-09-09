@@ -26,6 +26,10 @@ import { TicketProjectWorkflowController } from '../../presentation/http/ticket-
 import { TicketProjectTaskImagesController } from '../../presentation/http/ticket-project-task-images.controller';
 import { TicketProjectTaskWorkflowController } from '../../presentation/http/ticket-project-task-workflow.controller';
 import { DevOpsPermissionsGuard } from './devops-permissions.guard';
+import { DevOpsTicketCreator } from './application/devops-ticket-creator';
+import { DevOpsTicketCreateRepository } from './application/ports/devops-ticket-create.repository';
+import { PrismaDevOpsTicketCreateRepository } from './infrastructure/prisma-devops-ticket-create.repository';
+import { DevOpsTicketCreateController } from './presentation/devops-ticket-create.controller';
 
 @Module({
   imports: [AccessModule, TicketTypeAccessModule],
@@ -35,6 +39,7 @@ import { DevOpsPermissionsGuard } from './devops-permissions.guard';
     TicketProjectWorkflowController,
     TicketProjectTaskImagesController,
     TicketProjectTaskWorkflowController,
+    DevOpsTicketCreateController,
   ],
   providers: [
     ListTicketProjects,
@@ -45,6 +50,11 @@ import { DevOpsPermissionsGuard } from './devops-permissions.guard';
     TicketProjectTaskImages,
     TicketProjectTaskWorkflow,
     DevOpsPermissionsGuard,
+    DevOpsTicketCreator,
+    {
+      provide: DevOpsTicketCreateRepository,
+      useClass: PrismaDevOpsTicketCreateRepository,
+    },
     { provide: TicketProjectCommandRepository, useClass: PrismaTicketProjectCommandRepository },
     { provide: TicketProjectReadRepository, useClass: PrismaTicketProjectReadRepository },
     { provide: TicketProjectScheduleActivationRepository, useClass: PrismaTicketProjectScheduleActivationRepository },

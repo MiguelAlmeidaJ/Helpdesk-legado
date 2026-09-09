@@ -39,3 +39,21 @@ atd_projeto/delete_image_tarefa.php	0044f	tickets/devops	0044e marcou DEAD apos 
 atd_projeto/edit_image_tarefa.php	0044f	tickets/devops	0044e marcou DEAD apos cutover Next/Nest; 0044f remove o tombstone 410
 atd_projeto/lib/list_helpers.php	0044f	tickets/devops	0044e marcou DEAD apos cutover Next/Nest; 0044f remove o tombstone 410
 atd_projeto/lib/projeto_detail_tasks.php	0044f	tickets/devops	0044e marcou DEAD apos cutover Next/Nest; 0044f remove o tombstone 410
+atd_projeto/home.php	0044h	tickets/devops	superficie PHP fora do runtime; lista de projetos ja existe no Next
+atd_projeto/hometarefas.php	0044h	tickets/devops	superficie PHP fora do runtime; lista DevOps ja existe no Next
+atd_projeto/dash_pro.php	0044h	tickets/devops	superficie PHP fora do runtime; navegacao DevOps ja existe no Next
+atd_projeto/projeto.php	0044h	tickets/devops	superficie PHP fora do runtime; criacao/detalhe de projetos ja existem no Next
+atd_projeto/tarefa.php	0044h	tickets/devops	superficie PHP fora do runtime; criacao/detalhe/workflow DevOps ja existem no Next
+atd_projeto/rel_analitico_tarefas.php	0044h	tickets/devops/reporting	reporting nativo disponivel em /tickets/devops/reports/tasks; PHP nao executa no runtime
+atd_3andar/home.php	0044h	tickets/marketing	superficie PHP fora do runtime; lista Marketing ja existe no Next
+atd_3andar/dash_pro.php	0044h	tickets/marketing	superficie PHP fora do runtime; navegacao Marketing ja existe no Next
+atd_3andar/tarefa.php	0044h	tickets/marketing	superficie PHP fora do runtime; criacao/detalhe/workflow Marketing ja existem no Next
+atd_3andar/rel_analitico_tarefas.php	0044h	tickets/marketing/reporting	reporting nativo disponivel em /tickets/marketing/reports/tasks; PHP nao executa no runtime
+atd_facility/agenda.php	0044h	logistics	agenda de veiculos ja existe em /logistics/vehicles/agenda; PHP nao executa no runtime
+atd_facility/atd.php	0044h	tickets	Facility desativado e PHP fora do runtime
+atd_facility/home.php	0044h	tickets	Facility desativado e PHP fora do runtime
+atd_facility/dash_pro.php	0044h	tickets	Facility desativado e PHP fora do runtime
+atd_facility/busca_itens.php	0044h	tickets	Facility desativado; endpoint PHP sem runtime
+atd_facility/busca_locais.php	0044h	tickets	Facility desativado; endpoint PHP sem runtime
+atd_facility/busca_solicitantes.php	0044h	tickets	Facility desativado; endpoint PHP sem runtime
+atd_facility/busca_subcategorias.php	0044h	tickets	Facility desativado; endpoint PHP sem runtime
