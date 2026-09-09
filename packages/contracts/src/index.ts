@@ -12,6 +12,7 @@ export * from './tickets/ticket-facility';
 export * from './tickets/ticket-hold';
 export * from './tickets/ticket-interaction';
 export * from './tickets/ticket-list';
+export * from './tickets/ticket-marketing';
 export * from './tickets/ticket-project';
 export * from './tickets/ticket-project-image';
 export * from './tickets/ticket-rejection';
