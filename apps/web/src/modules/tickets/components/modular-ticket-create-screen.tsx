@@ -154,7 +154,7 @@ function FormHeader({ label, description }: { label: string; description: string
   );
 }
 
-function DevOpsTicketForm() {
+function DevOpsTicketForm({ initialProjectId }: { initialProjectId?: number }) {
   const [catalogs, setCatalogs] = useState<TicketCreateCatalogsResponse | null>(null);
   const [projects, setProjects] = useState<TicketProjectListItem[]>([]);
   const [dependencies, setDependencies] = useState<TicketProjectTaskListItem[]>([]);
@@ -162,7 +162,7 @@ function DevOpsTicketForm() {
   const [locations, setLocations] = useState<TicketCatalogOption[]>([]);
   const [subcategories, setSubcategories] = useState<TicketCatalogOption[]>([]);
   const [items, setItems] = useState<TicketCatalogOption[]>([]);
-  const [projectId, setProjectId] = useState('0');
+  const [projectId, setProjectId] = useState(String(initialProjectId ?? 0));
   const [clientId, setClientId] = useState('');
   const [requesterId, setRequesterId] = useState('0');
   const [locationId, setLocationId] = useState('0');
@@ -191,13 +191,33 @@ function DevOpsTicketForm() {
 
   useEffect(() => {
     Promise.all([fetchDevOpsCreateCatalogs(), fetchDevOpsProjects()])
-      .then(([nextCatalogs, projectResponse]) => {
+      .then(async ([nextCatalogs, projectResponse]) => {
         setCatalogs(nextCatalogs);
         setProjects(projectResponse.data);
+
+        if (!initialProjectId) return;
+        const initialProject = projectResponse.data.find(
+          (project) => project.id === initialProjectId,
+        );
+        if (!initialProject) {
+          setProjectId('0');
+          setError('O projeto informado não está disponível no seu escopo.');
+          return;
+        }
+
+        const client = initialProject.client.id ?? 0;
+        const [nextRequesters, nextLocations, taskResponse] = await Promise.all([
+          fetchDevOpsRequesters(client),
+          fetchDevOpsLocations(client),
+          fetchDevOpsProjectTasks(initialProject.id),
+        ]);
+        setRequesters(nextRequesters);
+        setLocations(nextLocations);
+        setDependencies(taskResponse.data);
       })
       .catch((reason) => setError(errorMessage(reason)))
       .finally(() => setLoading(false));
-  }, []);
+  }, [initialProjectId]);
 
   async function loadClientParties(nextClientId: number) {
     setRequesterId('0');
@@ -755,9 +775,11 @@ function MarketingTicketForm() {
 
 export function ModularTicketCreateScreen({
   currentUser,
+  initialProjectId,
   initialType,
 }: {
   currentUser: CurrentUserResponse;
+  initialProjectId?: number;
   initialType?: Exclude<TicketTypeKey, 'atendimento'>;
 }) {
   const [types, setTypes] = useState<TicketTypeDescriptor[]>([]);
@@ -793,7 +815,9 @@ export function ModularTicketCreateScreen({
       ) : null}
 
       {!initialType || forbiddenSelection ? <TypeChooser types={types} /> : null}
-      {initialType === 'devops' && selected?.canCreate ? <DevOpsTicketForm /> : null}
+      {initialType === 'devops' && selected?.canCreate ? (
+        <DevOpsTicketForm initialProjectId={initialProjectId} />
+      ) : null}
       {initialType === 'marketing' && selected?.canCreate ? <MarketingTicketForm /> : null}
     </ScreenShell>
   );

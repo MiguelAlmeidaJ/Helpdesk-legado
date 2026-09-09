@@ -70,6 +70,7 @@ export interface TicketProjectTaskListItem {
   status: TicketProjectStatus;
   statusLabel: string;
   typeId: number | null;
+  dependencyTaskId: number;
   level: number | null;
   form: number | null;
   client: TicketListParty;

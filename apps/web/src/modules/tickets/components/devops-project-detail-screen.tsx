@@ -116,7 +116,12 @@ export function DevOpsProjectDetailScreen({
       <div className="tickets-content">
         <div className="tickets-title-row">
           <div><span className="eyebrow">DevOps · Projeto</span><h1>Projeto #{projectId}</h1><p>{project?.name ?? 'Grupo de tickets DevOps.'}</p></div>
-          <Link className="button" href="/tickets/devops/projects">Voltar aos projetos</Link>
+          <div className="tickets-header-actions">
+            {project && project.status !== 4 ? (
+              <Link className="button button-primary" href={`/tickets/new?type=devops&projectId=${projectId}`}>Nova tarefa neste projeto</Link>
+            ) : null}
+            <Link className="button" href="/tickets/devops/projects">Voltar aos projetos</Link>
+          </div>
         </div>
 
         {loading ? <div className="loading-line" aria-label="Carregando" /> : null}

@@ -68,6 +68,7 @@ interface TaskRow extends ProjectRow {
   desc_fechamento: string | null;
   fechamento: Date | string | null;
   dias: number | null;
+  tarefas_relacionadas: number | null;
 }
 
 interface Visibility {
@@ -324,6 +325,7 @@ export class PrismaTicketProjectReadRepository extends TicketProjectReadReposito
         projetos.nome_proj AS nome_projeto,
         tarefas.nome_tarefa,
         tarefas.dias,
+        tarefas.tarefas_relacionadas,
         tarefas.status,
         tarefas.tipo,
         tarefas.nivel,
@@ -641,6 +643,7 @@ export class PrismaTicketProjectReadRepository extends TicketProjectReadReposito
       status: taskStatus,
       statusLabel: statusLabel(taskStatus, true),
       typeId: row.tipo,
+      dependencyTaskId: row.tarefas_relacionadas ?? 0,
       level: row.nivel,
       form: row.forma,
       client: party(row.cliente_id, row.cliente_nome),

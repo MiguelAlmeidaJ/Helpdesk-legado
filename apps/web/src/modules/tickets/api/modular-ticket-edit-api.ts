@@ -1,5 +1,6 @@
 import type {
   MarketingTicketUpdateRequest,
+  TicketProjectTaskDependencyRequest,
   TicketProjectTaskUpdateRequest,
   TicketProjectUpdateRequest,
 } from '@helpdesk/contracts';
@@ -18,6 +19,13 @@ export function updateDevOpsTicketClassification(
   input: TicketProjectTaskUpdateRequest,
 ): Promise<void> {
   return patch(`tickets/projects/tasks/${ticketId}`, input);
+}
+
+export function updateDevOpsTaskDependency(
+  ticketId: number,
+  input: TicketProjectTaskDependencyRequest,
+): Promise<void> {
+  return patch(`tickets/projects/tasks/${ticketId}/dependency`, input);
 }
 
 export function updateDevOpsProjectClassification(

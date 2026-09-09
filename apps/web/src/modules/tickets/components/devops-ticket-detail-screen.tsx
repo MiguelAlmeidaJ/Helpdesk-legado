@@ -11,7 +11,10 @@ import { ApiError } from '../../../shared/api/api-client';
 import { AppSidebar } from '../../../shared/navigation/app-sidebar';
 import { SessionUserMenu } from '../../access/components/session-user-menu';
 import { updateDevOpsTicketClassification } from '../api/modular-ticket-edit-api';
-import { fetchDevOpsTicketDetail } from '../api/modular-ticket-read-api';
+import {
+  fetchDevOpsProjectTickets,
+  fetchDevOpsTicketDetail,
+} from '../api/modular-ticket-read-api';
 import {
   addDevOpsTicketInteraction,
   assignDevOpsTicket,
@@ -23,6 +26,7 @@ import {
   updateDevOpsTicketProgress,
 } from '../api/modular-ticket-workflow-api';
 import { DevOpsTicketClassificationEditor } from './devops-ticket-classification-editor';
+import { DevOpsTaskDependencyEditor } from './devops-task-dependency-editor';
 import { DevOpsTicketImagesPanel } from './devops-ticket-images-panel';
 import { SpecializedTicketWorkflowPanel } from './specialized-ticket-workflow-panel';
 import styles from './specialized-ticket-screens.module.css';
@@ -65,6 +69,7 @@ export function DevOpsTicketDetailScreen({
 }) {
   const [ticket, setTicket] = useState<TicketProjectTaskListItem | null>(null);
   const [technicians, setTechnicians] = useState<TicketCatalogOption[]>([]);
+  const [dependencyOptions, setDependencyOptions] = useState<TicketProjectTaskListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [refreshToken, setRefreshToken] = useState(0);
@@ -78,14 +83,28 @@ export function DevOpsTicketDetailScreen({
       fetchDevOpsTicketDetail(ticketId, controller.signal),
       fetchDevOpsWorkflowTechnicians().catch(() => [] as TicketCatalogOption[]),
     ])
-      .then(([result, options]) => {
+      .then(async ([result, options]) => {
         if (!result) {
           setTicket(null);
+          setDependencyOptions([]);
           setError('Ticket DevOps não encontrado ou fora do seu escopo.');
           return;
         }
         setTicket(result);
         setTechnicians(options);
+
+        const projectId = result.project.id;
+        if (!projectId) {
+          setDependencyOptions([]);
+          return;
+        }
+
+        const projectTasks = await fetchDevOpsProjectTickets(
+          projectId,
+          { page: 1, limit: 100, status: 'all', sort: 'id', direction: 'asc' },
+          controller.signal,
+        );
+        setDependencyOptions(projectTasks.data);
       })
       .catch((reason: unknown) => {
         if (!(reason instanceof Error && reason.name === 'AbortError')) {
@@ -179,6 +198,14 @@ export function DevOpsTicketDetailScreen({
                 formId: ticket.form,
                 openingDescription: ticket.openingDescription,
               }}
+            />
+
+            <DevOpsTaskDependencyEditor
+              dependencyTaskId={ticket.dependencyTaskId}
+              onChanged={refresh}
+              options={dependencyOptions}
+              projectId={ticket.project.id}
+              ticketId={ticketId}
             />
 
             <SpecializedTicketWorkflowPanel
