@@ -38,6 +38,7 @@ interface ProjectRow {
   id: number;
   nome_proj: string | null;
   status: number | null;
+  tipo: number | null;
   nivel: number | null;
   forma: number | null;
   abertura: Date | string | null;
@@ -221,6 +222,7 @@ export class PrismaTicketProjectReadRepository extends TicketProjectReadReposito
         projetos.id,
         projetos.nome_proj,
         projetos.status,
+        projetos.tipo,
         projetos.nivel,
         projetos.forma,
         projetos.abertura,
@@ -323,6 +325,7 @@ export class PrismaTicketProjectReadRepository extends TicketProjectReadReposito
         tarefas.nome_tarefa,
         tarefas.dias,
         tarefas.status,
+        tarefas.tipo,
         tarefas.nivel,
         tarefas.forma,
         tarefas.abertura,
@@ -608,6 +611,7 @@ export class PrismaTicketProjectReadRepository extends TicketProjectReadReposito
       openedAt: toIsoString(row.abertura),
       status: projectStatus,
       statusLabel: statusLabel(projectStatus),
+      typeId: row.tipo,
       level: row.nivel,
       form: row.forma,
       client: party(row.cliente_id, row.cliente_nome),
@@ -636,6 +640,7 @@ export class PrismaTicketProjectReadRepository extends TicketProjectReadReposito
       days: row.dias,
       status: taskStatus,
       statusLabel: statusLabel(taskStatus, true),
+      typeId: row.tipo,
       level: row.nivel,
       form: row.forma,
       client: party(row.cliente_id, row.cliente_nome),

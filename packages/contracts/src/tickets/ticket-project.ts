@@ -44,6 +44,7 @@ export interface TicketProjectListItem {
   openedAt: string | null;
   status: TicketProjectStatus;
   statusLabel: string;
+  typeId: number | null;
   level: number | null;
   form: number | null;
   client: TicketListParty;
@@ -68,6 +69,7 @@ export interface TicketProjectTaskListItem {
   days: number | null;
   status: TicketProjectStatus;
   statusLabel: string;
+  typeId: number | null;
   level: number | null;
   form: number | null;
   client: TicketListParty;
@@ -206,4 +208,16 @@ export interface TicketProjectTaskUpdateRequest {
 
 export interface TicketProjectTaskDependencyRequest {
   dependencyTaskId: number;
+}
+
+/**
+ * Ticket DevOps sem agrupamento em projeto. Mantém os mesmos campos do
+ * cadastro legado de atd_projeto/tarefa.php.
+ */
+export type DevOpsTicketCreateRequest = TicketProjectCreateRequest;
+
+export interface DevOpsTicketCreateResponse {
+  id: number;
+  status: TicketProjectStatus;
+  projectId: null;
 }
