@@ -35,3 +35,5 @@ export * from './logistics/expense-paid-report';
 export * from './logistics/expense-comparison';
 export * from './reports/ticket-client-totals';
 export * from './reports/ticket-technician-totals';
+export * from './reports/ticket-category-totals';
+export * from './reports/ticket-analytics';

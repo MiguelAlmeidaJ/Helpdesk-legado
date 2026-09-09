@@ -1,10 +1,18 @@
 import type {
+  TicketCategoryTotalsLevel,
+  TicketCategoryTotalsReportResponse,
   TicketClientTotalsLevel,
   TicketClientTotalsReportResponse,
   TicketTechnicianTotalsLevel,
   TicketTechnicianTotalsReportResponse,
 } from '@helpdesk/contracts';
 import { apiRequest } from '../../../shared/api/api-client';
+
+export interface TicketCategoryTotalsReportFilters {
+  startDate?: string;
+  endDate?: string;
+  level?: TicketCategoryTotalsLevel;
+}
 
 export interface TicketClientTotalsReportFilters {
   startDate?: string;
@@ -30,6 +38,14 @@ function buildReportQuery(filters: {
   if (filters.level !== undefined) query.set('level', String(filters.level));
 
   return query.size > 0 ? `?${query.toString()}` : '';
+}
+
+export function fetchTicketCategoryTotalsReport(
+  filters: TicketCategoryTotalsReportFilters = {},
+): Promise<TicketCategoryTotalsReportResponse> {
+  return apiRequest<TicketCategoryTotalsReportResponse>(
+    `reports/tickets/category-totals${buildReportQuery(filters)}`,
+  );
 }
 
 export function fetchTicketClientTotalsReport(

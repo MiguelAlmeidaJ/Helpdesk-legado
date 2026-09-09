@@ -1,0 +1,7 @@
+export abstract class ReportArchiveRepository {
+  abstract authorize(userId: number): Promise<void>;
+  abstract list(): Promise<Array<{ name: string; size: number; modifiedAt: string }>>;
+  abstract read(name: string): Promise<Buffer>;
+  abstract remove(name: string): Promise<void>;
+  abstract save(clientId: number, start: string, end: string, pdf: Buffer): Promise<string>;
+}

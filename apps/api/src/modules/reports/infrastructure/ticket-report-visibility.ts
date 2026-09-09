@@ -49,12 +49,14 @@ export async function resolveTicketReportVisibility(
     userId,
   );
 
-  if (users[0]?.tipo_usuario !== 2) {
+  if (users[0] && users[0].tipo_usuario !== 2) {
     return {
       restrictClients: false,
       clientIds: [],
     };
   }
+
+  if (!users[0]) return { restrictClients: true, clientIds: [] };
 
   const clients = await database.$queryRawUnsafe<ClientScopeRow[]>(
     `SELECT cliente_id

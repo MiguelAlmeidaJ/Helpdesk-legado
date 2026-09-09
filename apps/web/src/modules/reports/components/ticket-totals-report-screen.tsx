@@ -13,6 +13,7 @@ import { ApiError } from '../../../shared/api/api-client';
 import { AppSidebar } from '../../../shared/navigation/app-sidebar';
 import { SessionUserMenu } from '../../access/components/session-user-menu';
 import styles from './ticket-client-totals-report-screen.module.css';
+import { downloadCsv } from '../lib/report-export';
 
 export type TicketTotalsLevel = 0 | 1 | 2 | 3;
 
@@ -121,6 +122,7 @@ export function TicketTotalsReportScreen({
         setEndDate(response.period.endDate);
         setLevel(response.level);
       } catch (reason: unknown) {
+        setData(null);
         if (reason instanceof ApiError && reason.status === 401) {
           setError('Sua sessão expirou. Entre novamente.');
         } else if (reason instanceof ApiError && reason.status === 403) {
@@ -136,7 +138,9 @@ export function TicketTotalsReportScreen({
   );
 
   useEffect(() => {
-    void load();
+    const query = new URLSearchParams(window.location.search);
+    const selectedLevel = Number(query.get('level') ?? 0);
+    void load({ startDate: query.get('startDate') ?? undefined, endDate: query.get('endDate') ?? undefined, level: ([0, 1, 2, 3].includes(selectedLevel) ? selectedLevel : 0) as TicketTotalsLevel });
   }, [load]);
 
   const maxTotal = useMemo(
@@ -179,6 +183,8 @@ export function TicketTotalsReportScreen({
           </div>
         </section>
 
+        {data ? <p className={styles.printHeading}>{data.period.startDate} a {data.period.endDate} · Nível {data.level || 'Todos (1–3)'}</p> : null}
+
         <form className={styles.filters} onSubmit={apply}>
           <label>
             <span>De</span>
@@ -216,11 +222,21 @@ export function TicketTotalsReportScreen({
             <button type="submit" disabled={loading}>
               {loading ? 'Atualizando…' : 'Filtrar'}
             </button>
-            <button type="button" className={styles.secondary} onClick={clear}>
+            <button type="button" className={styles.secondary} onClick={clear} disabled={loading}>
               Limpar
             </button>
           </div>
         </form>
+
+        {data && !loading && !error ? <div className={styles.exportActions}>
+          <span>{data.period.startDate} a {data.period.endDate} · Nível: {data.level || 'Todos (1–3)'}</span>
+          <button type="button" onClick={() => downloadCsv(`relatorio-${data.period.startDate}-${data.period.endDate}.csv`, [
+            [title, 'Nível 1', 'Nível 2', 'Nível 3', 'Total'],
+            ...data.rows.map(row => [row.name, row.level1, row.level2, row.level3, row.total]),
+            ['Total', ...[1, 2, 3].map(n => data.rows.reduce((sum, row) => sum + (n === 1 ? row.level1 : n === 2 ? row.level2 : row.level3), 0)), data.total],
+          ])}>Exportar CSV</button>
+          <button type="button" onClick={() => window.print()}>Imprimir / Salvar PDF</button>
+        </div> : null}
 
         <div className={styles.legend} aria-label="Legenda dos níveis">
           <span><i className={styles.level1} /> Nível 1</span>

@@ -59,9 +59,31 @@ because the native dashboard already uses the protected
 The older administrative lookup/update endpoints are also tombstoned, so stale
 clients cannot bypass the native status, scope and concurrency checks.
 
-## Cleanup policy
+## Mechanical cleanup — 0044a
 
-Some PHP files can still contain unreachable historical code below an early
-`exit`. That code is not part of the executable cutover path and may be removed
-in a later mechanical cleanup commit after the team no longer needs the inline
-rollback reference.
+The first logistics cleanup pass removes unreachable historical bodies from the
+smallest compatibility surfaces without changing their observable behavior:
+
+- `buscarRD.php` remains `410 Gone`;
+- `buscar_detalhesRD.php` remains `410 Gone`;
+- `editarRDAdm.php` remains `410 Gone`;
+- `gerarPDF.php` remains a `302` bridge to the native administrative report.
+
+This establishes the rule for the remaining RD cleanup: a PHP file may only be
+reduced to a bridge/tombstone when an unconditional redirect/`410` followed by
+`exit` already makes the legacy body unreachable.
+
+The following files are **not** covered by this mechanical cleanup because they
+still execute legacy PHP and database access and therefore require a separate
+parity/retirement proof:
+
+- `pagarRD2.php`;
+- `pagarRD3.php`;
+- `gestaoDadosRD.php`;
+- `rdAjuste.php`;
+- `detalharRD_subir.php`.
+
+The larger compatibility entry points (`gestaoRD.php`, `aprovarRD.php`,
+`pagarRD.php`, `detalharRD.php` and `analiseRD.php`) already redirect before
+their historical bodies. They can be reduced in a follow-up mechanical patch
+after this smaller slice is validated.
