@@ -23,3 +23,11 @@ atd_3andar/views/detail/tarefa_sidebar_cliente.php	MIGRATE_UI	tickets	detalhe na
 atd_3andar/views/detail/tarefa_timeline.php	MIGRATE_UI	tickets	API nativa de timeline + componente Next equivalente	renderizacao do historico consumindo n3_tarefa3_fetch_timeline
 atd_3andar/views/partials/alerts.php	BRIDGE_ONLY	tickets	nenhuma tela PHP restante depende de flash em sessao	adaptador visual de mensagens flash armazenadas na sessao PHP
 atd_3andar/views/tarefa_detail.php	MIGRATE_UI	tickets	API nativa de detalhe/timeline + tela Next + comandos nativos	orquestrador da tela legada de detalhe da tarefa
+atd_facility/agenda.php	REDIRECT	logistics	rota Next /logistics/vehicles/agenda disponivel	compatibilidade redireciona agenda de veiculos para Logistics
+atd_facility/atd.php	REDIRECT	tickets	Facility desativado; remover bookmarks/callers	tombstone redireciona para /tickets sem bridge ou SQL
+atd_facility/home.php	REDIRECT	tickets	Facility desativado; remover bookmarks/callers	tombstone redireciona para /tickets sem bridge ou SQL
+atd_facility/dash_pro.php	REDIRECT	tickets	Facility desativado; remover bookmarks/callers	tombstone redireciona para /tickets sem bridge ou SQL
+atd_facility/busca_itens.php	DEAD	tickets	0 callers apos tombstone Facility	endpoint auxiliar responde HTTP 410 sem bridge ou SQL
+atd_facility/busca_locais.php	DEAD	tickets	0 callers apos tombstone Facility	endpoint auxiliar responde HTTP 410 sem bridge ou SQL
+atd_facility/busca_solicitantes.php	DEAD	tickets	0 callers apos tombstone Facility	endpoint auxiliar responde HTTP 410 sem bridge ou SQL
+atd_facility/busca_subcategorias.php	DEAD	tickets	0 callers apos tombstone Facility	endpoint auxiliar responde HTTP 410 sem bridge ou SQL
