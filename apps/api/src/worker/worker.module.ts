@@ -1,6 +1,10 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { DatabaseModule } from '../core/database/database.module';
+import { CleanupExpiredReports } from '../modules/reports/application/cleanup-expired-reports';
+import { ReportArchiveRepository } from '../modules/reports/application/ports/report-archive.repository';
+import { ReportRetentionPoller } from '../modules/reports/infrastructure/automation/report-retention.poller';
+import { ReportArchive } from '../modules/reports/infrastructure/report-archive';
 import { ActivateDueScheduledTickets } from '../modules/tickets/application/activate-due-scheduled-tickets';
 import { DueScheduledTicketRepository } from '../modules/tickets/application/ports/due-scheduled-ticket.repository';
 import { DueTicketHoldRepository } from '../modules/tickets/application/ports/due-ticket-hold.repository';
@@ -28,6 +32,8 @@ import { PrismaTicketRecurrenceRepository } from '../modules/tickets/infrastruct
     DatabaseModule,
   ],
   providers: [
+    CleanupExpiredReports,
+    ReportRetentionPoller,
     ActivateDueScheduledTickets,
     ProcessDueTicketRecurrences,
     ProcessTicketNotificationOutbox,
@@ -37,6 +43,10 @@ import { PrismaTicketRecurrenceRepository } from '../modules/tickets/infrastruct
     TicketNotificationOutboxPoller,
     TicketRecurrencePoller,
     TicketScheduledActivationPoller,
+    {
+      provide: ReportArchiveRepository,
+      useClass: ReportArchive,
+    },
     {
       provide: DueScheduledTicketRepository,
       useClass: PrismaDueScheduledTicketRepository,
