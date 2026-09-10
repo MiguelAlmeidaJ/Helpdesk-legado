@@ -6,6 +6,7 @@ import { randomUUID } from 'node:crypto';
 import type { Nivel3DatabaseClient } from '@helpdesk/database';
 import { NIVEL3_DATABASE } from '../../../core/database/database.constants';
 import { resolveTicketReportVisibility } from './ticket-report-visibility';
+import { reportRetentionDays } from '../application/cleanup-expired-reports';
 import { ReportArchiveRepository } from '../application/ports/report-archive.repository';
 
 export function archiveRoot(): string {
@@ -44,10 +45,21 @@ export class ReportArchive extends ReportArchiveRepository {
   }
   async list() {
     await mkdir(archiveRoot(), { recursive: true });
+    const retentionMs =
+      reportRetentionDays(process.env.REPORT_RETENTION_DAYS) * 24 * 60 * 60 * 1000;
     const files = [];
     for (const name of await readdir(archiveRoot())) {
       if (!name.toLowerCase().endsWith('.pdf')) continue;
-      try { const file = await this.file(name); const stat = await lstat(file); files.push({ name, size: stat.size, modifiedAt: stat.mtime.toISOString() }); } catch { /* Skip links and non-files. */ }
+      try {
+        const file = await this.file(name);
+        const stat = await lstat(file);
+        files.push({
+          name,
+          size: stat.size,
+          modifiedAt: stat.mtime.toISOString(),
+          expiresAt: new Date(stat.mtime.getTime() + retentionMs).toISOString(),
+        });
+      } catch { /* Skip links and non-files. */ }
     }
     return files.sort((a, b) => b.modifiedAt.localeCompare(a.modifiedAt));
   }

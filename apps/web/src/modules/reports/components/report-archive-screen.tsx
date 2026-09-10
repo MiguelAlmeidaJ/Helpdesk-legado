@@ -9,7 +9,7 @@ import { SessionUserMenu } from '../../access/components/session-user-menu';
 import { reportError } from '../lib/report-export';
 import styles from './ticket-client-totals-report-screen.module.css';
 
-interface ArchivedReport { name: string; size: number; modifiedAt: string }
+interface ArchivedReport { name: string; size: number; modifiedAt: string; expiresAt: string }
 
 export function ReportArchiveScreen({ currentUser }: { currentUser: CurrentUserResponse }) {
   const [files, setFiles] = useState<ArchivedReport[]>([]);
@@ -37,7 +37,7 @@ export function ReportArchiveScreen({ currentUser }: { currentUser: CurrentUserR
   return <main className={styles.page}>
     <header className={styles.header}><div className={styles.headerLeft}><AppSidebar /><Link className={styles.brand} href="/dashboard"><strong>Helpdesk</strong><span>Relatórios</span></Link></div><SessionUserMenu user={currentUser} /></header>
     <div className={styles.content}>
-      <section className={styles.hero}><div><h1>Relatórios PDF</h1><p>Gere um relatório unificado por cliente e consulte os PDFs arquivados.</p></div></section>
+      <section className={styles.hero}><div><h1>Relatórios gerados</h1><p>Gere relatórios por cliente. Os PDFs ficam disponíveis por 15 dias e depois podem ser gerados novamente.</p></div></section>
       <form className={styles.filters} onSubmit={event => { event.preventDefault(); void action(async () => {
         const result = await apiRequest<{ files: string[]; errors: Array<{ clientId: number; message: string }> }>('reports/archive/generate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ clientIds, startDate, endDate }) });
         await refresh(); setMessage(`${result.files.length} PDF(s) gerado(s).`);
@@ -56,9 +56,9 @@ export function ReportArchiveScreen({ currentUser }: { currentUser: CurrentUserR
         }}>Excluir selecionados</button>
       </div>
       {error ? <p className={styles.error} role="alert">{error}</p> : null}{message ? <p role="status">{message}</p> : null}
-      <section className={styles.reportCard}><div className={styles.tableWrap}><table><thead><tr><th><input type="checkbox" aria-label="Selecionar todos" disabled={busy} checked={files.length > 0 && names.length === files.length} onChange={e => setNames(e.target.checked ? files.map(row => row.name) : [])} /></th><th>Arquivo</th><th>Modificado</th><th>Tamanho</th><th>Download</th></tr></thead><tbody>{files.map(file => <tr key={file.name}>
-        <td><input type="checkbox" aria-label={`Selecionar ${file.name}`} disabled={busy} checked={names.includes(file.name)} onChange={e => setNames(e.target.checked ? [...names, file.name] : names.filter(name => name !== file.name))} /></td><td>{file.name}</td><td>{new Date(file.modifiedAt).toLocaleString('pt-BR')}</td><td>{Math.ceil(file.size / 1024)} KB</td><td><button disabled={busy} onClick={() => void action(() => apiDownload(`reports/archive/${encodeURIComponent(file.name)}`, file.name))}>Baixar PDF</button></td>
-      </tr>)}</tbody></table>{!busy && !files.length ? <p className={styles.empty}>Nenhum PDF arquivado.</p> : null}</div></section>
+      <section className={styles.reportCard}><div className={styles.tableWrap}><table><thead><tr><th><input type="checkbox" aria-label="Selecionar todos" disabled={busy} checked={files.length > 0 && names.length === files.length} onChange={e => setNames(e.target.checked ? files.map(row => row.name) : [])} /></th><th>Arquivo</th><th>Gerado em</th><th>Expira em</th><th>Tamanho</th><th>Download</th></tr></thead><tbody>{files.map(file => <tr key={file.name}>
+        <td><input type="checkbox" aria-label={`Selecionar ${file.name}`} disabled={busy} checked={names.includes(file.name)} onChange={e => setNames(e.target.checked ? [...names, file.name] : names.filter(name => name !== file.name))} /></td><td>{file.name}</td><td>{new Date(file.modifiedAt).toLocaleString('pt-BR')}</td><td>{new Date(file.expiresAt).toLocaleString('pt-BR')}</td><td>{Math.ceil(file.size / 1024)} KB</td><td><button disabled={busy} onClick={() => void action(() => apiDownload(`reports/archive/${encodeURIComponent(file.name)}`, file.name))}>Baixar PDF</button></td>
+      </tr>)}</tbody></table>{!busy && !files.length ? <p className={styles.empty}>Nenhum relatório gerado disponível.</p> : null}</div></section>
     </div>
   </main>;
 }

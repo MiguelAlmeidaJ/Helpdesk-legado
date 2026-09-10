@@ -193,7 +193,14 @@ test('archive denies external users, traversal and symlink downloads; preserves 
     await assert.rejects(() => archive.read('C:\\existing.pdf'));
     await assert.rejects(() => archive.read('keep.txt'));
     const name = await archive.save(7, '2026-09-01', '2026-09-09', Buffer.from('%PDF-1.4'));
-    assert.equal((await archive.list()).length, 2);
+    const listed = await archive.list();
+    assert.equal(listed.length, 2);
+    for (const file of listed) {
+      assert.equal(
+        new Date(file.expiresAt).getTime() - new Date(file.modifiedAt).getTime(),
+        15 * 24 * 60 * 60 * 1000,
+      );
+    }
     assert.equal((await archive.read(name)).toString(), '%PDF-1.4');
     await archive.remove(name);
     assert.equal((await readFile(path.join(root, 'keep.txt'))).toString(), 'keep');
