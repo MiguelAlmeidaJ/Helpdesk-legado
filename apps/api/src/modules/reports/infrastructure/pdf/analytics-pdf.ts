@@ -1,0 +1,65 @@
+import { Buffer } from 'node:buffer';
+import { TICKET_STATUS_LABELS, type TicketAnalyticsResponse, type TicketStatus } from '@helpdesk/contracts';
+
+const SOURCE_LABELS = { tickets: 'Atendimentos', tasks: 'Tarefas', improvements: 'Melhorias', unified: 'Unificado' };
+
+function wrap(text: string, width = 100): string[] {
+  const words = text.replace(/\s+/g, ' ').trim().split(' ');
+  const lines: string[] = [];
+  let current = '';
+  for (let word of words) {
+    if (current.length + word.length + 1 > width) { lines.push(current); current = ''; }
+    while (word.length > width) { lines.push(word.slice(0, width)); word = word.slice(width); }
+    current += (current ? ' ' : '') + word;
+  }
+  if (current) lines.push(current);
+  return lines.length ? lines : [''];
+}
+
+function escapePdf(text: string) {
+  return text.replace(/[^\x20-\xFF]/g, '?').replaceAll('\\', '\\\\').replaceAll('(', '\\(').replaceAll(')', '\\)');
+}
+
+export function analyticsPdf(report: TicketAnalyticsResponse): Buffer {
+  const lines = [
+    'HELPDESK - RELATÓRIO ANALÍTICO',
+    `Período: ${report.filters.startDate} a ${report.filters.endDate} | Total: ${report.total}`,
+    `Origem: ${SOURCE_LABELS[report.filters.source]} | Nível: ${report.filters.level || 'Todos'} | Cliente: ${report.filters.clientId || 'Todos'} | Local: ${report.filters.locationId || 'Todos'}`,
+    '',
+  ];
+  for (const row of report.rows) {
+    for (const line of [
+      `${SOURCE_LABELS[row.source]} #${row.id} | ${row.clientName} | Status: ${TICKET_STATUS_LABELS[row.status as TicketStatus] ?? row.status}`,
+      `Local: ${row.locationName} | ${row.locationAddress}`,
+      `Solicitante: ${row.requesterName} | Técnico: ${row.technicianName}`,
+      `Abertura: ${row.openedAt} | Fechamento: ${row.closedAt ?? '-'} | Nível: ${row.level} | Tipo: ${row.type} | Forma: ${row.method}`,
+      [row.categoryName, row.subcategoryName, row.itemName].filter(Boolean).join(' / '),
+      `Descrição de abertura: ${row.openingDescription}`,
+      `Descrição de fechamento: ${row.closingDescription}`, '',
+      ...(report.filters.view === 'time' ? [`Tempo desde a abertura: ${Math.floor(row.elapsedSeconds / 86400)} dias, ${Math.floor(row.elapsedSeconds / 3600) % 24}h ${Math.floor(row.elapsedSeconds / 60) % 60}m`] : []),
+    ]) lines.push(...wrap(line));
+  }
+  if (!report.total) lines.push('Nenhum registro para os filtros selecionados.');
+  const pages: string[][] = [];
+  for (let i = 0; i < lines.length; i += 54) pages.push(lines.slice(i, i + 54));
+  const objects = new Map<number, string>();
+  objects.set(1, '<< /Type /Catalog /Pages 2 0 R >>');
+  objects.set(3, '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>');
+  const ids: number[] = [];
+  pages.forEach((page, index) => {
+    const id = 4 + index * 2;
+    ids.push(id);
+    const stream = ['BT', '/F1 9 Tf', '36 805 Td', '13 TL', ...[...page, '', `Página ${index + 1} de ${pages.length}`].flatMap(line => [`(${escapePdf(line)}) Tj`, 'T*']), 'ET'].join('\n');
+    objects.set(id, `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R >> >> /Contents ${id + 1} 0 R >>`);
+    objects.set(id + 1, `<< /Length ${Buffer.byteLength(stream, 'latin1')} >>\nstream\n${stream}\nendstream`);
+  });
+  objects.set(2, `<< /Type /Pages /Kids [${ids.map(id => `${id} 0 R`).join(' ')}] /Count ${ids.length} >>`);
+  let output = '%PDF-1.4\n';
+  const offsets = [0];
+  for (let id = 1; id <= objects.size; id++) { offsets[id] = Buffer.byteLength(output, 'latin1'); output += `${id} 0 obj\n${objects.get(id)}\nendobj\n`; }
+  const xref = Buffer.byteLength(output, 'latin1');
+  output += `xref\n0 ${objects.size + 1}\n0000000000 65535 f \n`;
+  output += offsets.slice(1).map(offset => `${String(offset).padStart(10, '0')} 00000 n \n`).join('');
+  output += `trailer\n<< /Size ${objects.size + 1} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF\n`;
+  return Buffer.from(output, 'latin1');
+}
