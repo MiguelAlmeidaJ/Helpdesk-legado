@@ -1,5 +1,1 @@
-import type { LogisticsExpenseApprovalItem } from '@helpdesk/contracts';
-
-export abstract class ExpenseApprovalNotifier {
-  abstract sendApproved(items: LogisticsExpenseApprovalItem[]): Promise<void>;
-}
+export * from '../../expenses/application/ports/expense-approval.notifier';
