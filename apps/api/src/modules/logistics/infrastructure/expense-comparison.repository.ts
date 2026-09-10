@@ -7,7 +7,7 @@ import {
 } from '@helpdesk/contracts';
 import type { Nivel3DatabaseClient } from '@helpdesk/database';
 import { NIVEL3_DATABASE } from '../../../core/database/database.constants';
-import type { ExpenseComparisonQuery } from '../application/expense-comparison.service';
+import type { ExpenseComparisonQuery } from '../expenses/application/expense-comparison.service';
 
 interface ComparisonClockRow {
   period1_start: string;

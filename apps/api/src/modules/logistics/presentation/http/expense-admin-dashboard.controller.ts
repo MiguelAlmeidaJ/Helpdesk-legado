@@ -23,7 +23,7 @@ import { CurrentUser } from '../../../access/presentation/http/current-user.deco
 import { LegacySessionGuard } from '../../../access/presentation/http/legacy-session.guard';
 import { PermissionsGuard } from '../../../access/presentation/http/permissions.guard';
 import { RequirePermissions } from '../../../access/presentation/http/require-permissions.decorator';
-import { ExpenseAdminDashboardService } from '../../application/expense-admin-dashboard.service';
+import { ExpenseAdminDashboardService } from '../../expenses/application/expense-admin-dashboard.service';
 
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 

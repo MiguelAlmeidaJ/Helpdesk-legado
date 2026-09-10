@@ -11,8 +11,8 @@ import type {
 } from '@helpdesk/contracts';
 import type { Nivel3DatabaseClient } from '@helpdesk/database';
 import { NIVEL3_DATABASE } from '../../../core/database/database.constants';
-import { ExpenseAttachmentStorage } from '../application/ports/expense-attachment.storage';
-import { canEditExpense, expenseStatus } from '../domain/expense-status';
+import { ExpenseAttachmentStorage } from '../expenses/application/ports/expense-attachment.storage';
+import { canEditExpense, expenseStatus } from '../expenses/domain/expense-status';
 
 interface ProfileRow {
   user_id: number;

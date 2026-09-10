@@ -9,7 +9,7 @@ import { NIVEL3_DATABASE } from '../../../core/database/database.constants';
 import {
   ExpenseStatus,
   canTransitionExpense,
-} from '../domain/expense-status';
+} from '../expenses/domain/expense-status';
 
 interface PaymentRow {
   id: number | bigint | string;

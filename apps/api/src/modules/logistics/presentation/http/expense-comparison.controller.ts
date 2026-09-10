@@ -14,7 +14,7 @@ import { CurrentUser } from '../../../access/presentation/http/current-user.deco
 import { LegacySessionGuard } from '../../../access/presentation/http/legacy-session.guard';
 import { PermissionsGuard } from '../../../access/presentation/http/permissions.guard';
 import { RequirePermissions } from '../../../access/presentation/http/require-permissions.decorator';
-import { ExpenseComparisonService } from '../../application/expense-comparison.service';
+import { ExpenseComparisonService } from '../../expenses/application/expense-comparison.service';
 
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 

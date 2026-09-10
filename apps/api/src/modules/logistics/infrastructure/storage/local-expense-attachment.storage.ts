@@ -5,7 +5,7 @@ import {
   ExpenseAttachmentStorage,
   type ExpenseAttachmentFileReference,
   type StoredExpenseAttachmentFile,
-} from '../../application/ports/expense-attachment.storage';
+} from '../../expenses/application/ports/expense-attachment.storage';
 
 @Injectable()
 export class LocalExpenseAttachmentStorage extends ExpenseAttachmentStorage {

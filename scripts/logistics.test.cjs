@@ -3,11 +3,12 @@ const assert = require('node:assert/strict');
 
 require('../apps/api/node_modules/reflect-metadata');
 
-const base = '../apps/api/dist/modules/logistics/application/';
-const { ExpenseManagementService } = require(base + 'expense-management.service');
-const { ExpenseApprovalService } = require(base + 'expense-approval.service');
-const { ExpensePaymentService } = require(base + 'expense-payment.service');
-const { VehicleAgendaService } = require(base + 'vehicle-agenda.service');
+const logisticsBase = '../apps/api/dist/modules/logistics/';
+const expensesBase = logisticsBase + 'expenses/application/';
+const { ExpenseManagementService } = require(expensesBase + 'expense-management.service');
+const { ExpenseApprovalService } = require(expensesBase + 'expense-approval.service');
+const { ExpensePaymentService } = require(expensesBase + 'expense-payment.service');
+const { VehicleAgendaService } = require(logisticsBase + 'application/vehicle-agenda.service');
 
 async function rejectsStatus(action, status, message) {
   await assert.rejects(

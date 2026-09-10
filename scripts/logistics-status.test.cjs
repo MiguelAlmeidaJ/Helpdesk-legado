@@ -7,7 +7,7 @@ const {
   canTransitionExpense,
   expenseStatus,
   parseExpenseStatus,
-} = require('../apps/api/dist/modules/logistics/domain/expense-status');
+} = require('../apps/api/dist/modules/logistics/expenses/domain/expense-status');
 
 test('status de despesa reconhece os quatro estados persistidos', () => {
   assert.equal(parseExpenseStatus(1), ExpenseStatus.Pending);
