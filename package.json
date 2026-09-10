@@ -15,6 +15,7 @@
     "legacy:audit": "node scripts/audit-legacy-php.mjs",
     "test:reports": "node --test scripts/reports.test.cjs",
     "test:reports:db": "node scripts/reports-db-smoke.cjs",
+    "test:logistics": "node --test scripts/logistics.test.cjs",
     "docker:up": "docker compose up -d database",
     "docker:down": "docker compose down --remove-orphans",
     "docker:reset": "docker compose down -v --remove-orphans",
