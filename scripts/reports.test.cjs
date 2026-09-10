@@ -1,6 +1,6 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
-const { mkdtemp, writeFile, readFile, rm, symlink } = require('node:fs/promises');
+const { mkdtemp, writeFile, readFile, rm, symlink, utimes } = require('node:fs/promises');
 const os = require('node:os');
 const path = require('node:path');
 require('../apps/api/node_modules/reflect-metadata');
@@ -11,6 +11,7 @@ const { PrismaTicketAnalyticsRepository } = require(base + 'infrastructure/prism
 const { resolveTicketReportVisibility } = require(base + 'infrastructure/ticket-report-visibility');
 const { analyticsPdf, reportZip } = require(base + 'infrastructure/report-files');
 const { ReportArchive, archiveRoot } = require(base + 'infrastructure/report-archive');
+const { CleanupExpiredReports, reportRetentionDays } = require(base + 'application/cleanup-expired-reports');
 
 const filters = { startDate: '2026-09-01', endDate: '2026-09-09', clientId: 0, locationId: 0, technicianId: 0, level: 0, source: 'tickets' };
 
@@ -111,6 +112,69 @@ test('report storage prefers REPORT_STORAGE_DIR and keeps REPORT_ARCHIVE_DIR as 
     else process.env.REPORT_STORAGE_DIR = previousStorage;
     if (previousArchive === undefined) delete process.env.REPORT_ARCHIVE_DIR;
     else process.env.REPORT_ARCHIVE_DIR = previousArchive;
+  }
+});
+
+test('report retention defaults to 15 days and rejects invalid values', () => {
+  assert.equal(reportRetentionDays(undefined), 15);
+  assert.equal(reportRetentionDays(''), 15);
+  assert.equal(reportRetentionDays('30'), 30);
+  assert.equal(reportRetentionDays('0'), 15);
+  assert.equal(reportRetentionDays('-1'), 15);
+  assert.equal(reportRetentionDays('366'), 15);
+  assert.equal(reportRetentionDays('15.5'), 15);
+  assert.equal(reportRetentionDays('abc'), 15);
+});
+
+test('cleanup service calculates the expiration cutoff from REPORT_RETENTION_DAYS', async () => {
+  const previous = process.env.REPORT_RETENTION_DAYS;
+  let receivedBefore;
+  process.env.REPORT_RETENTION_DAYS = '15';
+  try {
+    const cleanup = new CleanupExpiredReports({
+      removeExpired: async before => {
+        receivedBefore = before;
+        return 3;
+      },
+    });
+    const result = await cleanup.execute(new Date('2026-09-10T12:00:00.000Z'));
+    assert.equal(receivedBefore.toISOString(), '2026-08-26T12:00:00.000Z');
+    assert.equal(result.before.toISOString(), '2026-08-26T12:00:00.000Z');
+    assert.equal(result.retentionDays, 15);
+    assert.equal(result.removed, 3);
+  } finally {
+    if (previous === undefined) delete process.env.REPORT_RETENTION_DAYS;
+    else process.env.REPORT_RETENTION_DAYS = previous;
+  }
+});
+
+test('archive cleanup removes only expired PDFs and preserves other files', async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), 'helpdesk-report-retention-'));
+  const previousStorage = process.env.REPORT_STORAGE_DIR;
+  const previousArchive = process.env.REPORT_ARCHIVE_DIR;
+  process.env.REPORT_STORAGE_DIR = root;
+  delete process.env.REPORT_ARCHIVE_DIR;
+  try {
+    const archive = new ReportArchive({ $queryRawUnsafe: async () => [{ tipo_usuario: 1 }] });
+    const expired = path.join(root, 'expired.pdf');
+    const fresh = path.join(root, 'fresh.pdf');
+    const unrelated = path.join(root, 'keep.txt');
+    await writeFile(expired, '%PDF-1.4 expired');
+    await writeFile(fresh, '%PDF-1.4 fresh');
+    await writeFile(unrelated, 'keep');
+    await utimes(expired, new Date('2026-08-20T12:00:00.000Z'), new Date('2026-08-20T12:00:00.000Z'));
+    await utimes(fresh, new Date('2026-09-01T12:00:00.000Z'), new Date('2026-09-01T12:00:00.000Z'));
+
+    assert.equal(await archive.removeExpired(new Date('2026-08-26T12:00:00.000Z')), 1);
+    await assert.rejects(() => readFile(expired), error => error?.code === 'ENOENT');
+    assert.equal((await readFile(fresh)).toString(), '%PDF-1.4 fresh');
+    assert.equal((await readFile(unrelated)).toString(), 'keep');
+  } finally {
+    if (previousStorage === undefined) delete process.env.REPORT_STORAGE_DIR;
+    else process.env.REPORT_STORAGE_DIR = previousStorage;
+    if (previousArchive === undefined) delete process.env.REPORT_ARCHIVE_DIR;
+    else process.env.REPORT_ARCHIVE_DIR = previousArchive;
+    await rm(root, { recursive: true, force: true });
   }
 });
 

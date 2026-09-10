@@ -57,6 +57,22 @@ export class ReportArchive extends ReportArchiveRepository {
     return readFile(file);
   }
   async remove(name: string) { await unlink(await this.file(name)); }
+  async removeExpired(before: Date) {
+    await mkdir(archiveRoot(), { recursive: true });
+    let removed = 0;
+    for (const name of await readdir(archiveRoot())) {
+      if (!name.toLowerCase().endsWith('.pdf')) continue;
+      try {
+        const file = await this.file(name);
+        const stat = await lstat(file);
+        if (stat.mtimeMs < before.getTime()) {
+          await unlink(file);
+          removed++;
+        }
+      } catch { /* Skip links, invalid entries and files removed concurrently. */ }
+    }
+    return removed;
+  }
   async save(clientId: number, start: string, end: string, pdf: Buffer) {
     await mkdir(archiveRoot(), { recursive: true });
     const name = `Relatorio_${clientId}_${start}_${end}_${randomUUID()}.pdf`;
