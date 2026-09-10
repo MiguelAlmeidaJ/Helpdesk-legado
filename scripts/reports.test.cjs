@@ -10,7 +10,7 @@ const { parseReportQuery } = require(base + 'presentation/http/report-query');
 const { PrismaTicketAnalyticsRepository } = require(base + 'infrastructure/prisma-ticket-analytics.repository');
 const { resolveTicketReportVisibility } = require(base + 'infrastructure/ticket-report-visibility');
 const { analyticsPdf, reportZip } = require(base + 'infrastructure/report-files');
-const { ReportArchive } = require(base + 'infrastructure/report-archive');
+const { ReportArchive, archiveRoot } = require(base + 'infrastructure/report-archive');
 
 const filters = { startDate: '2026-09-01', endDate: '2026-09-09', clientId: 0, locationId: 0, technicianId: 0, level: 0, source: 'tickets' };
 
@@ -96,9 +96,29 @@ test('ZIP store headers contain UTF-8 filename, CRC and original bytes', () => {
   assert.equal(zip.readUInt32LE(zip.length - 22), 0x06054b50);
 });
 
+test('report storage prefers REPORT_STORAGE_DIR and keeps REPORT_ARCHIVE_DIR as compatibility fallback', () => {
+  const previousStorage = process.env.REPORT_STORAGE_DIR;
+  const previousArchive = process.env.REPORT_ARCHIVE_DIR;
+  try {
+    process.env.REPORT_STORAGE_DIR = path.join(os.tmpdir(), 'helpdesk-report-storage');
+    process.env.REPORT_ARCHIVE_DIR = path.join(os.tmpdir(), 'helpdesk-report-archive');
+    assert.equal(archiveRoot(), path.resolve(process.env.REPORT_STORAGE_DIR));
+
+    delete process.env.REPORT_STORAGE_DIR;
+    assert.equal(archiveRoot(), path.resolve(process.env.REPORT_ARCHIVE_DIR));
+  } finally {
+    if (previousStorage === undefined) delete process.env.REPORT_STORAGE_DIR;
+    else process.env.REPORT_STORAGE_DIR = previousStorage;
+    if (previousArchive === undefined) delete process.env.REPORT_ARCHIVE_DIR;
+    else process.env.REPORT_ARCHIVE_DIR = previousArchive;
+  }
+});
+
 test('archive denies external users, traversal and symlink downloads; preserves unrelated files', async () => {
   const root = await mkdtemp(path.join(os.tmpdir(), 'helpdesk-reports-'));
+  const previousStorage = process.env.REPORT_STORAGE_DIR;
   const previous = process.env.REPORT_ARCHIVE_DIR;
+  delete process.env.REPORT_STORAGE_DIR;
   process.env.REPORT_ARCHIVE_DIR = root;
   try {
     const archive = new ReportArchive({ $queryRawUnsafe: async () => [{ tipo_usuario: 2 }] });
@@ -118,6 +138,8 @@ test('archive denies external users, traversal and symlink downloads; preserves 
       await assert.rejects(() => archive.read('link.pdf'));
     } catch (error) { if (error.code !== 'EPERM') throw error; }
   } finally {
+    if (previousStorage === undefined) delete process.env.REPORT_STORAGE_DIR;
+    else process.env.REPORT_STORAGE_DIR = previousStorage;
     if (previous === undefined) delete process.env.REPORT_ARCHIVE_DIR; else process.env.REPORT_ARCHIVE_DIR = previous;
     // Only the unique temporary directory created by this test is removed.
     assert.equal(path.dirname(path.resolve(root)), path.resolve(os.tmpdir()));

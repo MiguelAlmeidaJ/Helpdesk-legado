@@ -27,6 +27,10 @@ docker/mysql/init/legacy-*.sql.gz
 *.log
 pnpm-debug.log*
 
+# Runtime-generated files
+/storage/reports/
+/rel/relatorios/
+
 # OS / editor
 .DS_Store
 .idea/

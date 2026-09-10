@@ -9,14 +9,19 @@ import { resolveTicketReportVisibility } from './ticket-report-visibility';
 import { ReportArchiveRepository } from '../application/ports/report-archive.repository';
 
 export function archiveRoot(): string {
+  if (process.env.REPORT_STORAGE_DIR?.trim()) return path.resolve(process.env.REPORT_STORAGE_DIR);
   if (process.env.REPORT_ARCHIVE_DIR?.trim()) return path.resolve(process.env.REPORT_ARCHIVE_DIR);
+
   let root = process.cwd();
   while (!existsSync(path.join(root, 'pnpm-workspace.yaml'))) {
     const parent = path.dirname(root);
-    if (parent === root) throw new Error('Configure REPORT_ARCHIVE_DIR.');
+    if (parent === root) {
+      throw new Error('Configure REPORT_STORAGE_DIR.');
+    }
     root = parent;
   }
-  return path.join(root, 'rel', 'relatorios');
+
+  return path.join(root, 'storage', 'reports');
 }
 
 @Injectable()
