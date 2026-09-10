@@ -7,6 +7,7 @@ import type {
 import type { Nivel3DatabaseClient } from '@helpdesk/database';
 import { NIVEL3_DATABASE } from '../../../core/database/database.constants';
 import { ExpenseAttachmentStorage } from '../application/ports/expense-attachment.storage';
+import { canTransitionExpense } from '../domain/expense-status';
 
 interface AttachmentJson {
   id?: string;
@@ -177,7 +178,7 @@ export class ExpenseApprovalRepository {
       );
       const row = rows[0];
       if (!row) return { kind: 'not-found', ids: [expenseId] } as const;
-      if (numberValue(row.status) !== 1) {
+      if (!canTransitionExpense(row.status, 'approve')) {
         return { kind: 'not-pending', ids: [expenseId] } as const;
       }
 
@@ -222,7 +223,7 @@ export class ExpenseApprovalRepository {
       }
 
       const notPending = rows
-        .filter((row) => numberValue(row.status) !== 1)
+        .filter((row) => !canTransitionExpense(row.status, 'approve'))
         .map((row) => numberValue(row.id));
       if (notPending.length > 0) {
         return { kind: 'not-pending', ids: notPending } as const;
@@ -262,7 +263,7 @@ export class ExpenseApprovalRepository {
       );
       const row = rows[0];
       if (!row) return { kind: 'not-found', ids: [expenseId] } as const;
-      if (numberValue(row.status) !== 1) {
+      if (!canTransitionExpense(row.status, 'reject')) {
         return { kind: 'not-pending', ids: [expenseId] } as const;
       }
 

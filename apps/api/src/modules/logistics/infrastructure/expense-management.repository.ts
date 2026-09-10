@@ -12,6 +12,7 @@ import type {
 import type { Nivel3DatabaseClient } from '@helpdesk/database';
 import { NIVEL3_DATABASE } from '../../../core/database/database.constants';
 import { ExpenseAttachmentStorage } from '../application/ports/expense-attachment.storage';
+import { canEditExpense, expenseStatus } from '../domain/expense-status';
 
 interface ProfileRow {
   user_id: number;
@@ -260,7 +261,7 @@ export class ExpenseManagementRepository {
       );
       const row = rows[0];
       if (!row) return 'not-found';
-      if (Number(row.status) !== 1) return 'locked';
+      if (!canEditExpense(row.status)) return 'locked';
 
       await transaction.$executeRawUnsafe(
         `UPDATE running_balance
@@ -305,7 +306,7 @@ export class ExpenseManagementRepository {
       );
       const row = rows[0];
       if (!row) return 'not-found' as const;
-      if (Number(row.status) !== 1) return 'locked' as const;
+      if (!canEditExpense(row.status)) return 'locked' as const;
 
       attachments = parseAttachments(row.anexos);
       await transaction.$executeRawUnsafe(
@@ -364,7 +365,7 @@ export class ExpenseManagementRepository {
         );
         const row = rows[0];
         if (!row) return 'not-found' as const;
-        if (Number(row.status) !== 1) return 'locked' as const;
+        if (!canEditExpense(row.status)) return 'locked' as const;
 
         const attachments = parseAttachments(row.anexos);
         attachments.push(stored);
@@ -417,7 +418,7 @@ export class ExpenseManagementRepository {
       );
       const row = rows[0];
       if (!row) return 'not-found' as const;
-      if (Number(row.status) !== 1) return 'locked' as const;
+      if (!canEditExpense(row.status)) return 'locked' as const;
 
       const attachments = parseAttachments(row.anexos);
       const index = this.attachmentIndex(attachments, attachmentKey);
@@ -502,7 +503,7 @@ export class ExpenseManagementRepository {
           native: Boolean(attachment.id && attachment.storagePath),
         };
       }),
-      canEdit: Number(row.status) === 1,
+      canEdit: canEditExpense(row.status),
     };
   }
 
@@ -514,7 +515,7 @@ export class ExpenseManagementRepository {
   }
 
   private status(value: number): LogisticsExpenseStatus {
-    return value === 2 || value === 3 || value === 4 ? value : 1;
+    return expenseStatus(value);
   }
 
   private async catalogValues(

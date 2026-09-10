@@ -2,7 +2,6 @@ import {
   ConflictException,
   Injectable,
   Logger,
-  NotFoundException,
 } from '@nestjs/common';
 import type {
   LogisticsExpenseApprovalActionResponse,
@@ -13,6 +12,7 @@ import {
   ExpenseApprovalRepository,
   type ExpenseApprovalMutationResult,
 } from './ports/expense-approval.repository';
+import { throwExpenseMutationFailure } from './expense-workflow';
 
 @Injectable()
 export class ExpenseApprovalService {
@@ -58,12 +58,7 @@ export class ExpenseApprovalService {
 
   async reject(expenseId: number): Promise<LogisticsExpenseApprovalActionResponse> {
     const result = await this.repository.reject(expenseId);
-    if (result.kind === 'not-found') {
-      throw new NotFoundException('Despesa não encontrada.');
-    }
-    if (result.kind === 'not-pending') {
-      throw new ConflictException('A despesa não está mais aguardando aprovação.');
-    }
+    throwExpenseMutationFailure(result, 'approval');
     if (result.kind !== 'rejected') {
       throw new ConflictException('Não foi possível recusar a despesa.');
     }
@@ -71,20 +66,7 @@ export class ExpenseApprovalService {
   }
 
   private approvedItems(result: ExpenseApprovalMutationResult) {
-    if (result.kind === 'not-found') {
-      throw new NotFoundException(
-        result.ids.length === 1
-          ? 'Despesa não encontrada.'
-          : `Despesas não encontradas: ${result.ids.join(', ')}.`,
-      );
-    }
-    if (result.kind === 'not-pending') {
-      throw new ConflictException(
-        result.ids.length === 1
-          ? 'A despesa não está mais aguardando aprovação.'
-          : `Despesas não estão mais aguardando aprovação: ${result.ids.join(', ')}.`,
-      );
-    }
+    throwExpenseMutationFailure(result, 'approval');
     if (result.kind !== 'approved') {
       throw new ConflictException('Não foi possível aprovar a despesa.');
     }

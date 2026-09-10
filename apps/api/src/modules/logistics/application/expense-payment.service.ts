@@ -1,7 +1,6 @@
 import {
   ConflictException,
   Injectable,
-  NotFoundException,
 } from '@nestjs/common';
 import type {
   LogisticsExpensePaymentActionResponse,
@@ -11,6 +10,7 @@ import {
   ExpensePaymentRepository,
   type ExpensePaymentMutationResult,
 } from './ports/expense-payment.repository';
+import { throwExpenseMutationFailure } from './expense-workflow';
 
 @Injectable()
 export class ExpensePaymentService {
@@ -54,21 +54,7 @@ export class ExpensePaymentService {
     result: ExpensePaymentMutationResult,
     successKind: 'paid' | 'rejected',
   ): number[] {
-    if (result.kind === 'not-found') {
-      throw new NotFoundException(
-        result.ids.length === 1
-          ? 'Despesa não encontrada.'
-          : `Despesas não encontradas: ${result.ids.join(', ')}.`,
-      );
-    }
-
-    if (result.kind === 'not-approved') {
-      throw new ConflictException(
-        result.ids.length === 1
-          ? 'A despesa não está mais aguardando pagamento.'
-          : `Despesas não estão mais aguardando pagamento: ${result.ids.join(', ')}.`,
-      );
-    }
+    throwExpenseMutationFailure(result, 'payment');
 
     if (result.kind !== successKind) {
       throw new ConflictException('Não foi possível atualizar o pagamento da despesa.');

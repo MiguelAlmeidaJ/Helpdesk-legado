@@ -6,6 +6,10 @@ import type {
 } from '@helpdesk/contracts';
 import type { Nivel3DatabaseClient } from '@helpdesk/database';
 import { NIVEL3_DATABASE } from '../../../core/database/database.constants';
+import {
+  ExpenseStatus,
+  canTransitionExpense,
+} from '../domain/expense-status';
 
 interface PaymentRow {
   id: number | bigint | string;
@@ -113,7 +117,7 @@ export class ExpensePaymentRepository {
     return this.changeStatus({
       payerId,
       expenseId,
-      targetStatus: 4,
+      targetStatus: ExpenseStatus.Paid,
       remarks: remarks || 'Pagamento Efetuado',
       successKind: 'paid',
     });
@@ -127,7 +131,7 @@ export class ExpensePaymentRepository {
     return this.changeStatus({
       payerId,
       expenseId,
-      targetStatus: 3,
+      targetStatus: ExpenseStatus.Rejected,
       remarks: remarks || 'Pagamento Recusado',
       successKind: 'rejected',
     });
@@ -160,7 +164,7 @@ export class ExpensePaymentRepository {
       }
 
       const notApproved = rows
-        .filter((row) => numberValue(row.status) !== 2)
+        .filter((row) => !canTransitionExpense(row.status, 'pay'))
         .map((row) => numberValue(row.id));
       if (notApproved.length > 0) {
         return { kind: 'not-approved', ids: notApproved } as const;
@@ -187,7 +191,7 @@ export class ExpensePaymentRepository {
   private changeStatus(input: {
     payerId: number;
     expenseId: number;
-    targetStatus: 3 | 4;
+    targetStatus: typeof ExpenseStatus.Rejected | typeof ExpenseStatus.Paid;
     remarks: string;
     successKind: 'paid' | 'rejected';
   }): Promise<ExpensePaymentMutationResult> {
@@ -204,7 +208,7 @@ export class ExpensePaymentRepository {
       if (!row) {
         return { kind: 'not-found', ids: [input.expenseId] } as const;
       }
-      if (numberValue(row.status) !== 2) {
+      if (!canTransitionExpense(row.status, 'pay')) {
         return { kind: 'not-approved', ids: [input.expenseId] } as const;
       }
 

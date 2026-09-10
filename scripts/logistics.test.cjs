@@ -248,3 +248,69 @@ test('agenda não permite excluir agendamento arquivado', async () => {
   );
   assert.equal(deleted, false);
 });
+
+test('aprovação em lote informa todas as despesas não encontradas', async () => {
+  const service = new ExpenseApprovalService(
+    {
+      approveBatch: async () => ({
+        kind: 'not-found',
+        ids: [41, 42],
+      }),
+    },
+    { sendApproved: async () => undefined },
+  );
+
+  await rejectsStatus(
+    () =>
+      service.approveBatch(5, [
+        { id: 41, remarks: '' },
+        { id: 42, remarks: '' },
+      ]),
+    404,
+    'Despesas não encontradas: 41, 42.',
+  );
+});
+
+test('pagamento em lote informa todas as despesas que deixaram de estar aprovadas', async () => {
+  const service = new ExpensePaymentService({
+    payBatch: async () => ({
+      kind: 'not-approved',
+      ids: [51, 52],
+    }),
+  });
+
+  await rejectsStatus(
+    () =>
+      service.payBatch(8, [
+        { id: 51, remarks: '' },
+        { id: 52, remarks: '' },
+      ]),
+    409,
+    'Despesas não estão mais aguardando pagamento: 51, 52.',
+  );
+});
+
+test('recusa na aprovação preserva resposta com id alterado', async () => {
+  const service = new ExpenseApprovalService(
+    {
+      reject: async () => ({
+        kind: 'rejected',
+        ids: [61],
+      }),
+    },
+    { sendApproved: async () => undefined },
+  );
+
+  assert.deepEqual(await service.reject(61), { ids: [61] });
+});
+
+test('recusa no pagamento preserva resposta com id alterado', async () => {
+  const service = new ExpensePaymentService({
+    reject: async () => ({
+      kind: 'rejected',
+      ids: [71],
+    }),
+  });
+
+  assert.deepEqual(await service.reject(8, 71, 'Recusado'), { ids: [71] });
+});
