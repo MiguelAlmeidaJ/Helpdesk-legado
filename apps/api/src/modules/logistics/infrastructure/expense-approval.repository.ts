@@ -1,5 +1,3 @@
-import { readFile } from 'node:fs/promises';
-import path from 'node:path';
 import { Inject, Injectable } from '@nestjs/common';
 import type {
   LogisticsExpenseApprovalAttachment,
@@ -8,6 +6,7 @@ import type {
 } from '@helpdesk/contracts';
 import type { Nivel3DatabaseClient } from '@helpdesk/database';
 import { NIVEL3_DATABASE } from '../../../core/database/database.constants';
+import { ExpenseAttachmentStorage } from '../application/ports/expense-attachment.storage';
 
 interface AttachmentJson {
   id?: string;
@@ -114,6 +113,7 @@ export class ExpenseApprovalRepository {
   constructor(
     @Inject(NIVEL3_DATABASE)
     private readonly database: Nivel3DatabaseClient,
+    private readonly attachmentStorage: ExpenseAttachmentStorage,
   ) {}
 
   async queue(): Promise<LogisticsExpenseApprovalQueueResponse> {
@@ -148,21 +148,17 @@ export class ExpenseApprovalRepository {
     const attachment = this.attachment(attachments, attachmentKey);
     if (!attachment) return null;
 
-    const physical = this.physicalPath(attachment);
-    if (!physical) return null;
+    const data = await this.attachmentStorage.read(attachment);
+    if (!data) return null;
 
-    try {
-      return {
-        name:
-          attachment.nome ??
-          attachment.fileName ??
-          `comprovante-${expenseId}.pdf`,
-        mimeType: attachment.mimeType ?? 'application/pdf',
-        data: await readFile(physical),
-      };
-    } catch {
-      return null;
-    }
+    return {
+      name:
+        attachment.nome ??
+        attachment.fileName ??
+        `comprovante-${expenseId}.pdf`,
+      mimeType: attachment.mimeType ?? 'application/pdf',
+      data,
+    };
   }
 
   approve(
@@ -322,38 +318,6 @@ export class ExpenseApprovalRepository {
     }
 
     return attachments.find((attachment) => attachment.id === key);
-  }
-
-  private uploadRoot(): string {
-    return path.resolve(
-      process.env.RD_UPLOAD_DIR?.trim() || path.join(process.cwd(), 'uploads_rd'),
-    );
-  }
-
-  private safeStoragePath(relative: string): string | null {
-    const root = this.uploadRoot();
-    const candidate = path.resolve(root, relative);
-    return candidate !== root && candidate.startsWith(`${root}${path.sep}`)
-      ? candidate
-      : null;
-  }
-
-  private physicalPath(attachment: AttachmentJson): string | null {
-    if (attachment.storagePath) {
-      return this.safeStoragePath(attachment.storagePath);
-    }
-    if (!attachment.url) return null;
-
-    try {
-      const pathname = new URL(attachment.url, 'http://legacy.local').pathname;
-      const marker = '/uploads_rd/';
-      const index = pathname.toLowerCase().indexOf(marker);
-      if (index < 0) return null;
-      const relative = decodeURIComponent(pathname.slice(index + marker.length));
-      return this.safeStoragePath(relative);
-    } catch {
-      return null;
-    }
   }
 
   private attachments(

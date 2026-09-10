@@ -30,6 +30,7 @@ pnpm-debug.log*
 # Runtime-generated files
 /storage/reports/
 /rel/relatorios/
+/uploads_rd/
 
 # OS / editor
 .DS_Store

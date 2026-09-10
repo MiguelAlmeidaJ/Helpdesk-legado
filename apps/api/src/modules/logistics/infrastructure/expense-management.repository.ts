@@ -1,11 +1,4 @@
 import { randomUUID } from 'node:crypto';
-import {
-  mkdir,
-  readFile,
-  unlink,
-  writeFile,
-} from 'node:fs/promises';
-import path from 'node:path';
 import { Inject, Injectable } from '@nestjs/common';
 import type {
   CreateLogisticsExpenseRequest,
@@ -18,6 +11,7 @@ import type {
 } from '@helpdesk/contracts';
 import type { Nivel3DatabaseClient } from '@helpdesk/database';
 import { NIVEL3_DATABASE } from '../../../core/database/database.constants';
+import { ExpenseAttachmentStorage } from '../application/ports/expense-attachment.storage';
 
 interface ProfileRow {
   user_id: number;
@@ -113,6 +107,7 @@ export class ExpenseManagementRepository {
   constructor(
     @Inject(NIVEL3_DATABASE)
     private readonly database: Nivel3DatabaseClient,
+    private readonly attachmentStorage: ExpenseAttachmentStorage,
   ) {}
 
   async get(
@@ -324,7 +319,9 @@ export class ExpenseManagementRepository {
 
     if (result === 'deleted') {
       await Promise.all(
-        attachments.map((attachment) => this.removePhysical(attachment)),
+        attachments.map((attachment) =>
+          this.attachmentStorage.remove(attachment),
+        ),
       );
     }
     return result;
@@ -339,32 +336,19 @@ export class ExpenseManagementRepository {
     data: Buffer;
   }): Promise<LogisticsExpenseAttachment | 'not-found' | 'locked'> {
     const attachmentId = randomUUID();
-    const originalName = this.safeOriginalName(input.originalName);
-    const date = new Date();
-    const directory = path.join(
-      'native',
-      `${date.getFullYear()}_${String(date.getMonth() + 1).padStart(2, '0')}`,
-    );
-    const storedName = `${attachmentId}.pdf`;
-    const relativePath = path.posix.join(
-      directory.replace(/\\/g, '/'),
-      storedName,
-    );
-    const physical = this.safeStoragePath(relativePath);
-    if (!physical) {
-      throw new Error('Caminho de armazenamento de RD inválido.');
-    }
-
-    await mkdir(path.dirname(physical), { recursive: true });
-    await writeFile(physical, input.data);
-
+    const file = await this.attachmentStorage.store({
+      key: attachmentId,
+      originalName: input.originalName,
+      mimeType: input.mimeType,
+      data: input.data,
+    });
     const publicUrl = `${this.webOrigin()}/logistics/expenses/attachments/${input.expenseId}/${attachmentId}`;
     const stored: AttachmentJson = {
       id: attachmentId,
-      nome: originalName,
+      nome: file.name,
       url: publicUrl,
-      storagePath: relativePath,
-      mimeType: input.mimeType || 'application/pdf',
+      storagePath: file.storagePath,
+      mimeType: file.mimeType,
     };
 
     try {
@@ -398,18 +382,18 @@ export class ExpenseManagementRepository {
       });
 
       if (result !== 'uploaded') {
-        await unlink(physical).catch(() => undefined);
+        await this.attachmentStorage.remove(stored);
         return result;
       }
 
       return {
         key: attachmentId,
-        name: originalName,
+        name: file.name,
         contentUrl: publicUrl,
         native: true,
       };
     } catch (error) {
-      await unlink(physical).catch(() => undefined);
+      await this.attachmentStorage.remove(stored);
       throw error;
     }
   }
@@ -454,7 +438,7 @@ export class ExpenseManagementRepository {
     });
 
     if (result === 'deleted' && removed) {
-      await this.removePhysical(removed);
+      await this.attachmentStorage.remove(removed);
     }
     return result;
   }
@@ -478,21 +462,17 @@ export class ExpenseManagementRepository {
 
     const attachment = attachments[index];
     if (!attachment) return null;
-    const physical = this.physicalPath(attachment);
-    if (!physical) return null;
+    const data = await this.attachmentStorage.read(attachment);
+    if (!data) return null;
 
-    try {
-      return {
-        name:
-          attachment.nome ??
-          attachment.fileName ??
-          `comprovante-${expenseId}.pdf`,
-        mimeType: attachment.mimeType ?? 'application/pdf',
-        data: await readFile(physical),
-      };
-    } catch {
-      return null;
-    }
+    return {
+      name:
+        attachment.nome ??
+        attachment.fileName ??
+        `comprovante-${expenseId}.pdf`,
+      mimeType: attachment.mimeType ?? 'application/pdf',
+      data,
+    };
   }
 
   private item(row: ExpenseRow): LogisticsExpenseItem {
@@ -591,55 +571,6 @@ export class ExpenseManagementRepository {
     }
 
     return attachments.findIndex((attachment) => attachment.id === key);
-  }
-
-  private uploadRoot(): string {
-    return path.resolve(
-      process.env.RD_UPLOAD_DIR?.trim() ||
-        path.join(process.cwd(), 'uploads_rd'),
-    );
-  }
-
-  private safeStoragePath(relative: string): string | null {
-    const root = this.uploadRoot();
-    const candidate = path.resolve(root, relative);
-    return candidate !== root && candidate.startsWith(`${root}${path.sep}`)
-      ? candidate
-      : null;
-  }
-
-  private physicalPath(attachment: AttachmentJson): string | null {
-    if (attachment.storagePath) {
-      return this.safeStoragePath(attachment.storagePath);
-    }
-
-    if (!attachment.url) return null;
-
-    try {
-      const pathname = new URL(attachment.url, 'http://legacy.local').pathname;
-      const marker = '/uploads_rd/';
-      const index = pathname.toLowerCase().indexOf(marker);
-      if (index < 0) return null;
-
-      const relative = decodeURIComponent(
-        pathname.slice(index + marker.length),
-      );
-      return this.safeStoragePath(relative);
-    } catch {
-      return null;
-    }
-  }
-
-  private async removePhysical(attachment: AttachmentJson): Promise<void> {
-    const physical = this.physicalPath(attachment);
-    if (physical) {
-      await unlink(physical).catch(() => undefined);
-    }
-  }
-
-  private safeOriginalName(value: string): string {
-    const name = path.basename(value.replace(/\\/g, '/')).trim();
-    return (name || 'comprovante.pdf').slice(0, 255);
   }
 
   private webOrigin(): string {

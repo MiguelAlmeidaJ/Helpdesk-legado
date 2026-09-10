@@ -8,6 +8,7 @@ import { ExpenseManagementService } from './application/expense-management.servi
 import { ExpensePaymentService } from './application/expense-payment.service';
 import { ExpensePaidReportService } from './application/expense-paid-report.service';
 import { ExpenseAdminDashboardRepository } from './application/ports/expense-admin-dashboard.repository';
+import { ExpenseAttachmentStorage } from './application/ports/expense-attachment.storage';
 import { ExpenseApprovalNotifier } from './application/ports/expense-approval.notifier';
 import { ExpenseApprovalRepository } from './application/ports/expense-approval.repository';
 import { ExpenseComparisonRepository } from './application/ports/expense-comparison.repository';
@@ -25,6 +26,7 @@ import { ExpenseDashboardRepository as ExpenseDashboardRepositoryImpl } from './
 import { ExpenseManagementRepository as ExpenseManagementRepositoryImpl } from './infrastructure/expense-management.repository';
 import { ExpensePaymentRepository as ExpensePaymentRepositoryImpl } from './infrastructure/expense-payment.repository';
 import { ExpensePaidReportRepository as ExpensePaidReportRepositoryImpl } from './infrastructure/expense-paid-report.repository';
+import { LocalExpenseAttachmentStorage } from './infrastructure/storage/local-expense-attachment.storage';
 import { VehicleAgendaRepository as VehicleAgendaRepositoryImpl } from './infrastructure/vehicle-agenda.repository';
 import { ExpenseAdminDashboardController } from './presentation/http/expense-admin-dashboard.controller';
 import { ExpenseApprovalController } from './presentation/http/expense-approval.controller';
@@ -72,6 +74,10 @@ import { VehicleAgendaController } from './presentation/http/vehicle-agenda.cont
       useClass: ExpenseDashboardRepositoryImpl,
     },
     ExpenseDashboardService,
+    {
+      provide: ExpenseAttachmentStorage,
+      useClass: LocalExpenseAttachmentStorage,
+    },
     {
       provide: ExpenseManagementRepository,
       useClass: ExpenseManagementRepositoryImpl,
