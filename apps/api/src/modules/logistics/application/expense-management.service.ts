@@ -10,7 +10,7 @@ import type {
   LogisticsExpenseManagementResponse,
   UpdateLogisticsExpenseRequest,
 } from '@helpdesk/contracts';
-import { ExpenseManagementRepository } from '../infrastructure/expense-management.repository';
+import { ExpenseManagementRepository } from './ports/expense-management.repository';
 
 @Injectable()
 export class ExpenseManagementService {

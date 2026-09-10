@@ -9,7 +9,7 @@ import type {
   PermissionScope,
   UpdateLogisticsExpensePaidAdminRequest,
 } from '@helpdesk/contracts';
-import { ExpensePaidReportRepository } from '../infrastructure/expense-paid-report.repository';
+import { ExpensePaidReportRepository } from './ports/expense-paid-report.repository';
 
 export interface ExpensePaidReportQuery {
   startDate?: string;

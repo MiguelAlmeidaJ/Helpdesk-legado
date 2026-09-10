@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import type { LogisticsExpenseDashboardResponse } from '@helpdesk/contracts';
-import { ExpenseDashboardRepository } from '../infrastructure/expense-dashboard.repository';
+import { ExpenseDashboardRepository } from './ports/expense-dashboard.repository';
 
 @Injectable()
 export class ExpenseDashboardService {

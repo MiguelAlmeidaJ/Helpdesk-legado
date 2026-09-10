@@ -8,11 +8,11 @@ import type {
   LogisticsExpenseApprovalActionResponse,
   LogisticsExpenseApprovalQueueResponse,
 } from '@helpdesk/contracts';
-import { ExpenseApprovalMailer } from '../infrastructure/expense-approval.mailer';
+import { ExpenseApprovalNotifier } from './ports/expense-approval.notifier';
 import {
   ExpenseApprovalRepository,
   type ExpenseApprovalMutationResult,
-} from '../infrastructure/expense-approval.repository';
+} from './ports/expense-approval.repository';
 
 @Injectable()
 export class ExpenseApprovalService {
@@ -20,7 +20,7 @@ export class ExpenseApprovalService {
 
   constructor(
     private readonly repository: ExpenseApprovalRepository,
-    private readonly mailer: ExpenseApprovalMailer,
+    private readonly notifier: ExpenseApprovalNotifier,
   ) {}
 
   queue(): Promise<LogisticsExpenseApprovalQueueResponse> {
@@ -95,7 +95,7 @@ export class ExpenseApprovalService {
     items: ReturnType<ExpenseApprovalService['approvedItems']>,
   ): Promise<void> {
     try {
-      await this.mailer.sendApproved(items);
+      await this.notifier.sendApproved(items);
     } catch (error) {
       this.logger.error(
         'A aprovação foi concluída, mas o e-mail de RD falhou.',

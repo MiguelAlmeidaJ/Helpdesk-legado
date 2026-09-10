@@ -13,7 +13,7 @@ import type {
   VehicleAgendaResponse,
 } from '@helpdesk/contracts';
 import type { AuthenticatedUser } from '../../access/domain/authenticated-user';
-import { VehicleAgendaRepository } from '../infrastructure/vehicle-agenda.repository';
+import { VehicleAgendaRepository } from './ports/vehicle-agenda.repository';
 
 const PRIVATE_VISIBILITY_FUNCTIONS = new Set([1, 2, 3, 9, 10, 18]);
 

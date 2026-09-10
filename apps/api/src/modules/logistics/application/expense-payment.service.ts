@@ -10,7 +10,7 @@ import type {
 import {
   ExpensePaymentRepository,
   type ExpensePaymentMutationResult,
-} from '../infrastructure/expense-payment.repository';
+} from './ports/expense-payment.repository';
 
 @Injectable()
 export class ExpensePaymentService {

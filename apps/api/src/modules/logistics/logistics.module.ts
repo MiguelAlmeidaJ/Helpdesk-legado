@@ -7,16 +7,25 @@ import { ExpenseDashboardService } from './application/expense-dashboard.service
 import { ExpenseManagementService } from './application/expense-management.service';
 import { ExpensePaymentService } from './application/expense-payment.service';
 import { ExpensePaidReportService } from './application/expense-paid-report.service';
+import { ExpenseAdminDashboardRepository } from './application/ports/expense-admin-dashboard.repository';
+import { ExpenseApprovalNotifier } from './application/ports/expense-approval.notifier';
+import { ExpenseApprovalRepository } from './application/ports/expense-approval.repository';
+import { ExpenseComparisonRepository } from './application/ports/expense-comparison.repository';
+import { ExpenseDashboardRepository } from './application/ports/expense-dashboard.repository';
+import { ExpenseManagementRepository } from './application/ports/expense-management.repository';
+import { ExpensePaidReportRepository } from './application/ports/expense-paid-report.repository';
+import { ExpensePaymentRepository } from './application/ports/expense-payment.repository';
+import { VehicleAgendaRepository } from './application/ports/vehicle-agenda.repository';
 import { VehicleAgendaService } from './application/vehicle-agenda.service';
-import { ExpenseAdminDashboardRepository } from './infrastructure/expense-admin-dashboard.repository';
+import { ExpenseAdminDashboardRepository as ExpenseAdminDashboardRepositoryImpl } from './infrastructure/expense-admin-dashboard.repository';
 import { ExpenseApprovalMailer } from './infrastructure/expense-approval.mailer';
-import { ExpenseApprovalRepository } from './infrastructure/expense-approval.repository';
-import { ExpenseComparisonRepository } from './infrastructure/expense-comparison.repository';
-import { ExpenseDashboardRepository } from './infrastructure/expense-dashboard.repository';
-import { ExpenseManagementRepository } from './infrastructure/expense-management.repository';
-import { ExpensePaymentRepository } from './infrastructure/expense-payment.repository';
-import { ExpensePaidReportRepository } from './infrastructure/expense-paid-report.repository';
-import { VehicleAgendaRepository } from './infrastructure/vehicle-agenda.repository';
+import { ExpenseApprovalRepository as ExpenseApprovalRepositoryImpl } from './infrastructure/expense-approval.repository';
+import { ExpenseComparisonRepository as ExpenseComparisonRepositoryImpl } from './infrastructure/expense-comparison.repository';
+import { ExpenseDashboardRepository as ExpenseDashboardRepositoryImpl } from './infrastructure/expense-dashboard.repository';
+import { ExpenseManagementRepository as ExpenseManagementRepositoryImpl } from './infrastructure/expense-management.repository';
+import { ExpensePaymentRepository as ExpensePaymentRepositoryImpl } from './infrastructure/expense-payment.repository';
+import { ExpensePaidReportRepository as ExpensePaidReportRepositoryImpl } from './infrastructure/expense-paid-report.repository';
+import { VehicleAgendaRepository as VehicleAgendaRepositoryImpl } from './infrastructure/vehicle-agenda.repository';
 import { ExpenseAdminDashboardController } from './presentation/http/expense-admin-dashboard.controller';
 import { ExpenseApprovalController } from './presentation/http/expense-approval.controller';
 import { ExpenseComparisonController } from './presentation/http/expense-comparison.controller';
@@ -39,22 +48,49 @@ import { VehicleAgendaController } from './presentation/http/vehicle-agenda.cont
     VehicleAgendaController,
   ],
   providers: [
-    ExpenseAdminDashboardRepository,
+    {
+      provide: ExpenseAdminDashboardRepository,
+      useClass: ExpenseAdminDashboardRepositoryImpl,
+    },
     ExpenseAdminDashboardService,
-    ExpenseApprovalRepository,
-    ExpenseApprovalMailer,
+    {
+      provide: ExpenseApprovalRepository,
+      useClass: ExpenseApprovalRepositoryImpl,
+    },
+    {
+      provide: ExpenseApprovalNotifier,
+      useClass: ExpenseApprovalMailer,
+    },
     ExpenseApprovalService,
-    ExpenseComparisonRepository,
+    {
+      provide: ExpenseComparisonRepository,
+      useClass: ExpenseComparisonRepositoryImpl,
+    },
     ExpenseComparisonService,
-    ExpenseDashboardRepository,
+    {
+      provide: ExpenseDashboardRepository,
+      useClass: ExpenseDashboardRepositoryImpl,
+    },
     ExpenseDashboardService,
-    ExpenseManagementRepository,
+    {
+      provide: ExpenseManagementRepository,
+      useClass: ExpenseManagementRepositoryImpl,
+    },
     ExpenseManagementService,
-    ExpensePaymentRepository,
+    {
+      provide: ExpensePaymentRepository,
+      useClass: ExpensePaymentRepositoryImpl,
+    },
     ExpensePaymentService,
-    ExpensePaidReportRepository,
+    {
+      provide: ExpensePaidReportRepository,
+      useClass: ExpensePaidReportRepositoryImpl,
+    },
     ExpensePaidReportService,
-    VehicleAgendaRepository,
+    {
+      provide: VehicleAgendaRepository,
+      useClass: VehicleAgendaRepositoryImpl,
+    },
     VehicleAgendaService,
   ],
 })

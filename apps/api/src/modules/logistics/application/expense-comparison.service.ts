@@ -3,7 +3,7 @@ import type {
   LogisticsExpenseComparisonResponse,
   PermissionScope,
 } from '@helpdesk/contracts';
-import { ExpenseComparisonRepository } from '../infrastructure/expense-comparison.repository';
+import { ExpenseComparisonRepository } from './ports/expense-comparison.repository';
 
 export interface ExpenseComparisonQuery {
   period1Start?: string;

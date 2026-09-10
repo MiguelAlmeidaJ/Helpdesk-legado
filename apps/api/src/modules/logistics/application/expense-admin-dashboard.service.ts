@@ -5,7 +5,7 @@ import type {
   LogisticsExpenseAdminGroup,
   LogisticsExpenseAdminStatus,
 } from '@helpdesk/contracts';
-import { ExpenseAdminDashboardRepository } from '../infrastructure/expense-admin-dashboard.repository';
+import { ExpenseAdminDashboardRepository } from './ports/expense-admin-dashboard.repository';
 
 @Injectable()
 export class ExpenseAdminDashboardService {
