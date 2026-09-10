@@ -11,7 +11,6 @@ import { resolveTicketReportVisibility } from '../ticket-report-visibility';
 
 export function generatedReportStorageRoot(): string {
   if (process.env.REPORT_STORAGE_DIR?.trim()) return path.resolve(process.env.REPORT_STORAGE_DIR);
-  if (process.env.REPORT_ARCHIVE_DIR?.trim()) return path.resolve(process.env.REPORT_ARCHIVE_DIR);
 
   let root = process.cwd();
   while (!existsSync(path.join(root, 'pnpm-workspace.yaml'))) {

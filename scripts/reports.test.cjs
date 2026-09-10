@@ -99,21 +99,14 @@ test('ZIP store headers contain UTF-8 filename, CRC and original bytes', () => {
   assert.equal(zip.readUInt32LE(zip.length - 22), 0x06054b50);
 });
 
-test('report storage prefers REPORT_STORAGE_DIR and keeps REPORT_ARCHIVE_DIR as compatibility fallback', () => {
+test('report storage uses REPORT_STORAGE_DIR when configured', () => {
   const previousStorage = process.env.REPORT_STORAGE_DIR;
-  const previousArchive = process.env.REPORT_ARCHIVE_DIR;
   try {
     process.env.REPORT_STORAGE_DIR = path.join(os.tmpdir(), 'helpdesk-report-storage');
-    process.env.REPORT_ARCHIVE_DIR = path.join(os.tmpdir(), 'helpdesk-report-archive');
     assert.equal(archiveRoot(), path.resolve(process.env.REPORT_STORAGE_DIR));
-
-    delete process.env.REPORT_STORAGE_DIR;
-    assert.equal(archiveRoot(), path.resolve(process.env.REPORT_ARCHIVE_DIR));
   } finally {
     if (previousStorage === undefined) delete process.env.REPORT_STORAGE_DIR;
     else process.env.REPORT_STORAGE_DIR = previousStorage;
-    if (previousArchive === undefined) delete process.env.REPORT_ARCHIVE_DIR;
-    else process.env.REPORT_ARCHIVE_DIR = previousArchive;
   }
 });
 
@@ -153,9 +146,7 @@ test('cleanup service calculates the expiration cutoff from REPORT_RETENTION_DAY
 test('archive cleanup removes only expired PDFs and preserves other files', async () => {
   const root = await mkdtemp(path.join(os.tmpdir(), 'helpdesk-report-retention-'));
   const previousStorage = process.env.REPORT_STORAGE_DIR;
-  const previousArchive = process.env.REPORT_ARCHIVE_DIR;
   process.env.REPORT_STORAGE_DIR = root;
-  delete process.env.REPORT_ARCHIVE_DIR;
   try {
     const archive = new ReportArchive({ $queryRawUnsafe: async () => [{ tipo_usuario: 1 }] });
     const expired = path.join(root, 'expired.pdf');
@@ -174,8 +165,6 @@ test('archive cleanup removes only expired PDFs and preserves other files', asyn
   } finally {
     if (previousStorage === undefined) delete process.env.REPORT_STORAGE_DIR;
     else process.env.REPORT_STORAGE_DIR = previousStorage;
-    if (previousArchive === undefined) delete process.env.REPORT_ARCHIVE_DIR;
-    else process.env.REPORT_ARCHIVE_DIR = previousArchive;
     await rm(root, { recursive: true, force: true });
   }
 });
@@ -183,9 +172,7 @@ test('archive cleanup removes only expired PDFs and preserves other files', asyn
 test('archive denies external users, traversal and symlink downloads; preserves unrelated files', async () => {
   const root = await mkdtemp(path.join(os.tmpdir(), 'helpdesk-reports-'));
   const previousStorage = process.env.REPORT_STORAGE_DIR;
-  const previous = process.env.REPORT_ARCHIVE_DIR;
-  delete process.env.REPORT_STORAGE_DIR;
-  process.env.REPORT_ARCHIVE_DIR = root;
+  process.env.REPORT_STORAGE_DIR = root;
   try {
     const archive = new ReportArchive({ $queryRawUnsafe: async () => [{ tipo_usuario: 2 }] });
     await assert.rejects(() => archive.authorize(1));
@@ -213,7 +200,6 @@ test('archive denies external users, traversal and symlink downloads; preserves 
   } finally {
     if (previousStorage === undefined) delete process.env.REPORT_STORAGE_DIR;
     else process.env.REPORT_STORAGE_DIR = previousStorage;
-    if (previous === undefined) delete process.env.REPORT_ARCHIVE_DIR; else process.env.REPORT_ARCHIVE_DIR = previous;
     // Only the unique temporary directory created by this test is removed.
     assert.equal(path.dirname(path.resolve(root)), path.resolve(os.tmpdir()));
     assert.ok(path.basename(root).startsWith('helpdesk-reports-'));
