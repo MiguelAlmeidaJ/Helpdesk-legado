@@ -1,5 +1,7 @@
 import { Buffer } from 'node:buffer';
-import type { TicketAnalyticsResponse } from '@helpdesk/contracts';
+import { TICKET_STATUS_LABELS, type TicketAnalyticsResponse, type TicketStatus } from '@helpdesk/contracts';
+
+const SOURCE_LABELS = { tickets: 'Atendimentos', tasks: 'Tarefas', improvements: 'Melhorias', unified: 'Unificado' };
 
 function wrap(text: string, width = 100): string[] {
   const words = text.replace(/\s+/g, ' ').trim().split(' ');
@@ -22,18 +24,19 @@ export function analyticsPdf(report: TicketAnalyticsResponse): Buffer {
   const lines = [
     'HELPDESK - RELATÓRIO ANALÍTICO',
     `Período: ${report.filters.startDate} a ${report.filters.endDate} | Total: ${report.total}`,
-    `Origem: ${report.filters.source} | Nível: ${report.filters.level || 'Todos'} | Cliente: ${report.filters.clientId || 'Todos'} | Local: ${report.filters.locationId || 'Todos'}`,
+    `Origem: ${SOURCE_LABELS[report.filters.source]} | Nível: ${report.filters.level || 'Todos'} | Cliente: ${report.filters.clientId || 'Todos'} | Local: ${report.filters.locationId || 'Todos'}`,
     '',
   ];
   for (const row of report.rows) {
     for (const line of [
-      `${row.source} #${row.id} | ${row.clientName} | Status: ${row.status}`,
+      `${SOURCE_LABELS[row.source]} #${row.id} | ${row.clientName} | Status: ${TICKET_STATUS_LABELS[row.status as TicketStatus] ?? row.status}`,
       `Local: ${row.locationName} | ${row.locationAddress}`,
       `Solicitante: ${row.requesterName} | Técnico: ${row.technicianName}`,
       `Abertura: ${row.openedAt} | Fechamento: ${row.closedAt ?? '-'} | Nível: ${row.level} | Tipo: ${row.type} | Forma: ${row.method}`,
       [row.categoryName, row.subcategoryName, row.itemName].filter(Boolean).join(' / '),
       `Descrição de abertura: ${row.openingDescription}`,
       `Descrição de fechamento: ${row.closingDescription}`, '',
+      ...(report.filters.view === 'time' ? [`Tempo desde a abertura: ${Math.floor(row.elapsedSeconds / 86400)} dias, ${Math.floor(row.elapsedSeconds / 3600) % 24}h ${Math.floor(row.elapsedSeconds / 60) % 60}m`] : []),
     ]) lines.push(...wrap(line));
   }
   if (!report.total) lines.push('Nenhum registro para os filtros selecionados.');

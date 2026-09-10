@@ -150,7 +150,7 @@ export const APP_NAVIGATION_SECTIONS: NavigationSection[] = [
       { id: 'report-task-analytic', label: 'Atd. Analítico por Tarefa', href: "/reports/tickets/analytics?source=tasks", status: 'available' },
       { id: 'report-unified', label: 'Relatório Unificado', href: "/reports/tickets/analytics?source=unified", status: 'available' },
       { id: 'report-it-only', label: 'Relatório Somente TI', href: "/reports/tickets/analytics?source=tickets", status: 'available' },
-      { id: 'report-improvements', label: 'Anal?tico de Melhorias', href: '/reports/tickets/analytics?source=improvements', status: 'available' },
+      { id: 'report-improvements', label: 'Analítico de Melhorias', href: '/reports/tickets/analytics?source=improvements', status: 'available' },
       { id: 'report-service-time', label: 'Tempo de Atendimento', href: "/reports/tickets/time", status: 'available' },
       { id: 'report-pdf', label: 'Gerar PDF', href: "/reports/archive", status: 'available' },
     ],

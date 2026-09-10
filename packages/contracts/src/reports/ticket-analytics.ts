@@ -1,6 +1,7 @@
 export type TicketReportSource = 'tickets' | 'tasks' | 'improvements' | 'unified';
 
 export interface TicketAnalyticsFilters {
+  view?: 'analytics' | 'time';
   startDate: string;
   endDate: string;
   source: TicketReportSource;

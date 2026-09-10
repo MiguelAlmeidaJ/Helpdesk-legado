@@ -5,5 +5,5 @@ export default async function TimePage({ searchParams }: { searchParams: Promise
   const currentUser = await requireAuthenticatedUser('/reports/tickets/time');
   const query = await searchParams;
   const filters = Object.fromEntries(['source', 'startDate', 'endDate', 'clientId', 'locationId', 'technicianId', 'level'].flatMap(key => typeof query[key] === 'string' ? [[key, query[key]]] : []));
-  return <TicketAnalyticsScreen currentUser={currentUser} mode="time" initialFilters={filters} />;
+  return <TicketAnalyticsScreen key={JSON.stringify(filters)} currentUser={currentUser} mode="time" initialFilters={filters} />;
 }

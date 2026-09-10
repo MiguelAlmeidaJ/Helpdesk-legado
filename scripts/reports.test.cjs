@@ -61,6 +61,21 @@ test('every branch of unified analytics enforces company scope and exclusive end
   assert.equal(queries.filter(query => query.sql.includes('FROM locais')).length, 0);
 });
 
+test('time report preserves scheduled tickets and all levels when no level is selected', async () => {
+  const queries = [];
+  const repository = new PrismaTicketAnalyticsRepository({ $queryRawUnsafe: async sql => {
+    queries.push(sql);
+    return sql.includes('SELECT tipo_usuario') ? [{ tipo_usuario: 1 }] : [];
+  } });
+  await repository.analytics(1, { ...filters, view: 'time' });
+  const sql = queries.find(sql => sql.includes('AS openingDescription'));
+  assert.ok(!sql.includes('a.status > 0'));
+  assert.ok(!sql.includes('a.nivel IN'));
+  const parsed = analyticsFilters({ view: 'time' });
+  assert.equal(parsed.startDate, parsed.endDate);
+  assert.throws(() => analyticsFilters({ view: 'unknown' }));
+});
+
 test('PDF preserves long descriptions, accents, multiple pages and valid xref offsets', () => {
   const report = { filters, total: 1, rows: [{ id: 1, source: 'tickets', clientName: 'João', openingDescription: 'x'.repeat(12000) + 'FINAL-DA-DESCRICAO', closingDescription: 'Conclusão', locationName: '', locationAddress: '', requesterName: '', technicianName: '', openedAt: '', closedAt: null, level: 1, type: 1, method: 1, status: 4 } ] };
   const pdf = analyticsPdf(report), text = pdf.toString('latin1');
@@ -105,6 +120,8 @@ test('archive denies external users, traversal and symlink downloads; preserves 
   } finally {
     if (previous === undefined) delete process.env.REPORT_ARCHIVE_DIR; else process.env.REPORT_ARCHIVE_DIR = previous;
     // Only the unique temporary directory created by this test is removed.
+    assert.equal(path.dirname(path.resolve(root)), path.resolve(os.tmpdir()));
+    assert.ok(path.basename(root).startsWith('helpdesk-reports-'));
     await rm(root, { recursive: true, force: true });
   }
 });

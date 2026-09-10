@@ -24,14 +24,15 @@ export class PrismaTicketAnalyticsRepository extends TicketAnalyticsRepository {
     const sources = filters.source === 'unified' ? ['tickets', 'tasks'] as const : [filters.source];
     const rows: TicketAnalyticsRow[] = [];
     for (const source of sources) {
-      const where = ['a.status > 0', 'a.abertura >= ?', 'a.abertura < DATE_ADD(?, INTERVAL 1 DAY)'];
+      const where = ['a.abertura >= ?', 'a.abertura < DATE_ADD(?, INTERVAL 1 DAY)'];
+      if (filters.view !== 'time') where.push('a.status > 0');
       const params: unknown[] = [filters.startDate, filters.endDate];
       scope(where, params, visibility, 'a.cliente');
       for (const [column, value] of [['a.cliente', filters.clientId], ['a.local', filters.locationId], ['a.tecnico', filters.technicianId]] as const) {
         if (value) { where.push(`${column} = ?`); params.push(value); }
       }
       // The unified legacy report filters TI levels and includes all tasks.
-      if (source !== 'tasks') appendNumberInFilter(where, params, 'a.nivel', filters.level ? [filters.level] : [1, 2, 3, 4, 5]);
+      if (source !== 'tasks' && (filters.view !== 'time' || filters.level)) appendNumberInFilter(where, params, 'a.nivel', filters.level ? [filters.level] : [1, 2, 3, 4, 5]);
       const result = await this.database.$queryRawUnsafe<TicketAnalyticsRow[]>(
         `SELECT a.id, '${source}' AS source, a.cliente AS clientId,
           COALESCE(c.clt_nomer, c.clt_nomef, '') AS clientName,

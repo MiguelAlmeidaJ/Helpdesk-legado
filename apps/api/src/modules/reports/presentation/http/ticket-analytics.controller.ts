@@ -17,15 +17,18 @@ export function reportId(value: unknown, name: string): number {
 }
 
 export function analyticsFilters(query: Record<string, unknown>): TicketAnalyticsFilters {
+  const view = query.view ?? 'analytics';
+  if (view !== 'analytics' && view !== 'time') throw new BadRequestException('view inválido.');
   const source = query.source ?? 'tickets';
   if (typeof source !== 'string' || !['tickets', 'tasks', 'improvements', 'unified'].includes(source)) throw new BadRequestException('source inválido.');
   for (const field of ['startDate', 'endDate']) {
     if (query[field] !== undefined && typeof query[field] !== 'string') throw new BadRequestException(`${field} inválido.`);
   }
   const dates = parseReportQuery(query.startDate as string | undefined, query.endDate as string | undefined);
+  if (view === 'time' && !query.startDate) dates.startDate = dates.endDate;
   const level = reportId(query.level, 'level');
   if (level > 5) throw new BadRequestException('level deve estar entre 0 e 5.');
-  return { startDate: dates.startDate, endDate: dates.endDate, source: source as TicketReportSource, level,
+  return { view, startDate: dates.startDate, endDate: dates.endDate, source: source as TicketReportSource, level,
     clientId: reportId(query.clientId, 'clientId'), locationId: reportId(query.locationId, 'locationId'), technicianId: reportId(query.technicianId, 'technicianId') };
 }
 

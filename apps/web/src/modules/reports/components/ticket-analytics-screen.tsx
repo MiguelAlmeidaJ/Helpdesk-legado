@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import Link from 'next/link';
-import type { CurrentUserResponse, TicketAnalyticsResponse, TicketReportCatalog, TicketReportSource, TechnicianWorkloadResponse } from '@helpdesk/contracts';
+import { TICKET_STATUS_LABELS, type CurrentUserResponse, type TicketAnalyticsResponse, type TicketReportCatalog, type TicketReportSource, type TechnicianWorkloadResponse } from '@helpdesk/contracts';
 import { apiDownload, apiRequest } from '../../../shared/api/api-client';
 import { AppSidebar } from '../../../shared/navigation/app-sidebar';
 import { SessionUserMenu } from '../../access/components/session-user-menu';
@@ -10,7 +10,7 @@ import { downloadCsv, duration, reportError } from '../lib/report-export';
 import styles from './ticket-client-totals-report-screen.module.css';
 
 const SOURCE_LABELS = { tickets: 'Atendimento', tasks: 'Tarefa', improvements: 'Melhoria', unified: 'Unificado' };
-const STATUS: Record<number, string> = { 1: 'Aguardando execução', 2: 'Em execução', 3: 'Em espera', 4: 'Concluído', 5: 'Finalizado' };
+const STATUS: Readonly<Record<number, string>> = TICKET_STATUS_LABELS;
 const TYPES: Record<number, string> = { 1: 'Falha', 2: 'Relacionamento', 3: 'Requisição de serviços', 4: 'Requisição de informação', 5: 'Monitoramento' };
 const METHODS: Record<number, string> = { 1: 'Remoto', 2: 'Presencial', 3: 'Remoto — plantão', 4: 'Presencial — plantão' };
 const EMPTY_CATALOG: TicketReportCatalog = { clients: [], locations: [], technicians: [] };
@@ -18,7 +18,7 @@ const EMPTY_CATALOG: TicketReportCatalog = { clients: [], locations: [], technic
 export function TicketAnalyticsScreen({ currentUser, mode, initialSource = 'tickets', initialFilters = {} }: {
   currentUser: CurrentUserResponse; mode: 'analytics' | 'workload' | 'time'; initialSource?: TicketReportSource; initialFilters?: Record<string, string>;
 }) {
-  const [filters, setFilters] = useState({ startDate: '', endDate: '', clientId: '0', locationId: '0', technicianId: '0', level: '0', source: initialSource as string, ...initialFilters });
+  const [filters, setFilters] = useState({ startDate: '', endDate: '', clientId: '0', locationId: '0', technicianId: '0', level: '0', source: initialSource as string, ...initialFilters, view: mode === 'time' ? 'time' : 'analytics' });
   const [report, setReport] = useState<TicketAnalyticsResponse | null>(null);
   const [workload, setWorkload] = useState<TechnicianWorkloadResponse | null>(null);
   const [catalog, setCatalog] = useState<TicketReportCatalog>(EMPTY_CATALOG);

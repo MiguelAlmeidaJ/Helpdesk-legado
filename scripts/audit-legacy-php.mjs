@@ -57,9 +57,13 @@ const removedRuntimePaths = [
   'logistica/editarRD.php',
   'logistica/excluirRD.php',
   'logistica/recebe_upload.php',
+  'rel/atd_total_por_cliente.php',
+  'rel/atd_total_por_tecnico.php',
+  'rel/atd_total_por_categoria.php',
 ];
 
 const retiredDirectories = [
+  { label: 'rel/ (runtime)', prefix: 'rel/', preservePrefix: 'rel/relatorios/' },
   { label: 'atd/', prefix: 'atd/' },
   { label: 'home/', prefix: 'home/' },
 ];
@@ -86,7 +90,7 @@ const runtimeFiles = tracked.filter(
 
 const retiredDirectoryState = retiredDirectories.map((directory) => ({
   ...directory,
-  files: tracked.filter((file) => file.startsWith(directory.prefix)),
+  files: tracked.filter((file) => file.startsWith(directory.prefix) && !(directory.preservePrefix && file.startsWith(directory.preservePrefix))),
 }));
 
 function normalizedTarget(value) {
