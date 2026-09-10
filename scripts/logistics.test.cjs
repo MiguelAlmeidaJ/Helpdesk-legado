@@ -8,7 +8,7 @@ const expensesBase = logisticsBase + 'expenses/application/';
 const { ExpenseManagementService } = require(expensesBase + 'expense-management.service');
 const { ExpenseApprovalService } = require(expensesBase + 'expense-approval.service');
 const { ExpensePaymentService } = require(expensesBase + 'expense-payment.service');
-const { VehicleAgendaService } = require(logisticsBase + 'application/vehicle-agenda.service');
+const { VehicleAgendaService } = require(logisticsBase + 'vehicles/application/vehicle-agenda.service');
 
 async function rejectsStatus(action, status, message) {
   await assert.rejects(
