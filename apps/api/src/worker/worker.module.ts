@@ -2,9 +2,9 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { DatabaseModule } from '../core/database/database.module';
 import { CleanupExpiredReports } from '../modules/reports/application/cleanup-expired-reports';
-import { ReportArchiveRepository } from '../modules/reports/application/ports/report-archive.repository';
+import { GeneratedReportStorage } from '../modules/reports/application/ports/generated-report-storage';
 import { ReportRetentionPoller } from '../modules/reports/infrastructure/automation/report-retention.poller';
-import { ReportArchive } from '../modules/reports/infrastructure/report-archive';
+import { LocalGeneratedReportStorage } from '../modules/reports/infrastructure/storage/local-generated-report-storage';
 import { ActivateDueScheduledTickets } from '../modules/tickets/application/activate-due-scheduled-tickets';
 import { DueScheduledTicketRepository } from '../modules/tickets/application/ports/due-scheduled-ticket.repository';
 import { DueTicketHoldRepository } from '../modules/tickets/application/ports/due-ticket-hold.repository';
@@ -44,8 +44,8 @@ import { PrismaTicketRecurrenceRepository } from '../modules/tickets/infrastruct
     TicketRecurrencePoller,
     TicketScheduledActivationPoller,
     {
-      provide: ReportArchiveRepository,
-      useClass: ReportArchive,
+      provide: GeneratedReportStorage,
+      useClass: LocalGeneratedReportStorage,
     },
     {
       provide: DueScheduledTicketRepository,

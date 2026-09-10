@@ -4,8 +4,8 @@ import { GetTicketAnalytics } from './application/get-ticket-analytics';
 import { TicketAnalyticsRepository } from './application/ports/ticket-analytics.repository';
 import { PrismaTicketAnalyticsRepository } from './infrastructure/prisma-ticket-analytics.repository';
 import { TicketAnalyticsController } from './presentation/http/ticket-analytics.controller';
-import { ReportArchiveRepository } from './application/ports/report-archive.repository';
-import { ReportArchive } from './infrastructure/report-archive';
+import { GeneratedReportStorage } from './application/ports/generated-report-storage';
+import { LocalGeneratedReportStorage } from './infrastructure/storage/local-generated-report-storage';
 import { ReportArchiveController } from './presentation/http/report-archive.controller';
 import { GetTicketCategoryTotalsReport } from './application/get-ticket-category-totals-report';
 import { GetTicketClientTotalsReport } from './application/get-ticket-client-totals-report';
@@ -23,7 +23,7 @@ import { ReportsController } from './presentation/http/reports.controller';
   controllers: [ReportsController, TicketAnalyticsController, ReportArchiveController],
   providers: [
     GetTicketAnalytics,
-    { provide: ReportArchiveRepository, useClass: ReportArchive },
+    { provide: GeneratedReportStorage, useClass: LocalGeneratedReportStorage },
     { provide: TicketAnalyticsRepository, useClass: PrismaTicketAnalyticsRepository },
     GetTicketCategoryTotalsReport,
     GetTicketClientTotalsReport,

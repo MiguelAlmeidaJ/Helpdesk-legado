@@ -8,8 +8,9 @@ import { LegacySessionGuard } from '../../../access/presentation/http/legacy-ses
 import { PermissionsGuard } from '../../../access/presentation/http/permissions.guard';
 import { RequirePermissions } from '../../../access/presentation/http/require-permissions.decorator';
 import { GetTicketAnalytics } from '../../application/get-ticket-analytics';
-import { ReportArchiveRepository } from '../../application/ports/report-archive.repository';
-import { analyticsPdf, reportZip } from '../../infrastructure/report-files';
+import { GeneratedReportStorage } from '../../application/ports/generated-report-storage';
+import { reportZip } from '../../infrastructure/archive/report-zip';
+import { analyticsPdf } from '../../infrastructure/pdf/analytics-pdf';
 import { analyticsFilters, reportUser } from './ticket-analytics.controller';
 
 function filenames(body: unknown): string[] {
@@ -24,7 +25,7 @@ function filenames(body: unknown): string[] {
 @RequirePermissions(AppPermission.TicketsAudit)
 @ApiSecurity(LEGACY_SESSION_SECURITY)
 export class ReportArchiveController {
-  constructor(private readonly archive: ReportArchiveRepository, private readonly reports: GetTicketAnalytics) {}
+  constructor(private readonly archive: GeneratedReportStorage, private readonly reports: GetTicketAnalytics) {}
 
   @Get('tickets/analytics.pdf')
   @Header('Cache-Control', 'no-store')

@@ -9,9 +9,11 @@ const { analyticsFilters } = require(base + 'presentation/http/ticket-analytics.
 const { parseReportQuery } = require(base + 'presentation/http/report-query');
 const { PrismaTicketAnalyticsRepository } = require(base + 'infrastructure/prisma-ticket-analytics.repository');
 const { resolveTicketReportVisibility } = require(base + 'infrastructure/ticket-report-visibility');
-const { analyticsPdf, reportZip } = require(base + 'infrastructure/report-files');
-const { ReportArchive, archiveRoot } = require(base + 'infrastructure/report-archive');
-const { CleanupExpiredReports, reportRetentionDays } = require(base + 'application/cleanup-expired-reports');
+const { analyticsPdf } = require(base + 'infrastructure/pdf/analytics-pdf');
+const { reportZip } = require(base + 'infrastructure/archive/report-zip');
+const { LocalGeneratedReportStorage: ReportArchive, generatedReportStorageRoot: archiveRoot } = require(base + 'infrastructure/storage/local-generated-report-storage');
+const { CleanupExpiredReports } = require(base + 'application/cleanup-expired-reports');
+const { reportRetentionDays } = require(base + 'application/report-retention');
 
 const filters = { startDate: '2026-09-01', endDate: '2026-09-09', clientId: 0, locationId: 0, technicianId: 0, level: 0, source: 'tickets' };
 
