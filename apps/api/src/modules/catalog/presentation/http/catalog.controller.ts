@@ -1,9 +1,12 @@
 import {
   BadRequestException,
+  Body,
   Controller,
   Get,
   Param,
   ParseIntPipe,
+  Patch,
+  Post,
   Query,
   UnauthorizedException,
   UseGuards,
@@ -15,6 +18,7 @@ import type {
   CatalogListResponse,
   CatalogResolutionResponse,
   CatalogSector,
+  CatalogWriteInput,
 } from '@helpdesk/contracts';
 import { LEGACY_SESSION_SECURITY } from '../../../../core/openapi/openapi.constants';
 import type { AuthenticatedUser } from '../../../access/domain/authenticated-user';
@@ -90,6 +94,48 @@ function authenticated(
   return user;
 }
 
+function bodyPositiveInteger(value: unknown, field: string): number {
+  if (typeof value !== 'number' || !Number.isSafeInteger(value) || value < 1) {
+    throw new BadRequestException(`${field} é inválido.`);
+  }
+
+  return value;
+}
+
+function writeInput(body: unknown): CatalogWriteInput {
+  if (!body || typeof body !== 'object' || Array.isArray(body)) {
+    throw new BadRequestException('Corpo da requisição é inválido.');
+  }
+
+  const input = body as Record<string, unknown>;
+  const title = typeof input.title === 'string' ? input.title.trim() : '';
+
+  if (!title) {
+    throw new BadRequestException('title é obrigatório.');
+  }
+
+  if (title.length > 255) {
+    throw new BadRequestException('title deve ter no máximo 255 caracteres.');
+  }
+
+  if (input.content !== undefined && typeof input.content !== 'string') {
+    throw new BadRequestException('content é inválido.');
+  }
+
+  const sectorValue = input.sector;
+  if (sectorValue !== 1 && sectorValue !== 2) {
+    throw new BadRequestException('sector é inválido.');
+  }
+
+  return {
+    sector: sectorValue,
+    categoryId: bodyPositiveInteger(input.categoryId, 'categoryId'),
+    clientId: bodyPositiveInteger(input.clientId, 'clientId'),
+    title,
+    content: typeof input.content === 'string' ? input.content.trim() : '',
+  };
+}
+
 @ApiTags('catalog')
 @Controller('catalog')
 @UseGuards(LegacySessionGuard)
@@ -140,6 +186,29 @@ export class CatalogController {
       offset: offset(offsetValue),
       limit: limit(limitValue),
     });
+  }
+
+  @Post()
+  @ApiOperation({ summary: 'Cria um catálogo no setor gerenciável pelo usuário' })
+  create(
+    @CurrentUser() user: AuthenticatedUser | undefined,
+    @Body() body: unknown,
+  ): Promise<CatalogDetailResponse> {
+    return this.catalog.create(authenticated(user), writeInput(body));
+  }
+
+  @Patch(':id')
+  @ApiOperation({ summary: 'Edita um catálogo gerenciável pelo usuário' })
+  update(
+    @CurrentUser() user: AuthenticatedUser | undefined,
+    @Param('id', ParseIntPipe) id: number,
+    @Body() body: unknown,
+  ): Promise<CatalogDetailResponse> {
+    if (id < 1) {
+      throw new BadRequestException('id é inválido.');
+    }
+
+    return this.catalog.update(authenticated(user), id, writeInput(body));
   }
 
   @Get(':id')

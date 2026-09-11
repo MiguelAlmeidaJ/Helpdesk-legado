@@ -12,6 +12,7 @@ import {
   type CatalogListFilters,
   type CatalogListResult,
   type CatalogRecord,
+  type CatalogWriteRecordInput,
 } from '../application/ports/catalog.repository';
 
 type CatalogRow = {
@@ -181,5 +182,59 @@ export class PrismaCatalogRepository extends CatalogRepository {
     });
 
     return rows.map((row) => row.id);
+  }
+
+  async clientExists(clientId: number): Promise<boolean> {
+    const count = await this.nivel3.clientes.count({
+      where: { clt_id: clientId },
+    });
+
+    return count > 0;
+  }
+
+  async categoryExists(categoryId: number): Promise<boolean> {
+    const count = await this.nivel3.catalogos_categoria.count({
+      where: { categoria_id: categoryId },
+    });
+
+    return count > 0;
+  }
+
+  async create(input: CatalogWriteRecordInput): Promise<CatalogRecord> {
+    const now = new Date();
+    const row = await this.nivel3.catalogos.create({
+      data: {
+        catalogo_categoria: input.categoryId,
+        cliente_id: input.clientId,
+        setor: input.sector,
+        titulo: input.title,
+        conteudo: input.content,
+        usuario_id: input.authorUserId,
+        data_criacao: now,
+        data_edicao: now,
+      },
+    });
+
+    return (await this.decorate([row]))[0]!;
+  }
+
+  async update(
+    id: number,
+    input: CatalogWriteRecordInput,
+  ): Promise<CatalogRecord> {
+    const row = await this.nivel3.catalogos.update({
+      where: { id },
+      data: {
+        catalogo_categoria: input.categoryId,
+        cliente_id: input.clientId,
+        setor: input.sector,
+        titulo: input.title,
+        conteudo: input.content,
+        usuario_id: input.authorUserId,
+        data_edicao: new Date(),
+      },
+    });
+
+    return (await this.decorate([row]))[0]!;
   }
 }

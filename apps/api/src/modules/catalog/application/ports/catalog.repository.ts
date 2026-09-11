@@ -2,6 +2,7 @@ import type {
   CatalogCategoryOption,
   CatalogClientOption,
   CatalogSector,
+  CatalogWriteInput,
 } from '@helpdesk/contracts';
 
 export interface CatalogListFilters {
@@ -36,6 +37,10 @@ export interface CatalogFilterOptions {
   clients: CatalogClientOption[];
 }
 
+export interface CatalogWriteRecordInput extends CatalogWriteInput {
+  authorUserId: number;
+}
+
 export abstract class CatalogRepository {
   abstract list(
     filters: CatalogListFilters,
@@ -54,4 +59,15 @@ export abstract class CatalogRepository {
     categoryId: number,
     sectors: CatalogSector[],
   ): Promise<number[]>;
+
+  abstract clientExists(clientId: number): Promise<boolean>;
+
+  abstract categoryExists(categoryId: number): Promise<boolean>;
+
+  abstract create(input: CatalogWriteRecordInput): Promise<CatalogRecord>;
+
+  abstract update(
+    id: number,
+    input: CatalogWriteRecordInput,
+  ): Promise<CatalogRecord>;
 }

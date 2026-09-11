@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ForbiddenException,
   Injectable,
   NotFoundException,
@@ -11,6 +12,7 @@ import {
   type CatalogListResponse,
   type CatalogResolutionResponse,
   type CatalogSector,
+  type CatalogWriteInput,
 } from '@helpdesk/contracts';
 import type { AuthenticatedUser } from '../../access/domain/authenticated-user';
 import {
@@ -64,6 +66,14 @@ function item(record: CatalogRecord): CatalogListItem {
   };
 }
 
+function detail(record: CatalogRecord): CatalogDetailResponse {
+  return {
+    ...item(record),
+    content: record.content,
+    authorUserId: record.authorUserId,
+  };
+}
+
 @Injectable()
 export class CatalogService {
   constructor(private readonly repository: CatalogRepository) {}
@@ -87,6 +97,37 @@ export class CatalogService {
     }
 
     return [requestedSector];
+  }
+
+  private requireManageSector(
+    user: AuthenticatedUser,
+    sector: CatalogSector,
+  ): void {
+    const permission =
+      sector === 1
+        ? AppPermission.CatalogTiManage
+        : AppPermission.CatalogDevOpsManage;
+
+    if (!hasPermission(user, permission)) {
+      throw new ForbiddenException(
+        'Usuário sem permissão para alterar este setor do catálogo.',
+      );
+    }
+  }
+
+  private async validateReferences(input: CatalogWriteInput): Promise<void> {
+    const [clientExists, categoryExists] = await Promise.all([
+      this.repository.clientExists(input.clientId),
+      this.repository.categoryExists(input.categoryId),
+    ]);
+
+    if (!clientExists) {
+      throw new BadRequestException('Cliente informado não existe.');
+    }
+
+    if (!categoryExists) {
+      throw new BadRequestException('Categoria informada não existe.');
+    }
   }
 
   async list(
@@ -117,11 +158,45 @@ export class CatalogService {
       throw new NotFoundException('Catálogo não encontrado.');
     }
 
-    return {
-      ...item(record),
-      content: record.content,
-      authorUserId: record.authorUserId,
-    };
+    return detail(record);
+  }
+
+  async create(
+    user: AuthenticatedUser,
+    input: CatalogWriteInput,
+  ): Promise<CatalogDetailResponse> {
+    this.requireManageSector(user, input.sector);
+    await this.validateReferences(input);
+
+    const record = await this.repository.create({
+      ...input,
+      authorUserId: user.id,
+    });
+
+    return detail(record);
+  }
+
+  async update(
+    user: AuthenticatedUser,
+    id: number,
+    input: CatalogWriteInput,
+  ): Promise<CatalogDetailResponse> {
+    const existing = await this.repository.findById(id, this.sectors(user));
+
+    if (!existing) {
+      throw new NotFoundException('Catálogo não encontrado.');
+    }
+
+    this.requireManageSector(user, existing.sector);
+    this.requireManageSector(user, input.sector);
+    await this.validateReferences(input);
+
+    const record = await this.repository.update(id, {
+      ...input,
+      authorUserId: user.id,
+    });
+
+    return detail(record);
   }
 
   async filters(user: AuthenticatedUser): Promise<CatalogFiltersResponse> {

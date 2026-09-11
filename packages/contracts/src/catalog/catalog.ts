@@ -46,3 +46,11 @@ export interface CatalogResolutionResponse {
   status: CatalogResolutionStatus;
   catalogIds: number[];
 }
+
+export interface CatalogWriteInput {
+  sector: CatalogSector;
+  categoryId: number;
+  clientId: number;
+  title: string;
+  content: string;
+}
