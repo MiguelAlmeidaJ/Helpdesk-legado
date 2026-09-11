@@ -6,6 +6,14 @@ O catálogo em `catlg/` será migrado para NestJS/Next.js antes da aposentadoria
 
 A pasta não deve ser removida enquanto houver consumidores externos ou enquanto a resolução contextual de catálogo usada pelos atendimentos não estiver coberta pelo novo módulo.
 
+## Estado atual
+
+O inventário inicial encontrou os cinco PHPs esperados e nenhuma referência de runtime fora de `catlg/`. A API nativa de leitura passa a ser o primeiro substituto funcional, com listagem, detalhe, metadados de filtro e resolução por cliente/categoria.
+
+As permissões legadas de `m8_04` ficam concentradas no tradutor de sessão e são convertidas para permissões semânticas de leitura/gestão por setor (TI e DevOps). O valor numérico legado não deve ser consultado pelo módulo de catálogo.
+
+`catlg/` continua presente nesta fase porque criação, edição, exclusão e a interface Next.js ainda não foram migradas.
+
 ## Superfície legada
 
 A pasta contém cinco entry points PHP conhecidos:
@@ -39,8 +47,8 @@ A migração deve criar permissões explícitas seguindo o padrão de `AppPermis
 
 ## Sequência de migração
 
-1. Inventariar referências externas para os cinco PHPs e registrar os consumidores atuais.
-2. Implementar API nativa de leitura: lista, detalhe e resolução contextual usada por atendimentos.
+1. ~~Inventariar referências externas para os cinco PHPs e registrar os consumidores atuais.~~ Concluído; nenhuma referência externa encontrada.
+2. ~~Implementar API nativa de leitura: lista, detalhe e resolução contextual usada por atendimentos.~~ Concluído nesta etapa.
 3. Adicionar permissões nativas e operações de escrita necessárias para criar, editar e excluir catálogos.
 4. Implementar a interface Next.js e trocar a integração de tickets para a API nativa.
 5. Executar a auditoria em modo estrito e remover qualquer referência restante a `catlg/*.php`.

@@ -39,13 +39,52 @@ function pushGrant(
   }
 }
 
+function pushCatalogGrants(
+  grants: PermissionGrant[],
+  legacyLevel: number,
+) {
+  const tiRead = [1, 2, 5, 6].includes(legacyLevel);
+  const tiManage = [2, 6].includes(legacyLevel);
+  const devOpsRead = [3, 4, 5, 6].includes(legacyLevel);
+  const devOpsManage = [4, 6].includes(legacyLevel);
+
+  pushGrant(
+    grants,
+    AppPermission.CatalogTiRead,
+    tiRead ? 1 : 0,
+    1,
+    PermissionScope.All,
+  );
+  pushGrant(
+    grants,
+    AppPermission.CatalogTiManage,
+    tiManage ? 1 : 0,
+    1,
+    PermissionScope.All,
+  );
+  pushGrant(
+    grants,
+    AppPermission.CatalogDevOpsRead,
+    devOpsRead ? 1 : 0,
+    1,
+    PermissionScope.All,
+  );
+  pushGrant(
+    grants,
+    AppPermission.CatalogDevOpsManage,
+    devOpsManage ? 1 : 0,
+    1,
+    PermissionScope.All,
+  );
+}
+
 export function translateLegacySession(
   session: LegacyUserSession,
 ): AuthenticatedUser {
   const grants: PermissionGrant[] = [];
   const users = session.modules[1];
   const tickets = session.modules[3];
-  const ticketAudit = session.modules[8];
+  const legacyModule8 = session.modules[8];
   const logistics = session.modules[9];
 
   pushGrant(
@@ -149,10 +188,12 @@ export function translateLegacySession(
   pushGrant(
     grants,
     AppPermission.TicketsAudit,
-    permissionLevel(ticketAudit, 0),
+    permissionLevel(legacyModule8, 0),
     1,
     PermissionScope.All,
   );
+
+  pushCatalogGrants(grants, permissionLevel(legacyModule8, 4));
 
   pushGrant(
     grants,
