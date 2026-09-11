@@ -32,13 +32,16 @@ Essas bases devem permanecer fora do escopo da limpeza até existir uma decisão
 
 Não adicionar `plugins_app` ou `patrimonios` ao Prisma apenas para suportar a retirada do PHP. Sem consumidor nativo, isso criaria integração sem necessidade operacional.
 
-## Sequência de retirada
+## Estado da retirada
 
-1. Auditar referências externas para endpoints em `ativos/*.php`.
-2. Remover ou substituir qualquer acesso encontrado em menus, páginas ou scripts externos.
-3. Excluir os PHPs e demais arquivos exclusivos da pasta `ativos/`.
-4. Procurar CSS, imagens, includes e dependências que tenham ficado órfãos.
-5. Executar a auditoria geral de legado, typecheck e build do monorepo.
+A auditoria anterior à remoção confirmou que nenhum runtime fora de `ativos/` aponta para os 19 endpoints PHP conhecidos do módulo.
+
+Nesta etapa, os 19 PHPs de `ativos/` são retirados do repositório. Os bancos `plugins_app` e `patrimonios` continuam preservados e não fazem parte da exclusão.
+
+Depois da retirada do runtime, permanecem duas verificações de limpeza:
+
+1. procurar CSS, imagens, includes e outras dependências que tenham ficado órfãs;
+2. executar auditoria geral de legado, typecheck e build do monorepo.
 
 O comando de proteção desta etapa é:
 
@@ -46,7 +49,7 @@ O comando de proteção desta etapa é:
 pnpm legacy:assets:audit
 ```
 
-Enquanto a pasta ainda existir, referências internas entre arquivos de `ativos/` são toleradas. O comando falha somente quando algum runtime fora da pasta ainda aponta para um endpoint PHP conhecido do módulo.
+Após esta etapa, o comando falha em duas situações: se qualquer arquivo voltar a existir em `ativos/` ou se algum runtime externo apontar para um dos endpoints PHP aposentados.
 
 ## Possível evolução futura
 

@@ -54,6 +54,8 @@ const tracked = execFileSync(
   .filter((file, index, all) => all.indexOf(file) === index)
   .filter((file) => existsSync(path.join(root, file)));
 
+const remainingLegacyFiles = tracked.filter((file) => file.startsWith('ativos/'));
+
 const runtimeFiles = tracked.filter(
   (file) =>
     file !== self &&
@@ -130,7 +132,18 @@ for (const file of runtimeFiles) {
 
 console.log('Auditoria do módulo legado de ativos');
 console.log(`  endpoints conhecidos: ${legacyAssetEntryPoints.length}`);
+console.log(`  arquivos remanescentes em ativos/: ${remainingLegacyFiles.length}`);
 console.log(`  runtimes externos verificados: ${runtimeFiles.length}`);
+
+if (remainingLegacyFiles.length > 0) {
+  console.error(
+    `\nFalha: ${remainingLegacyFiles.length} arquivo(s) ainda existem em ativos/:`,
+  );
+
+  for (const file of remainingLegacyFiles) {
+    console.error(`  ${file}`);
+  }
+}
 
 if (references.length > 0) {
   console.error(
@@ -142,13 +155,15 @@ if (references.length > 0) {
       `  ${reference.file}  [${reference.literal}] -> ${reference.resolved}`,
     );
   }
+}
 
+if (remainingLegacyFiles.length > 0 || references.length > 0) {
   console.error(
-    '\nRemova ou substitua essas referências antes de excluir a pasta ativos/.',
+    '\nA aposentadoria de ativos ainda não está completa: remova o runtime legado e qualquer referência externa restante.',
   );
   process.exitCode = 2;
 } else {
   console.log(
-    '\nOK: nenhum runtime fora de ativos/ aponta para os endpoints PHP conhecidos do módulo.',
+    '\nOK: ativos/ está removido e nenhum runtime aponta para os endpoints PHP aposentados.',
   );
 }

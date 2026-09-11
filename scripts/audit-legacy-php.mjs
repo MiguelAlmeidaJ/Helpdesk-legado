@@ -60,12 +60,32 @@ const removedRuntimePaths = [
   'rel/atd_total_por_cliente.php',
   'rel/atd_total_por_tecnico.php',
   'rel/atd_total_por_categoria.php',
+  'ativos/ativos.php',
+  'ativos/ativos_antiga.php',
+  'ativos/ativos_conect.php',
+  'ativos/ativos_delete.php',
+  'ativos/ativos_edit.php',
+  'ativos/ativos_insert.php',
+  'ativos/ativos_prog.php',
+  'ativos/ativos_programas.php',
+  'ativos/downloads.php',
+  'ativos/gerar_relatorio.php',
+  'ativos/home.php',
+  'ativos/patrimonio_delete_img.php',
+  'ativos/patrimonios.php',
+  'ativos/patrimonios_delete.php',
+  'ativos/patrimonios_edit.php',
+  'ativos/patrimonios_edit_imagem.php',
+  'ativos/patrimonios_insert.php',
+  'ativos/processos.php',
+  'ativos/programas.php',
 ];
 
 const retiredDirectories = [
   { label: 'rel/ (runtime)', prefix: 'rel/', preservePrefix: 'rel/relatorios/' },
   { label: 'atd/', prefix: 'atd/' },
   { label: 'home/', prefix: 'home/' },
+  { label: 'ativos/', prefix: 'ativos/' },
 ];
 
 const tracked = execFileSync(
