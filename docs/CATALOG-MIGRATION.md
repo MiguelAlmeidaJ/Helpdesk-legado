@@ -12,7 +12,9 @@ O inventário inicial encontrou os cinco PHPs esperados e nenhuma referência de
 
 As permissões legadas de `m8_04` ficam concentradas no tradutor de sessão e são convertidas para permissões semânticas de leitura/gestão por setor (TI e DevOps). O valor numérico legado não deve ser consultado pelo módulo de catálogo.
 
-`catlg/` continua presente nesta fase porque a interface Next.js ainda não foi migrada. O legado não possui fluxo de exclusão de catálogo, portanto a API nova não introduz `DELETE` destrutivo sem requisito funcional.
+A interface Next.js nativa agora está disponível em `/catalog`, cobrindo listagem, filtros, visualização segura do conteúdo, criação e edição. A UI usa as permissões semânticas `read`/`manage` por setor e consome somente a API NestJS.
+
+`catlg/` continua presente nesta fase porque a integração contextual de tickets e o cutover ainda não foram concluídos. O legado não possui fluxo de exclusão de catálogo, portanto a API e a interface novas não introduzem exclusão destrutiva sem requisito funcional.
 
 ## Superfície legada
 
@@ -50,9 +52,10 @@ A migração deve criar permissões explícitas seguindo o padrão de `AppPermis
 1. ~~Inventariar referências externas para os cinco PHPs e registrar os consumidores atuais.~~ Concluído; nenhuma referência externa encontrada.
 2. ~~Implementar API nativa de leitura: lista, detalhe e resolução contextual usada por atendimentos.~~ Concluído nesta etapa.
 3. ~~Adicionar operações nativas de escrita para criar e editar catálogos usando permissões `manage`.~~ Concluído nesta etapa; o legado não possui exclusão.
-4. Implementar a interface Next.js e trocar a integração de tickets para a API nativa.
-5. Executar a auditoria em modo estrito e remover qualquer referência restante a `catlg/*.php`.
-6. Excluir `catlg/`, registrar os endpoints na auditoria geral de legado e executar typecheck/build.
+4. ~~Implementar a interface Next.js nativa para listar, visualizar, criar e editar catálogos.~~ Concluído nesta etapa em `/catalog`.
+5. Trocar a integração contextual de tickets para a API nativa de catálogo.
+6. Executar a auditoria em modo estrito e remover qualquer referência restante a `catlg/*.php`.
+7. Excluir `catlg/`, registrar os endpoints na auditoria geral de legado e executar typecheck/build.
 
 ## Auditoria
 
