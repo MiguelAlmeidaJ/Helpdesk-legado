@@ -2,45 +2,45 @@
 
 ## Objetivo
 
-A navegação do Helpdesk ainda é definida estaticamente no frontend. Esta migração introduz uma fonte persistente para que administradores possam organizar o sidebar sem alterar código a cada nova página migrada.
+A navegação do Helpdesk passa a ter uma fonte persistente para que administradores possam organizar o sidebar sem alterar código a cada nova página migrada.
 
 O gerenciamento do menu é apenas uma camada de apresentação. Ocultar um item nunca substitui as verificações de autorização das rotas e APIs.
 
-## Fase 1: fundação
+## Fundação de acesso
 
-Este patch cria a base para as próximas etapas:
-
-- role nativa `system-admin` para administração global;
-- tradução da role `system-admin` para `AppPermission.SystemAdmin`;
-- comando idempotente para conceder a role a um usuário existente;
-- tabelas `navigation_sections` e `navigation_items`;
-- campo `visibility_condition` reservado para condições estruturadas de acesso;
-- comandos de bootstrap sem alteração imediata do sidebar atual.
-
-A role existente `administrador` não é convertida automaticamente em acesso global. Isso evita elevar usuários existentes sem uma decisão explícita.
-
-## Provisionamento
-
-Com as variáveis de banco configuradas no `.env` da raiz:
+A role nativa `system-admin` é traduzida para `AppPermission.SystemAdmin`. Ela é concedida explicitamente pelo comando abaixo; não existe regra especial por ID de usuário:
 
 ```bash
-pnpm navigation:bootstrap
 pnpm access:grant-system-admin -- 157
 ```
 
-Os dois comandos são idempotentes e podem ser executados novamente.
+A role histórica `administrador` não é convertida automaticamente em acesso global. Isso evita elevar usuários existentes sem uma decisão explícita.
 
-`access:grant-system-admin` não contém regra especial para o usuário 157. O ID é um argumento do comando e pode ser usado para provisionar outro administrador global no futuro.
+## Navegação persistente
 
-## Modelo de navegação
+As tabelas `navigation_sections` e `navigation_items` armazenam grupos e itens do sidebar. Elas controlam nome, sigla, URL, ordem, status `available`/`planned`, estado ativo e condição de visibilidade.
 
-`navigation_sections` representa os grupos principais do sidebar. Cada seção possui slug, nome, sigla opcional, ordem e estado ativo.
+O bootstrap cria as tabelas e importa o menu inicial de forma idempotente:
 
-`navigation_items` representa as páginas dentro de uma seção. Cada item possui slug, nome, URL opcional, status, ordem, estado ativo e uma condição de visibilidade opcional.
+```bash
+pnpm navigation:bootstrap
+```
 
-Nesta fase `visibility_condition` é armazenada como texto JSON, mas ainda não é executada pelo frontend. A API da próxima fase validará apenas formatos declarativos conhecidos; não haverá execução de JavaScript, SQL ou expressões arbitrárias.
+O bootstrap usa `INSERT IGNORE`: itens já existentes não são sobrescritos. Isso é importante porque, a partir da tela administrativa, a configuração persistida passa a ser a fonte de verdade.
 
-Formato planejado para condições:
+## API e sidebar dinâmico
+
+`GET /api/navigation` retorna somente as seções e itens ativos que o usuário autenticado pode visualizar, respeitando `sort_order`.
+
+O sidebar consulta essa API no navegador. Se a API estiver indisponível, mantém a configuração estática compilada como fallback para não bloquear a navegação durante uma falha transitória.
+
+O bootstrap também corrige páginas nativas que já existiam mas ainda estavam marcadas como migração no menu, incluindo rotas de DevOps, Marketing e administração de RDs.
+
+## Condições de visibilidade
+
+`visibility_condition` usa apenas JSON declarativo. Não há execução de JavaScript, SQL ou expressões arbitrárias.
+
+Exemplo com qualquer uma das permissões:
 
 ```json
 {
@@ -48,8 +48,23 @@ Formato planejado para condições:
 }
 ```
 
-Também serão suportadas combinações controladas como `allPermissions` e `anyRoles`. Condição nula significa item disponível para qualquer usuário autenticado, sujeito às proteções da rota de destino.
+Também são aceitos:
 
-## Próximas fases
+```json
+{
+  "allPermissions": ["tickets.read", "tickets.audit"],
+  "anyRoles": ["quality", "sector_manager"]
+}
+```
 
-A fase seguinte fará a leitura da configuração pela API, importará o menu estático atual e conectará o sidebar à fonte persistente com fallback seguro. Depois será adicionada a tela administrativa para criar, editar, ativar, desativar e reorganizar seções e itens.
+As regras são combinadas com `AND`: quando mais de um grupo é informado, todos os grupos precisam ser satisfeitos. Dentro de `anyPermissions` e `anyRoles`, basta uma correspondência. `allPermissions` exige todas.
+
+Condição nula significa visível para qualquer usuário autenticado. JSON inválido ou com chaves desconhecidas é tratado como não visível. `AppPermission.SystemAdmin` ignora as condições de menu e visualiza todos os itens ativos.
+
+## Páginas migradas importadas nesta fase
+
+Além dos itens que já estavam disponíveis, o seed passa a expor as rotas nativas existentes para projetos e tarefas DevOps, tarefas de Marketing, análise e relatório de RDs, manutenção de RD, aprovação de RDs e pagamento de RDs. A visibilidade segue permissões semânticas quando elas já existem no núcleo de acesso.
+
+## Próxima fase
+
+A próxima fase adicionará `/admin/navigation`, restrita a `system.admin`, para criar, editar, ativar, desativar e reorganizar seções e itens sem editar o banco manualmente.
