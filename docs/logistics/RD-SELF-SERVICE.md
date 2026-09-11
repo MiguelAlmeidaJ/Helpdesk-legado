@@ -1,6 +1,7 @@
 # Autosserviço nativo de RD
 
-O `0038` migra o fluxo pessoal de `logistica/rd.php` para NestJS/Next.
+O `0038` migrou o fluxo pessoal de RD para NestJS/Next. O autosserviço nativo
+é hoje a implementação mantida.
 
 ## Interface
 
@@ -9,7 +10,7 @@ O `0038` migra o fluxo pessoal de `logistica/rd.php` para NestJS/Next.
 /logistics/expenses/manage
 ```
 
-O painel de resumo continua em `/logistics/expenses`. O CRUD fica em
+O painel de resumo fica em `/logistics/expenses`. O CRUD fica em
 `/logistics/expenses/manage`.
 
 ## API
@@ -43,44 +44,26 @@ comprovantes são PDFs armazenados sob `uploads_rd/native/`, com no máximo
 25 MB e validação tanto do MIME quanto da assinatura `%PDF-`.
 
 `RD_UPLOAD_DIR` pode sobrescrever o diretório físico. Sem configuração, a API
-usa `<repo>/uploads_rd`, compatível com o diretório legado.
+usa `<repo>/uploads_rd`.
 
 ## Hardening intencional
 
-Os PHPs antigos confiavam no `id` recebido pelo formulário em operações de
-edição/exclusão. A implementação nativa exige simultaneamente:
+A implementação histórica confiava no `id` recebido pelo formulário em
+operações de edição/exclusão. A implementação nativa exige simultaneamente:
 
 - usuário autenticado igual ao `running_balance.user_id`;
 - `status = 1`.
 
 Isso corrige acesso horizontal por ID sem alterar a regra funcional da tela.
 
-## Retirada do autosserviço PHP
+## Estado atual
 
-O corte `0038b` aposenta o runtime de autosserviço depois do smoke nativo.
-Os deep links passam a ser bridges mínimos:
+O runtime PHP de autosserviço e seus antigos writers, uploads, bridges e CSS
+foram removidos. O painel e o CRUD são atendidos diretamente pelas rotas Next e
+pela API nativa, sem camada de redirecionamento.
 
-- `logistica/rdPainel.php` -> `/logistics/expenses`;
-- `logistica/rd.php` -> `/logistics/expenses/manage`;
-- `logistica/rd3.php` -> `/logistics/expenses/manage`;
-- `logistica/rd_subistituido.php` -> `/logistics/expenses/manage`.
+A leitura de comprovantes nativos exige que `running_balance.user_id` seja o
+usuário autenticado, preservando o escopo `Own` da permissão de RD.
 
-Foram removidos os writers/upload exclusivos do autosserviço:
-
-- `logistica/addDespesa.php`;
-- `logistica/editarRD.php`;
-- `logistica/excluirRD.php`;
-- `logistica/recebe_upload.php`.
-
-Os CSS `logistica/css/rd_modern.css` e
-`logistica/css/rd_painel_modern.css` também foram removidos por não terem
-mais consumidores. O menu PHP de Logística aponta diretamente para o painel
-Next.
-
-Os fluxos administrativos de RD continuam no legado nesta etapa, incluindo
-`gestaoRD.php`, `aprovarRD.php`, `pagarRD.php`, `analiseRD.php`,
-`detalharRD.php` e o fluxo gerencial de ajustes.
-
-O mesmo corte endurece a leitura de comprovantes nativos: o download agora
-exige que `running_balance.user_id` seja o usuário autenticado, preservando
-o escopo `Own` da permissão de RD.
+Os fluxos administrativos de aprovação, pagamento, relatório, análise e
+ajustes também estão no stack nativo.

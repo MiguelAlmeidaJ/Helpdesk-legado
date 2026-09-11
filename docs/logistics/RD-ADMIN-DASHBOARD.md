@@ -1,7 +1,8 @@
 # Painel administrativo nativo de RD
 
-O `0039a` abre o read model administrativo do RD em NestJS sem mover ainda os
-workflows financeiros do PHP.
+O `0039a` introduziu o read model administrativo do RD em NestJS. Os workflows
+financeiros e a interface administrativa foram migrados nos cortes seguintes,
+e a árvore PHP de logística foi posteriormente removida.
 
 ## API
 
@@ -11,7 +12,7 @@ GET /api/logistics/expenses/admin/details
 ```
 
 O resumo aceita `startDate`, `endDate` e `status`. Os status preservados do
-painel legado são:
+painel histórico são:
 
 - `1`: aguardando aprovação;
 - `2`: aprovadas aguardando pagamento;
@@ -26,10 +27,10 @@ agrupamento.
 A leitura administrativa usa a permissão de aplicação
 `logistics.expenses.admin.read` com escopo `All`.
 
-Na sessão legada ela é concedida quando `m9_02 >= 2`, exatamente como a porta
-de entrada de `logistica/gestaoRD.php`. No adapter RBAC o slug explícito é
-`logistica.rd.admin.visualizar`, mantendo o fallback para `m9_02` durante a
-transição.
+Na sessão legada ela é concedida quando `m9_02 >= 2`, preservando a regra
+histórica de acesso. No adapter RBAC o slug explícito é
+`logistica.rd.admin.visualizar`, com fallback para `m9_02` enquanto a
+compatibilidade de permissões legadas for necessária.
 
 Isso separa a leitura global do painel das permissões pessoais
 `logistics.expenses.read/manage`, que permanecem com escopo `Own`.
@@ -38,7 +39,7 @@ Isso separa a leitura global do painel das permissões pessoais
 
 - somente linhas com `running_balance.aj = 1` entram nos cálculos;
 - os cards globais de aguardando aprovação e aprovadas não usam o filtro de
-  período, como no painel PHP;
+  período, como no painel histórico;
 - os totais do período usam `date_created`;
 - o resumo por categoria mantém o corte histórico em `2025-10-01`:
   `category` antes da data e `categorias_subgrupo` a partir dela;
@@ -47,37 +48,24 @@ Isso separa a leitura global do painel das permissões pessoais
   e `running_balance.user_id`.
 
 O detalhamento por categoria mantém a resolução das duas tabelas usada pelo
-AJAX legado para permitir comparação de paridade durante este corte.
+fluxo histórico para preservar a paridade dos dados.
 
 ## Hardening
 
-`logistica/buscar_detalhesRD.php` não repetia a checagem de permissão de
-`gestaoRD.php`. Os dois endpoints nativos exigem explicitamente
-`LogisticsExpensesAdminRead`, evitando que o endpoint de detalhes seja usado
-como bypass da tela administrativa.
+O endpoint PHP histórico de detalhes não repetia a checagem de permissão do
+painel administrativo. Os dois endpoints nativos exigem explicitamente
+`LogisticsExpensesAdminRead`, evitando que o detalhamento seja usado como
+bypass da autorização administrativa.
 
-## Fora do corte
+## Web
 
-Continuam no legado nesta etapa:
-
-- aprovação e recusa (`aprovarRD.php`);
-- pagamento (`pagarRD.php`);
-- relatório/PDF (`detalharRD.php`, `gerarPDF.php`);
-- edição administrativa e demais ajustes gerenciais.
-
-Não há cutover de `gestaoRD.php` no `0039a`. O próximo corte pode construir a
-UI nativa sobre este read model antes de migrar os workflows de escrita.
-
-## Web (`0039b`)
-
-O painel administrativo passa a ter a rota nativa:
+O painel administrativo está disponível em:
 
 ```text
 /logistics/expenses/admin
 ```
 
-A tela consome exclusivamente os endpoints do `0039a` e preserva a leitura do
-painel legado com:
+A tela consome exclusivamente os endpoints nativos e oferece:
 
 - filtro por período;
 - alternância entre status `1`, `2` e `4`;
@@ -89,5 +77,5 @@ O item `Gestão RDs` fica disponível na navegação nativa. A página faz uma
 checagem inicial de `LogisticsExpensesAdminRead` (ou `SystemAdmin`) e a API
 continua sendo a autoridade de autorização para todas as leituras.
 
-O `0039b` ainda não redireciona `gestaoRD.php`: aprovação, pagamento,
-relatórios e ajustes administrativos permanecem no PHP até os próximos cortes.
+Aprovação, pagamento, relatórios, análise comparativa e ajustes administrativos
+também possuem fluxos nativos. Não há entry point PHP mantido para o painel.

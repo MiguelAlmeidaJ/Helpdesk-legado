@@ -2,8 +2,7 @@
 
 ## Scope
 
-`0042c` migrates the administrative comparative analysis from
-`logistica/analiseRD.php` to the native stack.
+`0042c` introduced the native administrative comparative analysis.
 
 Native routes:
 
@@ -18,11 +17,11 @@ same `PermissionScope` behavior used by the administrative paid report.
 ## Comparison semantics
 
 The API compares only active paid expenses (`running_balance.status = 4` and
-`aj = 1`) using `date_created`, matching the legacy report period basis.
+`aj = 1`) using `date_created`, matching the historical report period basis.
 
 Defaults are the previous calendar month as Period 1 and the current calendar
 month as Period 2. When the submitted periods are reversed, the API orders them
-chronologically, preserving the legacy behavior.
+chronologically, preserving the historical behavior.
 
 Variation follows the historical rule:
 
@@ -35,32 +34,28 @@ cutoff resolve through `category`, and rows from the cutoff onward resolve
 through `categorias_subgrupo`.
 
 The native comparison intentionally includes expenses without a client under
-`Sem cliente`. This fixes the legacy inconsistency where the headline total was
-calculated from the client breakdown and could omit paid expenses with an empty
-client.
+`Sem cliente`. This fixes a historical inconsistency where the headline total
+was calculated from the client breakdown and could omit paid expenses with an
+empty client.
 
 ## Web behavior
 
 The page exposes:
 
 - two editable date periods;
-- the same alert thresholds used by the PHP screen;
+- the same alert thresholds used by the historical screen;
 - total for each period;
 - general percentage variation and absolute difference;
 - comparison by category;
 - comparison by client.
 
-Highlighting remains compatible with the legacy UI: only positive variation at
-or above the selected threshold is highlighted.
+Highlighting remains compatible with the historical UI: only positive variation
+at or above the selected threshold is highlighted.
 
-## Cutover
+## Final cutover
 
-`logistica/analiseRD.php` now returns a `302` redirect to the native page. GET
-and POST parameters are forwarded as query parameters, and the Next.js page
-accepts the legacy names (`date_start_1`, `date_end_1`, `date_start_2`,
-`date_end_2`, `percent_alert`) so old bookmarks and stale form submissions keep
-working during the transition.
+The native page is the only supported entry point. It still accepts the
+historical query names (`date_start_1`, `date_end_1`, `date_start_2`,
+`date_end_2`, `percent_alert`) where bookmark compatibility is useful.
 
-The old PHP implementation remains below the early `exit` temporarily. It can
-be physically removed together with the remaining legacy administrative RD
-shell after operational validation.
+The legacy PHP implementation and its redirect bridge were physically removed.

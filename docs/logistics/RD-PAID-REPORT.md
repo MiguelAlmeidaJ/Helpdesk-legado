@@ -1,7 +1,7 @@
 # RD paid report — 0042a / 0042b
 
-`0042a` introduced the native paid-expense report. `0042b` completes the
-administrative edit flow and cuts the legacy paid report over to Next.js.
+`0042a` introduced the native paid-expense report. `0042b` completed the
+administrative edit flow and the Next.js cutover.
 
 ## Native routes
 
@@ -33,12 +33,12 @@ Administrative editing is deliberately separate and requires
 `logistics.expenses.admin.manage`. The legacy permission adapter grants it when
 `m9_02 >= 2`, while RBAC can use `logistica.rd.admin.gerenciar`.
 
-This replaces the hard-coded user IDs found in `detalharRD.php` with explicit
-permissions. No user ID allowlist is ported.
+The native policy replaced the hard-coded user ID allowlist from the historical
+implementation with explicit permissions.
 
 ## Report semantics
 
-For parity with the PHP report:
+For parity with the historical report:
 
 - only `running_balance.status = 4` and `aj = 1` are returned;
 - the period still filters `date_created`;
@@ -48,7 +48,7 @@ For parity with the PHP report:
   `categorias_subgrupo` on/after that cutoff.
 
 The difference between filtering by creation date and displaying payment date is
-legacy behavior. Changing the business meaning of the report should be a
+historical behavior. Changing the business meaning of the report should be a
 separate decision, not an incidental migration change.
 
 ## Administrative edit rules
@@ -79,16 +79,15 @@ The Next.js screen provides native filters, pagination, CSV export, browser
 print/Save as PDF and an edit action for users with
 `logistics.expenses.admin.manage`.
 
-Legacy query names (`date_start`, `date_end`, `user_id`, `cliente_nome` and
-`category_id`) are accepted by the Next page so old bookmarks survive cutover.
+Historical query names (`date_start`, `date_end`, `user_id`, `cliente_nome` and
+`category_id`) are accepted by the Next page so existing bookmarks can keep
+their initial filters.
 
-## Legacy cutover
+## Final cutover
 
-`detalharRD.php` now redirects to `/logistics/expenses/admin/report`, preserving
-its query string. `gerarPDF.php` redirects to the same report, where browser
-print/Save as PDF replaces FPDF.
+The native report and API are authoritative. Browser print/Save as PDF replaces
+the historical server-side PDF entry point, and administrative editing uses only
+the protected native endpoints.
 
-The old AJAX/editor endpoints `buscarRD.php` and `editarRDAdm.php` return
-`410 Gone` before any database access. Their historical code remains below the
-early exit temporarily for rollback/reference, but no legacy administrative
-write is executed after the cutover.
+The old PHP report, editor handlers, redirects and tombstones were physically
+removed with the legacy logistics tree.

@@ -1,8 +1,8 @@
 # Aprovação nativa de RD
 
-O `0040a` migra para NestJS o workflow de aprovação e recusa que hoje existe
-em `logistica/aprovarRD.php`. A interface Next será conectada em um corte
-seguinte; este patch entrega primeiro a API transacional e o permissionamento.
+O `0040a` introduziu no NestJS o workflow transacional de aprovação e recusa.
+O `0040b` conectou a interface Next, e o fluxo nativo passou a ser a única
+implementação mantida após a retirada da árvore PHP de logística.
 
 ## API
 
@@ -21,8 +21,9 @@ despesa mais antiga para a mais nova.
 O workflow usa `logistics.expenses.approve` com escopo `All`.
 
 Na sessão legada, a permissão é concedida quando `m9_02 >= 2`, preservando a
-porta de entrada atual de `aprovarRD.php`. No adapter RBAC o slug é
-`logistica.rd.aprovar`, com fallback temporário para o nível legado.
+regra histórica de aprovação. No adapter RBAC o slug é
+`logistica.rd.aprovar`, com fallback para o nível legado enquanto esse modelo
+de permissão permanecer em uso.
 
 ## Transação e concorrência
 
@@ -42,11 +43,11 @@ Ao aprovar:
 4. `remark_aprov` recebe a observação da aprovação (máximo de 255 caracteres).
 
 A persistência usa os campos administrativos já existentes em `running_balance`.
-A tabela `approvement` referenciada por uma versão do PHP legado não existe no
-schema atual de `nivel3`, portanto o fluxo nativo não depende dela.
+A tabela `approvement` referenciada por uma versão histórica do fluxo não existe
+no schema atual de `nivel3`, portanto o fluxo nativo não depende dela.
 
-A recusa preserva o comportamento legado e move o status de `1` para `3`, sem
-inventar um registro de auditoria separado que não existe no banco atual.
+A recusa preserva o comportamento histórico e move o status de `1` para `3`,
+sem inventar um registro de auditoria separado que não existe no banco atual.
 
 ## Categoria e comprovante
 
@@ -55,15 +56,14 @@ A fila padroniza a troca de catálogo na mesma data do painel administrativo:
 `categorias_subgrupo` com `aplicavel IN ('Ambos', 'RD')`.
 
 A categoria `43` continua sinalizando `receiptRequiredMissing` quando não há
-anexo. A fila também expõe os metadados dos anexos para a UI nativa que será
-ligada no próximo corte.
+anexo. A fila expõe os metadados dos anexos para a UI nativa.
 
 ## E-mail
 
 Após o commit da aprovação, a API pode enviar o aviso de despesas aprovadas
-usando a infraestrutura SMTP já existente no monorepo. O envio não participa
-da transação: uma falha de SMTP é registrada no log, mas não desfaz uma
-aprovação já confirmada no banco.
+usando a infraestrutura SMTP do monorepo. O envio não participa da transação:
+uma falha de SMTP é registrada no log, mas não desfaz uma aprovação já
+confirmada no banco.
 
 O envio fica desligado por padrão. Para habilitar:
 
@@ -72,27 +72,14 @@ RD_APPROVAL_EMAIL_ENABLED=true
 RD_APPROVAL_EMAIL_RECIPIENTS=destinatario1@empresa.com,destinatario2@empresa.com
 ```
 
-Sem `RD_APPROVAL_EMAIL_RECIPIENTS`, o adapter mantém temporariamente os mesmos
-destinatários existentes no PHP legado. `SMTP_HOST`, `SMTP_FROM` e demais
-variáveis SMTP continuam sendo compartilhadas com as notificações do Helpdesk.
+Sem `RD_APPROVAL_EMAIL_RECIPIENTS`, o adapter mantém os destinatários
+históricos configurados na implementação migrada. `SMTP_HOST`, `SMTP_FROM` e
+demais variáveis SMTP continuam sendo compartilhadas com as notificações do
+Helpdesk.
 
-## Fora do corte
+## Web e estado atual
 
-Ainda permanecem no legado nesta etapa:
-
-- tela de aprovação (`aprovarRD.php`) como entrada principal;
-- visualização administrativa de anexos na fila nativa;
-- pagamento (`pagarRD.php`);
-- relatório/PDF;
-- ajustes administrativos.
-
-O próximo corte deve conectar a UI Next ao workflow acima e somente depois
-fazer o cutover da tela PHP de aprovação.
-
-
-## Web e cutover (`0040b`)
-
-A fila de aprovação passa a ter a rota nativa:
+A fila de aprovação está em:
 
 ```text
 /logistics/expenses/admin/approvals
@@ -105,8 +92,5 @@ Os comprovantes são abertos por um proxy Next e por um endpoint administrativo
 protegido por `LogisticsExpensesApprove`. O endpoint pessoal de anexos continua
 com escopo `Own`; ele não foi relaxado para atender o fluxo administrativo.
 
-`logistica/aprovarRD.php` passa a redirecionar para a rota Next. A implementação
-PHP antiga fica temporariamente abaixo do `exit` durante o smoke/cutover e pode
-ser removida em um corte de aposentadoria depois da paridade operacional.
-
-Pagamento (`pagarRD.php`) continua legado e será tratado no `0041`.
+Pagamento, relatório e ajustes administrativos também estão no stack nativo.
+Não existe bridge PHP para o workflow de aprovação.

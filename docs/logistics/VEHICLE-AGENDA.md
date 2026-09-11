@@ -1,7 +1,6 @@
 # Agenda de Veículos
 
-A primeira fatia do domínio Logística migrada para NestJS/Next é a Agenda de
-Veículos.
+A Agenda de Veículos é atendida pelo stack nativo NestJS/Next.
 
 ## Rotas
 
@@ -30,10 +29,10 @@ O módulo 9, posição 1, continua sendo a origem de compatibilidade:
   desfazer e gestão de veículos.
 
 A tradução RBAC reconhece os slugs `logistica.agenda.visualizar` e
-`logistica.agenda.gerenciar`, mantendo fallback para o valor legado durante a
-transição.
+`logistica.agenda.gerenciar`, mantendo fallback para o valor legado enquanto
+esse modelo de permissão permanecer em uso.
 
-A visibilidade privada preserva as funções administrativas legadas
+A visibilidade privada preserva as funções administrativas históricas
 `1, 2, 3, 9, 10, 18`. Usuários externos continuam limitados aos clientes
 vinculados em `clientes_usuarios`.
 
@@ -48,20 +47,10 @@ vinculados em `clientes_usuarios`.
   inativos;
 - impressão usa a mesma grade Next via `window.print()`.
 
-## Retirement
+## Estado atual
 
-Após o smoke funcional da implementação Nest/Next, a lógica operacional de
-`logistica/agendaVeiculos.php` e `logistica/relatorioAgenda.php` foi removida.
+A lógica e os entry points PHP da agenda e do relatório foram removidos.
+A rota `/logistics/vehicles/agenda` é a única interface mantida, e a impressão
+é executada pela própria tela Next depois do carregamento dos dados.
 
-Os dois caminhos permanecem somente como bridges mínimos para preservar links
-antigos e favoritos. Eles dependem apenas de `all/app_url.php` e redirecionam
-para `/logistics/vehicles/agenda`, preservando `mes` e `ano` como
-`month` e `year` quando presentes. O antigo relatório adiciona `print=1`, e a
-tela Next dispara a impressão somente depois de carregar os dados.
-
-O sidebar PHP aponta diretamente para a rota Next. O stylesheet legado
-`logistica/css/agenda_modern.css` foi removido por não possuir outros
-consumidores.
-
-Os bridges podem ser apagados fisicamente junto com os demais bridges PHP
-quando a aplicação legada deixar de ser servida.
+Não há bridge PHP ou stylesheet específico da implementação antiga.

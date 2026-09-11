@@ -1,8 +1,8 @@
 # Painel pessoal de RD
 
-O primeiro corte de RD migra o painel `logistica/rdPainel.php` para NestJS e
-Next sem alterar ainda o fluxo de cadastro, edição, anexos, aprovação ou
-pagamento de despesas.
+O painel pessoal de RD está no stack nativo NestJS/Next. O autosserviço,
+os anexos e os workflows administrativos também foram migrados; a antiga
+árvore PHP de logística foi removida do repositório.
 
 ## Rotas
 
@@ -15,7 +15,7 @@ A interface Next fica em `/logistics/expenses`.
 
 ## Paridade
 
-O painel preserva as consultas legadas:
+O painel preserva as consultas históricas:
 
 - `status = 1`: soma total aguardando aprovação, sem filtro de período;
 - `status = 2`: soma total aprovado para pagamento, sem filtro de período;
@@ -27,18 +27,14 @@ O período padrão continua sendo o mês corrente.
 
 ## Permissão
 
-`LogisticsExpensesRead` usa o módulo legado 9, posição 0, nível 1 ou superior,
-igual ao gate de `rdPainel.php`.
+`LogisticsExpensesRead` preserva a compatibilidade com o módulo legado 9,
+posição 0, nível 1 ou superior.
 
-No RBAC, o slug nativo é `logistica.rd.visualizar`. Durante a transição o
-tradutor mantém fallback para o módulo 9 legado.
+No RBAC, o slug nativo é `logistica.rd.visualizar`; o tradutor mantém o
+fallback para o módulo 9 legado enquanto esse modelo de permissão existir.
 
-## Próximos cortes
+## Estado atual
 
-`logistica/rd.php`, `addDespesa.php`, `editarRD.php`, `excluirRD.php` e
-`recebe_upload.php` continuam ativos. Eles serão migrados como uma única fatia
-de autosserviço de despesas, incluindo anexos PDF e regras de edição por
-status.
-
-Por isso `rdPainel.php` ainda não é removido neste patch. O retirement físico
-acontece depois que a tela nativa também conseguir cadastrar e manter despesas.
+Cadastro, edição, exclusão, duplicação e anexos são atendidos pela interface
+`/logistics/expenses/manage` e pelos endpoints nativos de despesas. Não há
+bridge PHP ou entry point de logística mantido para esse fluxo.
