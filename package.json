@@ -12,6 +12,8 @@
     "db:pull": "pnpm --filter @helpdesk/database db:pull",
     "db:generate": "pnpm --filter @helpdesk/database db:generate",
     "access:audit": "pnpm --filter @helpdesk/database access:audit",
+    "access:grant-system-admin": "pnpm --filter @helpdesk/database access:grant-system-admin",
+    "navigation:bootstrap": "pnpm --filter @helpdesk/database navigation:bootstrap",
     "legacy:audit": "node scripts/audit-legacy-php.mjs",
     "legacy:assets:audit": "node scripts/audit-assets-legacy.mjs",
     "legacy:assets:verify": "pnpm legacy:assets:audit && pnpm legacy:audit && pnpm typecheck && pnpm build",

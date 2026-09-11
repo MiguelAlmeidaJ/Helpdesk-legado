@@ -8,6 +8,8 @@
   "scripts": {
     "build": "pnpm db:generate && tsc -p tsconfig.build.json",
     "access:audit": "pnpm build && node dist/tools/audit-access.js",
+    "access:grant-system-admin": "pnpm build && node dist/tools/grant-system-admin.js",
+    "navigation:bootstrap": "pnpm build && node dist/tools/bootstrap-navigation.js",
     "db:pull": "pnpm db:pull:nivel3 && pnpm db:pull:n3rd",
     "db:pull:nivel3": "prisma db pull --config=prisma/nivel3/prisma.config.ts",
     "db:pull:n3rd": "prisma db pull --config=prisma/n3rd/prisma.config.ts",

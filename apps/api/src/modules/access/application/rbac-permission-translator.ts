@@ -36,6 +36,8 @@ const USER_PERMISSION = {
   manageAccess: 'usuarios.editar_acesso',
 } as const;
 
+const SYSTEM_ADMIN_ROLE = 'system-admin';
+
 function permissionLevel(moduleValue: string, index: number): number {
   const value = moduleValue[index];
   return value && /^\d$/.test(value) ? Number(value) : 0;
@@ -58,6 +60,13 @@ export function translateRbacAccess(
 ): AuthenticatedUser {
   const permissions = snapshot.permissionSlugs;
   const grants: PermissionGrant[] = [];
+
+  addGrant(
+    grants,
+    AppPermission.SystemAdmin,
+    snapshot.roleSlugs.includes(SYSTEM_ADMIN_ROLE),
+    PermissionScope.All,
+  );
 
   addGrant(grants, AppPermission.UsersRead, permissions.has(USER_PERMISSION.read), PermissionScope.All);
   addGrant(grants, AppPermission.UsersCreate, permissions.has(USER_PERMISSION.create), PermissionScope.All);
