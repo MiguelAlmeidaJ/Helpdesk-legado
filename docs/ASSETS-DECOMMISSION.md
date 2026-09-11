@@ -38,10 +38,13 @@ A auditoria anterior à remoção confirmou que nenhum runtime fora de `ativos/`
 
 Nesta etapa, os 19 PHPs de `ativos/` são retirados do repositório. Os bancos `plugins_app` e `patrimonios` continuam preservados e não fazem parte da exclusão.
 
-Depois da retirada do runtime, permanecem duas verificações de limpeza:
+## Limpeza de resíduos
 
-1. procurar CSS, imagens, includes e outras dependências que tenham ficado órfãs;
-2. executar auditoria geral de legado, typecheck e build do monorepo.
+A revisão dos entry points removidos não identificou arquivos estáticos exclusivos do módulo fora de `ativos/`. As telas reutilizavam recursos compartilhados do legado, como `css/help.css`, Bootstrap, Font Awesome, `bootstrap-select`, `timeline.css`, `bootstrap-datetimepicker` e o favicon global. Esses arquivos permanecem porque também atendem outras áreas e não devem ser removidos como parte da aposentadoria de assets.
+
+A árvore pós-remoção também não mantém caminhos dedicados com nomes de ativos, patrimônio ou `plugins_app`. Em vez de apagar dependências compartilhadas por associação, a auditoria especializada passa a bloquear integrações de runtime que seriam sinais reais de reintrodução do módulo: conexões `ConnectionPluginsApp()`/`ConnectionPatrimonios()`, banco `plugins_app` e tabelas `comando_ativos`, `programas_instalados` e `processos_ativos`.
+
+Com a limpeza estrutural encerrada, resta executar a validação geral de legado, typecheck e build do monorepo.
 
 O comando de proteção desta etapa é:
 
@@ -49,7 +52,7 @@ O comando de proteção desta etapa é:
 pnpm legacy:assets:audit
 ```
 
-Após esta etapa, o comando falha em duas situações: se qualquer arquivo voltar a existir em `ativos/` ou se algum runtime externo apontar para um dos endpoints PHP aposentados.
+Após esta etapa, o comando falha se qualquer arquivo voltar a existir em `ativos/`, se algum runtime externo apontar para um endpoint PHP aposentado ou se uma integração específica do antigo módulo reaparecer no runtime.
 
 ## Possível evolução futura
 

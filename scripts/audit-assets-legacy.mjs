@@ -40,6 +40,15 @@ const legacyAssetEntryPoints = [
   'ativos/programas.php',
 ];
 
+const retiredIntegrationMarkers = [
+  { label: 'ConnectionPluginsApp()', matcher: /\bConnectionPluginsApp\s*\(/ },
+  { label: 'ConnectionPatrimonios()', matcher: /\bConnectionPatrimonios\s*\(/ },
+  { label: 'banco plugins_app', matcher: /\bplugins_app\b/i },
+  { label: 'tabela comando_ativos', matcher: /\bcomando_ativos\b/i },
+  { label: 'tabela programas_instalados', matcher: /\bprogramas_instalados\b/i },
+  { label: 'tabela processos_ativos', matcher: /\bprocessos_ativos\b/i },
+];
+
 const tracked = execFileSync(
   'git',
   ['ls-files', '--cached', '--others', '--exclude-standard'],
@@ -111,6 +120,7 @@ function resolveReference(sourceFile, literal) {
 
 const targets = new Set(legacyAssetEntryPoints.map(normalizedTarget));
 const references = [];
+const integrationResidues = [];
 
 for (const file of runtimeFiles) {
   let content = '';
@@ -119,6 +129,14 @@ for (const file of runtimeFiles) {
     content = readFileSync(path.join(root, file), 'utf8');
   } catch {
     continue;
+  }
+
+  const source = withoutComments(content);
+
+  for (const marker of retiredIntegrationMarkers) {
+    if (marker.matcher.test(source)) {
+      integrationResidues.push({ file, label: marker.label });
+    }
   }
 
   for (const literal of extractPhpPathLiterals(content)) {
@@ -134,6 +152,7 @@ console.log('Auditoria do módulo legado de ativos');
 console.log(`  endpoints conhecidos: ${legacyAssetEntryPoints.length}`);
 console.log(`  arquivos remanescentes em ativos/: ${remainingLegacyFiles.length}`);
 console.log(`  runtimes externos verificados: ${runtimeFiles.length}`);
+console.log(`  resíduos de integração encontrados: ${integrationResidues.length}`);
 
 if (remainingLegacyFiles.length > 0) {
   console.error(
@@ -157,13 +176,27 @@ if (references.length > 0) {
   }
 }
 
-if (remainingLegacyFiles.length > 0 || references.length > 0) {
+if (integrationResidues.length > 0) {
   console.error(
-    '\nA aposentadoria de ativos ainda não está completa: remova o runtime legado e qualquer referência externa restante.',
+    `\nFalha: ${integrationResidues.length} resíduo(s) de integração do módulo aposentado ainda existem no runtime:`,
+  );
+
+  for (const residue of integrationResidues) {
+    console.error(`  ${residue.file}  [${residue.label}]`);
+  }
+}
+
+if (
+  remainingLegacyFiles.length > 0 ||
+  references.length > 0 ||
+  integrationResidues.length > 0
+) {
+  console.error(
+    '\nA aposentadoria de ativos ainda não está completa: remova runtime, referências e integrações residuais do módulo.',
   );
   process.exitCode = 2;
 } else {
   console.log(
-    '\nOK: ativos/ está removido e nenhum runtime aponta para os endpoints PHP aposentados.',
+    '\nOK: ativos/ está removido e não há endpoints ou integrações residuais do módulo no runtime.',
   );
 }
