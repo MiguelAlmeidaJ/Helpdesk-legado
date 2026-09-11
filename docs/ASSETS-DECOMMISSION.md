@@ -44,15 +44,21 @@ A revisão dos entry points removidos não identificou arquivos estáticos exclu
 
 A árvore pós-remoção também não mantém caminhos dedicados com nomes de ativos, patrimônio ou `plugins_app`. Em vez de apagar dependências compartilhadas por associação, a auditoria especializada passa a bloquear integrações de runtime que seriam sinais reais de reintrodução do módulo: conexões `ConnectionPluginsApp()`/`ConnectionPatrimonios()`, banco `plugins_app` e tabelas `comando_ativos`, `programas_instalados` e `processos_ativos`.
 
-Com a limpeza estrutural encerrada, resta executar a validação geral de legado, typecheck e build do monorepo.
-
-O comando de proteção desta etapa é:
+Com a limpeza estrutural encerrada, a validação final da desativação fica consolidada em um único comando:
 
 ```bash
-pnpm legacy:assets:audit
+pnpm legacy:assets:verify
 ```
 
-Após esta etapa, o comando falha se qualquer arquivo voltar a existir em `ativos/`, se algum runtime externo apontar para um endpoint PHP aposentado ou se uma integração específica do antigo módulo reaparecer no runtime.
+Esse gate executa, nesta ordem, a auditoria especializada de assets, a auditoria geral do legado PHP, o typecheck e o build do monorepo. A etapa só deve ser considerada concluída quando as quatro verificações terminarem com sucesso.
+
+Para uma checagem rápida durante desenvolvimento, `pnpm legacy:assets:audit` continua disponível. Ela falha se qualquer arquivo voltar a existir em `ativos/`, se algum runtime externo apontar para um endpoint PHP aposentado ou se uma integração específica do antigo módulo reaparecer no runtime.
+
+## Critério de encerramento
+
+A capacidade `assets` permanece marcada como `decommissioned`: não existe runtime PHP, não existe substituição 1:1 em Nest/Next e nenhum datasource novo é criado apenas para manter compatibilidade com o módulo removido.
+
+Os bancos `plugins_app` e `patrimonios` continuam preservados como dados legados. Qualquer migração, arquivamento ou exclusão desses dados exige uma decisão separada da limpeza de código.
 
 ## Possível evolução futura
 
