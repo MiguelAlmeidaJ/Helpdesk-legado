@@ -15,6 +15,7 @@
     "legacy:audit": "node scripts/audit-legacy-php.mjs",
     "legacy:assets:audit": "node scripts/audit-assets-legacy.mjs",
     "legacy:assets:verify": "pnpm legacy:assets:audit && pnpm legacy:audit && pnpm typecheck && pnpm build",
+    "legacy:catalog:audit": "node scripts/audit-catalog-legacy.mjs",
     "test:reports": "node --test scripts/reports.test.cjs",
     "test:reports:db": "node scripts/reports-db-smoke.cjs",
     "test:logistics": "node --test scripts/logistics.test.cjs scripts/logistics-status.test.cjs",
