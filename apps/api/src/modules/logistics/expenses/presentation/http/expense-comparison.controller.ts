@@ -8,13 +8,13 @@ import {
 } from '@nestjs/common';
 import { ApiOperation, ApiQuery, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { AppPermission, PermissionScope } from '@helpdesk/contracts';
-import { LEGACY_SESSION_SECURITY } from '../../../../core/openapi/openapi.constants';
-import type { AuthenticatedUser } from '../../../access/domain/authenticated-user';
-import { CurrentUser } from '../../../access/presentation/http/current-user.decorator';
-import { LegacySessionGuard } from '../../../access/presentation/http/legacy-session.guard';
-import { PermissionsGuard } from '../../../access/presentation/http/permissions.guard';
-import { RequirePermissions } from '../../../access/presentation/http/require-permissions.decorator';
-import { ExpenseComparisonService } from '../../expenses/application/expense-comparison.service';
+import { LEGACY_SESSION_SECURITY } from '../../../../../core/openapi/openapi.constants';
+import type { AuthenticatedUser } from '../../../../access/domain/authenticated-user';
+import { CurrentUser } from '../../../../access/presentation/http/current-user.decorator';
+import { LegacySessionGuard } from '../../../../access/presentation/http/legacy-session.guard';
+import { PermissionsGuard } from '../../../../access/presentation/http/permissions.guard';
+import { RequirePermissions } from '../../../../access/presentation/http/require-permissions.decorator';
+import { ExpenseComparisonService } from '../../application/expense-comparison.service';
 
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 

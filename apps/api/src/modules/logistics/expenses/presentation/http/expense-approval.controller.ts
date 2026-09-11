@@ -23,13 +23,13 @@ import {
   type LogisticsExpenseApprovalRequest,
   type LogisticsExpenseBatchApprovalRequest,
 } from '@helpdesk/contracts';
-import { LEGACY_SESSION_SECURITY } from '../../../../core/openapi/openapi.constants';
-import type { AuthenticatedUser } from '../../../access/domain/authenticated-user';
-import { CurrentUser } from '../../../access/presentation/http/current-user.decorator';
-import { LegacySessionGuard } from '../../../access/presentation/http/legacy-session.guard';
-import { PermissionsGuard } from '../../../access/presentation/http/permissions.guard';
-import { RequirePermissions } from '../../../access/presentation/http/require-permissions.decorator';
-import { ExpenseApprovalService } from '../../expenses/application/expense-approval.service';
+import { LEGACY_SESSION_SECURITY } from '../../../../../core/openapi/openapi.constants';
+import type { AuthenticatedUser } from '../../../../access/domain/authenticated-user';
+import { CurrentUser } from '../../../../access/presentation/http/current-user.decorator';
+import { LegacySessionGuard } from '../../../../access/presentation/http/legacy-session.guard';
+import { PermissionsGuard } from '../../../../access/presentation/http/permissions.guard';
+import { RequirePermissions } from '../../../../access/presentation/http/require-permissions.decorator';
+import { ExpenseApprovalService } from '../../application/expense-approval.service';
 
 function remarks(value: unknown): string {
   if (value === undefined || value === null) return '';

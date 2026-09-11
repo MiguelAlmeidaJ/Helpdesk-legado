@@ -5,11 +5,11 @@ import type {
   LogisticsExpensePaymentQueueResponse,
 } from '@helpdesk/contracts';
 import type { Nivel3DatabaseClient } from '@helpdesk/database';
-import { NIVEL3_DATABASE } from '../../../core/database/database.constants';
+import { NIVEL3_DATABASE } from '../../../../core/database/database.constants';
 import {
   ExpenseStatus,
   canTransitionExpense,
-} from '../expenses/domain/expense-status';
+} from '../domain/expense-status';
 
 interface PaymentRow {
   id: number | bigint | string;

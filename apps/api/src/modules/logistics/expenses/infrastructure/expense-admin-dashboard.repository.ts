@@ -7,7 +7,7 @@ import type {
   LogisticsExpenseAdminStatus,
 } from '@helpdesk/contracts';
 import type { Nivel3DatabaseClient } from '@helpdesk/database';
-import { NIVEL3_DATABASE } from '../../../core/database/database.constants';
+import { NIVEL3_DATABASE } from '../../../../core/database/database.constants';
 
 interface ClockRow {
   period_start: string;

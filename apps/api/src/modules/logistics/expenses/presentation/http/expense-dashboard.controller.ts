@@ -11,13 +11,13 @@ import {
   AppPermission,
   type LogisticsExpenseDashboardResponse,
 } from '@helpdesk/contracts';
-import { LEGACY_SESSION_SECURITY } from '../../../../core/openapi/openapi.constants';
-import type { AuthenticatedUser } from '../../../access/domain/authenticated-user';
-import { CurrentUser } from '../../../access/presentation/http/current-user.decorator';
-import { LegacySessionGuard } from '../../../access/presentation/http/legacy-session.guard';
-import { PermissionsGuard } from '../../../access/presentation/http/permissions.guard';
-import { RequirePermissions } from '../../../access/presentation/http/require-permissions.decorator';
-import { ExpenseDashboardService } from '../../expenses/application/expense-dashboard.service';
+import { LEGACY_SESSION_SECURITY } from '../../../../../core/openapi/openapi.constants';
+import type { AuthenticatedUser } from '../../../../access/domain/authenticated-user';
+import { CurrentUser } from '../../../../access/presentation/http/current-user.decorator';
+import { LegacySessionGuard } from '../../../../access/presentation/http/legacy-session.guard';
+import { PermissionsGuard } from '../../../../access/presentation/http/permissions.guard';
+import { RequirePermissions } from '../../../../access/presentation/http/require-permissions.decorator';
+import { ExpenseDashboardService } from '../../application/expense-dashboard.service';
 
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 

@@ -30,13 +30,13 @@ import {
   type CreateLogisticsExpenseRequest,
   type UpdateLogisticsExpenseRequest,
 } from '@helpdesk/contracts';
-import { LEGACY_SESSION_SECURITY } from '../../../../core/openapi/openapi.constants';
-import type { AuthenticatedUser } from '../../../access/domain/authenticated-user';
-import { CurrentUser } from '../../../access/presentation/http/current-user.decorator';
-import { LegacySessionGuard } from '../../../access/presentation/http/legacy-session.guard';
-import { PermissionsGuard } from '../../../access/presentation/http/permissions.guard';
-import { RequirePermissions } from '../../../access/presentation/http/require-permissions.decorator';
-import { ExpenseManagementService } from '../../expenses/application/expense-management.service';
+import { LEGACY_SESSION_SECURITY } from '../../../../../core/openapi/openapi.constants';
+import type { AuthenticatedUser } from '../../../../access/domain/authenticated-user';
+import { CurrentUser } from '../../../../access/presentation/http/current-user.decorator';
+import { LegacySessionGuard } from '../../../../access/presentation/http/legacy-session.guard';
+import { PermissionsGuard } from '../../../../access/presentation/http/permissions.guard';
+import { RequirePermissions } from '../../../../access/presentation/http/require-permissions.decorator';
+import { ExpenseManagementService } from '../../application/expense-management.service';
 
 interface UploadedFileLike {
   originalname: string;

@@ -7,8 +7,8 @@ import {
   type UpdateLogisticsExpensePaidAdminRequest,
 } from '@helpdesk/contracts';
 import type { Nivel3DatabaseClient } from '@helpdesk/database';
-import { NIVEL3_DATABASE } from '../../../core/database/database.constants';
-import type { ExpensePaidReportQuery } from '../expenses/application/expense-paid-report.service';
+import { NIVEL3_DATABASE } from '../../../../core/database/database.constants';
+import type { ExpensePaidReportQuery } from '../application/expense-paid-report.service';
 
 interface ClockRow {
   period_start: string;

@@ -5,9 +5,9 @@ import type {
   LogisticsExpenseApprovalQueueResponse,
 } from '@helpdesk/contracts';
 import type { Nivel3DatabaseClient } from '@helpdesk/database';
-import { NIVEL3_DATABASE } from '../../../core/database/database.constants';
-import { ExpenseAttachmentStorage } from '../expenses/application/ports/expense-attachment.storage';
-import { canTransitionExpense } from '../expenses/domain/expense-status';
+import { NIVEL3_DATABASE } from '../../../../core/database/database.constants';
+import { ExpenseAttachmentStorage } from '../application/ports/expense-attachment.storage';
+import { canTransitionExpense } from '../domain/expense-status';
 
 interface AttachmentJson {
   id?: string;
