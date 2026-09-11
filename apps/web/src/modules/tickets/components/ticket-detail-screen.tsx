@@ -15,6 +15,7 @@ import { SessionUserMenu } from '../../access/components/session-user-menu';
 import { AppSidebar } from '../../../shared/navigation/app-sidebar';
 import { TicketAssignmentActions } from './ticket-assignment-actions';
 import { TicketAttachmentsPanel } from './ticket-attachments-panel';
+import { TicketCatalogPanel } from './ticket-catalog-panel';
 import { TicketClassificationEditor } from './ticket-classification-editor';
 import { TicketHoldActions } from './ticket-hold-actions';
 import { TicketCloseActions } from './ticket-close-actions';
@@ -311,6 +312,11 @@ export function TicketDetailScreen({
                   </dl>
                 </div>
               </section>
+
+              <TicketCatalogPanel
+                clientId={ticket.client.id}
+                currentUser={currentUser}
+              />
 
               <section className={styles.card}>
                 <div className={styles.cardHeader}>

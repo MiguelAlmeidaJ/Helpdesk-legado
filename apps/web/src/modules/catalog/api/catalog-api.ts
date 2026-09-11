@@ -2,6 +2,7 @@ import type {
   CatalogDetailResponse,
   CatalogFiltersResponse,
   CatalogListResponse,
+  CatalogResolutionResponse,
   CatalogSector,
   CatalogWriteInput,
 } from '@helpdesk/contracts';
@@ -37,6 +38,20 @@ export function fetchCatalogs(
   signal?: AbortSignal,
 ): Promise<CatalogListResponse> {
   return apiRequest<CatalogListResponse>(`catalog${queryString(query)}`, { signal });
+}
+
+export function resolveCatalogs(
+  clientId: number,
+  categoryId: number,
+  sector?: CatalogSector,
+  signal?: AbortSignal,
+): Promise<CatalogResolutionResponse> {
+  const params = new URLSearchParams({
+    clientId: String(clientId),
+    categoryId: String(categoryId),
+  });
+  if (sector) params.set('sector', String(sector));
+  return apiRequest<CatalogResolutionResponse>(`catalog/resolve?${params.toString()}`, { signal });
 }
 
 export function fetchCatalog(id: number, signal?: AbortSignal): Promise<CatalogDetailResponse> {

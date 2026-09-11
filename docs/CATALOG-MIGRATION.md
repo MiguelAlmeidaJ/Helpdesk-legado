@@ -14,7 +14,9 @@ As permissões legadas de `m8_04` ficam concentradas no tradutor de sessão e s�
 
 A interface Next.js nativa agora está disponível em `/catalog`, cobrindo listagem, filtros, visualização segura do conteúdo, criação e edição. A UI usa as permissões semânticas `read`/`manage` por setor e consome somente a API NestJS.
 
-`catlg/` continua presente nesta fase porque a integração contextual de tickets e o cutover ainda não foram concluídos. O legado não possui fluxo de exclusão de catálogo, portanto a API e a interface novas não introduzem exclusão destrutiva sem requisito funcional.
+A integração contextual do detalhe de atendimento também é nativa: o usuário escolhe uma categoria de catálogo, a UI resolve os registros pelo cliente com `catalog/resolve` e carrega o conteúdo por `catalog/:id`. Nenhum fluxo nativo depende de `catlg/*.php`.
+
+`catlg/` continua presente apenas como superfície legada aguardando a auditoria estrita e a remoção final. O legado não possui fluxo de exclusão de catálogo, portanto a API e a interface novas não introduzem exclusão destrutiva sem requisito funcional.
 
 ## Superfície legada
 
@@ -53,7 +55,7 @@ A migração deve criar permissões explícitas seguindo o padrão de `AppPermis
 2. ~~Implementar API nativa de leitura: lista, detalhe e resolução contextual usada por atendimentos.~~ Concluído nesta etapa.
 3. ~~Adicionar operações nativas de escrita para criar e editar catálogos usando permissões `manage`.~~ Concluído nesta etapa; o legado não possui exclusão.
 4. ~~Implementar a interface Next.js nativa para listar, visualizar, criar e editar catálogos.~~ Concluído nesta etapa em `/catalog`.
-5. Trocar a integração contextual de tickets para a API nativa de catálogo.
+5. ~~Trocar a integração contextual de tickets para a API nativa de catálogo.~~ Concluído nesta etapa no detalhe nativo do atendimento.
 6. Executar a auditoria em modo estrito e remover qualquer referência restante a `catlg/*.php`.
 7. Excluir `catlg/`, registrar os endpoints na auditoria geral de legado e executar typecheck/build.
 
