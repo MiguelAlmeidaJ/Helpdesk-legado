@@ -22,6 +22,7 @@ import {
   fetchTickets,
   type TicketListQuery,
 } from '../api/tickets-api';
+import { SlaIndicator } from './sla-indicator';
 
 const DEFAULT_STATUS = '1,2,3,5';
 
@@ -480,6 +481,7 @@ export function TicketsScreen({
                     <td>
                       <div className="sla">
                         <strong>
+                          <SlaIndicator bellOrder={ticket.sla.bellOrder} />
                           {formatDuration(ticket.sla.remainingSeconds)}
                         </strong>
                         <span>

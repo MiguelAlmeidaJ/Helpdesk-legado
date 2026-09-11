@@ -1,0 +1,140 @@
+.indicator {
+  --sla-color: #ca8a04;
+  --sla-soft: rgba(202, 138, 4, 0.12);
+  --sla-shadow: rgba(202, 138, 4, 0.26);
+  position: relative;
+  display: inline-flex;
+  width: 24px;
+  height: 24px;
+  margin-right: 6px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  color: var(--sla-color);
+  vertical-align: middle;
+}
+
+.indicator::before {
+  position: absolute;
+  inset: 2px;
+  border-radius: inherit;
+  background: var(--sla-soft);
+  content: "";
+}
+
+.indicator::after {
+  position: absolute;
+  inset: 0;
+  border: 1px solid var(--sla-color);
+  border-radius: 9px;
+  animation: pulse 2.4s ease-out infinite;
+  content: "";
+  opacity: 0;
+  pointer-events: none;
+}
+
+.icon {
+  position: relative;
+  z-index: 1;
+  width: 16px;
+  height: 16px;
+  animation: ring 2.4s ease-in-out infinite;
+  fill: none;
+  filter: drop-shadow(0 2px 4px var(--sla-shadow));
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2;
+  transform-origin: 50% 12%;
+}
+
+.mark {
+  position: absolute;
+  z-index: 2;
+  top: -3px;
+  right: -3px;
+  display: inline-flex;
+  width: 12px;
+  height: 12px;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #ffffff;
+  border-radius: 999px;
+  background: var(--sla-color);
+  color: #ffffff;
+  font-size: 8px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.ok {
+  --sla-color: #15803d;
+  --sla-soft: rgba(21, 128, 61, 0.12);
+  --sla-shadow: rgba(21, 128, 61, 0.24);
+}
+
+.attention {
+  --sla-color: #ca8a04;
+  --sla-soft: rgba(202, 138, 4, 0.12);
+  --sla-shadow: rgba(202, 138, 4, 0.26);
+}
+
+.alert {
+  --sla-color: #dc2626;
+  --sla-soft: rgba(220, 38, 38, 0.1);
+  --sla-shadow: rgba(220, 38, 38, 0.26);
+}
+
+.critical {
+  --sla-color: #111827;
+  --sla-soft: rgba(17, 24, 39, 0.08);
+  --sla-shadow: rgba(17, 24, 39, 0.22);
+}
+
+@keyframes ring {
+  0%,
+  72%,
+  100% {
+    transform: rotate(0deg);
+  }
+
+  8% {
+    transform: rotate(-9deg);
+  }
+
+  16% {
+    transform: rotate(8deg);
+  }
+
+  24% {
+    transform: rotate(-5deg);
+  }
+
+  32% {
+    transform: rotate(3deg);
+  }
+
+  42% {
+    transform: rotate(0deg);
+  }
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 0.35;
+    transform: scale(0.84);
+  }
+
+  58%,
+  100% {
+    opacity: 0;
+    transform: scale(1.24);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .indicator::after,
+  .icon {
+    animation: none;
+  }
+}

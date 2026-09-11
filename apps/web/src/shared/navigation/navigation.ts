@@ -54,9 +54,9 @@ export const APP_NAVIGATION_SECTIONS: NavigationSection[] = [
     label: 'DevOps',
     shortLabel: 'DO',
     items: [
-      { id: 'devops-projects', label: 'Lista de Projetos', status: 'planned' },
-      { id: 'devops-tasks', label: 'Lista de Tarefas', status: 'planned' },
-      { id: 'devops-project-new', label: 'Novo Projeto', status: 'planned' },
+      { id: 'devops-projects', label: 'Lista de Projetos', href: '/tickets/devops/projects', status: 'available' },
+      { id: 'devops-tasks', label: 'Lista de Tarefas', href: '/tickets/devops', status: 'available' },
+      { id: 'devops-project-new', label: 'Novo Projeto', href: '/tickets/devops/projects/new', status: 'available' },
       { id: 'devops-task-new', label: 'Nova Tarefa', status: 'planned' },
     ],
   },
@@ -65,7 +65,7 @@ export const APP_NAVIGATION_SECTIONS: NavigationSection[] = [
     label: 'Marketing',
     shortLabel: 'MK',
     items: [
-      { id: 'marketing-tasks', label: 'Lista de Tarefas', status: 'planned' },
+      { id: 'marketing-tasks', label: 'Lista de Tarefas', href: '/tickets/marketing', status: 'available' },
       {
         id: 'marketing-availability',
         label: 'Disponibilidade Técnica',
@@ -104,10 +104,13 @@ export const APP_NAVIGATION_SECTIONS: NavigationSection[] = [
       {
         id: 'rd-comparison',
         label: 'Análise Comparativa RDs',
-        status: 'planned',
+        href: '/logistics/expenses/admin/analysis',
+        status: 'available',
       },
-      { id: 'rd-report', label: 'Relatório RDs', status: 'planned' },
-      { id: 'rd-data', label: 'Cadastro Dados RD', status: 'planned' },
+      { id: 'rd-report', label: 'Relatório RDs', href: '/logistics/expenses/admin/report', status: 'available' },
+      { id: 'rd-data', label: 'Cadastro Dados RD', href: '/logistics/expenses/manage', status: 'available' },
+      { id: 'rd-approvals', label: 'Aprovação RDs', href: '/logistics/expenses/admin/approvals', status: 'available' },
+      { id: 'rd-payments', label: 'Pagamento RDs', href: '/logistics/expenses/admin/payments', status: 'available' },
       {
         id: 'receivables-accrual',
         label: 'Contas a Receber - Competência',

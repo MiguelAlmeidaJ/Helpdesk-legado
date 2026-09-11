@@ -2,14 +2,32 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { fetchAppNavigation } from './navigation-api';
 import {
   APP_NAVIGATION_SECTIONS,
   APP_NAVIGATION_STANDALONE,
   DASHBOARD_NAVIGATION_ITEM,
   type NavigationItem,
+  type NavigationSection,
 } from './navigation';
 import styles from './app-sidebar.module.css';
+
+const FALLBACK_SECTIONS: NavigationSection[] = [
+  {
+    id: 'primary',
+    label: 'Principal',
+    shortLabel: 'IN',
+    items: [DASHBOARD_NAVIGATION_ITEM],
+  },
+  ...APP_NAVIGATION_SECTIONS,
+  {
+    id: 'standalone',
+    label: 'Outros',
+    shortLabel: 'OU',
+    items: APP_NAVIGATION_STANDALONE,
+  },
+];
 
 function isActive(pathname: string, item: NavigationItem): boolean {
   if (!item.href) {
@@ -57,6 +75,36 @@ function NavigationLink({
 export function AppSidebar() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const [navigationSections, setNavigationSections] =
+    useState<NavigationSection[]>(FALLBACK_SECTIONS);
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    fetchAppNavigation(controller.signal)
+      .then((response) => setNavigationSections(response.sections))
+      .catch((error: unknown) => {
+        if (error instanceof DOMException && error.name === 'AbortError') return;
+        // Keep the static navigation as a safe fallback when the API is unavailable.
+      });
+
+    return () => controller.abort();
+  }, []);
+
+  const { primaryItems, regularSections, standaloneItems } = useMemo(() => {
+    const primary = navigationSections.find((section) => section.id === 'primary');
+    const standalone = navigationSections.find(
+      (section) => section.id === 'standalone',
+    );
+
+    return {
+      primaryItems: primary?.items ?? [],
+      regularSections: navigationSections.filter(
+        (section) => section.id !== 'primary' && section.id !== 'standalone',
+      ),
+      standaloneItems: standalone?.items ?? [],
+    };
+  }, [navigationSections]);
 
   useEffect(() => {
     if (!open) {
@@ -125,15 +173,20 @@ export function AppSidebar() {
         </div>
 
         <nav className={styles.navigation} aria-label="Menu principal">
-          <div className={styles.dashboardLink}>
-            <NavigationLink
-              item={DASHBOARD_NAVIGATION_ITEM}
-              onNavigate={() => setOpen(false)}
-              pathname={pathname}
-            />
-          </div>
+          {primaryItems.length > 0 ? (
+            <div className={styles.dashboardLink}>
+              {primaryItems.map((item) => (
+                <NavigationLink
+                  item={item}
+                  key={item.id}
+                  onNavigate={() => setOpen(false)}
+                  pathname={pathname}
+                />
+              ))}
+            </div>
+          ) : null}
 
-          {APP_NAVIGATION_SECTIONS.map((section) => (
+          {regularSections.map((section) => (
             <details className={styles.section} key={section.id} open>
               <summary>
                 <span className={styles.sectionIcon}>{section.shortLabel}</span>
@@ -153,16 +206,18 @@ export function AppSidebar() {
             </details>
           ))}
 
-          <div className={styles.standalone}>
-            {APP_NAVIGATION_STANDALONE.map((item) => (
-              <NavigationLink
-                item={item}
-                key={item.id}
-                onNavigate={() => setOpen(false)}
-                pathname={pathname}
-              />
-            ))}
-          </div>
+          {standaloneItems.length > 0 ? (
+            <div className={styles.standalone}>
+              {standaloneItems.map((item) => (
+                <NavigationLink
+                  item={item}
+                  key={item.id}
+                  onNavigate={() => setOpen(false)}
+                  pathname={pathname}
+                />
+              ))}
+            </div>
+          ) : null}
         </nav>
       </aside>
     </>
