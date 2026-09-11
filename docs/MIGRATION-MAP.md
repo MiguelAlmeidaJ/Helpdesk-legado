@@ -12,6 +12,7 @@ This file is the migration control board. Update it in the same pull request tha
 - `parity`: comparing new behavior with PHP.
 - `cutover`: users are directed to the new module.
 - `retired`: equivalent PHP entry points can be removed.
+- `decommissioned`: legacy capability was intentionally discontinued and has no migration requirement.
 
 ## Module map
 
@@ -20,7 +21,7 @@ This file is the migration control board. Update it in the same pull request tha
 | platform | retired `all/`; compatibility in `legacy/bridge` | `nivel3` | retired | `0043f` retires the `all/` directory after `0043e` rewrote all 703 executable references. Residual PHP compatibility lives only in `legacy/bridge/`; native Nest/Next remains authoritative. |
 | tickets | `atd`, `atd_facility`, `atd_projeto`, `atd_3andar`, parts of `atd_mkt` | `nivel3` | web | Read API and first Next.js list UI available; legacy remains authoritative until jobs/detail/workflows reach parity and cutover. |
 | reports | `rel` | `nivel3` | parity | `0045a` migrates totals by client, `0045b` totals by technician, and `ed24f67` adds category totals plus native analytics, workload/time, PDF/archive and legacy `/rel/*` redirects. `0045d` retires the three total-report PHP entry points after Nest/Next cutover; the remaining `rel/*.php` stays until parity is verified per report family. |
-| assets | `ativos` | `nivel3` | planned | Inventory/assets and related assignments. |
+| assets | `ativos` | `plugins_app`, `patrimonios` | decommissioned | Legacy module is inactive and will be removed without a 1:1 Nest/Next migration. Database data is preserved. See `docs/ASSETS-DECOMMISSION.md`. |
 | catalog | `catlg` | `nivel3` | planned | Catalog/service information; ownership must be confirmed during inventory. |
 | master-data | `cads` | `nivel3` | planned | Clients, people, locations and generic registrations should later be split only if rules justify it. |
 | finance | `cont`, `cads_cont` | `nivel3` | planned | Accounting/receivables/payables grouping to validate during inventory. |
