@@ -65,6 +65,20 @@ Condição nula significa visível para qualquer usuário autenticado. JSON inv�
 
 Além dos itens que já estavam disponíveis, o seed passa a expor as rotas nativas existentes para projetos e tarefas DevOps, tarefas de Marketing, análise e relatório de RDs, manutenção de RD, aprovação de RDs e pagamento de RDs. A visibilidade segue permissões semânticas quando elas já existem no núcleo de acesso.
 
-## Próxima fase
+## Administração do menu
 
-A próxima fase adicionará `/admin/navigation`, restrita a `system.admin`, para criar, editar, ativar, desativar e reorganizar seções e itens sem editar o banco manualmente.
+A tela `/admin/navigation` está disponível somente para usuários com `system.admin`. Ela permite criar e editar seções e itens, alterar ordem, mover itens entre seções, alternar `available`/`planned`, ativar ou desativar entradas e configurar as condições declarativas de visibilidade.
+
+A API administrativa fica em `/api/navigation/admin` e também exige `AppPermission.SystemAdmin`. As gravações continuam protegidas pelo guard global de requisições do navegador.
+
+Não há exclusão física pela interface. Para retirar uma entrada do menu, desative a seção ou o item; isso preserva o histórico da configuração e reduz o risco de remoções acidentais.
+
+Os `slug`s são identificadores estáveis: podem ser definidos na criação, mas não são alterados depois. Isso preserva referências especiais do sidebar (`primary` e `standalone`) e mantém o bootstrap idempotente mesmo após customizações de nome, rota, ordem ou visibilidade.
+
+Depois de aplicar este patch em uma base que já executou o bootstrap anterior, rode novamente:
+
+```bash
+pnpm navigation:bootstrap
+```
+
+Como o bootstrap usa `INSERT IGNORE`, as customizações existentes não são sobrescritas. A nova seção `Administração` e o item `Navegação` são inseridos apenas se ainda não existirem.

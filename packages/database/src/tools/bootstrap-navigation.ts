@@ -180,6 +180,20 @@ const NAVIGATION_SEED: SeedSection[] = [
       { slug: 'statements', label: 'Extratos', status: 'planned' },
     ],
   },
+  {
+    slug: 'administration',
+    label: 'Administração',
+    shortLabel: 'AD',
+    items: [
+      {
+        slug: 'navigation-admin',
+        label: 'Navegação',
+        href: '/admin/navigation',
+        status: 'available',
+        visibilityCondition: { anyPermissions: ['system.admin'] },
+      },
+    ],
+  },
 ];
 
 type SectionRow = { id: number; slug: string };
