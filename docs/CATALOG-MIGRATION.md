@@ -2,9 +2,9 @@
 
 ## Decisão
 
-O catálogo em `catlg/` será migrado para NestJS/Next.js antes da aposentadoria dos PHPs. Diferentemente de um módulo sem uso, o catálogo participa do fluxo de atendimento e ainda possui comportamento que precisa existir de forma nativa antes do cutover.
+O catálogo de `catlg/` foi migrado para NestJS/Next.js antes da aposentadoria dos PHPs. Diferentemente de um módulo descontinuado, a capacidade foi preservada porque participa do fluxo de atendimento.
 
-A pasta não deve ser removida enquanto houver consumidores externos ou enquanto a resolução contextual de catálogo usada pelos atendimentos não estiver coberta pelo novo módulo.
+A remoção foi executada somente depois que gestão, verificação, visualização e resolução contextual passaram a existir no módulo nativo e deixaram de depender dos entry points PHP.
 
 ## Estado atual
 
@@ -14,13 +14,15 @@ As permissões legadas de `m8_04` ficam concentradas no tradutor de sessão e s�
 
 A interface Next.js nativa agora está disponível em `/catalog`, cobrindo listagem, filtros, visualização segura do conteúdo, criação e edição. A UI usa as permissões semânticas `read`/`manage` por setor e consome somente a API NestJS.
 
+A verificação de cobertura antes oferecida por `check_catlg.php` está disponível em `/catalog/check`, com matriz cliente × categoria e filtro por setor permitido.
+
 A integração contextual do detalhe de atendimento também é nativa: o usuário escolhe uma categoria de catálogo, a UI resolve os registros pelo cliente com `catalog/resolve` e carrega o conteúdo por `catalog/:id`. Nenhum fluxo nativo depende de `catlg/*.php`.
 
-`catlg/` continua presente apenas como superfície legada aguardando a auditoria estrita e a remoção final. O legado não possui fluxo de exclusão de catálogo, portanto a API e a interface novas não introduzem exclusão destrutiva sem requisito funcional.
+`catlg/` foi removido após o cutover. O legado não possuía fluxo de exclusão de catálogo, portanto a API e as interfaces novas também não introduzem exclusão destrutiva sem requisito funcional.
 
-## Superfície legada
+## Superfície legada aposentada
 
-A pasta contém cinco entry points PHP conhecidos:
+A pasta removida continha cinco entry points PHP conhecidos:
 
 - `catlg/catalogo.php`: listagem, filtros e manutenção do catálogo;
 - `catlg/catalogo_visualizar.php`: visualização do conteúdo de um catálogo;
@@ -47,7 +49,7 @@ A modelagem nativa deve encapsular esses detalhes no módulo de catálogo em vez
 
 O PHP usa o valor legado `m8_04` para decidir acesso por setor e ações de gerenciamento. Esse valor é uma regra de compatibilidade e não deve aparecer no domínio novo.
 
-A migração deve criar permissões explícitas seguindo o padrão de `AppPermission`, separando ao menos leitura e gerenciamento. A compatibilidade com `m8_04`, enquanto necessária, deve ficar concentrada no tradutor de permissões legado. Restrições de TI/DevOps devem ser representadas por escopo/setor nativo, não por testes de números mágicos espalhados pela aplicação.
+A implementação nativa usa permissões explícitas seguindo o padrão de `AppPermission`, separando leitura e gerenciamento. A compatibilidade com `m8_04` permanece concentrada no tradutor de permissões legado enquanto sessões antigas ainda existirem. Restrições de TI/DevOps são representadas por permissões de setor, sem testes de números mágicos no módulo de catálogo.
 
 ## Sequência de migração
 
@@ -56,27 +58,26 @@ A migração deve criar permissões explícitas seguindo o padrão de `AppPermis
 3. ~~Adicionar operações nativas de escrita para criar e editar catálogos usando permissões `manage`.~~ Concluído nesta etapa; o legado não possui exclusão.
 4. ~~Implementar a interface Next.js nativa para listar, visualizar, criar e editar catálogos.~~ Concluído nesta etapa em `/catalog`.
 5. ~~Trocar a integração contextual de tickets para a API nativa de catálogo.~~ Concluído nesta etapa no detalhe nativo do atendimento.
-6. Executar a auditoria em modo estrito e remover qualquer referência restante a `catlg/*.php`.
-7. Excluir `catlg/`, registrar os endpoints na auditoria geral de legado e executar typecheck/build.
+6. ~~Migrar a verificação de cobertura de `check_catlg.php`.~~ Concluído em `/catalog/check`.
+7. ~~Executar a auditoria em modo estrito e remover qualquer referência restante a `catlg/*.php`.~~ Concluído na aposentadoria.
+8. ~~Excluir `catlg/`, registrar os endpoints na auditoria geral de legado e executar typecheck/build.~~ Concluído na aposentadoria.
 
 ## Auditoria
 
-O comando desta etapa é:
+O gate específico do catálogo agora é estrito por padrão:
 
 ```bash
 pnpm legacy:catalog:audit
 ```
 
-Durante a fase `inventory`, referências externas são listadas como dependências a migrar e não causam falha. Isso permite usar a saída como checklist para os próximos patches.
-
-O mesmo script possui um modo estrito para o futuro cutover:
+Para validar toda a aposentadoria, incluindo a auditoria geral, typecheck e build, use:
 
 ```bash
-node scripts/audit-catalog-legacy.mjs --strict
+pnpm legacy:catalog:verify
 ```
 
-Nesse modo, a auditoria falha enquanto existir qualquer arquivo em `catlg/` ou runtime externo apontando para os endpoints conhecidos.
+`legacy:catalog:audit` falha se qualquer arquivo voltar a aparecer em `catlg/` ou se algum runtime voltar a apontar para os cinco endpoints PHP aposentados. A auditoria central também registra `catlg/` como diretório aposentado.
 
 ## Critério para aposentadoria
 
-`catlg/` só pode entrar na lista de diretórios aposentados quando a API/UI nativas cobrirem o comportamento necessário, a integração de atendimentos estiver apontando para o fluxo nativo e a auditoria estrita retornar sem arquivos ou referências legadas.
+Critério atendido: API e UIs nativas cobrem gestão, visualização, verificação e resolução contextual; a integração de atendimentos usa o fluxo nativo; `catlg/` está removido; e `pnpm legacy:catalog:verify` é o gate final contra regressões.

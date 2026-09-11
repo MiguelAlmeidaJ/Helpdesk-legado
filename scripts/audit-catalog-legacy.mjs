@@ -5,6 +5,7 @@ import path from 'node:path';
 const root = process.cwd();
 const self = 'scripts/audit-catalog-legacy.mjs';
 const documentation = 'docs/CATALOG-MIGRATION.md';
+const centralAudit = 'scripts/audit-legacy-php.mjs';
 const strict = process.argv.includes('--strict');
 
 const runtimeExtensions = new Set([
@@ -47,6 +48,7 @@ const runtimeFiles = tracked.filter(
   (file) =>
     file !== self &&
     file !== documentation &&
+    file !== centralAudit &&
     !file.startsWith('catlg/') &&
     runtimeExtensions.has(path.extname(file).toLowerCase()),
 );

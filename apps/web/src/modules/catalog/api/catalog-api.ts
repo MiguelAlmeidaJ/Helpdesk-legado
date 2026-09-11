@@ -1,6 +1,7 @@
 import type {
   CatalogDetailResponse,
   CatalogFiltersResponse,
+  CatalogListItem,
   CatalogListResponse,
   CatalogResolutionResponse,
   CatalogSector,
@@ -38,6 +39,24 @@ export function fetchCatalogs(
   signal?: AbortSignal,
 ): Promise<CatalogListResponse> {
   return apiRequest<CatalogListResponse>(`catalog${queryString(query)}`, { signal });
+}
+
+export async function fetchAllCatalogs(
+  signal?: AbortSignal,
+): Promise<CatalogListItem[]> {
+  const items: CatalogListItem[] = [];
+  let offset = 0;
+
+  while (true) {
+    const result = await fetchCatalogs({ offset, limit: 100 }, signal);
+    items.push(...result.items);
+
+    if (!result.hasMore || result.nextOffset === null) {
+      return items;
+    }
+
+    offset = result.nextOffset;
+  }
 }
 
 export function resolveCatalogs(

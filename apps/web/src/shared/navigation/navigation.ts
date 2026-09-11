@@ -164,7 +164,7 @@ export const APP_NAVIGATION_SECTIONS: NavigationSection[] = [
       { id: 'clients', label: 'Clientes', status: 'planned' },
       { id: 'categories', label: 'Categorias', status: 'planned' },
       { id: 'catalogs', label: 'Catálogos', href: '/catalog', status: 'available' },
-      { id: 'catalog-check', label: 'Verificação de Catálogos', status: 'planned' },
+      { id: 'catalog-check', label: 'Verificação de Catálogos', href: '/catalog/check', status: 'available' },
       { id: 'cost-centers', label: 'Centros de Custo', status: 'planned' },
       { id: 'accounting-classification', label: 'Classificação Contábil', status: 'planned' },
       { id: 'adjustment-indexes', label: 'Índices de Reajuste', status: 'planned' },

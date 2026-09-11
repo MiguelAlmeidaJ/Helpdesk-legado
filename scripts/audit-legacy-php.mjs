@@ -60,6 +60,11 @@ const removedRuntimePaths = [
   'rel/atd_total_por_cliente.php',
   'rel/atd_total_por_tecnico.php',
   'rel/atd_total_por_categoria.php',
+  'catlg/catalogo.php',
+  'catlg/catalogo_editar.php',
+  'catlg/catalogo_visualizar.php',
+  'catlg/check_catlg.php',
+  'catlg/localizar_catalogo.php',
   'ativos/ativos.php',
   'ativos/ativos_antiga.php',
   'ativos/ativos_conect.php',
@@ -86,6 +91,7 @@ const retiredDirectories = [
   { label: 'atd/', prefix: 'atd/' },
   { label: 'home/', prefix: 'home/' },
   { label: 'ativos/', prefix: 'ativos/' },
+  { label: 'catlg/', prefix: 'catlg/' },
 ];
 
 const tracked = execFileSync(
