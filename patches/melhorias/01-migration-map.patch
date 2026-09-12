@@ -1,0 +1,53 @@
+diff --git a/docs/migracao_melhorias.md b/docs/migracao_melhorias.md
+new file mode 100644
+--- /dev/null
++++ b/docs/migracao_melhorias.md
+@@ -0,0 +1,47 @@
++# Migração de `melhorias` para o monorepo
++
++## Diretriz
++
++`melhorias/` é uma implementação legada paralela. O objetivo da migração não é copiar seus arquivos PHP para outro diretório, mas preservar seus comportamentos úteis dentro da arquitetura NestJS + NextJS + TypeScript já existente.
++
++- NestJS: regras de negócio, permissões, casos de uso, persistência e API.
++- NextJS: telas, componentes, navegação e experiência do usuário.
++- PHP legado: somente referência/transição enquanto a funcionalidade ainda não estiver coberta pelo monorepo.
++
++## Mapeamento inicial
++
++| Legado | Destino arquitetural | Situação |
++| --- | --- | --- |
++| `melhorias/atd.php` | `api/src/modules/tickets/application/*` + apresentação HTTP/Next | INTEGRAR/VALIDAR |
++| `melhorias/home.php` | `tickets` + aplicação web | INTEGRAR/VALIDAR |
++| `melhorias/srhome.php` | `tickets` + aplicação web | INTEGRAR/VALIDAR |
++| `melhorias/busca_itens.php` | `tickets/application/create-ticket.ts` | JÁ COBERTO |
++| `melhorias/busca_locais.php` | `tickets/application/create-ticket.ts` | JÁ COBERTO |
++| `melhorias/busca_solicitantes.php` | `tickets/application/create-ticket.ts` | JÁ COBERTO |
++| `melhorias/busca_subcategorias.php` | `tickets/application/create-ticket.ts` | JÁ COBERTO |
++| `melhorias/recorrente.php` | `tickets/application/*` + domínio de recorrência | JÁ COBERTO/VALIDAR |
++| `melhorias/recorrente_data.php` | domínio de recorrência | JÁ COBERTO/VALIDAR |
++
++## Comportamentos que devem ser preservados
++
++1. Cadastro de atendimento com cliente, solicitante, local, tipo, categoria, subcategoria, item, nível, forma, descrição, técnico e agendamento.
++2. Restrição do cliente ao escopo do usuário.
++3. Catálogos dependentes: cliente → solicitante/local; categoria → subcategoria → item.
++4. Atendimento agendado quando a abertura estiver no futuro.
++5. Detecção de reincidência no período legado de 30 dias, caso a regra ainda seja aplicável ao domínio atual.
++6. Registro de interações para abertura, aceite, direcionamento, devolução, espera, retomada, interação, conclusão, edição de classificação e finalização.
++7. Transições de estado do atendimento e validação de quem pode executar cada operação.
++8. Recorrência e criação do próximo atendimento sem duplicação.
++9. Histórico/timeline do atendimento.
++10. Feedback ao cliente, caso o fluxo continue fazendo parte do produto atual.
++
++## Critério para remover `melhorias/`
++
++O diretório só deve ser removido depois de:
++
++- confirmar que cada comportamento útil tem um destino no monorepo;
++- eliminar duplicações entre `melhorias` e `tickets`;
++- validar permissões no backend;
++- validar os fluxos principais no frontend;
++- verificar que não existem referências restantes a `melhorias/` como rota operacional.
++
++Este arquivo é um mapa de migração; ele não autoriza copiar a implementação PHP para o monorepo.
