@@ -1,0 +1,39 @@
+{
+  "name": "helpdesk-monorepo",
+  "private": true,
+  "packageManager": "pnpm@11.24.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "typecheck": "turbo typecheck",
+    "db:pull": "pnpm --filter @helpdesk/database db:pull",
+    "db:generate": "pnpm --filter @helpdesk/database db:generate",
+    "access:audit": "pnpm --filter @helpdesk/database access:audit",
+    "access:grant-system-admin": "pnpm --filter @helpdesk/database access:grant-system-admin",
+    "navigation:bootstrap": "pnpm --filter @helpdesk/database navigation:bootstrap",
+    "legacy:audit": "node scripts/audit-legacy-php.mjs",
+    "legacy:assets:audit": "node scripts/audit-assets-legacy.mjs",
+    "legacy:assets:verify": "pnpm legacy:assets:audit && pnpm legacy:audit && pnpm typecheck && pnpm build",
+    "legacy:catalog:audit": "node scripts/audit-catalog-legacy.mjs --strict",
+    "legacy:catalog:verify": "pnpm legacy:catalog:audit && pnpm legacy:audit && pnpm typecheck && pnpm build",
+    "test:reports": "node --test scripts/reports.test.cjs",
+    "test:reports:db": "node scripts/reports-db-smoke.cjs",
+    "test:logistics": "node --test scripts/logistics.test.cjs scripts/logistics-status.test.cjs",
+    "docker:up": "docker compose up -d database",
+    "docker:down": "docker compose down --remove-orphans",
+    "docker:reset": "docker compose down -v --remove-orphans",
+    "pm2:start": "pm2 start ecosystem.config.cjs",
+    "pm2:restart": "pm2 startOrRestart ecosystem.config.cjs --update-env",
+    "pm2:stop": "pm2 stop ecosystem.config.cjs",
+    "pm2:delete": "pm2 delete ecosystem.config.cjs",
+    "pm2:status": "pm2 status",
+    "pm2:logs": "pm2 logs"
+  },
+  "devDependencies": {
+    "turbo": "2.10.12",
+    "typescript": "^5.9.0"
+  }
+}

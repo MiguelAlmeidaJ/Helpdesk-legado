@@ -1,0 +1,29 @@
+.layout { display: grid; grid-template-columns: minmax(320px, .8fr) minmax(520px, 1.5fr); gap: 16px; align-items: start; }
+.listCard, .editor { padding: 16px; border: 1px solid #dfe6ec; border-radius: 12px; background: #fff; }
+.search { display: flex; gap: 8px; margin-bottom: 12px; }
+.search input { min-width: 0; flex: 1; min-height: 40px; padding: 0 10px; border: 1px solid #cbd5df; border-radius: 8px; }
+.userList { display: grid; gap: 6px; max-height: 620px; overflow: auto; }
+.userList button { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; padding: 10px; border: 1px solid #e1e7ec; border-radius: 9px; background: #fff; text-align: left; cursor: pointer; }
+.userList button:hover, .userList button[data-active="true"] { border-color: #1f5fa8; background: #f5f9fd; }
+.userList span { min-width: 0; display: grid; gap: 3px; }
+.userList strong, .userList small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.userList small { color: #687887; }
+.userList em { padding: 3px 7px; border-radius: 99px; background: #eef3f7; color: #52606d; font-size: 10px; font-style: normal; font-weight: 800; }
+.userList em[data-status="1"] { background: #e9f7ee; color: #267044; }
+.pagination { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 14px; color: #687887; font-size: 12px; }
+.editor h2 { margin: 0 0 16px; font-size: 20px; }
+.grid, .moduleGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.grid label, .moduleGrid label { display: grid; gap: 6px; color: #52606d; font-size: 12px; font-weight: 800; }
+.grid input, .grid select, .moduleGrid input { width: 100%; min-height: 40px; padding: 0 10px; border: 1px solid #cbd5df; border-radius: 8px; background: #fff; }
+.grid select[multiple] { min-height: 120px; padding: 6px; }
+.wide { grid-column: 1 / -1; }
+.permissions { margin: 18px 0 0; padding: 14px; border: 1px solid #dfe6ec; border-radius: 10px; }
+.permissions legend { padding: 0 6px; font-weight: 800; }
+.permissions p { margin: 0 0 12px; color: #687887; font-size: 12px; }
+.moduleGrid input { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; letter-spacing: .08em; }
+.actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
+.error, .success { margin-bottom: 12px; padding: 11px 12px; border-radius: 8px; font-size: 13px; }
+.error { border: 1px solid #e4c8c8; background: #fff7f7; color: #8d3030; }
+.success { border: 1px solid #b9dcc7; background: #f3fbf6; color: #24613b; }
+@media (max-width: 950px) { .layout { grid-template-columns: 1fr; } }
+@media (max-width: 620px) { .grid, .moduleGrid { grid-template-columns: 1fr; } .wide { grid-column: auto; } }

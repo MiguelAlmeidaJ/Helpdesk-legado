@@ -1,0 +1,525 @@
+.page {
+  min-height: 100vh;
+  background: #f4f6f8;
+  color: #17212b;
+}
+
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  min-height: 64px;
+  padding: 8px 24px;
+  background: #fff;
+  border-bottom: 1px solid #dfe5eb;
+}
+
+.headerLeft,
+.hero,
+.reportHeader,
+.reportActions,
+.filterActions,
+.pagination {
+  display: flex;
+  align-items: center;
+}
+
+.headerLeft {
+  gap: 14px;
+}
+
+.brand {
+  display: flex;
+  flex-direction: column;
+  color: inherit;
+  text-decoration: none;
+}
+
+.brand strong {
+  font-size: 1rem;
+}
+
+.brand span,
+.eyebrow,
+.reportHeader span {
+  color: #667481;
+  font-size: 0.78rem;
+}
+
+.content {
+  width: min(1500px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 24px 0 48px;
+}
+
+.hero {
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 16px;
+}
+
+.hero h1 {
+  margin: 4px 0 6px;
+  font-size: clamp(1.7rem, 3vw, 2.35rem);
+}
+
+.hero p {
+  margin: 0;
+  color: #667481;
+}
+
+.backLink {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  padding: 0 14px;
+  color: #243b53;
+  font-weight: 700;
+  text-decoration: none;
+  background: #fff;
+  border: 1px solid #cbd5df;
+  border-radius: 8px;
+}
+
+.notice,
+.feedback {
+  margin-bottom: 16px;
+  padding: 12px 14px;
+  background: #fff;
+  border: 1px solid #dfe5eb;
+  border-radius: 10px;
+}
+
+.notice {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.notice span {
+  color: #667481;
+}
+
+.filters {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(150px, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 16px;
+  background: #fff;
+  border: 1px solid #dfe5eb;
+  border-radius: 10px;
+}
+
+.filters label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.filters input,
+.filters select,
+.filters button,
+.reportActions button,
+.pagination button {
+  min-height: 40px;
+  padding: 8px 10px;
+  font: inherit;
+  border: 1px solid #cbd5df;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.categoryField select {
+  min-height: 92px;
+}
+
+.filterActions {
+  align-self: end;
+  gap: 8px;
+}
+
+.filterActions button:first-child,
+.reportActions button:first-child {
+  color: #fff;
+  font-weight: 800;
+  background: #2563a7;
+  border-color: #2563a7;
+}
+
+.reportCard {
+  overflow: hidden;
+  background: #fff;
+  border: 1px solid #dfe5eb;
+  border-radius: 10px;
+}
+
+.reportHeader {
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px;
+  border-bottom: 1px solid #dfe5eb;
+}
+
+.reportHeader > div:first-child {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.reportHeader strong {
+  font-size: 1.4rem;
+}
+
+.reportActions,
+.pagination {
+  gap: 8px;
+}
+
+.tableWrap {
+  overflow-x: auto;
+}
+
+.tableWrap table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.86rem;
+}
+
+.tableWrap th,
+.tableWrap td {
+  padding: 10px 9px;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid #e7ebef;
+}
+
+.tableWrap thead th {
+  white-space: nowrap;
+  background: #f7f9fb;
+}
+
+.tableWrap tbody tr:hover {
+  background: #fafcfd;
+}
+
+.amountCell {
+  text-align: right !important;
+  white-space: nowrap;
+}
+
+.tableWrap tfoot th {
+  font-weight: 800;
+  background: #f7f9fb;
+}
+
+.emptyCell {
+  padding: 30px !important;
+  text-align: center !important;
+  color: #667481;
+}
+
+.printOnlyRow {
+  display: none;
+}
+
+.pagination {
+  justify-content: center;
+  padding: 14px;
+}
+
+.pagination button:disabled,
+.filters button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+@media (max-width: 900px) {
+  .filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .hero,
+  .reportHeader {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 560px) {
+  .header {
+    padding: 8px 12px;
+  }
+
+  .content {
+    width: min(100% - 20px, 1500px);
+  }
+
+  .filters {
+    grid-template-columns: 1fr;
+  }
+
+  .filterActions,
+  .reportActions {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+}
+
+
+
+.actionsColumn {
+  width: 88px;
+  text-align: center !important;
+  white-space: nowrap;
+}
+
+.editButton {
+  min-height: 34px;
+  padding: 6px 10px;
+  color: #1d4f7a;
+  font: inherit;
+  font-weight: 800;
+  background: #edf5fb;
+  border: 1px solid #b9d3e8;
+  border-radius: 7px;
+  cursor: pointer;
+}
+
+.editButton:hover {
+  background: #e1eef8;
+}
+
+.modalBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgb(16 24 40 / 58%);
+}
+
+.modal {
+  width: min(760px, 100%);
+  max-height: calc(100vh - 40px);
+  overflow: auto;
+  background: #fff;
+  border: 1px solid #d4dde6;
+  border-radius: 14px;
+  box-shadow: 0 24px 70px rgb(0 0 0 / 28%);
+}
+
+.modalHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 20px;
+  border-bottom: 1px solid #e2e8ee;
+}
+
+.modalHeader > div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.modalHeader span {
+  color: #667481;
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.modalHeader h2 {
+  margin: 0;
+  font-size: 1.35rem;
+}
+
+.modalHeader button,
+.modalActions button {
+  min-height: 38px;
+  padding: 8px 12px;
+  font: inherit;
+  font-weight: 700;
+  background: #fff;
+  border: 1px solid #cbd5df;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.modalHeader button:disabled,
+.modalActions button:disabled,
+.editForm input:disabled,
+.editForm select:disabled,
+.editForm textarea:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.modalFeedback,
+.modalError {
+  margin: 16px 20px;
+  padding: 12px 14px;
+  border-radius: 9px;
+}
+
+.modalFeedback {
+  color: #425466;
+  background: #f4f7fa;
+  border: 1px solid #dde5ec;
+}
+
+.modalError {
+  color: #8e2b2b;
+  background: #fff4f4;
+  border: 1px solid #efc8c8;
+}
+
+.editForm {
+  padding: 18px 20px 20px;
+}
+
+.editMeta {
+  display: flex;
+  gap: 12px 20px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+  padding: 12px 14px;
+  color: #536270;
+  font-size: 0.84rem;
+  background: #f7f9fb;
+  border: 1px solid #e2e8ee;
+  border-radius: 9px;
+}
+
+.editGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.editGrid label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.84rem;
+  font-weight: 800;
+}
+
+.editForm input,
+.editForm select,
+.editForm textarea {
+  width: 100%;
+  min-height: 42px;
+  padding: 8px 10px;
+  color: #17212b;
+  font: inherit;
+  background: #fff;
+  border: 1px solid #cbd5df;
+  border-radius: 8px;
+}
+
+.editForm textarea {
+  min-height: 96px;
+  resize: vertical;
+}
+
+.wideField {
+  grid-column: 1 / -1;
+}
+
+.editWarning {
+  margin: 16px 0 0;
+  padding: 11px 13px;
+  color: #6d5722;
+  font-size: 0.82rem;
+  background: #fff9e9;
+  border: 1px solid #eadcae;
+  border-radius: 8px;
+}
+
+.modalActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 18px;
+}
+
+.modalActions button:last-child {
+  color: #fff;
+  background: #2563a7;
+  border-color: #2563a7;
+}
+
+@media (max-width: 620px) {
+  .modalBackdrop {
+    padding: 8px;
+  }
+
+  .modal {
+    max-height: calc(100vh - 16px);
+  }
+
+  .modalHeader,
+  .editForm {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+
+  .editGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .wideField {
+    grid-column: auto;
+  }
+
+  .modalActions {
+    flex-direction: column-reverse;
+  }
+
+  .modalActions button {
+    width: 100%;
+  }
+}
+
+@media print {
+  .header,
+  .hero .backLink,
+  .notice,
+  .filters,
+  .reportActions,
+  .pagination,
+  .actionsColumn,
+  .modalBackdrop {
+    display: none;
+  }
+
+  .page,
+  .reportCard {
+    background: #fff;
+    border: 0;
+  }
+
+  .content {
+    width: 100%;
+    padding: 0;
+  }
+
+  .tableWrap {
+    overflow: visible;
+  }
+
+  .printOnlyRow {
+    display: table-row;
+  }
+}

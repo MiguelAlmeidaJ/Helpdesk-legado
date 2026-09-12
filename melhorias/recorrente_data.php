@@ -1,7 +1,7 @@
 <?php
 session_start();
-include_once("../all/seguranca.php");
-include_once("../all/conect.php");
+include_once("../legacy/bridge/seguranca.php");
+include_once("../legacy/bridge/conect.php");
 $data_recorrenteee = $_REQUEST['abertura_recorrente']; 
 
 $dia_mes = date_format(date_create($data_recorrenteee), 'd');

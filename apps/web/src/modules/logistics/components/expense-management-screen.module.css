@@ -1,0 +1,376 @@
+.page {
+  min-height: 100vh;
+  background: #f3f6f8;
+  color: #263746;
+}
+
+.header {
+  position: sticky;
+  z-index: 20;
+  top: 0;
+  min-height: 58px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 0 24px;
+  border-bottom: 1px solid #dce4ea;
+  background: rgba(255, 255, 255, .97);
+}
+
+.headerLeft {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.brand {
+  display: grid;
+  color: inherit;
+  text-decoration: none;
+}
+
+.brand strong { font-size: 15px; }
+.brand span { color: #768590; font-size: 10px; }
+
+.content {
+  width: min(1500px, calc(100% - 28px));
+  margin: 0 auto;
+  padding: 20px 0 48px;
+}
+
+.toolbar,
+.filters,
+.tablePanel {
+  border: 1px solid #dce4ea;
+  border-radius: 11px;
+  background: #fff;
+}
+
+.toolbar {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 18px;
+}
+
+.toolbar h1 {
+  margin: 2px 0;
+  font-size: 24px;
+}
+
+.toolbar p {
+  margin: 0;
+  color: #71808a;
+  font-size: 10px;
+}
+
+.eyebrow {
+  color: #6d7c87;
+  font-size: 8px;
+  font-weight: 900;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.actions,
+.rowActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.actions a,
+.actions button,
+.filters button,
+.rowActions button,
+.modal button {
+  min-height: 32px;
+  padding: 0 10px;
+  border: 1px solid #ccd7df;
+  border-radius: 7px;
+  background: #fff;
+  color: inherit;
+  font: inherit;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.actions a {
+  display: inline-flex;
+  align-items: center;
+}
+
+.filters {
+  display: flex;
+  align-items: end;
+  gap: 9px;
+  margin-top: 10px;
+  padding: 10px 12px;
+}
+
+.filters label {
+  display: grid;
+  gap: 3px;
+  color: #6d7c87;
+  font-size: 8px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.filters input,
+.formGrid input,
+.formGrid select,
+.formGrid textarea {
+  min-height: 34px;
+  border: 1px solid #ccd7df;
+  border-radius: 7px;
+  background: #fff;
+  color: inherit;
+  font: inherit;
+}
+
+.filters input {
+  padding: 0 8px;
+}
+
+.filters span {
+  margin-left: auto;
+  color: #74838d;
+  font-size: 9px;
+}
+
+.feedback {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border: 1px solid #dce4ea;
+  border-radius: 8px;
+  background: #fff;
+  font-size: 10px;
+}
+
+.tablePanel {
+  margin-top: 10px;
+  overflow: hidden;
+}
+
+.tableWrap {
+  overflow-x: auto;
+}
+
+.tableWrap table {
+  width: 100%;
+  min-width: 1150px;
+  border-collapse: collapse;
+  font-size: 9px;
+}
+
+.tableWrap th,
+.tableWrap td {
+  padding: 9px 10px;
+  border-bottom: 1px solid #e8edef;
+  vertical-align: top;
+  text-align: left;
+}
+
+.tableWrap th {
+  background: #f8fafb;
+  color: #687984;
+  font-size: 8px;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.tableWrap td:nth-child(5),
+.tableWrap th:nth-child(5) {
+  text-align: right;
+}
+
+.empty {
+  color: #82909a;
+  text-align: center !important;
+}
+
+.status {
+  display: inline-flex;
+  padding: 4px 6px;
+  border-radius: 999px;
+  font-size: 8px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.status1 { background: #fff2c9; color: #785d11; }
+.status2 { background: #dcefff; color: #245b7d; }
+.status3 { background: #fde1e1; color: #8b3939; }
+.status4 { background: #e0f3e4; color: #2c6940; }
+
+.attachments {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.attachments a {
+  padding: 3px 5px;
+  border-radius: 5px;
+  background: #edf4f8;
+  color: #325c74;
+  text-decoration: none;
+}
+
+.pending {
+  color: #a04444;
+  font-size: 8px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.rowActions button {
+  min-height: 26px;
+  padding: 0 6px;
+  font-size: 8px;
+}
+
+.danger {
+  border-color: #d9b4b4 !important;
+  color: #984343 !important;
+}
+
+.modalBackdrop {
+  position: fixed;
+  z-index: 100;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background: rgba(17, 27, 36, .48);
+}
+
+.modal {
+  width: min(820px, 100%);
+  max-height: calc(100vh - 36px);
+  overflow: auto;
+  border: 1px solid #d5dee4;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 22px 60px rgba(20, 30, 40, .26);
+}
+
+.modal > header,
+.modal > footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border-bottom: 1px solid #e6ecef;
+}
+
+.modal > footer {
+  justify-content: flex-end;
+  border-top: 1px solid #e6ecef;
+  border-bottom: 0;
+}
+
+.modal h2 {
+  margin: 2px 0 0;
+  font-size: 16px;
+}
+
+.formGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 11px;
+  padding: 14px;
+}
+
+.formGrid label {
+  display: grid;
+  gap: 4px;
+  color: #657682;
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.formGrid input,
+.formGrid select,
+.formGrid textarea {
+  width: 100%;
+  padding: 6px 8px;
+}
+
+.formGrid input[type='file'] {
+  padding: 5px;
+}
+
+.formGrid small {
+  color: #81909a;
+  font-size: 8px;
+}
+
+.wide {
+  grid-column: 1 / -1;
+}
+
+.existingAttachments {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 6px;
+  padding: 10px;
+  border: 1px solid #e3e9ed;
+  border-radius: 8px;
+  background: #f9fbfc;
+  font-size: 9px;
+}
+
+.existingAttachments > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.existingAttachments a {
+  min-width: 0;
+  overflow: hidden;
+  color: #325c74;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.existingAttachments button {
+  min-height: 26px;
+  font-size: 8px;
+}
+
+.modalFeedback {
+  margin: 0 14px 12px;
+  padding: 9px 10px;
+  border: 1px solid #e6c8c8;
+  border-radius: 7px;
+  background: #fff7f7;
+  color: #8d4545;
+  font-size: 9px;
+}
+
+.primary {
+  border-color: #2f658c !important;
+  background: #2f658c !important;
+  color: #fff !important;
+}
+
+@media (max-width: 720px) {
+  .header { padding: 0 12px; }
+  .toolbar,
+  .filters {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .filters span { margin-left: 0; }
+  .formGrid { grid-template-columns: 1fr; }
+  .wide,
+  .existingAttachments { grid-column: auto; }
+}

@@ -1,0 +1,103 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../../src/generated/n3rd"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+model approvement {
+  id         Int      @id @default(autoincrement()) @db.UnsignedInt
+  balance_id Int      @unique(map: "unique_balance_id") @db.UnsignedInt
+  user_id    Int      @db.UnsignedInt
+  date       DateTime @default(now()) @db.DateTime(0)
+  approved   Int      @db.TinyInt
+  remarks    String   @db.Text
+  pix        String?  @db.VarChar(100)
+  pix_type   Int?
+}
+
+model category {
+  id              Int               @id @default(autoincrement())
+  categories      String            @db.VarChar(250)
+  description     String?           @db.Text
+  status          Boolean           @default(true)
+  date_created    DateTime          @default(now()) @db.DateTime(0)
+  date_updated    DateTime?         @db.DateTime(0)
+  running_balance running_balance[]
+}
+
+model clientes {
+  id     Int     @id @default(autoincrement())
+  nome   String  @db.VarChar(255)
+  status Boolean @default(true)
+}
+
+model payment {
+  id             Int      @id @default(autoincrement()) @db.UnsignedInt
+  user_id        Int      @db.UnsignedInt
+  approvement_id Int      @db.UnsignedInt
+  date           DateTime @default(now()) @db.DateTime(0)
+  remarks        String   @db.Text
+  pix            String?  @db.VarChar(100)
+  pix_type       Int?
+}
+
+model running_balance {
+  id           Int       @id @default(autoincrement()) @db.UnsignedInt
+  remarks      String    @db.Text
+  cliente      String    @db.Text
+  amount       Float     @db.Float
+  user_id      String    @db.Text
+  category_id  Int
+  date_created DateTime  @default(now()) @db.DateTime(0)
+  date_updated DateTime? @db.DateTime(0)
+  pix          String?   @db.VarChar(255)
+  pix_type     Int?
+  input_flag   Boolean   @default(true)
+  aj           Boolean   @default(true)
+  status       String    @db.VarChar(45)
+  category     category  @relation(fields: [category_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "running_balance_ibfk_1")
+
+  @@index([category_id], map: "category_id")
+}
+
+model running_balance2 {
+  id           Int       @id @db.UnsignedInt
+  remarks      String    @db.Text
+  clt_id       Int?
+  cliente      String    @db.VarChar(255)
+  amount       Decimal   @db.Decimal(10, 2)
+  user_id      Int
+  category_id  Int
+  date_created DateTime  @db.DateTime(0)
+  date_updated DateTime? @db.DateTime(0)
+  pix          String?   @db.VarChar(255)
+  pix_type     Int?
+  status       String    @db.VarChar(45)
+}
+
+model type_keys {
+  id        Int    @id
+  name_type String @db.VarChar(45)
+  pix_type  Int
+}
+
+model user {
+  id           Int       @id @default(autoincrement())
+  id_allterus  Int?
+  firstname    String    @db.VarChar(250)
+  lastname     String    @db.VarChar(250)
+  username     String    @db.Text
+  password     String    @db.Text
+  avatar       String?   @db.Text
+  last_login   DateTime? @db.DateTime(0)
+  type         Boolean   @default(false)
+  date_added   DateTime  @default(now()) @db.DateTime(0)
+  date_updated DateTime? @db.DateTime(0)
+  chavepix     String    @db.VarChar(255)
+  pix_type     Int?
+  sts          Int
+}

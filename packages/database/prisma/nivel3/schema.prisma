@@ -1,0 +1,1407 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../../src/generated/nivel3"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+model agenciasbancarias {
+  id      Int    @id
+  ag_nome String @db.VarChar(100)
+  status  Int?   @default(1)
+}
+
+model agenda_veiculos {
+  id                  Int       @id @default(autoincrement())
+  veiculo_id          Int
+  data                DateTime  @db.Date
+  empresa             String    @db.VarChar(100)
+  cidade              String?   @db.VarChar(100)
+  horario             String    @db.VarChar(20)
+  motorista           Int
+  observacoes         String?   @db.Text
+  color               Int?      @default(1)
+  kmInicial           Int?
+  kmFinal             Int?
+  visibilidade        Int       @default(0)
+  usuario_id          Int
+  criado_em           DateTime? @default(now()) @db.DateTime(0)
+  arquivado           Boolean?  @default(false)
+  data_anterior       DateTime? @db.Date
+  horario_anterior    DateTime? @db.Time(0)
+  veiculo_id_anterior Int?
+  ultima_alteracao    DateTime? @db.Timestamp(0)
+  modificado_por_id   Int?
+  veiculos            veiculos  @relation(fields: [veiculo_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "agenda_veiculos_ibfk_1")
+
+  @@index([veiculo_id], map: "veiculo_id")
+}
+
+model api_idempotency_keys {
+  id              BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
+  user_id         Int
+  idempotency_key String    @db.VarChar(128)
+  request_method  String    @db.VarChar(10)
+  request_path    String    @db.VarChar(500)
+  request_hash    String    @db.Char(64)
+  response_status Int?      @db.UnsignedSmallInt
+  response_body   String?   @db.LongText
+  locked_until    DateTime? @db.DateTime(6)
+  created_at      DateTime  @default(now()) @db.DateTime(6)
+  expires_at      DateTime  @db.DateTime(6)
+  usuarios        usuarios  @relation(fields: [user_id], references: [user_id], onUpdate: Restrict, map: "fk_api_idempotency_user")
+
+  @@unique([user_id, idempotency_key], map: "uq_api_idempotency_user_key")
+  @@index([expires_at], map: "ix_api_idempotency_expiry")
+}
+
+model api_outbox_events {
+  id              String    @id @db.Char(36)
+  idempotency_key String    @unique(map: "uq_api_outbox_idempotency") @db.VarChar(190)
+  aggregate_type  String    @db.VarChar(80)
+  aggregate_id    String    @db.VarChar(80)
+  event_type      String    @db.VarChar(120)
+  payload         String    @db.LongText
+  attempts        Int       @default(0) @db.UnsignedSmallInt
+  available_at    DateTime  @default(now()) @db.DateTime(6)
+  claimed_at      DateTime? @db.DateTime(6)
+  processed_at    DateTime? @db.DateTime(6)
+  last_error      String?   @db.VarChar(1000)
+  created_at      DateTime  @default(now()) @db.DateTime(6)
+
+  @@index([processed_at, available_at], map: "ix_api_outbox_pending")
+}
+
+model api_sessions {
+  id                 String    @id @db.Char(36)
+  family_id          String    @db.Char(36)
+  user_id            Int
+  refresh_token_hash String    @unique(map: "uq_api_sessions_token_hash") @db.Char(64)
+  replaced_by_id     String?   @db.Char(36)
+  device_name        String?   @db.VarChar(160)
+  user_agent         String?   @db.VarChar(500)
+  ip_address         String?   @db.VarChar(45)
+  created_at         DateTime  @default(now()) @db.DateTime(6)
+  last_used_at       DateTime? @db.DateTime(6)
+  expires_at         DateTime  @db.DateTime(6)
+  revoked_at         DateTime? @db.DateTime(6)
+  revoke_reason      String?   @db.VarChar(120)
+  usuarios           usuarios  @relation(fields: [user_id], references: [user_id], onUpdate: Restrict, map: "fk_api_sessions_user")
+
+  @@index([family_id], map: "ix_api_sessions_family")
+  @@index([user_id, revoked_at, expires_at], map: "ix_api_sessions_user_active")
+}
+
+model atendimento_recorrencias {
+  id                    Int                                      @id @default(autoincrement()) @db.UnsignedInt
+  atendimento_modelo_id Int                                      @unique(map: "uq_atendimento_recorrencias_modelo")
+  nome                  String                                   @db.VarChar(180)
+  cliente_id            Int
+  periodo               Int                                      @db.UnsignedTinyInt
+  proxima_reabertura    DateTime                                 @db.DateTime(0)
+  quantidade_modo       atendimento_recorrencias_quantidade_modo @default(fixa)
+  quantidade_total      Int?                                     @db.UnsignedSmallInt
+  quantidade_restante   Int                                      @default(1) @db.UnsignedSmallInt
+  ativo                 Boolean                                  @default(true)
+  criado_por            Int?
+  atualizado_por        Int?
+  criado_em             DateTime                                 @default(now()) @db.DateTime(0)
+  atualizado_em         DateTime                                 @default(now()) @db.DateTime(0)
+
+  @@index([ativo, proxima_reabertura], map: "idx_atendimento_recorrencias_execucao")
+  @@index([cliente_id, periodo, ativo], map: "idx_atendimento_recorrencias_filtros")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model atendimentos {
+  id               Int       @id @default(autoincrement())
+  area             Int?      @default(1)
+  cliente          Int?      @default(1)
+  pessoa           Int?
+  local            Int?
+  tipo             Int?
+  categoria        Int?
+  subcategoria     Int?
+  item             Int?
+  nivel            Int?      @default(1)
+  forma            Int?      @default(1)
+  desc_abertura    String?   @db.Text
+  desc_fechamento  String?   @db.Text
+  abertura         DateTime? @db.DateTime(0)
+  fechamento       DateTime? @db.DateTime(0)
+  tecnico          Int?
+  reincidente      Int?      @default(0)
+  status           Int?      @default(1)
+  recorrente       Int?      @default(1)
+  data_recorrencia DateTime? @db.DateTime(0)
+  vezes_reabrir    Int?      @default(1)
+  vezes            Int?      @default(1)
+  semana           Int?
+  prioridade       Int?
+  imagens          imagens[]
+
+  @@index([abertura], map: "idx_abertura")
+  @@index([cliente, status, abertura], map: "idx_atd_cliente_status_abertura")
+  @@index([status, abertura], map: "idx_atd_status_abertura")
+  @@index([status, fechamento], map: "idx_atd_status_fechamento")
+  @@index([cliente], map: "idx_cliente")
+  @@index([fechamento], map: "idx_fechamento")
+  @@index([status], map: "idx_status")
+  @@index([tecnico], map: "idx_tecnico")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model cads_bancos {
+  id     Int     @id @default(autoincrement())
+  bancos String? @db.VarChar(50)
+  dados  String? @db.VarChar(50)
+  status Int?
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model cads_centro_custo {
+  id           Int     @id @default(autoincrement())
+  centro_custo String? @db.VarChar(50)
+  status       Int?
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model cads_class_contab {
+  id        Int     @id @default(autoincrement())
+  categoria String? @db.VarChar(50)
+  status    Int?
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model cads_forma_pag {
+  id             Int              @id @default(autoincrement())
+  forma          String?          @db.VarChar(50)
+  status         Int?
+  contas_pagar   contas_pagar[]
+  contas_receber contas_receber[]
+  recebimentos   recebimentos[]
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model cads_fotos {
+  id        Int     @id @default(autoincrement())
+  contrato  Int?
+  descricao String? @db.VarChar(50)
+  endereco  String? @db.VarChar(50)
+  status    Int?
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model cads_ind_reaju {
+  id     Int     @id @default(autoincrement())
+  indice String? @db.VarChar(50)
+  status Int?
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model cads_tipo_despe {
+  id           Int     @id @default(autoincrement())
+  despesa      String? @db.VarChar(50)
+  class_contab Int?
+  status       Int?
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model cads_tipo_servi {
+  id           Int     @id @default(autoincrement())
+  servico      String? @db.VarChar(50)
+  class_contab Int?
+  status       Int?
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model cads_tipo_taxa {
+  id           Int     @id @default(autoincrement())
+  taxa         String? @db.VarChar(50)
+  class_contab Int?
+  status       Int?
+}
+
+model cargos_n3 {
+  cargo_id   Int     @id @default(autoincrement())
+  cargo_nome String? @db.VarChar(50)
+  cargo_sts  Int?
+}
+
+model catalogos {
+  id                 Int       @id @default(autoincrement())
+  setor              Int
+  catalogo_categoria Int
+  cliente_id         Int
+  titulo             String    @db.VarChar(255)
+  conteudo           String    @db.LongText
+  data_criacao       DateTime? @default(now()) @db.DateTime(0)
+  data_edicao        DateTime? @default(now()) @db.DateTime(0)
+  usuario_id         Int
+}
+
+model catalogos_categoria {
+  categoria_id   Int    @id @default(autoincrement())
+  categoria_nome String @db.VarChar(50)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model categorias {
+  cat_id    Int     @id @default(autoincrement())
+  cat_nome  String? @db.VarChar(50)
+  cat_setor Int?
+  cat_sts   Int     @default(1)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model categorias_classificacao {
+  id             Int              @id @default(autoincrement())
+  nome           String           @unique(map: "nome") @db.VarChar(50)
+  status         Int              @default(1)
+  contas_pagar   contas_pagar[]
+  contas_receber contas_receber[]
+  recorrencias   recorrencias[]
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model categorias_empresa_centro_custo {
+  id     Int    @id @default(autoincrement())
+  nome   String @unique(map: "nome") @db.VarChar(50)
+  status Int    @default(1)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model categorias_grupo {
+  id                  Int                   @id @default(autoincrement())
+  nome                String                @unique(map: "nome") @db.VarChar(50)
+  status              Int                   @default(1)
+  categorias_subgrupo categorias_subgrupo[]
+  contas_receber      contas_receber[]
+  recorrencias        recorrencias[]
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model categorias_subgrupo {
+  id               Int              @id @default(autoincrement())
+  id_grupo         Int
+  nome             String           @db.VarChar(50)
+  status           Int              @default(1)
+  aplicavel        String?          @db.VarChar(50)
+  categorias_grupo categorias_grupo @relation(fields: [id_grupo], references: [id], onUpdate: Restrict, map: "categorias_subgrupo_ibfk_1")
+  contas_pagar     contas_pagar[]
+  contas_receber   contas_receber[]
+  recorrencias     recorrencias[]
+
+  @@index([id_grupo], map: "id_grupo")
+}
+
+model categorias_terc_andar {
+  id    Int     @id @default(autoincrement())
+  nome  String  @db.VarChar(120)
+  ativo Boolean @default(true)
+  ordem Int     @default(0)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model categorias_tipo_documento {
+  id             Int              @id @default(autoincrement())
+  nome           String           @unique(map: "nome") @db.VarChar(50)
+  status         Int              @default(1)
+  contas_pagar   contas_pagar[]
+  contas_receber contas_receber[]
+  recorrencias   recorrencias[]
+}
+
+model category {
+  id           Int       @id @default(autoincrement())
+  categories   String    @db.VarChar(250)
+  description  String?   @db.Text
+  status       Boolean   @default(true)
+  date_created DateTime  @default(now()) @db.DateTime(0)
+  date_updated DateTime? @db.DateTime(0)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model clientes {
+  clt_id            Int                 @id @default(autoincrement())
+  clt_nomer         String?             @db.VarChar(80)
+  clt_nomef         String?             @db.VarChar(80)
+  clt_cnpj          String?             @db.VarChar(22)
+  clt_end           String?             @db.VarChar(100)
+  clt_city          String?             @db.VarChar(50)
+  clt_uf            String?             @db.VarChar(2)
+  clt_mail          String?             @db.VarChar(60)
+  clt_tel           String?             @db.VarChar(50)
+  clt_sts           Int                 @default(1)
+  clt_ti            Int                 @default(0)
+  clt_adm           Int                 @default(0)
+  clt_mkt           Int                 @default(0)
+  clientes_usuarios clientes_usuarios[]
+  contas_receber    contas_receber[]
+  recorrencias      recorrencias[]
+}
+
+model clientes_usuarios {
+  id         Int       @id @default(autoincrement())
+  cliente_id Int?
+  usuario_id Int?
+  clientes   clientes? @relation(fields: [cliente_id], references: [clt_id], onDelete: NoAction, onUpdate: NoAction, map: "FK__clientes")
+  usuarios   usuarios? @relation(fields: [usuario_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "FK__usuarios")
+
+  @@index([cliente_id], map: "FK__clientes")
+  @@index([usuario_id], map: "FK__usuarios")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model concluido {
+  concluido_id    Int       @id @default(autoincrement())
+  concluido_atd   Int?
+  concluido_start DateTime? @db.DateTime(0)
+  concluido_prev  DateTime? @db.DateTime(0)
+  concluido_desc  String?   @db.Text
+  concluido_end   DateTime? @db.DateTime(0)
+  concluido_user  Int?
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model config_mkt {
+  id           Int @id @default(autoincrement())
+  tempo_alerta Int @default(40)
+  sla_n1       Int @default(30)
+  sla_n2       Int @default(10)
+  sla_n3       Int @default(20)
+  sla_n4       Int @default(30)
+  sla_n5       Int @default(210)
+  sla_n6       Int @default(180)
+  sla_n7       Int @default(210)
+  sla_n8       Int @default(420)
+  sla_n9       Int @default(840)
+  sla_n10      Int @default(120)
+  sla_n11      Int @default(60)
+  sla_n12      Int @default(120)
+  sla_n13      Int @default(60)
+  sla_n14      Int @default(60)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model configuracao {
+  id           Int @id @default(autoincrement())
+  tempo_alerta Int @default(40)
+  sla_n1       Int @default(60)
+  sla_n2       Int @default(120)
+  sla_n3       Int @default(180)
+  sla_n4       Int @default(60)
+  sla_n5       Int @default(60)
+  sla_n6       Int @default(2880)
+  sla_n7       Int @default(7200)
+  sla_n8       Int @default(21600)
+  sla_n9       Int @default(43200)
+  sla_n10      Int @default(86400)
+  sla_n11      Int @default(129600)
+  sla_n12      Int @default(360)
+}
+
+model contas_pagar {
+  id                        Int                        @id @default(autoincrement())
+  descricao                 String                     @db.VarChar(255)
+  id_usuario                Int?
+  fornecedor                String?                    @db.VarChar(100)
+  valor                     Decimal                    @db.Decimal(10, 2)
+  data_vencimento           DateTime                   @db.Date
+  data_pagamento            DateTime?                  @db.Date
+  status                    contas_pagar_status        @default(Pendente)
+  status_id                 Int?                       @default(1)
+  unidade_negocio           Int
+  id_grupo                  Int
+  id_subgrupo               Int
+  id_classificacao          Int
+  id_tipo_documento         Int?
+  id_forma_pagamento        Int?
+  observacao                String?                    @db.Text
+  data_criacao              DateTime                   @default(now()) @db.Timestamp(0)
+  last_update               DateTime?                  @default(now()) @db.Timestamp(0)
+  id_agBancaria             Int?
+  anexos                    String?                    @db.Text
+  usuarios                  usuarios?                  @relation(fields: [id_usuario], references: [user_id], onDelete: Restrict, onUpdate: Restrict, map: "contas_pagar_ibfk_1")
+  categorias_subgrupo       categorias_subgrupo        @relation(fields: [id_subgrupo], references: [id], onUpdate: Restrict, map: "contas_pagar_ibfk_2")
+  categorias_classificacao  categorias_classificacao   @relation(fields: [id_classificacao], references: [id], onUpdate: Restrict, map: "contas_pagar_ibfk_3")
+  categorias_tipo_documento categorias_tipo_documento? @relation(fields: [id_tipo_documento], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "contas_pagar_ibfk_4")
+  cads_forma_pag            cads_forma_pag?            @relation(fields: [id_forma_pagamento], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "contas_pagar_ibfk_5")
+  status_contas             status_contas?             @relation(fields: [status_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_contas_pagar_status")
+
+  @@index([status_id], map: "fk_contas_pagar_status")
+  @@index([id_classificacao], map: "id_classificacao")
+  @@index([id_forma_pagamento], map: "id_forma_pagamento")
+  @@index([id_subgrupo], map: "id_subgrupo")
+  @@index([id_tipo_documento], map: "id_tipo_documento")
+  @@index([id_usuario], map: "id_usuario")
+}
+
+model contas_receber {
+  id                        Int                        @id @default(autoincrement())
+  id_cliente                Int
+  descricao                 String                     @db.VarChar(255)
+  valor_total               Decimal                    @db.Decimal(10, 2)
+  saldo                     Decimal?                   @db.Decimal(10, 2)
+  unidade_negocio           Int
+  id_grupo                  Int
+  id_subgrupo               Int
+  id_classificacao          Int
+  id_tipo_documento         Int?
+  id_forma_pagamento        Int?
+  data_vencimento           DateTime                   @db.Date
+  status                    contas_receber_status      @default(A_vencer)
+  observacao                String?                    @db.Text
+  data_criacao              DateTime                   @default(now()) @db.Timestamp(0)
+  id_usuario                Int
+  data_update               DateTime                   @default(now()) @db.Timestamp(0)
+  anexos                    String?                    @db.Text
+  status_id                 Int?                       @default(1)
+  clientes                  clientes                   @relation(fields: [id_cliente], references: [clt_id], onUpdate: Restrict, map: "contas_receber_ibfk_1")
+  categorias_tipo_documento categorias_tipo_documento? @relation(fields: [id_tipo_documento], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "contas_receber_ibfk_2")
+  cads_forma_pag            cads_forma_pag?            @relation(fields: [id_forma_pagamento], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "contas_receber_ibfk_3")
+  categorias_grupo          categorias_grupo           @relation(fields: [id_grupo], references: [id], onUpdate: Restrict, map: "contas_receber_ibfk_4")
+  categorias_subgrupo       categorias_subgrupo        @relation(fields: [id_subgrupo], references: [id], onUpdate: Restrict, map: "contas_receber_ibfk_5")
+  categorias_classificacao  categorias_classificacao   @relation(fields: [id_classificacao], references: [id], onUpdate: Restrict, map: "contas_receber_ibfk_6")
+  status_contas             status_contas?             @relation(fields: [status_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_status_conta")
+  contas_receber_divisao    contas_receber_divisao?
+  recebimentos              recebimentos[]
+
+  @@index([status_id], map: "fk_status_conta")
+  @@index([id_classificacao], map: "id_classificacao")
+  @@index([id_cliente], map: "id_cliente")
+  @@index([id_forma_pagamento], map: "id_forma_pagamento")
+  @@index([id_grupo], map: "id_grupo")
+  @@index([id_subgrupo], map: "id_subgrupo")
+  @@index([id_tipo_documento], map: "id_tipo_documento")
+}
+
+model contas_receber_divisao {
+  id                   Int            @id @default(autoincrement())
+  id_conta_receber     Int            @unique(map: "idx_conta_unica")
+  percentual_ti        Int?           @default(0) @db.UnsignedTinyInt
+  percentual_devops    Int?           @default(0) @db.UnsignedTinyInt
+  percentual_marketing Int?           @default(0) @db.UnsignedTinyInt
+  contas_receber       contas_receber @relation(fields: [id_conta_receber], references: [id], onUpdate: Restrict, map: "contas_receber_divisao_ibfk_1")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model contratos {
+  id              Int       @id @default(autoincrement())
+  cliente         Int?
+  data_inicio     DateTime? @db.Date
+  data_termino    DateTime? @db.Date
+  dia_pagamento   Int?
+  valor_inicial   Float?    @db.Float
+  valor_atual     Float?    @db.Float
+  forma_pag       String?   @db.Text
+  bancos          String?   @db.Text
+  agencia         String?   @db.Text
+  conta           String?   @db.Text
+  indice_reajuste Int?
+  centro_custo    Int?
+  class_contabil  Int?
+  status          Int?      @default(1)
+  observacoes     String?   @db.Text
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model custos {
+  id               Int      @id @default(autoincrement())
+  contrato         Int
+  tipo             Int
+  custo            Int
+  centro_custo     Int
+  data_competencia DateTime @db.Date
+  data_vencimento  DateTime @db.Date
+  valor            Float    @db.Float
+  info_consumo     String   @db.VarChar(50)
+  nf               String   @db.VarChar(50)
+  descricao        String   @db.Text
+  status           Int      @default(1)
+}
+
+model documentos {
+  id              Int      @id @default(autoincrement())
+  atd_id          Int?
+  user_id         Int?
+  caminho_arquivo String   @db.VarChar(255)
+  nome_arquivo    String   @db.VarChar(255)
+  tipo_arquivo    String?  @db.VarChar(100)
+  data_upload     DateTime @default(now()) @db.Timestamp(0)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model espera {
+  espera_id       Int       @id @default(autoincrement())
+  espera_atd      Int?
+  id_melhorias    Int?
+  espera_start    DateTime? @db.DateTime(0)
+  espera_prev     DateTime? @db.DateTime(0)
+  espera_desc     String?   @db.Text
+  espera_end      DateTime? @db.DateTime(0)
+  espera_user     Int?
+  espera_causa    String?   @db.VarChar(50)
+  ultimo_registro DateTime  @default(now()) @db.Timestamp(0)
+
+  @@index([espera_atd], map: "idx_espera_atd")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model espera_mkt_proj {
+  espera_id      Int       @id @default(autoincrement())
+  espera_projeto Int?
+  espera_start   DateTime? @db.DateTime(0)
+  espera_prev    DateTime? @db.DateTime(0)
+  espera_desc    String?   @db.Text
+  espera_end     DateTime? @db.DateTime(0)
+  espera_user    Int?
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model espera_mkt_tarefa {
+  espera_id     Int       @id @default(autoincrement())
+  espera_tarefa Int?
+  espera_start  DateTime? @db.DateTime(0)
+  espera_prev   DateTime? @db.DateTime(0)
+  espera_desc   String?   @db.Text
+  espera_end    DateTime? @db.DateTime(0)
+  espera_user   Int?
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model espera_projeto {
+  espera_id      Int       @id @default(autoincrement())
+  espera_projeto Int?
+  espera_start   DateTime? @db.DateTime(0)
+  espera_prev    DateTime? @db.DateTime(0)
+  espera_desc    String?   @db.Text
+  espera_end     DateTime? @db.DateTime(0)
+  espera_user    Int?
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model espera_tarefas {
+  espera_id     Int       @id @default(autoincrement())
+  espera_tarefa Int?
+  espera_start  DateTime? @db.DateTime(0)
+  espera_prev   DateTime? @db.DateTime(0)
+  espera_desc   String?   @db.Text
+  espera_end    DateTime? @db.DateTime(0)
+  espera_user   Int?
+}
+
+model espera_terc_andar {
+  espera_id          Int                @id @default(autoincrement())
+  espera_tarefa      Int
+  espera_start       DateTime?          @default(now()) @db.DateTime(0)
+  espera_prev        DateTime?          @db.DateTime(0)
+  espera_desc        String?            @db.Text
+  espera_end         DateTime?          @db.DateTime(0)
+  espera_user        String?            @db.VarChar(150)
+  tarefas_terc_andar tarefas_terc_andar @relation(fields: [espera_tarefa], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "espera_terc_andar_ibfk_1")
+
+  @@index([espera_tarefa], map: "espera_tarefa")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model facility {
+  id              Int       @id @default(autoincrement())
+  area            Int?      @default(1)
+  cliente         Int?      @default(1)
+  pessoa          Int?
+  local           Int?
+  tipo            Int?
+  categoria       Int?
+  subcategoria    Int?
+  item            Int?
+  nivel           Int?      @default(1)
+  forma           Int?      @default(1)
+  desc_abertura   String?   @db.Text
+  desc_fechamento String?   @db.Text
+  abertura        DateTime? @db.DateTime(0)
+  fechamento      DateTime? @db.DateTime(0)
+  tecnico         Int?
+  reincidente     Int?      @default(0)
+  status          Int?      @default(1)
+}
+
+model gantt {
+  id                 Int       @id @default(autoincrement())
+  id_projeto         Int       @default(0)
+  id_tarefa          Int       @default(0)
+  inicio_tarefa      DateTime? @db.DateTime(0)
+  espera_tarefa      DateTime? @db.DateTime(0)
+  retomou_tarefa     DateTime? @db.DateTime(0)
+  retomou_anterior   DateTime? @db.DateTime(0)
+  finalizou_tarefa   DateTime? @db.DateTime(0)
+  hora_espera        Int       @default(0)
+  minutos_espera     Int       @default(0)
+  segundos_espera    Int       @default(0)
+  tipo_tarefa        Int?      @default(0)
+  horas_total        Int       @default(0)
+  minutos_total      Int       @default(0)
+  segundos_total     Int       @default(0)
+  nome_tarefa        String?   @db.VarChar(50)
+  porcentagem_tarefa Int?
+  dependencia_tarefa Int?
+  status_tarefa      Int?
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model ged_file {
+  ged_fl_id     Int       @id @default(autoincrement())
+  ged_fl_folder Int?
+  ged_fl_cont   Int?
+  ged_fl_name   String?   @db.VarChar(50)
+  ged_fl_ext    String?   @db.VarChar(5)
+  ged_fl_url    String?   @db.VarChar(50)
+  ged_fl_sts    Int       @default(2)
+  ged_fl_dt     DateTime? @db.DateTime(0)
+  ged_fl_user   Int?
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model ged_file_mkt {
+  ged_fl_id     Int       @id @default(autoincrement())
+  ged_fl_folder Int?
+  ged_fl_cont   Int?
+  ged_fl_name   String?   @db.VarChar(50)
+  ged_fl_ext    String?   @db.VarChar(5)
+  ged_fl_url    String?   @db.VarChar(50)
+  ged_fl_sts    Int       @default(2)
+  ged_fl_dt     DateTime? @db.DateTime(0)
+  ged_fl_user   Int?
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model ged_folder {
+  ged_fd_id     Int       @id @default(autoincrement())
+  ged_fd_cont   Int?
+  ged_fd_folder String?   @db.VarChar(50)
+  ged_fd_sts    Int       @default(2)
+  ged_fd_dt     DateTime? @db.DateTime(0)
+  ged_fd_user   Int?
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model ged_folder_mkt {
+  ged_fd_id     Int       @id @default(autoincrement())
+  ged_fd_cont   Int?
+  ged_fd_folder String?   @db.VarChar(50)
+  ged_fd_sts    Int       @default(2)
+  ged_fd_dt     DateTime? @db.DateTime(0)
+  ged_fd_user   Int?
+}
+
+model imagens {
+  id               Int           @id @default(autoincrement())
+  atd_id           Int?
+  user_id          Int?
+  img_atd          Bytes?
+  data_atualizacao DateTime      @default(now()) @db.Timestamp(0)
+  atendimentos     atendimentos? @relation(fields: [atd_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "imagens_ibfk_1")
+
+  @@index([atd_id], map: "atd_id")
+}
+
+model imagens_tarefa {
+  id               Int      @id @default(autoincrement())
+  tarefa_id        Int?
+  user_id          Int?
+  img_tarefa       Bytes?
+  data_atualizacao DateTime @default(now()) @db.Timestamp(0)
+  tarefas          tarefas? @relation(fields: [tarefa_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "imagens_ibfk_2")
+
+  @@index([tarefa_id], map: "tarefa_id")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model inter_contrato {
+  inter_id       Int       @id @default(autoincrement())
+  inter_tipo     Int?
+  inter_contrato Int?
+  inter_user     Int?
+  inter_data     DateTime? @db.DateTime(0)
+  inter_desc     String?   @db.Text
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model inter_facility {
+  inter_id   Int       @id @default(autoincrement())
+  inter_tipo Int?
+  inter_atd  Int?
+  inter_user Int?
+  inter_data DateTime? @db.DateTime(0)
+  inter_desc String?   @db.Text
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model inter_proj_mkt {
+  inter_id      Int       @id @default(autoincrement())
+  inter_tipo    Int?
+  inter_projeto Int?
+  inter_user    Int?
+  inter_data    DateTime? @db.DateTime(0)
+  inter_desc    String?   @db.Text
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model inter_projeto {
+  inter_id      Int       @id @default(autoincrement())
+  inter_tipo    Int?
+  inter_projeto Int?
+  inter_user    Int?
+  inter_data    DateTime? @db.DateTime(0)
+  inter_desc    String?   @db.Text
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model inter_tarefa {
+  inter_id     Int       @id @default(autoincrement())
+  inter_tipo   Int?
+  inter_tarefa Int?
+  inter_user   Int?
+  inter_data   DateTime? @db.DateTime(0)
+  inter_desc   String?   @db.Text
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model inter_tarefa_mkt {
+  inter_id     Int       @id @default(autoincrement())
+  inter_tipo   Int?
+  inter_tarefa Int?
+  inter_user   Int?
+  inter_data   DateTime? @db.DateTime(0)
+  inter_desc   String?   @db.Text
+}
+
+model inter_terc_andar {
+  inter_id           Int                @id @default(autoincrement())
+  inter_tipo         String?            @db.VarChar(100)
+  inter_tarefa       Int
+  inter_user         String?            @db.VarChar(150)
+  inter_data         DateTime?          @default(now()) @db.DateTime(0)
+  inter_desc         String?            @db.Text
+  tarefas_terc_andar tarefas_terc_andar @relation(fields: [inter_tarefa], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "inter_terc_andar_ibfk_1")
+
+  @@index([inter_tarefa], map: "inter_tarefa")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model interatividade {
+  inter_id   Int       @id @default(autoincrement())
+  inter_tipo Int?
+  inter_atd  Int?
+  inter_user Int?
+  inter_data DateTime? @db.DateTime(0)
+  inter_desc String?   @db.Text
+
+  @@index([inter_atd], map: "idx_inter_atd")
+  @@index([inter_data], map: "idx_inter_data")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model interatividade_melhorias {
+  inter_id   Int       @id @default(autoincrement())
+  inter_tipo Int?
+  inter_atd  Int?
+  inter_user Int?
+  inter_data DateTime? @db.DateTime(0)
+  inter_desc String?   @db.Text
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model itens {
+  itens_id   Int     @id @default(autoincrement())
+  itens_scat Int?
+  itens_nome String? @db.VarChar(50)
+  itens_sts  Int     @default(1)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model locais {
+  local_id   Int     @id @default(autoincrement())
+  local_clt  Int?
+  local_nom  String? @db.VarChar(60)
+  local_end  String? @db.VarChar(100)
+  local_city String? @db.VarChar(50)
+  local_uf   String? @db.VarChar(2)
+  local_sts  Int     @default(1)
+}
+
+model log_uso {
+  log_id      Int       @id @default(autoincrement())
+  log_area    Int?
+  log_user    Int?
+  log_time    DateTime? @db.DateTime(0)
+  log_action  String?   @db.Text
+  log_cliente Int?
+  log_chamado Int?
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model melhorias {
+  id               Int       @id @default(autoincrement())
+  area             Int?      @default(1)
+  cliente          Int?      @default(1)
+  pessoa           Int?
+  local            Int?
+  tipo             Int?
+  categoria        Int?
+  subcategoria     Int?
+  item             Int?
+  nivel            Int?      @default(1)
+  forma            Int?      @default(1)
+  desc_abertura    String?   @db.Text
+  desc_fechamento  String?   @db.Text
+  abertura         DateTime? @db.DateTime(0)
+  fechamento       DateTime? @db.DateTime(0)
+  tecnico          Int?
+  reincidente      Int?      @default(0)
+  status           Int?      @default(1)
+  recorrente       Int?      @default(1)
+  data_recorrencia DateTime? @db.DateTime(0)
+  vezes_reabrir    Int?      @default(1)
+  vezes            Int?      @default(1)
+  semana           Int?
+}
+
+model niveis_terc_andar {
+  id    Int     @id @default(autoincrement())
+  nome  String  @db.VarChar(120)
+  ativo Boolean @default(true)
+  ordem Int     @default(0)
+}
+
+model permissions {
+  id               Int                @id @default(autoincrement()) @db.UnsignedInt
+  name             String             @db.VarChar(140)
+  slug             String             @unique(map: "uq_permissions_slug") @db.VarChar(160)
+  module           String             @db.VarChar(60)
+  description      String?            @db.VarChar(255)
+  created_at       DateTime           @default(now()) @db.DateTime(0)
+  updated_at       DateTime           @default(now()) @db.DateTime(0)
+  role_permissions role_permissions[]
+  user_permissions user_permissions[]
+
+  @@index([module], map: "idx_permissions_module")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model pessoas {
+  pessoa_id    Int     @id @default(autoincrement())
+  pessoa_clt   Int?
+  pessoa_nom   String? @db.VarChar(60)
+  pessoa_cargo String? @db.VarChar(60)
+  pessoa_tel   String? @db.VarChar(50)
+  pessoa_mail  String? @db.VarChar(60)
+  pessoa_sts   Int     @default(1)
+
+  @@index([pessoa_clt], map: "idx_pessoas_cliente")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model proj_mkt {
+  id              Int       @id @default(autoincrement())
+  nome_proj       String?   @db.VarChar(50)
+  area            Int?      @default(1)
+  cliente         Int?      @default(1)
+  pessoa          Int?
+  local           Int?
+  tipo            Int?
+  categoria       Int?
+  subcategoria    Int?
+  item            Int?
+  dias            Int?      @default(1)
+  forma           Int?      @default(1)
+  desc_abertura   String?   @db.Text
+  desc_fechamento String?   @db.Text
+  abertura        DateTime? @db.DateTime(0)
+  fechamento      DateTime? @db.DateTime(0)
+  tecnico         Int?
+  reincidente     Int?      @default(0)
+  status          Int?      @default(1)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model projetos {
+  id              Int       @id @default(autoincrement())
+  nome_proj       String?   @db.VarChar(50)
+  area            Int?      @default(1)
+  cliente         Int?      @default(1)
+  pessoa          Int?
+  local           Int?
+  tipo            Int?
+  categoria       Int?
+  subcategoria    Int?
+  item            Int?
+  nivel           Int?
+  dias            Int?      @default(1)
+  forma           Int?      @default(1)
+  desc_abertura   String?   @db.Text
+  desc_fechamento String?   @db.Text
+  abertura        DateTime? @db.DateTime(0)
+  fechamento      DateTime? @db.DateTime(0)
+  tecnico         Int?
+  reincidente     Int?      @default(0)
+  status          Int?      @default(1)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model recebimentos {
+  id                 Int             @id @default(autoincrement())
+  id_conta_receber   Int
+  valor_recebido     Decimal         @db.Decimal(10, 2)
+  data_recebimento   DateTime        @db.DateTime(0)
+  id_forma_pagamento Int?
+  observacao         String?         @db.Text
+  id_usuario         Int
+  data_registro      DateTime        @default(now()) @db.Timestamp(0)
+  id_agBancaria      Int
+  contas_receber     contas_receber  @relation(fields: [id_conta_receber], references: [id], onUpdate: Restrict, map: "recebimentos_ibfk_1")
+  cads_forma_pag     cads_forma_pag? @relation(fields: [id_forma_pagamento], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "recebimentos_ibfk_2")
+  usuarios           usuarios        @relation(fields: [id_usuario], references: [user_id], onUpdate: Restrict, map: "recebimentos_ibfk_3")
+
+  @@index([id_conta_receber], map: "id_conta_receber")
+  @@index([id_forma_pagamento], map: "id_forma_pagamento")
+  @@index([id_usuario], map: "id_usuario")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model recorrencias {
+  id                          Int                        @id @default(autoincrement())
+  id_conta_origem             Int?
+  tipo                        recorrencias_tipo
+  descricao_padrao            String                     @db.VarChar(255)
+  valor_padrao                Decimal                    @db.Decimal(10, 2)
+  ativo                       Boolean                    @default(true)
+  id_cliente                  Int?
+  id_usuario                  Int?
+  fornecedor_padrao           String?                    @db.VarChar(100)
+  unidade_negocio_padrao      Int?
+  id_grupo_padrao             Int?
+  dia_vencimento              Int
+  id_subgrupo_padrao          Int?
+  id_classificacao_padrao     Int?
+  id_tipo_documento           Int?
+  percentual_ti_padrao        Int?                       @default(0)
+  percentual_devops_padrao    Int?                       @default(0)
+  percentual_marketing_padrao Int?                       @default(0)
+  clientes                    clientes?                  @relation(fields: [id_cliente], references: [clt_id], onDelete: Restrict, onUpdate: Restrict, map: "recorrencias_ibfk_1")
+  usuarios                    usuarios?                  @relation(fields: [id_usuario], references: [user_id], onDelete: Restrict, onUpdate: Restrict, map: "recorrencias_ibfk_2")
+  categorias_subgrupo         categorias_subgrupo?       @relation(fields: [id_subgrupo_padrao], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "recorrencias_ibfk_3")
+  categorias_classificacao    categorias_classificacao?  @relation(fields: [id_classificacao_padrao], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "recorrencias_ibfk_4")
+  categorias_grupo            categorias_grupo?          @relation(fields: [id_grupo_padrao], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "recorrencias_ibfk_5")
+  categorias_tipo_documento   categorias_tipo_documento? @relation(fields: [id_tipo_documento], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "recorrencias_ibfk_6")
+
+  @@unique([descricao_padrao, fornecedor_padrao, id_subgrupo_padrao], map: "idx_recorrencia_unica")
+  @@index([id_classificacao_padrao], map: "id_classificacao_padrao")
+  @@index([id_cliente], map: "id_cliente")
+  @@index([id_grupo_padrao], map: "id_grupo_padrao")
+  @@index([id_subgrupo_padrao], map: "id_subgrupo_padrao")
+  @@index([id_tipo_documento], map: "id_tipo_documento")
+  @@index([id_usuario], map: "id_usuario")
+  @@index([tipo, id_conta_origem], map: "idx_tipo_conta_origem")
+}
+
+model role_permissions {
+  role_id       Int         @db.UnsignedInt
+  permission_id Int         @db.UnsignedInt
+  granted_at    DateTime    @default(now()) @db.DateTime(0)
+  permissions   permissions @relation(fields: [permission_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "fk_role_permissions_permission")
+  roles         roles       @relation(fields: [role_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "fk_role_permissions_role")
+
+  @@id([role_id, permission_id])
+  @@index([permission_id], map: "idx_role_permissions_permission")
+}
+
+model roles {
+  id               Int                @id @default(autoincrement()) @db.UnsignedInt
+  name             String             @db.VarChar(100)
+  slug             String             @unique(map: "uq_roles_slug") @db.VarChar(120)
+  description      String?            @db.VarChar(255)
+  is_system        Boolean            @default(false)
+  created_at       DateTime           @default(now()) @db.DateTime(0)
+  updated_at       DateTime           @default(now()) @db.DateTime(0)
+  role_permissions role_permissions[]
+  user_roles       user_roles[]
+}
+
+model running_balance {
+  id             Int       @id @default(autoincrement()) @db.UnsignedInt
+  remarks        String    @db.Text
+  clt_id         Int?
+  cliente        String    @db.VarChar(255)
+  amount         Decimal   @db.Decimal(10, 2)
+  user_id        Int
+  category_id    Int
+  date_created   DateTime  @default(now()) @db.DateTime(0)
+  date_updated   DateTime? @db.DateTime(0)
+  pix            String?   @db.VarChar(255)
+  pix_type       Int?
+  input_flag     Boolean   @default(true)
+  aj             Boolean   @default(true)
+  aprovador_id   Int?
+  remark_aprov   String?   @db.VarChar(255)
+  pagador_id     Int?
+  remark_pagador String?   @db.VarChar(255)
+  status         Int?
+  id_agBancaria  Int?      @default(1)
+  anexos         String?   @db.Text
+}
+
+model status_contas {
+  id             Int              @id @default(autoincrement())
+  nome           String           @unique(map: "nome") @db.VarChar(50)
+  descricao      String?          @db.Text
+  ativo          Boolean?         @default(true)
+  contas_pagar   contas_pagar[]
+  contas_receber contas_receber[]
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model subcategorias {
+  scat_id   Int     @id @default(autoincrement())
+  scat_cat  Int?
+  scat_nome String? @db.VarChar(50)
+  scat_sts  Int     @default(1)
+}
+
+model subcategorias_terc_andar {
+  id           Int     @id @default(autoincrement())
+  categoria_id Int
+  nome         String  @db.VarChar(120)
+  ativo        Boolean @default(true)
+  ordem        Int     @default(0)
+
+  @@index([categoria_id], map: "categoria_id")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model tarefas {
+  id                   Int              @id @default(autoincrement())
+  id_projeto           Int?
+  tarefas_relacionadas Int?
+  nome_tarefa          String?          @db.Text
+  area                 Int?             @default(1)
+  cliente              Int?             @default(1)
+  pessoa               Int?
+  local                Int?
+  tipo                 Int?
+  categoria            Int?
+  subcategoria         Int?
+  item                 Int?
+  nivel                Int?             @default(1)
+  forma                Int?             @default(1)
+  desc_abertura        String?          @db.Text
+  desc_fechamento      String?          @db.Text
+  abertura             DateTime?        @db.DateTime(0)
+  fechamento           DateTime?        @db.DateTime(0)
+  tecnico              Int?
+  reincidente          Int?             @default(0)
+  dias                 Int?             @default(1)
+  status               Int?             @default(1)
+  porcentagem          Int?             @default(0)
+  imagens_tarefa       imagens_tarefa[]
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model tarefas_mkt {
+  id              Int       @id @default(autoincrement())
+  id_projeto      Int
+  nome_tarefa     String?   @db.VarChar(50)
+  area            Int?      @default(1)
+  cliente         Int?      @default(1)
+  pessoa          Int?
+  local           Int?
+  tipo            Int?
+  categoria       Int?
+  subcategoria    Int?
+  item            Int?
+  nivel           Int?      @default(1)
+  forma           Int?      @default(1)
+  desc_abertura   String?   @db.Text
+  desc_fechamento String?   @db.Text
+  abertura        DateTime? @db.DateTime(0)
+  fechamento      DateTime? @db.DateTime(0)
+  tecnico         Int?
+  reincidente     Int?      @default(0)
+  dias            Int?      @default(1)
+  status          Int?      @default(1)
+}
+
+model tarefas_terc_andar {
+  id                Int                 @id @default(autoincrement())
+  nome_tarefa       String              @db.VarChar(255)
+  quantidade        Int                 @default(1) @db.UnsignedInt
+  urgencia          Boolean             @default(false)
+  area              String?             @db.VarChar(150)
+  cliente           String?             @db.VarChar(150)
+  pessoa            String?             @db.VarChar(150)
+  local             String?             @db.VarChar(150)
+  tipo              String?             @db.VarChar(100)
+  categoria         String?             @db.VarChar(100)
+  subcategoria      String?             @db.VarChar(100)
+  item              String?             @db.VarChar(100)
+  nivel             String?             @db.VarChar(100)
+  forma             String?             @db.VarChar(100)
+  desc_abertura     String?             @db.Text
+  desc_fechamento   String?             @db.Text
+  abertura          DateTime?           @db.DateTime(0)
+  fechamento        DateTime?           @db.DateTime(0)
+  concluido_em      DateTime?           @db.DateTime(0)
+  concluido_por     Int?
+  tecnico           String?             @db.VarChar(150)
+  reincidente       Boolean?            @default(false)
+  status            String?             @default("Aberta") @db.VarChar(50)
+  created_at        DateTime            @default(now()) @db.Timestamp(0)
+  updated_at        DateTime            @default(now()) @db.Timestamp(0)
+  espera_terc_andar espera_terc_andar[]
+  inter_terc_andar  inter_terc_andar[]
+
+  @@index([urgencia, status, tecnico], map: "idx_tarefas_marketing_urgencia")
+}
+
+model tipo {
+  tipo_id   Int     @id @default(autoincrement())
+  tipo_nome String? @db.VarChar(50)
+  tipo_desc String? @db.VarChar(400)
+  tipo_sts  Int?
+}
+
+model tipos_terc_andar {
+  id    Int     @id @default(autoincrement())
+  nome  String  @db.VarChar(120)
+  ativo Boolean @default(true)
+  ordem Int     @default(0)
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model token {
+  token      String?  @db.VarChar(50)
+  valor      Int?     @default(0)
+  created_at DateTime @default(now()) @db.Timestamp(0)
+
+  @@ignore
+}
+
+model token_senha {
+  id     Int     @id @default(autoincrement())
+  token  String? @db.VarChar(200)
+  expire String? @db.VarChar(200)
+  email  String? @db.VarChar(100)
+}
+
+model troca_devolucao_anexos {
+  id                           Int                          @id @default(autoincrement())
+  solicitacao_id               Int
+  tipo                         troca_devolucao_anexos_tipo
+  nome_arquivo                 String?                      @db.VarChar(255)
+  mime_type                    String?                      @db.VarChar(100)
+  tamanho_bytes                Int?
+  drive_file_id                String?                      @db.VarChar(255)
+  drive_url                    String?                      @db.Text
+  caminho_local                String?                      @db.Text
+  criado_em                    DateTime                     @default(now()) @db.DateTime(0)
+  troca_devolucao_solicitacoes troca_devolucao_solicitacoes @relation(fields: [solicitacao_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "fk_tda_solicitacao")
+
+  @@index([solicitacao_id], map: "idx_tda_solicitacao")
+}
+
+model troca_devolucao_auditoria_publica {
+  id             Int      @id @default(autoincrement())
+  ip             String?  @db.VarChar(45)
+  user_agent     String?  @db.VarChar(255)
+  evento         String   @db.VarChar(50)
+  sucesso        Boolean  @default(false)
+  solicitacao_id Int?
+  detalhe        String?  @db.VarChar(255)
+  criado_em      DateTime @default(now()) @db.DateTime(0)
+
+  @@index([evento], map: "idx_tdap_evento")
+  @@index([ip, criado_em], map: "idx_tdap_ip_data")
+}
+
+model troca_devolucao_solicitacoes {
+  id                     Int                                      @id @default(autoincrement())
+  origem                 String                                   @default("manual") @db.VarChar(50)
+  origem_form_id         String?                                  @db.VarChar(255)
+  payload_json           String?                                  @db.LongText
+  email_resposta         String?                                  @db.VarChar(255)
+  cnpj                   String                                   @db.VarChar(30)
+  razao_social           String                                   @db.VarChar(255)
+  codigo_cliente         String                                   @db.VarChar(50)
+  codrota                String?                                  @db.VarChar(50)
+  descrota               String?                                  @db.VarChar(255)
+  telefone_whatsapp      String?                                  @db.VarChar(50)
+  codigo_produto         String                                   @db.VarChar(50)
+  descricao_produto      String                                   @db.VarChar(255)
+  quantidade_devolvida   Decimal                                  @db.Decimal(15, 3)
+  natureza_problema      String                                   @db.VarChar(255)
+  descricao_problema     String                                   @db.Text
+  numero_nota_fiscal     String                                   @db.VarChar(50)
+  nome_vendedor          String                                   @db.VarChar(255)
+  codigo_vendedor        String?                                  @db.VarChar(50)
+  solicitante            troca_devolucao_solicitacoes_solicitante
+  categoria_id           Int?
+  subcategoria_id        Int?
+  responsavel_id         Int?
+  forma_id               Int?
+  quantidade_nf          Decimal?                                 @db.Decimal(15, 3)
+  valor_unitario         Decimal?                                 @db.Decimal(15, 2)
+  valor_total            Decimal?                                 @db.Decimal(15, 2)
+  itens_nota_json        String?                                  @db.LongText
+  cnpj_consultado        Boolean                                  @default(false)
+  cnpj_nota_consultada   String?                                  @db.VarChar(30)
+  status                 troca_devolucao_solicitacoes_status      @default(pendente)
+  motivo_rejeicao        String?                                  @db.Text
+  erro_processamento     String?                                  @db.Text
+  atendimento_id         Int?
+  criado_por             Int?
+  criado_em              DateTime                                 @default(now()) @db.DateTime(0)
+  atualizado_em          DateTime?                                @db.DateTime(0)
+  aprovado_por           Int?
+  aprovado_em            DateTime?                                @db.DateTime(0)
+  rejeitado_por          Int?
+  rejeitado_em           DateTime?                                @db.DateTime(0)
+  troca_devolucao_anexos troca_devolucao_anexos[]
+
+  @@index([atendimento_id], map: "idx_tds_atendimento")
+  @@index([cnpj], map: "idx_tds_cnpj")
+  @@index([status], map: "idx_tds_status")
+}
+
+model type_keys {
+  id        Int    @id
+  name_type String @db.VarChar(45)
+  pix_type  Int
+}
+
+model unidade_negocio {
+  id        Int    @id @default(autoincrement()) @db.UnsignedInt
+  nome_unid String @db.VarChar(100)
+  sts_unid  Int
+}
+
+model user_permissions {
+  user_id                                         Int
+  permission_id                                   Int                     @db.UnsignedInt
+  effect                                          user_permissions_effect @default(allow)
+  assigned_at                                     DateTime                @default(now()) @db.DateTime(0)
+  assigned_by                                     Int?
+  usuarios_user_permissions_assigned_byTousuarios usuarios?               @relation("user_permissions_assigned_byTousuarios", fields: [assigned_by], references: [user_id], onUpdate: Restrict, map: "fk_user_permissions_assigned_by")
+  permissions                                     permissions             @relation(fields: [permission_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "fk_user_permissions_permission")
+  usuarios_user_permissions_user_idTousuarios     usuarios                @relation("user_permissions_user_idTousuarios", fields: [user_id], references: [user_id], onDelete: Cascade, onUpdate: Restrict, map: "fk_user_permissions_user")
+
+  @@id([user_id, permission_id])
+  @@index([assigned_by], map: "fk_user_permissions_assigned_by")
+  @@index([permission_id], map: "idx_user_permissions_permission")
+}
+
+model user_roles {
+  user_id                                   Int
+  role_id                                   Int       @db.UnsignedInt
+  assigned_at                               DateTime  @default(now()) @db.DateTime(0)
+  assigned_by                               Int?
+  usuarios_user_roles_assigned_byTousuarios usuarios? @relation("user_roles_assigned_byTousuarios", fields: [assigned_by], references: [user_id], onUpdate: Restrict, map: "fk_user_roles_assigned_by")
+  roles                                     roles     @relation(fields: [role_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "fk_user_roles_role")
+  usuarios_user_roles_user_idTousuarios     usuarios  @relation("user_roles_user_idTousuarios", fields: [user_id], references: [user_id], onDelete: Cascade, onUpdate: Restrict, map: "fk_user_roles_user")
+
+  @@id([user_id, role_id])
+  @@index([assigned_by], map: "fk_user_roles_assigned_by")
+  @@index([role_id], map: "idx_user_roles_role")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model usuarios {
+  user_id                                                 Int                    @id @default(autoincrement())
+  user_sts                                                Int?
+  user_nome                                               String?                @db.VarChar(60)
+  user_mail                                               String?                @db.VarChar(60)
+  user_cel                                                String?                @db.VarChar(20)
+  user_funcao                                             Int?
+  user_login                                              String?                @db.VarChar(15)
+  user_pass                                               String?                @db.VarChar(300)
+  user_modulo_01                                          String                 @default("0000000000") @db.Char(10)
+  user_modulo_02                                          String                 @default("0000000000") @db.Char(10)
+  user_modulo_03                                          String                 @default("0000000000") @db.Char(10)
+  user_modulo_04                                          String                 @default("0000000000") @db.Char(10)
+  user_modulo_05                                          String                 @default("0000000000") @db.Char(10)
+  user_modulo_06                                          String                 @default("0000000000") @db.Char(10)
+  user_modulo_07                                          String                 @default("0000000000") @db.Char(10)
+  user_modulo_08                                          String                 @default("0000000000") @db.Char(10)
+  user_modulo_09                                          String                 @default("0000000000") @db.Char(10)
+  tipo_usuario                                            Int                    @default(1)
+  link                                                    String?                @db.VarChar(50)
+  chavepix                                                String?                @db.VarChar(255)
+  pix_type                                                Int?
+  api_idempotency_keys                                    api_idempotency_keys[]
+  api_sessions                                            api_sessions[]
+  clientes_usuarios                                       clientes_usuarios[]
+  contas_pagar                                            contas_pagar[]
+  recebimentos                                            recebimentos[]
+  recorrencias                                            recorrencias[]
+  user_permissions_user_permissions_assigned_byTousuarios user_permissions[]     @relation("user_permissions_assigned_byTousuarios")
+  user_permissions_user_permissions_user_idTousuarios     user_permissions[]     @relation("user_permissions_user_idTousuarios")
+  user_roles_user_roles_assigned_byTousuarios             user_roles[]           @relation("user_roles_assigned_byTousuarios")
+  user_roles_user_roles_user_idTousuarios                 user_roles[]           @relation("user_roles_user_idTousuarios")
+}
+
+model veiculos {
+  id              Int               @id @default(autoincrement())
+  veiculo         String            @db.VarChar(100)
+  placa           String            @db.VarChar(10)
+  ativo           Boolean?          @default(true)
+  criado_em       DateTime?         @default(now()) @db.DateTime(0)
+  agenda_veiculos agenda_veiculos[]
+}
+
+enum user_permissions_effect {
+  allow
+  deny
+}
+
+enum recorrencias_tipo {
+  Pagar
+  Receber
+}
+
+enum troca_devolucao_anexos_tipo {
+  foto_produto
+  nota_fiscal
+}
+
+enum atendimento_recorrencias_quantidade_modo {
+  fixa
+  continua
+}
+
+enum contas_pagar_status {
+  Pendente
+  Pago
+}
+
+enum contas_receber_status {
+  Pendente
+  Parcialmente_Recebido @map("Parcialmente Recebido")
+  Recebido
+  Inadimplente
+  A_vencer              @map("A vencer")
+}
+
+enum troca_devolucao_solicitacoes_solicitante {
+  Vendedor
+  Cliente
+}
+
+enum troca_devolucao_solicitacoes_status {
+  pendente
+  em_analise
+  rejeitado
+  erro
+  atendimento_aberto
+}

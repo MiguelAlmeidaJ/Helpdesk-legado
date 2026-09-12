@@ -1,0 +1,128 @@
+.page {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background:
+    radial-gradient(circle at 20% 15%, rgba(31, 95, 168, 0.14), transparent 34%),
+    #f3f6f9;
+}
+
+.card {
+  width: min(430px, 100%);
+  padding: 32px;
+  border: 1px solid #dfe6ec;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 18px 60px rgba(23, 32, 42, 0.1);
+}
+
+.brand {
+  margin-bottom: 24px;
+}
+
+.brand > span {
+  color: #1f5fa8;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.brand strong {
+  display: block;
+  margin-top: 8px;
+  font-size: 30px;
+}
+
+.brand p,
+.note {
+  margin: 8px 0 0;
+  color: #687887;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.form {
+  display: grid;
+  gap: 16px;
+}
+
+.form label {
+  display: grid;
+  gap: 6px;
+}
+
+.form label span {
+  color: #52606d;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.form input {
+  width: 100%;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid #cbd5df;
+  border-radius: 9px;
+  outline: none;
+}
+
+.form input:focus {
+  border-color: #1f5fa8;
+  box-shadow: 0 0 0 3px rgba(31, 95, 168, 0.12);
+}
+
+.form button {
+  min-height: 44px;
+  border: 1px solid #1f5fa8;
+  border-radius: 9px;
+  background: #1f5fa8;
+  color: #fff;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.form button:hover {
+  background: #194f8d;
+}
+
+.form button:disabled,
+.form input:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.error {
+  padding: 11px 12px;
+  border: 1px solid #e4c8c8;
+  border-radius: 8px;
+  background: #fff7f7;
+  color: #8d3030;
+  font-size: 13px;
+}
+
+.success {
+  padding: 11px 12px;
+  border: 1px solid #b9dcc7;
+  border-radius: 8px;
+  background: #f3fbf6;
+  color: #24613b;
+  font-size: 13px;
+}
+
+.recoveryLink,
+.backLink {
+  display: inline-block;
+  margin-top: 16px;
+  color: #1f5fa8;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.note {
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid #edf1f4;
+  font-size: 12px;
+}

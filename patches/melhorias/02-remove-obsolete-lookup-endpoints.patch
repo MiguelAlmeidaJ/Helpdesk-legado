@@ -1,0 +1,177 @@
+diff --git a/melhorias/busca_itens.php b/melhorias/busca_itens.php
+deleted file mode 100644
+--- a/melhorias/busca_itens.php
++++ /dev/null
+@@ -1,24 +0,0 @@
+-<?php
+-session_start();
+-include_once("../legacy/bridge/seguranca.php");
+-include_once("../legacy/bridge/conect.php");
+-$subcategoria= $_REQUEST["subcategoria"];
+-$pdo = ConnectionN3();
+-$show = $pdo->prepare("SELECT itens.itens_id, itens.itens_nome FROM itens WHERE itens.itens_scat = '$subcategoria' AND itens.itens_sts = '1' ORDER BY itens.itens_nome ASC");
+-$show->execute();
+-$conta_itens = $show->rowCount();
+-if($conta_itens>0){  
+-while($row=$show->fetch(PDO::FETCH_ASSOC)){
+-  $itens_post[] = array(
+-    'id' => $row["itens_id"],
+-    'nome' => $row["itens_nome"],
+-  );
+-}
+-}else{
+-  $itens_post[] = array(
+-  'id' => "0",
+-  'nome' => "Sem Item cadastrado",
+-  );
+-}
+-echo(json_encode($itens_post));
+\ No newline at end of file
+-diff --git a/melhorias/busca_locais.php b/melhorias/busca_locais.php
+-deleted file mode 100644
+---- a/melhorias/busca_locais.php
+-+++ /dev/null
+-@@ -1,22 +0,0 @@
+-<?php
+-session_start();
+-include_once("../legacy/bridge/seguranca.php");
+-include_once("../legacy/bridge/conect.php");
+-$cliente = $_REQUEST["cliente"];
+-$pdo = ConnectionN3();
+-$show = $pdo->prepare("SELECT locais.* FROM locais WHERE locais.local_clt = '$cliente' ORDER BY locais.local_nom ASC");
+-$show->execute();
+-$conta_locais = $show->rowCount();
+-if($conta_locais>0){  
+-while($row=$show->fetch(PDO::FETCH_ASSOC)){
+-  $locais_post[] = array(
+-    'id' => $row["local_id"],
+-    'nome' => $row["local_nom"],
+-  );
+-} 
+-}else{
+-  $locais_post[] = array(
+-  'id' => "0",
+-  'nome' => "Sem local cadastrado",
+-  );
+-}
+-echo(json_encode($locais_post));
+\ No newline at end of file
+-diff --git a/melhorias/busca_solicitantes.php b/melhorias/busca_solicitantes.php
+-deleted file mode 100644
+---- a/melhorias/busca_solicitantes.php
+-+++ /dev/null
+-@@ -1,23 +0,0 @@
+-<?php
+-session_start();
+-include_once("../legacy/bridge/seguranca.php");
+-include_once("../legacy/bridge/conect.php");
+-$cliente = $_REQUEST["cliente"];
+-$pdo = ConnectionN3();
+-$show = $pdo->prepare("SELECT pessoas.* FROM pessoas WHERE pessoas.pessoa_clt = '$cliente' ORDER BY pessoas.pessoa_nom ASC");
+-$show->execute();
+-$conta_pessoas = $show->rowCount();
+-if($conta_pessoas>0){  
+-while($row=$show->fetch(PDO::FETCH_ASSOC)){
+-  $solicitantes_post[] = array(
+-    'id' => $row["pessoa_id"],
+-    'nome' => $row["pessoa_nom"],
+-  );
+-}
+-}else{
+-  $locais_post[] = array(
+-  'id' => "0",
+-  'nome' => "Sem solicitante cadastrado",
+-  );
+-}
+-echo(json_encode($solicitantes_post));       
+\ No newline at end of file
+-diff --git a/melhorias/busca_subcategorias.php b/melhorias/busca_subcategorias.php
+-deleted file mode 100644
+---- a/melhorias/busca_subcategorias.php
+-+++ /dev/null
+-@@ -1,24 +0,0 @@
+-<?php
+-session_start();
+-include_once("../legacy/bridge/seguranca.php");
+-include_once("../legacy/bridge/conect.php");
+-$categoria= $_REQUEST["categoria"];
+-$pdo = ConnectionN3();
+-$show = $pdo->prepare("SELECT subcategorias.scat_id, subcategorias.scat_nome FROM subcategorias WHERE subcategorias.scat_cat = '$categoria' AND subcategorias.scat_sts = '1' ORDER BY subcategorias.scat_nome ASC");
+-$show->execute();
+-$conta_subcategorias = $show->rowCount();
+-if($conta_subcategorias>0){  
+-while($row=$show->fetch(PDO::FETCH_ASSOC)){
+-  $subcategoria_post[] = array(
+-    'id' => $row["scat_id"],
+-    'nome' => $row["scat_nome"],
+-  );
+-}
+-}else{
+-  $subcategoria_post[] = array(
+-  'id' => "0",
+-  'nome' => "Sem SubCategoria cadastrada",
+-  );
+-}
+-echo(json_encode($subcategoria_post));
+\ No newline at end of file
+-diff --git a/melhorias/recorrente.php b/melhorias/recorrente.php
+-deleted file mode 100644
+---- a/melhorias/recorrente.php
+-+++ /dev/null
+-@@ -1,15 +0,0 @@
+-<?php
+-session_start();
+-include_once("../legacy/bridge/seguranca.php");
+-include_once("../legacy/bridge/conect.php");
+-$recorrente = $_REQUEST["recorrente"];
+-
+-if ($recorrente == 2) {
+-    $aparece_API = 1;
+-} else {
+-    $aparece_API = 2;
+-}
+-
+-$API_post = array('aparece' => $aparece_API);
+-
+-echo json_encode($API_post);
+-?>
+\ No newline at end of file
+-diff --git a/melhorias/recorrente_data.php b/melhorias/recorrente_data.php
+-deleted file mode 100644
+---- a/melhorias/recorrente_data.php
+-+++ /dev/null
+-@@ -1,30 +0,0 @@
+-<?php
+-session_start();
+-include_once("../legacy/bridge/seguranca.php");
+-include_once("../legacy/bridge/conect.php");
+-$data_recorrenteee = $_REQUEST['abertura_recorrente']; 
+-
+-$dia_mes = date_format(date_create($data_recorrenteee), 'd');
+-$dia_semana = date_format(date_create($data_recorrenteee), 'w');
+-$semana_mes = ceil($dia_mes / 7);
+-
+-
+-
+-if($semana_mes > "4"){
+-    $semana_mes = "Ultima";
+-} 
+-if($dia_semana == 0){
+-    $dia = "Domingo";
+-}elseif($dia_semana == 1){
+-    $dia = "Segunda";
+-}elseif($dia_semana == 2){
+-    $dia = "Terça";
+-}elseif($dia_semana == 3){
+-    $dia = "Quarta";
+-}elseif($dia_semana == 4){
+-    $dia = "Quinta";
+-}elseif($dia_semana == 5){
+-    $dia = "Sexta";
+-}elseif($dia_semana == 6){
+-    $dia = "Sábado";
+-}
+-$API_post = array('semana_mes' => $semana_mes,'dia_semana' => $dia);
+-
+-echo json_encode($API_post);
+-?>

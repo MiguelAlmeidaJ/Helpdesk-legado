@@ -2,7 +2,7 @@
 
 ## Objetivo
 
-Reduzir risco de o sistema funcionar no XAMPP local e falhar no servidor por caminhos absolutos, host fixo, permissões de escrita ou dependências externas.
+Reduzir risco de o sistema funcionar no ambiente local e falhar no servidor por caminhos absolutos, host fixo, permissões de escrita ou dependências externas.
 
 ## Ajustes aplicados
 
@@ -35,28 +35,21 @@ Reduzir risco de o sistema funcionar no XAMPP local e falhar no servidor por cam
   - inclui `all/seguranca.php`;
   - normaliza caminho web do anexo.
 
-- `logistica/recebe_upload.php`
-  - removida URL fixa `https://allterus.nivel3ti.com.br/n3ti/`;
-  - URL pública agora é montada dinamicamente pelo host atual.
-
-- `logistica/recebe_upload_financeiro.php`
-  - removida URL fixa do domínio antigo;
-  - URL pública agora é montada dinamicamente pelo host atual.
+- despesas de logística
+  - uploads de comprovantes são gerenciados pela API nativa;
+  - `RD_UPLOAD_DIR` pode definir o diretório físico fora do checkout;
+  - sem configuração, o fallback é `<repo>/uploads_rd`.
 
 ## Diretórios com escrita obrigatória
 
-Essas pastas precisam existir e estar graváveis pelo usuário do servidor web:
+Essas pastas precisam existir e estar graváveis pelo processo responsável:
 
 - `uploads/`
   - anexos de atendimentos em `atd/add_arquivos.php`.
 
-- `uploads_rd/`
-  - notas de serviço e comprovantes diversos da logística;
-  - subpastas criadas automaticamente por mês/ano.
-
-- `uploads_financeiro/`
-  - comprovantes de contas a pagar/receber;
-  - pode não existir no ambiente local, mas será criada se a permissão da raiz permitir.
+- `uploads_rd/` ou o caminho configurado em `RD_UPLOAD_DIR`
+  - comprovantes de despesas da API nativa;
+  - subpastas de storage são criadas automaticamente.
 
 - `documentos/`
   - arquivos GED/contratos em `cont/contrato.php`.
@@ -69,12 +62,12 @@ Essas pastas precisam existir e estar graváveis pelo usuário do servidor web:
 
 ## Dependências obrigatórias
 
-- PHP com extensões usadas pelo sistema:
+- PHP com extensões usadas pelos módulos legados restantes:
   - `pdo_mysql` ou driver usado em `all/conect.php`;
   - `json`;
   - `mbstring` recomendado;
   - `zip` para download em massa de relatórios;
-  - `fileinfo` recomendado para validação futura de uploads;
+  - `fileinfo` recomendado para validação de uploads;
   - `gd` se módulos de imagem/relatórios precisarem.
 
 - `wkhtmltopdf`
@@ -85,31 +78,39 @@ Essas pastas precisam existir e estar graváveis pelo usuário do servidor web:
 
 ### Uploads dentro do código
 
-Hoje arquivos de usuário ficam dentro da pasta do projeto:
+Arquivos de usuário ainda podem existir dentro da pasta do projeto:
 
 - `uploads/`
-- `uploads_rd/`
-- `uploads_financeiro/`
+- `uploads_rd/` quando `RD_UPLOAD_DIR` não estiver configurado
 - `documentos/`
 - `rel/relatorios/`
 
-Para produção, o ideal é mover esses diretórios para fora do diretório versionado e servir por configuração de storage/symlink. Se mantiver dentro do projeto, não sobrescrever essas pastas no deploy.
+Para produção, prefira configurar storage fora do diretório versionado e servir
+por configuração apropriada. Se algum storage permanecer dentro do projeto, não
+o sobrescreva durante o deploy.
 
 ### URLs já salvas no banco
 
-Alguns fluxos antigos podem ter salvo URLs absolutas no banco, principalmente logística/financeiro. Os novos uploads passam a usar host dinâmico, mas registros antigos podem continuar apontando para o domínio antigo.
+Registros históricos podem conter URLs absolutas para anexos. A API nativa
+continua capaz de resolver referências de anexos de RD já persistidas, mas a
+migração definitiva desses valores deve ser tratada separadamente se necessário.
 
 ### CDNs externos
 
-Há páginas que carregam jQuery/Bootstrap/DataTables/Select2 por CDN. Se o servidor/cliente não tiver internet externa ou tiver CSP restritiva, essas telas podem falhar. Recomenda-se baixar assets e apontar para `css/` e `js/` locais aos poucos.
+Há páginas legadas que carregam jQuery/Bootstrap/DataTables/Select2 por CDN. Se
+o servidor/cliente não tiver internet externa ou tiver CSP restritiva, essas
+telas podem falhar. Recomenda-se baixar assets e apontar para recursos locais
+aos poucos.
 
 ### Firebird/RDF
 
-`conexao_RDF.php` ainda possui caminho local `C:/DBSOFT/KM2.FDB` e host `localhost`. Se esse módulo for usado em produção, precisa de configuração própria no servidor.
+`conexao_RDF.php` ainda possui caminho local `C:/DBSOFT/KM2.FDB` e host
+`localhost`. Se esse módulo for usado em produção, precisa de configuração
+própria no servidor.
 
 ## Comandos de validação pós-deploy
 
-Rodar no servidor:
+Rodar os checks adequados ao stack implantado. Para os módulos PHP restantes:
 
 ```bat
 php -v
@@ -117,18 +118,28 @@ php -m
 php atd/jobs/run_home_jobs.php
 ```
 
+Para o monorepo nativo:
+
+```bash
+pnpm typecheck
+pnpm build
+pnpm test:logistics
+pnpm test:reports
+```
+
 Testar também:
 
 - login/logout;
-- abrir `atd/home.php`;
 - abrir um atendimento e anexar/excluir arquivo;
-- gerar relatório PDF individual e em massa;
-- upload de nota/comprovante em logística;
-- recorrência via agendador.
+- gerar os relatórios ainda mantidos pelo stack em uso;
+- cadastrar/editar uma despesa e enviar/baixar comprovante;
+- aprovar e pagar uma RD;
+- abrir e alterar a agenda de veículos.
 
 ## Agendador obrigatório
 
-Para recorrência e jobs automáticos, configurar a cada 1 minuto:
+Para os jobs automáticos que ainda utilizam o runner legado, configurar a cada
+1 minuto:
 
 ```bat
 C:\xampp\php\php.exe C:\xampp\htdocs\N3TI\atd\jobs\run_home_jobs.php
