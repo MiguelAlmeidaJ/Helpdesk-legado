@@ -22,6 +22,7 @@
     "test:reports": "node --test scripts/reports.test.cjs",
     "test:reports:db": "node scripts/reports-db-smoke.cjs",
     "test:logistics": "node --test scripts/logistics.test.cjs scripts/logistics-status.test.cjs",
+    "storage:migrate": "node scripts/migrate-runtime-uploads.mjs",
     "docker:up": "docker compose up -d database",
     "docker:down": "docker compose down --remove-orphans",
     "docker:reset": "docker compose down -v --remove-orphans",
