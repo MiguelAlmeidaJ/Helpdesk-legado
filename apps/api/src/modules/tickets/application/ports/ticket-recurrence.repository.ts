@@ -1,12 +1,18 @@
+export type TicketRecurrenceSource = 'canonical' | 'legacy';
+
 export interface DueTicketRecurrence {
-  ticketId: number;
+  recurrenceId: number;
+  templateTicketId: number;
+  source: TicketRecurrenceSource;
   recurrenceAt: string;
   recurrenceRule: number;
   week: string | null;
 }
 
 export interface AdvanceTicketRecurrenceInput {
-  ticketId: number;
+  recurrenceId: number;
+  templateTicketId: number;
+  source: TicketRecurrenceSource;
   recurrenceAt: string;
   nextRecurrenceAt: string;
 }

@@ -31,13 +31,15 @@ export class ProcessDueTicketRecurrences {
       if (!nextRecurrenceAt) {
         invalid += 1;
         this.logger.warn(
-          `Recorrencia invalida ignorada: atendimento=${recurrence.ticketId}, regra=${recurrence.recurrenceRule}, data=${recurrence.recurrenceAt}.`,
+          `Recorrencia invalida ignorada: recorrencia=${recurrence.recurrenceId}, atendimento_modelo=${recurrence.templateTicketId}, fonte=${recurrence.source}, regra=${recurrence.recurrenceRule}, data=${recurrence.recurrenceAt}.`,
         );
         continue;
       }
 
       const changed = await this.repository.advanceAndCreate({
-        ticketId: recurrence.ticketId,
+        recurrenceId: recurrence.recurrenceId,
+        templateTicketId: recurrence.templateTicketId,
+        source: recurrence.source,
         recurrenceAt: recurrence.recurrenceAt,
         nextRecurrenceAt,
       });

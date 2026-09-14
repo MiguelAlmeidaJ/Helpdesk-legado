@@ -77,6 +77,22 @@ function addDays(date: Date, days: number): Date {
   return result;
 }
 
+function addBusinessDays(date: Date, days: number): Date {
+  const result = new Date(date.getTime());
+  let remaining = Math.max(0, Math.trunc(days));
+
+  while (remaining > 0) {
+    result.setUTCDate(result.getUTCDate() + 1);
+    const weekday = result.getUTCDay();
+
+    if (weekday !== 0 && weekday !== 6) {
+      remaining -= 1;
+    }
+  }
+
+  return result;
+}
+
 function addMonths(date: Date, months: number): Date {
   const result = new Date(date.getTime());
   result.setUTCMonth(result.getUTCMonth() + months);
@@ -156,6 +172,9 @@ export function calculateNextTicketRecurrence(
   switch (recurrenceRule) {
     case 1:
       result = addDays(source, 1);
+      break;
+    case 8:
+      result = addBusinessDays(source, 1);
       break;
     case 6:
       result = addDays(source, 7);
