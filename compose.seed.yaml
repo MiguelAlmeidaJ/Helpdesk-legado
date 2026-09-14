@@ -1,0 +1,11 @@
+# Use only when initializing an empty database volume from the local dump.
+# docker compose -f compose.yaml -f compose.seed.yaml up -d --wait database
+services:
+  database:
+    volumes:
+      - type: bind
+        source: ./Dump_Helpdesk_RD.sql
+        target: /docker-entrypoint-initdb.d/20-Dump_Helpdesk_RD.sql
+        read_only: true
+        bind:
+          create_host_path: false

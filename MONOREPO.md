@@ -84,6 +84,19 @@ Rules:
 
 ## Local setup
 
+For a first installation with an empty database volume, place the SQL dump at
+`Dump_Helpdesk_RD.sql` in the repository root and initialize MariaDB before running
+the setup commands below:
+
+```bash
+docker compose -f compose.yaml -f compose.seed.yaml up -d --wait database
+```
+
+The dump is imported only when the database volume is empty. Normal startup with
+`pnpm docker:up` reuses the existing data and does not require the dump file.
+Without a dump or existing data, normal startup creates empty `nivel3` and `n3rd`
+databases; the application still needs the legacy schema and data to work.
+
 ```bash
 cp .env.example .env
 corepack enable
@@ -116,10 +129,12 @@ If the local dump changes and a fresh database is intentional:
 
 ```bash
 pnpm docker:reset
-pnpm docker:up
+docker compose -f compose.yaml -f compose.seed.yaml up -d --wait database
 ```
 
 `docker:reset` deletes the local Docker database volume.
+Make sure `Dump_Helpdesk_RD.sql` exists before resetting. Do not reset the volume
+to fix a missing dump mount: run `pnpm docker:up` to preserve and reuse existing data.
 
 ## Server
 

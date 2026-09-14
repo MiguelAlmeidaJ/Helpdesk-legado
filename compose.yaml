@@ -9,7 +9,6 @@ services:
     volumes:
       - helpdesk_mysql_data:/var/lib/mysql
       - ./docker/mysql/init/00-create-databases.sql:/docker-entrypoint-initdb.d/00-create-databases.sql:ro
-      - ./Dump_Helpdesk_RD.sql:/docker-entrypoint-initdb.d/20-Dump_Helpdesk_RD.sql:ro
     healthcheck:
       test:
         [
