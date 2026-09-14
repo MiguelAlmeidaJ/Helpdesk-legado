@@ -105,7 +105,7 @@ module.exports = {
     {
       name: 'helpdesk-web',
       cwd: path.join(root, 'apps/web'),
-      script: path.join(root, 'apps/web/node_modules/next/dist/bin/next'),
+      script: path.join(root, 'scripts/start-web.cjs'),
       args: ['start', '-p', webPort],
       interpreter: 'node',
       instances: 1,
@@ -113,6 +113,7 @@ module.exports = {
       autorestart: true,
       watch: false,
       max_memory_restart: '768M',
+      restart_delay: 5000,
       env: definedEnv({
         NODE_ENV: 'production',
         PORT: webPort,

@@ -116,6 +116,17 @@ health    http://localhost:4004/api/health
 database  127.0.0.1:3307
 ```
 
+Under PM2, the web process waits up to two minutes for `/api/health` to confirm
+that the API and both databases are available before starting Next.js. This avoids
+session fetch errors when the API starts more slowly than the web process.
+If startup times out, check `helpdesk-api` logs and database connectivity; PM2
+retries the web process after five seconds.
+
+When upgrading an existing PM2 registration that still points directly to the
+Next.js binary, run `pm2 delete helpdesk-web` followed by `pnpm pm2:start` once.
+PM2 keeps the old script path on a regular restart. Subsequent restarts can use
+`pnpm pm2:restart` normally.
+
 Useful commands:
 
 ```bash
