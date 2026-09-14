@@ -33,7 +33,7 @@ export const APP_NAVIGATION_SECTIONS: NavigationSection[] = [
         href: '/tickets',
         status: 'available',
       },
-      { id: 'tickets-recurrences', label: 'Recorrências', status: 'planned' },
+      { id: 'tickets-recurrences', label: 'Recorrências', href: '/tickets/recurrences', status: 'available' },
       {
         id: 'tickets-availability',
         label: 'Disponibilidade Técnica',

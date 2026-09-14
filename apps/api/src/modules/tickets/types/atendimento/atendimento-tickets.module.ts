@@ -11,6 +11,8 @@ import { GetTicketTimeline } from '../../application/get-ticket-timeline';
 import { ListTicketAssignmentOptions } from '../../application/list-ticket-assignment-options';
 import { ListTicketRejectionOptions } from '../../application/list-ticket-rejection-options';
 import { ListTickets } from '../../application/list-tickets';
+import { ManageTicketRecurrences } from '../../application/manage-ticket-recurrences';
+import { TicketRecurrenceManagementRepository } from '../../application/ports/ticket-recurrence-management.repository';
 import { TicketAssignmentRepository } from '../../application/ports/ticket-assignment.repository';
 import { TicketAttachmentRepository } from '../../application/ports/ticket-attachment.repository';
 import { TicketCreateRepository } from '../../application/ports/ticket-create.repository';
@@ -41,6 +43,7 @@ import { PrismaTicketAvailabilityRepository } from '../../infrastructure/persist
 import { PrismaTicketTimelineRepository } from '../../infrastructure/persistence/prisma-ticket-timeline.repository';
 import { PrismaTicketRejectionRepository } from '../../infrastructure/persistence/prisma-ticket-rejection.repository';
 import { PrismaTicketsReadRepository } from '../../infrastructure/persistence/prisma-tickets-read.repository';
+import { PrismaTicketRecurrenceManagementRepository } from '../../infrastructure/persistence/prisma-ticket-recurrence-management.repository';
 import { TicketAttachmentsController } from '../../presentation/http/ticket-attachments.controller';
 import { TicketAvailabilityController } from '../../presentation/http/ticket-availability.controller';
 import { TicketTimelineController } from '../../presentation/http/ticket-timeline.controller';
@@ -48,10 +51,12 @@ import { TicketCreateController } from '../../presentation/http/ticket-create.co
 import { TicketClassificationController } from '../../presentation/http/ticket-classification.controller';
 import { TicketWorkflowController } from '../../presentation/http/ticket-workflow.controller';
 import { TicketsController } from '../../presentation/http/tickets.controller';
+import { TicketRecurrencesController } from '../../presentation/http/ticket-recurrences.controller';
 
 @Module({
   imports: [AccessModule],
   controllers: [
+    TicketRecurrencesController,
     TicketsController,
     TicketWorkflowController,
     TicketClassificationController,
@@ -72,6 +77,7 @@ import { TicketsController } from '../../presentation/http/tickets.controller';
     ListTicketAssignmentOptions,
     ListTicketRejectionOptions,
     ListTickets,
+    ManageTicketRecurrences,
     PutTicketOnHold,
     RejectTicket,
     ResumeTicket,
@@ -90,6 +96,7 @@ import { TicketsController } from '../../presentation/http/tickets.controller';
     { provide: TicketTimelineRepository, useClass: PrismaTicketTimelineRepository },
     { provide: TicketDetailRepository, useClass: PrismaTicketDetailRepository },
     { provide: TicketsReadRepository, useClass: PrismaTicketsReadRepository },
+    { provide: TicketRecurrenceManagementRepository, useClass: PrismaTicketRecurrenceManagementRepository },
   ],
 })
 export class AtendimentoTicketsModule {}

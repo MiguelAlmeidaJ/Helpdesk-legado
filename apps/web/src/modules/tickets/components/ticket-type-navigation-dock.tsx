@@ -24,8 +24,11 @@ function currentType(pathname: string): TicketTypeKey | null {
 export function TicketTypeNavigationDock() {
   const pathname = usePathname();
   const [types, setTypes] = useState<TicketTypeDescriptor[]>([]);
+  const showDock = !pathname.startsWith('/tickets/recurrences');
 
   useEffect(() => {
+    if (!showDock) return;
+
     let active = true;
     fetchTicketTypes()
       .then((response) => {
@@ -37,11 +40,11 @@ export function TicketTypeNavigationDock() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [showDock]);
 
   const activeType = useMemo(() => currentType(pathname), [pathname]);
 
-  if (types.length < 2) return null;
+  if (!showDock || types.length < 2) return null;
 
   return (
     <nav className={styles.dock} aria-label="Tipos de ticket">
