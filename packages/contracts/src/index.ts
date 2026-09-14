@@ -6,6 +6,7 @@ export * from './auth/permission-scope';
 export * from './auth/sector';
 export * from './auth/user-role';
 export * from './common/pagination';
+export * from './improvements/improvement-list';
 export * from './navigation/navigation';
 export * from './catalog/catalog';
 export * from './tickets/ticket-assignment';

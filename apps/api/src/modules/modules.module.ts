@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { AccessModule } from './access/access.module';
 import { CatalogModule } from './catalog/catalog.module';
 import { DashboardModule } from './dashboard/dashboard.module';
+import { ImprovementsModule } from './improvements/improvements.module';
 import { LogisticsModule } from './logistics/logistics.module';
 import { NavigationModule } from './navigation/navigation.module';
 import { ReportsModule } from './reports/reports.module';
@@ -13,6 +14,7 @@ import { UsersModule } from './users/users.module';
     AccessModule,
     CatalogModule,
     DashboardModule,
+    ImprovementsModule,
     LogisticsModule,
     NavigationModule,
     ReportsModule,
