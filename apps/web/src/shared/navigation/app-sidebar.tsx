@@ -1,5 +1,6 @@
 "use client";
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
@@ -158,9 +159,16 @@ export function AppSidebar() {
         id="app-navigation-sidebar"
       >
         <div className={styles.sidebarHeader}>
-          <div>
-            <span>Helpdesk</span>
-            <strong>Navegação</strong>
+          <div className={styles.sidebarBrand}>
+            <Image
+              alt="Helpdesk"
+              className={styles.sidebarLogo}
+              height={600}
+              priority
+              src="/branding/helpdesk-logo.png"
+              width={1200}
+            />
+            <span>Navegação</span>
           </div>
           <button
             aria-label="Fechar menu"

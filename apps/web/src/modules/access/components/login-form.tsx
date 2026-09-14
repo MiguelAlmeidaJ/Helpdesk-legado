@@ -1,6 +1,7 @@
 "use client";
 
 import type { FormEvent } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { useState } from 'react';
 import { ApiError, apiRequest } from '../../../shared/api/api-client';
@@ -44,60 +45,90 @@ export function LoginForm({ nextPath }: { nextPath: string }) {
   }
 
   return (
-    <main className={styles.page}>
-      <section className={styles.card}>
-        <div className={styles.brand}>
-          <span>Helpdesk</span>
-          <strong>Entrar</strong>
-          <p>Use o mesmo usuário e senha do Helpdesk atual.</p>
+    <main className={styles.loginPage}>
+      <section className={styles.loginCard}>
+        <div className={styles.loginBrandPanel}>
+          <Image
+            alt="Helpdesk"
+            className={styles.loginHelpdeskLogo}
+            height={600}
+            priority
+            src="/branding/helpdesk-logo-white.png"
+            width={1200}
+          />
+
+          <div className={styles.loginBrandCopy}>
+            <h1>Gestão inteligente para uma operação mais eficiente</h1>
+            <p>
+              Mais controle, agilidade e visão estratégica, mantendo o fluxo e
+              a qualidade operacional sempre em movimento.
+            </p>
+          </div>
         </div>
 
-        <form className={styles.form} onSubmit={submit}>
-          <label>
-            <span>Usuário</span>
-            <input
-              autoComplete="username"
-              autoFocus
-              disabled={submitting}
-              maxLength={100}
-              onChange={(event) => setLogin(event.target.value)}
-              required
-              type="text"
-              value={login}
-            />
-          </label>
+        <div className={styles.loginFormPanel}>
+          <div className={styles.loginFormHeader}>
+            <h2>Acesse sua conta</h2>
+            <p>Bem-vindo de volta!</p>
+          </div>
 
-          <label>
-            <span>Senha</span>
-            <input
-              autoComplete="current-password"
-              disabled={submitting}
-              maxLength={200}
-              onChange={(event) => setPassword(event.target.value)}
-              required
-              type="password"
-              value={password}
-            />
-          </label>
+          <form className={`${styles.form} ${styles.loginForm}`} onSubmit={submit}>
+            <label>
+              <span>Usuário ou e-mail</span>
+              <input
+                autoComplete="username"
+                autoFocus
+                disabled={submitting}
+                maxLength={100}
+                onChange={(event) => setLogin(event.target.value)}
+                placeholder="Digite seu usuário ou e-mail"
+                required
+                type="text"
+                value={login}
+              />
+            </label>
 
-          {error ? (
-            <div className={styles.error} role="alert">
-              {error}
+            <label>
+              <span>Senha</span>
+              <input
+                autoComplete="current-password"
+                disabled={submitting}
+                maxLength={200}
+                onChange={(event) => setPassword(event.target.value)}
+                placeholder="Digite sua senha"
+                required
+                type="password"
+                value={password}
+              />
+            </label>
+
+            {error ? (
+              <div className={`${styles.error} ${styles.loginError}`} role="alert">
+                {error}
+              </div>
+            ) : null}
+
+            <div className={styles.loginFormLinks}>
+              <Link className={styles.recoveryLink} href="/forgot-password">
+                Esqueceu a sua senha?
+              </Link>
             </div>
-          ) : null}
 
-          <button disabled={submitting} type="submit">
-            {submitting ? 'Entrando…' : 'Entrar'}
-          </button>
-        </form>
+            <button disabled={submitting} type="submit">
+              {submitting ? 'Entrando…' : 'Entrar'}
+            </button>
+          </form>
 
-        <Link className={styles.recoveryLink} href="/forgot-password">
-          Esqueci minha senha
-        </Link>
-
-        <p className={styles.note}>
-          O login cria uma sessão segura e própria da nova plataforma.
-        </p>
+          <div className={styles.loginPartner}>
+            <Image
+              alt="Nível 3"
+              className={styles.loginPartnerLogo}
+              height={3863}
+              src="/branding/nivel3-logo.png"
+              width={8334}
+            />
+          </div>
+        </div>
       </section>
     </main>
   );

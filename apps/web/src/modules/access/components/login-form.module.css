@@ -126,3 +126,237 @@
   border-top: 1px solid #edf1f4;
   font-size: 12px;
 }
+
+.loginPage {
+  min-height: 100vh;
+  position: relative;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  padding: 32px;
+  background:
+    radial-gradient(circle at 12% 20%, rgba(80, 246, 139, 0.08), transparent 24%),
+    radial-gradient(circle at 84% 12%, rgba(113, 130, 139, 0.16), transparent 32%),
+    linear-gradient(145deg, #171b1e 0%, #101315 46%, #090b0d 100%);
+}
+
+.loginPage::before,
+.loginPage::after {
+  content: '';
+  position: absolute;
+  pointer-events: none;
+  transform: rotate(-18deg);
+  border: 1px solid rgba(255, 255, 255, 0.025);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.035), transparent 65%);
+}
+
+.loginPage::before {
+  width: 64vw;
+  height: 58vw;
+  left: -23vw;
+  top: -20vw;
+}
+
+.loginPage::after {
+  width: 58vw;
+  height: 52vw;
+  right: -22vw;
+  bottom: -24vw;
+}
+
+.loginCard {
+  position: relative;
+  z-index: 1;
+  width: min(1030px, 100%);
+  min-height: 510px;
+  display: grid;
+  grid-template-columns: 1.06fr 0.94fr;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 24px;
+  background: #15191b;
+  box-shadow: 0 28px 80px rgba(0, 0, 0, 0.42);
+}
+
+.loginBrandPanel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 44px;
+  padding: 54px 66px;
+  text-align: center;
+  background:
+    radial-gradient(circle at 50% 26%, rgba(80, 246, 139, 0.07), transparent 34%),
+    linear-gradient(180deg, #031b1e 0%, #001416 100%);
+}
+
+.loginHelpdeskLogo {
+  width: min(390px, 100%);
+  height: auto;
+}
+
+.loginBrandCopy {
+  max-width: 430px;
+}
+
+.loginBrandCopy h1 {
+  margin: 0;
+  color: #f5f8f6;
+  font-size: clamp(22px, 2.4vw, 29px);
+  line-height: 1.05;
+}
+
+.loginBrandCopy p {
+  margin: 18px 0 0;
+  color: #b7c0bd;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.loginFormPanel {
+  display: flex;
+  flex-direction: column;
+  padding: 52px 50px 34px;
+  background: linear-gradient(180deg, #202426 0%, #111416 100%);
+  color: #f7f9f8;
+}
+
+.loginFormHeader h2 {
+  margin: 0;
+  font-size: clamp(29px, 3vw, 36px);
+  line-height: 1.05;
+}
+
+.loginFormHeader p {
+  margin: 10px 0 0;
+  color: #939d99;
+  font-size: 15px;
+}
+
+.loginForm {
+  margin-top: 30px;
+  gap: 18px;
+}
+
+.loginForm label span {
+  color: #c9d0cd;
+  font-size: 12px;
+}
+
+.loginForm input {
+  min-height: 46px;
+  border-color: #444b4e;
+  border-radius: 7px;
+  background: rgba(8, 11, 12, 0.45);
+  color: #f7f9f8;
+}
+
+.loginForm input::placeholder {
+  color: #737c79;
+}
+
+.loginForm input:focus {
+  border-color: #50f68b;
+  box-shadow: 0 0 0 3px rgba(80, 246, 139, 0.12);
+}
+
+.loginForm button {
+  margin-top: 2px;
+  min-height: 46px;
+  border-color: #50f68b;
+  border-radius: 7px;
+  background: #50f68b;
+  color: #07120b;
+  font-size: 15px;
+}
+
+.loginForm button:hover {
+  background: #6ff89d;
+}
+
+.loginFormLinks {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.loginFormLinks .recoveryLink {
+  margin-top: 0;
+  color: #50f68b;
+  font-size: 12px;
+}
+
+.loginError {
+  border-color: rgba(255, 120, 120, 0.28);
+  background: rgba(130, 34, 34, 0.2);
+  color: #ffcaca;
+}
+
+.loginPartner {
+  display: flex;
+  justify-content: center;
+  margin-top: auto;
+  padding-top: 32px;
+}
+
+.loginPartnerLogo {
+  width: 82px;
+  height: auto;
+}
+
+@media (max-width: 820px) {
+  .loginPage {
+    padding: 18px;
+  }
+
+  .loginCard {
+    width: min(520px, 100%);
+    grid-template-columns: 1fr;
+  }
+
+  .loginBrandPanel {
+    gap: 18px;
+    padding: 30px 36px;
+  }
+
+  .loginHelpdeskLogo {
+    width: min(290px, 82%);
+  }
+
+  .loginBrandCopy h1 {
+    font-size: 21px;
+  }
+
+  .loginBrandCopy p {
+    display: none;
+  }
+
+  .loginFormPanel {
+    padding: 34px 30px 28px;
+  }
+}
+
+@media (max-width: 480px) {
+  .loginPage {
+    padding: 0;
+    place-items: stretch;
+  }
+
+  .loginCard {
+    min-height: 100vh;
+    border: 0;
+    border-radius: 0;
+  }
+
+  .loginBrandPanel {
+    padding: 24px 28px;
+  }
+
+  .loginBrandCopy {
+    display: none;
+  }
+
+  .loginFormPanel {
+    padding: 32px 24px 26px;
+  }
+}
