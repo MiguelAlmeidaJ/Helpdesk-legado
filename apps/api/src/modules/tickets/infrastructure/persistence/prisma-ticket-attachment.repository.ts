@@ -151,18 +151,19 @@ export class PrismaTicketAttachmentRepository
     const row = rows[0];
     if (!row) return null;
 
-    const physical = this.physicalPath(row.caminho_arquivo);
-    if (!physical) return null;
-
-    try {
-      return {
-        name: row.nome_arquivo,
-        mimeType: row.tipo_arquivo ?? 'application/octet-stream',
-        data: await readFile(physical),
-      };
-    } catch {
-      return null;
+    for (const physical of this.physicalPaths(row.caminho_arquivo)) {
+      try {
+        return {
+          name: row.nome_arquivo,
+          mimeType: row.tipo_arquivo ?? 'application/octet-stream',
+          data: await readFile(physical),
+        };
+      } catch {
+        // Try the legacy location before treating the attachment as missing.
+      }
     }
+
+    return null;
   }
 
   async add(
@@ -295,8 +296,7 @@ export class PrismaTicketAttachmentRepository
     });
 
     if (deleted && storedPath) {
-      const physical = this.physicalPath(storedPath);
-      if (physical) {
+      for (const physical of this.physicalPaths(storedPath)) {
         await unlink(physical).catch(() => undefined);
       }
     }
@@ -320,16 +320,31 @@ export class PrismaTicketAttachmentRepository
 
   private uploadRoot() {
     return path.resolve(
-      process.env.TICKET_UPLOAD_DIR?.trim() || path.join(process.cwd(), 'uploads'),
+      process.env.TICKET_UPLOAD_DIR?.trim() ||
+        path.join(process.cwd(), 'storage', 'uploads', 'tickets'),
     );
   }
 
-  private physicalPath(storedPath: string): string | null {
-    const normalized = storedPath.replace(/\\/g, '/').replace(/^(\.\.\/)+/, '');
+  private legacyUploadRoot() {
+    return path.resolve(process.cwd(), 'uploads');
+  }
+
+  private physicalPaths(storedPath: string): string[] {
+    const normalized = storedPath
+      .replace(/\\/g, '/')
+      .replace(/^(\.\.\/)+/, '')
+      .replace(/^\/+/, '');
     const relative = normalized.startsWith('uploads/')
       ? normalized.slice('uploads/'.length)
       : normalized;
-    const root = this.uploadRoot();
+    const roots = [this.uploadRoot(), this.legacyUploadRoot()];
+
+    return [...new Set(roots)]
+      .map((root) => this.safeStoragePath(root, relative))
+      .filter((candidate): candidate is string => candidate !== null);
+  }
+
+  private safeStoragePath(root: string, relative: string): string | null {
     const candidate = path.resolve(root, relative);
     if (candidate !== root && !candidate.startsWith(`${root}${path.sep}`)) {
       return null;

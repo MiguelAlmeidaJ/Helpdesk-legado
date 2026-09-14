@@ -39,19 +39,19 @@ export class LocalExpenseAttachmentStorage extends ExpenseAttachmentStorage {
   }
 
   async read(reference: ExpenseAttachmentFileReference): Promise<Buffer | null> {
-    const physical = this.physicalPath(reference);
-    if (!physical) return null;
-
-    try {
-      return await readFile(physical);
-    } catch {
-      return null;
+    for (const physical of this.physicalPaths(reference)) {
+      try {
+        return await readFile(physical);
+      } catch {
+        // Try the legacy location before treating the attachment as missing.
+      }
     }
+
+    return null;
   }
 
   async remove(reference: ExpenseAttachmentFileReference): Promise<void> {
-    const physical = this.physicalPath(reference);
-    if (physical) {
+    for (const physical of this.physicalPaths(reference)) {
       await unlink(physical).catch(() => undefined);
     }
   }
@@ -59,21 +59,37 @@ export class LocalExpenseAttachmentStorage extends ExpenseAttachmentStorage {
   private uploadRoot(): string {
     return path.resolve(
       process.env.RD_UPLOAD_DIR?.trim() ||
-        path.join(process.cwd(), 'uploads_rd'),
+        path.join(process.cwd(), 'storage', 'uploads', 'rd'),
     );
   }
 
-  private safeStoragePath(relative: string): string | null {
-    const root = this.uploadRoot();
+  private legacyUploadRoot(): string {
+    return path.resolve(process.cwd(), 'uploads_rd');
+  }
+
+  private safeStoragePath(
+    relative: string,
+    root = this.uploadRoot(),
+  ): string | null {
     const candidate = path.resolve(root, relative);
     return candidate !== root && candidate.startsWith(`${root}${path.sep}`)
       ? candidate
       : null;
   }
 
-  private physicalPath(reference: ExpenseAttachmentFileReference): string | null {
+  private physicalPaths(reference: ExpenseAttachmentFileReference): string[] {
+    const relative = this.relativePath(reference);
+    if (!relative) return [];
+    const roots = [this.uploadRoot(), this.legacyUploadRoot()];
+
+    return [...new Set(roots)]
+      .map((root) => this.safeStoragePath(relative, root))
+      .filter((candidate): candidate is string => candidate !== null);
+  }
+
+  private relativePath(reference: ExpenseAttachmentFileReference): string | null {
     if (reference.storagePath) {
-      return this.safeStoragePath(reference.storagePath);
+      return reference.storagePath;
     }
     if (!reference.url) return null;
 
@@ -83,8 +99,7 @@ export class LocalExpenseAttachmentStorage extends ExpenseAttachmentStorage {
       const index = pathname.toLowerCase().indexOf(marker);
       if (index < 0) return null;
 
-      const relative = decodeURIComponent(pathname.slice(index + marker.length));
-      return this.safeStoragePath(relative);
+      return decodeURIComponent(pathname.slice(index + marker.length));
     } catch {
       return null;
     }

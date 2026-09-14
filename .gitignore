@@ -29,7 +29,9 @@ pnpm-debug.log*
 
 # Runtime-generated files
 /storage/reports/
+/storage/uploads/
 /rel/relatorios/
+/uploads/
 /uploads_rd/
 
 # Legacy document storage removed from source control
