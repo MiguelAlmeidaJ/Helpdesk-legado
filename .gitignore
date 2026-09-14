@@ -32,6 +32,10 @@ pnpm-debug.log*
 /rel/relatorios/
 /uploads_rd/
 
+# Legacy document storage removed from source control
+/docs_mkt/
+/documentos/
+
 # OS / editor
 .DS_Store
 .idea/
