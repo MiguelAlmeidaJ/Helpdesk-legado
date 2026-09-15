@@ -1,0 +1,12 @@
+.card{overflow:hidden;border:1px solid #dfe6ec;border-radius:12px;background:#fff}
+.header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 16px;border-bottom:1px solid #edf1f4;background:#f8fafb}
+.header h2{margin:0;font-size:15px}.header span{color:#73808c;font-size:11px}
+.header button,.footer button{min-height:34px;padding:0 12px;border:1px solid #356a9a;border-radius:8px;background:#fff;color:#356a9a;font-size:10px;font-weight:800;cursor:pointer}
+.form{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;padding:14px 16px}
+.form label{display:grid;gap:5px;color:#52606d;font-size:10px;font-weight:800;text-transform:uppercase}
+.form select,.form textarea{width:100%;padding:8px 10px;border:1px solid #cbd5df;border-radius:8px;background:#fff;color:#263746;font:inherit;font-size:12px}
+.description{grid-column:1/-1}.form textarea{resize:vertical;min-height:96px}
+.footer{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between}.footer small{color:#84919d}
+.footer button{background:#356a9a;color:#fff}.feedback{padding:9px 16px;border-top:1px solid #edf1f4;background:#f5f8fa;color:#52606d;font-size:11px}
+@media(max-width:900px){.form{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:600px){.form{grid-template-columns:1fr}.header{align-items:stretch;flex-direction:column}}

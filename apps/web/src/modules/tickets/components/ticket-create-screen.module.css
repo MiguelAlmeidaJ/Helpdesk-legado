@@ -1,0 +1,13 @@
+.card { padding: 18px; border: 1px solid #dfe6ec; border-radius: 12px; background: #fff; }
+.grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.grid label { display: grid; gap: 6px; color: #52606d; font-size: 12px; font-weight: 800; }
+.grid input, .grid select, .grid textarea { width: 100%; min-height: 40px; padding: 8px 10px; border: 1px solid #cbd5df; border-radius: 8px; background: #fff; color: #263746; font: inherit; }
+.grid textarea { resize: vertical; }
+.description { grid-column: 1 / -1; }
+.recurrence { margin-top: 18px; padding: 14px; border: 1px solid #dfe6ec; border-radius: 10px; }
+.recurrence legend { padding: 0 6px; font-size: 13px; font-weight: 800; }
+.recurrence legend label { display: flex; align-items: center; gap: 8px; }
+.actions { display: flex; justify-content: flex-end; margin-top: 18px; }
+.error { margin-bottom: 12px; padding: 11px 12px; border: 1px solid #e4c8c8; border-radius: 8px; background: #fff7f7; color: #8d3030; }
+@media (max-width: 850px) { .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 580px) { .grid { grid-template-columns: 1fr; } .description { grid-column: auto; } }

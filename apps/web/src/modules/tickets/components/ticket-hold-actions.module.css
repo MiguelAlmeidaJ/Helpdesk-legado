@@ -1,0 +1,192 @@
+.card {
+  overflow: hidden;
+  border: 1px solid #dfe6ec;
+  border-radius: 12px;
+  background: #ffffff;
+}
+
+.header {
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 16px;
+  border-bottom: 1px solid #edf1f4;
+  background: #f8fafb;
+}
+
+.header > div {
+  display: grid;
+  gap: 2px;
+}
+
+.header h2 {
+  margin: 0;
+  font-size: 15px;
+}
+
+.header span {
+  color: #73808c;
+  font-size: 11px;
+}
+
+.header button,
+.form > button {
+  min-height: 34px;
+  padding: 0 11px;
+  border: 1px solid #9b6d20;
+  border-radius: 8px;
+  font-size: 10px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.header button {
+  background: #ffffff;
+  color: #8a611d;
+}
+
+.header button:hover {
+  background: #fff8e8;
+}
+
+.form {
+  display: grid;
+  grid-template-columns: minmax(185px, 0.8fr) minmax(150px, 0.6fr) minmax(300px, 1.5fr) auto;
+  align-items: end;
+  gap: 14px;
+  padding: 14px 16px;
+}
+
+.form > div {
+  display: grid;
+  gap: 6px;
+}
+
+.form label,
+.activeHold span {
+  color: #73808c;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.form input,
+.form select,
+.form textarea {
+  width: 100%;
+  min-height: 38px;
+  padding: 8px 10px;
+  border: 1px solid #cbd5df;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #263746;
+  font: inherit;
+  font-size: 12px;
+}
+
+.form textarea {
+  min-height: 72px;
+  resize: vertical;
+  line-height: 1.45;
+}
+
+.form > button {
+  min-height: 38px;
+  background: #9b6d20;
+  color: #ffffff;
+  white-space: nowrap;
+}
+
+.form > button:hover {
+  background: #795519;
+}
+
+.form > button:disabled,
+.form input:disabled,
+.form select:disabled,
+.form textarea:disabled,
+.header button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.activeHold {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px 16px;
+  padding: 14px 16px;
+  background: #fffbf0;
+}
+
+.activeHold > div {
+  display: grid;
+  gap: 4px;
+}
+
+.activeHold strong {
+  color: #4d4537;
+  font-size: 12px;
+}
+
+.activeHold p {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding-top: 10px;
+  border-top: 1px solid #efe4c9;
+  color: #635a4a;
+  font-size: 12px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+.warning,
+.feedback {
+  padding: 10px 16px;
+  border-top: 1px solid #edf1f4;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.warning {
+  background: #fff7f7;
+  color: #7c3a3a;
+}
+
+.feedback {
+  background: #fffaf0;
+  color: #76591f;
+}
+
+@media (max-width: 1100px) {
+  .form,
+  .activeHold {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .form > button {
+    justify-self: start;
+  }
+}
+
+@media (max-width: 680px) {
+  .header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .header button {
+    align-self: flex-start;
+  }
+
+  .form,
+  .activeHold {
+    grid-template-columns: 1fr;
+  }
+
+  .activeHold p {
+    grid-column: auto;
+  }
+}

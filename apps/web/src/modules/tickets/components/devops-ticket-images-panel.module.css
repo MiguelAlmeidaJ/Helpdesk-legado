@@ -1,0 +1,90 @@
+.card {
+  border: 1px solid var(--border-color, #d9dee7);
+  border-radius: 16px;
+  background: var(--surface, #fff);
+  padding: 20px;
+  display: grid;
+  gap: 16px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.header h2 {
+  margin: 0;
+}
+
+.header p {
+  margin: 4px 0 0;
+  color: var(--text-muted, #667085);
+}
+
+.upload {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+}
+
+.imageCard {
+  border: 1px solid var(--border-color, #d9dee7);
+  border-radius: 12px;
+  overflow: hidden;
+  display: grid;
+  background: var(--surface-muted, #f7f8fa);
+}
+
+.preview {
+  aspect-ratio: 4 / 3;
+  width: 100%;
+  object-fit: cover;
+  background: #eef1f5;
+}
+
+.meta {
+  padding: 10px;
+  display: grid;
+  gap: 4px;
+}
+
+.meta span {
+  color: var(--text-muted, #667085);
+  font-size: 0.82rem;
+}
+
+.actions {
+  padding: 0 10px 10px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.replace {
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.replace input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.feedback {
+  margin: 0;
+  color: var(--text-muted, #667085);
+}
