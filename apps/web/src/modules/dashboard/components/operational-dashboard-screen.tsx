@@ -12,7 +12,18 @@ import { ApiError } from '../../../shared/api/api-client';
 import { AppSidebar } from '../../../shared/navigation/app-sidebar';
 import { SessionUserMenu } from '../../access/components/session-user-menu';
 import { fetchOperationalDashboard } from '../api/dashboard-api';
-import styles from './operational-dashboard-screen.module.css';
+
+const EYEBROW_CLASS =
+  'text-[9px] font-black uppercase tracking-[0.09em] text-app-muted';
+const CONTROL_CLASS =
+  'inline-flex min-h-9 items-center justify-center rounded-lg border border-app-border-strong bg-app-surface px-[13px] text-[10px] font-extrabold text-app-text-soft no-underline transition-colors hover:bg-app-surface-hover disabled:cursor-not-allowed disabled:opacity-50';
+const INPUT_CLASS =
+  'min-h-9 rounded-[7px] border border-app-border-strong bg-app-surface px-[9px] text-app-text outline-none transition focus:border-app-brand focus:ring-3 focus:ring-[var(--app-brand-ring)]';
+const CARD_CLASS =
+  'overflow-hidden rounded-[11px] border border-app-border bg-app-surface';
+const CARD_HEADER_CLASS =
+  'flex items-center justify-between gap-2.5 border-b border-app-border-soft bg-app-surface-muted px-3 py-[11px]';
+const EMPTY_CLASS = 'm-0 px-0.5 py-3 text-[9px] text-app-subtle';
 
 function dateFromYmd(value: string): Date {
   const year = Number(value.slice(0, 4));
@@ -50,26 +61,41 @@ function currentWeekRange(current: string): [string, string] {
   return [ymd(start), ymd(end)];
 }
 
-function RankingCard({
-  ranking,
-}: {
-  ranking: DashboardRanking;
-}) {
+function rankingBarClass(rankingId: string): string {
+  switch (rankingId) {
+    case 'devops':
+      return 'bg-[#876c55] dark:bg-[#b29379]';
+    case 'mkt':
+      return 'bg-[#5d8868] dark:bg-[#7fb08a]';
+    case 'qa':
+      return 'bg-[#74678e] dark:bg-[#9a8bb8]';
+    default:
+      return 'bg-[#597c9f] dark:bg-[#7ea6cc]';
+  }
+}
+
+function RankingCard({ ranking }: { ranking: DashboardRanking }) {
   const max = Math.max(0, ...ranking.entries.map((entry) => entry.total));
 
   return (
-    <article className={styles.rankingCard} data-ranking={ranking.id}>
-      <header>
-        <div>
-          <span>{ranking.id.toUpperCase()}</span>
-          <h3>{ranking.label}</h3>
+    <article className={CARD_CLASS} data-ranking={ranking.id}>
+      <header className={CARD_HEADER_CLASS}>
+        <div className="min-w-0">
+          <span className="text-[8px] font-black tracking-[0.08em] text-app-subtle">
+            {ranking.id.toUpperCase()}
+          </span>
+          <h3 className="mt-px mb-0 text-xs font-bold text-app-text">
+            {ranking.label}
+          </h3>
         </div>
-        <strong>{ranking.total}</strong>
+        <strong className="text-[21px] leading-none text-app-text">
+          {ranking.total}
+        </strong>
       </header>
 
-      <div className={styles.rankingList}>
+      <div className="max-h-[410px] overflow-y-auto px-[11px] pt-1.5 pb-2.5">
         {ranking.entries.length === 0 ? (
-          <p className={styles.empty}>Nenhum dado no período.</p>
+          <p className={EMPTY_CLASS}>Nenhum dado no período.</p>
         ) : (
           ranking.entries.map((entry, index) => (
             <RankingRow
@@ -77,6 +103,7 @@ function RankingCard({
               index={index}
               key={`${entry.name}-${index}`}
               max={max}
+              rankingId={ranking.id}
             />
           ))
         )}
@@ -89,25 +116,34 @@ function RankingRow({
   entry,
   index,
   max,
+  rankingId,
 }: {
   entry: DashboardRankingEntry;
   index: number;
   max: number;
+  rankingId: string;
 }) {
   const width = max > 0 ? Math.max(3, (entry.total / max) * 100) : 0;
 
   return (
-    <div className={styles.rankingRow}>
-      <div className={styles.rankingName}>
-        <span>{index === 0 ? '♛' : index + 1}</span>
-        <strong>{entry.name}</strong>
-        <b>{entry.total}</b>
+    <div className="border-b border-app-border-soft py-[9px] last:border-b-0">
+      <div className="grid grid-cols-[24px_minmax(0,1fr)_auto] items-center gap-1.5">
+        <span className="text-center text-[10px] text-amber-700 dark:text-amber-300">
+          {index === 0 ? '♛' : index + 1}
+        </span>
+        <strong className="overflow-hidden text-[10px] text-ellipsis whitespace-nowrap text-app-text">
+          {entry.name}
+        </strong>
+        <b className="text-[11px] text-app-text">{entry.total}</b>
       </div>
-      <div className={styles.barTrack}>
-        <div className={styles.barFill} style={{ width: `${width}%` }} />
+      <div className="mt-[5px] ml-[30px] h-[7px] overflow-hidden rounded-full bg-app-border-soft">
+        <div
+          className={`h-full rounded-[inherit] ${rankingBarClass(rankingId)}`}
+          style={{ width: `${width}%` }}
+        />
       </div>
       {entry.tickets !== undefined || entry.tasks !== undefined ? (
-        <small>
+        <small className="mt-1 ml-[30px] block text-[8px] text-app-subtle">
           {entry.tickets ?? 0} atendimentos · {entry.tasks ?? 0} tarefas
         </small>
       ) : null}
@@ -117,20 +153,33 @@ function RankingRow({
 
 function PodiumCard({ ranking }: { ranking: DashboardRanking }) {
   return (
-    <article className={styles.podiumCard} data-ranking={ranking.id}>
-      <header>
-        <span>{ranking.id.toUpperCase()}</span>
-        <h3>{ranking.label}</h3>
+    <article className={CARD_CLASS} data-ranking={ranking.id}>
+      <header className={CARD_HEADER_CLASS}>
+        <div>
+          <span className="text-[8px] font-black tracking-[0.08em] text-app-subtle">
+            {ranking.id.toUpperCase()}
+          </span>
+          <h3 className="mt-px mb-0 text-xs font-bold text-app-text">
+            {ranking.label}
+          </h3>
+        </div>
       </header>
-      <ol>
+      <ol className="m-0 grid list-none gap-0 px-[11px] pt-[5px] pb-[9px]">
         {ranking.entries.length === 0 ? (
-          <li className={styles.empty}>Sem dados no trimestre.</li>
+          <li className={EMPTY_CLASS}>Sem dados no trimestre.</li>
         ) : (
           ranking.entries.slice(0, 3).map((entry, index) => (
-            <li key={`${entry.name}-${index}`}>
-              <span>{index + 1}º</span>
-              <strong>{entry.name}</strong>
-              <b>{entry.total}</b>
+            <li
+              className="grid grid-cols-[30px_minmax(0,1fr)_auto] items-center gap-[7px] border-b border-app-border-soft py-2 last:border-b-0"
+              key={`${entry.name}-${index}`}
+            >
+              <span className="text-[9px] font-black text-amber-700 dark:text-amber-300">
+                {index + 1}º
+              </span>
+              <strong className="overflow-hidden text-[10px] text-ellipsis whitespace-nowrap text-app-text">
+                {entry.name}
+              </strong>
+              <b className="text-[11px] text-app-text">{entry.total}</b>
             </li>
           ))
         )}
@@ -201,99 +250,124 @@ export function OperationalDashboardScreen({
   }
 
   return (
-    <main className={styles.page}>
-      <header className={styles.header}>
-        <div className={styles.headerLeft}>
+    <main className="min-h-screen bg-app-bg text-app-text">
+      <header className="sticky top-0 z-20 flex min-h-[58px] items-center justify-between gap-[18px] border-b border-app-border bg-[var(--app-header-bg)] px-6 backdrop-blur-[10px] max-[680px]:px-3">
+        <div className="flex min-w-0 items-center gap-3">
           <AppSidebar />
-          <Link className={styles.brand} href="/dashboard">
-            <strong>Helpdesk</strong>
-            <span>Painel operacional</span>
+          <Link className="grid no-underline" href="/dashboard">
+            <strong className="text-[15px] text-app-text">Helpdesk</strong>
+            <span className="text-[10px] text-app-subtle">Painel operacional</span>
           </Link>
         </div>
         <SessionUserMenu user={currentUser} />
       </header>
 
-      <div className={styles.content}>
-        <section className={styles.hero}>
+      <div className="mx-auto w-[min(1440px,calc(100%-32px))] pt-6 pb-12 max-[680px]:w-[calc(100%-20px)]">
+        <section className="mb-3.5 flex items-end justify-between gap-[18px] rounded-[14px] border border-app-border bg-app-surface px-[22px] py-5 shadow-sm max-[680px]:flex-col max-[680px]:items-stretch">
           <div>
-            <span className={styles.eyebrow}>Visão operacional</span>
-            <h1>Dashboard</h1>
-            <p>
+            <span className={EYEBROW_CLASS}>Visão operacional</span>
+            <h1 className="my-0.5 text-[30px] font-bold leading-tight text-app-text">
+              Dashboard
+            </h1>
+            <p className="m-0 text-xs text-app-muted-strong">
               Rankings de produção por período e pódio do trimestre atual.
             </p>
           </div>
-          <Link className={styles.ticketsLink} href="/tickets">
+          <Link className={CONTROL_CLASS} href="/tickets">
             Abrir Atendimentos
           </Link>
         </section>
 
-        {error ? <div className={styles.error}>{error}</div> : null}
+        {error ? (
+          <div
+            className="mb-3.5 rounded-[9px] border border-app-danger-border bg-app-danger-soft px-3.5 py-3 text-[11px] text-app-danger"
+            role="alert"
+          >
+            {error}
+          </div>
+        ) : null}
         {loading && !data ? (
-          <div className={styles.notice}>Carregando dashboard…</div>
+          <div
+            className="mb-3.5 rounded-[9px] border border-app-border bg-app-surface px-3.5 py-3 text-[11px] text-app-muted"
+            role="status"
+          >
+            Carregando dashboard…
+          </div>
         ) : null}
 
         {data && !data.internalUser ? (
-          <div className={styles.notice}>
+          <div className="mb-3.5 rounded-[9px] border border-app-border bg-app-surface px-3.5 py-3 text-[11px] text-app-muted">
             O ranking operacional é exibido somente para usuários internos.
           </div>
         ) : null}
 
         {data?.internalUser ? (
           <>
-            <section className={styles.filters}>
-              <form onSubmit={apply}>
-                <label>
+            <section className="mb-[18px] flex items-end justify-between gap-3.5 rounded-[11px] border border-app-border bg-app-surface px-3.5 py-3 max-[1100px]:flex-col max-[1100px]:items-stretch">
+              <form
+                className="flex items-end gap-2 max-[680px]:flex-wrap max-[680px]:items-stretch"
+                onSubmit={apply}
+              >
+                <label className="grid gap-1 text-[9px] font-extrabold uppercase text-app-subtle max-[680px]:flex-[1_1_130px]">
                   Início
                   <input
+                    className={INPUT_CLASS}
                     onChange={(event) => setStartDate(event.target.value)}
                     type="date"
                     value={startDate}
                   />
                 </label>
-                <label>
+                <label className="grid gap-1 text-[9px] font-extrabold uppercase text-app-subtle max-[680px]:flex-[1_1_130px]">
                   Fim
                   <input
+                    className={INPUT_CLASS}
                     onChange={(event) => setEndDate(event.target.value)}
                     type="date"
                     value={endDate}
                   />
                 </label>
-                <button disabled={loading} type="submit">
+                <button className={CONTROL_CLASS} disabled={loading} type="submit">
                   {loading ? 'Atualizando…' : 'Aplicar'}
                 </button>
               </form>
 
-              <div className={styles.quickRanges}>
-                <button onClick={() => quickRange('today')} type="button">Hoje</button>
-                <button onClick={() => quickRange('week')} type="button">Semana</button>
-                <button onClick={() => quickRange('month')} type="button">Mês atual</button>
-                <button onClick={() => quickRange('quarter')} type="button">Trimestre</button>
+              <div className="flex items-end gap-2 max-[680px]:flex-wrap max-[680px]:items-stretch">
+                <button className={`${CONTROL_CLASS} min-h-8`} onClick={() => quickRange('today')} type="button">Hoje</button>
+                <button className={`${CONTROL_CLASS} min-h-8`} onClick={() => quickRange('week')} type="button">Semana</button>
+                <button className={`${CONTROL_CLASS} min-h-8`} onClick={() => quickRange('month')} type="button">Mês atual</button>
+                <button className={`${CONTROL_CLASS} min-h-8`} onClick={() => quickRange('quarter')} type="button">Trimestre</button>
               </div>
             </section>
 
-            <section className={styles.section}>
-              <div className={styles.sectionHeader}>
+            <section className="mt-5">
+              <div className="mb-2.5 flex items-end justify-between gap-4 max-[680px]:flex-col max-[680px]:items-stretch">
                 <div>
-                  <span className={styles.eyebrow}>Ranking</span>
-                  <h2>{data.period.label}</h2>
+                  <span className={EYEBROW_CLASS}>Ranking</span>
+                  <h2 className="mt-0.5 mb-0 text-[17px] font-bold text-app-text">
+                    {data.period.label}
+                  </h2>
                 </div>
-                <small>Atualizado em {data.generatedAt.replace('T', ' ')}</small>
+                <small className="text-[9px] text-app-subtle">
+                  Atualizado em {data.generatedAt.replace('T', ' ')}
+                </small>
               </div>
-              <div className={styles.rankingGrid}>
+              <div className="grid grid-cols-4 gap-2.5 max-[1100px]:grid-cols-2 max-[680px]:grid-cols-1">
                 {data.periodRankings.map((ranking) => (
                   <RankingCard key={ranking.id} ranking={ranking} />
                 ))}
               </div>
             </section>
 
-            <section className={styles.section}>
-              <div className={styles.sectionHeader}>
+            <section className="mt-5">
+              <div className="mb-2.5 flex items-end justify-between gap-4 max-[680px]:flex-col max-[680px]:items-stretch">
                 <div>
-                  <span className={styles.eyebrow}>Pódio</span>
-                  <h2>{data.quarter.label}</h2>
+                  <span className={EYEBROW_CLASS}>Pódio</span>
+                  <h2 className="mt-0.5 mb-0 text-[17px] font-bold text-app-text">
+                    {data.quarter.label}
+                  </h2>
                 </div>
               </div>
-              <div className={styles.podiumGrid}>
+              <div className="grid grid-cols-4 gap-2.5 max-[1100px]:grid-cols-2 max-[680px]:grid-cols-1">
                 {data.quarterRankings.map((ranking) => (
                   <PodiumCard key={ranking.id} ranking={ranking} />
                 ))}
