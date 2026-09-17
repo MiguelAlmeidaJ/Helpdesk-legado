@@ -5,7 +5,13 @@ import type { FormEvent } from 'react';
 import { useEffect, useMemo, useState } from 'react';
 import { ApiError } from '../../../shared/api/api-client';
 import { updateDevOpsTaskDependency } from '../api/modular-ticket-edit-api';
-import styles from './specialized-ticket-classification-editor.module.css';
+
+const CARD_CLASS =
+  'mb-4 rounded-[14px] border border-app-border bg-app-surface p-[1.15rem] shadow-sm shadow-slate-950/5 dark:shadow-black/10';
+const FIELD_CONTROL_CLASS =
+  'min-h-10 w-full rounded-lg border border-app-border-strong bg-app-surface px-3 text-sm text-app-text outline-none transition focus:border-app-brand focus:ring-3 focus:ring-[var(--app-brand-ring)] disabled:cursor-not-allowed disabled:opacity-55';
+const PRIMARY_BUTTON_CLASS =
+  'inline-flex min-h-10 items-center justify-center rounded-lg border border-app-brand bg-app-brand px-4 text-sm font-bold text-white transition-colors hover:bg-app-brand-hover disabled:cursor-not-allowed disabled:opacity-50 dark:text-slate-950';
 
 function errorMessage(reason: unknown): string {
   if (reason instanceof ApiError && reason.body && typeof reason.body === 'object') {
@@ -49,12 +55,18 @@ export function DevOpsTaskDependencyEditor({
 
   if (!projectId) {
     return (
-      <section className={styles.card}>
-        <div className={styles.header}>
+      <section className={CARD_CLASS} aria-label="Dependência da tarefa DevOps">
+        <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <span className="eyebrow">Estrutura DevOps</span>
-            <h2>Dependência</h2>
-            <p>Tickets avulsos não participam da cadeia de dependências de projeto.</p>
+            <span className="mb-2 inline-block text-xs font-extrabold uppercase tracking-[0.1em] text-app-muted">
+              Estrutura DevOps
+            </span>
+            <h2 className="m-0 text-[1.05rem] font-bold text-app-text">
+              Dependência
+            </h2>
+            <p className="mt-1.5 text-sm text-app-muted">
+              Tickets avulsos não participam da cadeia de dependências de projeto.
+            </p>
           </div>
         </div>
       </section>
@@ -79,25 +91,47 @@ export function DevOpsTaskDependencyEditor({
   }
 
   return (
-    <section className={styles.card}>
-      <div className={styles.header}>
+    <section className={CARD_CLASS} aria-label="Dependência da tarefa DevOps">
+      <div className="mb-4 flex flex-wrap items-start justify-between gap-4">
         <div>
-          <span className="eyebrow">Estrutura DevOps</span>
-          <h2>Dependência da tarefa</h2>
-          <p>Atual: {currentLabel}. O backend valida mesmo projeto e impede ciclos.</p>
+          <span className="mb-2 inline-block text-xs font-extrabold uppercase tracking-[0.1em] text-app-muted">
+            Estrutura DevOps
+          </span>
+          <h2 className="m-0 text-[1.05rem] font-bold text-app-text">
+            Dependência da tarefa
+          </h2>
+          <p className="mt-1.5 text-sm text-app-muted">
+            Atual: {currentLabel}. O backend valida mesmo projeto e impede ciclos.
+          </p>
         </div>
       </div>
 
-      {feedback ? <div className={styles.feedback}>{feedback}</div> : null}
+      {feedback ? (
+        <div
+          className="mb-3.5 whitespace-pre-wrap rounded-lg border border-app-border bg-app-surface-muted px-3 py-2.5 text-sm text-app-text-soft"
+          role="status"
+        >
+          {feedback}
+        </div>
+      ) : null}
 
       <form onSubmit={submit}>
-        <div className={styles.grid}>
-          <label>
-            <span>Depende de</span>
-            <select disabled={saving} onChange={(event) => setSelected(event.target.value)} value={selected}>
+        <div className="grid gap-3 md:max-w-2xl">
+          <label className="grid min-w-0 gap-1.5">
+            <span className="text-xs font-bold tracking-[0.02em] text-app-muted">
+              Depende de
+            </span>
+            <select
+              className={FIELD_CONTROL_CLASS}
+              disabled={saving}
+              onChange={(event) => setSelected(event.target.value)}
+              value={selected}
+            >
               <option value="0">Sem dependência</option>
               {dependencyTaskId > 0 && !current ? (
-                <option value={dependencyTaskId}>#{dependencyTaskId} · dependência atual</option>
+                <option value={dependencyTaskId}>
+                  #{dependencyTaskId} · dependência atual
+                </option>
               ) : null}
               {candidates.map((task) => (
                 <option key={task.id} value={task.id}>
@@ -107,8 +141,12 @@ export function DevOpsTaskDependencyEditor({
             </select>
           </label>
         </div>
-        <div className={styles.actions}>
-          <button className="button button-primary" disabled={saving || Number(selected) === dependencyTaskId} type="submit">
+        <div className="mt-4 flex flex-wrap justify-end gap-2.5">
+          <button
+            className={PRIMARY_BUTTON_CLASS}
+            disabled={saving || Number(selected) === dependencyTaskId}
+            type="submit"
+          >
             {saving ? 'Salvando…' : 'Salvar dependência'}
           </button>
         </div>

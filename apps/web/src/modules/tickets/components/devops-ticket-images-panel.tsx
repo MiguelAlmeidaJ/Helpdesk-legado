@@ -11,7 +11,11 @@ import {
   replaceDevOpsTicketImage,
   uploadDevOpsTicketImage,
 } from '../api/modular-ticket-workflow-api';
-import styles from './devops-ticket-images-panel.module.css';
+
+const BUTTON_CLASS =
+  'inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-app-border-strong bg-app-surface px-4 text-sm font-bold text-app-text-soft transition-colors hover:bg-app-surface-hover disabled:cursor-not-allowed disabled:opacity-50';
+const FILE_INPUT_CLASS =
+  'max-w-full text-sm text-app-muted file:mr-3 file:rounded-lg file:border file:border-app-border-strong file:bg-app-surface-muted file:px-3 file:py-2 file:text-sm file:font-bold file:text-app-text-soft hover:file:bg-app-surface-hover disabled:cursor-not-allowed disabled:opacity-50';
 
 function formatDate(value: string | null): string {
   if (!value) return '—';
@@ -99,37 +103,53 @@ export function DevOpsTicketImagesPanel({ ticketId }: { ticketId: number }) {
   }
 
   return (
-    <section className={styles.card} aria-label="Imagens do ticket DevOps">
-      <div className={styles.header}>
-        <div><span className="eyebrow">DevOps</span><h2>Imagens da tarefa</h2><p>O backend aceita somente JPEG, preservando a regra já migrada.</p></div>
-        <strong>{images.length.toLocaleString('pt-BR')}</strong>
+    <section
+      className="grid gap-4 rounded-2xl border border-app-border bg-app-surface p-5 shadow-sm shadow-slate-950/5 dark:shadow-black/10"
+      aria-label="Imagens do ticket DevOps"
+    >
+      <div className="flex items-start justify-between gap-4 max-sm:flex-col">
+        <div>
+          <span className="mb-2 inline-block text-xs font-extrabold uppercase tracking-[0.1em] text-app-muted">DevOps</span>
+          <h2 className="m-0 text-lg font-bold text-app-text">Imagens da tarefa</h2>
+          <p className="mt-1 text-sm text-app-muted">O backend aceita somente JPEG, preservando a regra já migrada.</p>
+        </div>
+        <strong className="rounded-full bg-app-surface-muted px-3 py-1 text-sm text-app-text-soft">
+          {images.length.toLocaleString('pt-BR')}
+        </strong>
       </div>
 
-      <form className={styles.upload} onSubmit={upload}>
-        <input accept="image/jpeg,.jpg,.jpeg" disabled={busy} onChange={(event) => setFile(event.target.files?.[0] ?? null)} type="file" />
-        <button className="button" disabled={busy || !file} type="submit">Adicionar imagem</button>
+      <form className="flex flex-wrap items-center gap-2.5" onSubmit={upload}>
+        <input className={FILE_INPUT_CLASS} accept="image/jpeg,.jpg,.jpeg" disabled={busy} onChange={(event) => setFile(event.target.files?.[0] ?? null)} type="file" />
+        <button className={BUTTON_CLASS} disabled={busy || !file} type="submit">Adicionar imagem</button>
       </form>
 
-      {feedback ? <p className={styles.feedback} role="status">{feedback}</p> : null}
-      {loading ? <div className="loading-line" aria-label="Carregando imagens" /> : null}
+      {feedback ? <p className="m-0 text-sm text-app-muted" role="status">{feedback}</p> : null}
+      {loading ? (
+        <div className="h-1 overflow-hidden rounded-full bg-app-border" aria-label="Carregando imagens" role="progressbar">
+          <div className="h-full w-1/3 animate-pulse rounded-full bg-app-brand" />
+        </div>
+      ) : null}
 
-      <div className={styles.grid}>
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-3.5 max-sm:grid-cols-1">
         {images.map((image) => (
-          <article className={styles.imageCard} key={image.id}>
-            <img className={styles.preview} src={devOpsTicketImageContentUrl(ticketId, image.id)} alt={image.name || `Imagem ${image.id}`} />
-            <div className={styles.meta}><strong>{image.name || `Imagem #${image.id}`}</strong><span>{image.uploadedBy.name || 'Usuário não identificado'} · {formatDate(image.updatedAt)}</span></div>
-            <div className={styles.actions}>
-              <label className={`${styles.replace} button`}>
+          <article className="grid overflow-hidden rounded-xl border border-app-border bg-app-surface-muted" key={image.id}>
+            <img className="aspect-[4/3] w-full bg-app-border-soft object-cover" src={devOpsTicketImageContentUrl(ticketId, image.id)} alt={image.name || `Imagem ${image.id}`} />
+            <div className="grid gap-1 p-2.5">
+              <strong className="text-sm text-app-text">{image.name || `Imagem #${image.id}`}</strong>
+              <span className="text-xs text-app-muted">{image.uploadedBy.name || 'Usuário não identificado'} · {formatDate(image.updatedAt)}</span>
+            </div>
+            <div className="flex flex-wrap items-center gap-2 px-2.5 pb-2.5">
+              <label className={`${BUTTON_CLASS} relative cursor-pointer overflow-hidden`}>
                 Substituir
-                <input accept="image/jpeg,.jpg,.jpeg" disabled={busy} onChange={(event) => void replace(image.id, event)} type="file" />
+                <input className="absolute h-px w-px opacity-0 pointer-events-none" accept="image/jpeg,.jpg,.jpeg" disabled={busy} onChange={(event) => void replace(image.id, event)} type="file" />
               </label>
-              <button className="button" disabled={busy} onClick={() => void remove(image.id)} type="button">Excluir</button>
+              <button className={BUTTON_CLASS} disabled={busy} onClick={() => void remove(image.id)} type="button">Excluir</button>
             </div>
           </article>
         ))}
       </div>
 
-      {!loading && images.length === 0 ? <p className={styles.feedback}>Nenhuma imagem registrada para esta tarefa.</p> : null}
+      {!loading && images.length === 0 ? <p className="m-0 text-sm text-app-muted">Nenhuma imagem registrada para esta tarefa.</p> : null}
     </section>
   );
 }

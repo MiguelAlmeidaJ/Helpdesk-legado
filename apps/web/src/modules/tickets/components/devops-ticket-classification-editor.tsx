@@ -13,7 +13,12 @@ import {
   fetchDevOpsItems,
   fetchDevOpsSubcategories,
 } from '../api/modular-ticket-create-api';
-import styles from './specialized-ticket-classification-editor.module.css';
+
+const PRIMARY_BUTTON_CLASS =
+  'inline-flex min-h-10 items-center justify-center rounded-lg border border-app-brand bg-app-brand px-4 text-sm font-bold text-white transition-colors hover:bg-app-brand-hover disabled:cursor-not-allowed disabled:opacity-50 dark:text-slate-950';
+const CONTROL_CLASS =
+  'min-h-10 w-full rounded-lg border border-app-border-strong bg-app-surface px-3 py-2 text-sm text-app-text outline-none transition focus:border-app-brand focus:ring-3 focus:ring-[var(--app-brand-ring)] disabled:cursor-not-allowed disabled:opacity-55';
+const FIELD_CLASS = 'grid min-w-0 gap-1.5 text-sm font-semibold text-app-text-soft';
 
 export interface DevOpsEditableClassification {
   typeId: number | null;
@@ -164,30 +169,39 @@ export function DevOpsTicketClassificationEditor({
   }
 
   return (
-    <section className={styles.card} aria-label={`Editar ${resourceLabel}`}>
-      <div className={styles.header}>
+    <section
+      className="mb-4 rounded-2xl border border-app-border bg-app-surface p-5 shadow-sm shadow-slate-950/5 dark:shadow-black/10"
+      aria-label={`Editar ${resourceLabel}`}
+    >
+      <div className="mb-4 flex flex-wrap items-start justify-between gap-4">
         <div>
-          <span className="eyebrow">Classificação</span>
-          <h2>Editar {resourceLabel}</h2>
-          <p>Altera somente classificação, forma e descrição de abertura.</p>
+          <span className="mb-2 inline-block text-xs font-extrabold uppercase tracking-[0.1em] text-app-muted">
+            Classificação
+          </span>
+          <h2 className="m-0 text-lg font-bold text-app-text">Editar {resourceLabel}</h2>
+          <p className="mt-1 text-sm text-app-muted">Altera somente classificação, forma e descrição de abertura.</p>
         </div>
-        {loading ? <span className={styles.muted}>Carregando catálogos…</span> : null}
+        {loading ? <span className="text-sm text-app-muted">Carregando catálogos…</span> : null}
       </div>
 
-      {feedback ? <div className={styles.feedback} role="status">{feedback}</div> : null}
+      {feedback ? (
+        <div className="mb-3.5 whitespace-pre-wrap rounded-lg border border-app-border bg-app-surface-muted px-3 py-2.5 text-sm text-app-text-soft" role="status">
+          {feedback}
+        </div>
+      ) : null}
 
       <form onSubmit={submit}>
-        <div className={styles.grid}>
-          <label><span>Tipo</span><select disabled={loading || saving} onChange={(event) => setTypeId(event.target.value)} value={typeId}><Options values={types} /></select></label>
-          <label><span>Categoria</span><select disabled={loading || saving} onChange={(event) => void changeCategory(event.target.value)} required value={categoryId}><option value="">Selecione</option><Options values={categories} /></select></label>
-          <label><span>Subcategoria</span><select disabled={loading || saving || !categoryId} onChange={(event) => void changeSubcategory(event.target.value)} value={subcategoryId}><option value="0">Não informado</option><Options values={subcategories.filter((option) => option.id > 0)} /></select></label>
-          <label><span>Item</span><select disabled={loading || saving || subcategoryId === '0'} onChange={(event) => setItemId(event.target.value)} value={itemId}><option value="0">Não informado</option><Options values={items.filter((option) => option.id > 0)} /></select></label>
-          <label><span>Nível</span><select disabled={loading || saving} onChange={(event) => setLevelId(event.target.value)} value={levelId}><Options values={levels} /></select></label>
-          <label><span>Forma</span><select disabled={loading || saving} onChange={(event) => setFormId(event.target.value)} required value={formId}><Options values={forms} /></select></label>
-          <label className={styles.description}><span>Descrição de abertura</span><textarea disabled={saving} maxLength={10000} onChange={(event) => setDescription(event.target.value)} rows={5} value={description} /></label>
+        <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-3">
+          <label className={FIELD_CLASS}><span>Tipo</span><select className={CONTROL_CLASS} disabled={loading || saving} onChange={(event) => setTypeId(event.target.value)} value={typeId}><Options values={types} /></select></label>
+          <label className={FIELD_CLASS}><span>Categoria</span><select className={CONTROL_CLASS} disabled={loading || saving} onChange={(event) => void changeCategory(event.target.value)} required value={categoryId}><option value="">Selecione</option><Options values={categories} /></select></label>
+          <label className={FIELD_CLASS}><span>Subcategoria</span><select className={CONTROL_CLASS} disabled={loading || saving || !categoryId} onChange={(event) => void changeSubcategory(event.target.value)} value={subcategoryId}><option value="0">Não informado</option><Options values={subcategories.filter((option) => option.id > 0)} /></select></label>
+          <label className={FIELD_CLASS}><span>Item</span><select className={CONTROL_CLASS} disabled={loading || saving || subcategoryId === '0'} onChange={(event) => setItemId(event.target.value)} value={itemId}><option value="0">Não informado</option><Options values={items.filter((option) => option.id > 0)} /></select></label>
+          <label className={FIELD_CLASS}><span>Nível</span><select className={CONTROL_CLASS} disabled={loading || saving} onChange={(event) => setLevelId(event.target.value)} value={levelId}><Options values={levels} /></select></label>
+          <label className={FIELD_CLASS}><span>Forma</span><select className={CONTROL_CLASS} disabled={loading || saving} onChange={(event) => setFormId(event.target.value)} required value={formId}><Options values={forms} /></select></label>
+          <label className={`${FIELD_CLASS} sm:col-span-2 lg:col-span-3`}><span>Descrição de abertura</span><textarea className={`${CONTROL_CLASS} min-h-30 resize-y`} disabled={saving} maxLength={10000} onChange={(event) => setDescription(event.target.value)} rows={5} value={description} /></label>
         </div>
-        <div className={styles.actions}>
-          <button className="button button-primary" disabled={loading || saving || !categoryId} type="submit">{saving ? 'Salvando…' : 'Salvar classificação'}</button>
+        <div className="mt-4 flex flex-wrap justify-end gap-2.5">
+          <button className={PRIMARY_BUTTON_CLASS} disabled={loading || saving || !categoryId} type="submit">{saving ? 'Salvando…' : 'Salvar classificação'}</button>
         </div>
       </form>
     </section>
