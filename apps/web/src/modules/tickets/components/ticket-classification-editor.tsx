@@ -16,7 +16,18 @@ import {
   fetchTicketSubcategories,
   updateTicketClassification,
 } from '../api/tickets-api';
-import styles from './ticket-classification-editor.module.css';
+const styles = {
+  card: 'overflow-hidden rounded-xl border border-app-border bg-app-surface',
+  header:
+    'flex items-center justify-between gap-3 border-b border-app-border-soft bg-app-surface-muted px-4 py-2.5 max-[600px]:flex-col max-[600px]:items-stretch [&_h2]:m-0 [&_h2]:text-[15px] [&_span]:text-[11px] [&_span]:text-app-subtle [&_button]:min-h-[34px] [&_button]:rounded-lg [&_button]:border [&_button]:border-app-brand [&_button]:bg-app-surface [&_button]:px-3 [&_button]:text-[10px] [&_button]:font-extrabold [&_button]:text-app-brand [&_button]:transition [&_button:hover]:bg-app-brand-soft [&_button:disabled]:cursor-not-allowed [&_button:disabled]:opacity-50',
+  form:
+    'grid grid-cols-1 gap-3 px-4 py-3.5 min-[601px]:grid-cols-2 min-[901px]:grid-cols-4 [&_label]:grid [&_label]:gap-[5px] [&_label]:text-[10px] [&_label]:font-extrabold [&_label]:uppercase [&_label]:text-app-muted [&_select]:w-full [&_select]:rounded-lg [&_select]:border [&_select]:border-app-border-strong [&_select]:bg-app-surface [&_select]:px-2.5 [&_select]:py-2 [&_select]:text-xs [&_select]:text-app-text [&_select]:outline-none [&_select]:transition [&_textarea]:min-h-24 [&_textarea]:w-full [&_textarea]:resize-y [&_textarea]:rounded-lg [&_textarea]:border [&_textarea]:border-app-border-strong [&_textarea]:bg-app-surface [&_textarea]:px-2.5 [&_textarea]:py-2 [&_textarea]:text-xs [&_textarea]:text-app-text [&_textarea]:outline-none [&_textarea]:transition [&_select:focus]:border-app-brand [&_select:focus]:ring-3 [&_select:focus]:ring-[var(--app-brand-ring)] [&_textarea:focus]:border-app-brand [&_textarea:focus]:ring-3 [&_textarea:focus]:ring-[var(--app-brand-ring)]',
+  description: 'col-span-full',
+  footer:
+    'col-span-full flex items-center justify-between gap-3 max-[600px]:flex-col max-[600px]:items-stretch [&_small]:text-app-subtle [&_button]:min-h-[34px] [&_button]:rounded-lg [&_button]:border [&_button]:border-app-brand [&_button]:bg-app-brand [&_button]:px-3 [&_button]:text-[10px] [&_button]:font-extrabold [&_button]:text-white dark:[&_button]:text-slate-950 [&_button]:transition [&_button:hover]:bg-app-brand-hover [&_button:disabled]:cursor-not-allowed [&_button:disabled]:opacity-50',
+  feedback:
+    'border-t border-app-border-soft bg-app-surface-hover px-4 py-[9px] text-[11px] text-app-muted',
+} as const;
 
 function canEdit(user: CurrentUserResponse, ticket: TicketDetailResponse) {
   if (user.grants.some((g) => g.permission === AppPermission.SystemAdmin)) {
