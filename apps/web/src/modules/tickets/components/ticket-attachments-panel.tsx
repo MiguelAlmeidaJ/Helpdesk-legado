@@ -16,7 +16,21 @@ import {
   ticketAttachmentContentUrl,
   uploadTicketAttachment,
 } from '../api/tickets-api';
-import styles from './ticket-attachments-panel.module.css';
+const styles = {
+  card: 'overflow-hidden rounded-xl border border-app-border bg-app-surface',
+  header:
+    'flex items-center justify-between gap-3 border-b border-app-border-soft bg-app-surface-muted px-4 py-2.5 max-[600px]:flex-col max-[600px]:items-stretch [&_h2]:m-0 [&_h2]:text-[15px] [&_span]:text-[11px] [&_span]:text-app-subtle',
+  upload:
+    'inline-flex min-h-[34px] cursor-pointer items-center rounded-lg border border-app-brand px-3 text-[10px] font-extrabold text-app-brand transition hover:bg-app-brand-soft [&_input]:hidden',
+  body:
+    'grid [&>p]:m-0 [&>p]:px-4 [&>p]:py-3.5 [&>p]:text-xs [&>p]:text-app-subtle',
+  item:
+    'flex items-center justify-between gap-3 border-b border-app-border-soft px-4 py-2.5 last:border-b-0 max-[600px]:flex-col max-[600px]:items-stretch [&>div:first-child]:grid [&>div:first-child]:gap-0.5 [&_strong]:text-xs [&_small]:text-[10px] [&_small]:text-app-subtle',
+  actions:
+    'flex items-center gap-2 max-[600px]:self-start [&_a]:cursor-pointer [&_a]:rounded-[7px] [&_a]:border [&_a]:border-app-border-strong [&_a]:bg-app-surface [&_a]:px-[9px] [&_a]:py-1.5 [&_a]:text-[10px] [&_a]:font-bold [&_a]:text-app-brand [&_a]:no-underline [&_a]:transition [&_a:hover]:bg-app-surface-hover [&_button]:cursor-pointer [&_button]:rounded-[7px] [&_button]:border [&_button]:border-app-border-strong [&_button]:bg-app-surface [&_button]:px-[9px] [&_button]:py-1.5 [&_button]:text-[10px] [&_button]:font-bold [&_button]:text-app-danger [&_button]:transition [&_button:hover]:bg-app-danger-soft [&_button:disabled]:cursor-not-allowed [&_button:disabled]:opacity-50',
+  feedback:
+    'border-t border-app-border-soft bg-app-surface-hover px-4 py-[9px] text-[11px] text-app-muted',
+} as const;
 
 function canMutate(user: CurrentUserResponse, ticket: TicketDetailResponse) {
   if (user.grants.some((g) => g.permission === AppPermission.SystemAdmin)) {
