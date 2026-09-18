@@ -15,7 +15,52 @@ import {
   getExpenseApprovalQueue,
   rejectExpense,
 } from '../api/expense-approval-api';
-import styles from './expense-approval-screen.module.css';
+const styles = {
+  page:
+    'min-h-screen bg-app-bg text-app-text',
+  header:
+    'sticky top-0 z-20 flex min-h-[68px] items-center justify-between border-b border-app-border bg-[var(--app-header-bg)] px-8 backdrop-blur-xl max-[900px]:px-[18px]',
+  headerLeft:
+    'flex items-center gap-4',
+  brand:
+    'flex flex-col gap-0.5 text-inherit no-underline max-[560px]:[&_span]:hidden [&_span]:text-[0.78rem] [&_span]:uppercase [&_span]:tracking-[0.06em] [&_span]:text-app-muted',
+  content:
+    'mx-auto w-[min(1600px,calc(100%-36px))] py-[30px] pb-14 max-[900px]:w-[min(1600px,calc(100%-22px))]',
+  hero:
+    'mb-5 flex items-center justify-between gap-5 max-[900px]:flex-col max-[900px]:items-start [&_h1]:my-[5px] [&_h1]:text-[clamp(1.8rem,4vw,2.6rem)] [&_h1]:tracking-[-0.04em] [&_p]:m-0 [&_p]:text-app-muted',
+  eyebrow:
+    'text-[0.78rem] uppercase tracking-[0.06em] text-app-muted',
+  secondaryLink:
+    'rounded-[9px] border border-app-border-strong bg-app-surface px-3.5 py-2.5 font-bold text-app-text-soft no-underline transition hover:bg-app-surface-hover',
+  error:
+    'mb-4 rounded-[10px] border border-app-danger-border bg-app-danger-soft px-4 py-3.5 text-app-danger',
+  success:
+    'mb-4 rounded-[10px] border border-emerald-200 bg-emerald-50 px-4 py-3.5 text-emerald-800 dark:border-emerald-900/70 dark:bg-emerald-950/35 dark:text-emerald-200',
+  empty:
+    'mb-4 rounded-[10px] border border-dashed border-app-border-strong bg-app-surface px-4 py-3.5 text-center text-app-muted',
+  summary:
+    'mb-[18px] grid grid-cols-[repeat(3,minmax(0,1fr))_auto] gap-3.5 max-[900px]:grid-cols-2 max-[560px]:grid-cols-1 [&>article]:flex [&>article]:flex-col [&>article]:gap-[5px] [&>article]:rounded-xl [&>article]:border [&>article]:border-app-border [&>article]:bg-app-surface [&>article]:px-[17px] [&>article]:py-[15px] [&_span]:text-[0.78rem] [&_span]:uppercase [&_span]:tracking-[0.06em] [&_span]:text-app-muted [&_strong]:text-[1.45rem] [&_small]:text-app-muted [&>button]:cursor-pointer [&>button]:rounded-[10px] [&>button]:border [&>button]:border-emerald-700 [&>button]:bg-emerald-700 [&>button]:px-[18px] [&>button]:font-extrabold [&>button]:text-white max-[900px]:[&>button]:min-h-[54px] [&>button:disabled]:cursor-wait [&>button:disabled]:opacity-[0.55] dark:[&>button]:border-emerald-600 dark:[&>button]:bg-emerald-700',
+  panel:
+    'overflow-hidden rounded-[14px] border border-app-border bg-app-surface shadow-sm [&>header]:flex [&>header]:items-center [&>header]:justify-between [&>header]:gap-4 [&>header]:border-b [&>header]:border-app-border-soft [&>header]:px-[18px] [&>header]:py-4 [&>header_h2]:mt-[3px] [&>header_h2]:mb-0 [&>header_h2]:text-[1.1rem] [&>header_button]:min-h-[38px] [&>header_button]:cursor-pointer [&>header_button]:rounded-[10px] [&>header_button]:border [&>header_button]:border-app-border-strong [&>header_button]:bg-app-surface [&>header_button]:px-[18px] [&>header_button]:font-extrabold [&>header_button]:text-app-text-soft [&>header_button]:transition [&>header_button:hover]:bg-app-surface-hover [&_button:disabled]:cursor-wait [&_button:disabled]:opacity-[0.55]',
+  tableWrap:
+    'overflow-auto [&_table]:w-full [&_table]:min-w-[1320px] [&_table]:border-collapse [&_table]:text-[0.84rem] [&_th]:border-b [&_th]:border-app-border-soft [&_th]:px-2.5 [&_th]:py-[11px] [&_th]:text-left [&_th]:align-top [&_td]:border-b [&_td]:border-app-border-soft [&_td]:px-2.5 [&_td]:py-[11px] [&_td]:text-left [&_td]:align-top [&_thead_th]:sticky [&_thead_th]:top-0 [&_thead_th]:z-[2] [&_thead_th]:bg-app-surface-muted [&_thead_th]:text-app-text-soft [&_tbody_tr:hover]:bg-app-surface-hover [&_td_small]:mt-1 [&_td_small]:block [&_td_small]:text-app-muted [&_td_p]:mb-[7px] [&_td_p]:mt-0 [&_td_p]:max-w-[300px] [&_td_p]:whitespace-pre-wrap [&_td_p]:[overflow-wrap:anywhere]',
+  money:
+    'whitespace-nowrap font-extrabold',
+  attachments:
+    'grid max-w-[180px] gap-[5px] [&_a]:text-app-brand [&_a]:[overflow-wrap:anywhere]',
+  missingReceipt:
+    'inline-block rounded-md border border-red-300 bg-red-50 px-[7px] py-[5px] text-[0.75rem] font-extrabold text-red-800 dark:border-red-900/70 dark:bg-red-950/35 dark:text-red-200',
+  muted:
+    'text-app-subtle',
+  decision:
+    'min-w-[275px] [&_textarea]:min-h-[72px] [&_textarea]:w-full [&_textarea]:resize-y [&_textarea]:rounded-lg [&_textarea]:border [&_textarea]:border-app-border-strong [&_textarea]:bg-app-surface [&_textarea]:px-[9px] [&_textarea]:py-2 [&_textarea]:text-app-text [&_textarea]:outline-none [&_textarea:focus]:border-app-brand [&_textarea:focus]:ring-[3px] [&_textarea:focus]:ring-[var(--app-brand-ring)] [&>div]:mt-[7px] [&>div]:grid [&>div]:grid-cols-2 [&>div]:gap-[7px] [&_button]:min-h-9 [&_button]:cursor-pointer [&_button]:rounded-[7px] [&_button]:font-extrabold',
+  approve:
+    'border border-emerald-700 bg-emerald-700 text-white transition hover:bg-emerald-800 dark:border-emerald-600 dark:bg-emerald-700 dark:hover:bg-emerald-600',
+  reject:
+    'border border-red-700 bg-red-700 text-white transition hover:bg-red-800 dark:border-red-600 dark:bg-red-700 dark:hover:bg-red-600',
+  batchNote:
+    'mx-1 mt-2.5 text-[0.8rem] text-app-subtle',
+} as const;
 
 const currency = new Intl.NumberFormat('pt-BR', {
   style: 'currency',

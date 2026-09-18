@@ -24,7 +24,66 @@ import {
   updateExpense,
   uploadExpenseAttachment,
 } from '../api/expense-management-api';
-import styles from './expense-management-screen.module.css';
+const styles = {
+  page:
+    'min-h-screen bg-app-bg text-app-text',
+  header:
+    'sticky top-0 z-20 flex min-h-[58px] items-center justify-between gap-[18px] border-b border-app-border bg-[var(--app-header-bg)] px-6 backdrop-blur-xl max-[720px]:px-3',
+  headerLeft:
+    'flex items-center gap-3',
+  brand:
+    'grid text-inherit no-underline [&_strong]:text-[15px] [&_span]:text-[10px] [&_span]:text-app-subtle',
+  content:
+    'mx-auto w-[min(1500px,calc(100%-28px))] py-5 pb-12',
+  toolbar:
+    'flex items-end justify-between gap-4 rounded-[11px] border border-app-border bg-app-surface px-[18px] py-4 max-[720px]:flex-col max-[720px]:items-stretch [&_h1]:my-0.5 [&_h1]:text-2xl [&_p]:m-0 [&_p]:text-[10px] [&_p]:text-app-muted',
+  eyebrow:
+    'text-[8px] font-black uppercase tracking-[0.08em] text-app-muted',
+  actions:
+    'flex flex-wrap gap-1.5 [&_a]:inline-flex [&_a]:min-h-8 [&_a]:items-center [&_a]:rounded-[7px] [&_a]:border [&_a]:border-app-border-strong [&_a]:bg-app-surface [&_a]:px-2.5 [&_a]:text-inherit [&_a]:no-underline [&_a]:transition [&_a:hover]:bg-app-surface-hover [&_button]:min-h-8 [&_button]:cursor-pointer [&_button]:rounded-[7px] [&_button]:border [&_button]:border-app-border-strong [&_button]:bg-app-surface [&_button]:px-2.5 [&_button]:text-inherit [&_button]:transition [&_button:hover]:bg-app-surface-hover [&_button:disabled]:cursor-not-allowed [&_button:disabled]:opacity-60',
+  filters:
+    'mt-2.5 flex items-end gap-[9px] rounded-[11px] border border-app-border bg-app-surface px-3 py-2.5 max-[720px]:flex-col max-[720px]:items-stretch [&_label]:grid [&_label]:gap-[3px] [&_label]:text-[8px] [&_label]:font-extrabold [&_label]:uppercase [&_label]:text-app-muted [&_input]:min-h-[34px] [&_input]:rounded-[7px] [&_input]:border [&_input]:border-app-border-strong [&_input]:bg-app-surface [&_input]:px-2 [&_input]:text-app-text [&_input]:outline-none [&_input:focus]:border-app-brand [&_input:focus]:ring-[3px] [&_input:focus]:ring-[var(--app-brand-ring)] [&_button]:min-h-8 [&_button]:cursor-pointer [&_button]:rounded-[7px] [&_button]:border [&_button]:border-app-border-strong [&_button]:bg-app-surface [&_button]:px-2.5 [&_button]:text-inherit [&_button]:transition [&_button:hover]:bg-app-surface-hover [&_button:disabled]:cursor-not-allowed [&_button:disabled]:opacity-60 [&_span]:ml-auto [&_span]:text-[9px] [&_span]:text-app-subtle max-[720px]:[&_span]:ml-0',
+  feedback:
+    'mt-2.5 rounded-lg border border-app-border bg-app-surface px-3 py-2.5 text-[10px] text-app-text-soft',
+  tablePanel:
+    'mt-2.5 overflow-hidden rounded-[11px] border border-app-border bg-app-surface',
+  tableWrap:
+    'overflow-x-auto [&_table]:w-full [&_table]:min-w-[1150px] [&_table]:border-collapse [&_table]:text-[9px] [&_th]:border-b [&_th]:border-app-border-soft [&_th]:px-2.5 [&_th]:py-[9px] [&_th]:text-left [&_th]:align-top [&_td]:border-b [&_td]:border-app-border-soft [&_td]:px-2.5 [&_td]:py-[9px] [&_td]:text-left [&_td]:align-top [&_th]:bg-app-surface-muted [&_th]:text-[8px] [&_th]:uppercase [&_th]:tracking-[0.04em] [&_th]:text-app-muted [&_td:nth-child(5)]:text-right [&_th:nth-child(5)]:text-right',
+  empty:
+    'text-center! text-app-subtle',
+  status:
+    'inline-flex whitespace-nowrap rounded-full px-1.5 py-1 text-[8px] font-extrabold',
+  status1:
+    'bg-amber-100 text-amber-800 dark:bg-amber-950/50 dark:text-amber-200',
+  status2:
+    'bg-sky-100 text-sky-800 dark:bg-sky-950/50 dark:text-sky-200',
+  status3:
+    'bg-red-100 text-red-800 dark:bg-red-950/50 dark:text-red-200',
+  status4:
+    'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200',
+  attachments:
+    'flex flex-wrap gap-1 [&_a]:rounded-[5px] [&_a]:bg-app-brand-soft [&_a]:px-[5px] [&_a]:py-[3px] [&_a]:text-app-brand [&_a]:no-underline',
+  pending:
+    'text-[8px] font-extrabold uppercase text-app-danger',
+  rowActions:
+    'flex flex-wrap gap-1.5 [&_button]:min-h-[26px] [&_button]:cursor-pointer [&_button]:rounded-[7px] [&_button]:border [&_button]:border-app-border-strong [&_button]:bg-app-surface [&_button]:px-1.5 [&_button]:text-[8px] [&_button]:text-inherit [&_button]:transition [&_button:hover]:bg-app-surface-hover [&_button:disabled]:cursor-not-allowed [&_button:disabled]:opacity-60',
+  danger:
+    'border-red-300! text-red-700! dark:border-red-900! dark:text-red-300!',
+  modalBackdrop:
+    'fixed inset-0 z-[100] grid place-items-center bg-slate-950/50 p-[18px]',
+  modal:
+    'max-h-[calc(100vh-36px)] w-[min(820px,100%)] overflow-auto rounded-xl border border-app-border bg-app-surface shadow-2xl [&>header]:flex [&>header]:items-center [&>header]:justify-between [&>header]:gap-3 [&>header]:border-b [&>header]:border-app-border-soft [&>header]:px-3.5 [&>header]:py-3 [&>footer]:flex [&>footer]:items-center [&>footer]:justify-end [&>footer]:gap-3 [&>footer]:border-t [&>footer]:border-app-border-soft [&>footer]:px-3.5 [&>footer]:py-3 [&_h2]:mt-0.5 [&_h2]:mb-0 [&_h2]:text-base [&_button]:min-h-8 [&_button]:cursor-pointer [&_button]:rounded-[7px] [&_button]:border [&_button]:border-app-border-strong [&_button]:bg-app-surface [&_button]:px-2.5 [&_button]:text-inherit [&_button]:transition [&_button:hover]:bg-app-surface-hover [&_button:disabled]:cursor-not-allowed [&_button:disabled]:opacity-60',
+  formGrid:
+    'grid grid-cols-2 gap-[11px] p-3.5 max-[720px]:grid-cols-1 [&_label]:grid [&_label]:gap-1 [&_label]:text-[9px] [&_label]:font-extrabold [&_label]:text-app-muted [&_input]:min-h-[34px] [&_input]:w-full [&_input]:rounded-[7px] [&_input]:border [&_input]:border-app-border-strong [&_input]:bg-app-surface [&_input]:px-2 [&_input]:py-1.5 [&_input]:text-app-text [&_input]:outline-none [&_select]:min-h-[34px] [&_select]:w-full [&_select]:rounded-[7px] [&_select]:border [&_select]:border-app-border-strong [&_select]:bg-app-surface [&_select]:px-2 [&_select]:py-1.5 [&_select]:text-app-text [&_select]:outline-none [&_textarea]:min-h-[34px] [&_textarea]:w-full [&_textarea]:rounded-[7px] [&_textarea]:border [&_textarea]:border-app-border-strong [&_textarea]:bg-app-surface [&_textarea]:px-2 [&_textarea]:py-1.5 [&_textarea]:text-app-text [&_textarea]:outline-none [&_input:focus]:border-app-brand [&_select:focus]:border-app-brand [&_textarea:focus]:border-app-brand [&_input:focus]:ring-[3px] [&_select:focus]:ring-[3px] [&_textarea:focus]:ring-[3px] [&_input:focus]:ring-[var(--app-brand-ring)] [&_select:focus]:ring-[var(--app-brand-ring)] [&_textarea:focus]:ring-[var(--app-brand-ring)] [&_input[type=file]]:p-[5px] [&_small]:text-[8px] [&_small]:text-app-subtle',
+  wide:
+    'col-span-full max-[720px]:col-auto',
+  existingAttachments:
+    'col-span-full grid gap-1.5 rounded-lg border border-app-border-soft bg-app-surface-muted p-2.5 text-[9px] max-[720px]:col-auto [&>div]:flex [&>div]:items-center [&>div]:justify-between [&>div]:gap-2.5 [&_a]:min-w-0 [&_a]:overflow-hidden [&_a]:text-ellipsis [&_a]:whitespace-nowrap [&_a]:text-app-brand [&_button]:min-h-[26px] [&_button]:text-[8px]',
+  modalFeedback:
+    'mx-3.5 mb-3 mt-0 rounded-[7px] border border-app-danger-border bg-app-danger-soft px-2.5 py-[9px] text-[9px] text-app-danger',
+  primary:
+    'border-app-brand! bg-app-brand! text-white! hover:opacity-90',
+} as const;
 
 const currency = new Intl.NumberFormat('pt-BR', {
   style: 'currency',

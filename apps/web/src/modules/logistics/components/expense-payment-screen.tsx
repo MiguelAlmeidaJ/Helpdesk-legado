@@ -26,7 +26,90 @@ import {
   buildPixPayload,
   createPixTransactionId,
 } from '../lib/pix-br-code';
-import styles from './expense-payment-screen.module.css';
+const styles = {
+  page:
+    'min-h-screen bg-app-bg text-app-text [&_button:disabled]:cursor-not-allowed [&_button:disabled]:opacity-[0.55]',
+  header:
+    'sticky top-0 z-20 flex min-h-[68px] items-center justify-between border-b border-app-border bg-[var(--app-header-bg)] px-8 backdrop-blur-xl max-[900px]:px-[18px]',
+  headerLeft:
+    'flex items-center gap-4',
+  brand:
+    'flex flex-col gap-0.5 text-inherit no-underline max-[620px]:[&_span]:hidden [&_span]:text-[0.78rem] [&_span]:uppercase [&_span]:tracking-[0.06em] [&_span]:text-app-muted',
+  content:
+    'mx-auto w-[min(1660px,calc(100%-36px))] py-[30px] pb-14 max-[900px]:w-[min(1660px,calc(100%-22px))]',
+  hero:
+    'mb-[18px] flex items-center justify-between gap-5 max-[900px]:flex-col max-[900px]:items-start [&_h1]:my-[5px] [&_h1]:text-[clamp(1.8rem,4vw,2.6rem)] [&_h1]:tracking-[-0.04em] [&_p]:m-0 [&_p]:text-app-muted',
+  eyebrow:
+    'text-[0.78rem] uppercase tracking-[0.06em] text-app-muted',
+  secondaryLink:
+    'rounded-[9px] border border-app-border-strong bg-app-surface px-3.5 py-2.5 font-bold text-app-text-soft no-underline transition hover:bg-app-surface-hover',
+  notice:
+    'mb-4 rounded-[10px] border border-app-border bg-app-surface-muted px-4 py-3.5 text-app-text-soft',
+  error:
+    'mb-4 rounded-[10px] border border-app-danger-border bg-app-danger-soft px-4 py-3.5 text-app-danger',
+  success:
+    'mb-4 rounded-[10px] border border-emerald-200 bg-emerald-50 px-4 py-3.5 text-emerald-800 dark:border-emerald-900/70 dark:bg-emerald-950/35 dark:text-emerald-200',
+  empty:
+    'mb-4 rounded-[10px] border border-dashed border-app-border-strong bg-app-surface px-4 py-3.5 text-center text-app-muted',
+  summary:
+    'mb-[18px] grid grid-cols-[repeat(3,minmax(0,1fr))_auto] gap-3.5 max-[900px]:grid-cols-2 max-[620px]:grid-cols-1 [&>article]:flex [&>article]:flex-col [&>article]:gap-[5px] [&>article]:rounded-xl [&>article]:border [&>article]:border-app-border [&>article]:bg-app-surface [&>article]:px-[17px] [&>article]:py-[15px] [&_span]:text-[0.78rem] [&_span]:uppercase [&_span]:tracking-[0.06em] [&_span]:text-app-muted [&_strong]:text-[1.45rem] [&_small]:text-app-muted [&>button]:min-h-full [&>button]:cursor-pointer [&>button]:rounded-[9px] [&>button]:border [&>button]:border-emerald-700 [&>button]:bg-emerald-700 [&>button]:px-3.5 [&>button]:font-extrabold [&>button]:text-white max-[900px]:[&>button]:min-h-[54px] dark:[&>button]:border-emerald-600 dark:[&>button]:bg-emerald-700',
+  panel:
+    'overflow-hidden rounded-[14px] border border-app-border bg-app-surface shadow-sm [&>header]:flex [&>header]:items-center [&>header]:justify-between [&>header]:gap-4 [&>header]:border-b [&>header]:border-app-border-soft [&>header]:px-[18px] [&>header]:py-4 max-[900px]:[&>header]:flex-col max-[900px]:[&>header]:items-start [&>header_h2]:mt-[3px] [&>header_h2]:mb-0 [&>header_h2]:text-[1.1rem]',
+  panelActions:
+    'flex flex-wrap gap-2 [&_button]:min-h-[38px] [&_button]:cursor-pointer [&_button]:rounded-[9px] [&_button]:border [&_button]:border-app-border-strong [&_button]:bg-app-surface [&_button]:px-3.5 [&_button]:font-extrabold [&_button]:text-app-text-soft [&_button]:transition [&_button:hover]:bg-app-surface-hover',
+  groups:
+    'grid gap-3 bg-app-surface-muted p-3.5',
+  group:
+    'overflow-hidden rounded-xl border border-app-border bg-app-surface',
+  groupHeader:
+    'grid grid-cols-[auto_minmax(220px,2fr)_minmax(130px,.8fr)_minmax(220px,1.2fr)_auto] items-center gap-4 px-[15px] py-3.5 max-[1120px]:grid-cols-[auto_minmax(220px,1fr)_1fr] max-[620px]:grid-cols-[auto_1fr]',
+  groupSelect:
+    'grid justify-items-center gap-1 text-[0.72rem] text-app-muted [&_input]:size-[18px]',
+  groupIdentity:
+    'flex min-w-0 flex-col gap-1 [&_strong]:text-base [&_small]:text-app-muted [&_small]:[overflow-wrap:anywhere]',
+  groupMoney:
+    'flex flex-col gap-[3px] max-[620px]:col-start-2 [&_span]:text-[0.78rem] [&_span]:text-app-muted [&_strong]:text-[1.05rem]',
+  pixInfo:
+    'flex min-w-0 flex-col gap-[3px] max-[1120px]:col-[2/-1] max-[620px]:col-start-2 [&_span]:text-[0.78rem] [&_span]:uppercase [&_span]:tracking-[0.06em] [&_span]:text-app-muted [&_strong]:[overflow-wrap:anywhere] [&_small]:text-app-muted',
+  groupActions:
+    'grid grid-cols-1 gap-[7px] max-[1120px]:col-[2/-1] max-[1120px]:grid-cols-2 max-[620px]:col-start-2 max-[620px]:grid-cols-1 [&_button]:min-h-[38px] [&_button]:cursor-pointer [&_button]:rounded-[9px] [&_button]:border [&_button]:border-app-border-strong [&_button]:bg-app-surface [&_button]:px-3.5 [&_button]:font-extrabold [&_button]:text-app-text-soft [&_button]:transition [&_button:hover]:bg-app-surface-hover',
+  pixButton:
+    'border-emerald-700! bg-emerald-700! text-white! hover:bg-emerald-800! dark:border-emerald-600! dark:bg-emerald-700! dark:hover:bg-emerald-600!',
+  tableWrap:
+    'overflow-auto border-t border-app-border-soft [&_table]:w-full [&_table]:min-w-[1280px] [&_table]:border-collapse [&_table]:text-[0.84rem] [&_th]:border-b [&_th]:border-app-border-soft [&_th]:px-2.5 [&_th]:py-2.5 [&_th]:text-left [&_th]:align-top [&_td]:border-b [&_td]:border-app-border-soft [&_td]:px-2.5 [&_td]:py-2.5 [&_td]:text-left [&_td]:align-top [&_thead_th]:bg-app-surface-muted [&_thead_th]:text-app-text-soft [&_td_small]:mt-1 [&_td_small]:block [&_td_small]:text-app-muted',
+  money:
+    'whitespace-nowrap font-extrabold',
+  textCell:
+    'max-w-[260px] whitespace-pre-wrap [overflow-wrap:anywhere]',
+  decision:
+    'min-w-[270px] [&_textarea]:min-h-[68px] [&_textarea]:w-full [&_textarea]:resize-y [&_textarea]:rounded-lg [&_textarea]:border [&_textarea]:border-app-border-strong [&_textarea]:bg-app-surface [&_textarea]:px-[9px] [&_textarea]:py-2 [&_textarea]:text-app-text [&_textarea]:outline-none [&_textarea:focus]:border-app-brand [&_textarea:focus]:ring-[3px] [&_textarea:focus]:ring-[var(--app-brand-ring)] [&>div]:mt-[7px] [&>div]:grid [&>div]:grid-cols-2 [&>div]:gap-[7px] [&_button]:min-h-9 [&_button]:cursor-pointer [&_button]:rounded-[7px] [&_button]:font-extrabold',
+  pay:
+    'border-emerald-700! bg-emerald-700! text-white! hover:bg-emerald-800! dark:border-emerald-600! dark:bg-emerald-700! dark:hover:bg-emerald-600!',
+  reject:
+    'border border-red-700 bg-red-700 text-white transition hover:bg-red-800 dark:border-red-600 dark:bg-red-700 dark:hover:bg-red-600',
+  pagination:
+    'flex items-center justify-center gap-3 border-t border-app-border-soft p-3.5 [&_span]:text-[0.85rem] [&_span]:text-app-muted [&_button]:min-h-[38px] [&_button]:cursor-pointer [&_button]:rounded-[9px] [&_button]:border [&_button]:border-app-border-strong [&_button]:bg-app-surface [&_button]:px-3.5 [&_button]:font-extrabold [&_button]:text-app-text-soft [&_button]:transition [&_button:hover]:bg-app-surface-hover',
+  batchNote:
+    'mx-1 mt-2.5 text-[0.8rem] text-app-subtle',
+  modalBackdrop:
+    'fixed inset-0 z-[100] grid place-items-center bg-slate-950/60 p-5',
+  modal:
+    'max-h-[calc(100vh-40px)] w-[min(620px,100%)] overflow-auto rounded-2xl bg-app-surface shadow-2xl [&>header]:flex [&>header]:items-center [&>header]:justify-between [&>header]:gap-4 [&>header]:border-b [&>header]:border-app-border-soft [&>header]:px-[18px] [&>header]:py-4 [&>header_h2]:mt-[3px] [&>header_h2]:mb-0 [&>header_h2]:text-xl [&>header>button]:min-h-[38px] [&>header>button]:min-w-10 [&>header>button]:cursor-pointer [&>header>button]:rounded-[9px] [&>header>button]:border [&>header>button]:border-app-border-strong [&>header>button]:bg-app-surface [&>header>button]:p-0 [&>header>button]:text-[1.35rem]',
+  modalBody:
+    'grid justify-items-center gap-[15px] p-5',
+  pixSummary:
+    'grid justify-items-center gap-1 text-center [&>span]:text-[1.45rem] [&>span]:font-black [&_small]:text-app-muted [&_small]:[overflow-wrap:anywhere]',
+  qrCode:
+    'h-auto w-[min(320px,100%)] border-[10px] border-white [image-rendering:pixelated] ring-1 ring-app-border',
+  pixDescription:
+    'm-0 w-full rounded-lg bg-app-surface-muted px-3 py-2.5 text-app-text-soft',
+  copyPaste:
+    'grid w-full gap-1.5 text-[0.82rem] font-bold text-app-text-soft [&_textarea]:min-h-[78px] [&_textarea]:w-full [&_textarea]:resize-y [&_textarea]:rounded-lg [&_textarea]:border [&_textarea]:border-app-border-strong [&_textarea]:bg-app-surface [&_textarea]:p-[9px] [&_textarea]:font-mono [&_textarea]:text-[0.76rem] [&_textarea]:leading-[1.4] [&_textarea]:text-app-text',
+  modalActions:
+    'grid w-full grid-cols-2 gap-[9px] max-[620px]:grid-cols-1 [&_button]:min-h-[38px] [&_button]:cursor-pointer [&_button]:rounded-[9px] [&_button]:border [&_button]:border-app-border-strong [&_button]:bg-app-surface [&_button]:px-3.5 [&_button]:font-extrabold [&_button]:text-app-text-soft',
+  modalWarning:
+    'text-center text-amber-700 dark:text-amber-300',
+} as const;
 
 const currency = new Intl.NumberFormat('pt-BR', {
   style: 'currency',

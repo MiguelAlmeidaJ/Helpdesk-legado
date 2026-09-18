@@ -29,7 +29,56 @@ import {
   updateVehicleAgendaSchedule,
   updateVehicleAgendaVehicle,
 } from '../api/vehicle-agenda-api';
-import styles from './vehicle-agenda-screen.module.css';
+const styles = {
+  page:
+    'min-h-screen bg-app-bg text-app-text',
+  header:
+    'sticky top-0 z-30 flex min-h-[58px] items-center justify-between gap-[18px] border-b border-app-border bg-[var(--app-header-bg)] px-6 backdrop-blur-xl max-[800px]:px-3 print:hidden',
+  headerLeft:
+    'flex items-center gap-3',
+  brand:
+    'grid text-inherit no-underline [&_strong]:text-[15px] [&_span]:text-[10px] [&_span]:text-app-subtle',
+  content:
+    'mx-auto w-[min(1700px,calc(100%-24px))] py-[18px] pb-[42px] print:w-full print:p-0',
+  toolbar:
+    'mb-3 flex items-end justify-between gap-3.5 rounded-[11px] border border-app-border bg-app-surface px-4 py-3.5 max-[800px]:flex-col max-[800px]:items-stretch print:border-0 print:px-0 print:pb-2 print:pt-0 [&_h1]:mt-0.5 [&_h1]:mb-0 [&_h1]:text-[22px]',
+  eyebrow:
+    'text-[8px] font-black uppercase tracking-[0.08em] text-app-muted',
+  filters:
+    'flex flex-wrap gap-[7px] print:hidden [&_select]:min-h-8 [&_select]:rounded-[7px] [&_select]:border [&_select]:border-app-border-strong [&_select]:bg-app-surface [&_select]:px-[9px] [&_select]:text-app-text-soft [&_select]:outline-none [&_input]:min-h-8 [&_input]:rounded-[7px] [&_input]:border [&_input]:border-app-border-strong [&_input]:bg-app-surface [&_input]:px-[9px] [&_input]:text-app-text-soft [&_input]:outline-none [&_button]:min-h-8 [&_button]:cursor-pointer [&_button]:rounded-[7px] [&_button]:border [&_button]:border-app-border-strong [&_button]:bg-app-surface [&_button]:px-2.5 [&_button]:text-app-text-soft [&_button]:transition [&_button:hover]:bg-app-surface-hover [&_select:focus]:border-app-brand [&_input:focus]:border-app-brand [&_select:focus]:ring-[3px] [&_input:focus]:ring-[3px] [&_select:focus]:ring-[var(--app-brand-ring)] [&_input:focus]:ring-[var(--app-brand-ring)]',
+  feedback:
+    'mb-2.5 rounded-lg border border-app-border bg-app-surface px-3 py-2.5 text-[11px] print:hidden',
+  tableWrap:
+    'max-h-[calc(100vh-170px)] overflow-auto rounded-[10px] border border-app-border bg-app-surface print:max-h-none print:overflow-visible print:border-0',
+  agenda:
+    'w-max min-w-full border-separate border-spacing-0 text-[10px] print:w-full print:text-[7px] [&_th]:w-[185px] [&_th]:min-w-[185px] [&_th]:border-b [&_th]:border-r [&_th]:border-app-border-soft [&_th]:p-1.5 [&_th]:align-top [&_td]:w-[185px] [&_td]:min-w-[185px] [&_td]:border-b [&_td]:border-r [&_td]:border-app-border-soft [&_td]:p-1.5 [&_td]:align-top print:[&_th]:w-auto print:[&_th]:min-w-0 print:[&_th]:p-0.5 print:[&_td]:w-auto print:[&_td]:min-w-0 print:[&_td]:p-0.5 [&_thead_th]:sticky [&_thead_th]:top-0 [&_thead_th]:z-[5] [&_thead_th]:bg-app-surface-muted print:[&_thead_th]:static [&_tr>*:first-child]:sticky [&_tr>*:first-child]:left-0 [&_tr>*:first-child]:z-[4] [&_tr>*:first-child]:w-[72px] [&_tr>*:first-child]:min-w-[72px] [&_tr>*:first-child]:bg-app-bg [&_tr>*:first-child]:text-center print:[&_tr>*:first-child]:static print:[&_tr>*:first-child]:w-auto print:[&_tr>*:first-child]:min-w-0 [&_thead_tr>*:first-child]:z-[6] [&_th_small]:block [&_th_small]:font-normal [&_th_small]:text-app-subtle',
+  weekend:
+    'bg-slate-300! dark:bg-slate-700!',
+  schedule:
+    'mb-[5px] grid gap-[3px] rounded-[7px] border border-slate-500/20 bg-white/[0.86] p-[7px] shadow-sm dark:bg-slate-900/80 [&_strong]:text-[9px] [&_span]:text-[8px] [&_span]:text-slate-700 dark:[&_span]:text-slate-200 [&_small]:text-[8px] [&_small]:text-slate-700 dark:[&_small]:text-slate-200',
+  rowActions:
+    'mt-1 flex gap-1 print:hidden [&_button]:min-h-[25px] [&_button]:cursor-pointer [&_button]:rounded-[7px] [&_button]:border [&_button]:border-app-border-strong [&_button]:bg-app-surface [&_button]:px-1.5 [&_button]:text-[8px] [&_button]:text-app-text-soft [&_button]:transition [&_button:hover]:bg-app-surface-hover',
+  cellActions:
+    'mt-1 flex justify-end gap-1 print:hidden [&_button]:min-h-[25px] [&_button]:cursor-pointer [&_button]:rounded-[7px] [&_button]:border [&_button]:border-app-border-strong [&_button]:bg-app-surface [&_button]:px-1.5 [&_button]:text-[8px] [&_button]:text-app-text-soft [&_button]:transition [&_button:hover]:bg-app-surface-hover',
+  modalBackdrop:
+    'fixed inset-0 z-[100] grid place-items-center bg-slate-950/50 p-[18px]',
+  modal:
+    'max-h-[calc(100vh-36px)] w-[min(860px,100%)] overflow-auto rounded-xl border border-app-border bg-app-surface shadow-2xl [&>header]:flex [&>header]:items-center [&>header]:justify-between [&>header]:gap-3 [&>header]:border-b [&>header]:border-app-border-soft [&>header]:px-3.5 [&>header]:py-3 [&>header_h2]:m-0 [&>header_h2]:text-[15px] [&>footer]:flex [&>footer]:items-center [&>footer]:justify-between [&>footer]:gap-3 [&>footer]:border-t [&>footer]:border-app-border-soft [&>footer]:px-3.5 [&>footer]:py-3 [&>footer>div]:flex [&>footer>div]:gap-[7px] [&_button]:min-h-8 [&_button]:cursor-pointer [&_button]:rounded-[7px] [&_button]:border [&_button]:border-app-border-strong [&_button]:bg-app-surface [&_button]:px-2.5 [&_button]:text-app-text-soft [&_button]:transition [&_button:hover]:bg-app-surface-hover [&_input]:min-h-8 [&_input]:rounded-[7px] [&_input]:border [&_input]:border-app-border-strong [&_input]:bg-app-surface [&_input]:text-app-text-soft [&_select]:min-h-8 [&_select]:rounded-[7px] [&_select]:border [&_select]:border-app-border-strong [&_select]:bg-app-surface [&_select]:text-app-text-soft [&_textarea]:min-h-8 [&_textarea]:rounded-[7px] [&_textarea]:border [&_textarea]:border-app-border-strong [&_textarea]:bg-app-surface [&_textarea]:text-app-text-soft',
+  formGrid:
+    'grid grid-cols-3 gap-[11px] p-3.5 max-[800px]:grid-cols-1 [&_label]:grid [&_label]:gap-1 [&_label]:text-[9px] [&_label]:font-extrabold [&_label]:text-app-muted [&_input]:w-full [&_input]:px-2 [&_input]:py-1.5 [&_select]:w-full [&_select]:px-2 [&_select]:py-1.5 [&_textarea]:w-full [&_textarea]:px-2 [&_textarea]:py-1.5 [&_input:focus]:border-app-brand [&_select:focus]:border-app-brand [&_textarea:focus]:border-app-brand [&_input:focus]:ring-[3px] [&_select:focus]:ring-[3px] [&_textarea:focus]:ring-[3px] [&_input:focus]:ring-[var(--app-brand-ring)] [&_select:focus]:ring-[var(--app-brand-ring)] [&_textarea:focus]:ring-[var(--app-brand-ring)]',
+  notes:
+    'col-span-2 max-[800px]:col-auto',
+  checkbox:
+    'flex! items-center gap-[7px]! [&_input]:w-auto',
+  primary:
+    'border-app-brand! bg-app-brand! text-white! hover:opacity-90',
+  danger:
+    'border-red-500! text-red-700! dark:border-red-700! dark:text-red-300!',
+  vehicleList:
+    'grid gap-0 px-3.5 py-2 [&>div]:flex [&>div]:items-center [&>div]:justify-between [&>div]:gap-3 [&>div]:border-b [&>div]:border-app-border-soft [&>div]:py-2 [&>div]:text-[10px] [&>div>div]:flex [&>div>div]:gap-[5px]',
+  vehicleForm:
+    'grid grid-cols-[1fr_160px_auto_auto] items-center gap-2 border-t border-app-border-soft p-3.5 max-[800px]:grid-cols-1 [&_label]:grid [&_label]:gap-1 [&_label]:text-[9px] [&_label]:font-extrabold [&_label]:text-app-muted [&_input]:w-full [&_input]:px-2 [&_input]:py-1.5 [&_input:focus]:border-app-brand [&_input:focus]:ring-[3px] [&_input:focus]:ring-[var(--app-brand-ring)]',
+} as const;
 
 const COLORS: Record<number, string> = {
   1: '#87CEEB',

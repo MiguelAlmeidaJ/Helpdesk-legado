@@ -23,7 +23,76 @@ import {
   getExpensePaidReport,
   updateExpensePaidAdmin,
 } from '../api/expense-paid-report-api';
-import styles from './expense-paid-report-screen.module.css';
+const styles = {
+  page:
+    'min-h-screen bg-app-bg text-app-text print:bg-white',
+  header:
+    'sticky top-0 z-20 flex min-h-16 items-center justify-between gap-5 border-b border-app-border bg-[var(--app-header-bg)] px-6 py-2 backdrop-blur-xl max-[560px]:px-3 print:hidden',
+  headerLeft:
+    'flex items-center gap-3.5',
+  brand:
+    'flex flex-col text-inherit no-underline [&_strong]:text-base [&_span]:text-[0.78rem] [&_span]:text-app-muted',
+  content:
+    'mx-auto w-[min(1500px,calc(100%-32px))] py-6 pb-12 max-[560px]:w-[min(1500px,calc(100%-20px))] print:w-full print:p-0',
+  hero:
+    'mb-4 flex items-center justify-between gap-6 max-[900px]:flex-col max-[900px]:items-start [&_h1]:mt-1 [&_h1]:mb-1.5 [&_h1]:text-[clamp(1.7rem,3vw,2.35rem)] [&_p]:m-0 [&_p]:text-app-muted',
+  eyebrow:
+    'text-[0.78rem] text-app-muted',
+  backLink:
+    'inline-flex min-h-10 items-center rounded-lg border border-app-border-strong bg-app-surface px-3.5 font-bold text-app-text-soft no-underline transition hover:bg-app-surface-hover print:hidden',
+  notice:
+    'mb-4 flex flex-wrap gap-2 rounded-[10px] border border-app-border bg-app-surface px-3.5 py-3 [&_span]:text-app-muted print:hidden',
+  feedback:
+    'mb-4 rounded-[10px] border border-app-border bg-app-surface px-3.5 py-3 text-app-text-soft',
+  filters:
+    'mb-4 grid grid-cols-4 gap-3 rounded-[10px] border border-app-border bg-app-surface p-4 max-[900px]:grid-cols-2 max-[560px]:grid-cols-1 print:hidden [&_label]:flex [&_label]:flex-col [&_label]:gap-1.5 [&_label]:text-[0.82rem] [&_label]:font-bold [&_input]:min-h-10 [&_input]:rounded-lg [&_input]:border [&_input]:border-app-border-strong [&_input]:bg-app-surface [&_input]:px-2.5 [&_input]:py-2 [&_input]:text-app-text [&_input]:outline-none [&_select]:min-h-10 [&_select]:rounded-lg [&_select]:border [&_select]:border-app-border-strong [&_select]:bg-app-surface [&_select]:px-2.5 [&_select]:py-2 [&_select]:text-app-text [&_select]:outline-none [&_input:focus]:border-app-brand [&_select:focus]:border-app-brand [&_input:focus]:ring-[3px] [&_select:focus]:ring-[3px] [&_input:focus]:ring-[var(--app-brand-ring)] [&_select:focus]:ring-[var(--app-brand-ring)] [&_button]:min-h-10 [&_button]:cursor-pointer [&_button]:rounded-lg [&_button]:border [&_button]:border-app-border-strong [&_button]:bg-app-surface [&_button]:px-2.5 [&_button]:py-2 [&_button]:text-app-text [&_button:disabled]:cursor-not-allowed [&_button:disabled]:opacity-[0.55]',
+  categoryField:
+    '[&_select]:min-h-[92px]',
+  filterActions:
+    'flex self-end gap-2 max-[560px]:w-full max-[560px]:flex-wrap [&_button:first-child]:border-app-brand [&_button:first-child]:bg-app-brand [&_button:first-child]:font-extrabold [&_button:first-child]:text-white',
+  reportCard:
+    'overflow-hidden rounded-[10px] border border-app-border bg-app-surface print:border-0 print:bg-white',
+  reportHeader:
+    'flex items-center justify-between gap-4 border-b border-app-border px-4 py-4 max-[900px]:flex-col max-[900px]:items-start [&>div:first-child]:flex [&>div:first-child]:flex-col [&>div:first-child]:gap-1 [&_span]:text-[0.78rem] [&_span]:text-app-muted [&_strong]:text-[1.4rem]',
+  reportActions:
+    'flex gap-2 print:hidden [&_button]:min-h-10 [&_button]:cursor-pointer [&_button]:rounded-lg [&_button]:border [&_button]:border-app-border-strong [&_button]:bg-app-surface [&_button]:px-2.5 [&_button]:py-2 [&_button:first-child]:border-app-brand [&_button:first-child]:bg-app-brand [&_button:first-child]:font-extrabold [&_button:first-child]:text-white max-[560px]:w-full max-[560px]:flex-wrap',
+  tableWrap:
+    'overflow-x-auto print:overflow-visible [&_table]:w-full [&_table]:border-collapse [&_table]:text-[0.86rem] [&_th]:border-b [&_th]:border-app-border-soft [&_th]:px-[9px] [&_th]:py-2.5 [&_th]:text-left [&_th]:align-top [&_td]:border-b [&_td]:border-app-border-soft [&_td]:px-[9px] [&_td]:py-2.5 [&_td]:text-left [&_td]:align-top [&_thead_th]:whitespace-nowrap [&_thead_th]:bg-app-surface-muted [&_tbody_tr:hover]:bg-app-surface-hover [&_tfoot_th]:bg-app-surface-muted [&_tfoot_th]:font-extrabold',
+  amountCell:
+    'whitespace-nowrap text-right!',
+  emptyCell:
+    'p-[30px]! text-center! text-app-muted',
+  printOnlyRow:
+    'hidden print:table-row',
+  pagination:
+    'flex items-center justify-center gap-2 p-3.5 print:hidden [&_button]:min-h-10 [&_button]:cursor-pointer [&_button]:rounded-lg [&_button]:border [&_button]:border-app-border-strong [&_button]:bg-app-surface [&_button]:px-2.5 [&_button]:py-2 [&_button:disabled]:cursor-not-allowed [&_button:disabled]:opacity-[0.55]',
+  actionsColumn:
+    'w-[88px] whitespace-nowrap text-center! print:hidden',
+  editButton:
+    'min-h-[34px] cursor-pointer rounded-[7px] border border-sky-200 bg-sky-50 px-2.5 py-1.5 font-extrabold text-sky-800 transition hover:bg-sky-100 dark:border-sky-900/70 dark:bg-sky-950/35 dark:text-sky-200 dark:hover:bg-sky-950/55',
+  modalBackdrop:
+    'fixed inset-0 z-[80] grid place-items-center bg-slate-950/60 p-5 max-[620px]:p-2 print:hidden',
+  modal:
+    'max-h-[calc(100vh-40px)] w-[min(760px,100%)] overflow-auto rounded-[14px] border border-app-border bg-app-surface shadow-2xl max-[620px]:max-h-[calc(100vh-16px)]',
+  modalHeader:
+    'flex items-start justify-between gap-4 border-b border-app-border-soft px-5 py-[18px] max-[620px]:px-3.5 [&>div]:flex [&>div]:flex-col [&>div]:gap-1 [&_span]:text-[0.78rem] [&_span]:font-extrabold [&_span]:uppercase [&_span]:tracking-[0.04em] [&_span]:text-app-muted [&_h2]:m-0 [&_h2]:text-[1.35rem] [&_button]:min-h-[38px] [&_button]:cursor-pointer [&_button]:rounded-lg [&_button]:border [&_button]:border-app-border-strong [&_button]:bg-app-surface [&_button]:px-3 [&_button]:font-bold [&_button:disabled]:cursor-not-allowed [&_button:disabled]:opacity-60',
+  modalFeedback:
+    'mx-5 my-4 rounded-[9px] border border-app-border bg-app-bg px-3.5 py-3 text-app-text-soft',
+  modalError:
+    'mx-5 my-4 rounded-[9px] border border-app-danger-border bg-app-danger-soft px-3.5 py-3 text-app-danger',
+  editForm:
+    'px-5 pb-5 pt-[18px] max-[620px]:px-3.5 [&_input]:w-full [&_input]:min-h-[42px] [&_input]:rounded-lg [&_input]:border [&_input]:border-app-border-strong [&_input]:bg-app-surface [&_input]:px-2.5 [&_input]:py-2 [&_input]:text-app-text [&_input]:outline-none [&_select]:w-full [&_select]:min-h-[42px] [&_select]:rounded-lg [&_select]:border [&_select]:border-app-border-strong [&_select]:bg-app-surface [&_select]:px-2.5 [&_select]:py-2 [&_select]:text-app-text [&_select]:outline-none [&_textarea]:min-h-24 [&_textarea]:w-full [&_textarea]:resize-y [&_textarea]:rounded-lg [&_textarea]:border [&_textarea]:border-app-border-strong [&_textarea]:bg-app-surface [&_textarea]:px-2.5 [&_textarea]:py-2 [&_textarea]:text-app-text [&_textarea]:outline-none [&_input:focus]:border-app-brand [&_select:focus]:border-app-brand [&_textarea:focus]:border-app-brand [&_input:focus]:ring-[3px] [&_select:focus]:ring-[3px] [&_textarea:focus]:ring-[3px] [&_input:focus]:ring-[var(--app-brand-ring)] [&_select:focus]:ring-[var(--app-brand-ring)] [&_textarea:focus]:ring-[var(--app-brand-ring)] [&_input:disabled]:cursor-not-allowed [&_select:disabled]:cursor-not-allowed [&_textarea:disabled]:cursor-not-allowed [&_input:disabled]:opacity-60 [&_select:disabled]:opacity-60 [&_textarea:disabled]:opacity-60',
+  editMeta:
+    'mb-4 flex flex-wrap gap-x-5 gap-y-3 rounded-[9px] border border-app-border-soft bg-app-surface-muted px-3.5 py-3 text-[0.84rem] text-app-text-soft',
+  editGrid:
+    'grid grid-cols-2 gap-3.5 max-[620px]:grid-cols-1 [&_label]:flex [&_label]:flex-col [&_label]:gap-1.5 [&_label]:text-[0.84rem] [&_label]:font-extrabold',
+  wideField:
+    'col-span-full max-[620px]:col-auto',
+  editWarning:
+    'mt-4 rounded-lg border border-amber-200 bg-amber-50 px-[13px] py-[11px] text-[0.82rem] text-amber-800 dark:border-amber-900/70 dark:bg-amber-950/35 dark:text-amber-200',
+  modalActions:
+    'mt-[18px] flex justify-end gap-2 max-[620px]:flex-col-reverse [&_button]:min-h-[38px] [&_button]:cursor-pointer [&_button]:rounded-lg [&_button]:border [&_button]:border-app-border-strong [&_button]:bg-app-surface [&_button]:px-3 [&_button]:font-bold max-[620px]:[&_button]:w-full [&_button:last-child]:border-app-brand [&_button:last-child]:bg-app-brand [&_button:last-child]:text-white [&_button:disabled]:cursor-not-allowed [&_button:disabled]:opacity-60',
+} as const;
 
 const PAGE_SIZE = 10;
 const currency = new Intl.NumberFormat('pt-BR', {
