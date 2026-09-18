@@ -17,7 +17,63 @@ import {
   getExpenseAdminDashboard,
   getExpenseAdminDetails,
 } from '../api/expense-admin-dashboard-api';
-import styles from './expense-admin-dashboard-screen.module.css';
+const styles = {
+  page: 'min-h-screen bg-app-bg text-app-text',
+  header:
+    'sticky top-0 z-20 flex min-h-[68px] items-center justify-between border-b border-app-border bg-[var(--app-header-bg)] px-8 backdrop-blur-xl max-[780px]:px-4',
+  headerLeft: 'flex items-center gap-4',
+  brand:
+    'flex flex-col items-start gap-0.5 text-inherit no-underline [&_strong]:text-base [&_span]:text-[0.78rem] [&_span]:uppercase [&_span]:tracking-[0.06em] [&_span]:text-app-muted',
+  content:
+    'mx-auto w-[min(1500px,calc(100%-40px))] py-8 pb-14 max-[780px]:w-[min(1500px,calc(100%-24px))] max-[780px]:pt-[22px]',
+  hero:
+    'mb-5 flex items-center justify-between gap-6 max-[780px]:flex-col max-[780px]:items-start [&_h1]:my-1.5 [&_h1]:text-[clamp(1.8rem,4vw,2.7rem)] [&_h1]:tracking-[-0.04em] [&_p]:m-0 [&_p]:text-app-muted',
+  eyebrow:
+    'text-[0.78rem] uppercase tracking-[0.06em] text-app-muted',
+  secondaryLink:
+    'rounded-[10px] border border-app-border bg-app-surface px-3.5 py-2.5 font-bold text-app-text-soft no-underline transition hover:bg-app-surface-hover',
+  notice:
+    'mb-[18px] flex flex-wrap items-center gap-x-3.5 gap-y-2 rounded-xl border border-amber-300/70 bg-amber-50 px-4 py-3.5 text-amber-900 dark:border-amber-900/70 dark:bg-amber-950/40 dark:text-amber-200 [&_span]:text-amber-800 dark:[&_span]:text-amber-300',
+  filters:
+    'mb-5 rounded-[14px] border border-app-border bg-app-surface p-4 [&_form]:flex [&_form]:flex-wrap [&_form]:items-center [&_form]:gap-3 max-[780px]:[&_form]:flex-col max-[780px]:[&_form]:items-stretch [&_label]:grid [&_label]:gap-[5px] [&_label]:text-[0.82rem] [&_label]:font-bold [&_label]:text-app-muted [&_input]:min-h-10 [&_input]:rounded-lg [&_input]:border [&_input]:border-app-border-strong [&_input]:bg-app-surface [&_input]:px-2.5 [&_input]:text-app-text [&_input]:outline-none [&_input:focus]:border-app-brand [&_input:focus]:ring-[3px] [&_input:focus]:ring-[var(--app-brand-ring)] [&_button]:min-h-10 [&_button]:self-end [&_button]:cursor-pointer [&_button]:rounded-lg [&_button]:border [&_button]:border-app-brand [&_button]:bg-app-brand [&_button]:px-4 [&_button]:font-bold [&_button]:text-white max-[780px]:[&_button]:self-stretch [&_button:disabled]:cursor-wait [&_button:disabled]:opacity-[0.6] [&_small]:mt-2.5 [&_small]:block [&_small]:text-app-subtle',
+  feedback:
+    'rounded-[10px] border border-app-border bg-app-surface p-[18px] text-center text-app-muted',
+  detailFeedback:
+    'rounded-[10px] border border-app-border bg-app-surface p-[18px] text-center text-app-muted',
+  detailError:
+    'rounded-[10px] border border-app-danger-border bg-app-danger-soft p-[18px] text-center text-app-danger',
+  metrics:
+    'mb-7 grid grid-cols-3 gap-4 max-[780px]:grid-cols-1 [&_article]:flex [&_article]:min-h-[178px] [&_article]:flex-col [&_article]:gap-[9px] [&_article]:rounded-[14px] [&_article]:border [&_article]:border-app-border [&_article]:border-t-4 [&_article]:bg-app-surface [&_article]:p-[18px] [&_article]:shadow-sm [&_article:nth-child(1)]:border-t-amber-500 [&_article:nth-child(2)]:border-t-sky-600 [&_article:nth-child(3)]:border-t-emerald-600 [&_article[data-active=true]]:outline-2 [&_article[data-active=true]]:outline-offset-2 [&_article[data-active=true]]:outline-app-text-soft [&_article>span]:text-[0.78rem] [&_article>span]:font-extrabold [&_article>span]:uppercase [&_article>span]:tracking-[0.05em] [&_article>span]:text-app-muted [&_article>strong]:text-[clamp(1.5rem,3vw,2.1rem)] [&_article>small]:min-h-[34px] [&_article>small]:leading-[1.4] [&_article>small]:text-app-subtle [&_article_button]:min-h-10 [&_article_button]:w-fit [&_article_button]:cursor-pointer [&_article_button]:rounded-lg [&_article_button]:border [&_article_button]:border-app-border-strong [&_article_button]:bg-app-surface [&_article_button]:px-4 [&_article_button]:font-bold [&_article_button]:text-app-text-soft [&_article_button]:transition [&_article_button:hover]:bg-app-surface-hover [&_article_button:disabled]:cursor-wait [&_article_button:disabled]:opacity-[0.6]',
+  metricActions: 'mt-auto flex flex-wrap gap-2',
+  approvalLink:
+    'inline-flex min-h-10 items-center rounded-lg border border-emerald-700 bg-emerald-700 px-3.5 font-extrabold text-white no-underline transition hover:bg-emerald-800 dark:border-emerald-600 dark:bg-emerald-700 dark:hover:bg-emerald-600',
+  paymentLink:
+    'inline-flex min-h-10 items-center rounded-lg border border-emerald-700 bg-emerald-700 px-3.5 font-extrabold text-white no-underline transition hover:bg-emerald-800 dark:border-emerald-600 dark:bg-emerald-700 dark:hover:bg-emerald-600',
+  reportLink:
+    'inline-flex min-h-10 items-center rounded-lg border border-emerald-700 bg-emerald-700 px-3.5 font-extrabold text-white no-underline transition hover:bg-emerald-800 dark:border-emerald-600 dark:bg-emerald-700 dark:hover:bg-emerald-600',
+  summaryHeader:
+    'mb-3.5 text-center [&_h2]:mt-[5px] [&_h2]:mb-0 [&_h2]:text-[1.35rem]',
+  breakdownGrid:
+    'grid grid-cols-3 items-start gap-4 max-[1100px]:grid-cols-1',
+  breakdownPanel:
+    'overflow-hidden rounded-[14px] border border-app-border bg-app-surface shadow-sm [&>header]:flex [&>header]:items-center [&>header]:justify-between [&>header]:gap-4 [&>header]:bg-app-text-soft [&>header]:px-[18px] [&>header]:py-4 [&>header]:text-app-surface [&>header_h2]:mt-0.5 [&>header_h2]:mb-0 [&>header_h2]:text-base [&>header_span]:text-[0.78rem] [&>header_span]:uppercase [&>header_span]:tracking-[0.06em] [&>header_span]:text-slate-300 [&>header>strong]:whitespace-nowrap',
+  breakdownRows:
+    'max-h-[580px] overflow-auto max-[1100px]:max-h-none',
+  breakdownEntry: 'border-b border-app-border-soft last:border-b-0',
+  breakdownButton:
+    'flex w-full cursor-pointer items-center gap-2.5 border-0 bg-app-surface px-3.5 py-[13px] text-left text-app-text-soft transition hover:bg-app-surface-hover aria-expanded:bg-app-surface-hover',
+  expandIcon:
+    'inline-grid size-6 flex-none place-items-center rounded-full bg-app-brand-soft text-[1.1rem] font-extrabold text-app-brand',
+  breakdownLabel: 'flex-1 [overflow-wrap:anywhere]',
+  detailArea:
+    'border-t border-app-border bg-app-bg p-3',
+  detailWrap:
+    'overflow-x-auto rounded-[9px] border border-app-border bg-app-surface',
+  detailTable:
+    'w-full min-w-[720px] border-collapse text-[0.82rem] [&_th]:border-b [&_th]:border-app-border-soft [&_th]:px-2.5 [&_th]:py-[9px] [&_th]:text-left [&_th]:align-top [&_td]:border-b [&_td]:border-app-border-soft [&_td]:px-2.5 [&_td]:py-[9px] [&_td]:text-left [&_td]:align-top [&_thead_th]:bg-app-surface-muted [&_thead_th]:text-app-muted [&_th:last-child]:whitespace-nowrap [&_th:last-child]:text-right [&_td:last-child]:whitespace-nowrap [&_td:last-child]:text-right [&_tfoot_th]:border-b-0 [&_tfoot_th:first-child]:text-right',
+  empty:
+    'm-3 rounded-[10px] border border-dashed border-app-border bg-app-surface p-[18px] text-center text-app-muted',
+} as const;
 
 const currency = new Intl.NumberFormat('pt-BR', {
   style: 'currency',
