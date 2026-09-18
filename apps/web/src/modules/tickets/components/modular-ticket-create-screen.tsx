@@ -32,7 +32,32 @@ import {
   fetchMarketingRequesters,
   fetchTicketTypes,
 } from '../api/modular-ticket-create-api';
-import styles from './modular-ticket-create-screen.module.css';
+const FORM_SURFACE_CLASS =
+  'grid gap-5 rounded-2xl border border-app-border bg-app-surface p-5 shadow-sm shadow-slate-950/5 dark:shadow-black/10 [&_label]:grid [&_label]:min-w-0 [&_label]:content-start [&_label]:gap-1.5 [&_label]:text-sm [&_label]:font-semibold [&_label]:text-app-text-soft [&_label_small]:text-xs [&_label_small]:font-normal [&_label_small]:text-app-muted [&_input]:min-h-10 [&_input]:w-full [&_input]:min-w-0 [&_input]:rounded-lg [&_input]:border [&_input]:border-app-border-strong [&_input]:bg-app-surface [&_input]:px-3 [&_input]:text-sm [&_input]:text-app-text [&_input]:outline-none [&_input]:transition [&_select]:min-h-10 [&_select]:w-full [&_select]:min-w-0 [&_select]:rounded-lg [&_select]:border [&_select]:border-app-border-strong [&_select]:bg-app-surface [&_select]:px-3 [&_select]:text-sm [&_select]:text-app-text [&_select]:outline-none [&_select]:transition [&_textarea]:w-full [&_textarea]:min-w-0 [&_textarea]:resize-y [&_textarea]:rounded-lg [&_textarea]:border [&_textarea]:border-app-border-strong [&_textarea]:bg-app-surface [&_textarea]:px-3 [&_textarea]:py-2.5 [&_textarea]:text-sm [&_textarea]:text-app-text [&_textarea]:outline-none [&_textarea]:transition [&_input:focus]:border-app-brand [&_input:focus]:ring-3 [&_input:focus]:ring-[var(--app-brand-ring)] [&_select:focus]:border-app-brand [&_select:focus]:ring-3 [&_select:focus]:ring-[var(--app-brand-ring)] [&_textarea:focus]:border-app-brand [&_textarea:focus]:ring-3 [&_textarea:focus]:ring-[var(--app-brand-ring)] [&_input:disabled]:cursor-not-allowed [&_input:disabled]:opacity-55 [&_select:disabled]:cursor-not-allowed [&_select:disabled]:opacity-55 [&_textarea:disabled]:cursor-not-allowed [&_textarea:disabled]:opacity-55';
+
+const styles = {
+  typeGrid: 'grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3',
+  typeCard:
+    'group grid min-h-[190px] gap-3.5 rounded-2xl border border-app-border bg-app-surface p-5 text-app-text no-underline shadow-sm shadow-slate-950/5 transition hover:-translate-y-0.5 hover:border-app-border-strong hover:shadow-lg hover:shadow-slate-950/10 dark:shadow-black/10 dark:hover:shadow-black/20',
+  typeTop: 'flex items-center justify-between gap-4',
+  typeKey: 'text-lg font-bold text-app-text',
+  arrow: 'text-[1.4rem] text-app-brand transition-transform group-hover:translate-x-1',
+  capabilities: 'mt-auto flex flex-wrap gap-2',
+  pill: 'rounded-full border border-app-border-strong bg-app-surface-muted px-2.5 py-1 text-xs font-semibold text-app-text-soft',
+  sectionHeader: 'mb-4 flex items-center justify-between gap-4 max-sm:flex-col max-sm:items-start',
+  card: FORM_SURFACE_CLASS,
+  grid: 'grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3',
+  fullWidth: 'md:col-span-2 xl:col-span-3',
+  readonly: 'bg-app-surface-muted',
+  error:
+    'mb-4 rounded-xl border border-red-300/70 bg-red-50 px-4 py-3 text-sm font-semibold text-red-800 dark:border-red-900/70 dark:bg-red-950/40 dark:text-red-200',
+  success:
+    'mb-4 rounded-xl border border-emerald-300/70 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800 dark:border-emerald-900/70 dark:bg-emerald-950/40 dark:text-emerald-200',
+  emptyState:
+    'mb-4 rounded-xl border border-app-border bg-app-surface px-4 py-5 text-center text-sm text-app-muted-strong',
+  muted: 'm-0 text-sm text-app-muted',
+  actions: 'flex flex-wrap justify-end gap-3 max-sm:[&>*]:w-full',
+} as const;
 
 function localDateTime(): string {
   const now = new Date(Date.now() - new Date().getTimezoneOffset() * 60_000);
