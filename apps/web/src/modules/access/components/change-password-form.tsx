@@ -3,7 +3,7 @@
 import type { FormEvent } from 'react';
 import { useState } from 'react';
 import { ApiError, apiRequest } from '../../../shared/api/api-client';
-import styles from './login-form.module.css';
+import { authFormStyles } from './auth-form-styles';
 
 export function ChangePasswordForm() {
   const [currentPassword, setCurrentPassword] = useState('');
@@ -40,12 +40,52 @@ export function ChangePasswordForm() {
   }
 
   return (
-    <form className={styles.form} onSubmit={submit}>
-      <label><span>Senha atual</span><input autoComplete="current-password" disabled={submitting} maxLength={200} onChange={(event) => setCurrentPassword(event.target.value)} required type="password" value={currentPassword} /></label>
-      <label><span>Nova senha</span><input autoComplete="new-password" disabled={submitting} maxLength={100} minLength={12} onChange={(event) => setNewPassword(event.target.value)} required type="password" value={newPassword} /></label>
-      <label><span>Confirmar nova senha</span><input autoComplete="new-password" disabled={submitting} maxLength={100} minLength={12} onChange={(event) => setConfirmation(event.target.value)} required type="password" value={confirmation} /></label>
-      {error ? <div className={styles.error} role="alert">{error}</div> : null}
-      <button disabled={submitting} type="submit">{submitting ? 'Salvando…' : 'Alterar senha'}</button>
+    <form className={authFormStyles.form} onSubmit={submit}>
+      <label className={authFormStyles.field}>
+        <span className={authFormStyles.fieldLabel}>Senha atual</span>
+        <input
+          autoComplete="current-password"
+          className={authFormStyles.input}
+          disabled={submitting}
+          maxLength={200}
+          onChange={(event) => setCurrentPassword(event.target.value)}
+          required
+          type="password"
+          value={currentPassword}
+        />
+      </label>
+      <label className={authFormStyles.field}>
+        <span className={authFormStyles.fieldLabel}>Nova senha</span>
+        <input
+          autoComplete="new-password"
+          className={authFormStyles.input}
+          disabled={submitting}
+          maxLength={100}
+          minLength={12}
+          onChange={(event) => setNewPassword(event.target.value)}
+          required
+          type="password"
+          value={newPassword}
+        />
+      </label>
+      <label className={authFormStyles.field}>
+        <span className={authFormStyles.fieldLabel}>Confirmar nova senha</span>
+        <input
+          autoComplete="new-password"
+          className={authFormStyles.input}
+          disabled={submitting}
+          maxLength={100}
+          minLength={12}
+          onChange={(event) => setConfirmation(event.target.value)}
+          required
+          type="password"
+          value={confirmation}
+        />
+      </label>
+      {error ? <div className={authFormStyles.error} role="alert">{error}</div> : null}
+      <button className={authFormStyles.button} disabled={submitting} type="submit">
+        {submitting ? 'Salvando…' : 'Alterar senha'}
+      </button>
     </form>
   );
 }

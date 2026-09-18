@@ -4,7 +4,7 @@ import Link from 'next/link';
 import type { FormEvent } from 'react';
 import { useState } from 'react';
 import { ApiError, apiRequest } from '../../../shared/api/api-client';
-import styles from './login-form.module.css';
+import { authFormStyles } from './auth-form-styles';
 
 function apiMessage(error: ApiError): string | null {
   if (!error.body || typeof error.body !== 'object') return null;
@@ -47,25 +47,59 @@ export function ResetPasswordForm({ token }: { token: string }) {
   }
 
   return (
-    <main className={styles.page}>
-      <section className={styles.card}>
-        <div className={styles.brand}>
-          <span>Helpdesk</span>
-          <strong>Nova senha</strong>
-          <p>Use ao menos 12 caracteres, com maiúscula, minúscula, número e símbolo.</p>
+    <main className={authFormStyles.page}>
+      <section className={authFormStyles.card}>
+        <div className={authFormStyles.brand}>
+          <span className={authFormStyles.brandEyebrow}>Helpdesk</span>
+          <strong className={authFormStyles.brandTitle}>Nova senha</strong>
+          <p className={authFormStyles.brandDescription}>
+            Use ao menos 12 caracteres, com maiúscula, minúscula, número e símbolo.
+          </p>
         </div>
 
         {complete ? (
-          <div className={styles.success} role="status">Senha alterada com sucesso.</div>
+          <div className={authFormStyles.success} role="status">Senha alterada com sucesso.</div>
         ) : (
-          <form className={styles.form} onSubmit={submit}>
-            <label><span>Nova senha</span><input autoComplete="new-password" disabled={submitting} maxLength={100} minLength={12} onChange={(event) => setPassword(event.target.value)} required type="password" value={password} /></label>
-            <label><span>Confirmar nova senha</span><input autoComplete="new-password" disabled={submitting} maxLength={100} minLength={12} onChange={(event) => setConfirmation(event.target.value)} required type="password" value={confirmation} /></label>
-            {error ? <div className={styles.error} role="alert">{error}</div> : null}
-            <button disabled={submitting || !token} type="submit">{submitting ? 'Salvando…' : 'Salvar nova senha'}</button>
+          <form className={authFormStyles.form} onSubmit={submit}>
+            <label className={authFormStyles.field}>
+              <span className={authFormStyles.fieldLabel}>Nova senha</span>
+              <input
+                autoComplete="new-password"
+                className={authFormStyles.input}
+                disabled={submitting}
+                maxLength={100}
+                minLength={12}
+                onChange={(event) => setPassword(event.target.value)}
+                required
+                type="password"
+                value={password}
+              />
+            </label>
+            <label className={authFormStyles.field}>
+              <span className={authFormStyles.fieldLabel}>Confirmar nova senha</span>
+              <input
+                autoComplete="new-password"
+                className={authFormStyles.input}
+                disabled={submitting}
+                maxLength={100}
+                minLength={12}
+                onChange={(event) => setConfirmation(event.target.value)}
+                required
+                type="password"
+                value={confirmation}
+              />
+            </label>
+            {error ? <div className={authFormStyles.error} role="alert">{error}</div> : null}
+            <button
+              className={authFormStyles.button}
+              disabled={submitting || !token}
+              type="submit"
+            >
+              {submitting ? 'Salvando…' : 'Salvar nova senha'}
+            </button>
           </form>
         )}
-        <Link className={styles.backLink} href="/login">Ir para o login</Link>
+        <Link className={authFormStyles.backLink} href="/login">Ir para o login</Link>
       </section>
     </main>
   );

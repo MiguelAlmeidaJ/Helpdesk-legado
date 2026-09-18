@@ -4,7 +4,7 @@ import Link from 'next/link';
 import type { FormEvent } from 'react';
 import { useState } from 'react';
 import { ApiError, apiRequest } from '../../../shared/api/api-client';
-import styles from './login-form.module.css';
+import { authFormStyles } from './auth-form-styles';
 
 export function ForgotPasswordForm() {
   const [email, setEmail] = useState('');
@@ -36,25 +36,28 @@ export function ForgotPasswordForm() {
   }
 
   return (
-    <main className={styles.page}>
-      <section className={styles.card}>
-        <div className={styles.brand}>
-          <span>Helpdesk</span>
-          <strong>Recuperar senha</strong>
-          <p>Informe o e-mail cadastrado para receber um link temporário.</p>
+    <main className={authFormStyles.page}>
+      <section className={authFormStyles.card}>
+        <div className={authFormStyles.brand}>
+          <span className={authFormStyles.brandEyebrow}>Helpdesk</span>
+          <strong className={authFormStyles.brandTitle}>Recuperar senha</strong>
+          <p className={authFormStyles.brandDescription}>
+            Informe o e-mail cadastrado para receber um link temporário.
+          </p>
         </div>
 
         {sent ? (
-          <div className={styles.success} role="status">
+          <div className={authFormStyles.success} role="status">
             Se o e-mail estiver cadastrado e ativo, enviaremos as instruções de recuperação.
           </div>
         ) : (
-          <form className={styles.form} onSubmit={submit}>
-            <label>
-              <span>E-mail</span>
+          <form className={authFormStyles.form} onSubmit={submit}>
+            <label className={authFormStyles.field}>
+              <span className={authFormStyles.fieldLabel}>E-mail</span>
               <input
                 autoComplete="email"
                 autoFocus
+                className={authFormStyles.input}
                 disabled={submitting}
                 maxLength={100}
                 onChange={(event) => setEmail(event.target.value)}
@@ -63,14 +66,14 @@ export function ForgotPasswordForm() {
                 value={email}
               />
             </label>
-            {error ? <div className={styles.error} role="alert">{error}</div> : null}
-            <button disabled={submitting} type="submit">
+            {error ? <div className={authFormStyles.error} role="alert">{error}</div> : null}
+            <button className={authFormStyles.button} disabled={submitting} type="submit">
               {submitting ? 'Enviando…' : 'Enviar recuperação'}
             </button>
           </form>
         )}
 
-        <Link className={styles.backLink} href="/login">Voltar ao login</Link>
+        <Link className={authFormStyles.backLink} href="/login">Voltar ao login</Link>
       </section>
     </main>
   );
