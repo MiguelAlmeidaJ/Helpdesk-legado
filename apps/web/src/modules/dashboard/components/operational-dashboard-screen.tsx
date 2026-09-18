@@ -1,0 +1,381 @@
+"use client";
+
+import type {
+  CurrentUserResponse,
+  DashboardRanking,
+  DashboardRankingEntry,
+  OperationalDashboardResponse,
+} from '@helpdesk/contracts';
+import Link from 'next/link';
+import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
+import { ApiError } from '../../../shared/api/api-client';
+import { AppSidebar } from '../../../shared/navigation/app-sidebar';
+import { SessionUserMenu } from '../../access/components/session-user-menu';
+import { fetchOperationalDashboard } from '../api/dashboard-api';
+
+const EYEBROW_CLASS =
+  'text-[9px] font-black uppercase tracking-[0.09em] text-app-muted';
+const CONTROL_CLASS =
+  'inline-flex min-h-9 items-center justify-center rounded-lg border border-app-border-strong bg-app-surface px-[13px] text-[10px] font-extrabold text-app-text-soft no-underline transition-colors hover:bg-app-surface-hover disabled:cursor-not-allowed disabled:opacity-50';
+const INPUT_CLASS =
+  'min-h-9 rounded-[7px] border border-app-border-strong bg-app-surface px-[9px] text-app-text outline-none transition focus:border-app-brand focus:ring-3 focus:ring-[var(--app-brand-ring)]';
+const CARD_CLASS =
+  'overflow-hidden rounded-[11px] border border-app-border bg-app-surface';
+const CARD_HEADER_CLASS =
+  'flex items-center justify-between gap-2.5 border-b border-app-border-soft bg-app-surface-muted px-3 py-[11px]';
+const EMPTY_CLASS = 'm-0 px-0.5 py-3 text-[9px] text-app-subtle';
+
+function dateFromYmd(value: string): Date {
+  const year = Number(value.slice(0, 4));
+  const month = Number(value.slice(5, 7));
+  const day = Number(value.slice(8, 10));
+  return new Date(Date.UTC(year, month - 1, day));
+}
+
+function ymd(value: Date): string {
+  return [
+    value.getUTCFullYear(),
+    String(value.getUTCMonth() + 1).padStart(2, '0'),
+    String(value.getUTCDate()).padStart(2, '0'),
+  ].join('-');
+}
+
+function currentMonthRange(current: string): [string, string] {
+  const date = dateFromYmd(current);
+  const year = date.getUTCFullYear();
+  const month = date.getUTCMonth();
+  return [
+    ymd(new Date(Date.UTC(year, month, 1))),
+    ymd(new Date(Date.UTC(year, month + 1, 0))),
+  ];
+}
+
+function currentWeekRange(current: string): [string, string] {
+  const date = dateFromYmd(current);
+  const day = date.getUTCDay();
+  const offset = day === 0 ? -6 : 1 - day;
+  const start = new Date(date);
+  start.setUTCDate(start.getUTCDate() + offset);
+  const end = new Date(start);
+  end.setUTCDate(end.getUTCDate() + 6);
+  return [ymd(start), ymd(end)];
+}
+
+function rankingBarClass(rankingId: string): string {
+  switch (rankingId) {
+    case 'devops':
+      return 'bg-[#876c55] dark:bg-[#b29379]';
+    case 'mkt':
+      return 'bg-[#5d8868] dark:bg-[#7fb08a]';
+    case 'qa':
+      return 'bg-[#74678e] dark:bg-[#9a8bb8]';
+    default:
+      return 'bg-[#597c9f] dark:bg-[#7ea6cc]';
+  }
+}
+
+function RankingCard({ ranking }: { ranking: DashboardRanking }) {
+  const max = Math.max(0, ...ranking.entries.map((entry) => entry.total));
+
+  return (
+    <article className={CARD_CLASS} data-ranking={ranking.id}>
+      <header className={CARD_HEADER_CLASS}>
+        <div className="min-w-0">
+          <span className="text-[8px] font-black tracking-[0.08em] text-app-subtle">
+            {ranking.id.toUpperCase()}
+          </span>
+          <h3 className="mt-px mb-0 text-xs font-bold text-app-text">
+            {ranking.label}
+          </h3>
+        </div>
+        <strong className="text-[21px] leading-none text-app-text">
+          {ranking.total}
+        </strong>
+      </header>
+
+      <div className="max-h-[410px] overflow-y-auto px-[11px] pt-1.5 pb-2.5">
+        {ranking.entries.length === 0 ? (
+          <p className={EMPTY_CLASS}>Nenhum dado no período.</p>
+        ) : (
+          ranking.entries.map((entry, index) => (
+            <RankingRow
+              entry={entry}
+              index={index}
+              key={`${entry.name}-${index}`}
+              max={max}
+              rankingId={ranking.id}
+            />
+          ))
+        )}
+      </div>
+    </article>
+  );
+}
+
+function RankingRow({
+  entry,
+  index,
+  max,
+  rankingId,
+}: {
+  entry: DashboardRankingEntry;
+  index: number;
+  max: number;
+  rankingId: string;
+}) {
+  const width = max > 0 ? Math.max(3, (entry.total / max) * 100) : 0;
+
+  return (
+    <div className="border-b border-app-border-soft py-[9px] last:border-b-0">
+      <div className="grid grid-cols-[24px_minmax(0,1fr)_auto] items-center gap-1.5">
+        <span className="text-center text-[10px] text-amber-700 dark:text-amber-300">
+          {index === 0 ? '♛' : index + 1}
+        </span>
+        <strong className="overflow-hidden text-[10px] text-ellipsis whitespace-nowrap text-app-text">
+          {entry.name}
+        </strong>
+        <b className="text-[11px] text-app-text">{entry.total}</b>
+      </div>
+      <div className="mt-[5px] ml-[30px] h-[7px] overflow-hidden rounded-full bg-app-border-soft">
+        <div
+          className={`h-full rounded-[inherit] ${rankingBarClass(rankingId)}`}
+          style={{ width: `${width}%` }}
+        />
+      </div>
+      {entry.tickets !== undefined || entry.tasks !== undefined ? (
+        <small className="mt-1 ml-[30px] block text-[8px] text-app-subtle">
+          {entry.tickets ?? 0} atendimentos · {entry.tasks ?? 0} tarefas
+        </small>
+      ) : null}
+    </div>
+  );
+}
+
+function PodiumCard({ ranking }: { ranking: DashboardRanking }) {
+  return (
+    <article className={CARD_CLASS} data-ranking={ranking.id}>
+      <header className={CARD_HEADER_CLASS}>
+        <div>
+          <span className="text-[8px] font-black tracking-[0.08em] text-app-subtle">
+            {ranking.id.toUpperCase()}
+          </span>
+          <h3 className="mt-px mb-0 text-xs font-bold text-app-text">
+            {ranking.label}
+          </h3>
+        </div>
+      </header>
+      <ol className="m-0 grid list-none gap-0 px-[11px] pt-[5px] pb-[9px]">
+        {ranking.entries.length === 0 ? (
+          <li className={EMPTY_CLASS}>Sem dados no trimestre.</li>
+        ) : (
+          ranking.entries.slice(0, 3).map((entry, index) => (
+            <li
+              className="grid grid-cols-[30px_minmax(0,1fr)_auto] items-center gap-[7px] border-b border-app-border-soft py-2 last:border-b-0"
+              key={`${entry.name}-${index}`}
+            >
+              <span className="text-[9px] font-black text-amber-700 dark:text-amber-300">
+                {index + 1}º
+              </span>
+              <strong className="overflow-hidden text-[10px] text-ellipsis whitespace-nowrap text-app-text">
+                {entry.name}
+              </strong>
+              <b className="text-[11px] text-app-text">{entry.total}</b>
+            </li>
+          ))
+        )}
+      </ol>
+    </article>
+  );
+}
+
+export function OperationalDashboardScreen({
+  currentUser,
+}: {
+  currentUser: CurrentUserResponse;
+}) {
+  const [data, setData] = useState<OperationalDashboardResponse | null>(null);
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const load = useCallback(async (start?: string, end?: string) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await fetchOperationalDashboard(start, end);
+      setData(response);
+      setStartDate(response.period.startDate);
+      setEndDate(response.period.endDate);
+    } catch (reason: unknown) {
+      setError(
+        reason instanceof ApiError && reason.status === 401
+          ? 'Sua sessão expirou. Entre novamente.'
+          : 'Não foi possível carregar o dashboard operacional.',
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  const today = useMemo(
+    () => data?.generatedAt.slice(0, 10) ?? '',
+    [data?.generatedAt],
+  );
+
+  function apply(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    void load(startDate, endDate);
+  }
+
+  function quickRange(kind: 'today' | 'week' | 'month' | 'quarter') {
+    if (!data || !today) return;
+
+    if (kind === 'today') {
+      void load(today, today);
+      return;
+    }
+    if (kind === 'quarter') {
+      void load(data.quarter.startDate, data.quarter.endDate);
+      return;
+    }
+
+    const [start, end] =
+      kind === 'week' ? currentWeekRange(today) : currentMonthRange(today);
+    void load(start, end);
+  }
+
+  return (
+    <main className="min-h-screen bg-app-bg text-app-text">
+      <header className="sticky top-0 z-20 flex min-h-[58px] items-center justify-between gap-[18px] border-b border-app-border bg-[var(--app-header-bg)] px-6 backdrop-blur-[10px] max-[680px]:px-3">
+        <div className="flex min-w-0 items-center gap-3">
+          <AppSidebar />
+          <Link className="grid no-underline" href="/dashboard">
+            <strong className="text-[15px] text-app-text">Helpdesk</strong>
+            <span className="text-[10px] text-app-subtle">Painel operacional</span>
+          </Link>
+        </div>
+        <SessionUserMenu user={currentUser} />
+      </header>
+
+      <div className="mx-auto w-[min(1440px,calc(100%-32px))] pt-6 pb-12 max-[680px]:w-[calc(100%-20px)]">
+        <section className="mb-3.5 flex items-end justify-between gap-[18px] rounded-[14px] border border-app-border bg-app-surface px-[22px] py-5 shadow-sm max-[680px]:flex-col max-[680px]:items-stretch">
+          <div>
+            <span className={EYEBROW_CLASS}>Visão operacional</span>
+            <h1 className="my-0.5 text-[30px] font-bold leading-tight text-app-text">
+              Dashboard
+            </h1>
+            <p className="m-0 text-xs text-app-muted-strong">
+              Rankings de produção por período e pódio do trimestre atual.
+            </p>
+          </div>
+          <Link className={CONTROL_CLASS} href="/tickets">
+            Abrir Atendimentos
+          </Link>
+        </section>
+
+        {error ? (
+          <div
+            className="mb-3.5 rounded-[9px] border border-app-danger-border bg-app-danger-soft px-3.5 py-3 text-[11px] text-app-danger"
+            role="alert"
+          >
+            {error}
+          </div>
+        ) : null}
+        {loading && !data ? (
+          <div
+            className="mb-3.5 rounded-[9px] border border-app-border bg-app-surface px-3.5 py-3 text-[11px] text-app-muted"
+            role="status"
+          >
+            Carregando dashboard…
+          </div>
+        ) : null}
+
+        {data && !data.internalUser ? (
+          <div className="mb-3.5 rounded-[9px] border border-app-border bg-app-surface px-3.5 py-3 text-[11px] text-app-muted">
+            O ranking operacional é exibido somente para usuários internos.
+          </div>
+        ) : null}
+
+        {data?.internalUser ? (
+          <>
+            <section className="mb-[18px] flex items-end justify-between gap-3.5 rounded-[11px] border border-app-border bg-app-surface px-3.5 py-3 max-[1100px]:flex-col max-[1100px]:items-stretch">
+              <form
+                className="flex items-end gap-2 max-[680px]:flex-wrap max-[680px]:items-stretch"
+                onSubmit={apply}
+              >
+                <label className="grid gap-1 text-[9px] font-extrabold uppercase text-app-subtle max-[680px]:flex-[1_1_130px]">
+                  Início
+                  <input
+                    className={INPUT_CLASS}
+                    onChange={(event) => setStartDate(event.target.value)}
+                    type="date"
+                    value={startDate}
+                  />
+                </label>
+                <label className="grid gap-1 text-[9px] font-extrabold uppercase text-app-subtle max-[680px]:flex-[1_1_130px]">
+                  Fim
+                  <input
+                    className={INPUT_CLASS}
+                    onChange={(event) => setEndDate(event.target.value)}
+                    type="date"
+                    value={endDate}
+                  />
+                </label>
+                <button className={CONTROL_CLASS} disabled={loading} type="submit">
+                  {loading ? 'Atualizando…' : 'Aplicar'}
+                </button>
+              </form>
+
+              <div className="flex items-end gap-2 max-[680px]:flex-wrap max-[680px]:items-stretch">
+                <button className={`${CONTROL_CLASS} min-h-8`} onClick={() => quickRange('today')} type="button">Hoje</button>
+                <button className={`${CONTROL_CLASS} min-h-8`} onClick={() => quickRange('week')} type="button">Semana</button>
+                <button className={`${CONTROL_CLASS} min-h-8`} onClick={() => quickRange('month')} type="button">Mês atual</button>
+                <button className={`${CONTROL_CLASS} min-h-8`} onClick={() => quickRange('quarter')} type="button">Trimestre</button>
+              </div>
+            </section>
+
+            <section className="mt-5">
+              <div className="mb-2.5 flex items-end justify-between gap-4 max-[680px]:flex-col max-[680px]:items-stretch">
+                <div>
+                  <span className={EYEBROW_CLASS}>Ranking</span>
+                  <h2 className="mt-0.5 mb-0 text-[17px] font-bold text-app-text">
+                    {data.period.label}
+                  </h2>
+                </div>
+                <small className="text-[9px] text-app-subtle">
+                  Atualizado em {data.generatedAt.replace('T', ' ')}
+                </small>
+              </div>
+              <div className="grid grid-cols-4 gap-2.5 max-[1100px]:grid-cols-2 max-[680px]:grid-cols-1">
+                {data.periodRankings.map((ranking) => (
+                  <RankingCard key={ranking.id} ranking={ranking} />
+                ))}
+              </div>
+            </section>
+
+            <section className="mt-5">
+              <div className="mb-2.5 flex items-end justify-between gap-4 max-[680px]:flex-col max-[680px]:items-stretch">
+                <div>
+                  <span className={EYEBROW_CLASS}>Pódio</span>
+                  <h2 className="mt-0.5 mb-0 text-[17px] font-bold text-app-text">
+                    {data.quarter.label}
+                  </h2>
+                </div>
+              </div>
+              <div className="grid grid-cols-4 gap-2.5 max-[1100px]:grid-cols-2 max-[680px]:grid-cols-1">
+                {data.quarterRankings.map((ranking) => (
+                  <PodiumCard key={ranking.id} ranking={ranking} />
+                ))}
+              </div>
+            </section>
+          </>
+        ) : null}
+      </div>
+    </main>
+  );
+}
