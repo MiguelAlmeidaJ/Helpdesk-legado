@@ -14,7 +14,19 @@ import {
   fetchTicketDetail,
   finalizeTicket,
 } from '../api/tickets-api';
-import styles from './ticket-close-actions.module.css';
+const styles = {
+  card: 'overflow-hidden rounded-xl border border-app-border bg-app-surface',
+  header:
+    'flex min-h-12 items-center justify-between gap-3 border-b border-app-border-soft bg-app-surface-muted px-4 py-2.5 max-[680px]:flex-col max-[680px]:items-stretch [&>div:first-child]:grid [&>div:first-child]:gap-0.5 [&_h2]:m-0 [&_h2]:text-[15px] [&_span]:text-[11px] [&_span]:text-app-subtle',
+  actions:
+    'flex gap-2 max-[680px]:flex-wrap [&_button]:min-h-[34px] [&_button]:rounded-lg [&_button]:border [&_button]:border-app-brand [&_button]:bg-app-surface [&_button]:px-3 [&_button]:text-[10px] [&_button]:font-extrabold [&_button]:text-app-brand [&_button]:transition-colors [&_button]:hover:bg-app-brand-soft',
+  form:
+    'grid gap-2.5 px-4 py-3.5 [&_label]:text-[10px] [&_label]:font-extrabold [&_label]:uppercase [&_label]:text-app-muted [&_textarea]:min-h-[90px] [&_textarea]:w-full [&_textarea]:resize-y [&_textarea]:rounded-lg [&_textarea]:border [&_textarea]:border-app-border-strong [&_textarea]:bg-app-surface [&_textarea]:p-2.5 [&_textarea]:text-sm [&_textarea]:text-app-text [&_textarea]:outline-none [&_textarea]:transition [&_textarea:focus]:border-app-brand [&_textarea:focus]:ring-3 [&_textarea:focus]:ring-[var(--app-brand-ring)] [&_textarea:disabled]:cursor-not-allowed [&_textarea:disabled]:opacity-50',
+  footer:
+    'flex items-center justify-between gap-3 [&_small]:text-[9px] [&_small]:text-app-subtle [&_button]:min-h-[34px] [&_button]:rounded-lg [&_button]:border [&_button]:border-app-brand [&_button]:bg-app-brand [&_button]:px-3 [&_button]:text-[10px] [&_button]:font-extrabold [&_button]:text-white [&_button]:transition-colors [&_button]:hover:bg-app-brand-hover [&_button]:disabled:cursor-not-allowed [&_button]:disabled:opacity-50',
+  feedback:
+    'border-t border-app-border-soft bg-app-surface-hover px-4 py-2.5 text-[11px] text-app-muted',
+} as const;
 
 type Mode = 'conclude' | 'finalize';
 

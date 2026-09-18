@@ -18,7 +18,15 @@ import {
   fetchTicketDetail,
   updateTicketAssignment,
 } from '../api/tickets-api';
-import styles from './ticket-assignment-actions.module.css';
+const styles = {
+  card: 'overflow-hidden rounded-xl border border-app-border bg-app-surface',
+  header:
+    'flex min-h-12 items-center justify-between gap-3 border-b border-app-border-soft bg-app-surface-muted px-4 py-2.5 max-sm:flex-col max-sm:items-stretch [&>div]:grid [&>div]:gap-0.5 [&_h2]:m-0 [&_h2]:text-[15px] [&_span]:text-[11px] [&_span]:text-app-subtle [&_button]:min-h-[34px] [&_button]:rounded-lg [&_button]:border [&_button]:border-app-success [&_button]:bg-app-surface [&_button]:px-3 [&_button]:text-[10px] [&_button]:font-extrabold [&_button]:text-app-success [&_button]:transition-colors [&_button]:hover:bg-app-success-soft max-sm:[&_button]:self-start',
+  form:
+    'grid grid-cols-1 items-end gap-3.5 px-4 py-3.5 min-[1051px]:grid-cols-[minmax(220px,1fr)_minmax(260px,1.5fr)_auto] [&>div]:grid [&>div]:gap-1.5 [&_label]:text-[10px] [&_label]:font-extrabold [&_label]:uppercase [&_label]:tracking-[0.03em] [&_label]:text-app-muted [&_select]:min-h-[38px] [&_select]:w-full [&_select]:rounded-lg [&_select]:border [&_select]:border-app-border-strong [&_select]:bg-app-surface [&_select]:px-2.5 [&_select]:text-app-text-soft [&_select]:outline-none [&_select]:transition [&_select:focus]:border-app-success [&_select:focus]:ring-3 [&_select:focus]:ring-emerald-500/10 [&>p]:m-0 [&>p]:text-[11px] [&>p]:leading-5 [&>p]:text-app-muted-strong [&>button]:min-h-[34px] [&>button]:rounded-lg [&>button]:border [&>button]:border-app-success [&>button]:bg-app-success [&>button]:px-3 [&>button]:text-[10px] [&>button]:font-extrabold [&>button]:whitespace-nowrap [&>button]:text-app-surface [&>button]:transition-opacity [&>button:disabled]:cursor-not-allowed [&>button:disabled]:opacity-50 [&_select:disabled]:cursor-not-allowed [&_select:disabled]:opacity-50',
+  feedback:
+    'border-t border-app-border-soft bg-app-success-soft px-4 py-2.5 text-[11px] leading-4 text-app-success',
+} as const;
 
 function executeScope(
   user: CurrentUserResponse,

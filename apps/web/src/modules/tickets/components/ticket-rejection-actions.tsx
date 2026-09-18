@@ -18,7 +18,15 @@ import {
   fetchTicketRejectionTechnicians,
   rejectTicket,
 } from '../api/tickets-api';
-import styles from './ticket-rejection-actions.module.css';
+const styles = {
+  card: 'overflow-hidden rounded-xl border border-app-border bg-app-surface',
+  header:
+    'flex min-h-12 items-center justify-between gap-3 border-b border-app-border-soft bg-app-surface-muted px-4 py-2.5 max-sm:flex-col max-sm:items-stretch [&>div]:grid [&>div]:gap-0.5 [&_h2]:m-0 [&_h2]:text-[15px] [&_span]:text-[11px] [&_span]:text-app-subtle [&_button]:min-h-[34px] [&_button]:rounded-lg [&_button]:border [&_button]:border-app-danger [&_button]:bg-app-surface [&_button]:px-3 [&_button]:text-[10px] [&_button]:font-extrabold [&_button]:text-app-danger [&_button]:transition-colors [&_button]:hover:bg-app-danger-soft max-sm:[&_button]:self-start',
+  form:
+    'grid grid-cols-1 items-end gap-3.5 px-4 py-3.5 min-[1051px]:grid-cols-[minmax(190px,0.8fr)_minmax(300px,1.6fr)_auto] [&>div]:grid [&>div]:gap-1.5 [&_label]:text-[10px] [&_label]:font-extrabold [&_label]:uppercase [&_label]:tracking-[0.03em] [&_label]:text-app-muted [&_select]:min-h-[38px] [&_select]:w-full [&_select]:rounded-lg [&_select]:border [&_select]:border-app-border-strong [&_select]:bg-app-surface [&_select]:px-2.5 [&_select]:text-app-text-soft [&_textarea]:min-h-[72px] [&_textarea]:w-full [&_textarea]:resize-y [&_textarea]:rounded-lg [&_textarea]:border [&_textarea]:border-app-border-strong [&_textarea]:bg-app-surface [&_textarea]:px-2.5 [&_textarea]:py-2 [&_textarea]:text-app-text-soft [&_select:focus]:border-app-danger [&_select:focus]:outline-none [&_select:focus]:ring-3 [&_select:focus]:ring-red-500/10 [&_textarea:focus]:border-app-danger [&_textarea:focus]:outline-none [&_textarea:focus]:ring-3 [&_textarea:focus]:ring-red-500/10 [&>button]:min-h-[38px] [&>button]:rounded-lg [&>button]:border [&>button]:border-app-danger [&>button]:bg-app-danger [&>button]:px-3 [&>button]:text-[10px] [&>button]:font-extrabold [&>button]:whitespace-nowrap [&>button]:text-app-surface [&>button]:transition-opacity [&>button:disabled]:cursor-not-allowed [&>button:disabled]:opacity-50 [&_select:disabled]:cursor-not-allowed [&_select:disabled]:opacity-50 [&_textarea:disabled]:cursor-not-allowed [&_textarea:disabled]:opacity-50',
+  feedback:
+    'border-t border-app-danger-border bg-app-danger-soft px-4 py-2.5 text-[11px] leading-4 text-app-danger',
+} as const;
 
 function rejectScope(
   user: CurrentUserResponse,

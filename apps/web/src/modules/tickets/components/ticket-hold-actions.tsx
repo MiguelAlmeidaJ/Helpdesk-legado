@@ -19,7 +19,20 @@ import {
   putTicketOnHold,
   resumeTicket,
 } from '../api/tickets-api';
-import styles from './ticket-hold-actions.module.css';
+const styles = {
+  card: 'overflow-hidden rounded-xl border border-app-border bg-app-surface',
+  header:
+    'flex min-h-12 items-center justify-between gap-3 border-b border-app-border-soft bg-app-surface-muted px-4 py-2.5 max-[680px]:flex-col max-[680px]:items-stretch [&>div]:grid [&>div]:gap-0.5 [&_h2]:m-0 [&_h2]:text-[15px] [&_span]:text-[11px] [&_span]:text-app-subtle [&_button]:min-h-[34px] [&_button]:rounded-lg [&_button]:border [&_button]:border-amber-600 [&_button]:bg-app-surface [&_button]:px-3 [&_button]:text-[10px] [&_button]:font-extrabold [&_button]:text-amber-700 [&_button]:transition-colors [&_button]:hover:bg-amber-50 [&_button]:disabled:cursor-not-allowed [&_button]:disabled:opacity-50 dark:[&_button]:border-amber-400/70 dark:[&_button]:text-amber-300 dark:[&_button]:hover:bg-amber-950/40 max-[680px]:[&_button]:self-start',
+  form:
+    'grid grid-cols-1 items-end gap-3.5 px-4 py-3.5 min-[681px]:grid-cols-2 min-[1101px]:grid-cols-[minmax(185px,0.8fr)_minmax(150px,0.6fr)_minmax(300px,1.5fr)_auto] [&>div]:grid [&>div]:gap-1.5 [&_label]:text-[10px] [&_label]:font-extrabold [&_label]:uppercase [&_label]:tracking-[0.03em] [&_label]:text-app-subtle [&_input]:min-h-[38px] [&_input]:w-full [&_input]:rounded-lg [&_input]:border [&_input]:border-app-border-strong [&_input]:bg-app-surface [&_input]:px-2.5 [&_input]:py-2 [&_input]:text-xs [&_input]:text-app-text-soft [&_select]:min-h-[38px] [&_select]:w-full [&_select]:rounded-lg [&_select]:border [&_select]:border-app-border-strong [&_select]:bg-app-surface [&_select]:px-2.5 [&_select]:py-2 [&_select]:text-xs [&_select]:text-app-text-soft [&_textarea]:min-h-[72px] [&_textarea]:w-full [&_textarea]:resize-y [&_textarea]:rounded-lg [&_textarea]:border [&_textarea]:border-app-border-strong [&_textarea]:bg-app-surface [&_textarea]:px-2.5 [&_textarea]:py-2 [&_textarea]:text-xs [&_textarea]:leading-5 [&_textarea]:text-app-text-soft [&_input:focus]:border-amber-600 [&_input:focus]:outline-none [&_input:focus]:ring-3 [&_input:focus]:ring-amber-500/10 [&_select:focus]:border-amber-600 [&_select:focus]:outline-none [&_select:focus]:ring-3 [&_select:focus]:ring-amber-500/10 [&_textarea:focus]:border-amber-600 [&_textarea:focus]:outline-none [&_textarea:focus]:ring-3 [&_textarea:focus]:ring-amber-500/10 [&>button]:min-h-[38px] [&>button]:rounded-lg [&>button]:border [&>button]:border-amber-700 [&>button]:bg-amber-700 [&>button]:px-3 [&>button]:text-[10px] [&>button]:font-extrabold [&>button]:whitespace-nowrap [&>button]:text-white [&>button]:transition-colors [&>button]:hover:bg-amber-800 [&>button:disabled]:cursor-not-allowed [&>button:disabled]:opacity-50 [&_input:disabled]:cursor-not-allowed [&_input:disabled]:opacity-50 [&_select:disabled]:cursor-not-allowed [&_select:disabled]:opacity-50 [&_textarea:disabled]:cursor-not-allowed [&_textarea:disabled]:opacity-50 dark:[&>button]:border-amber-500 dark:[&>button]:bg-amber-500 dark:[&>button]:text-slate-950 dark:[&>button]:hover:bg-amber-400',
+  descriptionField: 'min-[681px]:col-span-2 min-[1101px]:col-span-1',
+  activeHold:
+    'grid grid-cols-1 gap-x-4 gap-y-3 bg-amber-50/80 px-4 py-3.5 min-[681px]:grid-cols-2 min-[1101px]:grid-cols-4 dark:bg-amber-950/20 [&>div]:grid [&>div]:gap-1 [&_span]:text-[10px] [&_span]:font-extrabold [&_span]:uppercase [&_span]:tracking-[0.03em] [&_span]:text-app-subtle [&_strong]:text-xs [&_strong]:text-app-text-soft [&>p]:m-0 [&>p]:border-t [&>p]:border-amber-200 [&>p]:pt-2.5 [&>p]:text-xs [&>p]:leading-5 [&>p]:whitespace-pre-wrap [&>p]:text-app-muted min-[681px]:[&>p]:col-span-2 min-[1101px]:[&>p]:col-span-4 dark:[&>p]:border-amber-900/60',
+  warning:
+    'border-t border-app-danger-border bg-app-danger-soft px-4 py-2.5 text-[11px] leading-5 text-app-danger',
+  feedback:
+    'border-t border-amber-200 bg-amber-50/80 px-4 py-2.5 text-[11px] leading-5 text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/20 dark:text-amber-200',
+} as const;
 
 function holdScope(
   user: CurrentUserResponse,
