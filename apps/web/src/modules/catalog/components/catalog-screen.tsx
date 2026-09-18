@@ -22,7 +22,66 @@ import {
   fetchCatalogs,
   updateCatalog,
 } from '../api/catalog-api';
-import styles from './catalog-screen.module.css';
+const BUTTON_CLASS =
+  'inline-flex min-h-10 items-center justify-center gap-2 rounded-[9px] border border-app-border-strong bg-app-surface px-4 font-bold text-app-text-soft no-underline transition hover:bg-app-surface-hover focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-[var(--app-brand-ring)] disabled:cursor-not-allowed disabled:opacity-50';
+
+const PRIMARY_BUTTON_CLASS =
+  `${BUTTON_CLASS} border-app-brand bg-app-brand text-white hover:bg-app-brand-hover`;
+
+const CONTROL_CLASS =
+  '[&_input]:min-h-10 [&_input]:w-full [&_input]:rounded-[9px] [&_input]:border [&_input]:border-app-border-strong [&_input]:bg-app-surface [&_input]:px-[11px] [&_input]:py-[9px] [&_input]:text-app-text [&_input]:outline-none [&_input]:transition [&_select]:min-h-10 [&_select]:w-full [&_select]:rounded-[9px] [&_select]:border [&_select]:border-app-border-strong [&_select]:bg-app-surface [&_select]:px-[11px] [&_select]:py-[9px] [&_select]:text-app-text [&_select]:outline-none [&_select]:transition [&_input:focus]:border-app-brand [&_input:focus]:ring-3 [&_input:focus]:ring-[var(--app-brand-ring)] [&_select:focus]:border-app-brand [&_select:focus]:ring-3 [&_select:focus]:ring-[var(--app-brand-ring)]';
+
+const styles = {
+  page: 'min-h-screen bg-app-bg text-app-text',
+  header:
+    'sticky top-0 z-20 flex items-center justify-between gap-5 border-b border-app-border bg-[var(--app-header-bg)] px-6 py-3.5 backdrop-blur-xl max-sm:px-3.5',
+  headerLeft: 'flex min-w-0 items-center gap-2.5',
+  brand:
+    'flex items-baseline gap-2.5 no-underline [&_strong]:text-lg [&_span]:text-[13px] [&_span]:text-app-subtle max-sm:[&_span]:hidden',
+  content: 'mx-auto w-full max-w-[1500px] p-6 max-sm:px-3.5',
+  titleRow:
+    'mb-[18px] flex items-end justify-between gap-6 max-md:flex-col max-md:items-stretch [&_h1]:m-0 [&_h1]:text-[28px] [&_p]:mt-1.5 [&_p]:mb-0 [&_p]:text-app-muted-strong',
+  eyebrow:
+    'mb-2 inline-block text-xs font-extrabold uppercase tracking-[0.1em] text-app-muted',
+  button: BUTTON_CLASS,
+  buttonPrimary: PRIMARY_BUTTON_CLASS,
+  filters:
+    `mb-[18px] grid grid-cols-1 items-end gap-3 rounded-[14px] border border-app-border bg-app-surface p-4 md:grid-cols-2 xl:grid-cols-[minmax(220px,1.4fr)_repeat(3,minmax(150px,1fr))_auto] [&_label]:grid [&_label]:gap-1.5 [&_label]:text-[13px] [&_label]:font-semibold ${CONTROL_CLASS}`,
+  filterActions: 'flex justify-end gap-2 md:col-span-2 xl:col-span-1 max-sm:flex-col',
+  layout:
+    'grid items-start gap-[18px] xl:grid-cols-[minmax(300px,0.85fr)_minmax(0,1.65fr)]',
+  listCard:
+    'min-h-[520px] overflow-hidden rounded-[14px] border border-app-border bg-app-surface shadow-sm shadow-slate-950/5 dark:shadow-black/10',
+  detailCard:
+    'min-h-[520px] overflow-hidden rounded-[14px] border border-app-border bg-app-surface shadow-sm shadow-slate-950/5 dark:shadow-black/10',
+  cardHeader:
+    'flex items-start justify-between gap-4 border-b border-app-border-soft px-5 py-[18px] max-sm:flex-col [&_h2]:mt-[3px] [&_h2]:mb-0 [&_h2]:text-xl',
+  loading: 'text-[13px] text-app-muted',
+  list: 'max-h-[620px] overflow-auto',
+  listItem:
+    'grid w-full cursor-pointer gap-1 border-0 border-b border-app-border-soft bg-transparent px-[18px] py-3.5 text-left text-inherit transition hover:bg-app-surface-hover data-[active=true]:bg-app-surface-hover data-[active=true]:shadow-[inset_3px_0_0_var(--app-brand)]',
+  listTitle: 'font-bold leading-[1.35] text-app-text',
+  listMeta: 'text-xs text-app-muted',
+  pagination:
+    'flex items-center justify-between gap-2.5 border-t border-app-border-soft px-[18px] py-3.5 text-[13px] text-app-muted max-sm:flex-wrap',
+  detail: 'min-h-[520px]',
+  editor: 'min-h-[520px]',
+  metadata:
+    'm-0 grid grid-cols-1 gap-2.5 border-b border-app-border-soft px-5 py-4 sm:grid-cols-2 xl:grid-cols-4 [&_div]:min-w-0 [&_dt]:text-[11px] [&_dt]:font-bold [&_dt]:uppercase [&_dt]:text-app-muted [&_dd]:mt-[3px] [&_dd]:mb-0 [&_dd]:overflow-hidden [&_dd]:text-ellipsis [&_dd]:whitespace-nowrap [&_dd]:text-[13px] [&_dd]:text-app-text-soft',
+  preview: 'block min-h-[520px] w-full border-0 bg-white',
+  formGrid:
+    `grid grid-cols-1 gap-3.5 p-5 md:grid-cols-3 [&_label]:grid [&_label]:gap-1.5 [&_label]:text-[13px] [&_label]:font-semibold [&_small]:font-normal [&_small]:text-app-muted ${CONTROL_CLASS} [&_textarea]:min-h-[320px] [&_textarea]:w-full [&_textarea]:resize-y [&_textarea]:rounded-[9px] [&_textarea]:border [&_textarea]:border-app-border-strong [&_textarea]:bg-app-surface [&_textarea]:px-[11px] [&_textarea]:py-[9px] [&_textarea]:font-mono [&_textarea]:text-[13px] [&_textarea]:leading-[1.5] [&_textarea]:text-app-text [&_textarea]:outline-none [&_textarea]:transition [&_textarea:focus]:border-app-brand [&_textarea:focus]:ring-3 [&_textarea:focus]:ring-[var(--app-brand-ring)] [&_input:disabled]:cursor-not-allowed [&_input:disabled]:opacity-50 [&_select:disabled]:cursor-not-allowed [&_select:disabled]:opacity-50 [&_textarea:disabled]:cursor-not-allowed [&_textarea:disabled]:opacity-50`,
+  wide: 'md:col-span-3',
+  editorActions: 'flex justify-end gap-2 px-5 pb-5 max-sm:[&>*]:w-full',
+  placeholder:
+    'grid min-h-[480px] place-content-center px-5 py-7 text-center text-app-muted [&_h2]:mt-[3px] [&_h2]:mb-0 [&_h2]:text-xl [&_p]:max-w-[420px]',
+  empty: 'm-0 px-5 py-7 text-app-muted',
+  error:
+    'mb-3.5 rounded-[9px] border border-app-danger-border bg-app-danger-soft px-3.5 py-[11px] text-sm text-app-danger',
+  success:
+    'mb-3.5 rounded-[9px] border border-emerald-300/70 bg-emerald-50 px-3.5 py-[11px] text-sm text-emerald-800 dark:border-emerald-900/70 dark:bg-emerald-950/40 dark:text-emerald-200',
+} as const;
+
 
 const PAGE_SIZE = 30;
 
@@ -249,11 +308,11 @@ export function CatalogScreen({ currentUser }: { currentUser: CurrentUserRespons
   const canEditDetail = detail ? canManageSector(currentUser, detail.sector) : false;
 
   return (
-    <main className="tickets-page">
-      <header className="tickets-header">
-        <div className="tickets-header-left">
+    <main className={styles.page}>
+      <header className={styles.header}>
+        <div className={styles.headerLeft}>
           <AppSidebar />
-          <Link className="tickets-brand" href="/dashboard">
+          <Link className={styles.brand} href="/dashboard">
             <strong>Helpdesk</strong>
             <span>Nova plataforma</span>
           </Link>
@@ -261,15 +320,15 @@ export function CatalogScreen({ currentUser }: { currentUser: CurrentUserRespons
         <SessionUserMenu user={currentUser} />
       </header>
 
-      <div className="tickets-content">
-        <div className="tickets-title-row">
+      <div className={styles.content}>
+        <div className={styles.titleRow}>
           <div>
-            <span className="eyebrow">Cadastros</span>
+            <span className={styles.eyebrow}>Cadastros</span>
             <h1>Catálogos</h1>
             <p>Consulta e manutenção do catálogo de atendimento com escopo por setor.</p>
           </div>
           {manageableSectors.length > 0 ? (
-            <button className="button button-primary" onClick={startCreate} type="button">
+            <button className={styles.buttonPrimary} onClick={startCreate} type="button">
               Novo catálogo
             </button>
           ) : null}
@@ -329,8 +388,8 @@ export function CatalogScreen({ currentUser }: { currentUser: CurrentUserRespons
             </select>
           </label>
           <div className={styles.filterActions}>
-            <button className="button" onClick={clearFilters} type="button">Limpar</button>
-            <button className="button button-primary" type="submit">Filtrar</button>
+            <button className={styles.button} onClick={clearFilters} type="button">Limpar</button>
+            <button className={styles.buttonPrimary} type="submit">Filtrar</button>
           </div>
         </form>
 
@@ -338,7 +397,7 @@ export function CatalogScreen({ currentUser }: { currentUser: CurrentUserRespons
           <section className={styles.listCard}>
             <div className={styles.cardHeader}>
               <div>
-                <span className="eyebrow">Resultados</span>
+                <span className={styles.eyebrow}>Resultados</span>
                 <h2>Catálogos disponíveis</h2>
               </div>
               {loadingList ? <span className={styles.loading}>Carregando…</span> : null}
@@ -367,7 +426,7 @@ export function CatalogScreen({ currentUser }: { currentUser: CurrentUserRespons
 
             <div className={styles.pagination}>
               <button
-                className="button"
+                className={styles.button}
                 disabled={loadingList || offset === 0}
                 onClick={() => setOffset(Math.max(0, offset - PAGE_SIZE))}
                 type="button"
@@ -376,7 +435,7 @@ export function CatalogScreen({ currentUser }: { currentUser: CurrentUserRespons
               </button>
               <span>{offset + 1}{result?.items.length ? `–${offset + result.items.length}` : ''}</span>
               <button
-                className="button"
+                className={styles.button}
                 disabled={loadingList || !result?.hasMore || result.nextOffset === null}
                 onClick={() => {
                   const nextOffset = result?.nextOffset;
@@ -394,10 +453,10 @@ export function CatalogScreen({ currentUser }: { currentUser: CurrentUserRespons
               <form className={styles.editor} onSubmit={save}>
                 <div className={styles.cardHeader}>
                   <div>
-                    <span className="eyebrow">{form.id ? 'Edição' : 'Novo registro'}</span>
+                    <span className={styles.eyebrow}>{form.id ? 'Edição' : 'Novo registro'}</span>
                     <h2>{form.id ? `Editar catálogo #${form.id}` : 'Novo catálogo'}</h2>
                   </div>
-                  <button className="button" disabled={saving} onClick={closeEditor} type="button">Cancelar</button>
+                  <button className={styles.button} disabled={saving} onClick={closeEditor} type="button">Cancelar</button>
                 </div>
 
                 <div className={styles.formGrid}>
@@ -465,7 +524,7 @@ export function CatalogScreen({ currentUser }: { currentUser: CurrentUserRespons
                 </div>
 
                 <div className={styles.editorActions}>
-                  <button className="button button-primary" disabled={saving} type="submit">
+                  <button className={styles.buttonPrimary} disabled={saving} type="submit">
                     {saving ? 'Salvando…' : 'Salvar catálogo'}
                   </button>
                 </div>
@@ -476,11 +535,11 @@ export function CatalogScreen({ currentUser }: { currentUser: CurrentUserRespons
               <div className={styles.detail}>
                 <div className={styles.cardHeader}>
                   <div>
-                    <span className="eyebrow">Catálogo #{detail.id}</span>
+                    <span className={styles.eyebrow}>Catálogo #{detail.id}</span>
                     <h2>{detail.title}</h2>
                   </div>
                   {canEditDetail ? (
-                    <button className="button button-primary" onClick={startEdit} type="button">Editar</button>
+                    <button className={styles.buttonPrimary} onClick={startEdit} type="button">Editar</button>
                   ) : null}
                 </div>
                 <dl className={styles.metadata}>
@@ -502,7 +561,7 @@ export function CatalogScreen({ currentUser }: { currentUser: CurrentUserRespons
               </div>
             ) : (
               <div className={styles.placeholder}>
-                <span className="eyebrow">Visualização</span>
+                <span className={styles.eyebrow}>Visualização</span>
                 <h2>Selecione um catálogo</h2>
                 <p>Escolha um item da lista para consultar o conteúdo e os metadados.</p>
               </div>
