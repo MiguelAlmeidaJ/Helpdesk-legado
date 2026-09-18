@@ -192,24 +192,24 @@ export function DevOpsProjectCreateScreen({
   const disabled = loading || saving || canCreate !== true;
 
   return (
-    <main className="tickets-page">
-      <header className="tickets-header">
-        <div className="tickets-header-left">
+    <main className="min-h-screen bg-app-bg text-app-text">
+      <header className="sticky top-0 z-20 flex items-center justify-between gap-5 border-b border-app-border bg-[var(--app-header-bg)] px-6 py-3.5 backdrop-blur-xl max-sm:px-3.5">
+        <div className="flex min-w-0 items-center gap-2.5">
           <AppSidebar />
-          <Link className="tickets-brand" href="/dashboard"><strong>Helpdesk</strong><span>Nova plataforma</span></Link>
+          <Link className="flex items-baseline gap-2.5 no-underline [&_strong]:text-lg [&_span]:text-[13px] [&_span]:text-app-subtle max-sm:[&_span]:hidden" href="/dashboard"><strong>Helpdesk</strong><span>Nova plataforma</span></Link>
         </div>
         <SessionUserMenu user={currentUser} />
       </header>
-      <div className="tickets-content">
-        <div className="tickets-title-row">
-          <div><span className="eyebrow">DevOps · Agrupamento</span><h1>Novo projeto</h1><p>Crie um agrupador opcional para tickets DevOps. Projeto não é um tipo de ticket.</p></div>
-          <Link className="button" href="/tickets/devops/projects">Voltar aos projetos</Link>
+      <div className="mx-auto w-full max-w-[1500px] px-6 py-6 max-sm:px-3.5">
+        <div className="mb-[18px] flex items-end justify-between gap-6 max-sm:flex-col max-sm:items-start max-sm:gap-2 [&_h1]:m-0 [&_h1]:text-[28px] [&_p]:mt-1.5 [&_p]:mb-0 [&_p]:text-app-muted-strong">
+          <div><span className="mb-2 inline-block text-xs font-extrabold uppercase tracking-[0.1em] text-app-muted">DevOps · Agrupamento</span><h1>Novo projeto</h1><p>Crie um agrupador opcional para tickets DevOps. Projeto não é um tipo de ticket.</p></div>
+          <Link className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-app-border-strong bg-app-surface px-4 font-bold text-app-text-soft no-underline transition hover:bg-app-surface-hover focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-[var(--app-brand-ring)]" href="/tickets/devops/projects">Voltar aos projetos</Link>
         </div>
 
         {error ? <div className={styles.error} role="alert">{error}</div> : null}
         {canCreate === false ? <div className={styles.error} role="alert">Seu acesso DevOps permite leitura, mas não criação de projetos.</div> : null}
         {success ? <div className={styles.success} role="status">Projeto <Link href={`/tickets/devops/projects/${success.id}`}>#{success.id} · {success.name}</Link> criado.</div> : null}
-        {loading ? <div className="loading-line" aria-label="Carregando" /> : null}
+        {loading ? <div className="mb-3 h-[3px] animate-pulse rounded-full bg-app-brand" aria-label="Carregando" /> : null}
 
         <form className={styles.card} onSubmit={submit}>
           <div className={styles.grid}>
@@ -281,7 +281,7 @@ export function DevOpsProjectCreateScreen({
             </label>
           </div>
           <p className={styles.muted}>As mesmas classificações de DevOps são usadas por projetos e tarefas. O cliente será herdado pelas tarefas criadas dentro deste projeto.</p>
-          <div className={styles.actions}><button className="button button-primary" disabled={disabled} type="submit">{saving ? 'Criando…' : 'Criar projeto'}</button></div>
+          <div className={styles.actions}><button className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-app-brand bg-app-brand px-4 font-bold text-white transition hover:bg-app-brand-hover focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-[var(--app-brand-ring)] disabled:cursor-not-allowed disabled:opacity-50" disabled={disabled} type="submit">{saving ? 'Criando…' : 'Criar projeto'}</button></div>
         </form>
       </div>
     </main>

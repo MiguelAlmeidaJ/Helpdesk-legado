@@ -97,25 +97,25 @@ function ScreenShell({
   action?: ReactNode;
 }) {
   return (
-    <main className="tickets-page">
-      <header className="tickets-header">
-        <div className="tickets-header-left">
+    <main className="min-h-screen bg-app-bg text-app-text">
+      <header className="sticky top-0 z-20 flex items-center justify-between gap-5 border-b border-app-border bg-[var(--app-header-bg)] px-6 py-3.5 backdrop-blur-xl max-sm:px-3.5">
+        <div className="flex min-w-0 items-center gap-2.5">
           <AppSidebar />
-          <Link className="tickets-brand" href="/dashboard">
+          <Link className="flex items-baseline gap-2.5 no-underline [&_strong]:text-lg [&_span]:text-[13px] [&_span]:text-app-subtle max-sm:[&_span]:hidden" href="/dashboard">
             <strong>Helpdesk</strong>
             <span>Nova plataforma</span>
           </Link>
         </div>
         <SessionUserMenu user={currentUser} />
       </header>
-      <div className="tickets-content">
-        <div className="tickets-title-row">
+      <div className="mx-auto w-full max-w-[1500px] px-6 py-6 max-sm:px-3.5">
+        <div className="mb-[18px] flex items-end justify-between gap-6 max-sm:flex-col max-sm:items-start max-sm:gap-2 [&_h1]:m-0 [&_h1]:text-[28px] [&_p]:mt-1.5 [&_p]:mb-0 [&_p]:text-app-muted-strong">
           <div>
-            <span className="eyebrow">Tickets</span>
+            <span className="mb-2 inline-block text-xs font-extrabold uppercase tracking-[0.1em] text-app-muted">Tickets</span>
             <h1>{title}</h1>
             <p>{subtitle}</p>
           </div>
-          {action ?? <Link className="button" href="/tickets">Voltar à lista</Link>}
+          {action ?? <Link className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-app-border-strong bg-app-surface px-4 font-bold text-app-text-soft no-underline transition hover:bg-app-surface-hover focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-[var(--app-brand-ring)]" href="/tickets">Voltar à lista</Link>}
         </div>
         {children}
       </div>
@@ -171,10 +171,10 @@ function FormHeader({ label, description }: { label: string; description: string
   return (
     <div className={styles.sectionHeader}>
       <div>
-        <span className="eyebrow">{label}</span>
+        <span className="mb-2 inline-block text-xs font-extrabold uppercase tracking-[0.1em] text-app-muted">{label}</span>
         <h2>{description}</h2>
       </div>
-      <Link className="button" href="/tickets/new">Trocar tipo</Link>
+      <Link className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-app-border-strong bg-app-surface px-4 font-bold text-app-text-soft no-underline transition hover:bg-app-surface-hover focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-[var(--app-brand-ring)]" href="/tickets/new">Trocar tipo</Link>
     </div>
   );
 }
@@ -387,7 +387,7 @@ function DevOpsTicketForm({ initialProjectId }: { initialProjectId?: number }) {
       />
       {error ? <div className={styles.error} role="alert">{error}</div> : null}
       {success ? <div className={styles.success} role="status">{success}</div> : null}
-      {loading ? <div className="loading-line" aria-label="Carregando" /> : null}
+      {loading ? <div className="mb-3 h-[3px] animate-pulse rounded-full bg-app-brand" aria-label="Carregando" /> : null}
       <form className={styles.card} onSubmit={submit}>
         <div className={styles.grid}>
           <label>
@@ -574,7 +574,7 @@ function DevOpsTicketForm({ initialProjectId }: { initialProjectId?: number }) {
           </label>
         </div>
         <div className={styles.actions}>
-          <button className="button button-primary" disabled={saving || loading} type="submit">
+          <button className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-app-brand bg-app-brand px-4 font-bold text-white transition hover:bg-app-brand-hover focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-[var(--app-brand-ring)] disabled:cursor-not-allowed disabled:opacity-50" disabled={saving || loading} type="submit">
             {saving ? 'Cadastrando…' : 'Cadastrar ticket DevOps'}
           </button>
         </div>
@@ -676,7 +676,7 @@ function MarketingTicketForm() {
       />
       {error ? <div className={styles.error} role="alert">{error}</div> : null}
       {success ? <div className={styles.success} role="status">{success}</div> : null}
-      {loading ? <div className="loading-line" aria-label="Carregando" /> : null}
+      {loading ? <div className="mb-3 h-[3px] animate-pulse rounded-full bg-app-brand" aria-label="Carregando" /> : null}
       <form className={styles.card} onSubmit={submit}>
         <div className={styles.grid}>
           <label>
@@ -789,7 +789,7 @@ function MarketingTicketForm() {
           Item não faz parte do cadastro atual de Marketing e permanece sem valor.
         </p>
         <div className={styles.actions}>
-          <button className="button button-primary" disabled={saving || loading} type="submit">
+          <button className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-app-brand bg-app-brand px-4 font-bold text-white transition hover:bg-app-brand-hover focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-[var(--app-brand-ring)] disabled:cursor-not-allowed disabled:opacity-50" disabled={saving || loading} type="submit">
             {saving ? 'Cadastrando…' : 'Cadastrar ticket Marketing'}
           </button>
         </div>
@@ -825,13 +825,13 @@ export function ModularTicketCreateScreen({
 
   return (
     <ScreenShell
-      action={<Link className="button" href="/tickets">Voltar à lista</Link>}
+      action={<Link className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-app-border-strong bg-app-surface px-4 font-bold text-app-text-soft no-underline transition hover:bg-app-surface-hover focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-[var(--app-brand-ring)]" href="/tickets">Voltar à lista</Link>}
       currentUser={currentUser}
       subtitle="Escolha o fluxo certo. Cada tipo mantém seus campos, regras e permissões."
       title="Novo ticket"
     >
       {error ? <div className={styles.error} role="alert">{error}</div> : null}
-      {loading ? <div className="loading-line" aria-label="Carregando" /> : null}
+      {loading ? <div className="mb-3 h-[3px] animate-pulse rounded-full bg-app-brand" aria-label="Carregando" /> : null}
 
       {forbiddenSelection ? (
         <div className={styles.error} role="alert">

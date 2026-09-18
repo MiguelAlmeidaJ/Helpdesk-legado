@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { fetchTicketTypes } from '../api/modular-ticket-create-api';
-import styles from './ticket-type-navigation-dock.module.css';
 
 const LIST_ROUTES: Record<TicketTypeKey, string> = {
   atendimento: '/tickets',
@@ -47,11 +46,16 @@ export function TicketTypeNavigationDock() {
   if (!showDock || types.length < 2) return null;
 
   return (
-    <nav className={styles.dock} aria-label="Tipos de ticket">
-      <span className={styles.label}>Tickets</span>
+    <nav
+      aria-label="Tipos de ticket"
+      className="fixed bottom-4 left-1/2 z-[90] flex max-w-[calc(100vw-2rem)] -translate-x-1/2 items-center gap-1.5 overflow-x-auto rounded-full border border-app-border bg-app-surface/95 p-1.5 shadow-xl shadow-slate-950/15 backdrop-blur-xl dark:shadow-black/30 max-[620px]:justify-start"
+    >
+      <span className="pl-2.5 pr-2 text-[0.74rem] font-bold uppercase tracking-[0.04em] text-app-muted max-[620px]:hidden">
+        Tickets
+      </span>
       {types.map((type) => (
         <Link
-          className={styles.link}
+          className="inline-flex min-h-[34px] items-center justify-center whitespace-nowrap rounded-full px-3 py-1.5 text-[0.84rem] font-semibold text-app-text no-underline transition hover:bg-app-surface-hover data-[active=true]:bg-app-brand data-[active=true]:text-white"
           data-active={activeType === type.key}
           href={LIST_ROUTES[type.key]}
           key={type.key}
