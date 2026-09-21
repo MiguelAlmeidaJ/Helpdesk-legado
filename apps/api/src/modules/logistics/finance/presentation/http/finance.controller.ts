@@ -20,10 +20,10 @@ import type {
   FinanceReceivableWriteInput,
   FinanceRecurringWriteInput,
 } from '@helpdesk/contracts';
-import { LEGACY_SESSION_SECURITY } from '../../../../core/openapi/openapi.constants';
-import type { AuthenticatedUser } from '../../../access/domain/authenticated-user';
-import { CurrentUser } from '../../../access/presentation/http/current-user.decorator';
-import { LegacySessionGuard } from '../../../access/presentation/http/legacy-session.guard';
+import { LEGACY_SESSION_SECURITY } from '../../../../../core/openapi/openapi.constants';
+import type { AuthenticatedUser } from '../../../../access/domain/authenticated-user';
+import { CurrentUser } from '../../../../access/presentation/http/current-user.decorator';
+import { LegacySessionGuard } from '../../../../access/presentation/http/legacy-session.guard';
 import { FinanceService } from '../../application/finance.service';
 
 function authenticated(user: AuthenticatedUser | undefined): AuthenticatedUser {
