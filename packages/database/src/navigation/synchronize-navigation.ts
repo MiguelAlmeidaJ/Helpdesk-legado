@@ -19,6 +19,7 @@ export async function synchronizeNavigation(
     'tickets-recurrences',
     'devops-task-new',
     'marketing-task-new',
+    'marketing-availability',
     'clients',
     'categories',
     'cost-centers',
