@@ -14,8 +14,7 @@ import {
   useMemo,
   useState,
 } from 'react';
-import { AppSidebar } from '../../../shared/navigation/app-sidebar';
-import { SessionUserMenu } from '../../access/components/session-user-menu';
+import { AppPageHeader } from '../../../shared/navigation/app-page-header';
 import {
   getExpensePaymentQueue,
   payExpense,
@@ -415,28 +414,14 @@ export function ExpensePaymentScreen({
 
   return (
     <main className={styles.page}>
-      <header className={styles.header}>
-        <div className={styles.headerLeft}>
-          <AppSidebar />
-          <Link className={styles.brand} href="/painel">
-            <strong>Helpdesk</strong>
-            <span>Logística · Pagamento RDs</span>
-          </Link>
-        </div>
-        <SessionUserMenu user={currentUser} />
-      </header>
+      <AppPageHeader
+        actions={<Link className={styles.secondaryLink} href="/logistica/despesas/administracao">Voltar à gestão</Link>}
+        subtitle="Compense somente RDs já aprovadas e ainda aguardando pagamento."
+        title="Pagamento de Despesas"
+        user={currentUser}
+      />
 
       <div className={styles.content}>
-        <section className={styles.hero}>
-          <div>
-            <span className={styles.eyebrow}>Workflow financeiro</span>
-            <h1>Pagamento de Despesas</h1>
-            <p>Compense somente RDs já aprovadas e ainda aguardando pagamento.</p>
-          </div>
-          <Link className={styles.secondaryLink} href="/logistica/despesas/administracao">
-            Voltar à Gestão RDs
-          </Link>
-        </section>
 
         <section className={styles.notice}>
           O QR Code é gerado localmente no navegador. O pagamento continua sendo
