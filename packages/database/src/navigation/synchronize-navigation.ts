@@ -16,6 +16,10 @@ export async function synchronizeNavigation(
   db: Pick<Nivel3DatabaseClient, '$queryRaw' | '$executeRaw'>,
 ): Promise<number> {
   const migrated = new Set(['tickets-recurrences', 'devops-task-new', 'marketing-task-new']);
+  const legacyCreateHrefs = new Map<string, Set<string>>([
+    ['devops-task-new', new Set(['/atendimentos/novo?type=devops'])],
+    ['marketing-task-new', new Set(['/atendimentos/novo?type=marketing'])],
+  ]);
   const defaults = new Map(DEFAULT_NAVIGATION.flatMap((section) =>
     section.items.map((item) => [item.slug, item] as const),
   ));
@@ -26,6 +30,10 @@ export async function synchronizeNavigation(
   for (const row of rows) {
     const definition = defaults.get(row.slug);
     let href = row.href ? portugueseWebHref(row.href) : null;
+    const legacyCreateHref = legacyCreateHrefs.get(row.slug);
+    if (definition?.href && href && legacyCreateHref?.has(href)) {
+      href = definition.href;
+    }
     let status = row.status;
     let condition = row.visibility_condition;
     let label = row.label;
