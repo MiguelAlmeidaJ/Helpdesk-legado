@@ -5,8 +5,7 @@ import Link from 'next/link';
 import type { FormEvent } from 'react';
 import { useEffect, useMemo, useState } from 'react';
 import { ApiError } from '../../../shared/api/api-client';
-import { AppSidebar } from '../../../shared/navigation/app-sidebar';
-import { SessionUserMenu } from '../../access/components/session-user-menu';
+import { AppPageHeader } from '../../../shared/navigation/app-page-header';
 import { createUser, deactivateUser, fetchUser, fetchUserCatalogs, fetchUsers, updateUser } from '../api/users-api';
 const BUTTON_CLASS =
   'inline-flex min-h-10 items-center justify-center gap-2 rounded-[9px] border border-app-border-strong bg-app-surface px-4 font-bold text-app-text-soft no-underline transition hover:bg-app-surface-hover focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-[var(--app-brand-ring)] disabled:cursor-not-allowed disabled:opacity-50';
@@ -171,9 +170,13 @@ export function UsersScreen({ currentUser }: { currentUser: CurrentUserResponse 
 
   return (
     <main className={styles.page}>
-      <header className={styles.header}><div className={styles.headerLeft}><AppSidebar /><Link className={styles.brand} href="/painel"><strong>Helpdesk</strong><span>Nova plataforma</span></Link></div><SessionUserMenu user={currentUser} /></header>
+      <AppPageHeader
+        actions={canCreate ? <button className={styles.buttonPrimary} onClick={newUser} type="button">Novo usuário</button> : null}
+        subtitle="Cadastro, vínculos, situação e acessos em uma única tela."
+        title="Usuários"
+        user={currentUser}
+      />
       <div className={styles.content}>
-        <div className={styles.titleRow}><div><span className={styles.eyebrow}>Administração</span><h1>Usuários</h1><p>Cadastro, vínculos, situação e acessos em uma única tela.</p></div>{canCreate ? <button className={styles.buttonPrimary} onClick={newUser} type="button">Novo usuário</button> : null}</div>
         {error ? <div className={styles.error} role="alert">{error}</div> : null}
         {success ? <div className={styles.success} role="status">{success}</div> : null}
         <div className={styles.layout}>
