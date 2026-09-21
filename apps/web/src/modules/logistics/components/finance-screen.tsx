@@ -13,7 +13,7 @@ import type {
   FinanceRow,
   FinanceViewKey,
 } from '@helpdesk/contracts';
-import type { FormEvent } from 'react';
+import type { FormEvent, ReactNode } from 'react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ApiError } from '../../../shared/api/api-client';
 import { AppPageHeader } from '../../../shared/navigation/app-page-header';
@@ -114,10 +114,6 @@ function errorMessage(reason: unknown): string {
     : 'Não foi possível concluir a operação.';
 }
 
-function option(options: FinanceCatalogOption[], id: number): FinanceCatalogOption | undefined {
-  return options.find((item) => item.id === id);
-}
-
 function firstId(options: FinanceCatalogOption[]): number {
   return options[0]?.id ?? 0;
 }
@@ -179,7 +175,7 @@ export function FinanceScreen({
 
   const visibleSubgroups = useMemo(() => {
     if (!catalogs || !editor || !('values' in editor)) return [];
-    const values = editor.values as Record<string, unknown>;
+    const values = editor.values as unknown as Record<string, unknown>;
     const groupId = Number(values.groupId ?? 0);
     return catalogs.subgroups.filter(
       (item) => !item.parentId || item.parentId === groupId,
@@ -544,7 +540,7 @@ function FinanceEditor({
     );
   }
 
-  const values = editor.values;
+  const values = editor.values as FinanceReceivableWriteInput & FinancePayableWriteInput & FinanceRecurringWriteInput;
   const common = (
     <>
       <Field label="Descrição">
@@ -654,7 +650,7 @@ function FinanceEditor({
   );
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
     <label className="grid gap-1.5 text-xs font-bold text-app-muted">
       {label}
