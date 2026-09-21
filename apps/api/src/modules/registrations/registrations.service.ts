@@ -130,7 +130,7 @@ function has(user: AuthenticatedUser, permission: AppPermission): boolean {
 }
 
 function status(input: RegistrationWriteInput): 0 | 1 {
-  if (input.status !== 0 && input.status !== 1) {
+  if (!input || typeof input !== 'object' || (input.status !== 0 && input.status !== 1)) {
     throw new BadRequestException('status deve ser 0 ou 1.');
   }
   return input.status;
