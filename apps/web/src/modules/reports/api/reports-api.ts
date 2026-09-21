@@ -1,4 +1,7 @@
 import type {
+  TicketBreakdownLevel,
+  TicketBreakdownMode,
+  TicketBreakdownReportResponse,
   TicketCategoryTotalsLevel,
   TicketCategoryTotalsReportResponse,
   TicketClientTotalsLevel,
@@ -63,3 +66,20 @@ export function fetchTicketTechnicianTotalsReport(
     `reports/tickets/technician-totals${buildReportQuery(filters)}`,
   );
 }
+
+
+export interface TicketBreakdownReportFilters {
+  startDate?: string;
+  endDate?: string;
+  level?: TicketBreakdownLevel;
+}
+
+export function fetchTicketBreakdownReport(
+  mode: TicketBreakdownMode,
+  filters: TicketBreakdownReportFilters = {},
+): Promise<TicketBreakdownReportResponse> {
+  return apiRequest<TicketBreakdownReportResponse>(
+    `reports/tickets/breakdown/${mode}${buildReportQuery(filters)}`,
+  );
+}
+
