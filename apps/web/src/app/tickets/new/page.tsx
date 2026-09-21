@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
+import { redirect } from 'next/navigation';
 import { requireAuthenticatedUser } from '../../../modules/access/server/current-user';
-import { ModularTicketCreateScreen } from '../../../modules/tickets/components/modular-ticket-create-screen';
 import { TicketCreateScreen } from '../../../modules/tickets/components/ticket-create-screen';
 
 export const metadata: Metadata = { title: 'Novo atendimento · Helpdesk' };
@@ -15,32 +15,25 @@ interface NewTicketPageProps {
 export default async function NewTicketPage({
   searchParams,
 }: NewTicketPageProps) {
-  const currentUser = await requireAuthenticatedUser('/atendimentos/novo');
   const params = await searchParams;
   const requestedType = Array.isArray(params.type) ? params.type[0] : params.type;
   const rawProjectId = Array.isArray(params.projectId)
     ? params.projectId[0]
     : params.projectId;
   const parsedProjectId = Number(rawProjectId);
-  const initialProjectId =
+  const projectQuery =
     Number.isSafeInteger(parsedProjectId) && parsedProjectId > 0
-      ? parsedProjectId
-      : undefined;
+      ? `?projectId=${parsedProjectId}`
+      : '';
 
-  if (requestedType === 'atendimento') {
-    return <TicketCreateScreen currentUser={currentUser} />;
+  if (requestedType === 'devops') {
+    redirect(`/atendimentos/devops/nova-tarefa${projectQuery}`);
   }
 
-  const initialType =
-    requestedType === 'devops' || requestedType === 'marketing'
-      ? requestedType
-      : undefined;
+  if (requestedType === 'marketing') {
+    redirect('/atendimentos/marketing/nova-tarefa');
+  }
 
-  return (
-    <ModularTicketCreateScreen
-      currentUser={currentUser}
-      initialProjectId={initialType === 'devops' ? initialProjectId : undefined}
-      initialType={initialType}
-    />
-  );
+  const currentUser = await requireAuthenticatedUser('/atendimentos/novo');
+  return <TicketCreateScreen currentUser={currentUser} />;
 }
