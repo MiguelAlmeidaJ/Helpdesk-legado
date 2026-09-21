@@ -56,3 +56,72 @@ export interface RegistrationWriteInput {
   status: 0 | 1;
   values: Record<string, string | number | boolean | null>;
 }
+
+export interface ClientContactRecord {
+  id: number;
+  name: string;
+  role: string;
+  email: string;
+  phone: string;
+  status: 0 | 1;
+}
+
+export interface ClientLocationRecord {
+  id: number;
+  name: string;
+  address: string;
+  city: string;
+  state: string;
+  status: 0 | 1;
+}
+
+export interface ClientRelationsResponse {
+  contacts: ClientContactRecord[];
+  locations: ClientLocationRecord[];
+  canCreateContacts: boolean;
+  canEditContacts: boolean;
+  canCreateLocations: boolean;
+  canEditLocations: boolean;
+}
+
+export interface ClientContactWriteInput {
+  name: string;
+  role: string;
+  email: string;
+  phone: string;
+  status: 0 | 1;
+}
+
+export interface ClientLocationWriteInput {
+  name: string;
+  address: string;
+  city: string;
+  state: string;
+  status: 0 | 1;
+}
+
+export interface CategoryItemRecord {
+  id: number;
+  name: string;
+  status: 0 | 1;
+}
+
+export interface CategorySubcategoryRecord {
+  id: number;
+  name: string;
+  status: 0 | 1;
+  items: CategoryItemRecord[];
+}
+
+export interface CategoryTreeResponse {
+  subcategories: CategorySubcategoryRecord[];
+  canCreateSubcategories: boolean;
+  canEditSubcategories: boolean;
+  canCreateItems: boolean;
+  canEditItems: boolean;
+}
+
+export interface CategoryChildWriteInput {
+  name: string;
+  status: 0 | 1;
+}
