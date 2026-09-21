@@ -1,4 +1,5 @@
 import type {
+  MarketingAvailabilityResponse,
   MarketingTicketDetailResponse,
   MarketingTicketListResponse,
   TicketProjectListItem,
@@ -96,6 +97,15 @@ export async function fetchDevOpsTicketDetail(
     { signal },
   );
   return response.data[0] ?? null;
+}
+
+export function fetchMarketingAvailability(
+  signal?: AbortSignal,
+): Promise<MarketingAvailabilityResponse> {
+  return apiRequest<MarketingAvailabilityResponse>(
+    'tickets/marketing/availability/dashboard',
+    { signal },
+  );
 }
 
 export function fetchMarketingTickets(
