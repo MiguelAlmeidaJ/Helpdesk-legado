@@ -40,9 +40,17 @@ const REGISTRATION_PERMISSION = {
   clientsRead: 'cadastros.clientes.visualizar',
   clientsCreate: 'cadastros.clientes.criar',
   clientsEdit: 'cadastros.clientes.editar',
+  contactsCreate: 'cadastros.clientes.contatos.criar',
+  contactsEdit: 'cadastros.clientes.contatos.editar',
+  locationsCreate: 'cadastros.clientes.locais.criar',
+  locationsEdit: 'cadastros.clientes.locais.editar',
   categoriesRead: 'cadastros.categorias.visualizar',
   categoriesCreate: 'cadastros.categorias.criar',
   categoriesEdit: 'cadastros.categorias.editar',
+  subcategoriesCreate: 'cadastros.categorias.subcategorias.criar',
+  subcategoriesEdit: 'cadastros.categorias.subcategorias.editar',
+  itemsCreate: 'cadastros.categorias.itens.criar',
+  itemsEdit: 'cadastros.categorias.itens.editar',
   financeRead: 'cadastros.financeiro.visualizar',
   financeManage: 'cadastros.financeiro.gerenciar',
 } as const;
@@ -89,9 +97,17 @@ export function translateRbacAccess(
   addGrant(grants, AppPermission.RegistrationsClientsRead, permissions.has(REGISTRATION_PERMISSION.clientsRead) || permissionLevel(legacyRegistrations, 1) >= 1, PermissionScope.All);
   addGrant(grants, AppPermission.RegistrationsClientsCreate, permissions.has(REGISTRATION_PERMISSION.clientsCreate) || permissionLevel(legacyRegistrations, 1) >= 2, PermissionScope.All);
   addGrant(grants, AppPermission.RegistrationsClientsEdit, permissions.has(REGISTRATION_PERMISSION.clientsEdit) || permissionLevel(legacyRegistrations, 1) >= 3, PermissionScope.All);
+  addGrant(grants, AppPermission.RegistrationsClientContactsCreate, permissions.has(REGISTRATION_PERMISSION.contactsCreate) || permissionLevel(legacyRegistrations, 2) >= 2, PermissionScope.All);
+  addGrant(grants, AppPermission.RegistrationsClientContactsEdit, permissions.has(REGISTRATION_PERMISSION.contactsEdit) || permissionLevel(legacyRegistrations, 2) >= 3, PermissionScope.All);
+  addGrant(grants, AppPermission.RegistrationsClientLocationsCreate, permissions.has(REGISTRATION_PERMISSION.locationsCreate) || permissionLevel(legacyRegistrations, 3) >= 3, PermissionScope.All);
+  addGrant(grants, AppPermission.RegistrationsClientLocationsEdit, permissions.has(REGISTRATION_PERMISSION.locationsEdit) || permissionLevel(legacyRegistrations, 3) >= 3, PermissionScope.All);
   addGrant(grants, AppPermission.RegistrationsCategoriesRead, permissions.has(REGISTRATION_PERMISSION.categoriesRead) || permissionLevel(legacyRegistrations, 4) >= 1, PermissionScope.All);
   addGrant(grants, AppPermission.RegistrationsCategoriesCreate, permissions.has(REGISTRATION_PERMISSION.categoriesCreate) || permissionLevel(legacyRegistrations, 4) >= 2, PermissionScope.All);
   addGrant(grants, AppPermission.RegistrationsCategoriesEdit, permissions.has(REGISTRATION_PERMISSION.categoriesEdit) || permissionLevel(legacyRegistrations, 4) >= 3, PermissionScope.All);
+  addGrant(grants, AppPermission.RegistrationsSubcategoriesCreate, permissions.has(REGISTRATION_PERMISSION.subcategoriesCreate) || permissionLevel(legacyRegistrations, 5) >= 2, PermissionScope.All);
+  addGrant(grants, AppPermission.RegistrationsSubcategoriesEdit, permissions.has(REGISTRATION_PERMISSION.subcategoriesEdit) || permissionLevel(legacyRegistrations, 5) >= 3, PermissionScope.All);
+  addGrant(grants, AppPermission.RegistrationsItemsCreate, permissions.has(REGISTRATION_PERMISSION.itemsCreate) || permissionLevel(legacyRegistrations, 6) >= 2, PermissionScope.All);
+  addGrant(grants, AppPermission.RegistrationsItemsEdit, permissions.has(REGISTRATION_PERMISSION.itemsEdit) || permissionLevel(legacyRegistrations, 6) >= 3, PermissionScope.All);
   addGrant(grants, AppPermission.RegistrationsFinanceRead, permissions.has(REGISTRATION_PERMISSION.financeRead) || permissionLevel(legacyFinanceRegistrations, 0) >= 1, PermissionScope.All);
   addGrant(grants, AppPermission.RegistrationsFinanceManage, permissions.has(REGISTRATION_PERMISSION.financeManage) || permissionLevel(legacyFinanceRegistrations, 0) >= 1, PermissionScope.All);
 
