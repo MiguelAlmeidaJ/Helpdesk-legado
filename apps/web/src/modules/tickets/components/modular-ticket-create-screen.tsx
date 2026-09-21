@@ -11,6 +11,7 @@ import type {
   TicketTypeKey,
 } from '@helpdesk/contracts';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import type { FormEvent, ReactNode } from 'react';
 import { useEffect, useMemo, useState } from 'react';
 import { ApiError } from '../../../shared/api/api-client';
@@ -148,7 +149,7 @@ function TypeChooser({ types }: { types: TicketTypeDescriptor[] }) {
       {available.map((type) => (
         <Link
           className={styles.typeCard}
-          href={`/atendimentos/novo?type=${type.key}`}
+          href={type.key === 'atendimento' ? '/atendimentos/novo' : `/atendimentos/${type.key}/nova-tarefa`}
           key={type.key}
         >
           <div className={styles.typeTop}>
@@ -174,12 +175,12 @@ function FormHeader({ label, description }: { label: string; description: string
         <span className="mb-2 inline-block text-xs font-extrabold uppercase tracking-[0.1em] text-app-muted">{label}</span>
         <h2>{description}</h2>
       </div>
-      <Link className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-app-border-strong bg-app-surface px-4 font-bold text-app-text-soft no-underline transition hover:bg-app-surface-hover focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-[var(--app-brand-ring)]" href="/atendimentos/novo">Trocar tipo</Link>
     </div>
   );
 }
 
 function DevOpsTicketForm({ initialProjectId }: { initialProjectId?: number }) {
+  const router = useRouter();
   const [catalogs, setCatalogs] = useState<TicketCreateCatalogsResponse | null>(null);
   const [projects, setProjects] = useState<TicketProjectListItem[]>([]);
   const [dependencies, setDependencies] = useState<TicketProjectTaskListItem[]>([]);
@@ -206,7 +207,6 @@ function DevOpsTicketForm({ initialProjectId }: { initialProjectId?: number }) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
 
   const selectedProject = useMemo(
     () => projects.find((project) => project.id === Number(projectId)),
@@ -325,7 +325,6 @@ function DevOpsTicketForm({ initialProjectId }: { initialProjectId?: number }) {
     event.preventDefault();
     setSaving(true);
     setError(null);
-    setSuccess(null);
 
     try {
       if (effectiveClientId <= 0) {
@@ -347,27 +346,24 @@ function DevOpsTicketForm({ initialProjectId }: { initialProjectId?: number }) {
         technicianId: Number(technicianId),
       };
 
+      let createdId: number;
       if (selectedProject) {
         const result = await createDevOpsProjectTask(selectedProject.id, {
           ...common,
           days: Number(days),
           dependencyTaskId: Number(dependencyTaskId),
         });
-        setSuccess(
-          `Ticket DevOps #${result.id} criado no projeto ${selectedProject.name}.`,
-        );
+        createdId = result.id;
       } else {
         const result = await createStandaloneDevOpsTicket({
           ...common,
           clientId: effectiveClientId,
         });
-        setSuccess(`Ticket DevOps #${result.id} criado sem projeto.`);
+        createdId = result.id;
       }
 
-      setName('');
-      setDescription('');
-      setDependencyTaskId('0');
-      setDays('0');
+      router.push(`/atendimentos/devops/${createdId}`);
+      router.refresh();
     } catch (reason) {
       setError(
         reason instanceof Error && !(reason instanceof ApiError)
@@ -382,11 +378,10 @@ function DevOpsTicketForm({ initialProjectId }: { initialProjectId?: number }) {
   return (
     <>
       <FormHeader
-        description="Nova tarefa DevOps"
+        description="Dados da tarefa"
         label="DevOps · sem SLA"
       />
       {error ? <div className={styles.error} role="alert">{error}</div> : null}
-      {success ? <div className={styles.success} role="status">{success}</div> : null}
       {loading ? <div className="mb-3 h-[3px] animate-pulse rounded-full bg-app-brand" aria-label="Carregando" /> : null}
       <form className={styles.card} onSubmit={submit}>
         <div className={styles.grid}>
@@ -574,8 +569,11 @@ function DevOpsTicketForm({ initialProjectId }: { initialProjectId?: number }) {
           </label>
         </div>
         <div className={styles.actions}>
+          <Link className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-app-border-strong bg-app-surface px-4 font-bold text-app-text-soft no-underline transition hover:bg-app-surface-hover" href="/atendimentos/devops">
+            Cancelar
+          </Link>
           <button className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-app-brand bg-app-brand px-4 font-bold text-white transition hover:bg-app-brand-hover focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-[var(--app-brand-ring)] disabled:cursor-not-allowed disabled:opacity-50" disabled={saving || loading} type="submit">
-            {saving ? 'Cadastrando…' : 'Cadastrar atendimento DevOps'}
+            {saving ? 'Criando…' : 'Criar tarefa DevOps'}
           </button>
         </div>
       </form>
@@ -584,6 +582,7 @@ function DevOpsTicketForm({ initialProjectId }: { initialProjectId?: number }) {
 }
 
 function MarketingTicketForm() {
+  const router = useRouter();
   const [catalogs, setCatalogs] = useState<MarketingTicketCatalogsResponse | null>(null);
   const [requesters, setRequesters] = useState<TicketCatalogOption[]>([]);
   const [locations, setLocations] = useState<TicketCatalogOption[]>([]);
@@ -602,7 +601,6 @@ function MarketingTicketForm() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
 
   useEffect(() => {
     fetchMarketingCreateCatalogs()
@@ -641,7 +639,6 @@ function MarketingTicketForm() {
     event.preventDefault();
     setSaving(true);
     setError(null);
-    setSuccess(null);
     try {
       const result = await createMarketingTicket({
         name,
@@ -658,9 +655,8 @@ function MarketingTicketForm() {
         openingAt,
         technicianId: Number(technicianId),
       });
-      setSuccess(`Ticket Marketing #${result.id} criado.`);
-      setName('');
-      setDescription('');
+      router.push(`/atendimentos/marketing/${result.id}`);
+      router.refresh();
     } catch (reason) {
       setError(errorMessage(reason));
     } finally {
@@ -671,11 +667,10 @@ function MarketingTicketForm() {
   return (
     <>
       <FormHeader
-        description="Nova tarefa de Marketing"
+        description="Dados da tarefa"
         label="Marketing · sem SLA"
       />
       {error ? <div className={styles.error} role="alert">{error}</div> : null}
-      {success ? <div className={styles.success} role="status">{success}</div> : null}
       {loading ? <div className="mb-3 h-[3px] animate-pulse rounded-full bg-app-brand" aria-label="Carregando" /> : null}
       <form className={styles.card} onSubmit={submit}>
         <div className={styles.grid}>
@@ -789,8 +784,11 @@ function MarketingTicketForm() {
           Item não faz parte do cadastro atual de Marketing e permanece sem valor.
         </p>
         <div className={styles.actions}>
+          <Link className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-app-border-strong bg-app-surface px-4 font-bold text-app-text-soft no-underline transition hover:bg-app-surface-hover" href="/atendimentos/marketing">
+            Cancelar
+          </Link>
           <button className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-app-brand bg-app-brand px-4 font-bold text-white transition hover:bg-app-brand-hover focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-[var(--app-brand-ring)] disabled:cursor-not-allowed disabled:opacity-50" disabled={saving || loading} type="submit">
-            {saving ? 'Cadastrando…' : 'Cadastrar atendimento Marketing'}
+            {saving ? 'Criando…' : 'Criar tarefa de Marketing'}
           </button>
         </div>
       </form>
@@ -822,13 +820,34 @@ export function ModularTicketCreateScreen({
     ? types.find((type) => type.key === initialType)
     : undefined;
   const forbiddenSelection = Boolean(initialType && !loading && (!selected || !selected.canCreate));
+  const screen =
+    initialType === 'devops'
+      ? {
+          title: 'Nova tarefa DevOps',
+          subtitle: 'Cadastre uma tarefa avulsa ou vinculada a um projeto.',
+          backHref: '/atendimentos/devops',
+          backLabel: 'Voltar às tarefas',
+        }
+      : initialType === 'marketing'
+        ? {
+            title: 'Nova tarefa de Marketing',
+            subtitle: 'Registre uma nova demanda com os campos próprios do Marketing.',
+            backHref: '/atendimentos/marketing',
+            backLabel: 'Voltar às tarefas',
+          }
+        : {
+            title: 'Novo atendimento',
+            subtitle: 'Escolha o fluxo certo para o cadastro.',
+            backHref: '/atendimentos',
+            backLabel: 'Voltar à lista',
+          };
 
   return (
     <ScreenShell
-      action={<Link className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-app-border-strong bg-app-surface px-4 font-bold text-app-text-soft no-underline transition hover:bg-app-surface-hover focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-[var(--app-brand-ring)]" href="/atendimentos">Voltar à lista</Link>}
+      action={<Link className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-app-border-strong bg-app-surface px-4 font-bold text-app-text-soft no-underline transition hover:bg-app-surface-hover focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-[var(--app-brand-ring)]" href={screen.backHref}>{screen.backLabel}</Link>}
       currentUser={currentUser}
-      subtitle="Escolha o fluxo certo. Cada tipo mantém seus campos, regras e permissões."
-      title="Novo atendimento"
+      subtitle={screen.subtitle}
+      title={screen.title}
     >
       {error ? <div className={styles.error} role="alert">{error}</div> : null}
       {loading ? <div className="mb-3 h-[3px] animate-pulse rounded-full bg-app-brand" aria-label="Carregando" /> : null}
