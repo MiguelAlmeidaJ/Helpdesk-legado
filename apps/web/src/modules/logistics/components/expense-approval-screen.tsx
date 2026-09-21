@@ -7,8 +7,7 @@ import type {
 } from '@helpdesk/contracts';
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { AppSidebar } from '../../../shared/navigation/app-sidebar';
-import { SessionUserMenu } from '../../access/components/session-user-menu';
+import { AppPageHeader } from '../../../shared/navigation/app-page-header';
 import {
   approveExpense,
   approveExpensesBatch,
@@ -200,28 +199,14 @@ export function ExpenseApprovalScreen({
 
   return (
     <main className={styles.page}>
-      <header className={styles.header}>
-        <div className={styles.headerLeft}>
-          <AppSidebar />
-          <Link className={styles.brand} href="/painel">
-            <strong>Helpdesk</strong>
-            <span>Logística · Aprovação RDs</span>
-          </Link>
-        </div>
-        <SessionUserMenu user={currentUser} />
-      </header>
+      <AppPageHeader
+        actions={<Link className={styles.secondaryLink} href="/logistica/despesas/administracao">Voltar à gestão</Link>}
+        subtitle="Aprove ou recuse somente RDs que ainda estão aguardando aprovação."
+        title="Aprovação de Despesas"
+        user={currentUser}
+      />
 
       <div className={styles.content}>
-        <section className={styles.hero}>
-          <div>
-            <span className={styles.eyebrow}>Workflow financeiro</span>
-            <h1>Aprovação de Despesas</h1>
-            <p>Aprove ou recuse somente RDs que ainda estão aguardando aprovação.</p>
-          </div>
-          <Link className={styles.secondaryLink} href="/logistica/despesas/administracao">
-            Voltar à Gestão RDs
-          </Link>
-        </section>
 
         {feedback ? <div className={styles.error}>{feedback}</div> : null}
         {success ? <div className={styles.success}>{success}</div> : null}
