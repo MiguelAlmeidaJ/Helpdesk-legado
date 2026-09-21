@@ -67,7 +67,7 @@ test('navigation upgrade enables migrated screens, preserves customization and i
     Object.assign(rows.find(row => row.id === id), { label, href, status, visibility_condition });
     return 1;
   } };
-  assert.equal(await synchronizeNavigation(db), 3);
+  assert.equal(await synchronizeNavigation(db), 4);
   assert.equal(rows[0].href, '/atendimentos/recorrencias');
   assert.equal(rows[0].label, 'Rotinas');
   assert.equal(rows[0].is_active, 0);
@@ -75,7 +75,9 @@ test('navigation upgrade enables migrated screens, preserves customization and i
   assert.deepEqual(JSON.parse(rows[0].visibility_condition), { anyPermissions: ['tickets.read'] });
   assert.deepEqual(rows[1], original[1]);
   assert.equal(rows[2].href, '/relatorios/atendimentos/analitico?source=tickets#table');
-  assert.deepEqual(rows[3], original[3]);
+  assert.equal(rows[3].href, '/atendimentos/marketing/disponibilidade');
+  assert.equal(rows[3].status, 'available');
+  assert.deepEqual(JSON.parse(rows[3].visibility_condition), { anyPermissions: ['tickets.read'] });
   assert.equal(rows[4].href, '/atendimentos/marketing/nova-tarefa');
   assert.equal(await synchronizeNavigation(db), 0);
 });
@@ -91,7 +93,7 @@ test('browser URL translation preserves IDs, filters and unrelated paths', () =>
 
 test('all available menu destinations resolve to implemented Next pages', () => {
   const items = DEFAULT_NAVIGATION.flatMap(section => section.items);
-  for (const slug of ['tickets-recurrences', 'devops-task-new', 'marketing-task-new', 'clients', 'categories', 'cost-centers', 'accounting-classification', 'adjustment-indexes', 'payment-methods', 'expense-types', 'service-types', 'fee-types']) {
+  for (const slug of ['tickets-recurrences', 'devops-task-new', 'marketing-task-new', 'marketing-availability', 'clients', 'categories', 'cost-centers', 'accounting-classification', 'adjustment-indexes', 'payment-methods', 'expense-types', 'service-types', 'fee-types']) {
     assert.equal(items.find(item => item.slug === slug).status, 'available', slug);
   }
   for (const item of items) {
