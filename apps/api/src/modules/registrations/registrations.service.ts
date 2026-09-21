@@ -7,7 +7,6 @@ import {
 } from '@nestjs/common';
 import {
   AppPermission,
-  type RegistrationFieldDefinition,
   type RegistrationListResponse,
   type RegistrationRecord,
   type RegistrationResourceDefinition,
@@ -413,14 +412,13 @@ export class RegistrationsService {
     };
 
     if (id === null) {
-      await this.db.$executeRawUnsafe(
+      id = await this.insertWithId(
         `INSERT INTO clientes
           (clt_nomer, clt_nomef, clt_cnpj, clt_end, clt_city, clt_uf, clt_mail, clt_tel, clt_sts, clt_ti, clt_adm, clt_mkt)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         data.legalName, data.tradeName, data.cnpj, data.address, data.city,
         data.state, data.email, data.phone, nextStatus, data.ti, data.devops, data.marketing,
       );
-      id = await this.lastId();
     } else {
       const count = await this.db.$executeRawUnsafe(
         `UPDATE clientes
@@ -448,13 +446,12 @@ export class RegistrationsService {
     }
 
     if (id === null) {
-      await this.db.$executeRawUnsafe(
+      id = await this.insertWithId(
         'INSERT INTO categorias (cat_nome, cat_setor, cat_sts) VALUES (?, ?, ?)',
         name,
         sector,
         nextStatus,
       );
-      id = await this.lastId();
     } else {
       const count = await this.db.$executeRawUnsafe(
         'UPDATE categorias SET cat_nome=?, cat_setor=?, cat_sts=? WHERE cat_id=?',
@@ -493,20 +490,19 @@ export class RegistrationsService {
 
     if (id === null) {
       if (config.classified) {
-        await this.db.$executeRawUnsafe(
+        id = await this.insertWithId(
           `INSERT INTO ${config.table} (${config.nameColumn}, class_contab, status) VALUES (?, ?, ?)`,
           name,
           accountingClassificationId,
           nextStatus,
         );
       } else {
-        await this.db.$executeRawUnsafe(
+        id = await this.insertWithId(
           `INSERT INTO ${config.table} (${config.nameColumn}, status) VALUES (?, ?)`,
           name,
           nextStatus,
         );
       }
-      id = await this.lastId();
     } else {
       const count = config.classified
         ? await this.db.$executeRawUnsafe(
@@ -535,14 +531,17 @@ export class RegistrationsService {
     };
   }
 
-  private async lastId(): Promise<number> {
-    const rows = await this.db.$queryRawUnsafe<Array<{ id: number | bigint }>>(
-      'SELECT LAST_INSERT_ID() AS id',
-    );
-    const id = Number(rows[0]?.id);
-    if (!Number.isSafeInteger(id) || id < 1) {
-      throw new BadRequestException('Não foi possível identificar o registro criado.');
-    }
-    return id;
+  private insertWithId(sql: string, ...parameters: unknown[]): Promise<number> {
+    return this.db.$transaction(async (transaction) => {
+      await transaction.$executeRawUnsafe(sql, ...parameters);
+      const rows = await transaction.$queryRawUnsafe<Array<{ id: number | bigint }>>(
+        'SELECT LAST_INSERT_ID() AS id',
+      );
+      const id = Number(rows[0]?.id);
+      if (!Number.isSafeInteger(id) || id < 1) {
+        throw new BadRequestException('Não foi possível identificar o registro criado.');
+      }
+      return id;
+    });
   }
 }
