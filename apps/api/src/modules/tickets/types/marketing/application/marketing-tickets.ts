@@ -102,6 +102,11 @@ export class MarketingTickets {
     });
   }
 
+  async availability(user: AuthenticatedUser) {
+    await this.resolveAccess(user, 'read');
+    return this.repository.availability(user.id);
+  }
+
   async detail(user: AuthenticatedUser, ticketId: number) {
     const access = await this.resolveAccess(user, 'read');
     const result = await this.repository.detail({ ...access, ticketId });
