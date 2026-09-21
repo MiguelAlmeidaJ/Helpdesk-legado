@@ -10,6 +10,7 @@ import { ReportArchiveController } from './presentation/http/report-archive.cont
 import { GetTicketCategoryTotalsReport } from './application/get-ticket-category-totals-report';
 import { GetTicketClientTotalsReport } from './application/get-ticket-client-totals-report';
 import { GetTicketTechnicianTotalsReport } from './application/get-ticket-technician-totals-report';
+import { TicketBreakdownReportService } from './application/ticket-breakdown-report.service';
 import { TicketCategoryTotalsReportRepository } from './application/ports/ticket-category-totals-report.repository';
 import { TicketClientTotalsReportRepository } from './application/ports/ticket-client-totals-report.repository';
 import { TicketTechnicianTotalsReportRepository } from './application/ports/ticket-technician-totals-report.repository';
@@ -28,6 +29,7 @@ import { ReportsController } from './presentation/http/reports.controller';
     GetTicketCategoryTotalsReport,
     GetTicketClientTotalsReport,
     GetTicketTechnicianTotalsReport,
+    TicketBreakdownReportService,
     {
       provide: TicketCategoryTotalsReportRepository,
       useClass: PrismaTicketCategoryTotalsReportRepository,
