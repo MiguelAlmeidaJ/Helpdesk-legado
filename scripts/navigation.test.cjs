@@ -86,6 +86,9 @@ test('browser URL translation preserves IDs, filters and unrelated paths', () =>
   assert.equal(portugueseWebHref('/tickets/devops/projects/42?tab=tasks'), '/atendimentos/devops/projetos/42?tab=tasks');
   assert.equal(portugueseWebHref('/tickets/new?type=devops&projectId=42'), '/atendimentos/novo?type=devops&projectId=42');
   assert.equal(portugueseWebHref('/registrations/clientes'), '/cadastros/clientes');
+  assert.equal(portugueseWebHref('/reports/tickets/client-daily'), '/relatorios/atendimentos/diario-por-cliente');
+  assert.equal(portugueseWebHref('/logistics/finance/statements'), '/extratos');
+  assert.equal(portugueseWebHref('/radio'), '/radio');
   for (const unchanged of ['/api/tickets', '/tickets-other', '/atendimentos', 'https://example.com/tickets']) {
     assert.equal(portugueseWebHref(unchanged), unchanged);
   }
@@ -93,7 +96,32 @@ test('browser URL translation preserves IDs, filters and unrelated paths', () =>
 
 test('all available menu destinations resolve to implemented Next pages', () => {
   const items = DEFAULT_NAVIGATION.flatMap(section => section.items);
-  for (const slug of ['tickets-recurrences', 'devops-task-new', 'marketing-task-new', 'marketing-availability', 'clients', 'categories', 'cost-centers', 'accounting-classification', 'adjustment-indexes', 'payment-methods', 'expense-types', 'service-types', 'fee-types']) {
+  for (const slug of [
+    'tickets-recurrences',
+    'devops-task-new',
+    'marketing-task-new',
+    'marketing-availability',
+    'clients',
+    'categories',
+    'cost-centers',
+    'accounting-classification',
+    'adjustment-indexes',
+    'payment-methods',
+    'expense-types',
+    'service-types',
+    'fee-types',
+    'receivables-accrual',
+    'receivables-cashflow',
+    'payables',
+    'entries',
+    'recurring',
+    'accounting',
+    'report-client-daily',
+    'report-requester',
+    'report-tech-daily',
+    'radio',
+    'statements',
+  ]) {
     assert.equal(items.find(item => item.slug === slug).status, 'available', slug);
   }
   for (const item of items) {
