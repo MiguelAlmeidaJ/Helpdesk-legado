@@ -60,7 +60,7 @@ test('navigation upgrade enables migrated screens, preserves customization and i
     { id: 2n, slug: 'devops-task-new', label: 'Nova Tarefa', href: '/custom', status: 'planned', visibility_condition: '{"anyRoles":["custom"]}' },
     { id: 3n, slug: 'report-client-analytic', label: 'Análise', href: '/reports/tickets/analytics?source=tickets#table', status: 'available', visibility_condition: null },
     { id: 4n, slug: 'marketing-availability', label: 'Disponibilidade', href: null, status: 'planned', visibility_condition: null },
-    { id: 5n, slug: 'marketing-task-new', label: 'Nova Tarefa', href: null, status: 'planned', visibility_condition: null },
+    { id: 5n, slug: 'marketing-task-new', label: 'Nova Tarefa', href: '/tickets/new?type=marketing', status: 'available', visibility_condition: null },
   ];
   const original = structuredClone(rows);
   const db = { $queryRaw: async () => rows, $executeRaw: async (_sql, label, href, status, visibility_condition, id) => {
@@ -76,7 +76,7 @@ test('navigation upgrade enables migrated screens, preserves customization and i
   assert.deepEqual(rows[1], original[1]);
   assert.equal(rows[2].href, '/relatorios/atendimentos/analitico?source=tickets#table');
   assert.deepEqual(rows[3], original[3]);
-  assert.equal(rows[4].href, '/atendimentos/novo?type=marketing');
+  assert.equal(rows[4].href, '/atendimentos/marketing/nova-tarefa');
   assert.equal(await synchronizeNavigation(db), 0);
 });
 
