@@ -15,6 +15,7 @@ import {
 } from '@nestjs/common';
 import { ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import {
+  type MarketingAvailabilityResponse,
   type MarketingTicketAssignmentRequest,
   type MarketingTicketCatalogsResponse,
   type MarketingTicketCreateRequest,
@@ -195,6 +196,15 @@ export class MarketingTicketsController {
   ): Promise<MarketingTicketListResponse> {
     if (!user) throw new UnauthorizedException('Usuário não autenticado.');
     return this.tickets.list(user, parseListQuery(query));
+  }
+
+  @Get('availability/dashboard')
+  @ApiOperation({ summary: 'Obter disponibilidade técnica do Marketing' })
+  availability(
+    @CurrentUser() user: AuthenticatedUser | undefined,
+  ): Promise<MarketingAvailabilityResponse> {
+    if (!user) throw new UnauthorizedException('Usuário não autenticado.');
+    return this.tickets.availability(user);
   }
 
   @Get('create/catalogs')
