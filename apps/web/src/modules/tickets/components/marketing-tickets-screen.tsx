@@ -8,8 +8,7 @@ import Link from 'next/link';
 import type { FormEvent } from 'react';
 import { useEffect, useMemo, useState } from 'react';
 import { ApiError } from '../../../shared/api/api-client';
-import { AppSidebar } from '../../../shared/navigation/app-sidebar';
-import { SessionUserMenu } from '../../access/components/session-user-menu';
+import { AppPageHeader } from '../../../shared/navigation/app-page-header';
 import {
   fetchMarketingTickets,
   type SpecializedTicketListQuery,
@@ -169,42 +168,9 @@ export function MarketingTicketsScreen({
 
   return (
     <main className="min-h-screen bg-app-bg text-app-text">
-      <header className="sticky top-0 z-20 flex items-center justify-between gap-5 border-b border-app-border bg-[var(--app-header-bg)] px-6 py-3.5 backdrop-blur-xl max-sm:px-3.5">
-        <div className="flex min-w-0 items-center gap-2.5">
-          <AppSidebar />
-          <Link
-            className="flex items-baseline gap-2.5 no-underline"
-            href="/painel"
-          >
-            <strong className="text-lg text-app-text">Helpdesk</strong>
-            <span className="text-[13px] text-app-subtle max-sm:hidden">
-              Nova plataforma
-            </span>
-          </Link>
-        </div>
-        <div className="flex items-center justify-end gap-3">
-          <span className="text-sm text-app-muted max-sm:hidden">
-            {totalLabel}
-          </span>
-          <SessionUserMenu user={currentUser} />
-        </div>
-      </header>
-
-      <div className="mx-auto w-full max-w-[1500px] px-6 py-6 max-sm:px-3.5">
-        <div className="mb-[18px] flex items-end justify-between gap-6 max-sm:flex-col max-sm:items-stretch max-sm:gap-3">
-          <div>
-            <span className="mb-2 inline-block text-xs font-extrabold uppercase tracking-[0.1em] text-app-muted">
-              Atendimentos · Marketing
-            </span>
-            <h1 className="m-0 text-[28px] font-bold tracking-tight text-app-text">
-              Marketing
-            </h1>
-            <p className="mt-1.5 text-app-muted-strong">
-              Demandas do terceiro andar com classificação e fluxo próprios,
-              sem SLA.
-            </p>
-          </div>
-          <div className="flex flex-wrap items-center justify-end gap-3 max-sm:[&>*]:flex-1">
+      <AppPageHeader
+        actions={
+          <div className="flex items-center gap-2 max-md:[&>a:first-child]:hidden">
             <Link
               className={BUTTON_CLASS}
               href="/atendimentos/marketing/relatorios/tarefas"
@@ -215,10 +181,17 @@ export function MarketingTicketsScreen({
               className={PRIMARY_BUTTON_CLASS}
               href="/atendimentos/marketing/nova-tarefa"
             >
-              Novo atendimento
+              Nova tarefa
             </Link>
           </div>
-        </div>
+        }
+        meta={<span className="text-sm text-app-muted max-lg:hidden">{totalLabel}</span>}
+        subtitle="Demandas do terceiro andar com classificação e fluxo próprios, sem SLA."
+        title="Marketing"
+        user={currentUser}
+      />
+
+      <div className="mx-auto w-full max-w-[1500px] px-6 py-6 max-sm:px-3.5">
 
         <form
           className="mb-4 rounded-xl border border-app-border bg-app-surface p-4 shadow-sm shadow-slate-950/5 dark:shadow-black/10"
