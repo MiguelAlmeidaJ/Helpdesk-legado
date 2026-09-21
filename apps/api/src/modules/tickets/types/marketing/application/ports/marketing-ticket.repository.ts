@@ -3,6 +3,7 @@ import type {
   MarketingTicketCreateRequest,
   MarketingTicketCreateResponse,
   MarketingTicketDetailResponse,
+  MarketingAvailabilityResponse,
   MarketingTicketListResponse,
   MarketingTicketUpdateRequest,
   TicketCatalogOption,
@@ -81,6 +82,7 @@ export abstract class MarketingTicketRepository {
   abstract requesters(actorUserId: number, clientId: number): Promise<TicketCatalogOption[]>;
   abstract locations(actorUserId: number, clientId: number): Promise<TicketCatalogOption[]>;
   abstract list(input: MarketingTicketListPersistenceInput): Promise<MarketingTicketListResponse>;
+  abstract availability(actorUserId: number): Promise<MarketingAvailabilityResponse>;
   abstract detail(input: MarketingTicketScope & { ticketId: number }): Promise<MarketingTicketDetailResponse | null>;
   abstract create(input: MarketingTicketCreatePersistenceInput): Promise<MarketingTicketCreateResponse | 'invalid-reference' | 'forbidden-client'>;
   abstract update(input: MarketingTicketUpdatePersistenceInput): Promise<MarketingTicketCommandResult>;
