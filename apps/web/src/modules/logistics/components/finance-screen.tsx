@@ -75,6 +75,41 @@ type Editor =
   | { kind: 'payment'; id: number; values: FinancePaymentInput }
   | null;
 
+type ActiveEditor = Exclude<Editor, null>;
+
+function patchEditorValues(
+  editor: ActiveEditor,
+  patch: Record<string, unknown>,
+): ActiveEditor {
+  switch (editor.kind) {
+    case 'receivable':
+      return {
+        ...editor,
+        values: { ...editor.values, ...patch } as FinanceReceivableWriteInput,
+      };
+    case 'payable':
+      return {
+        ...editor,
+        values: { ...editor.values, ...patch } as FinancePayableWriteInput,
+      };
+    case 'recurring':
+      return {
+        ...editor,
+        values: { ...editor.values, ...patch } as FinanceRecurringWriteInput,
+      };
+    case 'receipt':
+      return {
+        ...editor,
+        values: { ...editor.values, ...patch } as FinanceReceiptInput,
+      };
+    case 'payment':
+      return {
+        ...editor,
+        values: { ...editor.values, ...patch } as FinancePaymentInput,
+      };
+  }
+}
+
 function today(): string {
   return new Date().toISOString().slice(0, 10);
 }
@@ -503,7 +538,7 @@ function FinanceEditor({
               <input
                 className={INPUT}
                 min="0.01"
-                onChange={(event) => onChange({ ...editor, values: { ...editor.values, amount: Number(event.target.value) } } as Exclude<Editor, null>)}
+                onChange={(event) => onChange(patchEditorValues(editor, { amount: Number(event.target.value) }))}
                 step="0.01"
                 type="number"
                 value={editor.values.amount}
@@ -513,7 +548,7 @@ function FinanceEditor({
           <Field label="Data">
             <input
               className={INPUT}
-              onChange={(event) => onChange({ ...editor, values: { ...editor.values, date: event.target.value } } as Exclude<Editor, null>)}
+              onChange={(event) => onChange(patchEditorValues(editor, { date: event.target.value }))}
               type="date"
               value={editor.values.date}
             />
@@ -522,14 +557,14 @@ function FinanceEditor({
             <Select
               options={catalogs.agencies}
               value={editor.values.agencyId}
-              onChange={(agencyId) => onChange({ ...editor, values: { ...editor.values, agencyId } } as Exclude<Editor, null>)}
+              onChange={(agencyId) => onChange(patchEditorValues(editor, { agencyId }))}
             />
           </Field>
           <div className="md:col-span-3">
             <Field label="Observação">
               <input
                 className={INPUT}
-                onChange={(event) => onChange({ ...editor, values: { ...editor.values, observation: event.target.value } } as Exclude<Editor, null>)}
+                onChange={(event) => onChange(patchEditorValues(editor, { observation: event.target.value }))}
                 value={editor.values.observation ?? ''}
               />
             </Field>
@@ -544,10 +579,10 @@ function FinanceEditor({
   const common = (
     <>
       <Field label="Descrição">
-        <input className={INPUT} maxLength={255} onChange={(event) => onChange({ ...editor, values: { ...values, description: event.target.value } } as Exclude<Editor, null>)} required value={values.description} />
+        <input className={INPUT} maxLength={255} onChange={(event) => onChange(patchEditorValues(editor, { description: event.target.value }))} required value={values.description} />
       </Field>
       <Field label="Valor">
-        <input className={INPUT} min="0.01" onChange={(event) => onChange({ ...editor, values: { ...values, amount: Number(event.target.value) } } as Exclude<Editor, null>)} required step="0.01" type="number" value={values.amount} />
+        <input className={INPUT} min="0.01" onChange={(event) => onChange(patchEditorValues(editor, { amount: Number(event.target.value) }))} required step="0.01" type="number" value={values.amount} />
       </Field>
       {editor.kind === 'recurring' ? (
         <Field label="Dia do vencimento">
@@ -556,13 +591,7 @@ function FinanceEditor({
             max="31"
             min="1"
             onChange={(event) =>
-              onChange({
-                ...editor,
-                values: {
-                  ...editor.values,
-                  dueDay: Number(event.target.value),
-                },
-              })
+              onChange(patchEditorValues(editor, { dueDay: Number(event.target.value) }))
             }
             required
             type="number"
@@ -574,13 +603,7 @@ function FinanceEditor({
           <input
             className={INPUT}
             onChange={(event) =>
-              onChange({
-                ...editor,
-                values: {
-                  ...editor.values,
-                  dueDate: event.target.value,
-                },
-              })
+              onChange(patchEditorValues(editor, { dueDate: event.target.value }))
             }
             required
             type="date"
@@ -589,19 +612,29 @@ function FinanceEditor({
         </Field>
       )}
       <Field label="Unidade de negócio">
-        <Select options={catalogs.units} value={values.unitId} onChange={(unitId) => onChange({ ...editor, values: { ...values, unitId } } as Exclude<Editor, null>)} />
+        <Select options={catalogs.units} value={values.unitId} onChange={(unitId) => onChange(patchEditorValues(editor, { unitId }))} />
       </Field>
       <Field label="Grupo">
-        <Select options={catalogs.groups} value={values.groupId} onChange={(groupId) => onChange({ ...editor, values: { ...values, groupId, subgroupId: subgroups.find((item) => item.parentId === groupId)?.id ?? 0 } } as Exclude<Editor, null>)} />
+        <Select options={catalogs.groups} value={values.groupId} onChange={(groupId) => onChange(
+          patchEditorValues(editor, {
+            groupId,
+            subgroupId:
+              subgroups.find((item) => item.parentId === groupId)?.id ?? 0,
+          }),
+        )} />
       </Field>
       <Field label="Subgrupo">
-        <Select options={subgroups} value={values.subgroupId} onChange={(subgroupId) => onChange({ ...editor, values: { ...values, subgroupId } } as Exclude<Editor, null>)} />
+        <Select options={subgroups} value={values.subgroupId} onChange={(subgroupId) => onChange(patchEditorValues(editor, { subgroupId }))} />
       </Field>
       <Field label="Classificação">
-        <Select options={catalogs.classifications} value={values.classificationId} onChange={(classificationId) => onChange({ ...editor, values: { ...values, classificationId } } as Exclude<Editor, null>)} />
+        <Select options={catalogs.classifications} value={values.classificationId} onChange={(classificationId) => onChange(patchEditorValues(editor, { classificationId }))} />
       </Field>
       <Field label="Tipo de documento">
-        <Select allowEmpty options={catalogs.documentTypes} value={values.documentTypeId ?? 0} onChange={(documentTypeId) => onChange({ ...editor, values: { ...values, documentTypeId: documentTypeId || null } } as Exclude<Editor, null>)} />
+        <Select allowEmpty options={catalogs.documentTypes} value={values.documentTypeId ?? 0} onChange={(documentTypeId) => onChange(
+          patchEditorValues(editor, {
+            documentTypeId: documentTypeId || null,
+          }),
+        )} />
       </Field>
     </>
   );
@@ -619,31 +652,35 @@ function FinanceEditor({
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
         {editor.kind === 'receivable' ? (
           <Field label="Cliente">
-            <Select options={catalogs.clients} value={editor.values.clientId} onChange={(clientId) => onChange({ ...editor, values: { ...editor.values, clientId } })} />
+            <Select options={catalogs.clients} value={editor.values.clientId} onChange={(clientId) => onChange(patchEditorValues(editor, { clientId }))} />
           </Field>
         ) : null}
 
         {editor.kind === 'payable' ? (
           <Field label="Fornecedor / favorecido">
-            <input className={INPUT} maxLength={100} onChange={(event) => onChange({ ...editor, values: { ...editor.values, supplier: event.target.value } })} value={editor.values.supplier ?? ''} />
+            <input className={INPUT} maxLength={100} onChange={(event) => onChange(patchEditorValues(editor, { supplier: event.target.value }))} value={editor.values.supplier ?? ''} />
           </Field>
         ) : null}
 
         {editor.kind === 'recurring' ? (
           <>
             <Field label="Tipo">
-              <select className={INPUT} onChange={(event) => onChange({ ...editor, values: { ...editor.values, type: event.target.value as 'Receber' | 'Pagar' } })} value={editor.values.type}>
+              <select className={INPUT} onChange={(event) => onChange(
+                patchEditorValues(editor, {
+                  type: event.target.value as 'Receber' | 'Pagar',
+                }),
+              )} value={editor.values.type}>
                 <option value="Receber">Receber</option>
                 <option value="Pagar">Pagar</option>
               </select>
             </Field>
             {editor.values.type === 'Receber' ? (
               <Field label="Cliente">
-                <Select options={catalogs.clients} value={editor.values.clientId ?? 0} onChange={(clientId) => onChange({ ...editor, values: { ...editor.values, clientId } })} />
+                <Select options={catalogs.clients} value={editor.values.clientId ?? 0} onChange={(clientId) => onChange(patchEditorValues(editor, { clientId }))} />
               </Field>
             ) : (
               <Field label="Fornecedor / favorecido">
-                <input className={INPUT} maxLength={100} onChange={(event) => onChange({ ...editor, values: { ...editor.values, supplier: event.target.value } })} value={editor.values.supplier ?? ''} />
+                <input className={INPUT} maxLength={100} onChange={(event) => onChange(patchEditorValues(editor, { supplier: event.target.value }))} value={editor.values.supplier ?? ''} />
               </Field>
             )}
           </>
@@ -654,20 +691,36 @@ function FinanceEditor({
         {editor.kind !== 'payable' ? (
           <>
             <Field label="% TI">
-              <input className={INPUT} max="100" min="0" onChange={(event) => onChange({ ...editor, values: { ...editor.values, percentTi: Number(event.target.value) } })} type="number" value={editor.values.percentTi ?? 0} />
+              <input className={INPUT} max="100" min="0" onChange={(event) => onChange(
+                patchEditorValues(editor, {
+                  percentTi: Number(event.target.value),
+                }),
+              )} type="number" value={editor.values.percentTi ?? 0} />
             </Field>
             <Field label="% DevOps">
-              <input className={INPUT} max="100" min="0" onChange={(event) => onChange({ ...editor, values: { ...editor.values, percentDevops: Number(event.target.value) } })} type="number" value={editor.values.percentDevops ?? 0} />
+              <input className={INPUT} max="100" min="0" onChange={(event) => onChange(
+                patchEditorValues(editor, {
+                  percentDevops: Number(event.target.value),
+                }),
+              )} type="number" value={editor.values.percentDevops ?? 0} />
             </Field>
             <Field label="% Marketing">
-              <input className={INPUT} max="100" min="0" onChange={(event) => onChange({ ...editor, values: { ...editor.values, percentMarketing: Number(event.target.value) } })} type="number" value={editor.values.percentMarketing ?? 0} />
+              <input className={INPUT} max="100" min="0" onChange={(event) => onChange(
+                patchEditorValues(editor, {
+                  percentMarketing: Number(event.target.value),
+                }),
+              )} type="number" value={editor.values.percentMarketing ?? 0} />
             </Field>
           </>
         ) : null}
 
         {editor.kind === 'recurring' ? (
           <Field label="Situação">
-            <select className={INPUT} onChange={(event) => onChange({ ...editor, values: { ...editor.values, active: event.target.value === '1' } })} value={editor.values.active ? '1' : '0'}>
+            <select className={INPUT} onChange={(event) => onChange(
+              patchEditorValues(editor, {
+                active: event.target.value === '1',
+              }),
+            )} value={editor.values.active ? '1' : '0'}>
               <option value="1">Ativa</option>
               <option value="0">Inativa</option>
             </select>
