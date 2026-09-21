@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
-import { requireAuthenticatedUser } from '../../../../../modules/access/server/current-user';
-import { FinanceScreen } from '../../../../../modules/logistics/components/finance-screen';
+import { requireAuthenticatedUser } from '../../../../modules/access/server/current-user';
+import { FinanceScreen } from '../../../../modules/logistics/components/finance-screen';
 
 export const metadata: Metadata = { title: 'Contas a Receber · Fluxo · Helpdesk' };
 
