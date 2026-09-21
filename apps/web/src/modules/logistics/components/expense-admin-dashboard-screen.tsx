@@ -11,8 +11,7 @@ import {
 } from '@helpdesk/contracts';
 import Link from 'next/link';
 import { FormEvent, useCallback, useEffect, useState } from 'react';
-import { AppSidebar } from '../../../shared/navigation/app-sidebar';
-import { SessionUserMenu } from '../../access/components/session-user-menu';
+import { AppPageHeader } from '../../../shared/navigation/app-page-header';
 import {
   getExpenseAdminDashboard,
   getExpenseAdminDetails,
@@ -370,30 +369,14 @@ export function ExpenseAdminDashboardScreen({
 
   return (
     <main className={styles.page}>
-      <header className={styles.header}>
-        <div className={styles.headerLeft}>
-          <AppSidebar />
-          <Link className={styles.brand} href="/painel">
-            <strong>Helpdesk</strong>
-            <span>Logística · Gestão RDs</span>
-          </Link>
-        </div>
-        <SessionUserMenu user={currentUser} />
-      </header>
+      <AppPageHeader
+        actions={<Link className={styles.secondaryLink} href="/logistica/despesas">Minhas despesas</Link>}
+        subtitle="Resumo administrativo por categoria, cliente e colaborador."
+        title="Painel Financeiro de RDs"
+        user={currentUser}
+      />
 
       <div className={styles.content}>
-        <section className={styles.hero}>
-          <div>
-            <span className={styles.eyebrow}>Logística · Administrativo</span>
-            <h1>Painel Financeiro de RDs</h1>
-            <p>
-              Resumo administrativo por categoria, cliente e colaborador.
-            </p>
-          </div>
-          <Link className={styles.secondaryLink} href="/logistica/despesas">
-            Minhas despesas
-          </Link>
-        </section>
 
         <section className={styles.notice}>
           <strong>Fluxo administrativo de RD totalmente nativo.</strong>
