@@ -1,6 +1,7 @@
 // Browser routes only. API endpoints and permission identifiers stay stable.
 // More specific prefixes must precede their parents.
 export const WEB_ROUTE_TRANSLATIONS = [
+  ['/radio', '/radio'],
   ['/tickets/availability/waiting-report', '/atendimentos/disponibilidade/relatorio-espera'],
   ['/tickets/devops/new', '/atendimentos/devops/nova-tarefa'],
   ['/tickets/marketing/new', '/atendimentos/marketing/nova-tarefa'],
