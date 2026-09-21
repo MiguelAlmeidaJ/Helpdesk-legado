@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
-import { requireAuthenticatedUser } from '../../../../../modules/access/server/current-user';
-import { TicketBreakdownReportScreen } from '../../../../../modules/reports/components/ticket-breakdown-report-screen';
+import { requireAuthenticatedUser } from '../../../../modules/access/server/current-user';
+import { TicketBreakdownReportScreen } from '../../../../modules/reports/components/ticket-breakdown-report-screen';
 
 export const metadata: Metadata = { title: 'Atendimentos diários por Técnico · Helpdesk' };
 
