@@ -4,8 +4,7 @@ import { useEffect, useRef, useState, type FormEvent } from 'react';
 import Link from 'next/link';
 import { TICKET_STATUS_LABELS, type CurrentUserResponse, type TicketAnalyticsResponse, type TicketReportCatalog, type TicketReportSource, type TechnicianWorkloadResponse } from '@helpdesk/contracts';
 import { apiDownload, apiRequest } from '../../../shared/api/api-client';
-import { AppSidebar } from '../../../shared/navigation/app-sidebar';
-import { SessionUserMenu } from '../../access/components/session-user-menu';
+import { AppPageHeader } from '../../../shared/navigation/app-page-header';
 import { downloadCsv, duration, reportError } from '../lib/report-export';
 import { reportScreenStyles as styles } from './report-screen-styles';
 
@@ -75,9 +74,13 @@ export function TicketAnalyticsScreen({ currentUser, mode, initialSource = 'tick
 
   const periodLabel = report ? `${report.filters.startDate} a ${report.filters.endDate} · ${SOURCE_LABELS[report.filters.source]} · Nível ${report.filters.level || 'Todos'}` : '';
   return <main className={styles.page}>
-    <header className={styles.header}><div className={styles.headerLeft}><AppSidebar /><Link className={styles.brand} href="/painel"><strong>Helpdesk</strong><span>Relatórios</span></Link></div><SessionUserMenu user={currentUser} /></header>
+    <AppPageHeader
+      subtitle={mode === 'workload' ? 'Chamados ativos e tempo acumulado. Atualização a cada 60 segundos.' : 'Consulte os registros por período, cliente, local e técnico.'}
+      title={title}
+      user={currentUser}
+    />
     <div className={styles.content}>
-      <section className={styles.hero}><div><span className={styles.eyebrow}>Atendimentos</span><h1>{title}</h1><p>{mode === 'workload' ? 'Chamados ativos e tempo acumulado. Atualização a cada 60 segundos.' : 'Consulte os registros por período, cliente, local e técnico.'}</p><p className={styles.printHeading}>{periodLabel}</p></div></section>
+      {periodLabel ? <p className={styles.printHeading}>{periodLabel}</p> : null}
       {mode !== 'workload' ? <form className={styles.filters} onSubmit={apply}>
         <label><span>De</span><input type="date" required value={filters.startDate} onChange={e => setFilters({ ...filters, startDate: e.target.value })} /></label>
         <label><span>Até</span><input type="date" required value={filters.endDate} onChange={e => setFilters({ ...filters, endDate: e.target.value })} /></label>
