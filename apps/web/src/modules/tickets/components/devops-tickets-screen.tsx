@@ -181,7 +181,7 @@ export function DevOpsTicketsScreen({
             <Link className={BUTTON_CLASS} href="/atendimentos/devops/projetos">
               Projetos
             </Link>
-            <Link className={PRIMARY_BUTTON_CLASS} href="/atendimentos/novo?type=devops">
+            <Link className={PRIMARY_BUTTON_CLASS} href="/atendimentos/devops/nova-tarefa">
               Novo atendimento
             </Link>
           </div>
