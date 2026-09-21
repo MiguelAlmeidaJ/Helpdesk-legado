@@ -2,6 +2,8 @@
 // More specific prefixes must precede their parents.
 export const WEB_ROUTE_TRANSLATIONS = [
   ['/tickets/availability/waiting-report', '/atendimentos/disponibilidade/relatorio-espera'],
+  ['/tickets/devops/new', '/atendimentos/devops/nova-tarefa'],
+  ['/tickets/marketing/new', '/atendimentos/marketing/nova-tarefa'],
   ['/tickets/devops/projects/new', '/atendimentos/devops/projetos/novo'],
   ['/tickets/devops/projects', '/atendimentos/devops/projetos'],
   ['/tickets/devops/reports/tasks', '/atendimentos/devops/relatorios/tarefas'],
