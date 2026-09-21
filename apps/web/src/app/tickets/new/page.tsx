@@ -3,7 +3,7 @@ import { requireAuthenticatedUser } from '../../../modules/access/server/current
 import { ModularTicketCreateScreen } from '../../../modules/tickets/components/modular-ticket-create-screen';
 import { TicketCreateScreen } from '../../../modules/tickets/components/ticket-create-screen';
 
-export const metadata: Metadata = { title: 'Novo ticket · Helpdesk' };
+export const metadata: Metadata = { title: 'Novo atendimento · Helpdesk' };
 
 interface NewTicketPageProps {
   searchParams: Promise<{
@@ -15,7 +15,7 @@ interface NewTicketPageProps {
 export default async function NewTicketPage({
   searchParams,
 }: NewTicketPageProps) {
-  const currentUser = await requireAuthenticatedUser('/tickets/new');
+  const currentUser = await requireAuthenticatedUser('/atendimentos/novo');
   const params = await searchParams;
   const requestedType = Array.isArray(params.type) ? params.type[0] : params.type;
   const rawProjectId = Array.isArray(params.projectId)

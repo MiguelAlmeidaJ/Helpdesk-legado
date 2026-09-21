@@ -75,7 +75,7 @@ export function TicketAnalyticsScreen({ currentUser, mode, initialSource = 'tick
 
   const periodLabel = report ? `${report.filters.startDate} a ${report.filters.endDate} · ${SOURCE_LABELS[report.filters.source]} · Nível ${report.filters.level || 'Todos'}` : '';
   return <main className={styles.page}>
-    <header className={styles.header}><div className={styles.headerLeft}><AppSidebar /><Link className={styles.brand} href="/dashboard"><strong>Helpdesk</strong><span>Relatórios</span></Link></div><SessionUserMenu user={currentUser} /></header>
+    <header className={styles.header}><div className={styles.headerLeft}><AppSidebar /><Link className={styles.brand} href="/painel"><strong>Helpdesk</strong><span>Relatórios</span></Link></div><SessionUserMenu user={currentUser} /></header>
     <div className={styles.content}>
       <section className={styles.hero}><div><span className={styles.eyebrow}>Atendimentos</span><h1>{title}</h1><p>{mode === 'workload' ? 'Chamados ativos e tempo acumulado. Atualização a cada 60 segundos.' : 'Consulte os registros por período, cliente, local e técnico.'}</p><p className={styles.printHeading}>{periodLabel}</p></div></section>
       {mode !== 'workload' ? <form className={styles.filters} onSubmit={apply}>

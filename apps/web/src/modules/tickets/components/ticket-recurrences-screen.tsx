@@ -196,7 +196,7 @@ export function TicketRecurrencesScreen({
           <AppSidebar />
           <Link
             className="flex items-baseline gap-2.5 no-underline"
-            href="/dashboard"
+            href="/painel"
           >
             <strong className="text-lg text-app-text">Helpdesk</strong>
             <span className="text-[13px] text-app-subtle max-sm:hidden">
@@ -474,7 +474,7 @@ export function TicketRecurrencesScreen({
                           <strong className="block text-app-text">{item.name}</strong>
                           <Link
                             className="mt-1 block text-xs font-semibold text-app-brand no-underline hover:underline"
-                            href={`/tickets/${item.modelTicketId}`}
+                            href={`/atendimentos/${item.modelTicketId}`}
                           >
                             Chamado modelo #{item.modelTicketId}
                           </Link>

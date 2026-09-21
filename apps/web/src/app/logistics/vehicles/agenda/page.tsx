@@ -27,7 +27,7 @@ export default async function VehicleAgendaPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const currentUser = await requireAuthenticatedUser(
-    '/logistics/vehicles/agenda',
+    '/logistica/veiculos/agenda',
   );
   const query = await searchParams;
 

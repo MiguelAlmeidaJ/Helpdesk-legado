@@ -59,12 +59,12 @@ function formatDuration(seconds: number): string {
 
 function errorMessage(reason: unknown): string {
   if (reason instanceof ApiError && reason.status === 403) {
-    return 'Seu usuário não possui acesso a este ticket DevOps.';
+    return 'Seu usuário não possui acesso a este atendimento DevOps.';
   }
   if (reason instanceof ApiError) return `A API respondeu com erro ${reason.status}.`;
   return reason instanceof Error
     ? reason.message
-    : 'Não foi possível carregar o ticket DevOps.';
+    : 'Não foi possível carregar o atendimento DevOps.';
 }
 
 function DetailItem({ label, children }: { label: string; children: ReactNode }) {
@@ -107,7 +107,7 @@ export function DevOpsTicketDetailScreen({
         if (!result) {
           setTicket(null);
           setDependencyOptions([]);
-          setError('Ticket DevOps não encontrado ou fora do seu escopo.');
+          setError('Atendimento DevOps não encontrado ou fora do seu escopo.');
           return;
         }
         setTicket(result);
@@ -147,7 +147,7 @@ export function DevOpsTicketDetailScreen({
       <header className="sticky top-0 z-20 flex items-center justify-between gap-5 border-b border-app-border bg-[var(--app-header-bg)] px-6 py-3.5 backdrop-blur-xl max-sm:px-3.5">
         <div className="flex min-w-0 items-center gap-2.5">
           <AppSidebar />
-          <Link className="flex items-baseline gap-2.5 no-underline" href="/dashboard">
+          <Link className="flex items-baseline gap-2.5 no-underline" href="/painel">
             <strong className="text-lg text-app-text">Helpdesk</strong>
             <span className="text-[13px] text-app-subtle max-sm:hidden">Nova plataforma</span>
           </Link>
@@ -159,16 +159,16 @@ export function DevOpsTicketDetailScreen({
         <div className="mb-[18px] flex items-end justify-between gap-6 max-sm:flex-col max-sm:items-stretch max-sm:gap-3">
           <div>
             <span className="mb-2 inline-block text-xs font-extrabold uppercase tracking-[0.1em] text-app-muted">
-              Tickets · DevOps
+              Atendimentos · DevOps
             </span>
             <h1 className="m-0 text-[28px] font-bold tracking-tight text-app-text">
               DevOps #{ticketId}
             </h1>
             <p className="mt-1.5 text-app-muted-strong">
-              {ticket?.name ?? 'Detalhe operacional do ticket.'}
+              {ticket?.name ?? 'Detalhe operacional do atendimento.'}
             </p>
           </div>
-          <Link className={BUTTON_CLASS} href="/tickets/devops">
+          <Link className={BUTTON_CLASS} href="/atendimentos/devops">
             Voltar à lista
           </Link>
         </div>
@@ -213,7 +213,7 @@ export function DevOpsTicketDetailScreen({
                   {ticket.project.id ? (
                     <Link
                       className="font-semibold text-app-brand underline decoration-[var(--app-border-strong)] underline-offset-[0.16em] hover:decoration-current"
-                      href={`/tickets/devops/projects/${ticket.project.id}`}
+                      href={`/atendimentos/devops/projetos/${ticket.project.id}`}
                     >
                       {ticket.project.name || `#${ticket.project.id}`}
                     </Link>
@@ -257,7 +257,7 @@ export function DevOpsTicketDetailScreen({
             <DevOpsTicketClassificationEditor
               onChanged={refresh}
               onSave={(input) => updateDevOpsTicketClassification(ticketId, input)}
-              resourceLabel="ticket DevOps"
+              resourceLabel="atendimento DevOps"
               value={{
                 typeId: ticket.typeId,
                 categoryId: ticket.category.id,
@@ -290,7 +290,7 @@ export function DevOpsTicketDetailScreen({
               assignedTechnicianId={ticket.technician.id}
               currentUser={currentUser}
               onChanged={refresh}
-              resourceLabel="ticket DevOps"
+              resourceLabel="atendimento DevOps"
               status={ticket.status}
               statusLabel={ticket.statusLabel}
               technicians={technicians}

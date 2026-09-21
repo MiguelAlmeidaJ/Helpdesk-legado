@@ -236,7 +236,7 @@ export function VehicleAgendaScreen({
       <header className={styles.header}>
         <div className={styles.headerLeft}>
           <AppSidebar />
-          <Link className={styles.brand} href="/dashboard">
+          <Link className={styles.brand} href="/painel">
             <strong>Helpdesk</strong>
             <span>Logística · Agenda de Veículos</span>
           </Link>

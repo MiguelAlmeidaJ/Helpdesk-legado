@@ -5,6 +5,6 @@ import { UsersScreen } from '../../modules/users/components/users-screen';
 export const metadata: Metadata = { title: 'Usuários · Helpdesk' };
 
 export default async function UsersPage() {
-  const currentUser = await requireAuthenticatedUser('/users');
+  const currentUser = await requireAuthenticatedUser('/usuarios');
   return <UsersScreen currentUser={currentUser} />;
 }

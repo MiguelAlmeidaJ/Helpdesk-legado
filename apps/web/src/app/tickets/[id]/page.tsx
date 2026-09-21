@@ -25,7 +25,7 @@ export default async function TicketDetailPage({
     notFound();
   }
 
-  const currentUser = await requireAuthenticatedUser(`/tickets/${ticketId}`);
+  const currentUser = await requireAuthenticatedUser(`/atendimentos/${ticketId}`);
 
   return (
     <TicketDetailScreen

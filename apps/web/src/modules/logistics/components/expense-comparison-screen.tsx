@@ -217,7 +217,7 @@ export function ExpenseComparisonScreen({
       <header className={styles.header}>
         <div className={styles.headerLeft}>
           <AppSidebar />
-          <Link className={styles.brand} href="/dashboard">
+          <Link className={styles.brand} href="/painel">
             <strong>Helpdesk</strong>
             <span>Logística · Análise de RDs</span>
           </Link>
@@ -233,8 +233,8 @@ export function ExpenseComparisonScreen({
             <p>Compare RDs pagas por categoria e cliente entre dois períodos.</p>
           </div>
           <div className={styles.heroActions}>
-            <Link href="/logistics/expenses/admin/report">Relatório de pagamentos</Link>
-            <Link href="/logistics/expenses/admin">Voltar à gestão</Link>
+            <Link href="/logistica/despesas/administracao/relatorio">Relatório de pagamentos</Link>
+            <Link href="/logistica/despesas/administracao">Voltar à gestão</Link>
           </div>
         </section>
 

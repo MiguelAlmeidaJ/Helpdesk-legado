@@ -140,7 +140,7 @@ export function DevOpsProjectsScreen({
       <header className="sticky top-0 z-20 flex items-center justify-between gap-5 border-b border-app-border bg-[var(--app-header-bg)] px-6 py-3.5 backdrop-blur-xl max-sm:px-3.5">
         <div className="flex min-w-0 items-center gap-2.5">
           <AppSidebar />
-          <Link className="flex items-baseline gap-2.5 no-underline" href="/dashboard">
+          <Link className="flex items-baseline gap-2.5 no-underline" href="/painel">
             <strong className="text-lg text-app-text">Helpdesk</strong>
             <span className="text-[13px] text-app-subtle max-sm:hidden">
               Nova plataforma
@@ -163,15 +163,15 @@ export function DevOpsProjectsScreen({
               Projetos
             </h1>
             <p className="mt-1.5 text-app-muted-strong">
-              Grupos opcionais de tickets DevOps. Tickets avulsos continuam fora de projeto.
+              Grupos opcionais de atendimentos DevOps. Atendimentos avulsos continuam fora de projeto.
             </p>
           </div>
           <div className="flex flex-wrap items-center justify-end gap-3 max-sm:[&>*]:flex-1">
-            <Link className={PRIMARY_BUTTON_CLASS} href="/tickets/devops/projects/new">
+            <Link className={PRIMARY_BUTTON_CLASS} href="/atendimentos/devops/projetos/novo">
               Novo projeto
             </Link>
-            <Link className={BUTTON_CLASS} href="/tickets/devops">
-              Voltar aos tickets
+            <Link className={BUTTON_CLASS} href="/atendimentos/devops">
+              Voltar aos atendimentos
             </Link>
           </div>
         </div>
@@ -318,7 +318,7 @@ export function DevOpsProjectsScreen({
                     <td className={`${TABLE_CELL_CLASS} font-extrabold`}>
                       <Link
                         className="font-extrabold text-app-brand no-underline hover:underline focus-visible:underline"
-                        href={`/tickets/devops/projects/${project.id}`}
+                        href={`/atendimentos/devops/projetos/${project.id}`}
                       >
                         #{project.id}
                       </Link>

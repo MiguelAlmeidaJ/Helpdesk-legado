@@ -90,7 +90,7 @@ function TimelineItem({ item }: { item: TicketTimelineEntry }) {
             {INTERACTION_LABELS[item.interactionType] ??
               `Evento ${item.interactionType}`}
           </span>
-          <Link href={`/tickets/${item.ticketId}`}>
+          <Link href={`/atendimentos/${item.ticketId}`}>
             Atendimento #{item.ticketId}
           </Link>
         </div>
@@ -131,8 +131,8 @@ export function TicketTimelineScreen({
     } catch (reason: unknown) {
       setError(
         reason instanceof ApiError && reason.status === 403
-          ? 'Seu usuário não possui acesso à Timeline.'
-          : 'Não foi possível carregar a Timeline.',
+          ? 'Seu usuário não possui acesso à Linha do tempo.'
+          : 'Não foi possível carregar a Linha do tempo.',
       );
     } finally {
       setLoading(false);
@@ -152,7 +152,7 @@ export function TicketTimelineScreen({
       <header className={styles.header}>
         <div className={styles.headerLeft}>
           <AppSidebar />
-          <Link className={styles.brand} href="/dashboard">
+          <Link className={styles.brand} href="/painel">
             <strong>Helpdesk</strong>
             <span>Nova plataforma</span>
           </Link>
@@ -164,7 +164,7 @@ export function TicketTimelineScreen({
         <div className={styles.titleRow}>
           <div>
             <span className={styles.eyebrow}>Auditoria operacional</span>
-            <h1>Timeline</h1>
+            <h1>Linha do tempo</h1>
             <p>Interações registradas nos atendimentos durante as últimas 24 horas.</p>
           </div>
           <button disabled={!allowed || loading} onClick={() => void load()} type="button">
@@ -177,7 +177,7 @@ export function TicketTimelineScreen({
             Seu usuário não possui a permissão de auditoria de atendimentos.
           </div>
         ) : null}
-        {loading ? <div className={styles.notice}>Carregando Timeline…</div> : null}
+        {loading ? <div className={styles.notice}>Carregando Linha do tempo…</div> : null}
         {error ? <div className={styles.error}>{error}</div> : null}
 
         {data ? (

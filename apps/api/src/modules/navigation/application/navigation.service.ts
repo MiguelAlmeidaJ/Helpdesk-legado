@@ -52,7 +52,6 @@ function stringArray(value: unknown): string[] | undefined {
   if (value === undefined) return undefined;
   if (
     !Array.isArray(value) ||
-    value.length === 0 ||
     value.some((item) => typeof item !== 'string' || !item.trim())
   ) {
     return undefined;
@@ -81,6 +80,10 @@ function parseCondition(raw: string | null): VisibilityCondition | null | false 
       (input.allPermissions !== undefined && allPermissions === undefined) ||
       (input.anyRoles !== undefined && anyRoles === undefined)
     ) {
+      return false;
+    }
+
+    if (!anyPermissions?.length && !allPermissions?.length && !anyRoles?.length) {
       return false;
     }
 

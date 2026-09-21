@@ -104,6 +104,7 @@ pnpm install
 pnpm docker:up
 pnpm db:generate
 pnpm build
+pnpm navigation:bootstrap
 pnpm pm2:start
 ```
 
@@ -165,6 +166,7 @@ git pull
 pnpm install --frozen-lockfile
 pnpm db:generate
 pnpm build
+pnpm navigation:bootstrap
 pm2 restart ecosystem.config.cjs --env production --update-env
 pm2 save
 ```

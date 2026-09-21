@@ -2,6 +2,8 @@
 
 This file is the migration control board. Update it in the same pull request that changes a module's migration phase.
 
+For the audited state of each sidebar entry, see [Navigation audit (2026-09-21)](NAVIGATION-AUDIT.md): 35 available entries and 21 pending. Recurrences and DevOps/Marketing task creation already have native implementations; their menu flags have been corrected. Browser links use Portuguese paths with redirects from the previous URLs.
+
 ## Phases
 
 - `planned`: mapped at a high level only.

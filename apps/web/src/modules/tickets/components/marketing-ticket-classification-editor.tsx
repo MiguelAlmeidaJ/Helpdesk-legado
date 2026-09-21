@@ -22,7 +22,7 @@ function errorMessage(reason: unknown): string {
     if (typeof message === 'string') return message;
   }
   if (reason instanceof ApiError && reason.status === 403) {
-    return 'Você não possui permissão para editar este ticket de Marketing.';
+    return 'Você não possui permissão para editar este atendimento de Marketing.';
   }
   if (reason instanceof ApiError) return `A API respondeu com erro ${reason.status}.`;
   return reason instanceof Error ? reason.message : 'Não foi possível salvar a classificação de Marketing.';
@@ -121,7 +121,7 @@ export function MarketingTicketClassificationEditor({
           <span className="mb-2 inline-block text-xs font-extrabold uppercase tracking-[0.1em] text-app-muted">
             Classificação
           </span>
-          <h2 className="m-0 text-lg font-bold text-app-text">Editar ticket de Marketing</h2>
+          <h2 className="m-0 text-lg font-bold text-app-text">Editar atendimento de Marketing</h2>
           <p className="mt-1 text-sm text-app-muted">Preserva cliente, solicitante, local, técnico e abertura.</p>
         </div>
         {loading ? <span className="text-sm text-app-muted">Carregando catálogos…</span> : null}

@@ -157,7 +157,7 @@ export function MarketingTicketReportScreen({
       <header className="sticky top-0 z-20 flex items-center justify-between gap-5 border-b border-app-border bg-[var(--app-header-bg)] px-6 py-3.5 backdrop-blur-xl max-sm:px-3.5">
         <div className="flex min-w-0 items-center gap-2.5">
           <AppSidebar />
-          <Link className="flex items-baseline gap-2.5 no-underline" href="/dashboard">
+          <Link className="flex items-baseline gap-2.5 no-underline" href="/painel">
             <strong className="text-lg text-app-text">Helpdesk</strong>
             <span className="text-[13px] text-app-subtle max-sm:hidden">Nova plataforma</span>
           </Link>
@@ -172,7 +172,7 @@ export function MarketingTicketReportScreen({
         <div className="mb-[18px] flex items-end justify-between gap-6 max-sm:flex-col max-sm:items-stretch max-sm:gap-3">
           <div>
             <span className="mb-2 inline-block text-xs font-extrabold uppercase tracking-[0.1em] text-app-muted">
-              Tickets · Marketing · Relatório
+              Atendimentos · Marketing · Relatório
             </span>
             <h1 className="m-0 text-[28px] font-bold tracking-tight text-app-text">
               Tarefas por cliente e técnico
@@ -181,7 +181,7 @@ export function MarketingTicketReportScreen({
               Leitura analítica das demandas de Marketing. Marketing não possui SLA; a duração abaixo é apenas o intervalo entre abertura e fechamento.
             </p>
           </div>
-          <Link className={BUTTON_CLASS} href="/tickets/marketing">Voltar para tickets</Link>
+          <Link className={BUTTON_CLASS} href="/atendimentos/marketing">Voltar para atendimentos</Link>
         </div>
 
         <form
@@ -300,7 +300,7 @@ export function MarketingTicketReportScreen({
                     <td className={`${TABLE_CELL_CLASS} font-extrabold`}>
                       <Link
                         className="font-extrabold text-app-brand no-underline hover:underline focus-visible:underline"
-                        href={`/tickets/marketing/${ticket.id}`}
+                        href={`/atendimentos/marketing/${ticket.id}`}
                       >
                         #{ticket.id}
                       </Link>

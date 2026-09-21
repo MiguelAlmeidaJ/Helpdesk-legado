@@ -53,11 +53,11 @@ export default async function ExpenseAdminPage({
   searchParams: Promise<Record<string, SearchValue>>;
 }) {
   const currentUser = await requireAuthenticatedUser(
-    '/logistics/expenses/admin',
+    '/logistica/despesas/administracao',
   );
 
   if (!canReadAdminDashboard(currentUser)) {
-    redirect('/logistics/expenses');
+    redirect('/logistica/despesas');
   }
 
   const params = await searchParams;

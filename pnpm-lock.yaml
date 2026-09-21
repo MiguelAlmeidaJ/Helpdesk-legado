@@ -121,6 +121,9 @@ importers:
 
   packages/database:
     dependencies:
+      '@helpdesk/contracts':
+        specifier: workspace:*
+        version: link:../contracts
       '@prisma/adapter-mariadb':
         specifier: 7.10.0
         version: 7.10.0

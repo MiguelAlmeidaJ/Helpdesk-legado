@@ -19,11 +19,11 @@ function canPay(user: CurrentUserResponse): boolean {
 
 export default async function ExpensePaymentsPage() {
   const currentUser = await requireAuthenticatedUser(
-    '/logistics/expenses/admin/payments',
+    '/logistica/despesas/administracao/pagamentos',
   );
 
   if (!canPay(currentUser)) {
-    redirect('/logistics/expenses/admin');
+    redirect('/logistica/despesas/administracao');
   }
 
   return <ExpensePaymentScreen currentUser={currentUser} />;

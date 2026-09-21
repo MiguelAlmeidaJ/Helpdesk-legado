@@ -20,6 +20,7 @@
     "legacy:catalog:audit": "node scripts/audit-catalog-legacy.mjs --strict",
     "legacy:catalog:verify": "pnpm legacy:catalog:audit && pnpm legacy:audit && pnpm typecheck && pnpm build",
     "test:reports": "node --test scripts/reports.test.cjs",
+    "test:navigation": "node --test scripts/navigation.test.cjs",
     "test:reports:db": "node scripts/reports-db-smoke.cjs",
     "test:logistics": "node --test scripts/logistics.test.cjs scripts/logistics-status.test.cjs",
     "storage:migrate": "node scripts/migrate-runtime-uploads.mjs",

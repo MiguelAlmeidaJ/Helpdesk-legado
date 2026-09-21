@@ -94,7 +94,7 @@ function TicketChip({ ticket }: { ticket: TicketAvailabilityTicket }) {
   return (
     <Link
       className={styles.ticketChip}
-      href={`/tickets/${ticket.id}`}
+      href={`/atendimentos/${ticket.id}`}
       title={`${ticket.clientName ?? 'Cliente não informado'} · ${ticket.typeLabel}`}
     >
       #{ticket.id}
@@ -149,7 +149,7 @@ function Queue({
       {tickets.length ? (
         <div className={styles.queue}>
           {tickets.map((ticket) => (
-            <Link className={styles.queueItem} href={`/tickets/${ticket.id}`} key={ticket.id}>
+            <Link className={styles.queueItem} href={`/atendimentos/${ticket.id}`} key={ticket.id}>
               <strong>#{ticket.id}</strong>
               <span className={styles.queueField}>{ticket.clientName ?? 'Cliente não informado'}</span>
               <span className={styles.queueField}>{ticket.typeLabel}</span>
@@ -204,7 +204,7 @@ export function TicketAvailabilityScreen({
       <header className={styles.header}>
         <div className={styles.headerLeft}>
           <AppSidebar />
-          <Link className={styles.brand} href="/dashboard">
+          <Link className={styles.brand} href="/painel">
             <strong>Helpdesk</strong>
             <span>Nova plataforma</span>
           </Link>
@@ -223,7 +223,7 @@ export function TicketAvailabilityScreen({
           </div>
           <div className={styles.actions}>
             {allowed ? (
-              <a href="/tickets/availability/waiting-report">
+              <a href="/atendimentos/disponibilidade/relatorio-espera">
                 Relatório de esperas
               </a>
             ) : null}
@@ -282,7 +282,7 @@ export function TicketAvailabilityScreen({
                     <div className={styles.holdGroup} key={group.cause}>
                       <h3>{group.cause}</h3>
                       {group.tickets.map((ticket) => (
-                        <Link className={styles.holdItem} href={`/tickets/${ticket.id}`} key={ticket.id}>
+                        <Link className={styles.holdItem} href={`/atendimentos/${ticket.id}`} key={ticket.id}>
                           <strong>#{ticket.id}</strong>
                           <span>{ticket.clientName ?? 'Cliente não informado'}</span>
                           <span>{ticket.technicianName ?? 'Sem técnico'}</span>

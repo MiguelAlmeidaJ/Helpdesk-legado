@@ -105,7 +105,7 @@ export function DevOpsTicketImagesPanel({ ticketId }: { ticketId: number }) {
   return (
     <section
       className="grid gap-4 rounded-2xl border border-app-border bg-app-surface p-5 shadow-sm shadow-slate-950/5 dark:shadow-black/10"
-      aria-label="Imagens do ticket DevOps"
+      aria-label="Imagens do atendimento DevOps"
     >
       <div className="flex items-start justify-between gap-4 max-sm:flex-col">
         <div>

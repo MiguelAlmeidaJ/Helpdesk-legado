@@ -3,11 +3,11 @@ import { requireAuthenticatedUser } from '../../../modules/access/server/current
 import { DevOpsTicketsScreen } from '../../../modules/tickets/components/devops-tickets-screen';
 
 export const metadata: Metadata = {
-  title: 'DevOps · Tickets · Helpdesk',
-  description: 'Lista nativa de tickets DevOps',
+  title: 'DevOps · Atendimentos · Helpdesk',
+  description: 'Lista nativa de atendimentos DevOps',
 };
 
 export default async function DevOpsTicketsPage() {
-  const currentUser = await requireAuthenticatedUser('/tickets/devops');
+  const currentUser = await requireAuthenticatedUser('/atendimentos/devops');
   return <DevOpsTicketsScreen currentUser={currentUser} />;
 }

@@ -5,6 +5,6 @@ import { CatalogCheckScreen } from '../../../modules/catalog/components/catalog-
 export const metadata: Metadata = { title: 'Verificação de Catálogos · Helpdesk' };
 
 export default async function CatalogCheckPage() {
-  const currentUser = await requireAuthenticatedUser('/catalog/check');
+  const currentUser = await requireAuthenticatedUser('/catalogos/verificacao');
   return <CatalogCheckScreen currentUser={currentUser} />;
 }

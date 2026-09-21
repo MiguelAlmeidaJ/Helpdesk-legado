@@ -17,7 +17,7 @@ export default async function ChangePasswordPage() {
           <p className={styles.brandDescription}>A alteração encerra todas as sessões abertas por segurança.</p>
         </div>
         <ChangePasswordForm />
-        <Link className={styles.backLink} href="/dashboard">Voltar ao dashboard</Link>
+        <Link className={styles.backLink} href="/painel">Voltar ao painel</Link>
       </section>
     </main>
   );

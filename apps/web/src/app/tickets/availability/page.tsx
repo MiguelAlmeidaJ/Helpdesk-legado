@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 };
 
 export default async function TicketAvailabilityPage() {
-  const currentUser = await requireAuthenticatedUser('/tickets/availability');
+  const currentUser = await requireAuthenticatedUser('/atendimentos/disponibilidade');
 
   return <TicketAvailabilityScreen currentUser={currentUser} />;
 }

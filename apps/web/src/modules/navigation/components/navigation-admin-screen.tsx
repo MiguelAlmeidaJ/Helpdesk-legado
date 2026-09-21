@@ -117,6 +117,7 @@ function fromItem(item: NavigationAdminItem): ItemForm {
 
 function errorMessage(error: unknown): string {
   if (error instanceof ApiError) {
+    if (error.status >= 500) return 'Não foi possível carregar ou salvar a navegação. Tente novamente.';
     if (error.body && typeof error.body === 'object') {
       const value = (error.body as Record<string, unknown>).message;
       if (typeof value === 'string') return value;
@@ -326,7 +327,7 @@ export function NavigationAdminScreen({
           <AppSidebar />
           <Link
             className="flex items-baseline gap-2.5 no-underline"
-            href="/dashboard"
+            href="/painel"
           >
             <strong className="text-lg">Helpdesk</strong>
             <span className="text-[13px] text-app-subtle max-[520px]:hidden">
@@ -431,7 +432,7 @@ export function NavigationAdminScreen({
               <form className="grid gap-4" onSubmit={saveSection}>
                 <div className="grid grid-cols-2 gap-3.5 max-[640px]:grid-cols-1">
                   <label className={FIELD_CLASS}>
-                    <span>Slug</span>
+                    <span>Identificador</span>
                     <input
                       className={CONTROL_CLASS}
                       disabled={selectedSectionId !== null}
@@ -584,7 +585,7 @@ export function NavigationAdminScreen({
                           </select>
                         </label>
                         <label className={FIELD_CLASS}>
-                          <span>Slug</span>
+                          <span>Identificador</span>
                           <input
                             className={CONTROL_CLASS}
                             disabled={selectedItemId !== null}

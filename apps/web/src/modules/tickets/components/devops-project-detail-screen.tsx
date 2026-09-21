@@ -127,7 +127,7 @@ export function DevOpsProjectDetailScreen({
       <header className="sticky top-0 z-20 flex items-center justify-between gap-5 border-b border-app-border bg-[var(--app-header-bg)] px-6 py-3.5 backdrop-blur-xl max-sm:px-3.5">
         <div className="flex min-w-0 items-center gap-2.5">
           <AppSidebar />
-          <Link className="flex items-baseline gap-2.5 no-underline" href="/dashboard">
+          <Link className="flex items-baseline gap-2.5 no-underline" href="/painel">
             <strong className="text-lg text-app-text">Helpdesk</strong>
             <span className="text-[13px] text-app-subtle max-sm:hidden">Nova plataforma</span>
           </Link>
@@ -145,19 +145,19 @@ export function DevOpsProjectDetailScreen({
               Projeto #{projectId}
             </h1>
             <p className="mt-1.5 text-app-muted-strong">
-              {project?.name ?? 'Grupo de tickets DevOps.'}
+              {project?.name ?? 'Grupo de atendimentos DevOps.'}
             </p>
           </div>
           <div className="flex flex-wrap items-center justify-end gap-3 max-sm:[&>*]:flex-1">
             {project && project.status !== 4 ? (
               <Link
                 className={PRIMARY_BUTTON_CLASS}
-                href={`/tickets/new?type=devops&projectId=${projectId}`}
+                href={`/atendimentos/novo?type=devops&projectId=${projectId}`}
               >
                 Nova tarefa neste projeto
               </Link>
             ) : null}
-            <Link className={BUTTON_CLASS} href="/tickets/devops/projects">
+            <Link className={BUTTON_CLASS} href="/atendimentos/devops/projetos">
               Voltar aos projetos
             </Link>
           </div>
@@ -249,11 +249,11 @@ export function DevOpsProjectDetailScreen({
 
             <section
               className="mb-4 overflow-hidden rounded-xl border border-app-border bg-app-surface shadow-sm shadow-slate-950/5 dark:shadow-black/10"
-              aria-label="Tickets do projeto"
+              aria-label="Atendimentos do projeto"
             >
               <div className="flex flex-wrap items-center justify-between gap-3 border-b border-app-border-soft px-4 py-3.5">
                 <span className="text-xs font-extrabold uppercase tracking-[0.1em] text-app-muted">
-                  Tickets do projeto
+                  Atendimentos do projeto
                 </span>
                 <strong className="text-lg text-app-text">
                   {tickets.length.toLocaleString('pt-BR')}
@@ -264,7 +264,7 @@ export function DevOpsProjectDetailScreen({
                   <thead>
                     <tr>
                       <th className={TABLE_HEADER_CLASS}>ID</th>
-                      <th className={TABLE_HEADER_CLASS}>Ticket</th>
+                      <th className={TABLE_HEADER_CLASS}>Atendimento</th>
                       <th className={TABLE_HEADER_CLASS}>Técnico</th>
                       <th className={TABLE_HEADER_CLASS}>Status</th>
                       <th className={TABLE_HEADER_CLASS}>Dias</th>
@@ -277,7 +277,7 @@ export function DevOpsProjectDetailScreen({
                         <td className={`${TABLE_CELL_CLASS} font-extrabold`}>
                           <Link
                             className="font-extrabold text-app-brand no-underline hover:underline focus-visible:underline"
-                            href={`/tickets/devops/${ticket.id}`}
+                            href={`/atendimentos/devops/${ticket.id}`}
                           >
                             #{ticket.id}
                           </Link>
@@ -305,7 +305,7 @@ export function DevOpsProjectDetailScreen({
               </div>
               {tickets.length === 0 ? (
                 <div className="px-5 py-10 text-center text-app-muted-strong">
-                  Este projeto ainda não possui tickets visíveis no seu escopo.
+                  Este projeto ainda não possui atendimentos visíveis no seu escopo.
                 </div>
               ) : null}
             </section>

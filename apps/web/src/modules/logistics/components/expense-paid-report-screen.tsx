@@ -392,7 +392,7 @@ export function ExpensePaidReportScreen({
       <header className={styles.header}>
         <div className={styles.headerLeft}>
           <AppSidebar />
-          <Link className={styles.brand} href="/dashboard">
+          <Link className={styles.brand} href="/painel">
             <strong>Helpdesk</strong>
             <span>Logística · Relatório de RDs</span>
           </Link>
@@ -407,7 +407,7 @@ export function ExpensePaidReportScreen({
             <h1>Relatório de Pagamentos</h1>
             <p>Consulta e manutenção administrativa das RDs pagas.</p>
           </div>
-          <Link className={styles.backLink} href="/logistics/expenses/admin">
+          <Link className={styles.backLink} href="/logistica/despesas/administracao">
             Voltar à gestão
           </Link>
         </section>

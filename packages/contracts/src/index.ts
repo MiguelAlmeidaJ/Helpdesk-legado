@@ -7,6 +7,8 @@ export * from './auth/sector';
 export * from './auth/user-role';
 export * from './common/pagination';
 export * from './navigation/navigation';
+export * from './navigation/web-routes';
+export * from './navigation/default-navigation';
 export * from './catalog/catalog';
 export * from './tickets/ticket-assignment';
 export * from './tickets/ticket-detail';

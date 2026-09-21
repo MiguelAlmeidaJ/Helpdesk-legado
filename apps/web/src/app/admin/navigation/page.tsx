@@ -16,8 +16,8 @@ function isSystemAdmin(user: CurrentUserResponse): boolean {
 }
 
 export default async function NavigationAdminPage() {
-  const currentUser = await requireAuthenticatedUser('/admin/navigation');
-  if (!isSystemAdmin(currentUser)) redirect('/dashboard');
+  const currentUser = await requireAuthenticatedUser('/administracao/navegacao');
+  if (!isSystemAdmin(currentUser)) redirect('/painel');
 
   return <NavigationAdminScreen currentUser={currentUser} />;
 }

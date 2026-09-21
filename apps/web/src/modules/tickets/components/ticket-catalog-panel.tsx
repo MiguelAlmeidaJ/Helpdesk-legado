@@ -155,7 +155,7 @@ export function TicketCatalogPanel({
           <h2>Catálogo do cliente</h2>
           <p>Localize orientações cadastradas para este cliente por categoria de catálogo.</p>
         </div>
-        <Link className={styles.manageLink} href="/catalog" rel="noreferrer" target="_blank">
+        <Link className={styles.manageLink} href="/catalogos" rel="noreferrer" target="_blank">
           Abrir catálogos
         </Link>
       </div>

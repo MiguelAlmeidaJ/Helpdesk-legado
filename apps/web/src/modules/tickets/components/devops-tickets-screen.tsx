@@ -59,13 +59,13 @@ function formatDate(value: string | null): string {
 function errorMessage(reason: unknown): string {
   if (reason instanceof ApiError) {
     if (reason.status === 403) {
-      return 'Seu usuário não possui acesso aos tickets DevOps.';
+      return 'Seu usuário não possui acesso aos atendimentos DevOps.';
     }
     return `A API respondeu com erro ${reason.status}.`;
   }
   return reason instanceof Error
     ? reason.message
-    : 'Não foi possível carregar os tickets DevOps.';
+    : 'Não foi possível carregar os atendimentos DevOps.';
 }
 
 export function DevOpsTicketsScreen({
@@ -145,7 +145,7 @@ export function DevOpsTicketsScreen({
           <AppSidebar />
           <Link
             className="flex items-baseline gap-2.5 no-underline"
-            href="/dashboard"
+            href="/painel"
           >
             <strong className="text-lg text-app-text">Helpdesk</strong>
             <span className="text-[13px] text-app-subtle max-sm:hidden">
@@ -165,24 +165,24 @@ export function DevOpsTicketsScreen({
         <div className="mb-[18px] flex items-end justify-between gap-6 max-sm:flex-col max-sm:items-stretch max-sm:gap-3">
           <div>
             <span className="mb-2 inline-block text-xs font-extrabold uppercase tracking-[0.1em] text-app-muted">
-              Tickets · DevOps
+              Atendimentos · DevOps
             </span>
             <h1 className="m-0 text-[28px] font-bold tracking-tight text-app-text">
               DevOps
             </h1>
             <p className="mt-1.5 text-app-muted-strong">
-              Tickets operacionais sem SLA, avulsos ou agrupados em projetos.
+              Atendimentos operacionais sem SLA, avulsos ou agrupados em projetos.
             </p>
           </div>
           <div className="flex flex-wrap items-center justify-end gap-3 max-sm:[&>*]:flex-1">
-            <Link className={BUTTON_CLASS} href="/tickets/devops/reports/tasks">
+            <Link className={BUTTON_CLASS} href="/atendimentos/devops/relatorios/tarefas">
               Relatório
             </Link>
-            <Link className={BUTTON_CLASS} href="/tickets/devops/projects">
+            <Link className={BUTTON_CLASS} href="/atendimentos/devops/projetos">
               Projetos
             </Link>
-            <Link className={PRIMARY_BUTTON_CLASS} href="/tickets/new?type=devops">
-              Novo ticket
+            <Link className={PRIMARY_BUTTON_CLASS} href="/atendimentos/novo?type=devops">
+              Novo atendimento
             </Link>
           </div>
         </div>
@@ -354,14 +354,14 @@ export function DevOpsTicketsScreen({
 
         <section
           className="overflow-hidden rounded-xl border border-app-border bg-app-surface shadow-sm shadow-slate-950/5 dark:shadow-black/10"
-          aria-label="Lista de tickets DevOps"
+          aria-label="Lista de atendimentos DevOps"
         >
           <div className="overflow-x-auto">
             <table className="w-full min-w-[1050px] border-collapse">
               <thead>
                 <tr>
                   <th className={TABLE_HEADER_CLASS}>ID</th>
-                  <th className={TABLE_HEADER_CLASS}>Ticket</th>
+                  <th className={TABLE_HEADER_CLASS}>Atendimento</th>
                   <th className={TABLE_HEADER_CLASS}>Projeto</th>
                   <th className={TABLE_HEADER_CLASS}>Cliente</th>
                   <th className={TABLE_HEADER_CLASS}>Técnico</th>
@@ -378,7 +378,7 @@ export function DevOpsTicketsScreen({
                     <td className={`${TABLE_CELL_CLASS} font-extrabold`}>
                       <Link
                         className="text-app-brand no-underline hover:underline focus-visible:underline"
-                        href={`/tickets/devops/${ticket.id}`}
+                        href={`/atendimentos/devops/${ticket.id}`}
                       >
                         #{ticket.id}
                       </Link>
@@ -399,7 +399,7 @@ export function DevOpsTicketsScreen({
                       {ticket.project.id ? (
                         <Link
                           className="font-semibold text-app-text-soft underline decoration-slate-400/45 underline-offset-[0.16em] transition hover:decoration-current"
-                          href={`/tickets/devops/projects/${ticket.project.id}`}
+                          href={`/atendimentos/devops/projetos/${ticket.project.id}`}
                         >
                           {ticket.project.name || `#${ticket.project.id}`}
                         </Link>
@@ -429,7 +429,7 @@ export function DevOpsTicketsScreen({
 
           {!loading && !error && result?.data.length === 0 ? (
             <div className="px-5 py-10 text-center text-app-muted-strong">
-              Nenhum ticket DevOps encontrado com os filtros atuais.
+              Nenhum atendimento DevOps encontrado com os filtros atuais.
             </div>
           ) : null}
 

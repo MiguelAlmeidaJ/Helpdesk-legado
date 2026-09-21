@@ -81,7 +81,7 @@ function apiErrorDetail(body: unknown): string | null {
 function errorMessage(reason: unknown): string {
   if (reason instanceof ApiError) {
     if (reason.status === 403) {
-      return 'Seu usuário não possui acesso aos tickets de Marketing.';
+      return 'Seu usuário não possui acesso aos atendimentos de Marketing.';
     }
     if (reason.status === 401) {
       return 'Sua sessão expirou ou deixou de ser válida. Entre novamente para continuar.';
@@ -96,7 +96,7 @@ function errorMessage(reason: unknown): string {
   }
   return reason instanceof Error
     ? reason.message
-    : 'Não foi possível carregar os tickets de Marketing.';
+    : 'Não foi possível carregar os atendimentos de Marketing.';
 }
 
 export function MarketingTicketsScreen({
@@ -174,7 +174,7 @@ export function MarketingTicketsScreen({
           <AppSidebar />
           <Link
             className="flex items-baseline gap-2.5 no-underline"
-            href="/dashboard"
+            href="/painel"
           >
             <strong className="text-lg text-app-text">Helpdesk</strong>
             <span className="text-[13px] text-app-subtle max-sm:hidden">
@@ -194,7 +194,7 @@ export function MarketingTicketsScreen({
         <div className="mb-[18px] flex items-end justify-between gap-6 max-sm:flex-col max-sm:items-stretch max-sm:gap-3">
           <div>
             <span className="mb-2 inline-block text-xs font-extrabold uppercase tracking-[0.1em] text-app-muted">
-              Tickets · Marketing
+              Atendimentos · Marketing
             </span>
             <h1 className="m-0 text-[28px] font-bold tracking-tight text-app-text">
               Marketing
@@ -207,15 +207,15 @@ export function MarketingTicketsScreen({
           <div className="flex flex-wrap items-center justify-end gap-3 max-sm:[&>*]:flex-1">
             <Link
               className={BUTTON_CLASS}
-              href="/tickets/marketing/reports/tasks"
+              href="/atendimentos/marketing/relatorios/tarefas"
             >
               Relatório
             </Link>
             <Link
               className={PRIMARY_BUTTON_CLASS}
-              href="/tickets/new?type=marketing"
+              href="/atendimentos/novo?type=marketing"
             >
-              Novo ticket
+              Novo atendimento
             </Link>
           </div>
         </div>
@@ -350,14 +350,14 @@ export function MarketingTicketsScreen({
 
         <section
           className="overflow-hidden rounded-xl border border-app-border bg-app-surface shadow-sm shadow-slate-950/5 dark:shadow-black/10"
-          aria-label="Lista de tickets de Marketing"
+          aria-label="Lista de atendimentos de Marketing"
         >
           <div className="overflow-x-auto">
             <table className="w-full min-w-[1050px] border-collapse">
               <thead>
                 <tr>
                   <th className={TABLE_HEADER_CLASS}>ID</th>
-                  <th className={TABLE_HEADER_CLASS}>Ticket</th>
+                  <th className={TABLE_HEADER_CLASS}>Atendimento</th>
                   <th className={TABLE_HEADER_CLASS}>Cliente</th>
                   <th className={TABLE_HEADER_CLASS}>Classificação</th>
                   <th className={TABLE_HEADER_CLASS}>Técnico</th>
@@ -374,7 +374,7 @@ export function MarketingTicketsScreen({
                     <td className={`${TABLE_CELL_CLASS} font-extrabold`}>
                       <Link
                         className="text-app-brand no-underline hover:underline focus-visible:underline"
-                        href={`/tickets/marketing/${ticket.id}`}
+                        href={`/atendimentos/marketing/${ticket.id}`}
                       >
                         #{ticket.id}
                       </Link>
@@ -416,7 +416,7 @@ export function MarketingTicketsScreen({
 
           {!loading && !error && result?.data.length === 0 ? (
             <div className="px-5 py-10 text-center text-app-muted-strong">
-              Nenhum ticket de Marketing encontrado com os filtros atuais.
+              Nenhum atendimento de Marketing encontrado com os filtros atuais.
             </div>
           ) : null}
 

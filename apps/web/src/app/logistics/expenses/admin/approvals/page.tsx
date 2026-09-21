@@ -19,11 +19,11 @@ function canApprove(user: CurrentUserResponse): boolean {
 
 export default async function ExpenseApprovalsPage() {
   const currentUser = await requireAuthenticatedUser(
-    '/logistics/expenses/admin/approvals',
+    '/logistica/despesas/administracao/aprovacoes',
   );
 
   if (!canApprove(currentUser)) {
-    redirect('/logistics/expenses/admin');
+    redirect('/logistica/despesas/administracao');
   }
 
   return <ExpenseApprovalScreen currentUser={currentUser} />;

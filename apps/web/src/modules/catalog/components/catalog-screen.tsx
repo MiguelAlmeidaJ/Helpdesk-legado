@@ -312,7 +312,7 @@ export function CatalogScreen({ currentUser }: { currentUser: CurrentUserRespons
       <header className={styles.header}>
         <div className={styles.headerLeft}>
           <AppSidebar />
-          <Link className={styles.brand} href="/dashboard">
+          <Link className={styles.brand} href="/painel">
             <strong>Helpdesk</strong>
             <span>Nova plataforma</span>
           </Link>

@@ -186,7 +186,7 @@ export function ExpenseManagementScreen({
       <header className={styles.header}>
         <div className={styles.headerLeft}>
           <AppSidebar />
-          <Link className={styles.brand} href="/logistics/expenses">
+          <Link className={styles.brand} href="/logistica/despesas">
             <strong>Helpdesk</strong>
             <span>Logística · Gerenciar RD</span>
           </Link>
@@ -203,7 +203,7 @@ export function ExpenseManagementScreen({
           </div>
 
           <div className={styles.actions}>
-            <Link href="/logistics/expenses">Resumo</Link>
+            <Link href="/logistica/despesas">Resumo</Link>
             <button
               disabled={!data}
               onClick={() => setDialog({ mode: 'create' })}

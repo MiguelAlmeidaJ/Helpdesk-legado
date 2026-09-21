@@ -211,7 +211,7 @@ export function OperationalDashboardScreen({
       setError(
         reason instanceof ApiError && reason.status === 401
           ? 'Sua sessão expirou. Entre novamente.'
-          : 'Não foi possível carregar o dashboard operacional.',
+          : 'Não foi possível carregar o painel operacional.',
       );
     } finally {
       setLoading(false);
@@ -254,7 +254,7 @@ export function OperationalDashboardScreen({
       <header className="sticky top-0 z-20 flex min-h-[58px] items-center justify-between gap-[18px] border-b border-app-border bg-[var(--app-header-bg)] px-6 backdrop-blur-[10px] max-[680px]:px-3">
         <div className="flex min-w-0 items-center gap-3">
           <AppSidebar />
-          <Link className="grid no-underline" href="/dashboard">
+          <Link className="grid no-underline" href="/painel">
             <strong className="text-[15px] text-app-text">Helpdesk</strong>
             <span className="text-[10px] text-app-subtle">Painel operacional</span>
           </Link>
@@ -267,13 +267,13 @@ export function OperationalDashboardScreen({
           <div>
             <span className={EYEBROW_CLASS}>Visão operacional</span>
             <h1 className="my-0.5 text-[30px] font-bold leading-tight text-app-text">
-              Dashboard
+              Painel
             </h1>
             <p className="m-0 text-xs text-app-muted-strong">
               Rankings de produção por período e pódio do trimestre atual.
             </p>
           </div>
-          <Link className={CONTROL_CLASS} href="/tickets">
+          <Link className={CONTROL_CLASS} href="/atendimentos">
             Abrir Atendimentos
           </Link>
         </section>
@@ -291,7 +291,7 @@ export function OperationalDashboardScreen({
             className="mb-3.5 rounded-[9px] border border-app-border bg-app-surface px-3.5 py-3 text-[11px] text-app-muted"
             role="status"
           >
-            Carregando dashboard…
+            Carregando painel…
           </div>
         ) : null}
 

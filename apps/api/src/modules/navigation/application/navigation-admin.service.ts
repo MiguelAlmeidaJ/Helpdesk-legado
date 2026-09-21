@@ -17,24 +17,24 @@ import type { Nivel3DatabaseClient } from '@helpdesk/database';
 import { NIVEL3_DATABASE } from '../../../core/database/database.constants';
 
 type SectionRow = {
-  id: number;
+  id: number | bigint;
   slug: string;
   label: string;
   short_label: string | null;
   sort_order: number;
-  is_active: number | boolean;
+  is_active: number | bigint | boolean;
 };
 
 type ItemRow = {
-  id: number;
-  section_id: number;
+  id: number | bigint;
+  section_id: number | bigint;
   slug: string;
   label: string;
   href: string | null;
   status: string;
   visibility_condition: string | null;
   sort_order: number;
-  is_active: number | boolean;
+  is_active: number | bigint | boolean;
 };
 
 function visibilityCondition(raw: string | null): NavigationVisibilityCondition | null {
@@ -54,8 +54,8 @@ function visibilityCondition(raw: string | null): NavigationVisibilityCondition 
 
 function item(row: ItemRow): NavigationAdminItem {
   return {
-    id: row.id,
-    sectionId: row.section_id,
+    id: Number(row.id),
+    sectionId: Number(row.section_id),
     slug: row.slug,
     label: row.label,
     href: row.href,
@@ -90,20 +90,21 @@ export class NavigationAdminService {
 
     const itemsBySection = new Map<number, NavigationAdminItem[]>();
     for (const row of items) {
-      const list = itemsBySection.get(row.section_id) ?? [];
+      const sectionId = Number(row.section_id);
+      const list = itemsBySection.get(sectionId) ?? [];
       list.push(item(row));
-      itemsBySection.set(row.section_id, list);
+      itemsBySection.set(sectionId, list);
     }
 
     return {
       sections: sections.map<NavigationAdminSection>((section) => ({
-        id: section.id,
+        id: Number(section.id),
         slug: section.slug,
         label: section.label,
         shortLabel: section.short_label,
         sortOrder: section.sort_order,
         active: Boolean(section.is_active),
-        items: itemsBySection.get(section.id) ?? [],
+        items: itemsBySection.get(Number(section.id)) ?? [],
       })),
     };
   }
@@ -127,7 +128,7 @@ export class NavigationAdminService {
       )
     `;
 
-    const rows = await this.nivel3.$queryRaw<Array<{ id: number }>>`
+    const rows = await this.nivel3.$queryRaw<Array<{ id: number | bigint }>>`
       SELECT id
       FROM navigation_sections
       WHERE slug = ${input.slug}
@@ -135,7 +136,7 @@ export class NavigationAdminService {
     `;
     const created = rows[0];
     if (!created) throw new NotFoundException('Seção criada, mas não foi possível relê-la.');
-    return created;
+    return { id: Number(created.id) };
   }
 
   async updateSection(
@@ -188,7 +189,7 @@ export class NavigationAdminService {
       )
     `;
 
-    const rows = await this.nivel3.$queryRaw<Array<{ id: number }>>`
+    const rows = await this.nivel3.$queryRaw<Array<{ id: number | bigint }>>`
       SELECT id
       FROM navigation_items
       WHERE slug = ${input.slug}
@@ -196,7 +197,7 @@ export class NavigationAdminService {
     `;
     const created = rows[0];
     if (!created) throw new NotFoundException('Item criado, mas não foi possível relê-lo.');
-    return created;
+    return { id: Number(created.id) };
   }
 
   async updateItem(

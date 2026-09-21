@@ -50,15 +50,15 @@ function formatDuration(seconds: number): string {
 
 function errorMessage(reason: unknown): string {
   if (reason instanceof ApiError && reason.status === 404) {
-    return 'Ticket de Marketing não encontrado ou fora do seu escopo.';
+    return 'Atendimento de Marketing não encontrado ou fora do seu escopo.';
   }
   if (reason instanceof ApiError && reason.status === 403) {
-    return 'Seu usuário não possui acesso a este ticket de Marketing.';
+    return 'Seu usuário não possui acesso a este atendimento de Marketing.';
   }
   if (reason instanceof ApiError) return `A API respondeu com erro ${reason.status}.`;
   return reason instanceof Error
     ? reason.message
-    : 'Não foi possível carregar o ticket de Marketing.';
+    : 'Não foi possível carregar o atendimento de Marketing.';
 }
 
 function DetailItem({ label, children }: { label: string; children: ReactNode }) {
@@ -121,7 +121,7 @@ export function MarketingTicketDetailScreen({
       <header className="sticky top-0 z-20 flex items-center justify-between gap-5 border-b border-app-border bg-[var(--app-header-bg)] px-6 py-3.5 backdrop-blur-xl max-sm:px-3.5">
         <div className="flex min-w-0 items-center gap-2.5">
           <AppSidebar />
-          <Link className="flex items-baseline gap-2.5 no-underline" href="/dashboard">
+          <Link className="flex items-baseline gap-2.5 no-underline" href="/painel">
             <strong className="text-lg text-app-text">Helpdesk</strong>
             <span className="text-[13px] text-app-subtle max-sm:hidden">Nova plataforma</span>
           </Link>
@@ -133,7 +133,7 @@ export function MarketingTicketDetailScreen({
         <div className="mb-[18px] flex items-end justify-between gap-6 max-sm:flex-col max-sm:items-stretch max-sm:gap-3">
           <div>
             <span className="mb-2 inline-block text-xs font-extrabold uppercase tracking-[0.1em] text-app-muted">
-              Tickets · Marketing
+              Atendimentos · Marketing
             </span>
             <h1 className="m-0 text-[28px] font-bold tracking-tight text-app-text">
               Marketing #{ticketId}
@@ -142,7 +142,7 @@ export function MarketingTicketDetailScreen({
               {ticket?.name ?? 'Detalhe operacional da demanda de Marketing.'}
             </p>
           </div>
-          <Link className={BUTTON_CLASS} href="/tickets/marketing">
+          <Link className={BUTTON_CLASS} href="/atendimentos/marketing">
             Voltar à lista
           </Link>
         </div>
@@ -234,7 +234,7 @@ export function MarketingTicketDetailScreen({
               assignedTechnicianId={ticket.technician.id}
               currentUser={currentUser}
               onChanged={refresh}
-              resourceLabel="ticket de Marketing"
+              resourceLabel="atendimento de Marketing"
               status={ticket.status}
               statusLabel={ticket.statusLabel}
               technicians={technicians}

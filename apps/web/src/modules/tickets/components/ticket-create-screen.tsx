@@ -164,7 +164,7 @@ export function TicketCreateScreen({
             }
           : null,
       });
-      router.push(`/tickets/${response.id}`);
+      router.push(`/atendimentos/${response.id}`);
       router.refresh();
     } catch (reason) {
       setError(errorMessage(reason));
@@ -179,7 +179,7 @@ export function TicketCreateScreen({
           <AppSidebar />
           <Link
             className="flex items-baseline gap-2.5 no-underline"
-            href="/dashboard"
+            href="/painel"
           >
             <strong className="text-lg text-app-text">Helpdesk</strong>
             <span className="text-[13px] text-app-subtle max-sm:hidden">
@@ -203,7 +203,7 @@ export function TicketCreateScreen({
               Registre uma solicitação imediata, agendada ou recorrente.
             </p>
           </div>
-          <Link className={BUTTON_CLASS} href="/tickets">
+          <Link className={BUTTON_CLASS} href="/atendimentos">
             Voltar à lista
           </Link>
         </div>

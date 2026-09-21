@@ -146,7 +146,7 @@ export function CatalogCheckScreen({ currentUser }: { currentUser: CurrentUserRe
       <header className={styles.header}>
         <div className={styles.headerLeft}>
           <AppSidebar />
-          <Link className={styles.brand} href="/dashboard">
+          <Link className={styles.brand} href="/painel">
             <strong>Helpdesk</strong>
             <span>Nova plataforma</span>
           </Link>
@@ -161,7 +161,7 @@ export function CatalogCheckScreen({ currentUser }: { currentUser: CurrentUserRe
             <h1>Verificação de Catálogos</h1>
             <p>Confira a cobertura de catálogo por cliente, categoria e setor permitido.</p>
           </div>
-          <Link className={styles.button} href="/catalog">Gerenciar catálogos</Link>
+          <Link className={styles.button} href="/catalogos">Gerenciar catálogos</Link>
         </div>
 
         {error ? <div className={styles.error} role="alert">{error}</div> : null}

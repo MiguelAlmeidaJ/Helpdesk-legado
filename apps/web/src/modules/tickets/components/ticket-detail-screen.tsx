@@ -231,7 +231,7 @@ export function TicketDetailScreen({
       <header className={styles.header}>
         <div className={styles.headerLeft}>
           <AppSidebar />
-          <Link className={styles.brand} href="/dashboard">
+          <Link className={styles.brand} href="/painel">
             <strong>Helpdesk</strong>
             <span>Nova plataforma</span>
           </Link>
@@ -242,7 +242,7 @@ export function TicketDetailScreen({
       <div className={styles.content}>
         <div className={styles.toolbar}>
           <div>
-            <Link className={styles.back} href="/tickets">
+            <Link className={styles.back} href="/atendimentos">
               ← Voltar para atendimentos
             </Link>
             <h1>Atendimento #{ticketId}</h1>

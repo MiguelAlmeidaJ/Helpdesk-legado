@@ -107,7 +107,7 @@ export function ExpenseDashboardScreen({
       <header className={styles.header}>
         <div className={styles.headerLeft}>
           <AppSidebar />
-          <Link className={styles.brand} href="/dashboard">
+          <Link className={styles.brand} href="/painel">
             <strong>Helpdesk</strong>
             <span>Logística · RD</span>
           </Link>
@@ -122,7 +122,7 @@ export function ExpenseDashboardScreen({
             <h1>Minhas Despesas</h1>
             <p>{data?.userName ?? 'Usuário autenticado'}</p>
           </div>
-          <Link className={styles.readOnlyBadge} href="/logistics/expenses/manage">
+          <Link className={styles.readOnlyBadge} href="/logistica/despesas/cadastro">
             Gerenciar despesas
           </Link>
         </section>

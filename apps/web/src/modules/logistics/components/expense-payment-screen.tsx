@@ -418,7 +418,7 @@ export function ExpensePaymentScreen({
       <header className={styles.header}>
         <div className={styles.headerLeft}>
           <AppSidebar />
-          <Link className={styles.brand} href="/dashboard">
+          <Link className={styles.brand} href="/painel">
             <strong>Helpdesk</strong>
             <span>Logística · Pagamento RDs</span>
           </Link>
@@ -433,7 +433,7 @@ export function ExpensePaymentScreen({
             <h1>Pagamento de Despesas</h1>
             <p>Compense somente RDs já aprovadas e ainda aguardando pagamento.</p>
           </div>
-          <Link className={styles.secondaryLink} href="/logistics/expenses/admin">
+          <Link className={styles.secondaryLink} href="/logistica/despesas/administracao">
             Voltar à Gestão RDs
           </Link>
         </section>

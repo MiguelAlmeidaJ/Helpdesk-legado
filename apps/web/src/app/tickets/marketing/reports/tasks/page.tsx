@@ -3,11 +3,11 @@ import { requireAuthenticatedUser } from '../../../../../modules/access/server/c
 import { MarketingTicketReportScreen } from '../../../../../modules/tickets/components/marketing-ticket-report-screen';
 
 export const metadata: Metadata = {
-  title: 'Relatório Marketing · Tickets · Helpdesk',
+  title: 'Relatório Marketing · Atendimentos · Helpdesk',
   description: 'Relatório nativo de tarefas de Marketing por cliente e técnico',
 };
 
 export default async function MarketingTaskReportPage() {
-  const currentUser = await requireAuthenticatedUser('/tickets/marketing/reports/tasks');
+  const currentUser = await requireAuthenticatedUser('/atendimentos/marketing/relatorios/tarefas');
   return <MarketingTicketReportScreen currentUser={currentUser} />;
 }

@@ -7,23 +7,23 @@ import { useEffect, useMemo, useState } from 'react';
 import { fetchTicketTypes } from '../api/modular-ticket-create-api';
 
 const LIST_ROUTES: Record<TicketTypeKey, string> = {
-  atendimento: '/tickets',
-  devops: '/tickets/devops',
-  marketing: '/tickets/marketing',
+  atendimento: '/atendimentos',
+  devops: '/atendimentos/devops',
+  marketing: '/atendimentos/marketing',
 };
 
 function currentType(pathname: string): TicketTypeKey | null {
-  if (pathname.startsWith('/tickets/devops')) return 'devops';
-  if (pathname.startsWith('/tickets/marketing')) return 'marketing';
-  if (pathname === '/tickets/new') return null;
-  if (pathname.startsWith('/tickets')) return 'atendimento';
+  if (pathname.startsWith('/atendimentos/devops')) return 'devops';
+  if (pathname.startsWith('/atendimentos/marketing')) return 'marketing';
+  if (pathname === '/atendimentos/novo') return null;
+  if (pathname.startsWith('/atendimentos')) return 'atendimento';
   return null;
 }
 
 export function TicketTypeNavigationDock() {
   const pathname = usePathname();
   const [types, setTypes] = useState<TicketTypeDescriptor[]>([]);
-  const showDock = !pathname.startsWith('/tickets/recurrences');
+  const showDock = !pathname.startsWith('/atendimentos/recorrencias');
 
   useEffect(() => {
     if (!showDock) return;
@@ -47,11 +47,11 @@ export function TicketTypeNavigationDock() {
 
   return (
     <nav
-      aria-label="Tipos de ticket"
+      aria-label="Tipos de atendimento"
       className="fixed bottom-4 left-1/2 z-[90] flex max-w-[calc(100vw-2rem)] -translate-x-1/2 items-center gap-1.5 overflow-x-auto rounded-full border border-app-border bg-app-surface/95 p-1.5 shadow-xl shadow-slate-950/15 backdrop-blur-xl dark:shadow-black/30 max-[620px]:justify-start"
     >
       <span className="pl-2.5 pr-2 text-[0.74rem] font-bold uppercase tracking-[0.04em] text-app-muted max-[620px]:hidden">
-        Tickets
+        Atendimentos
       </span>
       {types.map((type) => (
         <Link

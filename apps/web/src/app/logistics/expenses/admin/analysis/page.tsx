@@ -38,9 +38,9 @@ export default async function ExpenseComparisonPage({
   searchParams: Promise<Record<string, SearchValue>>;
 }) {
   const currentUser = await requireAuthenticatedUser(
-    '/logistics/expenses/admin/analysis',
+    '/logistica/despesas/administracao/analise',
   );
-  if (!canRead(currentUser)) redirect('/logistics/expenses');
+  if (!canRead(currentUser)) redirect('/logistica/despesas');
 
   const params = await searchParams;
   const initialFilters: ExpenseComparisonFilters = {

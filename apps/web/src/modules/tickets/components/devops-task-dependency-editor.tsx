@@ -65,7 +65,7 @@ export function DevOpsTaskDependencyEditor({
               Dependência
             </h2>
             <p className="mt-1.5 text-sm text-app-muted">
-              Tickets avulsos não participam da cadeia de dependências de projeto.
+              Atendimentos avulsos não participam da cadeia de dependências de projeto.
             </p>
           </div>
         </div>

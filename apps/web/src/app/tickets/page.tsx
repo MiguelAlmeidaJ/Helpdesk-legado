@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 };
 
 export default async function TicketsPage() {
-  const currentUser = await requireAuthenticatedUser('/tickets');
+  const currentUser = await requireAuthenticatedUser('/atendimentos');
 
   return <TicketsScreen currentUser={currentUser} />;
 }

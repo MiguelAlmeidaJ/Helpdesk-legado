@@ -34,7 +34,7 @@ function isActive(pathname: string, item: NavigationItem): boolean {
     return false;
   }
 
-  if (item.href === '/dashboard') {
+  if (item.href === '/painel') {
     return pathname === item.href;
   }
 

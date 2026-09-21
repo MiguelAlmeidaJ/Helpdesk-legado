@@ -373,7 +373,7 @@ export function ExpenseAdminDashboardScreen({
       <header className={styles.header}>
         <div className={styles.headerLeft}>
           <AppSidebar />
-          <Link className={styles.brand} href="/dashboard">
+          <Link className={styles.brand} href="/painel">
             <strong>Helpdesk</strong>
             <span>Logística · Gestão RDs</span>
           </Link>
@@ -390,7 +390,7 @@ export function ExpenseAdminDashboardScreen({
               Resumo administrativo por categoria, cliente e colaborador.
             </p>
           </div>
-          <Link className={styles.secondaryLink} href="/logistics/expenses">
+          <Link className={styles.secondaryLink} href="/logistica/despesas">
             Minhas despesas
           </Link>
         </section>
@@ -460,7 +460,7 @@ export function ExpenseAdminDashboardScreen({
                   {canApprove ? (
                     <Link
                       className={styles.approvalLink}
-                      href="/logistics/expenses/admin/approvals"
+                      href="/logistica/despesas/administracao/aprovacoes"
                     >
                       Aprovar despesas
                     </Link>
@@ -486,7 +486,7 @@ export function ExpenseAdminDashboardScreen({
                   {canPay ? (
                     <Link
                       className={styles.paymentLink}
-                      href="/logistics/expenses/admin/payments"
+                      href="/logistica/despesas/administracao/pagamentos"
                     >
                       Pagar despesas
                     </Link>
@@ -508,13 +508,13 @@ export function ExpenseAdminDashboardScreen({
                   </button>
                   <Link
                     className={styles.reportLink}
-                    href="/logistics/expenses/admin/report"
+                    href="/logistica/despesas/administracao/relatorio"
                   >
                     Relatório de pagamentos
                   </Link>
                   <Link
                     className={styles.reportLink}
-                    href="/logistics/expenses/admin/analysis"
+                    href="/logistica/despesas/administracao/analise"
                   >
                     Análise comparativa
                   </Link>

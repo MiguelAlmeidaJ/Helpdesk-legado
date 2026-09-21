@@ -147,7 +147,7 @@ export function DevOpsTicketReportScreen({
       <header className="sticky top-0 z-20 flex items-center justify-between gap-5 border-b border-app-border bg-[var(--app-header-bg)] px-6 py-3.5 backdrop-blur-xl max-sm:px-3.5">
         <div className="flex min-w-0 items-center gap-2.5">
           <AppSidebar />
-          <Link className="flex items-baseline gap-2.5 no-underline" href="/dashboard">
+          <Link className="flex items-baseline gap-2.5 no-underline" href="/painel">
             <strong className="text-lg text-app-text">Helpdesk</strong>
             <span className="text-[13px] text-app-subtle max-sm:hidden">Nova plataforma</span>
           </Link>
@@ -162,7 +162,7 @@ export function DevOpsTicketReportScreen({
         <div className="mb-[18px] flex items-end justify-between gap-6 max-sm:flex-col max-sm:items-stretch max-sm:gap-3">
           <div>
             <span className="mb-2 inline-block text-xs font-extrabold uppercase tracking-[0.1em] text-app-muted">
-              Tickets · DevOps · Relatório
+              Atendimentos · DevOps · Relatório
             </span>
             <h1 className="m-0 text-[28px] font-bold tracking-tight text-app-text">
               Tarefas por cliente e técnico
@@ -171,7 +171,7 @@ export function DevOpsTicketReportScreen({
               Leitura analítica das tarefas DevOps. DevOps não possui SLA; a duração abaixo é apenas o intervalo entre abertura e fechamento.
             </p>
           </div>
-          <Link className={BUTTON_CLASS} href="/tickets/devops">Voltar para tickets</Link>
+          <Link className={BUTTON_CLASS} href="/atendimentos/devops">Voltar para atendimentos</Link>
         </div>
 
         <form
@@ -288,7 +288,7 @@ export function DevOpsTicketReportScreen({
                     <td className={`${TABLE_CELL_CLASS} font-extrabold`}>
                       <Link
                         className="font-extrabold text-app-brand no-underline hover:underline focus-visible:underline"
-                        href={`/tickets/devops/${ticket.id}`}
+                        href={`/atendimentos/devops/${ticket.id}`}
                       >
                         #{ticket.id}
                       </Link>

@@ -58,9 +58,9 @@ export default async function ExpensePaidReportPage({
   searchParams: Promise<Record<string, SearchValue>>;
 }) {
   const currentUser = await requireAuthenticatedUser(
-    '/logistics/expenses/admin/report',
+    '/logistica/despesas/administracao/relatorio',
   );
-  if (!canRead(currentUser)) redirect('/logistics/expenses');
+  if (!canRead(currentUser)) redirect('/logistica/despesas');
 
   const params = await searchParams;
   const initialFilters: ExpensePaidReportFilters = {

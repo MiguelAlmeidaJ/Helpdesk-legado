@@ -5,6 +5,6 @@ import { CatalogScreen } from '../../modules/catalog/components/catalog-screen';
 export const metadata: Metadata = { title: 'Catálogos · Helpdesk' };
 
 export default async function CatalogPage() {
-  const currentUser = await requireAuthenticatedUser('/catalog');
+  const currentUser = await requireAuthenticatedUser('/catalogos');
   return <CatalogScreen currentUser={currentUser} />;
 }

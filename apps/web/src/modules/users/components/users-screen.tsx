@@ -171,7 +171,7 @@ export function UsersScreen({ currentUser }: { currentUser: CurrentUserResponse 
 
   return (
     <main className={styles.page}>
-      <header className={styles.header}><div className={styles.headerLeft}><AppSidebar /><Link className={styles.brand} href="/dashboard"><strong>Helpdesk</strong><span>Nova plataforma</span></Link></div><SessionUserMenu user={currentUser} /></header>
+      <header className={styles.header}><div className={styles.headerLeft}><AppSidebar /><Link className={styles.brand} href="/painel"><strong>Helpdesk</strong><span>Nova plataforma</span></Link></div><SessionUserMenu user={currentUser} /></header>
       <div className={styles.content}>
         <div className={styles.titleRow}><div><span className={styles.eyebrow}>Administração</span><h1>Usuários</h1><p>Cadastro, vínculos, situação e acessos em uma única tela.</p></div>{canCreate ? <button className={styles.buttonPrimary} onClick={newUser} type="button">Novo usuário</button> : null}</div>
         {error ? <div className={styles.error} role="alert">{error}</div> : null}

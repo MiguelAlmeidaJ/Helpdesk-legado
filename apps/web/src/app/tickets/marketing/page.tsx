@@ -3,11 +3,11 @@ import { requireAuthenticatedUser } from '../../../modules/access/server/current
 import { MarketingTicketsScreen } from '../../../modules/tickets/components/marketing-tickets-screen';
 
 export const metadata: Metadata = {
-  title: 'Marketing · Tickets · Helpdesk',
-  description: 'Lista nativa de tickets de Marketing',
+  title: 'Marketing · Atendimentos · Helpdesk',
+  description: 'Lista nativa de atendimentos de Marketing',
 };
 
 export default async function MarketingTicketsPage() {
-  const currentUser = await requireAuthenticatedUser('/tickets/marketing');
+  const currentUser = await requireAuthenticatedUser('/atendimentos/marketing');
   return <MarketingTicketsScreen currentUser={currentUser} />;
 }

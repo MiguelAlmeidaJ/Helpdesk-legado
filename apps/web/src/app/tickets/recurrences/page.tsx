@@ -8,6 +8,6 @@ export const metadata: Metadata = {
 };
 
 export default async function TicketRecurrencesPage() {
-  const currentUser = await requireAuthenticatedUser('/tickets/recurrences');
+  const currentUser = await requireAuthenticatedUser('/atendimentos/recorrencias');
   return <TicketRecurrencesScreen currentUser={currentUser} />;
 }

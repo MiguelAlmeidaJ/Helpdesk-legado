@@ -10,6 +10,6 @@ export default async function DevOpsProjectDetailPage({ params }: { params: Prom
   if (!/^\d+$/.test(id)) notFound();
   const projectId = Number(id);
   if (!Number.isSafeInteger(projectId) || projectId < 1) notFound();
-  const currentUser = await requireAuthenticatedUser(`/tickets/devops/projects/${projectId}`);
+  const currentUser = await requireAuthenticatedUser(`/atendimentos/devops/projetos/${projectId}`);
   return <DevOpsProjectDetailScreen currentUser={currentUser} projectId={projectId} />;
 }

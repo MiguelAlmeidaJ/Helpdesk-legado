@@ -35,7 +35,7 @@ export function ReportArchiveScreen({ currentUser }: { currentUser: CurrentUserR
     try { await operation(); } catch (reason) { setError(reportError(reason)); } finally { setBusy(false); }
   }
   return <main className={styles.page}>
-    <header className={styles.header}><div className={styles.headerLeft}><AppSidebar /><Link className={styles.brand} href="/dashboard"><strong>Helpdesk</strong><span>Relatórios</span></Link></div><SessionUserMenu user={currentUser} /></header>
+    <header className={styles.header}><div className={styles.headerLeft}><AppSidebar /><Link className={styles.brand} href="/painel"><strong>Helpdesk</strong><span>Relatórios</span></Link></div><SessionUserMenu user={currentUser} /></header>
     <div className={styles.content}>
       <section className={styles.hero}><div><h1>Relatórios gerados</h1><p>Gere relatórios por cliente. Os PDFs ficam disponíveis por 15 dias e depois podem ser gerados novamente.</p></div></section>
       <form className={styles.filters} onSubmit={event => { event.preventDefault(); void action(async () => {

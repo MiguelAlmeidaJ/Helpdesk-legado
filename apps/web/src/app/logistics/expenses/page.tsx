@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 };
 
 export default async function ExpensesPage() {
-  const currentUser = await requireAuthenticatedUser('/logistics/expenses');
+  const currentUser = await requireAuthenticatedUser('/logistica/despesas');
 
   return <ExpenseDashboardScreen currentUser={currentUser} />;
 }

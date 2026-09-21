@@ -5,6 +5,6 @@ import { DevOpsProjectsScreen } from '../../../../modules/tickets/components/dev
 export const metadata: Metadata = { title: 'Projetos DevOps · Helpdesk' };
 
 export default async function DevOpsProjectsPage() {
-  const currentUser = await requireAuthenticatedUser('/tickets/devops/projects');
+  const currentUser = await requireAuthenticatedUser('/atendimentos/devops/projetos');
   return <DevOpsProjectsScreen currentUser={currentUser} />;
 }

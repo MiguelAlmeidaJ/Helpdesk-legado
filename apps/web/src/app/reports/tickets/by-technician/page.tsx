@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 
 export default async function TicketTechnicianTotalsReportPage() {
   const currentUser = await requireAuthenticatedUser(
-    '/reports/tickets/by-technician',
+    '/relatorios/atendimentos/por-tecnico',
   );
 
   return <TicketTechnicianTotalsReportScreen currentUser={currentUser} />;

@@ -202,7 +202,7 @@ export function SpecializedTicketWorkflowPanel({
                 </select>
               </label>
               <div className="flex flex-wrap items-center gap-2">
-                <button className={PRIMARY_BUTTON_CLASS} disabled={busy} onClick={() => void run('Ticket iniciado para o usuário atual.', () => actions.assignment(currentUser.id))} type="button">Iniciar comigo</button>
+                <button className={PRIMARY_BUTTON_CLASS} disabled={busy} onClick={() => void run('Atendimento iniciado para o usuário atual.', () => actions.assignment(currentUser.id))} type="button">Iniciar comigo</button>
                 <button className={BUTTON_CLASS} disabled={busy || Number(assignmentId) < 1} onClick={() => void run('Direcionamento registrado.', () => actions.assignment(Number(assignmentId)))} type="button">Direcionar</button>
               </div>
               <span className="text-sm text-app-muted">Se o escopo não permitir atuar neste registro, a API recusará a operação.</span>

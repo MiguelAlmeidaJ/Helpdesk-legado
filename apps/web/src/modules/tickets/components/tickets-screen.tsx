@@ -292,7 +292,7 @@ export function TicketsScreen({
           <AppSidebar />
           <Link
             className="flex items-baseline gap-2.5 no-underline"
-            href="/dashboard"
+            href="/painel"
           >
             <strong className="text-lg text-app-text">Helpdesk</strong>
             <span className="text-[13px] text-app-subtle max-sm:hidden">
@@ -326,7 +326,7 @@ export function TicketsScreen({
               grant.permission === AppPermission.SystemAdmin ||
               grant.permission === AppPermission.TicketsCreate,
           ) ? (
-            <Link className={PRIMARY_BUTTON_CLASS} href="/tickets/new">
+            <Link className={PRIMARY_BUTTON_CLASS} href="/atendimentos/novo">
               Novo atendimento
             </Link>
           ) : null}
@@ -530,7 +530,7 @@ export function TicketsScreen({
                     <td className={`${TABLE_CELL_CLASS} font-extrabold`}>
                       <Link
                         className="font-extrabold text-app-brand no-underline hover:underline focus-visible:underline"
-                        href={`/tickets/${ticket.id}`}
+                        href={`/atendimentos/${ticket.id}`}
                       >
                         #{ticket.id}
                       </Link>

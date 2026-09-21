@@ -98,7 +98,7 @@ function formatDate(value: string): string {
 }
 
 function attachmentHref(item: LogisticsExpenseApprovalItem, key: string): string {
-  return `/logistics/expenses/admin/approvals/attachments/${item.id}/${encodeURIComponent(key)}`;
+  return `/logistica/despesas/administracao/aprovacoes/anexos/${item.id}/${encodeURIComponent(key)}`;
 }
 
 export function ExpenseApprovalScreen({
@@ -203,7 +203,7 @@ export function ExpenseApprovalScreen({
       <header className={styles.header}>
         <div className={styles.headerLeft}>
           <AppSidebar />
-          <Link className={styles.brand} href="/dashboard">
+          <Link className={styles.brand} href="/painel">
             <strong>Helpdesk</strong>
             <span>Logística · Aprovação RDs</span>
           </Link>
@@ -218,7 +218,7 @@ export function ExpenseApprovalScreen({
             <h1>Aprovação de Despesas</h1>
             <p>Aprove ou recuse somente RDs que ainda estão aguardando aprovação.</p>
           </div>
-          <Link className={styles.secondaryLink} href="/logistics/expenses/admin">
+          <Link className={styles.secondaryLink} href="/logistica/despesas/administracao">
             Voltar à Gestão RDs
           </Link>
         </section>
