@@ -11,8 +11,7 @@ import {
   useEffect,
   useState,
 } from 'react';
-import { SessionUserMenu } from '../../access/components/session-user-menu';
-import { AppSidebar } from '../../../shared/navigation/app-sidebar';
+import { AppPageHeader } from '../../../shared/navigation/app-page-header';
 import { TicketAssignmentActions } from './ticket-assignment-actions';
 import { TicketAttachmentsPanel } from './ticket-attachments-panel';
 import { TicketCatalogPanel } from './ticket-catalog-panel';
@@ -228,29 +227,18 @@ export function TicketDetailScreen({
 
   return (
     <main className={styles.page}>
-      <header className={styles.header}>
-        <div className={styles.headerLeft}>
-          <AppSidebar />
-          <Link className={styles.brand} href="/painel">
-            <strong>Helpdesk</strong>
-            <span>Nova plataforma</span>
+      <AppPageHeader
+        actions={
+          <Link className={styles.back} href="/atendimentos">
+            Voltar à lista
           </Link>
-        </div>
-        <SessionUserMenu user={currentUser} />
-      </header>
+        }
+        subtitle={ticket?.statusLabel ?? 'Detalhe operacional do atendimento.'}
+        title={`Atendimento #${ticketId}`}
+        user={currentUser}
+      />
 
       <div className={styles.content}>
-        <div className={styles.toolbar}>
-          <div>
-            <Link className={styles.back} href="/atendimentos">
-              ← Voltar para atendimentos
-            </Link>
-            <h1>Atendimento #{ticketId}</h1>
-            {ticket ? (
-              <span className={styles.status}>{ticket.statusLabel}</span>
-            ) : null}
-          </div>
-        </div>
 
         {loading ? <div className={styles.loading}>Carregando atendimento…</div> : null}
         {error ? <div className={styles.error}>{error}</div> : null}
