@@ -24,7 +24,7 @@ import { LEGACY_SESSION_SECURITY } from '../../../../core/openapi/openapi.consta
 import type { AuthenticatedUser } from '../../../access/domain/authenticated-user';
 import { CurrentUser } from '../../../access/presentation/http/current-user.decorator';
 import { LegacySessionGuard } from '../../../access/presentation/http/legacy-session.guard';
-import { FinanceService } from '../../finance/application/finance.service';
+import { FinanceService } from '../../application/finance.service';
 
 function authenticated(user: AuthenticatedUser | undefined): AuthenticatedUser {
   if (!user) throw new UnauthorizedException('Usuário não autenticado.');
