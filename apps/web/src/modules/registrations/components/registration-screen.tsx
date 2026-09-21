@@ -8,7 +8,8 @@ import type {
   RegistrationRecord,
   RegistrationResourceKey,
 } from '@helpdesk/contracts';
-import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
+import type { FormEvent } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ApiError } from '../../../shared/api/api-client';
 import { AppPageHeader } from '../../../shared/navigation/app-page-header';
 import {
@@ -222,7 +223,7 @@ export function RegistrationScreen({
           </div>
         ) : null}
         {success ? (
-          <div className="mb-4 rounded-xl border border-app-success-border bg-app-success-soft px-4 py-3 text-sm text-app-success" role="status">
+          <div className="mb-4 rounded-xl border border-emerald-300/70 bg-app-success-soft px-4 py-3 text-sm text-app-success" role="status">
             {success}
           </div>
         ) : null}
