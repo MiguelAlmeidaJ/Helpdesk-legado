@@ -83,7 +83,7 @@ test('navigation upgrade enables migrated screens, preserves customization and i
 test('browser URL translation preserves IDs, filters and unrelated paths', () => {
   assert.equal(portugueseWebHref('/tickets/devops/projects/42?tab=tasks'), '/atendimentos/devops/projetos/42?tab=tasks');
   assert.equal(portugueseWebHref('/tickets/new?type=devops&projectId=42'), '/atendimentos/novo?type=devops&projectId=42');
-  assert.equal(portugueseWebHref('/registrations/clients'), '/cadastros/clientes');
+  assert.equal(portugueseWebHref('/registrations/clientes'), '/cadastros/clientes');
   for (const unchanged of ['/api/tickets', '/tickets-other', '/atendimentos', 'https://example.com/tickets']) {
     assert.equal(portugueseWebHref(unchanged), unchanged);
   }
