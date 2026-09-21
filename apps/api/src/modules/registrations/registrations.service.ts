@@ -7,6 +7,13 @@ import {
 } from '@nestjs/common';
 import {
   AppPermission,
+  type CategoryChildWriteInput,
+  type CategoryTreeResponse,
+  type ClientContactRecord,
+  type ClientContactWriteInput,
+  type ClientLocationRecord,
+  type ClientLocationWriteInput,
+  type ClientRelationsResponse,
   type RegistrationListResponse,
   type RegistrationRecord,
   type RegistrationResourceDefinition,
@@ -279,6 +286,245 @@ export class RegistrationsService {
     return this.write(resource, id, input);
   }
 
+  async clientRelations(
+    user: AuthenticatedUser,
+    clientId: number,
+  ): Promise<ClientRelationsResponse> {
+    this.access(user, 'clients');
+    await this.ensureClient(clientId);
+
+    const [contacts, locations] = await Promise.all([
+      this.db.$queryRawUnsafe<Row[]>(
+        `SELECT pessoa_id, pessoa_nom, pessoa_cargo, pessoa_mail, pessoa_tel, pessoa_sts
+         FROM pessoas
+         WHERE pessoa_clt=?
+         ORDER BY pessoa_sts DESC, pessoa_nom ASC, pessoa_id ASC`,
+        clientId,
+      ),
+      this.db.$queryRawUnsafe<Row[]>(
+        `SELECT local_id, local_nom, local_end, local_city, local_uf, local_sts
+         FROM locais
+         WHERE local_clt=?
+         ORDER BY local_sts DESC, local_nom ASC, local_id ASC`,
+        clientId,
+      ),
+    ]);
+
+    return {
+      contacts: contacts.map((row): ClientContactRecord => ({
+        id: Number(row.pessoa_id),
+        name: String(row.pessoa_nom ?? ''),
+        role: String(row.pessoa_cargo ?? ''),
+        email: String(row.pessoa_mail ?? ''),
+        phone: String(row.pessoa_tel ?? ''),
+        status: rowStatus(row.pessoa_sts),
+      })),
+      locations: locations.map((row): ClientLocationRecord => ({
+        id: Number(row.local_id),
+        name: String(row.local_nom ?? ''),
+        address: String(row.local_end ?? ''),
+        city: String(row.local_city ?? ''),
+        state: String(row.local_uf ?? ''),
+        status: rowStatus(row.local_sts),
+      })),
+      canCreateContacts: has(user, AppPermission.RegistrationsClientContactsCreate),
+      canEditContacts: has(user, AppPermission.RegistrationsClientContactsEdit),
+      canCreateLocations: has(user, AppPermission.RegistrationsClientLocationsCreate),
+      canEditLocations: has(user, AppPermission.RegistrationsClientLocationsEdit),
+    };
+  }
+
+  async createClientContact(
+    user: AuthenticatedUser,
+    clientId: number,
+    input: ClientContactWriteInput,
+  ): Promise<ClientContactRecord> {
+    this.access(user, 'clients');
+    if (!has(user, AppPermission.RegistrationsClientContactsCreate)) {
+      throw new ForbiddenException('Usuário sem permissão para cadastrar contatos.');
+    }
+    await this.ensureClient(clientId);
+    return this.writeClientContact(clientId, null, input);
+  }
+
+  async updateClientContact(
+    user: AuthenticatedUser,
+    clientId: number,
+    contactId: number,
+    input: ClientContactWriteInput,
+  ): Promise<ClientContactRecord> {
+    this.access(user, 'clients');
+    if (!has(user, AppPermission.RegistrationsClientContactsEdit)) {
+      throw new ForbiddenException('Usuário sem permissão para editar contatos.');
+    }
+    await this.ensureClient(clientId);
+    return this.writeClientContact(clientId, contactId, input);
+  }
+
+  async createClientLocation(
+    user: AuthenticatedUser,
+    clientId: number,
+    input: ClientLocationWriteInput,
+  ): Promise<ClientLocationRecord> {
+    this.access(user, 'clients');
+    if (!has(user, AppPermission.RegistrationsClientLocationsCreate)) {
+      throw new ForbiddenException('Usuário sem permissão para cadastrar locais.');
+    }
+    await this.ensureClient(clientId);
+    return this.writeClientLocation(clientId, null, input);
+  }
+
+  async updateClientLocation(
+    user: AuthenticatedUser,
+    clientId: number,
+    locationId: number,
+    input: ClientLocationWriteInput,
+  ): Promise<ClientLocationRecord> {
+    this.access(user, 'clients');
+    if (!has(user, AppPermission.RegistrationsClientLocationsEdit)) {
+      throw new ForbiddenException('Usuário sem permissão para editar locais.');
+    }
+    await this.ensureClient(clientId);
+    return this.writeClientLocation(clientId, locationId, input);
+  }
+
+  async categoryTree(
+    user: AuthenticatedUser,
+    categoryId: number,
+  ): Promise<CategoryTreeResponse> {
+    this.access(user, 'categories');
+    await this.ensureCategory(categoryId);
+
+    const subcategories = await this.db.$queryRawUnsafe<Row[]>(
+      `SELECT scat_id, scat_nome, scat_sts
+       FROM subcategorias
+       WHERE scat_cat=?
+       ORDER BY scat_sts DESC, scat_nome ASC, scat_id ASC`,
+      categoryId,
+    );
+    const subcategoryIds = subcategories.map((row) => Number(row.scat_id));
+    const items = subcategoryIds.length
+      ? await this.db.$queryRawUnsafe<Row[]>(
+          `SELECT itens_id, itens_scat, itens_nome, itens_sts
+           FROM itens
+           WHERE itens_scat IN (${subcategoryIds.map(() => '?').join(',')})
+           ORDER BY itens_sts DESC, itens_nome ASC, itens_id ASC`,
+          ...subcategoryIds,
+        )
+      : [];
+    const itemsBySubcategory = new Map<number, CategoryTreeResponse['subcategories'][number]['items']>();
+    for (const row of items) {
+      const subcategoryId = Number(row.itens_scat);
+      const list = itemsBySubcategory.get(subcategoryId) ?? [];
+      list.push({
+        id: Number(row.itens_id),
+        name: String(row.itens_nome ?? ''),
+        status: rowStatus(row.itens_sts),
+      });
+      itemsBySubcategory.set(subcategoryId, list);
+    }
+
+    return {
+      subcategories: subcategories.map((row) => ({
+        id: Number(row.scat_id),
+        name: String(row.scat_nome ?? ''),
+        status: rowStatus(row.scat_sts),
+        items: itemsBySubcategory.get(Number(row.scat_id)) ?? [],
+      })),
+      canCreateSubcategories: has(user, AppPermission.RegistrationsSubcategoriesCreate),
+      canEditSubcategories: has(user, AppPermission.RegistrationsSubcategoriesEdit),
+      canCreateItems: has(user, AppPermission.RegistrationsItemsCreate),
+      canEditItems: has(user, AppPermission.RegistrationsItemsEdit),
+    };
+  }
+
+  async createSubcategory(
+    user: AuthenticatedUser,
+    categoryId: number,
+    input: CategoryChildWriteInput,
+  ) {
+    this.access(user, 'categories');
+    if (!has(user, AppPermission.RegistrationsSubcategoriesCreate)) {
+      throw new ForbiddenException('Usuário sem permissão para cadastrar subcategorias.');
+    }
+    await this.ensureCategory(categoryId);
+    const data = this.childInput(input);
+    const id = await this.insertWithId(
+      'INSERT INTO subcategorias (scat_cat, scat_nome, scat_sts) VALUES (?, ?, ?)',
+      categoryId,
+      data.name,
+      data.status,
+    );
+    return { id, name: data.name, status: data.status };
+  }
+
+  async updateSubcategory(
+    user: AuthenticatedUser,
+    categoryId: number,
+    subcategoryId: number,
+    input: CategoryChildWriteInput,
+  ) {
+    this.access(user, 'categories');
+    if (!has(user, AppPermission.RegistrationsSubcategoriesEdit)) {
+      throw new ForbiddenException('Usuário sem permissão para editar subcategorias.');
+    }
+    const data = this.childInput(input);
+    const count = await this.db.$executeRawUnsafe(
+      'UPDATE subcategorias SET scat_nome=?, scat_sts=? WHERE scat_id=? AND scat_cat=?',
+      data.name,
+      data.status,
+      subcategoryId,
+      categoryId,
+    );
+    if (!count) throw new NotFoundException('Subcategoria não encontrada.');
+    return { id: subcategoryId, name: data.name, status: data.status };
+  }
+
+  async createItem(
+    user: AuthenticatedUser,
+    categoryId: number,
+    subcategoryId: number,
+    input: CategoryChildWriteInput,
+  ) {
+    this.access(user, 'categories');
+    if (!has(user, AppPermission.RegistrationsItemsCreate)) {
+      throw new ForbiddenException('Usuário sem permissão para cadastrar itens.');
+    }
+    await this.ensureSubcategory(categoryId, subcategoryId);
+    const data = this.childInput(input);
+    const id = await this.insertWithId(
+      'INSERT INTO itens (itens_scat, itens_nome, itens_sts) VALUES (?, ?, ?)',
+      subcategoryId,
+      data.name,
+      data.status,
+    );
+    return { id, name: data.name, status: data.status };
+  }
+
+  async updateItem(
+    user: AuthenticatedUser,
+    categoryId: number,
+    subcategoryId: number,
+    itemId: number,
+    input: CategoryChildWriteInput,
+  ) {
+    this.access(user, 'categories');
+    if (!has(user, AppPermission.RegistrationsItemsEdit)) {
+      throw new ForbiddenException('Usuário sem permissão para editar itens.');
+    }
+    await this.ensureSubcategory(categoryId, subcategoryId);
+    const data = this.childInput(input);
+    const count = await this.db.$executeRawUnsafe(
+      'UPDATE itens SET itens_nome=?, itens_sts=? WHERE itens_id=? AND itens_scat=?',
+      data.name,
+      data.status,
+      itemId,
+      subcategoryId,
+    );
+    if (!count) throw new NotFoundException('Item não encontrado.');
+    return { id: itemId, name: data.name, status: data.status };
+  }
+
   private async clients(search: string): Promise<RegistrationRecord[]> {
     const like = `%${search}%`;
     const rows = await this.db.$queryRawUnsafe<Row[]>(
@@ -529,6 +775,132 @@ export class RegistrationsService {
         ...(config.classified ? { accountingClassificationId: accountingClassificationId! } : {}),
       },
     };
+  }
+
+  private async ensureClient(clientId: number): Promise<void> {
+    const rows = await this.db.$queryRawUnsafe<Row[]>(
+      'SELECT clt_id FROM clientes WHERE clt_id=? LIMIT 1',
+      clientId,
+    );
+    if (!rows[0]) throw new NotFoundException('Cliente não encontrado.');
+  }
+
+  private async ensureCategory(categoryId: number): Promise<void> {
+    const rows = await this.db.$queryRawUnsafe<Row[]>(
+      'SELECT cat_id FROM categorias WHERE cat_id=? LIMIT 1',
+      categoryId,
+    );
+    if (!rows[0]) throw new NotFoundException('Categoria não encontrada.');
+  }
+
+  private async ensureSubcategory(
+    categoryId: number,
+    subcategoryId: number,
+  ): Promise<void> {
+    const rows = await this.db.$queryRawUnsafe<Row[]>(
+      'SELECT scat_id FROM subcategorias WHERE scat_id=? AND scat_cat=? LIMIT 1',
+      subcategoryId,
+      categoryId,
+    );
+    if (!rows[0]) throw new NotFoundException('Subcategoria não encontrada.');
+  }
+
+  private childInput(input: CategoryChildWriteInput): { name: string; status: 0 | 1 } {
+    if (!input || typeof input !== 'object') {
+      throw new BadRequestException('Dados inválidos.');
+    }
+    return {
+      name: text(input as unknown as Record<string, unknown>, 'name', 50, true),
+      status: input.status === 1 ? 1 : input.status === 0 ? 0 : (() => {
+        throw new BadRequestException('status deve ser 0 ou 1.');
+      })(),
+    };
+  }
+
+  private async writeClientContact(
+    clientId: number,
+    contactId: number | null,
+    input: ClientContactWriteInput,
+  ): Promise<ClientContactRecord> {
+    if (!input || typeof input !== 'object') throw new BadRequestException('Dados inválidos.');
+    const source = input as unknown as Record<string, unknown>;
+    const data = {
+      name: text(source, 'name', 60, true),
+      role: text(source, 'role', 60, true),
+      email: text(source, 'email', 60, true),
+      phone: text(source, 'phone', 50, true),
+      status: input.status === 1 ? 1 as const : input.status === 0 ? 0 as const : null,
+    };
+    if (data.status === null) throw new BadRequestException('status deve ser 0 ou 1.');
+
+    if (contactId === null) {
+      contactId = await this.insertWithId(
+        'INSERT INTO pessoas (pessoa_clt, pessoa_nom, pessoa_cargo, pessoa_mail, pessoa_tel, pessoa_sts) VALUES (?, ?, ?, ?, ?, ?)',
+        clientId,
+        data.name,
+        data.role,
+        data.email,
+        data.phone,
+        data.status,
+      );
+    } else {
+      const count = await this.db.$executeRawUnsafe(
+        'UPDATE pessoas SET pessoa_nom=?, pessoa_cargo=?, pessoa_mail=?, pessoa_tel=?, pessoa_sts=? WHERE pessoa_id=? AND pessoa_clt=?',
+        data.name,
+        data.role,
+        data.email,
+        data.phone,
+        data.status,
+        contactId,
+        clientId,
+      );
+      if (!count) throw new NotFoundException('Contato não encontrado.');
+    }
+
+    return { id: contactId, ...data };
+  }
+
+  private async writeClientLocation(
+    clientId: number,
+    locationId: number | null,
+    input: ClientLocationWriteInput,
+  ): Promise<ClientLocationRecord> {
+    if (!input || typeof input !== 'object') throw new BadRequestException('Dados inválidos.');
+    const source = input as unknown as Record<string, unknown>;
+    const data = {
+      name: text(source, 'name', 60, true),
+      address: text(source, 'address', 100, true),
+      city: text(source, 'city', 50, true),
+      state: text(source, 'state', 2, true).toUpperCase(),
+      status: input.status === 1 ? 1 as const : input.status === 0 ? 0 as const : null,
+    };
+    if (data.status === null) throw new BadRequestException('status deve ser 0 ou 1.');
+
+    if (locationId === null) {
+      locationId = await this.insertWithId(
+        'INSERT INTO locais (local_clt, local_nom, local_end, local_city, local_uf, local_sts) VALUES (?, ?, ?, ?, ?, ?)',
+        clientId,
+        data.name,
+        data.address,
+        data.city,
+        data.state,
+        data.status,
+      );
+    } else {
+      const count = await this.db.$executeRawUnsafe(
+        'UPDATE locais SET local_nom=?, local_end=?, local_city=?, local_uf=?, local_sts=? WHERE local_id=? AND local_clt=?',
+        data.name,
+        data.address,
+        data.city,
+        data.state,
+        data.status,
+        locationId,
+        clientId,
+      );
+      if (!count) throw new NotFoundException('Local não encontrado.');
+    }
+
+    return { id: locationId, ...data };
   }
 
   private insertWithId(sql: string, ...parameters: unknown[]): Promise<number> {
