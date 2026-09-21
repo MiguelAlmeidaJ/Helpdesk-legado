@@ -30,6 +30,7 @@ export const WEB_ROUTE_TRANSLATIONS = [
   ['/logistics/expenses/attachments', '/logistica/despesas/anexos'],
   ['/logistics/expenses/manage', '/logistica/despesas/cadastro'],
   ['/logistics/expenses', '/logistica/despesas'],
+  ['/registrations', '/cadastros'],
   ['/catalog/check', '/catalogos/verificacao'],
   ['/catalog', '/catalogos'],
   ['/users', '/usuarios'],
