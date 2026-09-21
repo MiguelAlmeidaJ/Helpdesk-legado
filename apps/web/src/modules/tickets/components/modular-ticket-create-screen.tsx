@@ -15,8 +15,7 @@ import { useRouter } from 'next/navigation';
 import type { FormEvent, ReactNode } from 'react';
 import { useEffect, useMemo, useState } from 'react';
 import { ApiError } from '../../../shared/api/api-client';
-import { AppSidebar } from '../../../shared/navigation/app-sidebar';
-import { SessionUserMenu } from '../../access/components/session-user-menu';
+import { AppPageHeader } from '../../../shared/navigation/app-page-header';
 import {
   createDevOpsProjectTask,
   createMarketingTicket,
@@ -99,25 +98,19 @@ function ScreenShell({
 }) {
   return (
     <main className="min-h-screen bg-app-bg text-app-text">
-      <header className="sticky top-0 z-20 flex items-center justify-between gap-5 border-b border-app-border bg-[var(--app-header-bg)] px-6 py-3.5 backdrop-blur-xl max-sm:px-3.5">
-        <div className="flex min-w-0 items-center gap-2.5">
-          <AppSidebar />
-          <Link className="flex items-baseline gap-2.5 no-underline [&_strong]:text-lg [&_span]:text-[13px] [&_span]:text-app-subtle max-sm:[&_span]:hidden" href="/painel">
-            <strong>Helpdesk</strong>
-            <span>Nova plataforma</span>
-          </Link>
-        </div>
-        <SessionUserMenu user={currentUser} />
-      </header>
+      <AppPageHeader
+        actions={
+          action ?? (
+            <Link className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-app-border-strong bg-app-surface px-4 font-bold text-app-text-soft no-underline transition hover:bg-app-surface-hover focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-[var(--app-brand-ring)]" href="/atendimentos">
+              Voltar à lista
+            </Link>
+          )
+        }
+        subtitle={subtitle}
+        title={title}
+        user={currentUser}
+      />
       <div className="mx-auto w-full max-w-[1500px] px-6 py-6 max-sm:px-3.5">
-        <div className="mb-[18px] flex items-end justify-between gap-6 max-sm:flex-col max-sm:items-start max-sm:gap-2 [&_h1]:m-0 [&_h1]:text-[28px] [&_p]:mt-1.5 [&_p]:mb-0 [&_p]:text-app-muted-strong">
-          <div>
-            <span className="mb-2 inline-block text-xs font-extrabold uppercase tracking-[0.1em] text-app-muted">Atendimentos</span>
-            <h1>{title}</h1>
-            <p>{subtitle}</p>
-          </div>
-          {action ?? <Link className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-app-border-strong bg-app-surface px-4 font-bold text-app-text-soft no-underline transition hover:bg-app-surface-hover focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-[var(--app-brand-ring)]" href="/atendimentos">Voltar à lista</Link>}
-        </div>
         {children}
       </div>
     </main>
