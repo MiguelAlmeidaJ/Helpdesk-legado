@@ -17,8 +17,7 @@ import {
   useState,
 } from 'react';
 import { ApiError } from '../../../shared/api/api-client';
-import { AppSidebar } from '../../../shared/navigation/app-sidebar';
-import { SessionUserMenu } from '../../access/components/session-user-menu';
+import { AppPageHeader } from '../../../shared/navigation/app-page-header';
 import {
   fetchTickets,
   type TicketListQuery,
@@ -287,41 +286,9 @@ export function TicketsScreen({
 
   return (
     <main className="min-h-screen bg-app-bg text-app-text">
-      <header className="sticky top-0 z-20 flex items-center justify-between gap-5 border-b border-app-border bg-[var(--app-header-bg)] px-6 py-3.5 backdrop-blur-xl max-sm:px-3.5">
-        <div className="flex min-w-0 items-center gap-2.5">
-          <AppSidebar />
-          <Link
-            className="flex items-baseline gap-2.5 no-underline"
-            href="/painel"
-          >
-            <strong className="text-lg text-app-text">Helpdesk</strong>
-            <span className="text-[13px] text-app-subtle max-sm:hidden">
-              Nova plataforma
-            </span>
-          </Link>
-        </div>
-        <div className="flex items-center justify-end gap-3">
-          <span className="text-sm text-app-muted max-sm:hidden">
-            {totalLabel}
-          </span>
-          <SessionUserMenu user={currentUser} />
-        </div>
-      </header>
-
-      <div className="mx-auto w-full max-w-[1500px] px-6 py-6 max-sm:px-3.5">
-        <div className="mb-[18px] flex items-end justify-between gap-6 max-sm:flex-col max-sm:items-stretch max-sm:gap-3">
-          <div>
-            <span className="mb-2 inline-block text-xs font-extrabold uppercase tracking-[0.1em] text-app-muted">
-              Operação
-            </span>
-            <h1 className="m-0 text-[28px] font-bold tracking-tight text-app-text">
-              Atendimentos
-            </h1>
-            <p className="mt-1.5 text-app-muted-strong">
-              Consulte, filtre e acompanhe os atendimentos da operação.
-            </p>
-          </div>
-          {currentUser.grants.some(
+      <AppPageHeader
+        actions={
+          currentUser.grants.some(
             (grant) =>
               grant.permission === AppPermission.SystemAdmin ||
               grant.permission === AppPermission.TicketsCreate,
@@ -329,8 +296,15 @@ export function TicketsScreen({
             <Link className={PRIMARY_BUTTON_CLASS} href="/atendimentos/novo">
               Novo atendimento
             </Link>
-          ) : null}
-        </div>
+          ) : null
+        }
+        meta={<span className="text-sm text-app-muted max-md:hidden">{totalLabel}</span>}
+        subtitle="Consulte, filtre e acompanhe os atendimentos da operação."
+        title="Atendimentos"
+        user={currentUser}
+      />
+
+      <div className="mx-auto w-full max-w-[1500px] px-6 py-6 max-sm:px-3.5">
 
         {result ? (
           <StatusCards
