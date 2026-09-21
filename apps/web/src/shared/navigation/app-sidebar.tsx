@@ -89,6 +89,7 @@ function NavigationLink({
 export function AppSidebar() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const [openSectionId, setOpenSectionId] = useState<string | null>(null);
   const [navigationSections, setNavigationSections] =
     useState<NavigationSection[]>(FALLBACK_SECTIONS);
 
@@ -148,7 +149,10 @@ export function AppSidebar() {
         aria-expanded={open}
         aria-label="Abrir menu principal"
         className="grid size-10 shrink-0 cursor-pointer content-center gap-1 rounded-[9px] border border-app-border bg-app-surface px-2.5 transition-colors hover:bg-app-surface-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-app-brand"
-        onClick={() => setOpen(true)}
+        onClick={() => {
+          setOpenSectionId(null);
+          setOpen(true);
+        }}
         type="button"
       >
         <span className="h-0.5 w-full rounded-full bg-app-text-soft" />
@@ -215,7 +219,18 @@ export function AppSidebar() {
           ) : null}
 
           {regularSections.map((section) => (
-            <details className="group mb-1.5" key={section.id} open>
+            <details
+              className="group mb-1.5"
+              key={section.id}
+              onToggle={(event) => {
+                const sectionIsOpen = event.currentTarget.open;
+                setOpenSectionId((current) => {
+                  if (sectionIsOpen) return section.id;
+                  return current === section.id ? null : current;
+                });
+              }}
+              open={openSectionId === section.id}
+            >
               <summary className="grid min-h-11 cursor-pointer list-none grid-cols-[30px_minmax(0,1fr)_auto] items-center gap-[9px] rounded-[9px] px-2 py-1.5 text-app-text-soft transition-colors hover:bg-app-surface-hover">
                 <span className="grid size-[30px] place-items-center rounded-lg bg-app-surface-muted text-[9px] font-black tracking-[0.04em] text-app-muted">
                   {section.shortLabel}
