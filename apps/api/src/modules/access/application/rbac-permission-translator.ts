@@ -36,6 +36,17 @@ const USER_PERMISSION = {
   manageAccess: 'usuarios.editar_acesso',
 } as const;
 
+const REGISTRATION_PERMISSION = {
+  clientsRead: 'cadastros.clientes.visualizar',
+  clientsCreate: 'cadastros.clientes.criar',
+  clientsEdit: 'cadastros.clientes.editar',
+  categoriesRead: 'cadastros.categorias.visualizar',
+  categoriesCreate: 'cadastros.categorias.criar',
+  categoriesEdit: 'cadastros.categorias.editar',
+  financeRead: 'cadastros.financeiro.visualizar',
+  financeManage: 'cadastros.financeiro.gerenciar',
+} as const;
+
 const SYSTEM_ADMIN_ROLE = 'system-admin';
 
 function permissionLevel(moduleValue: string, index: number): number {
@@ -72,6 +83,17 @@ export function translateRbacAccess(
   addGrant(grants, AppPermission.UsersCreate, permissions.has(USER_PERMISSION.create), PermissionScope.All);
   addGrant(grants, AppPermission.UsersEdit, permissions.has(USER_PERMISSION.edit), PermissionScope.All);
   addGrant(grants, AppPermission.UsersManageAccess, permissions.has(USER_PERMISSION.manageAccess), PermissionScope.All);
+
+  const legacyRegistrations = session.modules[2];
+  const legacyFinanceRegistrations = session.modules[7];
+  addGrant(grants, AppPermission.RegistrationsClientsRead, permissions.has(REGISTRATION_PERMISSION.clientsRead) || permissionLevel(legacyRegistrations, 1) >= 1, PermissionScope.All);
+  addGrant(grants, AppPermission.RegistrationsClientsCreate, permissions.has(REGISTRATION_PERMISSION.clientsCreate) || permissionLevel(legacyRegistrations, 1) >= 2, PermissionScope.All);
+  addGrant(grants, AppPermission.RegistrationsClientsEdit, permissions.has(REGISTRATION_PERMISSION.clientsEdit) || permissionLevel(legacyRegistrations, 1) >= 3, PermissionScope.All);
+  addGrant(grants, AppPermission.RegistrationsCategoriesRead, permissions.has(REGISTRATION_PERMISSION.categoriesRead) || permissionLevel(legacyRegistrations, 4) >= 1, PermissionScope.All);
+  addGrant(grants, AppPermission.RegistrationsCategoriesCreate, permissions.has(REGISTRATION_PERMISSION.categoriesCreate) || permissionLevel(legacyRegistrations, 4) >= 2, PermissionScope.All);
+  addGrant(grants, AppPermission.RegistrationsCategoriesEdit, permissions.has(REGISTRATION_PERMISSION.categoriesEdit) || permissionLevel(legacyRegistrations, 4) >= 3, PermissionScope.All);
+  addGrant(grants, AppPermission.RegistrationsFinanceRead, permissions.has(REGISTRATION_PERMISSION.financeRead) || permissionLevel(legacyFinanceRegistrations, 0) >= 1, PermissionScope.All);
+  addGrant(grants, AppPermission.RegistrationsFinanceManage, permissions.has(REGISTRATION_PERMISSION.financeManage) || permissionLevel(legacyFinanceRegistrations, 0) >= 1, PermissionScope.All);
 
   const operationalScope = permissions.has(TICKET_PERMISSION.manageOthers)
     ? PermissionScope.All
