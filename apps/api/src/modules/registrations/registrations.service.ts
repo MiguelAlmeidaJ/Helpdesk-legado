@@ -186,6 +186,12 @@ function rowStatus(value: unknown): 0 | 1 {
   return Number(value) === 1 ? 1 : 0;
 }
 
+function binaryStatus(value: unknown): 0 | 1 {
+  if (value === 1) return 1;
+  if (value === 0) return 0;
+  throw new BadRequestException('status deve ser 0 ou 1.');
+}
+
 @Injectable()
 export class RegistrationsService {
   constructor(
@@ -811,9 +817,7 @@ export class RegistrationsService {
     }
     return {
       name: text(input as unknown as Record<string, unknown>, 'name', 50, true),
-      status: input.status === 1 ? 1 : input.status === 0 ? 0 : (() => {
-        throw new BadRequestException('status deve ser 0 ou 1.');
-      })(),
+      status: binaryStatus(input.status),
     };
   }
 
@@ -829,9 +833,8 @@ export class RegistrationsService {
       role: text(source, 'role', 60, true),
       email: text(source, 'email', 60, true),
       phone: text(source, 'phone', 50, true),
-      status: input.status === 1 ? 1 as const : input.status === 0 ? 0 as const : null,
+      status: binaryStatus(input.status),
     };
-    if (data.status === null) throw new BadRequestException('status deve ser 0 ou 1.');
 
     if (contactId === null) {
       contactId = await this.insertWithId(
@@ -872,9 +875,8 @@ export class RegistrationsService {
       address: text(source, 'address', 100, true),
       city: text(source, 'city', 50, true),
       state: text(source, 'state', 2, true).toUpperCase(),
-      status: input.status === 1 ? 1 as const : input.status === 0 ? 0 as const : null,
+      status: binaryStatus(input.status),
     };
-    if (data.status === null) throw new BadRequestException('status deve ser 0 ou 1.');
 
     if (locationId === null) {
       locationId = await this.insertWithId(
