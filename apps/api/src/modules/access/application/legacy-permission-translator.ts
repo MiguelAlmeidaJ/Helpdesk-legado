@@ -83,7 +83,9 @@ export function translateLegacySession(
 ): AuthenticatedUser {
   const grants: PermissionGrant[] = [];
   const users = session.modules[1];
+  const registrations = session.modules[2];
   const tickets = session.modules[3];
+  const financeRegistrations = session.modules[7];
   const legacyModule8 = session.modules[8];
   const logistics = session.modules[9];
 
@@ -115,6 +117,15 @@ export function translateLegacySession(
     1,
     PermissionScope.All,
   );
+
+  pushGrant(grants, AppPermission.RegistrationsClientsRead, permissionLevel(registrations, 1), 1, PermissionScope.All);
+  pushGrant(grants, AppPermission.RegistrationsClientsCreate, permissionLevel(registrations, 1), 2, PermissionScope.All);
+  pushGrant(grants, AppPermission.RegistrationsClientsEdit, permissionLevel(registrations, 1), 3, PermissionScope.All);
+  pushGrant(grants, AppPermission.RegistrationsCategoriesRead, permissionLevel(registrations, 4), 1, PermissionScope.All);
+  pushGrant(grants, AppPermission.RegistrationsCategoriesCreate, permissionLevel(registrations, 4), 2, PermissionScope.All);
+  pushGrant(grants, AppPermission.RegistrationsCategoriesEdit, permissionLevel(registrations, 4), 3, PermissionScope.All);
+  pushGrant(grants, AppPermission.RegistrationsFinanceRead, permissionLevel(financeRegistrations, 0), 1, PermissionScope.All);
+  pushGrant(grants, AppPermission.RegistrationsFinanceManage, permissionLevel(financeRegistrations, 0), 1, PermissionScope.All);
 
   const canManageOthers = permissionLevel(tickets, 5) >= 2;
   const operationalScope = canManageOthers
