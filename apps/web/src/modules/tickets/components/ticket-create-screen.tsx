@@ -10,8 +10,7 @@ import { useRouter } from 'next/navigation';
 import type { FormEvent } from 'react';
 import { useEffect, useState } from 'react';
 import { ApiError } from '../../../shared/api/api-client';
-import { AppSidebar } from '../../../shared/navigation/app-sidebar';
-import { SessionUserMenu } from '../../access/components/session-user-menu';
+import { AppPageHeader } from '../../../shared/navigation/app-page-header';
 import {
   createTicket,
   fetchTicketCreateCatalogs,
@@ -208,39 +207,18 @@ export function TicketCreateScreen({
 
   return (
     <main className="min-h-screen bg-app-bg text-app-text">
-      <header className="sticky top-0 z-20 flex items-center justify-between gap-5 border-b border-app-border bg-[var(--app-header-bg)] px-6 py-3.5 backdrop-blur-xl max-sm:px-3.5">
-        <div className="flex min-w-0 items-center gap-2.5">
-          <AppSidebar />
-          <Link
-            className="flex items-baseline gap-2.5 no-underline"
-            href="/painel"
-          >
-            <strong className="text-lg text-app-text">Helpdesk</strong>
-            <span className="text-[13px] text-app-subtle max-sm:hidden">
-              Nova plataforma
-            </span>
-          </Link>
-        </div>
-        <SessionUserMenu user={currentUser} />
-      </header>
-
-      <div className="mx-auto w-full max-w-[1400px] px-6 py-6 max-sm:px-3.5">
-        <div className="mb-[18px] flex items-end justify-between gap-6 max-sm:flex-col max-sm:items-stretch max-sm:gap-3">
-          <div>
-            <span className="mb-2 inline-block text-xs font-extrabold uppercase tracking-[0.1em] text-app-muted">
-              Operação
-            </span>
-            <h1 className="m-0 text-[28px] font-bold tracking-tight text-app-text">
-              Novo atendimento
-            </h1>
-            <p className="mt-1.5 text-app-muted-strong">
-              Registre uma solicitação imediata, agendada ou recorrente.
-            </p>
-          </div>
+      <AppPageHeader
+        actions={
           <Link className={BUTTON_CLASS} href="/atendimentos">
             Voltar à lista
           </Link>
-        </div>
+        }
+        subtitle="Registre uma solicitação imediata, agendada ou recorrente."
+        title="Novo atendimento"
+        user={currentUser}
+      />
+
+      <div className="mx-auto w-full max-w-[1400px] px-6 py-6 max-sm:px-3.5">
 
         {error ? (
           <div
