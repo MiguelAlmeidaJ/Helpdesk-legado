@@ -17,6 +17,8 @@ import {
   fetchRegistration,
   updateRegistration,
 } from '../api/registrations-api';
+import { CategoryTreePanel } from './category-tree-panel';
+import { ClientRelationsPanel } from './client-relations-panel';
 
 const BUTTON =
   'inline-flex min-h-10 items-center justify-center rounded-lg border border-app-border-strong bg-app-surface px-4 text-sm font-bold text-app-text-soft transition hover:bg-app-surface-hover disabled:cursor-not-allowed disabled:opacity-50';
@@ -148,6 +150,7 @@ export function RegistrationScreen({
     () => result?.items.filter((item) => item.status === 1).length ?? 0,
     [result],
   );
+  const mainReadOnly = Boolean(editing && result && !result.canEdit);
 
   function fieldOptions(field: RegistrationFieldDefinition): RegistrationFieldOption[] {
     return field.optionSource === 'accounting-classifications'
@@ -176,7 +179,7 @@ export function RegistrationScreen({
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!result) return;
+    if (!result || mainReadOnly) return;
     setSaving(true);
     setError('');
     setSuccess('');
@@ -254,7 +257,7 @@ export function RegistrationScreen({
                       {field.label}
                       <select
                         className={INPUT}
-                        disabled={saving}
+                        disabled={saving || mainReadOnly}
                         onChange={(event) =>
                           setValues((current) => ({
                             ...current,
@@ -276,7 +279,7 @@ export function RegistrationScreen({
                       {field.label}
                       <select
                         className={INPUT}
-                        disabled={saving}
+                        disabled={saving || mainReadOnly}
                         onChange={(event) => {
                           const raw = event.target.value;
                           const option = fieldOptions(field).find((item) => String(item.value) === raw);
@@ -303,7 +306,7 @@ export function RegistrationScreen({
                     {field.label}
                     <input
                       className={INPUT}
-                      disabled={saving}
+                      disabled={saving || mainReadOnly}
                       maxLength={field.maxLength}
                       onChange={(event) =>
                         setValues((current) => ({ ...current, [field.key]: event.target.value }))
@@ -321,7 +324,7 @@ export function RegistrationScreen({
                 Situação
                 <select
                   className={INPUT}
-                  disabled={saving}
+                  disabled={saving || mainReadOnly}
                   onChange={(event) => setStatus(event.target.value === '1' ? 1 : 0)}
                   value={String(status)}
                 >
@@ -333,13 +336,27 @@ export function RegistrationScreen({
 
             <div className="mt-5 flex justify-end gap-2">
               <button className={BUTTON} onClick={() => setFormOpen(false)} type="button">
-                Cancelar
+                Fechar
               </button>
-              <button className={PRIMARY} disabled={saving} type="submit">
-                {saving ? 'Salvando…' : 'Salvar'}
-              </button>
+              {!mainReadOnly ? (
+                <button className={PRIMARY} disabled={saving} type="submit">
+                  {saving ? 'Salvando…' : 'Salvar'}
+                </button>
+              ) : null}
             </div>
           </form>
+        ) : null}
+
+        {formOpen && editing && resource === 'clients' ? (
+          <div className="mb-5 rounded-2xl border border-app-border bg-app-surface p-5 shadow-sm">
+            <ClientRelationsPanel clientId={editing.id} />
+          </div>
+        ) : null}
+
+        {formOpen && editing && resource === 'categories' ? (
+          <div className="mb-5 rounded-2xl border border-app-border bg-app-surface p-5 shadow-sm">
+            <CategoryTreePanel categoryId={editing.id} />
+          </div>
         ) : null}
 
         <div className="mb-4 grid gap-3 rounded-2xl border border-app-border bg-app-surface p-4 shadow-sm md:grid-cols-[minmax(0,1fr)_auto_auto] md:items-end">
@@ -408,9 +425,9 @@ export function RegistrationScreen({
                       ) : null}
                     </div>
 
-                    {result.canEdit ? (
+                    {result.canEdit || resource === 'clients' || resource === 'categories' ? (
                       <button className={BUTTON} onClick={() => startEdit(record)} type="button">
-                        Editar
+                        {result.canEdit ? 'Editar' : 'Abrir'}
                       </button>
                     ) : null}
                   </article>
