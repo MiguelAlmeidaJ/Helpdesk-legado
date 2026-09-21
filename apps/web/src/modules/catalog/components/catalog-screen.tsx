@@ -13,8 +13,7 @@ import Link from 'next/link';
 import type { FormEvent } from 'react';
 import { useEffect, useMemo, useState } from 'react';
 import { ApiError } from '../../../shared/api/api-client';
-import { AppSidebar } from '../../../shared/navigation/app-sidebar';
-import { SessionUserMenu } from '../../access/components/session-user-menu';
+import { AppPageHeader } from '../../../shared/navigation/app-page-header';
 import {
   createCatalog,
   fetchCatalog,
@@ -309,30 +308,20 @@ export function CatalogScreen({ currentUser }: { currentUser: CurrentUserRespons
 
   return (
     <main className={styles.page}>
-      <header className={styles.header}>
-        <div className={styles.headerLeft}>
-          <AppSidebar />
-          <Link className={styles.brand} href="/painel">
-            <strong>Helpdesk</strong>
-            <span>Nova plataforma</span>
-          </Link>
-        </div>
-        <SessionUserMenu user={currentUser} />
-      </header>
-
-      <div className={styles.content}>
-        <div className={styles.titleRow}>
-          <div>
-            <span className={styles.eyebrow}>Cadastros</span>
-            <h1>Catálogos</h1>
-            <p>Consulta e manutenção do catálogo de atendimento com escopo por setor.</p>
-          </div>
-          {manageableSectors.length > 0 ? (
+      <AppPageHeader
+        actions={
+          manageableSectors.length > 0 ? (
             <button className={styles.buttonPrimary} onClick={startCreate} type="button">
               Novo catálogo
             </button>
-          ) : null}
-        </div>
+          ) : null
+        }
+        subtitle="Consulta e manutenção do catálogo de atendimento com escopo por setor."
+        title="Catálogos"
+        user={currentUser}
+      />
+
+      <div className={styles.content}>
 
         {error ? <div className={styles.error} role="alert">{error}</div> : null}
         {success ? <div className={styles.success} role="status">{success}</div> : null}
