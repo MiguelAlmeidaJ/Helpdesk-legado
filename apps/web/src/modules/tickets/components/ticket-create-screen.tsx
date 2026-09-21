@@ -84,6 +84,15 @@ export function TicketCreateScreen({
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const canSubmit = Boolean(
+    clientId &&
+      requesterId &&
+      locationId &&
+      categoryId &&
+      openingAt &&
+      description.trim() &&
+      (!recurring || recurrenceAt),
+  );
 
   useEffect(() => {
     fetchTicketCreateCatalogs()
@@ -135,6 +144,31 @@ export function TicketCreateScreen({
     } catch (reason) {
       setError(errorMessage(reason));
     }
+  }
+
+  function resetForm() {
+    setClientId('');
+    setRequesterId('');
+    setLocationId('');
+    setRequesters([]);
+    setLocations([]);
+    setTypeId('3');
+    setCategoryId('');
+    setSubcategoryId('0');
+    setItemId('0');
+    setSubcategories([]);
+    setItems([]);
+    setLevelId('1');
+    setPriorityId('1');
+    setFormId('1');
+    setTechnicianId('0');
+    setOpeningAt(localDateTime());
+    setDescription('');
+    setRecurring(false);
+    setRecurrenceAt('');
+    setRecurrenceRule('2');
+    setRemaining('1');
+    setError(null);
   }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
@@ -227,10 +261,33 @@ export function TicketCreateScreen({
         ) : null}
 
         <form
-          className="rounded-xl border border-app-border bg-app-surface p-4 shadow-sm shadow-slate-950/5 dark:shadow-black/10"
+          className="rounded-2xl border border-app-border bg-app-surface p-5 shadow-sm shadow-slate-950/5 dark:shadow-black/10 max-sm:p-4"
           onSubmit={submit}
         >
+          <div className="mb-5 flex flex-wrap items-center justify-between gap-3 border-b border-app-border-soft pb-4">
+            <div>
+              <strong className="block text-sm text-app-text">Dados do atendimento</strong>
+              <p className="m-0 mt-1 text-xs text-app-muted">
+                Cliente, solicitante, local, categoria e descrição são essenciais para concluir o cadastro.
+              </p>
+            </div>
+            <span
+              className={[
+                'rounded-full px-3 py-1.5 text-xs font-extrabold',
+                canSubmit
+                  ? 'bg-app-success-soft text-app-success'
+                  : 'bg-app-surface-muted text-app-muted',
+              ].join(' ')}
+            >
+              {canSubmit ? 'Pronto para cadastrar' : 'Preencha os campos obrigatórios'}
+            </span>
+          </div>
+
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            <div className="sm:col-span-2 xl:col-span-3">
+              <h2 className="m-0 text-sm font-extrabold text-app-text-soft">Solicitação</h2>
+              <p className="m-0 mt-1 text-xs text-app-muted">Quem solicitou e onde o atendimento será realizado.</p>
+            </div>
             <label className={FIELD_LABEL_CLASS}>
               Cliente
               <select
@@ -270,6 +327,10 @@ export function TicketCreateScreen({
                 <Options values={locations} />
               </select>
             </label>
+            <div className="mt-2 border-t border-app-border-soft pt-4 sm:col-span-2 xl:col-span-3">
+              <h2 className="m-0 text-sm font-extrabold text-app-text-soft">Classificação</h2>
+              <p className="m-0 mt-1 text-xs text-app-muted">Defina o tipo, categoria, nível e prioridade da solicitação.</p>
+            </div>
             <label className={FIELD_LABEL_CLASS}>
               Tipo
               <select
@@ -345,6 +406,10 @@ export function TicketCreateScreen({
                 <Options values={createCatalogs?.priorities ?? []} />
               </select>
             </label>
+            <div className="mt-2 border-t border-app-border-soft pt-4 sm:col-span-2 xl:col-span-3">
+              <h2 className="m-0 text-sm font-extrabold text-app-text-soft">Execução</h2>
+              <p className="m-0 mt-1 text-xs text-app-muted">Escolha a forma, o técnico responsável e a data de abertura.</p>
+            </div>
             <label className={FIELD_LABEL_CLASS}>
               Forma
               <select
@@ -381,7 +446,10 @@ export function TicketCreateScreen({
               />
             </label>
             <label className={`${FIELD_LABEL_CLASS} sm:col-span-2 xl:col-span-3`}>
-              Descrição de abertura
+              <span className="flex items-center justify-between gap-3">
+                <span>Descrição de abertura</span>
+                <small className="font-medium text-app-subtle">{description.length}/10000</small>
+              </span>
               <textarea
                 className={TEXTAREA_CLASS}
                 disabled={saving}
@@ -448,14 +516,30 @@ export function TicketCreateScreen({
             ) : null}
           </fieldset>
 
-          <div className="mt-5 flex justify-end max-sm:[&>*]:w-full">
-            <button
-              className={PRIMARY_BUTTON_CLASS}
-              disabled={saving || loading}
-              type="submit"
-            >
-              {saving ? 'Cadastrando…' : 'Cadastrar atendimento'}
-            </button>
+          <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-app-border-soft pt-4">
+            <p className="m-0 text-xs text-app-muted">
+              Revise os dados antes de salvar. Após o cadastro, o atendimento será aberto no detalhe.
+            </p>
+            <div className="flex flex-wrap justify-end gap-2 max-sm:w-full max-sm:[&>*]:flex-1">
+              <button
+                className={BUTTON_CLASS}
+                disabled={saving}
+                onClick={resetForm}
+                type="button"
+              >
+                Limpar
+              </button>
+              <Link className={BUTTON_CLASS} href="/atendimentos">
+                Cancelar
+              </Link>
+              <button
+                className={PRIMARY_BUTTON_CLASS}
+                disabled={saving || loading || !canSubmit}
+                type="submit"
+              >
+                {saving ? 'Cadastrando…' : 'Cadastrar atendimento'}
+              </button>
+            </div>
           </div>
         </form>
       </div>
