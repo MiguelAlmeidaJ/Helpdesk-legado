@@ -15,8 +15,7 @@ import {
   useMemo,
   useState,
 } from 'react';
-import { AppSidebar } from '../../../shared/navigation/app-sidebar';
-import { SessionUserMenu } from '../../access/components/session-user-menu';
+import { AppPageHeader } from '../../../shared/navigation/app-page-header';
 import {
   createVehicleAgendaSchedule,
   createVehicleAgendaVehicle,
@@ -233,24 +232,14 @@ export function VehicleAgendaScreen({
 
   return (
     <main className={styles.page}>
-      <header className={styles.header}>
-        <div className={styles.headerLeft}>
-          <AppSidebar />
-          <Link className={styles.brand} href="/painel">
-            <strong>Helpdesk</strong>
-            <span>Logística · Agenda de Veículos</span>
-          </Link>
-        </div>
-        <SessionUserMenu user={currentUser} />
-      </header>
+      <AppPageHeader
+        subtitle="Consulte e organize os agendamentos da frota."
+        title="Agenda de Veículos"
+        user={currentUser}
+      />
 
       <div className={styles.content}>
         <section className={styles.toolbar}>
-          <div>
-            <span className={styles.eyebrow}>Logística</span>
-            <h1>Agenda de Veículos</h1>
-          </div>
-
           <div className={styles.filters}>
             <select value={month} onChange={(event) => setMonth(Number(event.target.value))}>
               {Array.from({ length: 12 }, (_, index) => (
