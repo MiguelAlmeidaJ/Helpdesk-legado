@@ -29,6 +29,17 @@ export async function synchronizeNavigation(
     'expense-types',
     'service-types',
     'fee-types',
+    'receivables-accrual',
+    'receivables-cashflow',
+    'payables',
+    'entries',
+    'recurring',
+    'accounting',
+    'report-client-daily',
+    'report-requester',
+    'report-tech-daily',
+    'radio',
+    'statements',
   ]);
   const legacyCreateHrefs = new Map<string, Set<string>>([
     ['devops-task-new', new Set(['/atendimentos/novo?type=devops'])],
