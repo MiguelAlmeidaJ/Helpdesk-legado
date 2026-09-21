@@ -15,8 +15,7 @@ import {
   useEffect,
   useState,
 } from 'react';
-import { AppSidebar } from '../../../shared/navigation/app-sidebar';
-import { SessionUserMenu } from '../../access/components/session-user-menu';
+import { AppPageHeader } from '../../../shared/navigation/app-page-header';
 import {
   type ExpensePaidReportFilters,
   getExpensePaidAdminEdit,
@@ -389,28 +388,14 @@ export function ExpensePaidReportScreen({
 
   return (
     <main className={styles.page}>
-      <header className={styles.header}>
-        <div className={styles.headerLeft}>
-          <AppSidebar />
-          <Link className={styles.brand} href="/painel">
-            <strong>Helpdesk</strong>
-            <span>Logística · Relatório de RDs</span>
-          </Link>
-        </div>
-        <SessionUserMenu user={currentUser} />
-      </header>
+      <AppPageHeader
+        actions={<Link className={styles.backLink} href="/logistica/despesas/administracao">Voltar à gestão</Link>}
+        subtitle="Consulta e manutenção administrativa das RDs pagas."
+        title="Relatório de Pagamentos"
+        user={currentUser}
+      />
 
       <div className={styles.content}>
-        <section className={styles.hero}>
-          <div>
-            <span className={styles.eyebrow}>Logística · Administrativo</span>
-            <h1>Relatório de Pagamentos</h1>
-            <p>Consulta e manutenção administrativa das RDs pagas.</p>
-          </div>
-          <Link className={styles.backLink} href="/logistica/despesas/administracao">
-            Voltar à gestão
-          </Link>
-        </section>
 
         <section className={styles.notice}>
           <strong>Relatório e edição administrativa no fluxo nativo.</strong>
