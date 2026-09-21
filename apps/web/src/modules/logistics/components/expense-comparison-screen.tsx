@@ -13,8 +13,7 @@ import {
   useEffect,
   useState,
 } from 'react';
-import { AppSidebar } from '../../../shared/navigation/app-sidebar';
-import { SessionUserMenu } from '../../access/components/session-user-menu';
+import { AppPageHeader } from '../../../shared/navigation/app-page-header';
 import {
   type ExpenseComparisonFilters,
   getExpenseComparison,
@@ -214,29 +213,19 @@ export function ExpenseComparisonScreen({
 
   return (
     <main className={styles.page}>
-      <header className={styles.header}>
-        <div className={styles.headerLeft}>
-          <AppSidebar />
-          <Link className={styles.brand} href="/painel">
-            <strong>Helpdesk</strong>
-            <span>Logística · Análise de RDs</span>
-          </Link>
-        </div>
-        <SessionUserMenu user={currentUser} />
-      </header>
-
-      <div className={styles.content}>
-        <section className={styles.hero}>
-          <div>
-            <span className={styles.eyebrow}>Logística · Administrativo</span>
-            <h1>Análise Comparativa de Despesas</h1>
-            <p>Compare RDs pagas por categoria e cliente entre dois períodos.</p>
-          </div>
+      <AppPageHeader
+        actions={
           <div className={styles.heroActions}>
-            <Link href="/logistica/despesas/administracao/relatorio">Relatório de pagamentos</Link>
+            <Link href="/logistica/despesas/administracao/relatorio">Relatório</Link>
             <Link href="/logistica/despesas/administracao">Voltar à gestão</Link>
           </div>
-        </section>
+        }
+        subtitle="Compare RDs pagas por categoria e cliente entre dois períodos."
+        title="Análise Comparativa de Despesas"
+        user={currentUser}
+      />
+
+      <div className={styles.content}>
 
         <section className={styles.notice}>
           <strong>Comparação nativa sobre RDs pagas e ativas.</strong>
