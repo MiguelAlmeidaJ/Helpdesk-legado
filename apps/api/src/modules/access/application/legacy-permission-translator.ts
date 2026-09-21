@@ -121,9 +121,17 @@ export function translateLegacySession(
   pushGrant(grants, AppPermission.RegistrationsClientsRead, permissionLevel(registrations, 1), 1, PermissionScope.All);
   pushGrant(grants, AppPermission.RegistrationsClientsCreate, permissionLevel(registrations, 1), 2, PermissionScope.All);
   pushGrant(grants, AppPermission.RegistrationsClientsEdit, permissionLevel(registrations, 1), 3, PermissionScope.All);
+  pushGrant(grants, AppPermission.RegistrationsClientContactsCreate, permissionLevel(registrations, 2), 2, PermissionScope.All);
+  pushGrant(grants, AppPermission.RegistrationsClientContactsEdit, permissionLevel(registrations, 2), 3, PermissionScope.All);
+  pushGrant(grants, AppPermission.RegistrationsClientLocationsCreate, permissionLevel(registrations, 3), 3, PermissionScope.All);
+  pushGrant(grants, AppPermission.RegistrationsClientLocationsEdit, permissionLevel(registrations, 3), 3, PermissionScope.All);
   pushGrant(grants, AppPermission.RegistrationsCategoriesRead, permissionLevel(registrations, 4), 1, PermissionScope.All);
   pushGrant(grants, AppPermission.RegistrationsCategoriesCreate, permissionLevel(registrations, 4), 2, PermissionScope.All);
   pushGrant(grants, AppPermission.RegistrationsCategoriesEdit, permissionLevel(registrations, 4), 3, PermissionScope.All);
+  pushGrant(grants, AppPermission.RegistrationsSubcategoriesCreate, permissionLevel(registrations, 5), 2, PermissionScope.All);
+  pushGrant(grants, AppPermission.RegistrationsSubcategoriesEdit, permissionLevel(registrations, 5), 3, PermissionScope.All);
+  pushGrant(grants, AppPermission.RegistrationsItemsCreate, permissionLevel(registrations, 6), 2, PermissionScope.All);
+  pushGrant(grants, AppPermission.RegistrationsItemsEdit, permissionLevel(registrations, 6), 3, PermissionScope.All);
   pushGrant(grants, AppPermission.RegistrationsFinanceRead, permissionLevel(financeRegistrations, 0), 1, PermissionScope.All);
   pushGrant(grants, AppPermission.RegistrationsFinanceManage, permissionLevel(financeRegistrations, 0), 1, PermissionScope.All);
 
