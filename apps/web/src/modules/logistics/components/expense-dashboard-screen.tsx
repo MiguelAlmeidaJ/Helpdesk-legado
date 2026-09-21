@@ -6,8 +6,7 @@ import type {
 } from '@helpdesk/contracts';
 import Link from 'next/link';
 import { FormEvent, useCallback, useEffect, useState } from 'react';
-import { AppSidebar } from '../../../shared/navigation/app-sidebar';
-import { SessionUserMenu } from '../../access/components/session-user-menu';
+import { AppPageHeader } from '../../../shared/navigation/app-page-header';
 import { getExpenseDashboard } from '../api/expense-dashboard-api';
 const styles = {
   page: 'min-h-screen bg-app-bg text-app-text',
@@ -104,28 +103,14 @@ export function ExpenseDashboardScreen({
 
   return (
     <main className={styles.page}>
-      <header className={styles.header}>
-        <div className={styles.headerLeft}>
-          <AppSidebar />
-          <Link className={styles.brand} href="/painel">
-            <strong>Helpdesk</strong>
-            <span>Logística · RD</span>
-          </Link>
-        </div>
-        <SessionUserMenu user={currentUser} />
-      </header>
+      <AppPageHeader
+        actions={<Link className={styles.readOnlyBadge} href="/logistica/despesas/cadastro">Gerenciar despesas</Link>}
+        subtitle={data?.userName ?? 'Usuário autenticado'}
+        title="Minhas Despesas"
+        user={currentUser}
+      />
 
       <div className={styles.content}>
-        <section className={styles.hero}>
-          <div>
-            <span className={styles.eyebrow}>Logística</span>
-            <h1>Minhas Despesas</h1>
-            <p>{data?.userName ?? 'Usuário autenticado'}</p>
-          </div>
-          <Link className={styles.readOnlyBadge} href="/logistica/despesas/cadastro">
-            Gerenciar despesas
-          </Link>
-        </section>
 
         <section className={styles.filters}>
           <form onSubmit={apply}>
