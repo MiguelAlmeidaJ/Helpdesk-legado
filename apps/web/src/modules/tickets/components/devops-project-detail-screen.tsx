@@ -152,7 +152,7 @@ export function DevOpsProjectDetailScreen({
             {project && project.status !== 4 ? (
               <Link
                 className={PRIMARY_BUTTON_CLASS}
-                href={`/atendimentos/novo?type=devops&projectId=${projectId}`}
+                href={`/atendimentos/devops/nova-tarefa?projectId=${projectId}`}
               >
                 Nova tarefa neste projeto
               </Link>
