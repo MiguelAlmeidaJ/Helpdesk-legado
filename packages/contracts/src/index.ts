@@ -43,3 +43,4 @@ export * from './reports/ticket-technician-totals';
 export * from './reports/ticket-category-totals';
 export * from './reports/ticket-analytics';
 export * from './registrations/registration';
+export * from './reports/ticket-breakdown';
