@@ -83,6 +83,7 @@ test('navigation upgrade enables migrated screens, preserves customization and i
 test('browser URL translation preserves IDs, filters and unrelated paths', () => {
   assert.equal(portugueseWebHref('/tickets/devops/projects/42?tab=tasks'), '/atendimentos/devops/projetos/42?tab=tasks');
   assert.equal(portugueseWebHref('/tickets/new?type=devops&projectId=42'), '/atendimentos/novo?type=devops&projectId=42');
+  assert.equal(portugueseWebHref('/registrations/clients'), '/cadastros/clientes');
   for (const unchanged of ['/api/tickets', '/tickets-other', '/atendimentos', 'https://example.com/tickets']) {
     assert.equal(portugueseWebHref(unchanged), unchanged);
   }
@@ -90,7 +91,7 @@ test('browser URL translation preserves IDs, filters and unrelated paths', () =>
 
 test('all available menu destinations resolve to implemented Next pages', () => {
   const items = DEFAULT_NAVIGATION.flatMap(section => section.items);
-  for (const slug of ['tickets-recurrences', 'devops-task-new', 'marketing-task-new']) {
+  for (const slug of ['tickets-recurrences', 'devops-task-new', 'marketing-task-new', 'clients', 'categories', 'cost-centers', 'accounting-classification', 'adjustment-indexes', 'payment-methods', 'expense-types', 'service-types', 'fee-types']) {
     assert.equal(items.find(item => item.slug === slug).status, 'available', slug);
   }
   for (const item of items) {
@@ -99,6 +100,14 @@ test('all available menu destinations resolve to implemented Next pages', () => 
     const mapping = WEB_ROUTE_TRANSLATIONS.find(([, target]) => pathname === target || pathname.startsWith(target + '/'));
     assert.ok(mapping, item.href);
     const route = mapping[0] + pathname.slice(mapping[1].length);
-    assert.ok(fs.existsSync(path.join(__dirname, '../apps/web/src/app', route, 'page.tsx')), item.href);
+    const directPage = path.join(__dirname, '../apps/web/src/app', route, 'page.tsx');
+    const dynamicRegistrationPage = route.startsWith('/registrations/')
+      ? path.join(__dirname, '../apps/web/src/app/registrations/[resource]/page.tsx')
+      : null;
+    assert.ok(
+      fs.existsSync(directPage) ||
+        (dynamicRegistrationPage && fs.existsSync(dynamicRegistrationPage)),
+      item.href,
+    );
   }
 });
