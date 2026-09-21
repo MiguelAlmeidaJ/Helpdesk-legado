@@ -9,8 +9,7 @@ import type {
 import Link from 'next/link';
 import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import { ApiError } from '../../../shared/api/api-client';
-import { AppSidebar } from '../../../shared/navigation/app-sidebar';
-import { SessionUserMenu } from '../../access/components/session-user-menu';
+import { AppPageHeader } from '../../../shared/navigation/app-page-header';
 import { fetchOperationalDashboard } from '../api/dashboard-api';
 
 const EYEBROW_CLASS =
@@ -251,32 +250,18 @@ export function OperationalDashboardScreen({
 
   return (
     <main className="min-h-screen bg-app-bg text-app-text">
-      <header className="sticky top-0 z-20 flex min-h-[58px] items-center justify-between gap-[18px] border-b border-app-border bg-[var(--app-header-bg)] px-6 backdrop-blur-[10px] max-[680px]:px-3">
-        <div className="flex min-w-0 items-center gap-3">
-          <AppSidebar />
-          <Link className="grid no-underline" href="/painel">
-            <strong className="text-[15px] text-app-text">Helpdesk</strong>
-            <span className="text-[10px] text-app-subtle">Painel operacional</span>
+      <AppPageHeader
+        actions={
+          <Link className={CONTROL_CLASS} href="/atendimentos">
+            Abrir atendimentos
           </Link>
-        </div>
-        <SessionUserMenu user={currentUser} />
-      </header>
+        }
+        subtitle="Rankings de produção por período e pódio do trimestre atual."
+        title="Painel"
+        user={currentUser}
+      />
 
       <div className="mx-auto w-[min(1440px,calc(100%-32px))] pt-6 pb-12 max-[680px]:w-[calc(100%-20px)]">
-        <section className="mb-3.5 flex items-end justify-between gap-[18px] rounded-[14px] border border-app-border bg-app-surface px-[22px] py-5 shadow-sm max-[680px]:flex-col max-[680px]:items-stretch">
-          <div>
-            <span className={EYEBROW_CLASS}>Visão operacional</span>
-            <h1 className="my-0.5 text-[30px] font-bold leading-tight text-app-text">
-              Painel
-            </h1>
-            <p className="m-0 text-xs text-app-muted-strong">
-              Rankings de produção por período e pódio do trimestre atual.
-            </p>
-          </div>
-          <Link className={CONTROL_CLASS} href="/atendimentos">
-            Abrir Atendimentos
-          </Link>
-        </section>
 
         {error ? (
           <div
