@@ -1,6 +1,8 @@
 import {
+  BadRequestException,
   Controller,
   Get,
+  Param,
   Query,
   UnauthorizedException,
   UseGuards,
@@ -13,6 +15,8 @@ import {
 } from '@nestjs/swagger';
 import {
   AppPermission,
+  type TicketBreakdownMode,
+  type TicketBreakdownReportResponse,
   type TicketCategoryTotalsReportResponse,
   type TicketClientTotalsReportResponse,
   type TicketTechnicianTotalsReportResponse,
@@ -23,6 +27,7 @@ import { CurrentUser } from '../../../access/presentation/http/current-user.deco
 import { LegacySessionGuard } from '../../../access/presentation/http/legacy-session.guard';
 import { PermissionsGuard } from '../../../access/presentation/http/permissions.guard';
 import { RequirePermissions } from '../../../access/presentation/http/require-permissions.decorator';
+import { TicketBreakdownReportService } from '../../application/ticket-breakdown-report.service';
 import { GetTicketCategoryTotalsReport } from '../../application/get-ticket-category-totals-report';
 import { GetTicketClientTotalsReport } from '../../application/get-ticket-client-totals-report';
 import { GetTicketTechnicianTotalsReport } from '../../application/get-ticket-technician-totals-report';
@@ -36,10 +41,42 @@ import { parseReportQuery } from './report-query';
 @ApiSecurity(LEGACY_SESSION_SECURITY)
 export class ReportsController {
   constructor(
+    private readonly ticketBreakdownReport: TicketBreakdownReportService,
     private readonly getTicketCategoryTotalsReport: GetTicketCategoryTotalsReport,
     private readonly getTicketClientTotalsReport: GetTicketClientTotalsReport,
     private readonly getTicketTechnicianTotalsReport: GetTicketTechnicianTotalsReport,
   ) {}
+
+
+  @Get('tickets/breakdown/:mode')
+  @ApiOperation({ summary: 'Relatório agrupado diário ou por solicitante' })
+  getTicketBreakdown(
+    @CurrentUser() user: AuthenticatedUser | undefined,
+    @Param('mode') modeValue: string,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+    @Query('level') level?: string,
+  ): Promise<TicketBreakdownReportResponse> {
+    if (!user) {
+      throw new UnauthorizedException('Usuário não autenticado.');
+    }
+
+    const modes: TicketBreakdownMode[] = [
+      'client-daily',
+      'requester',
+      'technician-daily',
+    ];
+    if (!modes.includes(modeValue as TicketBreakdownMode)) {
+      throw new BadRequestException('Modo de relatório inválido.');
+    }
+
+    const query = parseReportQuery(startDate, endDate, level);
+    return this.ticketBreakdownReport.get({
+      userId: user.id,
+      mode: modeValue as TicketBreakdownMode,
+      ...query,
+    });
+  }
 
   @Get('tickets/category-totals')
   @ApiOperation({
