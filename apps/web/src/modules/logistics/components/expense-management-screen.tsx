@@ -14,8 +14,7 @@ import {
   useMemo,
   useState,
 } from 'react';
-import { AppSidebar } from '../../../shared/navigation/app-sidebar';
-import { SessionUserMenu } from '../../access/components/session-user-menu';
+import { AppPageHeader } from '../../../shared/navigation/app-page-header';
 import {
   createExpense,
   deleteExpense,
@@ -183,25 +182,8 @@ export function ExpenseManagementScreen({
 
   return (
     <main className={styles.page}>
-      <header className={styles.header}>
-        <div className={styles.headerLeft}>
-          <AppSidebar />
-          <Link className={styles.brand} href="/logistica/despesas">
-            <strong>Helpdesk</strong>
-            <span>Logística · Gerenciar RD</span>
-          </Link>
-        </div>
-        <SessionUserMenu user={currentUser} />
-      </header>
-
-      <div className={styles.content}>
-        <section className={styles.toolbar}>
-          <div>
-            <span className={styles.eyebrow}>Autosserviço</span>
-            <h1>Minhas Despesas</h1>
-            <p>{data?.profile.userName ?? 'Usuário autenticado'}</p>
-          </div>
-
+      <AppPageHeader
+        actions={
           <div className={styles.actions}>
             <Link href="/logistica/despesas">Resumo</Link>
             <button
@@ -212,7 +194,13 @@ export function ExpenseManagementScreen({
               + Nova despesa
             </button>
           </div>
-        </section>
+        }
+        subtitle={data?.profile.userName ?? 'Usuário autenticado'}
+        title="Gerenciar Despesas"
+        user={currentUser}
+      />
+
+      <div className={styles.content}>
 
         <section className={styles.filters}>
           <label>
