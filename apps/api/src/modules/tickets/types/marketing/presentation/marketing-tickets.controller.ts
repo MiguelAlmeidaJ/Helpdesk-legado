@@ -118,13 +118,32 @@ function parsePositiveQuery(value: unknown): number | undefined {
   return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : undefined;
 }
 
+function parseStatuses(value: unknown): number[] {
+  const source =
+    value === undefined || value === null || value === ''
+      ? ['1,2,3']
+      : Array.isArray(value)
+        ? value
+        : [value];
+
+  if (source.some((item) => String(item).trim().toLowerCase() === 'all')) {
+    return [0, 1, 2, 3, 4];
+  }
+
+  return Array.from(
+    new Set(
+      source
+        .flatMap((item) => String(item).split(','))
+        .map((item) => Number(item.trim()))
+        .filter((item) => Number.isInteger(item) && item >= 0 && item <= 4),
+    ),
+  );
+}
+
 function parseListQuery(query: Record<string, unknown>) {
   const page = Math.max(1, Number(query.page) || 1);
   const limit = Math.min(100, Math.max(1, Number(query.limit) || 30));
-  const statuses = String(query.status ?? '1,2,3')
-    .split(',')
-    .map((item) => Number(item.trim()))
-    .filter((item) => Number.isInteger(item) && item >= 0 && item <= 4);
+  const statuses = parseStatuses(query.status);
   if (statuses.length === 0) {
     throw new BadRequestException('status deve conter valores entre 0 e 4.');
   }

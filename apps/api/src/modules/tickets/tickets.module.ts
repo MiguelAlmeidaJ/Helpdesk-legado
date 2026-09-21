@@ -11,9 +11,12 @@ import { MarketingTicketsModule } from './types/marketing/marketing-tickets.modu
   imports: [
     AccessModule,
     TicketTypeAccessModule,
-    AtendimentoTicketsModule,
-    DevOpsTicketsModule,
+    // Register specialized ticket routes before the generic /tickets/:id routes.
+    // Otherwise values such as "marketing" or "projects" are consumed by
+    // TicketsController.detail() and fail its ParseIntPipe.
     MarketingTicketsModule,
+    DevOpsTicketsModule,
+    AtendimentoTicketsModule,
   ],
   controllers: [TicketTypesController],
   providers: [TicketTypeRegistry],

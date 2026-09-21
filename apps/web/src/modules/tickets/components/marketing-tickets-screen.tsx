@@ -19,7 +19,7 @@ const ACTIVE_STATUS = '1,2,3';
 
 const BUTTON_CLASS =
   'inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-app-border-strong bg-app-surface px-4 text-sm font-bold text-app-text-soft no-underline transition-colors hover:bg-app-surface-hover disabled:cursor-not-allowed disabled:opacity-50';
-const PRIMARY_BUTTON_CLASS = `${BUTTON_CLASS} border-app-brand bg-app-brand text-white hover:bg-app-brand-hover dark:text-slate-950`;
+const PRIMARY_BUTTON_CLASS = `${BUTTON_CLASS} !border-app-brand !bg-app-brand !text-white hover:!bg-app-brand-hover dark:!text-slate-950`;
 const FIELD_CONTROL_CLASS =
   'min-h-10 w-full rounded-lg border border-app-border-strong bg-app-surface px-3 text-sm text-app-text outline-none transition focus:border-app-brand focus:ring-3 focus:ring-[var(--app-brand-ring)] disabled:cursor-not-allowed disabled:opacity-55';
 const TABLE_CELL_CLASS =
@@ -52,11 +52,46 @@ function formatDate(value: string | null): string {
   }).format(date);
 }
 
+function apiErrorDetail(body: unknown): string | null {
+  if (typeof body === 'string') {
+    const value = body.trim();
+    return value || null;
+  }
+
+  if (!body || typeof body !== 'object' || Array.isArray(body)) {
+    return null;
+  }
+
+  const value = (body as { message?: unknown }).message;
+  if (typeof value === 'string') {
+    return value.trim() || null;
+  }
+
+  if (Array.isArray(value)) {
+    const messages = value.filter(
+      (item): item is string =>
+        typeof item === 'string' && item.trim().length > 0,
+    );
+    return messages.length > 0 ? messages.join(' ') : null;
+  }
+
+  return null;
+}
+
 function errorMessage(reason: unknown): string {
   if (reason instanceof ApiError) {
     if (reason.status === 403) {
       return 'Seu usuário não possui acesso aos tickets de Marketing.';
     }
+    if (reason.status === 401) {
+      return 'Sua sessão expirou ou deixou de ser válida. Entre novamente para continuar.';
+    }
+
+    const detail = apiErrorDetail(reason.body);
+    if (detail) {
+      return `API ${reason.status}: ${detail}`;
+    }
+
     return `A API respondeu com erro ${reason.status}.`;
   }
   return reason instanceof Error

@@ -7,7 +7,7 @@ import { apiDownload, apiRequest } from '../../../shared/api/api-client';
 import { AppSidebar } from '../../../shared/navigation/app-sidebar';
 import { SessionUserMenu } from '../../access/components/session-user-menu';
 import { downloadCsv, duration, reportError } from '../lib/report-export';
-import styles from './ticket-client-totals-report-screen.module.css';
+import { reportScreenStyles as styles } from './report-screen-styles';
 
 const SOURCE_LABELS = { tickets: 'Atendimento', tasks: 'Tarefa', improvements: 'Melhoria', unified: 'Unificado' };
 const STATUS: Readonly<Record<number, string>> = TICKET_STATUS_LABELS;

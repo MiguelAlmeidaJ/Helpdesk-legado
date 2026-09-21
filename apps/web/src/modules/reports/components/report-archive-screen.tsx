@@ -7,7 +7,7 @@ import { apiDownload, apiRequest } from '../../../shared/api/api-client';
 import { AppSidebar } from '../../../shared/navigation/app-sidebar';
 import { SessionUserMenu } from '../../access/components/session-user-menu';
 import { reportError } from '../lib/report-export';
-import styles from './ticket-client-totals-report-screen.module.css';
+import { reportScreenStyles as styles } from './report-screen-styles';
 
 interface ArchivedReport { name: string; size: number; modifiedAt: string; expiresAt: string }
 

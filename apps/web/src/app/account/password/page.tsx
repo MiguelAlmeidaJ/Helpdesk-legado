@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { authFormStyles as styles } from '../../../modules/access/components/auth-form-styles';
 import { ChangePasswordForm } from '../../../modules/access/components/change-password-form';
-import styles from '../../../modules/access/components/login-form.module.css';
 import { requireAuthenticatedUser } from '../../../modules/access/server/current-user';
 
 export const metadata: Metadata = { title: 'Alterar senha · Helpdesk' };
@@ -12,9 +12,9 @@ export default async function ChangePasswordPage() {
     <main className={styles.page}>
       <section className={styles.card}>
         <div className={styles.brand}>
-          <span>Minha conta</span>
-          <strong>Alterar senha</strong>
-          <p>A alteração encerra todas as sessões abertas por segurança.</p>
+          <span className={styles.brandEyebrow}>Minha conta</span>
+          <strong className={styles.brandTitle}>Alterar senha</strong>
+          <p className={styles.brandDescription}>A alteração encerra todas as sessões abertas por segurança.</p>
         </div>
         <ChangePasswordForm />
         <Link className={styles.backLink} href="/dashboard">Voltar ao dashboard</Link>
