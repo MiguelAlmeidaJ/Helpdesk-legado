@@ -15,8 +15,7 @@ import Link from 'next/link';
 import type { ChangeEvent, FormEvent } from 'react';
 import { useEffect, useMemo, useState } from 'react';
 import { ApiError } from '../../../shared/api/api-client';
-import { AppSidebar } from '../../../shared/navigation/app-sidebar';
-import { SessionUserMenu } from '../../access/components/session-user-menu';
+import { AppPageHeader } from '../../../shared/navigation/app-page-header';
 import {
   createNavigationItem,
   createNavigationSection,
@@ -322,33 +321,8 @@ export function NavigationAdminScreen({
 
   return (
     <main className="min-h-screen">
-      <header className="sticky top-0 z-20 flex items-center justify-between gap-5 border-b border-app-border bg-[var(--app-header-bg)] px-6 py-3.5 backdrop-blur-xl max-[760px]:px-3.5">
-        <div className="flex min-w-0 items-center gap-2.5">
-          <AppSidebar />
-          <Link
-            className="flex items-baseline gap-2.5 no-underline"
-            href="/painel"
-          >
-            <strong className="text-lg">Helpdesk</strong>
-            <span className="text-[13px] text-app-subtle max-[520px]:hidden">
-              Nova plataforma
-            </span>
-          </Link>
-        </div>
-        <SessionUserMenu user={currentUser} />
-      </header>
-
-      <div className="mx-auto w-full max-w-[1500px] p-6 max-[760px]:px-3.5">
-        <div className="mb-[18px] flex items-end justify-between gap-6 max-[760px]:flex-col max-[760px]:items-start max-[760px]:gap-2">
-          <div>
-            <span className="mb-2 inline-block text-xs font-extrabold uppercase tracking-[0.1em] text-app-muted">
-              Administração
-            </span>
-            <h1 className="m-0 text-[28px] font-bold">Navegação</h1>
-            <p className="mt-1.5 mb-0 text-[var(--app-muted-strong)]">
-              Organize seções, páginas, ordem e visibilidade do menu lateral.
-            </p>
-          </div>
+      <AppPageHeader
+        actions={
           <button
             className={PRIMARY_BUTTON_CLASS}
             onClick={newSection}
@@ -356,7 +330,13 @@ export function NavigationAdminScreen({
           >
             Nova seção
           </button>
-        </div>
+        }
+        subtitle="Organize seções, páginas, ordem e visibilidade do menu lateral."
+        title="Navegação"
+        user={currentUser}
+      />
+
+      <div className="mx-auto w-full max-w-[1500px] p-6 max-[760px]:px-3.5">
 
         {error ? (
           <div
