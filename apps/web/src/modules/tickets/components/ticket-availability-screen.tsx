@@ -10,8 +10,7 @@ import {
 import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 import { ApiError } from '../../../shared/api/api-client';
-import { AppSidebar } from '../../../shared/navigation/app-sidebar';
-import { SessionUserMenu } from '../../access/components/session-user-menu';
+import { AppPageHeader } from '../../../shared/navigation/app-page-header';
 import { fetchTicketAvailability } from '../api/tickets-api';
 const styles = {
   page: 'min-h-screen bg-app-bg text-app-text',
@@ -201,26 +200,8 @@ export function TicketAvailabilityScreen({
 
   return (
     <main className={styles.page}>
-      <header className={styles.header}>
-        <div className={styles.headerLeft}>
-          <AppSidebar />
-          <Link className={styles.brand} href="/painel">
-            <strong>Helpdesk</strong>
-            <span>Nova plataforma</span>
-          </Link>
-        </div>
-        <SessionUserMenu user={currentUser} />
-      </header>
-
-      <div className={styles.content}>
-        <div className={styles.titleRow}>
-          <div>
-            <span className={styles.eyebrow}>Operação</span>
-            <h1>Disponibilidade Técnica</h1>
-            <p>
-              Presença considera sessão nativa utilizada nos últimos 10 minutos.
-            </p>
-          </div>
+      <AppPageHeader
+        actions={
           <div className={styles.actions}>
             {allowed ? (
               <a href="/atendimentos/disponibilidade/relatorio-espera">
@@ -231,7 +212,13 @@ export function TicketAvailabilityScreen({
               Atualizar
             </button>
           </div>
-        </div>
+        }
+        subtitle="Presença considera sessão nativa utilizada nos últimos 10 minutos."
+        title="Disponibilidade Técnica"
+        user={currentUser}
+      />
+
+      <div className={styles.content}>
 
         {!allowed ? (
           <div className={styles.notice}>
