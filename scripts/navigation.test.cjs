@@ -61,13 +61,24 @@ test('navigation upgrade enables migrated screens, preserves customization and i
     { id: 3n, slug: 'report-client-analytic', label: 'Análise', href: '/reports/tickets/analytics?source=tickets#table', status: 'available', visibility_condition: null },
     { id: 4n, slug: 'marketing-availability', label: 'Disponibilidade', href: null, status: 'planned', visibility_condition: null },
     { id: 5n, slug: 'marketing-task-new', label: 'Nova Tarefa', href: '/tickets/new?type=marketing', status: 'available', visibility_condition: null },
+    { id: 6n, slug: 'receivables-accrual', label: 'Contas a Receber - Competência', href: null, status: 'planned', visibility_condition: null },
+    { id: 7n, slug: 'receivables-cashflow', label: 'Contas a Receber - Fluxo', href: null, status: 'planned', visibility_condition: null },
+    { id: 8n, slug: 'payables', label: 'Contas a Pagar', href: null, status: 'planned', visibility_condition: null },
+    { id: 9n, slug: 'entries', label: 'Lançamentos', href: null, status: 'planned', visibility_condition: null },
+    { id: 10n, slug: 'recurring', label: 'Recorrentes', href: null, status: 'planned', visibility_condition: null },
+    { id: 11n, slug: 'accounting', label: 'Contabilidade', href: null, status: 'planned', visibility_condition: null },
+    { id: 12n, slug: 'report-client-daily', label: 'Atd. diário por Cliente', href: null, status: 'planned', visibility_condition: null },
+    { id: 13n, slug: 'report-requester', label: 'Atd. por Solicitante', href: null, status: 'planned', visibility_condition: null },
+    { id: 14n, slug: 'report-tech-daily', label: 'Atd. diário por Técnico', href: null, status: 'planned', visibility_condition: null },
+    { id: 15n, slug: 'radio', label: 'Rádio', href: null, status: 'planned', visibility_condition: null },
+    { id: 16n, slug: 'statements', label: 'Extratos', href: null, status: 'planned', visibility_condition: null },
   ];
   const original = structuredClone(rows);
   const db = { $queryRaw: async () => rows, $executeRaw: async (_sql, label, href, status, visibility_condition, id) => {
     Object.assign(rows.find(row => row.id === id), { label, href, status, visibility_condition });
     return 1;
   } };
-  assert.equal(await synchronizeNavigation(db), 4);
+  assert.equal(await synchronizeNavigation(db), 15);
   assert.equal(rows[0].href, '/atendimentos/recorrencias');
   assert.equal(rows[0].label, 'Rotinas');
   assert.equal(rows[0].is_active, 0);
@@ -79,6 +90,25 @@ test('navigation upgrade enables migrated screens, preserves customization and i
   assert.equal(rows[3].status, 'available');
   assert.deepEqual(JSON.parse(rows[3].visibility_condition), { anyPermissions: ['tickets.read'] });
   assert.equal(rows[4].href, '/atendimentos/marketing/nova-tarefa');
+
+  const migratedDestinations = new Map([
+    ['receivables-accrual', '/logistica/financeiro/contas-a-receber-competencia'],
+    ['receivables-cashflow', '/logistica/financeiro/contas-a-receber-fluxo'],
+    ['payables', '/logistica/financeiro/contas-a-pagar'],
+    ['entries', '/logistica/financeiro/lancamentos'],
+    ['recurring', '/logistica/financeiro/recorrentes'],
+    ['accounting', '/logistica/financeiro/contabilidade'],
+    ['report-client-daily', '/relatorios/atendimentos/diario-por-cliente'],
+    ['report-requester', '/relatorios/atendimentos/por-solicitante'],
+    ['report-tech-daily', '/relatorios/atendimentos/diario-por-tecnico'],
+    ['radio', '/radio'],
+    ['statements', '/extratos'],
+  ]);
+  for (const [slug, href] of migratedDestinations) {
+    const row = rows.find(item => item.slug === slug);
+    assert.equal(row.status, 'available', slug);
+    assert.equal(row.href, href, slug);
+  }
   assert.equal(await synchronizeNavigation(db), 0);
 });
 
@@ -96,6 +126,7 @@ test('browser URL translation preserves IDs, filters and unrelated paths', () =>
 
 test('all available menu destinations resolve to implemented Next pages', () => {
   const items = DEFAULT_NAVIGATION.flatMap(section => section.items);
+  assert.equal(items.filter(item => item.status === 'planned').length, 0);
   for (const slug of [
     'tickets-recurrences',
     'devops-task-new',
