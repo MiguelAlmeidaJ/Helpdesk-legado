@@ -4,8 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import type { CurrentUserResponse, TicketReportCatalog } from '@helpdesk/contracts';
 import { apiDownload, apiRequest } from '../../../shared/api/api-client';
-import { AppSidebar } from '../../../shared/navigation/app-sidebar';
-import { SessionUserMenu } from '../../access/components/session-user-menu';
+import { AppPageHeader } from '../../../shared/navigation/app-page-header';
 import { reportError } from '../lib/report-export';
 import { reportScreenStyles as styles } from './report-screen-styles';
 
@@ -35,9 +34,12 @@ export function ReportArchiveScreen({ currentUser }: { currentUser: CurrentUserR
     try { await operation(); } catch (reason) { setError(reportError(reason)); } finally { setBusy(false); }
   }
   return <main className={styles.page}>
-    <header className={styles.header}><div className={styles.headerLeft}><AppSidebar /><Link className={styles.brand} href="/painel"><strong>Helpdesk</strong><span>Relatórios</span></Link></div><SessionUserMenu user={currentUser} /></header>
+    <AppPageHeader
+      subtitle="Gere relatórios por cliente. Os PDFs ficam disponíveis por 15 dias."
+      title="Relatórios gerados"
+      user={currentUser}
+    />
     <div className={styles.content}>
-      <section className={styles.hero}><div><h1>Relatórios gerados</h1><p>Gere relatórios por cliente. Os PDFs ficam disponíveis por 15 dias e depois podem ser gerados novamente.</p></div></section>
       <form className={styles.filters} onSubmit={event => { event.preventDefault(); void action(async () => {
         const result = await apiRequest<{ files: string[]; errors: Array<{ clientId: number; message: string }> }>('reports/archive/generate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ clientIds, startDate, endDate }) });
         await refresh(); setMessage(`${result.files.length} PDF(s) gerado(s).`);
