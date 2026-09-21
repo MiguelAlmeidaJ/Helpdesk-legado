@@ -10,8 +10,7 @@ import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { useEffect, useState } from 'react';
 import { ApiError } from '../../../shared/api/api-client';
-import { AppSidebar } from '../../../shared/navigation/app-sidebar';
-import { SessionUserMenu } from '../../access/components/session-user-menu';
+import { AppPageHeader } from '../../../shared/navigation/app-page-header';
 import { updateDevOpsProjectClassification } from '../api/modular-ticket-edit-api';
 import {
   fetchDevOpsProjectDetail,
@@ -124,44 +123,28 @@ export function DevOpsProjectDetailScreen({
 
   return (
     <main className="min-h-screen bg-app-bg text-app-text">
-      <header className="sticky top-0 z-20 flex items-center justify-between gap-5 border-b border-app-border bg-[var(--app-header-bg)] px-6 py-3.5 backdrop-blur-xl max-sm:px-3.5">
-        <div className="flex min-w-0 items-center gap-2.5">
-          <AppSidebar />
-          <Link className="flex items-baseline gap-2.5 no-underline" href="/painel">
-            <strong className="text-lg text-app-text">Helpdesk</strong>
-            <span className="text-[13px] text-app-subtle max-sm:hidden">Nova plataforma</span>
-          </Link>
-        </div>
-        <SessionUserMenu user={currentUser} />
-      </header>
-
-      <div className="mx-auto w-full max-w-[1500px] px-6 py-6 max-sm:px-3.5">
-        <div className="mb-[18px] flex items-end justify-between gap-6 max-sm:flex-col max-sm:items-stretch max-sm:gap-3">
-          <div>
-            <span className="mb-2 inline-block text-xs font-extrabold uppercase tracking-[0.1em] text-app-muted">
-              DevOps · Projeto
-            </span>
-            <h1 className="m-0 text-[28px] font-bold tracking-tight text-app-text">
-              Projeto #{projectId}
-            </h1>
-            <p className="mt-1.5 text-app-muted-strong">
-              {project?.name ?? 'Grupo de atendimentos DevOps.'}
-            </p>
-          </div>
-          <div className="flex flex-wrap items-center justify-end gap-3 max-sm:[&>*]:flex-1">
+      <AppPageHeader
+        actions={
+          <div className="flex items-center gap-2">
             {project && project.status !== 4 ? (
               <Link
                 className={PRIMARY_BUTTON_CLASS}
                 href={`/atendimentos/devops/nova-tarefa?projectId=${projectId}`}
               >
-                Nova tarefa neste projeto
+                Nova tarefa
               </Link>
             ) : null}
             <Link className={BUTTON_CLASS} href="/atendimentos/devops/projetos">
               Voltar aos projetos
             </Link>
           </div>
-        </div>
+        }
+        subtitle={project?.name ?? 'Grupo de tarefas DevOps.'}
+        title={`Projeto #${projectId}`}
+        user={currentUser}
+      />
+
+      <div className="mx-auto w-full max-w-[1500px] px-6 py-6 max-sm:px-3.5">
 
         {loading ? (
           <div
