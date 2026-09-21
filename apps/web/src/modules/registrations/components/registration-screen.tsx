@@ -118,9 +118,7 @@ export function RegistrationScreen({
           signal,
         );
         setClassificationOptions(
-          classifications.items
-            .filter((item) => item.status === 1)
-            .map((item) => ({
+          classifications.items.map((item) => ({
               value: item.id,
               label: String(item.values.name ?? `#${item.id}`),
             })),
