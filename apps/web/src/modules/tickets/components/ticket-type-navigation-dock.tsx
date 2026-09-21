@@ -23,7 +23,10 @@ function currentType(pathname: string): TicketTypeKey | null {
 export function TicketTypeNavigationDock() {
   const pathname = usePathname();
   const [types, setTypes] = useState<TicketTypeDescriptor[]>([]);
-  const showDock = !pathname.startsWith('/atendimentos/recorrencias');
+  const isCreateScreen =
+    pathname === '/atendimentos/novo' || pathname.endsWith('/nova-tarefa');
+  const showDock =
+    !isCreateScreen && !pathname.startsWith('/atendimentos/recorrencias');
 
   useEffect(() => {
     if (!showDock) return;
