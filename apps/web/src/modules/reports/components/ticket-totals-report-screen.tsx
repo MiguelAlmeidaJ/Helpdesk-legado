@@ -10,8 +10,7 @@ import {
   useState,
 } from 'react';
 import { ApiError } from '../../../shared/api/api-client';
-import { AppSidebar } from '../../../shared/navigation/app-sidebar';
-import { SessionUserMenu } from '../../access/components/session-user-menu';
+import { AppPageHeader } from '../../../shared/navigation/app-page-header';
 const styles = {
   page: 'min-h-screen bg-app-bg text-app-text print:bg-white print:text-black',
   header:
@@ -204,29 +203,17 @@ export function TicketTotalsReportScreen({
 
   return (
     <main className={styles.page}>
-      <header className={styles.header}>
-        <div className={styles.headerLeft}>
-          <AppSidebar />
-          <Link className={styles.brand} href="/painel">
-            <strong>Helpdesk</strong>
-            <span>Relatórios</span>
-          </Link>
-        </div>
-        <SessionUserMenu user={currentUser} />
-      </header>
+      <AppPageHeader
+        subtitle={description}
+        title={title}
+        user={currentUser}
+      />
 
       <div className={styles.content}>
-        <section className={styles.hero}>
-          <div>
-            <span className={styles.eyebrow}>Atendimentos</span>
-            <h1>{title}</h1>
-            <p>{description}</p>
-          </div>
-          <div className={styles.summary}>
-            <span>Total no período</span>
-            <strong>{data?.total ?? 0}</strong>
-          </div>
-        </section>
+        <div className={styles.summary}>
+          <span>Total no período</span>
+          <strong>{data?.total ?? 0}</strong>
+        </div>
 
         {data ? <p className={styles.printHeading}>{data.period.startDate} a {data.period.endDate} · Nível {data.level || 'Todos (1–3)'}</p> : null}
 
