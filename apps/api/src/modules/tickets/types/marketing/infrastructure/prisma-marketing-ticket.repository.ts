@@ -1,5 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import {
+  type MarketingAvailabilityResponse,
+  type MarketingAvailabilityTechnician,
   type MarketingTicketCatalogsResponse,
   type MarketingTicketCreateResponse,
   type MarketingTicketDetailResponse,
@@ -31,6 +33,12 @@ interface ClientScopeRow { cliente_id: number }
 interface CountRow { total: number | bigint | string }
 interface FlagRow { value: number | bigint | string }
 interface InsertIdRow { id: number | bigint | string }
+interface MarketingTechnicianRow {
+  id: number;
+  name: string | null;
+  online: number | bigint | string;
+}
+interface NowRow { generated_at: string }
 interface TaskRow {
   id: number;
   nome_tarefa: string | null;
@@ -243,6 +251,95 @@ export class PrismaMarketingTicketRepository extends MarketingTicketRepository {
         total,
         totalPages: total === 0 ? 0 : Math.ceil(total / input.limit),
       },
+    };
+  }
+
+  async availability(actorUserId: number): Promise<MarketingAvailabilityResponse> {
+    const clientIds = await this.restrictedClientIds(actorUserId);
+    const technicians = await this.database.$queryRawUnsafe<MarketingTechnicianRow[]>(
+      `SELECT
+         u.user_id AS id,
+         u.user_nome AS name,
+         EXISTS(
+           SELECT 1
+           FROM api_sessions s
+           WHERE s.user_id = u.user_id
+             AND s.revoked_at IS NULL
+             AND s.expires_at > NOW()
+             AND COALESCE(s.last_used_at, s.created_at) >= DATE_SUB(NOW(), INTERVAL 10 MINUTE)
+         ) AS online
+       FROM usuarios u
+       WHERE u.user_sts = 1
+         AND u.user_id > 1
+         AND CAST(SUBSTRING(COALESCE(u.user_modulo_08, '0000000000'), 1, 1) AS UNSIGNED) >= 1
+         AND CAST(SUBSTRING(COALESCE(u.user_modulo_08, '0000000000'), 3, 1) AS UNSIGNED) >= 2
+       ORDER BY u.user_nome ASC`,
+    );
+
+    let tasks: MarketingTicketListItem[] = [];
+    if (clientIds === null || clientIds.length > 0) {
+      const where = [
+        '(t.status IN (0, 1, 2, 3) OR (t.status = 4 AND DATE(t.fechamento) = CURDATE()))',
+      ];
+      const params: unknown[] = [];
+      this.appendVisibility(where, params, { actorUserId }, clientIds, 't');
+      const rows = await this.database.$queryRawUnsafe<TaskRow[]>(
+        `${this.selectTaskSql()}
+         WHERE ${where.join(' AND ')}
+         ORDER BY t.status ASC, t.abertura ASC, t.id ASC`,
+        ...params,
+      );
+      tasks = rows.map((row) => this.mapTask(row));
+    }
+
+    const executingByTechnician = new Map<number, MarketingTicketListItem[]>();
+    for (const task of tasks) {
+      const technicianId = task.technician.id;
+      if (task.status !== 2 || !technicianId) continue;
+      const current = executingByTechnician.get(technicianId) ?? [];
+      current.push(task);
+      executingByTechnician.set(technicianId, current);
+    }
+
+    const technicianItems: MarketingAvailabilityTechnician[] = technicians.map((row) => {
+      const executing = executingByTechnician.get(row.id) ?? [];
+      const online = Number(row.online) === 1;
+      return {
+        id: row.id,
+        name: row.name?.trim() || `Usuário #${row.id}`,
+        online,
+        state: executing.length > 0 ? 'busy' : online ? 'available' : 'offline',
+        executing,
+      };
+    });
+
+    const scheduled = tasks.filter((task) => task.status === 0);
+    const waitingExecution = tasks.filter((task) => task.status === 1);
+    const inProgress = tasks.filter((task) => task.status === 2);
+    const onHold = tasks.filter((task) => task.status === 3);
+    const finishedToday = tasks.filter((task) => task.status === 4);
+    const now = await this.database.$queryRawUnsafe<NowRow[]>(
+      `SELECT DATE_FORMAT(NOW(), '%Y-%m-%dT%H:%i:%s') AS generated_at`,
+    );
+
+    return {
+      generatedAt: now[0]?.generated_at ?? new Date().toISOString(),
+      onlineWindowMinutes: 10,
+      summary: {
+        scheduled: scheduled.length,
+        waitingExecution: waitingExecution.length,
+        inProgress: inProgress.length,
+        onHold: onHold.length,
+        finishedToday: finishedToday.length,
+        onlineTechnicians: technicianItems.filter((item) => item.online).length,
+        availableTechnicians: technicianItems.filter((item) => item.state === 'available').length,
+        busyTechnicians: technicianItems.filter((item) => item.state === 'busy').length,
+      },
+      technicians: technicianItems,
+      scheduled,
+      waitingExecution,
+      onHold,
+      finishedToday,
     };
   }
 
