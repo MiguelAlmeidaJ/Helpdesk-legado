@@ -15,7 +15,20 @@ type StoredItem = {
 export async function synchronizeNavigation(
   db: Pick<Nivel3DatabaseClient, '$queryRaw' | '$executeRaw'>,
 ): Promise<number> {
-  const migrated = new Set(['tickets-recurrences', 'devops-task-new', 'marketing-task-new']);
+  const migrated = new Set([
+    'tickets-recurrences',
+    'devops-task-new',
+    'marketing-task-new',
+    'clients',
+    'categories',
+    'cost-centers',
+    'accounting-classification',
+    'adjustment-indexes',
+    'payment-methods',
+    'expense-types',
+    'service-types',
+    'fee-types',
+  ]);
   const legacyCreateHrefs = new Map<string, Set<string>>([
     ['devops-task-new', new Set(['/atendimentos/novo?type=devops'])],
     ['marketing-task-new', new Set(['/atendimentos/novo?type=marketing'])],
