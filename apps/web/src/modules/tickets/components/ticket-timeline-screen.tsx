@@ -9,8 +9,7 @@ import {
 import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 import { ApiError } from '../../../shared/api/api-client';
-import { AppSidebar } from '../../../shared/navigation/app-sidebar';
-import { SessionUserMenu } from '../../access/components/session-user-menu';
+import { AppPageHeader } from '../../../shared/navigation/app-page-header';
 import { fetchTicketTimeline } from '../api/tickets-api';
 const styles = {
   page: 'min-h-screen bg-app-bg text-app-text-soft',
@@ -149,28 +148,18 @@ export function TicketTimelineScreen({
 
   return (
     <main className={styles.page}>
-      <header className={styles.header}>
-        <div className={styles.headerLeft}>
-          <AppSidebar />
-          <Link className={styles.brand} href="/painel">
-            <strong>Helpdesk</strong>
-            <span>Nova plataforma</span>
-          </Link>
-        </div>
-        <SessionUserMenu user={currentUser} />
-      </header>
-
-      <div className={styles.content}>
-        <div className={styles.titleRow}>
-          <div>
-            <span className={styles.eyebrow}>Auditoria operacional</span>
-            <h1>Linha do tempo</h1>
-            <p>Interações registradas nos atendimentos durante as últimas 24 horas.</p>
-          </div>
+      <AppPageHeader
+        actions={
           <button disabled={!allowed || loading} onClick={() => void load()} type="button">
             Atualizar
           </button>
-        </div>
+        }
+        subtitle="Interações registradas nos atendimentos durante as últimas 24 horas."
+        title="Linha do tempo"
+        user={currentUser}
+      />
+
+      <div className={styles.content}>
 
         {!allowed ? (
           <div className={styles.notice}>
