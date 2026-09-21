@@ -9,8 +9,7 @@ import type {
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { ApiError } from '../../../shared/api/api-client';
-import { AppSidebar } from '../../../shared/navigation/app-sidebar';
-import { SessionUserMenu } from '../../access/components/session-user-menu';
+import { AppPageHeader } from '../../../shared/navigation/app-page-header';
 import { fetchAllCatalogs, fetchCatalogFilters } from '../api/catalog-api';
 const BUTTON_CLASS =
   'inline-flex min-h-10 items-center justify-center gap-2 rounded-[9px] border border-app-border-strong bg-app-surface px-4 font-bold text-app-text-soft no-underline transition hover:bg-app-surface-hover focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-[var(--app-brand-ring)] disabled:cursor-not-allowed disabled:opacity-50';
@@ -143,26 +142,14 @@ export function CatalogCheckScreen({ currentUser }: { currentUser: CurrentUserRe
 
   return (
     <main className={styles.page}>
-      <header className={styles.header}>
-        <div className={styles.headerLeft}>
-          <AppSidebar />
-          <Link className={styles.brand} href="/painel">
-            <strong>Helpdesk</strong>
-            <span>Nova plataforma</span>
-          </Link>
-        </div>
-        <SessionUserMenu user={currentUser} />
-      </header>
+      <AppPageHeader
+        actions={<Link className={styles.button} href="/catalogos">Gerenciar catálogos</Link>}
+        subtitle="Confira a cobertura de catálogo por cliente, categoria e setor permitido."
+        title="Verificação de Catálogos"
+        user={currentUser}
+      />
 
       <div className={styles.content}>
-        <div className={styles.titleRow}>
-          <div>
-            <span className={styles.eyebrow}>Cadastros</span>
-            <h1>Verificação de Catálogos</h1>
-            <p>Confira a cobertura de catálogo por cliente, categoria e setor permitido.</p>
-          </div>
-          <Link className={styles.button} href="/catalogos">Gerenciar catálogos</Link>
-        </div>
 
         {error ? <div className={styles.error} role="alert">{error}</div> : null}
         {loading ? <div className={styles.loadingLine} aria-label="Carregando" /> : null}
