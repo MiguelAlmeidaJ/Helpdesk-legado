@@ -170,7 +170,13 @@ export function MarketingTicketsScreen({
     <main className="min-h-screen bg-app-bg text-app-text">
       <AppPageHeader
         actions={
-          <div className="flex items-center gap-2 max-md:[&>a:first-child]:hidden">
+          <div className="flex items-center gap-2 max-lg:[&>a:not(:last-child)]:hidden">
+            <Link
+              className={BUTTON_CLASS}
+              href="/atendimentos/marketing/disponibilidade"
+            >
+              Disponibilidade
+            </Link>
             <Link
               className={BUTTON_CLASS}
               href="/atendimentos/marketing/relatorios/tarefas"
