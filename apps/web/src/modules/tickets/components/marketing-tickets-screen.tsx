@@ -213,7 +213,7 @@ export function MarketingTicketsScreen({
             </Link>
             <Link
               className={PRIMARY_BUTTON_CLASS}
-              href="/atendimentos/novo?type=marketing"
+              href="/atendimentos/marketing/nova-tarefa"
             >
               Novo atendimento
             </Link>
