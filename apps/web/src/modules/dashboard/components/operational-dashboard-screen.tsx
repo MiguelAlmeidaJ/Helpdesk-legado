@@ -60,41 +60,79 @@ function currentWeekRange(current: string): [string, string] {
   return [ymd(start), ymd(end)];
 }
 
-function rankingBarClass(rankingId: string): string {
+function rankingAccent(rankingId: string): string {
   switch (rankingId) {
     case 'devops':
-      return 'bg-[#876c55] dark:bg-[#b29379]';
+      return 'text-amber-500';
     case 'mkt':
-      return 'bg-[#5d8868] dark:bg-[#7fb08a]';
+      return 'text-emerald-600 dark:text-emerald-400';
     case 'qa':
-      return 'bg-[#74678e] dark:bg-[#9a8bb8]';
+      return 'text-violet-600 dark:text-violet-400';
     default:
-      return 'bg-[#597c9f] dark:bg-[#7ea6cc]';
+      return 'text-blue-600 dark:text-blue-400';
   }
+}
+
+function rankingBarColor(rankingId: string): string {
+  switch (rankingId) {
+    case 'mkt':
+      return 'bg-[#109618]';
+    case 'qa':
+      return 'bg-[#6f42c1]';
+    default:
+      return 'bg-[#007bff]';
+  }
+}
+
+function rankingIcon(rankingId: string): string {
+  switch (rankingId) {
+    case 'devops':
+      return '</>';
+    case 'mkt':
+      return '📣';
+    case 'qa':
+      return '●';
+    default:
+      return '▦';
+  }
+}
+
+function podiumUnit(rankingId: string, total: number): string {
+  if (rankingId === 'ti') return total === 1 ? 'atendimento' : 'atendimentos';
+  if (rankingId === 'mkt') return total === 1 ? 'tarefa' : 'tarefas';
+  return total === 1 ? 'chamado' : 'chamados';
 }
 
 function RankingCard({ ranking }: { ranking: DashboardRanking }) {
   const max = Math.max(0, ...ranking.entries.map((entry) => entry.total));
 
   return (
-    <article className={CARD_CLASS} data-ranking={ranking.id}>
-      <header className={CARD_HEADER_CLASS}>
-        <div className="min-w-0">
-          <span className="text-[8px] font-black tracking-[0.08em] text-app-subtle">
-            {ranking.id.toUpperCase()}
+    <article
+      className="overflow-hidden rounded-[5px] border border-app-border bg-app-surface shadow-sm"
+      data-ranking={ranking.id}
+    >
+      <header className="flex min-h-[44px] items-center justify-between gap-3 border-b border-app-border bg-app-surface-muted px-5 py-3">
+        <div className="flex min-w-0 items-center gap-2">
+          <span
+            className={`shrink-0 text-[15px] font-black ${rankingAccent(ranking.id)}`}
+            aria-hidden="true"
+          >
+            {rankingIcon(ranking.id)}
           </span>
-          <h3 className="mt-px mb-0 text-xs font-bold text-app-text">
+          <h3 className="m-0 truncate text-[14px] font-bold text-app-text">
             {ranking.label}
           </h3>
         </div>
-        <strong className="text-[21px] leading-none text-app-text">
-          {ranking.total}
+        <strong className="whitespace-nowrap text-[13px] font-black text-app-text">
+          Total: {ranking.total}
         </strong>
       </header>
 
-      <div className="max-h-[410px] overflow-y-auto px-[11px] pt-1.5 pb-2.5">
+      <div className="h-[375px] overflow-y-auto px-5 py-2">
         {ranking.entries.length === 0 ? (
-          <p className={EMPTY_CLASS}>Nenhum dado no período.</p>
+          <p className="m-0 px-0.5 py-5 text-xs text-app-subtle">
+            Nenhum dado no período.
+          </p>
         ) : (
           ranking.entries.map((entry, index) => (
             <RankingRow
@@ -123,67 +161,154 @@ function RankingRow({
   rankingId: string;
 }) {
   const width = max > 0 ? Math.max(3, (entry.total / max) * 100) : 0;
+  const tickets = entry.tickets ?? 0;
+  const tasks = entry.tasks ?? 0;
+  const ticketsWidth = max > 0 ? (tickets / max) * 100 : 0;
+  const tasksWidth = max > 0 ? (tasks / max) * 100 : 0;
 
   return (
-    <div className="border-b border-app-border-soft py-[9px] last:border-b-0">
-      <div className="grid grid-cols-[24px_minmax(0,1fr)_auto] items-center gap-1.5">
-        <span className="text-center text-[10px] text-amber-700 dark:text-amber-300">
-          {index === 0 ? '♛' : index + 1}
-        </span>
-        <strong className="overflow-hidden text-[10px] text-ellipsis whitespace-nowrap text-app-text">
+    <div className="border-b border-app-border-soft py-[11px] last:border-b-0">
+      <div className="flex items-center justify-between gap-3">
+        <strong className="min-w-0 truncate text-[14px] font-bold text-app-text">
+          {index === 0 ? (
+            <span className="mr-1.5 text-[20px] leading-none" aria-label="Primeiro colocado">
+              👑
+            </span>
+          ) : null}
           {entry.name}
         </strong>
-        <b className="text-[11px] text-app-text">{entry.total}</b>
+        <b className="shrink-0 text-[14px] font-black text-app-text">
+          {entry.total}
+        </b>
       </div>
-      <div className="mt-[5px] ml-[30px] h-[7px] overflow-hidden rounded-full bg-app-border-soft">
-        <div
-          className={`h-full rounded-[inherit] ${rankingBarClass(rankingId)}`}
-          style={{ width: `${width}%` }}
-        />
+
+      <div className="mt-1.5 h-[12px] overflow-hidden rounded-[4px] bg-app-border-soft">
+        {rankingId === 'devops' ? (
+          <div className="flex h-full w-full">
+            {tickets > 0 ? (
+              <div
+                className="flex h-full items-center justify-center overflow-hidden bg-[#c23a1b] text-[8px] font-black text-white"
+                style={{ width: `${ticketsWidth}%` }}
+                title={`Atendimentos: ${tickets}`}
+              >
+                {ticketsWidth >= 12 ? tickets : null}
+              </div>
+            ) : null}
+            {tasks > 0 ? (
+              <div
+                className="flex h-full items-center justify-center overflow-hidden bg-[#f5981e] text-[8px] font-black text-white"
+                style={{ width: `${tasksWidth}%` }}
+                title={`Tarefas: ${tasks}`}
+              >
+                {tasksWidth >= 12 ? tasks : null}
+              </div>
+            ) : null}
+          </div>
+        ) : (
+          <div
+            className={`h-full rounded-[inherit] ${rankingBarColor(rankingId)}`}
+            style={{ width: `${width}%` }}
+          />
+        )}
       </div>
-      {entry.tickets !== undefined || entry.tasks !== undefined ? (
-        <small className="mt-1 ml-[30px] block text-[8px] text-app-subtle">
-          {entry.tickets ?? 0} atendimentos · {entry.tasks ?? 0} tarefas
-        </small>
+
+      {rankingId === 'devops' ? (
+        <div className="mt-1 flex items-center gap-3 text-[9px] font-semibold text-app-subtle">
+          <span className="inline-flex items-center gap-1">
+            <i className="h-2 w-2 rounded-sm bg-[#c23a1b]" />
+            {tickets} atend.
+          </span>
+          <span className="inline-flex items-center gap-1">
+            <i className="h-2 w-2 rounded-sm bg-[#f5981e]" />
+            {tasks} tarefas
+          </span>
+        </div>
       ) : null}
     </div>
   );
 }
 
-function PodiumCard({ ranking }: { ranking: DashboardRanking }) {
+function PodiumCard({
+  ranking,
+  quarterNumber,
+  year,
+}: {
+  ranking: DashboardRanking;
+  quarterNumber: number;
+  year: number;
+}) {
+  const [first, second, third] = ranking.entries.slice(0, 3);
+
   return (
-    <article className={CARD_CLASS} data-ranking={ranking.id}>
-      <header className={CARD_HEADER_CLASS}>
-        <div>
-          <span className="text-[8px] font-black tracking-[0.08em] text-app-subtle">
-            {ranking.id.toUpperCase()}
-          </span>
-          <h3 className="mt-px mb-0 text-xs font-bold text-app-text">
-            {ranking.label}
-          </h3>
-        </div>
+    <article
+      className="overflow-hidden rounded-[5px] border border-app-border bg-app-surface shadow-sm"
+      data-ranking={ranking.id}
+    >
+      <header className="flex min-h-[42px] items-center justify-between gap-3 border-b border-app-border px-4 py-2.5">
+        <h3 className="m-0 flex items-center gap-2 text-[13px] font-black text-app-text">
+          <span className="text-[15px]" aria-hidden="true">🏆</span>
+          {ranking.label === 'QA - Abertura de Atd' ? 'QA' : ranking.label.toUpperCase()}
+        </h3>
+        <span className="text-[10px] font-semibold text-app-subtle">
+          T{quarterNumber} {year}
+        </span>
       </header>
-      <ol className="m-0 grid list-none gap-0 px-[11px] pt-[5px] pb-[9px]">
-        {ranking.entries.length === 0 ? (
-          <li className={EMPTY_CLASS}>Sem dados no trimestre.</li>
-        ) : (
-          ranking.entries.slice(0, 3).map((entry, index) => (
-            <li
-              className="grid grid-cols-[30px_minmax(0,1fr)_auto] items-center gap-[7px] border-b border-app-border-soft py-2 last:border-b-0"
-              key={`${entry.name}-${index}`}
-            >
-              <span className="text-[9px] font-black text-amber-700 dark:text-amber-300">
-                {index + 1}º
-              </span>
-              <strong className="overflow-hidden text-[10px] text-ellipsis whitespace-nowrap text-app-text">
-                {entry.name}
+
+      {first ? (
+        <div className="px-4 py-3">
+          <div className="flex min-h-[66px] items-center justify-center gap-3 border-b border-app-border-soft pb-3 text-center">
+            <span className="text-[24px] leading-none" aria-label="Primeiro colocado">🥇</span>
+            <div className="min-w-0 text-left">
+              <strong className="block truncate text-[14px] font-black text-app-text">
+                {first.name}
               </strong>
-              <b className="text-[11px] text-app-text">{entry.total}</b>
-            </li>
-          ))
-        )}
-      </ol>
+              <span className="mt-0.5 block text-[10px] text-app-muted">
+                {first.total} {podiumUnit(ranking.id, first.total)}
+              </span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 divide-x divide-app-border-soft pt-2">
+            <PodiumRunner entry={second} rankingId={ranking.id} medal="🥈" />
+            <PodiumRunner entry={third} rankingId={ranking.id} medal="🥉" />
+          </div>
+        </div>
+      ) : (
+        <p className="m-0 px-4 py-6 text-center text-xs text-app-subtle">
+          Nenhum registro no trimestre.
+        </p>
+      )}
     </article>
+  );
+}
+
+function PodiumRunner({
+  entry,
+  rankingId,
+  medal,
+}: {
+  entry: DashboardRankingEntry | undefined;
+  rankingId: string;
+  medal: string;
+}) {
+  if (!entry) {
+    return <div className="min-h-[58px] px-3 py-2" />;
+  }
+
+  return (
+    <div className="flex min-h-[58px] items-start gap-2 px-3 py-2 first:pl-0 last:pr-0">
+      <span className="mt-0.5 text-[16px] leading-none" aria-hidden="true">
+        {medal}
+      </span>
+      <div className="min-w-0">
+        <strong className="block text-[11px] font-black leading-snug text-app-text">
+          {entry.name}
+        </strong>
+        <span className="mt-0.5 block text-[9px] text-app-muted">
+          {entry.total} {podiumUnit(rankingId, entry.total)}
+        </span>
+      </div>
+    </div>
   );
 }
 
@@ -325,9 +450,9 @@ export function OperationalDashboardScreen({
             </section>
 
             <section className="mt-5">
-              <div className="mb-2.5 flex items-end justify-between gap-4 max-[680px]:flex-col max-[680px]:items-stretch">
+              <div className="mb-2.5 flex items-center justify-between gap-4 max-[680px]:flex-col max-[680px]:items-stretch">
                 <div>
-                  <span className={EYEBROW_CLASS}>Ranking</span>
+                  <span className={EYEBROW_CLASS}>Ranking operacional</span>
                   <h2 className="mt-0.5 mb-0 text-[17px] font-bold text-app-text">
                     {data.period.label}
                   </h2>
@@ -336,25 +461,28 @@ export function OperationalDashboardScreen({
                   Atualizado em {data.generatedAt.replace('T', ' ')}
                 </small>
               </div>
-              <div className="grid grid-cols-4 gap-2.5 max-[1100px]:grid-cols-2 max-[680px]:grid-cols-1">
+              <div className="grid grid-cols-4 gap-3 max-[1180px]:grid-cols-2 max-[680px]:grid-cols-1">
                 {data.periodRankings.map((ranking) => (
                   <RankingCard key={ranking.id} ranking={ranking} />
                 ))}
               </div>
             </section>
 
-            <section className="mt-5">
-              <div className="mb-2.5 flex items-end justify-between gap-4 max-[680px]:flex-col max-[680px]:items-stretch">
-                <div>
-                  <span className={EYEBROW_CLASS}>Pódio</span>
-                  <h2 className="mt-0.5 mb-0 text-[17px] font-bold text-app-text">
-                    {data.quarter.label}
-                  </h2>
-                </div>
+            <section className="mt-4">
+              <div className="mb-2 rounded-[5px] border border-app-border bg-app-surface-muted px-3 py-2 shadow-sm">
+                <h2 className="m-0 flex items-center gap-2 text-[13px] font-black text-app-text">
+                  <span aria-hidden="true">🏆</span>
+                  Ranking trimestral {data.quarter.label}
+                </h2>
               </div>
-              <div className="grid grid-cols-4 gap-2.5 max-[1100px]:grid-cols-2 max-[680px]:grid-cols-1">
+              <div className="grid grid-cols-4 gap-3 max-[1180px]:grid-cols-2 max-[680px]:grid-cols-1">
                 {data.quarterRankings.map((ranking) => (
-                  <PodiumCard key={ranking.id} ranking={ranking} />
+                  <PodiumCard
+                    key={ranking.id}
+                    quarterNumber={data.quarter.number}
+                    ranking={ranking}
+                    year={Number(data.quarter.startDate.slice(0, 4))}
+                  />
                 ))}
               </div>
             </section>
