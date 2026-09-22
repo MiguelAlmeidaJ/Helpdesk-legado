@@ -30,6 +30,7 @@ pnpm-debug.log*
 # Runtime-generated files
 /storage/reports/
 /storage/uploads/
+/storage/maintenance/
 /rel/relatorios/
 /uploads/
 /uploads_rd/
