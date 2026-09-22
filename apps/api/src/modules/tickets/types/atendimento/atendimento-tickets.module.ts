@@ -31,6 +31,7 @@ import { ResumeTicket } from '../../application/resume-ticket';
 import { TicketAttachments } from '../../application/ticket-attachments';
 import { UpdateTicketAssignment } from '../../application/update-ticket-assignment';
 import { UpdateTicketClassification } from '../../application/update-ticket-classification';
+import { TicketSlaSettingsService } from '../../application/ticket-sla-settings.service';
 import { PrismaTicketAssignmentRepository } from '../../infrastructure/persistence/prisma-ticket-assignment.repository';
 import { PrismaTicketAttachmentRepository } from '../../infrastructure/persistence/prisma-ticket-attachment.repository';
 import { PrismaTicketCreateRepository } from '../../infrastructure/persistence/prisma-ticket-create.repository';
@@ -52,11 +53,13 @@ import { TicketClassificationController } from '../../presentation/http/ticket-c
 import { TicketWorkflowController } from '../../presentation/http/ticket-workflow.controller';
 import { TicketsController } from '../../presentation/http/tickets.controller';
 import { TicketRecurrencesController } from '../../presentation/http/ticket-recurrences.controller';
+import { TicketSlaSettingsController } from '../../presentation/http/ticket-sla-settings.controller';
 
 @Module({
   imports: [AccessModule],
   controllers: [
     TicketRecurrencesController,
+    TicketSlaSettingsController,
     TicketsController,
     TicketWorkflowController,
     TicketClassificationController,
@@ -84,6 +87,7 @@ import { TicketRecurrencesController } from '../../presentation/http/ticket-recu
     TicketAttachments,
     UpdateTicketAssignment,
     UpdateTicketClassification,
+    TicketSlaSettingsService,
     { provide: TicketAssignmentRepository, useClass: PrismaTicketAssignmentRepository },
     { provide: TicketAttachmentRepository, useClass: PrismaTicketAttachmentRepository },
     { provide: TicketCreateRepository, useClass: PrismaTicketCreateRepository },
