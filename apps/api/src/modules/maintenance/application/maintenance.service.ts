@@ -317,6 +317,70 @@ const CREATE_API_SESSIONS = [
   ') ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci',
 ].join('\n');
 
+const CREATE_API_IDEMPOTENCY_KEYS = [
+  'CREATE TABLE IF NOT EXISTS api_idempotency_keys (',
+  '  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,',
+  '  user_id INT NOT NULL,',
+  '  idempotency_key VARCHAR(128) NOT NULL,',
+  '  request_method VARCHAR(10) NOT NULL,',
+  '  request_path VARCHAR(500) NOT NULL,',
+  '  request_hash CHAR(64) NOT NULL,',
+  '  response_status SMALLINT UNSIGNED NULL,',
+  '  response_body LONGTEXT NULL,',
+  '  locked_until DATETIME(6) NULL,',
+  '  created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),',
+  '  expires_at DATETIME(6) NOT NULL,',
+  '  PRIMARY KEY (id),',
+  '  UNIQUE KEY uq_api_idempotency_user_key (user_id, idempotency_key),',
+  '  KEY ix_api_idempotency_expiry (expires_at),',
+  '  CONSTRAINT fk_api_idempotency_user FOREIGN KEY (user_id)',
+  '    REFERENCES usuarios(user_id) ON DELETE RESTRICT ON UPDATE RESTRICT',
+  ') ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci',
+].join('\n');
+
+const CREATE_API_OUTBOX_EVENTS = [
+  'CREATE TABLE IF NOT EXISTS api_outbox_events (',
+  '  id CHAR(36) NOT NULL,',
+  '  idempotency_key VARCHAR(190) NOT NULL,',
+  '  aggregate_type VARCHAR(80) NOT NULL,',
+  '  aggregate_id VARCHAR(80) NOT NULL,',
+  '  event_type VARCHAR(120) NOT NULL,',
+  '  payload LONGTEXT NOT NULL,',
+  '  attempts SMALLINT UNSIGNED NOT NULL DEFAULT 0,',
+  '  available_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),',
+  '  claimed_at DATETIME(6) NULL,',
+  '  processed_at DATETIME(6) NULL,',
+  '  last_error VARCHAR(1000) NULL,',
+  '  created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),',
+  '  PRIMARY KEY (id),',
+  '  UNIQUE KEY uq_api_outbox_idempotency (idempotency_key),',
+  '  KEY ix_api_outbox_pending (processed_at, available_at)',
+  ') ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci',
+].join('\n');
+
+const CREATE_ATENDIMENTO_RECORRENCIAS = [
+  'CREATE TABLE IF NOT EXISTS atendimento_recorrencias (',
+  '  id INT UNSIGNED NOT NULL AUTO_INCREMENT,',
+  '  atendimento_modelo_id INT NOT NULL,',
+  '  nome VARCHAR(180) NOT NULL,',
+  '  cliente_id INT NOT NULL,',
+  '  periodo TINYINT UNSIGNED NOT NULL,',
+  '  proxima_reabertura DATETIME NOT NULL,',
+  "  quantidade_modo ENUM('fixa','continua') NOT NULL DEFAULT 'fixa',",
+  '  quantidade_total SMALLINT UNSIGNED NULL,',
+  '  quantidade_restante SMALLINT UNSIGNED NOT NULL DEFAULT 1,',
+  '  ativo TINYINT(1) NOT NULL DEFAULT 1,',
+  '  criado_por INT NULL,',
+  '  atualizado_por INT NULL,',
+  '  criado_em DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,',
+  '  atualizado_em DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,',
+  '  PRIMARY KEY (id),',
+  '  UNIQUE KEY uq_atendimento_recorrencias_modelo (atendimento_modelo_id),',
+  '  KEY idx_atendimento_recorrencias_execucao (ativo, proxima_reabertura),',
+  '  KEY idx_atendimento_recorrencias_filtros (cliente_id, periodo, ativo)',
+  ') ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci',
+].join('\n');
+
 const REQUIRED_NIVEL3_TABLES = [
   'usuarios',
   'roles',
@@ -325,6 +389,9 @@ const REQUIRED_NIVEL3_TABLES = [
   'user_roles',
   'user_permissions',
   'api_sessions',
+  'api_idempotency_keys',
+  'api_outbox_events',
+  'atendimento_recorrencias',
   'navigation_sections',
   'navigation_items',
   'maintenance_backup_jobs',
@@ -613,6 +680,7 @@ export class MaintenanceService implements OnApplicationBootstrap {
         pid: process.pid,
         nodeVersion: process.version,
         environment: process.env.NODE_ENV ?? 'development',
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || process.env.TZ || 'local',
         memoryRssBytes: memory.rss,
         heapUsedBytes: memory.heapUsed,
       },
@@ -1043,16 +1111,20 @@ export class MaintenanceService implements OnApplicationBootstrap {
     const database = validateDatabase(target);
     let navigationPrepared = false;
     let maintenancePrepared = false;
+    let runtimePrepared = false;
 
     if (database === 'nivel3') {
       this.ensurePromise = null;
       await this.ensureSchema();
       maintenancePrepared = true;
       await this.ensureAccessSchema();
+      await this.ensureNativeRuntimeSchema();
+      runtimePrepared = true;
       await this.ensureNavigation();
       navigationPrepared = true;
     } else {
       await this.n3rd.$queryRawUnsafe('SELECT 1');
+      runtimePrepared = true;
     }
 
     const current = await this.databaseStatus(database);
@@ -1060,6 +1132,7 @@ export class MaintenanceService implements OnApplicationBootstrap {
       target: database,
       navigationPrepared,
       maintenancePrepared,
+      runtimePrepared,
       missingRequiredTables: current.missingRequiredTables,
     };
   }
@@ -1537,6 +1610,12 @@ export class MaintenanceService implements OnApplicationBootstrap {
     await this.nivel3.$executeRawUnsafe(CREATE_USER_ROLES);
     await this.nivel3.$executeRawUnsafe(CREATE_USER_PERMISSIONS);
     await this.nivel3.$executeRawUnsafe(CREATE_API_SESSIONS);
+  }
+
+  private async ensureNativeRuntimeSchema(): Promise<void> {
+    await this.nivel3.$executeRawUnsafe(CREATE_API_IDEMPOTENCY_KEYS);
+    await this.nivel3.$executeRawUnsafe(CREATE_API_OUTBOX_EVENTS);
+    await this.nivel3.$executeRawUnsafe(CREATE_ATENDIMENTO_RECORRENCIAS);
   }
 
   private async ensureSystemAdmin(userId: number): Promise<boolean> {
