@@ -20,7 +20,8 @@ import { AppPageHeader } from '../../../shared/navigation/app-page-header';
 import { fetchTicketAvailability } from '../api/tickets-api';
 
 type TechnicianFilter = 'all' | TechnicianAvailabilityState;
-type QueueKey = 'waiting' | 'scheduled' | 'hold' | 'finished';
+type ViewMode = 'technicians' | 'tickets';
+type QueueKey = 'hold' | 'finished' | 'inProgress' | 'waiting' | 'scheduled';
 
 const BUTTON =
   'inline-flex min-h-10 items-center justify-center rounded-lg border border-app-border-strong bg-app-surface px-4 text-sm font-bold text-app-text-soft no-underline transition hover:bg-app-surface-hover disabled:cursor-not-allowed disabled:opacity-50';
@@ -175,27 +176,43 @@ function TechnicianCard({
 function SummaryCard({
   label,
   value,
+  subtitle,
+  icon,
   tone = 'default',
 }: {
   label: string;
   value: number;
-  tone?: 'default' | 'green' | 'amber' | 'blue';
+  subtitle: string;
+  icon: string;
+  tone?: 'default' | 'green' | 'amber' | 'blue' | 'red';
 }) {
   const toneClass = {
-    default: 'text-app-text',
-    green: 'text-emerald-600 dark:text-emerald-400',
-    amber: 'text-amber-600 dark:text-amber-400',
-    blue: 'text-app-brand',
+    default: 'border-app-border text-app-text',
+    green: 'border-emerald-200 text-emerald-600 dark:border-emerald-900/70 dark:text-emerald-400',
+    amber: 'border-amber-200 text-amber-600 dark:border-amber-900/70 dark:text-amber-400',
+    blue: 'border-blue-200 text-app-brand dark:border-blue-900/70',
+    red: 'border-red-200 text-red-600 dark:border-red-900/70 dark:text-red-400',
   }[tone];
 
   return (
-    <div className="rounded-xl border border-app-border bg-app-surface px-4 py-3 shadow-sm">
-      <span className="block text-[9px] font-black uppercase tracking-[0.05em] text-app-subtle">
-        {label}
+    <div className="flex min-h-[82px] items-center gap-3 rounded-xl border border-app-border bg-app-surface px-4 py-3 shadow-sm">
+      <span
+        className={`inline-flex size-9 shrink-0 items-center justify-center rounded-lg border text-[17px] ${toneClass}`}
+        aria-hidden="true"
+      >
+        {icon}
       </span>
-      <strong className={`mt-1 block text-[23px] font-black leading-none ${toneClass}`}>
-        {value}
-      </strong>
+      <div className="min-w-0">
+        <span className="block truncate text-[9px] font-black uppercase tracking-[0.05em] text-app-subtle">
+          {label}
+        </span>
+        <strong className="mt-0.5 block text-[23px] font-black leading-none text-app-text">
+          {value}
+        </strong>
+        <small className="mt-1 block truncate text-[9px] text-app-muted">
+          {subtitle}
+        </small>
+      </div>
     </div>
   );
 }
@@ -280,14 +297,7 @@ function HoldsTable({
 }: {
   groups: TicketAvailabilityResponse['holds'];
 }) {
-  const tickets = groups.flatMap((group) =>
-    group.tickets.map((ticket) => ({
-      ...ticket,
-      groupCause: group.cause,
-    })),
-  );
-
-  if (!tickets.length) {
+  if (!groups.length) {
     return (
       <div className="px-4 py-10 text-center text-sm text-app-muted">
         Nenhum atendimento em espera.
@@ -297,39 +307,71 @@ function HoldsTable({
 
   return (
     <div className="grid gap-2 p-3">
-      {tickets.map((ticket) => (
-        <Link
-          className="grid gap-2 rounded-xl border border-app-border bg-app-surface-muted p-3 text-app-text no-underline transition hover:bg-app-surface-hover lg:grid-cols-[80px_minmax(180px,1fr)_160px_110px_170px]"
-          href={`/atendimentos/${ticket.id}`}
-          key={ticket.id}
-        >
-          <strong className="text-xs font-black text-app-brand">
-            #{ticket.id}
-          </strong>
-          <div className="min-w-0">
-            <strong className="block truncate text-xs">
-              {ticket.clientName ?? 'Cliente não informado'}
-            </strong>
-            <span className="mt-1 block truncate text-[10px] text-app-muted">
-              {ticket.groupCause}
-            </span>
-          </div>
-          <span className="truncate text-[11px] text-app-muted-strong">
-            {ticket.technicianName ?? 'Sem técnico'}
-          </span>
-          <span className="text-[11px] font-bold text-app-text-soft">
-            {ticket.waitingCount}x em espera
-          </span>
-          <span className="text-[10px] text-app-subtle lg:text-right">
-            Previsão: {formatDate(ticket.holdForecastAt)}
-          </span>
-          {ticket.holdDescription?.trim() ? (
-            <p className="m-0 text-[10px] leading-5 text-app-muted lg:col-start-2 lg:col-end-6">
-              {ticket.holdDescription.trim()}
-            </p>
-          ) : null}
-        </Link>
-      ))}
+      {groups.map((group) => {
+        const byTechnician = new Map<string, TicketAvailabilityTicket[]>();
+        for (const ticket of group.tickets) {
+          const name = ticket.technicianName?.trim() || 'Sem técnico';
+          const current = byTechnician.get(name) ?? [];
+          current.push(ticket);
+          byTechnician.set(name, current);
+        }
+
+        return (
+          <details
+            className="overflow-hidden rounded-xl border border-amber-300/80 bg-amber-50/25 open:bg-amber-50/40 dark:border-amber-900/60 dark:bg-amber-950/10"
+            key={group.cause}
+            open
+          >
+            <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-xs font-black text-app-text">
+              <span>{group.cause}</span>
+              <span className="rounded-full bg-amber-500 px-2.5 py-1 text-[9px] text-white">
+                {group.tickets.length} atendimento{group.tickets.length === 1 ? '' : 's'}
+              </span>
+            </summary>
+
+            <div className="border-t border-amber-200/70 p-2 dark:border-amber-900/50">
+              {[...byTechnician.entries()]
+                .sort(([a], [b]) => a.localeCompare(b, 'pt-BR'))
+                .map(([technician, tickets]) => (
+                  <details
+                    className="mb-1 overflow-hidden rounded-lg border border-amber-200/80 bg-app-surface last:mb-0 dark:border-amber-900/50"
+                    key={technician}
+                    open={tickets.length <= 4}
+                  >
+                    <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-3 py-2.5 text-[11px] font-black">
+                      <span>{technician}</span>
+                      <span className="rounded-full bg-amber-100 px-2 py-1 text-[9px] text-amber-700 dark:bg-amber-950/60 dark:text-amber-300">
+                        {tickets.length} chamado{tickets.length === 1 ? '' : 's'}
+                      </span>
+                    </summary>
+                    <div className="divide-y divide-app-border-soft border-t border-app-border-soft px-3">
+                      {tickets.map((ticket) => (
+                        <Link
+                          className="grid gap-2 py-2.5 text-app-text no-underline transition hover:bg-app-surface-muted lg:grid-cols-[80px_120px_minmax(0,1fr)_170px]"
+                          href={`/atendimentos/${ticket.id}`}
+                          key={ticket.id}
+                        >
+                          <strong className="text-[11px] text-app-brand">
+                            #{ticket.id}
+                          </strong>
+                          <span className="text-[10px] font-bold text-amber-700 dark:text-amber-300">
+                            {ticket.waitingCount}x em espera
+                          </span>
+                          <span className="min-w-0 truncate text-[10px] text-app-muted">
+                            {ticket.holdDescription?.trim() || ticket.clientName || 'Sem descrição'}
+                          </span>
+                          <span className="text-[9px] text-app-subtle lg:text-right">
+                            Previsão: {formatDate(ticket.holdForecastAt)}
+                          </span>
+                        </Link>
+                      ))}
+                    </div>
+                  </details>
+                ))}
+            </div>
+          </details>
+        );
+      })}
     </div>
   );
 }
@@ -346,7 +388,9 @@ export function TicketAvailabilityScreen({
   const [technicianFilter, setTechnicianFilter] =
     useState<TechnicianFilter>('all');
   const [technicianSearch, setTechnicianSearch] = useState('');
-  const [queue, setQueue] = useState<QueueKey>('waiting');
+  const [viewMode, setViewMode] = useState<ViewMode>('tickets');
+  const [queue, setQueue] = useState<QueueKey>('hold');
+  const [ticketTechnician, setTicketTechnician] = useState('all');
 
   const load = useCallback(async () => {
     if (!allowed) return;
@@ -407,18 +451,37 @@ export function TicketAvailabilityScreen({
   const offlineTechnicians =
     totalTechnicians - (data?.summary.onlineTechnicians ?? 0);
 
+  const inProgressTickets = useMemo(
+    () =>
+      data?.technicians.flatMap((item) => item.executing) ?? [],
+    [data],
+  );
+
+  const filterByTechnician = useCallback(
+    (tickets: TicketAvailabilityTicket[]) => {
+      if (ticketTechnician === 'all') return tickets;
+      const technicianId = Number(ticketTechnician);
+      return tickets.filter((ticket) => ticket.technicianId === technicianId);
+    },
+    [ticketTechnician],
+  );
+
+  const filteredHoldGroups = useMemo(() => {
+    if (!data) return [];
+    if (ticketTechnician === 'all') return data.holds;
+    const technicianId = Number(ticketTechnician);
+    return data.holds
+      .map((group) => ({
+        ...group,
+        tickets: group.tickets.filter(
+          (ticket) => ticket.technicianId === technicianId,
+        ),
+      }))
+      .filter((group) => group.tickets.length > 0);
+  }, [data, ticketTechnician]);
+
   const queueTabs = data
     ? [
-        {
-          key: 'waiting' as const,
-          label: 'Aguardando',
-          count: data.summary.waitingExecution,
-        },
-        {
-          key: 'scheduled' as const,
-          label: 'Agendados',
-          count: data.summary.scheduled,
-        },
         {
           key: 'hold' as const,
           label: 'Em espera',
@@ -426,8 +489,23 @@ export function TicketAvailabilityScreen({
         },
         {
           key: 'finished' as const,
-          label: 'Finalizados hoje',
+          label: 'Concluídos',
           count: data.summary.finishedToday,
+        },
+        {
+          key: 'inProgress' as const,
+          label: 'Em execução',
+          count: data.summary.inProgress,
+        },
+        {
+          key: 'waiting' as const,
+          label: 'Na fila',
+          count: data.summary.waitingExecution,
+        },
+        {
+          key: 'scheduled' as const,
+          label: 'Agendados',
+          count: data.summary.scheduled,
         },
       ]
     : [];
@@ -437,16 +515,14 @@ export function TicketAvailabilityScreen({
       <AppPageHeader
         actions={
           <div className="flex items-center gap-2">
-            {allowed ? (
-              <Link
-                className={BUTTON}
-                href="/atendimentos/disponibilidade/relatorio-espera"
-              >
-                Relatório de esperas
-              </Link>
-            ) : null}
-            <button
+            <Link
               className={PRIMARY}
+              href="/atendimentos/disponibilidade/antiga"
+            >
+              Ver Disponibilidade Antiga
+            </Link>
+            <button
+              className={BUTTON}
               disabled={!allowed || loading}
               onClick={() => void load()}
               type="button"
@@ -462,7 +538,7 @@ export function TicketAvailabilityScreen({
             </span>
           ) : undefined
         }
-        subtitle="Visão operacional da equipe e das filas de atendimento."
+        subtitle="Visão operacional dos atendimentos em tempo real."
         title="Disponibilidade Técnica"
         user={currentUser}
       />
@@ -488,129 +564,218 @@ export function TicketAvailabilityScreen({
 
         {data ? (
           <>
-            <section className="mb-4 grid grid-cols-2 gap-2.5 md:grid-cols-4 xl:grid-cols-8">
-              <SummaryCard label="Aguardando" value={data.summary.waitingExecution} />
-              <SummaryCard label="Em execução" value={data.summary.inProgress} tone="amber" />
-              <SummaryCard label="Em espera" value={data.summary.onHold} />
-              <SummaryCard label="Agendados" value={data.summary.scheduled} />
-              <SummaryCard label="Finalizados hoje" value={data.summary.finishedToday} />
-              <SummaryCard label="Online" value={data.summary.onlineTechnicians} tone="blue" />
-              <SummaryCard label="Disponíveis" value={data.summary.availableTechnicians} tone="green" />
-              <SummaryCard label="Ocupados" value={data.summary.busyTechnicians} tone="amber" />
+            <section className="mb-3 grid grid-cols-1 gap-2.5 sm:grid-cols-2 xl:grid-cols-5">
+              <SummaryCard
+                icon="👍"
+                label="Técnicos online livres"
+                subtitle="Equipe disponível agora"
+                tone="green"
+                value={data.summary.availableTechnicians}
+              />
+              <SummaryCard
+                icon="👎"
+                label="Técnicos ocupados"
+                subtitle="Em atendimento"
+                tone="red"
+                value={data.summary.busyTechnicians}
+              />
+              <SummaryCard
+                icon="⏸"
+                label="Em espera"
+                subtitle="Aguardando retorno"
+                tone="amber"
+                value={data.summary.onHold}
+              />
+              <SummaryCard
+                icon="🔔"
+                label="Na fila"
+                subtitle="Aguardando distribuição"
+                tone="red"
+                value={data.summary.waitingExecution}
+              />
+              <SummaryCard
+                icon="☑"
+                label="Concluídos hoje"
+                subtitle="Finalizados no dia"
+                tone="blue"
+                value={data.summary.finishedToday}
+              />
             </section>
 
-            <section className="mb-4 overflow-hidden rounded-2xl border border-app-border bg-app-surface shadow-sm">
-              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-app-border-soft px-4 py-3">
-                <div>
-                  <h2 className="m-0 text-[15px] font-black text-app-text">
-                    Equipe técnica
-                  </h2>
-                  <p className="m-0 mt-1 text-[10px] text-app-muted">
-                    {data.summary.onlineTechnicians} online · {offlineTechnicians} offline · presença considera os últimos {data.onlineWindowMinutes} min
-                  </p>
-                </div>
-
-                <div className="flex min-w-0 flex-1 items-center justify-end gap-2 max-lg:basis-full max-lg:justify-start">
-                  <div className="flex flex-wrap gap-1 rounded-lg bg-app-surface-muted p-1">
-                    {([
-                      ['all', 'Todos', totalTechnicians],
-                      ['available', 'Disponíveis', data.summary.availableTechnicians],
-                      ['busy', 'Ocupados', data.summary.busyTechnicians],
-                      ['offline', 'Offline', offlineTechnicians],
-                    ] as const).map(([key, label, count]) => (
-                      <button
-                        className={[
-                          'min-h-8 rounded-md px-2.5 text-[10px] font-black transition',
-                          technicianFilter === key
-                            ? 'bg-app-surface text-app-brand shadow-sm ring-1 ring-app-border'
-                            : 'text-app-muted hover:text-app-text',
-                        ].join(' ')}
-                        key={key}
-                        onClick={() => setTechnicianFilter(key)}
-                        type="button"
-                      >
-                        {label} · {count}
-                      </button>
-                    ))}
-                  </div>
-
-                  <input
-                    className={`${INPUT} max-w-[250px]`}
-                    onChange={(event) => setTechnicianSearch(event.target.value)}
-                    placeholder="Buscar técnico ou chamado"
-                    type="search"
-                    value={technicianSearch}
-                  />
-                </div>
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+              <div className="flex rounded-xl bg-app-surface-muted p-1">
+                <button
+                  className={[
+                    'min-h-9 rounded-lg px-4 text-xs font-black transition',
+                    viewMode === 'technicians'
+                      ? 'bg-app-brand text-white shadow-sm dark:text-slate-950'
+                      : 'text-app-muted hover:text-app-text',
+                  ].join(' ')}
+                  onClick={() => setViewMode('technicians')}
+                  type="button"
+                >
+                  👥 Técnicos
+                </button>
+                <button
+                  className={[
+                    'min-h-9 rounded-lg px-4 text-xs font-black transition',
+                    viewMode === 'tickets'
+                      ? 'bg-app-brand text-white shadow-sm dark:text-slate-950'
+                      : 'text-app-muted hover:text-app-text',
+                  ].join(' ')}
+                  onClick={() => setViewMode('tickets')}
+                  type="button"
+                >
+                  ☷ Atendimentos
+                </button>
               </div>
 
-              <div className="grid gap-2.5 p-3 sm:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-5">
-                {technicians.map((item) => (
-                  <TechnicianCard item={item} key={item.id} />
-                ))}
-                {!technicians.length ? (
-                  <div className="col-span-full rounded-xl bg-app-surface-muted px-4 py-8 text-center text-sm text-app-muted">
-                    Nenhum técnico encontrado com os filtros atuais.
-                  </div>
-                ) : null}
-              </div>
-            </section>
+              <span className="text-[10px] text-app-muted">
+                {data.summary.onlineTechnicians} online · atualização automática a cada 30s
+              </span>
+            </div>
 
-            <section className="overflow-hidden rounded-2xl border border-app-border bg-app-surface shadow-sm">
-              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-app-border-soft px-4 py-3">
-                <div>
-                  <h2 className="m-0 text-[15px] font-black text-app-text">
-                    Filas operacionais
-                  </h2>
-                  <p className="m-0 mt-1 text-[10px] text-app-muted">
-                    Acompanhe os atendimentos que exigem ação ou acompanhamento.
-                  </p>
+            {viewMode === 'technicians' ? (
+              <section className="overflow-hidden rounded-2xl border border-app-border bg-app-surface shadow-sm">
+                <div className="flex flex-wrap items-center justify-between gap-3 border-b border-app-border-soft px-4 py-3">
+                  <div>
+                    <h2 className="m-0 text-[15px] font-black text-app-text">
+                      Técnicos
+                    </h2>
+                    <p className="m-0 mt-1 text-[10px] text-app-muted">
+                      Presença considera os últimos {data.onlineWindowMinutes} minutos.
+                    </p>
+                  </div>
+
+                  <div className="flex min-w-0 flex-1 items-center justify-end gap-2 max-lg:basis-full max-lg:justify-start">
+                    <div className="flex flex-wrap gap-1 rounded-lg bg-app-surface-muted p-1">
+                      {([
+                        ['all', 'Todos', totalTechnicians],
+                        ['available', 'Disponíveis', data.summary.availableTechnicians],
+                        ['busy', 'Ocupados', data.summary.busyTechnicians],
+                        ['offline', 'Offline', offlineTechnicians],
+                      ] as const).map(([key, label, count]) => (
+                        <button
+                          className={[
+                            'min-h-8 rounded-md px-2.5 text-[10px] font-black transition',
+                            technicianFilter === key
+                              ? 'bg-app-surface text-app-brand shadow-sm ring-1 ring-app-border'
+                              : 'text-app-muted hover:text-app-text',
+                          ].join(' ')}
+                          key={key}
+                          onClick={() => setTechnicianFilter(key)}
+                          type="button"
+                        >
+                          {label} · {count}
+                        </button>
+                      ))}
+                    </div>
+
+                    <input
+                      className={`${INPUT} max-w-[260px]`}
+                      onChange={(event) => setTechnicianSearch(event.target.value)}
+                      placeholder="Buscar técnico ou chamado"
+                      type="search"
+                      value={technicianSearch}
+                    />
+                  </div>
                 </div>
 
-                <div className="flex flex-wrap gap-1 rounded-lg bg-app-surface-muted p-1">
+                <div className="grid gap-2.5 p-3 sm:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-5">
+                  {technicians.map((item) => (
+                    <TechnicianCard item={item} key={item.id} />
+                  ))}
+                  {!technicians.length ? (
+                    <div className="col-span-full rounded-xl bg-app-surface-muted px-4 py-8 text-center text-sm text-app-muted">
+                      Nenhum técnico encontrado com os filtros atuais.
+                    </div>
+                  ) : null}
+                </div>
+              </section>
+            ) : (
+              <section className="overflow-hidden rounded-2xl border border-app-border bg-app-surface shadow-sm">
+                <div className="flex flex-wrap items-center gap-2 border-b border-app-border-soft bg-app-surface-muted/40 px-3 py-3">
                   {queueTabs.map((tab) => (
                     <button
                       className={[
-                        'min-h-8 rounded-md px-3 text-[10px] font-black transition',
+                        'min-h-9 rounded-lg border px-4 text-[11px] font-black transition',
                         queue === tab.key
-                          ? 'bg-app-surface text-app-brand shadow-sm ring-1 ring-app-border'
-                          : 'text-app-muted hover:text-app-text',
+                          ? 'border-app-brand bg-app-brand text-white shadow-sm dark:text-slate-950'
+                          : 'border-app-border bg-app-surface text-app-text-soft hover:bg-app-surface-hover',
                       ].join(' ')}
                       key={tab.key}
                       onClick={() => setQueue(tab.key)}
                       type="button"
                     >
                       {tab.label}
-                      <span className="ml-1.5 rounded-full bg-app-surface-hover px-1.5 py-0.5 text-[9px]">
-                        {tab.count}
-                      </span>
+                      <span className="ml-1.5">{tab.count}</span>
                     </button>
                   ))}
-                </div>
-              </div>
 
-              {queue === 'waiting' ? (
-                <QueueTable
-                  empty="Nenhum atendimento aguardando execução."
-                  tickets={data.waitingExecution}
-                />
-              ) : null}
-              {queue === 'scheduled' ? (
-                <QueueTable
-                  empty="Nenhum atendimento agendado."
-                  tickets={data.scheduled}
-                />
-              ) : null}
-              {queue === 'hold' ? (
-                <HoldsTable groups={data.holds} />
-              ) : null}
-              {queue === 'finished' ? (
-                <QueueTable
-                  empty="Nenhum atendimento finalizado ou concluído hoje."
-                  tickets={data.finishedToday}
-                />
-              ) : null}
-            </section>
+                  <select
+                    className={`${INPUT} ml-auto max-w-[250px] max-lg:ml-0`}
+                    onChange={(event) => setTicketTechnician(event.target.value)}
+                    value={ticketTechnician}
+                  >
+                    <option value="all">👤 Todos os técnicos</option>
+                    {data.technicians.map((item) => (
+                      <option key={item.id} value={item.id}>
+                        {item.name}
+                      </option>
+                    ))}
+                  </select>
+
+                  <Link
+                    className={BUTTON}
+                    href="/atendimentos/disponibilidade/relatorio-espera"
+                  >
+                    Criar relatório em espera
+                  </Link>
+                </div>
+
+                <div className="flex items-center justify-between border-b border-app-border-soft px-4 py-3">
+                  <h2 className="m-0 text-[14px] font-black text-app-text">
+                    {queue === 'hold'
+                      ? `Atendimentos Em Espera: ${filterByTechnician(data.holds.flatMap((group) => group.tickets)).length}`
+                      : queue === 'finished'
+                        ? `Atendimentos Concluídos Hoje: ${filterByTechnician(data.finishedToday).length}`
+                        : queue === 'inProgress'
+                          ? `Atendimentos Em Execução: ${filterByTechnician(inProgressTickets).length}`
+                          : queue === 'waiting'
+                            ? `Atendimentos na fila: ${filterByTechnician(data.waitingExecution).length}`
+                            : `Atendimentos Agendados: ${filterByTechnician(data.scheduled).length}`}
+                  </h2>
+                </div>
+
+                {queue === 'hold' ? (
+                  <HoldsTable groups={filteredHoldGroups} />
+                ) : null}
+                {queue === 'finished' ? (
+                  <QueueTable
+                    empty="Nenhum atendimento concluído hoje."
+                    tickets={filterByTechnician(data.finishedToday)}
+                  />
+                ) : null}
+                {queue === 'inProgress' ? (
+                  <QueueTable
+                    empty="Nenhum atendimento em execução."
+                    tickets={filterByTechnician(inProgressTickets)}
+                  />
+                ) : null}
+                {queue === 'waiting' ? (
+                  <QueueTable
+                    empty="Nenhum atendimento aguardando distribuição."
+                    tickets={filterByTechnician(data.waitingExecution)}
+                  />
+                ) : null}
+                {queue === 'scheduled' ? (
+                  <QueueTable
+                    empty="Nenhum atendimento agendado."
+                    tickets={filterByTechnician(data.scheduled)}
+                  />
+                ) : null}
+              </section>
+            )}
           </>
         ) : null}
       </div>
