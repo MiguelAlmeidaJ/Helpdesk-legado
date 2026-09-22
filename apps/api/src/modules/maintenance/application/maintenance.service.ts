@@ -1295,25 +1295,72 @@ export class MaintenanceService implements OnApplicationBootstrap {
       let stderr = '';
       let stdout = '';
       let settled = false;
+      let processClosed = false;
+      let exitCode: number | null = null;
+      let outputFinished = !options.stdoutFile;
+
       const timer = options.timeoutMs
         ? setTimeout(() => {
             child.kill();
-            if (!settled) {
-              settled = true;
-              reject(new Error('Tempo limite excedido ao executar ' + executable + '.'));
-            }
+            if (settled) return;
+            settled = true;
+            reject(
+              new Error(
+                'Tempo limite excedido ao executar ' + executable + '.',
+              ),
+            );
           }, options.timeoutMs)
         : null;
 
+      const clearTimer = () => {
+        if (timer) clearTimeout(timer);
+      };
+
+      const rejectOnce = (error: Error) => {
+        clearTimer();
+        if (settled) return;
+        settled = true;
+        reject(error);
+      };
+
+      const finishIfReady = () => {
+        if (settled || !processClosed) return;
+        if (exitCode !== 0) {
+          rejectOnce(
+            new Error(
+              executable +
+                ' terminou com código ' +
+                String(exitCode) +
+                (stderr.trim() ? ': ' + stderr.trim() : '.'),
+            ),
+          );
+          return;
+        }
+        if (!outputFinished) return;
+        clearTimer();
+        settled = true;
+        resolve(stdout.trim());
+      };
+
       if (options.stdinFile && child.stdin) {
         const input = createReadStream(options.stdinFile);
-        input.on('error', (error) => child.stdin?.destroy(error));
+        input.on('error', (error) => {
+          child.stdin?.destroy(error);
+          rejectOnce(error);
+        });
         input.pipe(child.stdin);
       }
 
       if (options.stdoutFile && child.stdout) {
         const output = createWriteStream(options.stdoutFile, { flags: 'wx' });
-        output.on('error', (error) => child.stdout?.destroy(error));
+        output.on('error', (error) => {
+          child.kill();
+          rejectOnce(error);
+        });
+        output.on('finish', () => {
+          outputFinished = true;
+          finishIfReady();
+        });
         child.stdout.pipe(output);
       } else if (options.captureStdout && child.stdout) {
         child.stdout.on('data', (chunk: Buffer) => {
@@ -1326,28 +1373,13 @@ export class MaintenanceService implements OnApplicationBootstrap {
       });
 
       child.on('error', (error) => {
-        if (timer) clearTimeout(timer);
-        if (settled) return;
-        settled = true;
-        reject(error);
+        rejectOnce(error);
       });
 
       child.on('close', (code) => {
-        if (timer) clearTimeout(timer);
-        if (settled) return;
-        settled = true;
-        if (code === 0) {
-          resolve(stdout.trim());
-          return;
-        }
-        reject(
-          new Error(
-            executable +
-              ' terminou com código ' +
-              String(code) +
-              (stderr.trim() ? ': ' + stderr.trim() : '.'),
-          ),
-        );
+        processClosed = true;
+        exitCode = code;
+        finishIfReady();
       });
     });
   }
