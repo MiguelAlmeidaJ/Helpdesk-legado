@@ -2,7 +2,6 @@
 
 import {
   AppPermission,
-  TicketStatus,
   type CurrentUserResponse,
   type TicketFilterOption,
   type TicketListItem,
@@ -484,7 +483,7 @@ export function TicketsScreen({
                   <th className={TABLE_HEADER_CLASS}>Solicitante</th>
                   <th className={TABLE_HEADER_CLASS}>Técnico</th>
                   <th className={TABLE_HEADER_CLASS}>Status</th>
-                  <th className={TABLE_HEADER_CLASS}>SLAs</th>
+                  <th className={`${TABLE_HEADER_CLASS} text-center`}>Alerta</th>
                   <th className={TABLE_HEADER_CLASS}>Abertura</th>
                 </tr>
               </thead>
@@ -532,19 +531,8 @@ export function TicketsScreen({
                         {ticket.statusLabel}
                       </span>
                     </td>
-                    <td className={TABLE_CELL_CLASS}>
-                      <TicketSlaIndicators
-                        clerio={ticket.sla.clerio}
-                        inactiveLabel={
-                          ticket.status === TicketStatus.Scheduled
-                            ? 'Agendado'
-                            : ticket.status === TicketStatus.Finished ||
-                                ticket.status === TicketStatus.Completed
-                              ? 'Encerrado'
-                              : undefined
-                        }
-                        quality={ticket.sla.quality}
-                      />
+                    <td className={`${TABLE_CELL_CLASS} w-[82px] text-center`}>
+                      <TicketSlaIndicators clerio={ticket.sla.clerio} />
                     </td>
                     <td className={TABLE_CELL_CLASS}>{formatDate(ticket.openedAt)}</td>
                   </tr>
