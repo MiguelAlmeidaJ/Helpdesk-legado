@@ -46,6 +46,7 @@ export const WEB_ROUTE_TRANSLATIONS = [
   ['/catalog', '/catalogos'],
   ['/users', '/usuarios'],
   ['/dashboard', '/painel'],
+  ['/admin/ticket-sla', '/administracao/sla-atendimentos'],
   ['/admin/navigation', '/administracao/navegacao'],
 ] as const;
 
