@@ -37,6 +37,17 @@ export interface TicketProjectTaskFilters
   sort: TicketProjectTaskSort;
 }
 
+export interface TicketProjectTaskSummary {
+  total: number;
+  scheduled: number;
+  waiting: number;
+  inProgress: number;
+  onHold: number;
+  completed: number;
+  blocked: number;
+  progressPercent: number;
+}
+
 export interface TicketProjectListItem {
   id: number;
   name: string;
@@ -56,6 +67,7 @@ export interface TicketProjectListItem {
   technician: TicketListParty;
   waitSeconds: number;
   lastActivityAt: string | null;
+  tasks: TicketProjectTaskSummary;
 }
 
 export interface TicketProjectTaskListItem {
@@ -71,6 +83,10 @@ export interface TicketProjectTaskListItem {
   statusLabel: string;
   typeId: number | null;
   dependencyTaskId: number;
+  dependencyTaskName: string | null;
+  dependencyStatus: TicketProjectStatus | null;
+  blockedByDependency: boolean;
+  progressPercent: number;
   level: number | null;
   form: number | null;
   client: TicketListParty;
