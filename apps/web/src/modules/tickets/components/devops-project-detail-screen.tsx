@@ -191,6 +191,51 @@ export function DevOpsProjectDetailScreen({
             </section>
 
             <section className={CARD_CLASS}>
+              <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <span className="mb-1 block text-xs font-extrabold uppercase tracking-[0.1em] text-app-muted">
+                    Execução do projeto
+                  </span>
+                  <h2 className="m-0 text-[17px] font-bold text-app-text">
+                    Progresso das tarefas
+                  </h2>
+                </div>
+                <strong className="text-2xl font-black text-app-brand">
+                  {project.tasks.progressPercent}%
+                </strong>
+              </div>
+              <div className="mb-4 h-3 overflow-hidden rounded-full bg-app-border">
+                <div
+                  className="h-full rounded-full bg-app-brand transition-all"
+                  style={{ width: `${project.tasks.progressPercent}%` }}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 xl:grid-cols-7">
+                {[
+                  ['Total', project.tasks.total],
+                  ['Agendadas', project.tasks.scheduled],
+                  ['Aguardando', project.tasks.waiting],
+                  ['Em execução', project.tasks.inProgress],
+                  ['Em espera', project.tasks.onHold],
+                  ['Bloqueadas', project.tasks.blocked],
+                  ['Concluídas', project.tasks.completed],
+                ].map(([label, value]) => (
+                  <div className="rounded-lg bg-app-surface-muted px-3 py-2.5" key={String(label)}>
+                    <span className="block text-[10px] font-bold uppercase text-app-muted">
+                      {label}
+                    </span>
+                    <strong className="mt-1 block text-lg text-app-text">{value}</strong>
+                  </div>
+                ))}
+              </div>
+              {project.status !== 4 && project.tasks.total > project.tasks.completed ? (
+                <p className="mb-0 mt-4 text-xs font-semibold text-app-muted">
+                  O projeto só pode ser concluído quando todas as tarefas vinculadas estiverem finalizadas.
+                </p>
+              ) : null}
+            </section>
+
+            <section className={CARD_CLASS}>
               <h2 className="m-0 text-[17px] font-bold text-app-text">Descrição de abertura</h2>
               <p className="mt-2.5 mb-0 whitespace-pre-wrap text-sm leading-6 text-app-text-soft">
                 {project.openingDescription || 'Sem descrição.'}
@@ -243,13 +288,15 @@ export function DevOpsProjectDetailScreen({
                 </strong>
               </div>
               <div className="overflow-x-auto">
-                <table className="w-full min-w-[850px] border-collapse">
+                <table className="w-full min-w-[1080px] border-collapse">
                   <thead>
                     <tr>
                       <th className={TABLE_HEADER_CLASS}>ID</th>
                       <th className={TABLE_HEADER_CLASS}>Atendimento</th>
                       <th className={TABLE_HEADER_CLASS}>Técnico</th>
                       <th className={TABLE_HEADER_CLASS}>Status</th>
+                      <th className={TABLE_HEADER_CLASS}>Dependência</th>
+                      <th className={TABLE_HEADER_CLASS}>Progresso</th>
                       <th className={TABLE_HEADER_CLASS}>Dias</th>
                       <th className={TABLE_HEADER_CLASS}>Abertura</th>
                     </tr>
@@ -278,6 +325,36 @@ export function DevOpsProjectDetailScreen({
                           <span className="inline-flex items-center rounded-full bg-app-surface-muted px-2 py-1 text-xs font-extrabold whitespace-nowrap text-app-text-soft">
                             {ticket.statusLabel}
                           </span>
+                        </td>
+                        <td className={TABLE_CELL_CLASS}>
+                          {ticket.dependencyTaskId > 0 ? (
+                            <div className="grid gap-0.5 text-xs">
+                              <Link
+                                className="font-bold text-app-brand no-underline hover:underline"
+                                href={`/atendimentos/devops/${ticket.dependencyTaskId}`}
+                              >
+                                #{ticket.dependencyTaskId} · {ticket.dependencyTaskName || 'Tarefa'}
+                              </Link>
+                              <span className={ticket.blockedByDependency ? 'text-amber-700 dark:text-amber-300' : 'text-app-muted'}>
+                                {ticket.blockedByDependency ? 'Bloqueada pela dependência' : 'Dependência concluída'}
+                              </span>
+                            </div>
+                          ) : (
+                            <span className="text-app-muted">Sem dependência</span>
+                          )}
+                        </td>
+                        <td className={TABLE_CELL_CLASS}>
+                          <div className="grid min-w-[110px] gap-1">
+                            <div className="h-2 overflow-hidden rounded-full bg-app-border">
+                              <div
+                                className="h-full rounded-full bg-app-brand"
+                                style={{ width: `${ticket.progressPercent}%` }}
+                              />
+                            </div>
+                            <strong className="text-[11px] text-app-text-soft">
+                              {ticket.progressPercent}%
+                            </strong>
+                          </div>
                         </td>
                         <td className={TABLE_CELL_CLASS}>{ticket.days ?? '—'}</td>
                         <td className={TABLE_CELL_CLASS}>{formatDate(ticket.openedAt)}</td>
