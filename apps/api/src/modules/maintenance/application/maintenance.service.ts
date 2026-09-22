@@ -52,10 +52,16 @@ import {
   NIVEL3_DATABASE,
 } from '../../../core/database/database.constants';
 
-type QueryClient = Pick<
-  Nivel3DatabaseClient,
-  '$queryRawUnsafe' | '$executeRawUnsafe'
->;
+type QueryClient = {
+  $queryRawUnsafe<T = unknown>(
+    query: string,
+    ...values: unknown[]
+  ): Promise<T>;
+  $executeRawUnsafe(
+    query: string,
+    ...values: unknown[]
+  ): Promise<number>;
+};
 
 type UploadedDump = {
   path: string;
