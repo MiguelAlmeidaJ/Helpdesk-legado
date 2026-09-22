@@ -452,20 +452,22 @@ export function MaintenanceScreen({
                   >
                     {openDatabase === database.key ? 'Ocultar tabelas' : 'Ver tabelas'}
                   </button>
-                  <button
-                    className={BUTTON_CLASS}
-                    disabled={Boolean(busy)}
-                    onClick={() =>
-                      void run(
-                        'repair-' + database.key,
-                        'Adequações concluídas para ' + database.label + '.',
-                        () => repairMaintenanceDatabase(database.key),
-                      )
-                    }
-                    type="button"
-                  >
-                    Executar adequações
-                  </button>
+                  {database.key === 'nivel3' ? (
+                    <button
+                      className={BUTTON_CLASS}
+                      disabled={Boolean(busy)}
+                      onClick={() =>
+                        void run(
+                          'repair-' + database.key,
+                          'Adequações concluídas para ' + database.label + '.',
+                          () => repairMaintenanceDatabase(database.key),
+                        )
+                      }
+                      type="button"
+                    >
+                      Executar adequações
+                    </button>
+                  ) : null}
                 </div>
 
                 {openDatabase === database.key ? (
