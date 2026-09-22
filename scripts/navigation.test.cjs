@@ -112,6 +112,12 @@ test('navigation upgrade enables migrated screens, preserves customization and i
   assert.equal(await synchronizeNavigation(db), 0);
 });
 
+test('browser URL translations never contain identity redirects', () => {
+  for (const [source, destination] of WEB_ROUTE_TRANSLATIONS) {
+    assert.notEqual(source, destination, source);
+  }
+});
+
 test('browser URL translation preserves IDs, filters and unrelated paths', () => {
   assert.equal(portugueseWebHref('/tickets/devops/projects/42?tab=tasks'), '/atendimentos/devops/projetos/42?tab=tasks');
   assert.equal(portugueseWebHref('/tickets/new?type=devops&projectId=42'), '/atendimentos/novo?type=devops&projectId=42');
@@ -159,8 +165,9 @@ test('all available menu destinations resolve to implemented Next pages', () => 
     if (item.status !== 'available') { assert.equal(item.href, undefined, item.slug); continue; }
     const pathname = item.href.split('?')[0];
     const mapping = WEB_ROUTE_TRANSLATIONS.find(([, target]) => pathname === target || pathname.startsWith(target + '/'));
-    assert.ok(mapping, item.href);
-    const route = mapping[0] + pathname.slice(mapping[1].length);
+    const route = mapping
+      ? mapping[0] + pathname.slice(mapping[1].length)
+      : pathname;
     const directPage = path.join(__dirname, '../apps/web/src/app', route, 'page.tsx');
     const dynamicRegistrationPage = route.startsWith('/registrations/')
       ? path.join(__dirname, '../apps/web/src/app/registrations/[resource]/page.tsx')
