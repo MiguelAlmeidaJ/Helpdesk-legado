@@ -1,70 +1,130 @@
-const SLA_STATES = {
-  0: {
-    color: 'text-slate-900 dark:text-slate-100',
-    soft: 'bg-slate-900/10 dark:bg-slate-100/10',
-    ring: 'border-slate-700/50 dark:border-slate-200/50',
-    mark: 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-950',
-    label: 'SLA em estado crítico',
-  },
-  1: {
-    color: 'text-red-600 dark:text-red-400',
-    soft: 'bg-red-600/10 dark:bg-red-400/10',
-    ring: 'border-red-500/50',
-    mark: 'bg-red-600 text-white dark:bg-red-500',
-    label: 'SLA em alerta',
-  },
-  2: {
-    color: 'text-yellow-600 dark:text-yellow-400',
-    soft: 'bg-yellow-500/10 dark:bg-yellow-400/10',
-    ring: 'border-yellow-500/50',
-    mark: 'bg-yellow-600 text-white dark:bg-yellow-500 dark:text-slate-950',
-    label: 'SLA requer atenção',
-  },
-  3: {
-    color: 'text-green-700 dark:text-green-400',
-    soft: 'bg-green-600/10 dark:bg-green-400/10',
-    ring: 'border-green-600/50 dark:border-green-400/50',
-    mark: 'bg-green-700 text-white dark:bg-green-500 dark:text-slate-950',
-    label: 'SLA dentro do prazo',
-  },
-} as const;
+import type {
+  TicketListClerioSla,
+  TicketListQualitySla,
+} from '@helpdesk/contracts';
 
-function resolveSlaState(bellOrder: number) {
-  return SLA_STATES[bellOrder as keyof typeof SLA_STATES] ?? SLA_STATES[3];
+function formatSlaTime(seconds: number): string {
+  const overdue = seconds < 0;
+  const absolute = Math.max(0, Math.abs(seconds));
+  const hours = Math.floor(absolute / 3600);
+  const minutes = Math.floor((absolute % 3600) / 60);
+  const parts = [
+    hours > 0 ? `${hours}h` : '',
+    `${minutes}min`,
+  ].filter(Boolean);
+
+  return overdue
+    ? `Estourado há ${parts.join(' ')}`
+    : `${parts.join(' ')} restantes`;
 }
 
-export function SlaIndicator({ bellOrder }: { bellOrder: number }) {
-  const state = resolveSlaState(bellOrder);
-
+function Bell({
+  blinking,
+  paused,
+}: {
+  blinking: boolean;
+  paused: boolean;
+}) {
   return (
     <span
-      aria-label={state.label}
-      className={`relative mr-1.5 inline-flex size-6 items-center justify-center rounded-lg align-middle ${state.color}`}
-      title={state.label}
+      className={[
+        'relative inline-flex size-6 shrink-0 items-center justify-center rounded-lg',
+        paused
+          ? 'text-slate-400 dark:text-slate-500'
+          : 'text-slate-950 dark:text-slate-100',
+        blinking ? 'motion-safe:animate-pulse' : '',
+      ].join(' ')}
+      aria-label={
+        paused
+          ? 'SLA Clerio pausado visualmente durante a espera'
+          : blinking
+            ? 'SLA Clerio estourado'
+            : 'SLA Clerio dentro do prazo'
+      }
     >
-      <span
-        aria-hidden="true"
-        className={`absolute inset-0.5 rounded-lg ${state.soft}`}
-      />
-      <span
-        aria-hidden="true"
-        className={`absolute inset-0 rounded-[9px] border opacity-40 motion-safe:animate-pulse ${state.ring}`}
-      />
       <svg
         aria-hidden="true"
-        className="relative z-[1] size-4 fill-none stroke-current [stroke-linecap:round] [stroke-linejoin:round] [stroke-width:2]"
+        className="size-4 fill-current"
         focusable="false"
         viewBox="0 0 24 24"
       >
-        <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" />
-        <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+        <path d="M12 22a2.45 2.45 0 0 0 2.4-2h-4.8A2.45 2.45 0 0 0 12 22Zm7-6v-5a7 7 0 0 0-5-6.71V3a2 2 0 1 0-4 0v1.29A7 7 0 0 0 5 11v5l-2 2v1h18v-1l-2-2Z" />
       </svg>
-      <span
-        aria-hidden="true"
-        className={`absolute -right-[3px] -top-[3px] z-[2] inline-flex size-3 items-center justify-center rounded-full border-2 border-app-surface text-[8px] font-extrabold leading-none ${state.mark}`}
-      >
-        !
-      </span>
     </span>
   );
+}
+
+export function TicketSlaIndicators({
+  quality,
+  clerio,
+  inactiveLabel,
+}: {
+  quality: TicketListQualitySla;
+  clerio: TicketListClerioSla;
+  inactiveLabel?: string;
+}) {
+  if (inactiveLabel) {
+    return (
+      <div className="grid gap-1 whitespace-nowrap text-[11px] text-app-subtle">
+        <span>Qualidade · {inactiveLabel}</span>
+        <span className="inline-flex items-center gap-1.5">
+          <Bell blinking={false} paused />
+          Clerio · {inactiveLabel}
+        </span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid gap-1.5 whitespace-nowrap">
+      <div className="flex items-center gap-2">
+        <span
+          className={[
+            'inline-flex min-w-[24px] items-center justify-center rounded-md px-1.5 py-1 text-[9px] font-black uppercase',
+            quality.breached
+              ? 'bg-red-600 text-white'
+              : 'bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-300',
+          ].join(' ')}
+          title={
+            quality.lastInteractionAt
+              ? `Última interação: ${quality.lastInteractionAt}`
+              : 'Sem interação registrada'
+          }
+        >
+          Q
+        </span>
+        <span className="grid leading-tight">
+          <strong
+            className={
+              quality.breached
+                ? 'text-[11px] text-red-700 dark:text-red-300'
+                : 'text-[11px] text-app-text'
+            }
+          >
+            Qualidade
+          </strong>
+          <small className="text-[10px] text-app-muted">
+            {formatSlaTime(quality.remainingSeconds)}
+          </small>
+        </span>
+      </div>
+
+      <div className="flex items-center gap-2">
+        <Bell blinking={clerio.breached && !clerio.paused} paused={clerio.paused} />
+        <span className="grid leading-tight">
+          <strong className="text-[11px] text-app-text">Clerio</strong>
+          <small className="text-[10px] text-app-muted">
+            {clerio.paused
+              ? 'Em espera · alerta suspenso'
+              : formatSlaTime(clerio.remainingSeconds)}
+          </small>
+        </span>
+      </div>
+    </div>
+  );
+}
+
+// Export legado temporário para não quebrar imports externos durante a transição.
+export function SlaIndicator({ bellOrder }: { bellOrder: number }) {
+  return <Bell blinking={bellOrder === 0} paused={false} />;
 }
