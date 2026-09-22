@@ -393,6 +393,20 @@ export class PrismaTicketProjectCommandRepository
         return 'invalid-state';
       }
 
+      const openTasks = await transaction.$queryRawUnsafe<
+        Array<{ total: bigint | number | string }>
+      >(
+        `SELECT COUNT(*) AS total
+         FROM tarefas
+         WHERE id_projeto = ?
+           AND (status IS NULL OR status <> 4)`,
+        input.projectId,
+      );
+
+      if (Number(openTasks[0]?.total ?? 0) > 0) {
+        return 'open-tasks';
+      }
+
       if (project.status === 3) {
         await transaction.$executeRawUnsafe(
           `UPDATE espera_projeto
