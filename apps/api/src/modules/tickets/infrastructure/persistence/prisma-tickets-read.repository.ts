@@ -74,6 +74,16 @@ interface TicketRow {
   sla_bell_order: bigint | number | string;
   wait_seconds: bigint | number | string;
   last_activity_at: Date | string | null;
+  quality_threshold_minutes: bigint | number | string;
+  quality_elapsed_seconds: bigint | number | string;
+  quality_remaining_seconds: bigint | number | string;
+  quality_breached: bigint | number | string;
+  quality_last_interaction_at: Date | string | null;
+  clerio_threshold_minutes: bigint | number | string;
+  clerio_elapsed_seconds: bigint | number | string;
+  clerio_remaining_seconds: bigint | number | string;
+  clerio_breached: bigint | number | string;
+  clerio_paused: bigint | number | string;
   latest_wait_id: number | null;
   latest_wait_started_at: Date | string | null;
   latest_wait_scheduled_resume_at: Date | string | null;
@@ -154,18 +164,6 @@ function appendInFilter(
   params.push(...normalized);
 }
 
-function slaLevelMinutesSql(): string {
-  return `CASE
-    WHEN a.nivel <= 1 THEN (SELECT COALESCE(sla_n1, 0) FROM configuracao LIMIT 1)
-    WHEN a.nivel = 2 THEN (SELECT COALESCE(sla_n2, 0) FROM configuracao LIMIT 1)
-    WHEN a.nivel = 3 THEN (SELECT COALESCE(sla_n3, 0) FROM configuracao LIMIT 1)
-    WHEN a.nivel = 4 THEN (SELECT COALESCE(sla_n4, 0) FROM configuracao LIMIT 1)
-    WHEN a.nivel = 5 THEN (SELECT COALESCE(sla_n5, 0) FROM configuracao LIMIT 1)
-    WHEN a.nivel = 6 THEN (SELECT COALESCE(sla_n12, sla_n6, 0) FROM configuracao LIMIT 1)
-    ELSE (SELECT COALESCE(sla_n1, 0) FROM configuracao LIMIT 1)
-  END`;
-}
-
 function waitSecondsSql(): string {
   return `COALESCE((
     SELECT SUM(
@@ -180,43 +178,61 @@ function waitSecondsSql(): string {
   ), 0)`;
 }
 
-function lastActivitySql(): string {
+function qualityLastInteractionSql(): string {
+  return 'COALESCE(ia.last_interaction_at, a.abertura)';
+}
+
+function qualityThresholdMinutesSql(): string {
+  return 'COALESCE(NULLIF(cfg.tempo_alerta, 0), 40)';
+}
+
+function clerioThresholdMinutesSql(): string {
+  return 'COALESCE(NULLIF(cfg.sla_n1, 0), 60)';
+}
+
+function qualityElapsedSecondsSql(): string {
+  return `GREATEST(
+    0,
+    COALESCE(
+      TIMESTAMPDIFF(SECOND, ${qualityLastInteractionSql()}, NOW()),
+      0
+    )
+  )`;
+}
+
+function clerioElapsedSecondsSql(): string {
+  return `GREATEST(
+    0,
+    COALESCE(TIMESTAMPDIFF(SECOND, a.abertura, NOW()), 0)
+  )`;
+}
+
+function qualityBreachedSql(): string {
   return `CASE
-    WHEN a.subcategoria = 97 THEN (
-      SELECT MAX(inter_any.inter_data)
-      FROM interatividade inter_any
-      WHERE inter_any.inter_tipo > 0
-        AND inter_any.inter_atd = a.id
-    )
-    ELSE (
-      SELECT MAX(inter_start.inter_data)
-      FROM interatividade inter_start
-      WHERE inter_start.inter_tipo IN (1, 6)
-        AND inter_start.inter_atd = a.id
-    )
+    WHEN a.status IN (1, 2, 3)
+      AND (${qualityElapsedSecondsSql()}) >= ((${qualityThresholdMinutesSql()}) * 60)
+    THEN 1
+    ELSE 0
   END`;
 }
 
-function slaBellOrderSql(): string {
-  const activity = lastActivitySql();
-  const minutes = `COALESCE(TIMESTAMPDIFF(MINUTE, ${activity}, NOW()), 0)`;
-
+function clerioBreachedSql(): string {
   return `CASE
-    WHEN ${minutes} >= (SELECT COALESCE(sla_n3, 0) FROM configuracao LIMIT 1) THEN 0
-    WHEN ${minutes} >= (SELECT COALESCE(sla_n2, 0) FROM configuracao LIMIT 1) THEN 1
-    WHEN ${minutes} >= (SELECT COALESCE(sla_n1, 0) FROM configuracao LIMIT 1) THEN 2
-    ELSE 3
+    WHEN a.status IN (1, 2)
+      AND (${clerioElapsedSecondsSql()}) >= ((${clerioThresholdMinutesSql()}) * 60)
+    THEN 1
+    ELSE 0
   END`;
 }
 
 function slaOrderSql(): string {
-  const bellOrder = slaBellOrderSql();
-
   return `CASE
-    WHEN a.status = 1 THEN 0
-    WHEN a.status = 2 THEN 1 + (${bellOrder})
+    WHEN (${qualityBreachedSql()}) = 1 THEN 0
+    WHEN (${clerioBreachedSql()}) = 1 THEN 1
+    WHEN a.status = 1 THEN 2
+    WHEN a.status = 2 THEN 3
+    WHEN a.status = 3 THEN 4
     WHEN a.status = 5 THEN 10
-    WHEN a.status = 3 THEN 11
     WHEN a.status = 4 THEN 12
     WHEN a.status = 0 THEN 13
     ELSE 14
@@ -288,24 +304,24 @@ export class PrismaTicketsReadRepository extends TicketsReadRepository {
     const direction = filters.direction === 'asc' ? 'ASC' : 'DESC';
     const offset = (query.page - 1) * query.limit;
 
-    const levelMinutes = slaLevelMinutesSql();
     const waitSeconds = waitSecondsSql();
-    const lastActivity = lastActivitySql();
-    const bellOrder = slaBellOrderSql();
+    const qualityLastInteraction = qualityLastInteractionSql();
+    const qualityThresholdMinutes = qualityThresholdMinutesSql();
+    const qualityElapsedSeconds = qualityElapsedSecondsSql();
+    const qualityRemainingSeconds =
+      `((${qualityThresholdMinutes}) * 60) - (${qualityElapsedSeconds})`;
+    const qualityBreached = qualityBreachedSql();
+    const clerioThresholdMinutes = clerioThresholdMinutesSql();
+    const clerioElapsedSeconds = clerioElapsedSecondsSql();
+    const clerioRemainingSeconds =
+      `((${clerioThresholdMinutes}) * 60) - (${clerioElapsedSeconds})`;
+    const clerioBreached = clerioBreachedSql();
     const slaOrder = slaOrderSql();
-    const remaining = `TIMESTAMPDIFF(
-      SECOND,
-      NOW(),
-      DATE_ADD(
-        a.abertura,
-        INTERVAL (((${levelMinutes}) * 60) + (${waitSeconds})) SECOND
-      )
-    )`;
 
     const sortColumn = SORT_SQL[filters.sort] ?? 'a.abertura';
     const orderBy =
       filters.sort === 'sla'
-        ? 'sla_order ASC, sla_remaining_seconds ASC, a.id ASC'
+        ? 'sla_order ASC, quality_remaining_seconds ASC, clerio_remaining_seconds ASC, a.id ASC'
         : `${sortColumn} ${direction}, a.id ASC`;
 
     const rows = await this.database.$queryRawUnsafe<TicketRow[]>(
@@ -335,11 +351,21 @@ export class PrismaTicketsReadRepository extends TicketsReadRepository {
         i.itens_nome AS item_nome,
         u.user_id AS tecnico_id,
         u.user_nome AS tecnico_nome,
-        ${remaining} AS sla_remaining_seconds,
+        ${qualityRemainingSeconds} AS sla_remaining_seconds,
         ${slaOrder} AS sla_order,
-        ${bellOrder} AS sla_bell_order,
+        CASE WHEN (${clerioBreached}) = 1 THEN 0 ELSE 3 END AS sla_bell_order,
         ${waitSeconds} AS wait_seconds,
-        ${lastActivity} AS last_activity_at,
+        ${qualityLastInteraction} AS last_activity_at,
+        ${qualityThresholdMinutes} AS quality_threshold_minutes,
+        ${qualityElapsedSeconds} AS quality_elapsed_seconds,
+        ${qualityRemainingSeconds} AS quality_remaining_seconds,
+        ${qualityBreached} AS quality_breached,
+        ${qualityLastInteraction} AS quality_last_interaction_at,
+        ${clerioThresholdMinutes} AS clerio_threshold_minutes,
+        ${clerioElapsedSeconds} AS clerio_elapsed_seconds,
+        ${clerioRemainingSeconds} AS clerio_remaining_seconds,
+        ${clerioBreached} AS clerio_breached,
+        CASE WHEN a.status = 3 THEN 1 ELSE 0 END AS clerio_paused,
         (
           SELECT e.espera_id
           FROM espera e
@@ -369,6 +395,20 @@ export class PrismaTicketsReadRepository extends TicketsReadRepository {
       LEFT JOIN subcategorias scat ON scat.scat_id = a.subcategoria
       LEFT JOIN itens i ON i.itens_id = a.item
       LEFT JOIN usuarios u ON u.user_id = a.tecnico
+      LEFT JOIN (
+        SELECT
+          inter_atd,
+          MAX(inter_data) AS last_interaction_at
+        FROM interatividade
+        WHERE COALESCE(inter_tipo, 0) > 0
+        GROUP BY inter_atd
+      ) ia ON ia.inter_atd = a.id
+      LEFT JOIN (
+        SELECT tempo_alerta, sla_n1
+        FROM configuracao
+        ORDER BY id ASC
+        LIMIT 1
+      ) cfg ON 1 = 1
       ${listWhere.sql}
       ORDER BY ${orderBy}
       LIMIT ? OFFSET ?
@@ -718,6 +758,20 @@ export class PrismaTicketsReadRepository extends TicketsReadRepository {
         name: row.tecnico_nome,
       },
       sla: {
+        quality: {
+          thresholdMinutes: toNumber(row.quality_threshold_minutes) ?? 40,
+          elapsedSeconds: toNumber(row.quality_elapsed_seconds) ?? 0,
+          remainingSeconds: toNumber(row.quality_remaining_seconds) ?? 0,
+          breached: (toNumber(row.quality_breached) ?? 0) === 1,
+          lastInteractionAt: toIsoString(row.quality_last_interaction_at),
+        },
+        clerio: {
+          thresholdMinutes: toNumber(row.clerio_threshold_minutes) ?? 60,
+          elapsedSeconds: toNumber(row.clerio_elapsed_seconds) ?? 0,
+          remainingSeconds: toNumber(row.clerio_remaining_seconds) ?? 0,
+          breached: (toNumber(row.clerio_breached) ?? 0) === 1,
+          paused: (toNumber(row.clerio_paused) ?? 0) === 1,
+        },
         remainingSeconds: toNumber(row.sla_remaining_seconds),
         order: toNumber(row.sla_order) ?? 14,
         bellOrder: toNumber(row.sla_bell_order) ?? 3,
