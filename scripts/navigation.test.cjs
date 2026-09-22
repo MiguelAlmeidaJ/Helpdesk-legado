@@ -74,10 +74,25 @@ test('navigation upgrade enables migrated screens, preserves customization and i
     { id: 16n, slug: 'statements', label: 'Extratos', href: null, status: 'planned', visibility_condition: null, is_active: 1 },
   ];
   const original = structuredClone(rows);
-  const db = { $queryRaw: async () => rows, $executeRaw: async (_sql, label, href, status, visibility_condition, id) => {
-    Object.assign(rows.find(row => row.id === id), { label, href, status, visibility_condition });
-    return 1;
-  } };
+  const db = {
+    $queryRaw: async () => rows,
+    $executeRaw: async (sql, ...values) => {
+      const query = sql.join('');
+      if (query.includes('SET is_active = 0')) {
+        const [id] = values;
+        Object.assign(rows.find(row => row.id === id), { is_active: 0 });
+        return 1;
+      }
+      const [label, href, status, visibility_condition, id] = values;
+      Object.assign(rows.find(row => row.id === id), {
+        label,
+        href,
+        status,
+        visibility_condition,
+      });
+      return 1;
+    },
+  };
   assert.equal(await synchronizeNavigation(db), 15);
   assert.equal(rows[0].href, '/atendimentos/recorrencias');
   assert.equal(rows[0].label, 'Rotinas');
@@ -86,9 +101,9 @@ test('navigation upgrade enables migrated screens, preserves customization and i
   assert.deepEqual(JSON.parse(rows[0].visibility_condition), { anyPermissions: ['tickets.read'] });
   assert.deepEqual(rows[1], original[1]);
   assert.equal(rows[2].href, '/relatorios/atendimentos/analitico?source=tickets#table');
-  assert.equal(rows[3].href, '/atendimentos/marketing/disponibilidade');
-  assert.equal(rows[3].status, 'available');
-  assert.deepEqual(JSON.parse(rows[3].visibility_condition), { anyPermissions: ['tickets.read'] });
+  assert.equal(rows[3].href, null);
+  assert.equal(rows[3].status, 'planned');
+  assert.equal(rows[3].is_active, 0);
   assert.equal(rows[4].href, '/atendimentos/marketing/nova-tarefa');
 
   const migratedDestinations = new Map([
