@@ -326,6 +326,9 @@ export function MaintenanceScreen({
             <p className="mb-0 mt-1 text-xs text-app-muted">
               Memória RSS: {bytes(status?.api.memoryRssBytes ?? null)}
             </p>
+            <p className="mb-0 mt-1 text-xs text-app-muted">
+              Ambiente: {status?.api.environment ?? '—'} · Fuso: {status?.api.timezone ?? '—'}
+            </p>
           </div>
 
           <div className={CARD_CLASS}>
@@ -626,7 +629,7 @@ export function MaintenanceScreen({
               </select>
             </label>
             <label className={LABEL_CLASS}>
-              <span>Horário</span>
+              <span>Horário ({status?.api.timezone ?? 'servidor'})</span>
               <input
                 className={CONTROL_CLASS}
                 onChange={(event) => setJobDraft({ ...jobDraft, time: event.target.value })}
