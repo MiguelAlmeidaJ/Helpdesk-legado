@@ -1,7 +1,8 @@
 export type TicketProjectCommandResult =
   | 'updated'
   | 'not-found'
-  | 'invalid-state';
+  | 'invalid-state'
+  | 'open-tasks';
 
 export type TicketProjectAssignmentResult =
   | TicketProjectCommandResult
