@@ -45,3 +45,4 @@ export * from './reports/ticket-analytics';
 export * from './registrations/registration';
 export * from './reports/ticket-breakdown';
 export * from './logistics/finance';
+export * from './maintenance/maintenance';
