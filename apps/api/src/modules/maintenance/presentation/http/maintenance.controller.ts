@@ -34,12 +34,12 @@ import {
 } from '@helpdesk/contracts';
 import { createReadStream } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { LEGACY_SESSION_SECURITY } from '../../../core/openapi/openapi.constants';
-import type { AuthenticatedUser } from '../../access/domain/authenticated-user';
-import { CurrentUser } from '../../access/presentation/http/current-user.decorator';
-import { LegacySessionGuard } from '../../access/presentation/http/legacy-session.guard';
-import { PermissionsGuard } from '../../access/presentation/http/permissions.guard';
-import { RequirePermissions } from '../../access/presentation/http/require-permissions.decorator';
+import { LEGACY_SESSION_SECURITY } from '../../../../core/openapi/openapi.constants';
+import type { AuthenticatedUser } from '../../../access/domain/authenticated-user';
+import { CurrentUser } from '../../../access/presentation/http/current-user.decorator';
+import { LegacySessionGuard } from '../../../access/presentation/http/legacy-session.guard';
+import { PermissionsGuard } from '../../../access/presentation/http/permissions.guard';
+import { RequirePermissions } from '../../../access/presentation/http/require-permissions.decorator';
 import { MaintenanceService } from '../../application/maintenance.service';
 
 function recordBody(body: unknown): Record<string, unknown> {
