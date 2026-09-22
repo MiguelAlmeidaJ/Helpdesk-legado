@@ -40,7 +40,7 @@ import { CurrentUser } from '../../access/presentation/http/current-user.decorat
 import { LegacySessionGuard } from '../../access/presentation/http/legacy-session.guard';
 import { PermissionsGuard } from '../../access/presentation/http/permissions.guard';
 import { RequirePermissions } from '../../access/presentation/http/require-permissions.decorator';
-import { MaintenanceService } from '../../maintenance/application/maintenance.service';
+import { MaintenanceService } from '../../application/maintenance.service';
 
 function recordBody(body: unknown): Record<string, unknown> {
   if (!body || typeof body !== 'object' || Array.isArray(body)) {
