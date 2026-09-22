@@ -8,6 +8,7 @@ type StoredItem = {
   href: string | null;
   status: string;
   visibility_condition: string | null;
+  is_active: number;
 };
 
 // Upgrade shipped defaults without resetting names, ordering, visibility or
@@ -19,7 +20,6 @@ export async function synchronizeNavigation(
     'tickets-recurrences',
     'devops-task-new',
     'marketing-task-new',
-    'marketing-availability',
     'clients',
     'categories',
     'cost-centers',
@@ -49,10 +49,21 @@ export async function synchronizeNavigation(
     section.items.map((item) => [item.slug, item] as const),
   ));
   const rows = await db.$queryRaw<StoredItem[]>`
-    SELECT id, slug, label, href, status, visibility_condition FROM navigation_items
+    SELECT id, slug, label, href, status, visibility_condition, is_active FROM navigation_items
   `;
   let updated = 0;
   for (const row of rows) {
+    if (row.slug === 'marketing-availability') {
+      if (row.is_active !== 0) {
+        await db.$executeRaw`
+          UPDATE navigation_items
+          SET is_active = 0, updated_at = NOW()
+          WHERE id = ${row.id}
+        `;
+        updated++;
+      }
+      continue;
+    }
     const definition = defaults.get(row.slug);
     let href = row.href ? portugueseWebHref(row.href) : null;
     const legacyCreateHref = legacyCreateHrefs.get(row.slug);
