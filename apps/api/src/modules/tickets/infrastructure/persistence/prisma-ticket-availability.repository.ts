@@ -34,10 +34,6 @@ interface TicketRow {
   hold_forecast_at: string | null;
 }
 
-interface NowRow {
-  generated_at: string;
-}
-
 const TECHNICAL_FUNCTIONS = [5, 6, 10, 12, 14];
 
 const TYPE_LABELS: Record<number, string> = {
@@ -213,12 +209,10 @@ export class PrismaTicketAvailabilityRepository extends TicketAvailabilityReposi
         tickets: groupTickets,
       }));
 
-    const now = await this.database.$queryRawUnsafe<NowRow[]>(
-      `SELECT DATE_FORMAT(NOW(), '%Y-%m-%dT%H:%i:%s') AS generated_at`,
-    );
-
     return {
-      generatedAt: now[0]?.generated_at ?? new Date().toISOString(),
+      // Sempre transmite um instante absoluto com timezone explícito.
+      // O web converte esse ISO UTC para o fuso local do navegador.
+      generatedAt: new Date().toISOString(),
       onlineWindowMinutes: 10,
       summary: {
         scheduled: scheduled.length,
