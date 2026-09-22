@@ -31,6 +31,12 @@ function assertCommonResult(result: TicketProjectCommandResult): void {
       'O estado atual do projeto não permite esta operação.',
     );
   }
+
+  if (result === 'open-tasks') {
+    throw new ConflictException(
+      'O projeto possui tarefas pendentes. Finalize todas as tarefas antes de concluir o projeto.',
+    );
+  }
 }
 
 @Injectable()
