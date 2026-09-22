@@ -392,7 +392,7 @@ function DevOpsTicketForm({ initialProjectId }: { initialProjectId?: number }) {
                 </option>
               ))}
             </select>
-            <small>Projeto é opcional e funciona apenas como agrupador.</small>
+            <small>Ao vincular a um projeto, o cliente é herdado e as dependências passam a controlar o início da tarefa.</small>
           </label>
 
           {selectedProject ? (
