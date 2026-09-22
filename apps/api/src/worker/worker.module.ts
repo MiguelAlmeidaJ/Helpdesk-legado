@@ -5,7 +5,7 @@ import { CleanupExpiredReports } from '../modules/reports/application/cleanup-ex
 import { GeneratedReportStorage } from '../modules/reports/application/ports/generated-report-storage';
 import { ReportRetentionPoller } from '../modules/reports/infrastructure/automation/report-retention.poller';
 import { LocalGeneratedReportStorage } from '../modules/reports/infrastructure/storage/local-generated-report-storage';
-import { MaintenanceModule } from '../modules/maintenance/maintenance.module';
+import { MaintenanceService } from '../modules/maintenance/application/maintenance.service';
 import { MaintenanceBackupPoller } from '../modules/maintenance/infrastructure/automation/maintenance-backup.poller';
 import { ActivateDueScheduledTickets } from '../modules/tickets/application/activate-due-scheduled-tickets';
 import { DueScheduledTicketRepository } from '../modules/tickets/application/ports/due-scheduled-ticket.repository';
@@ -32,12 +32,12 @@ import { PrismaTicketRecurrenceRepository } from '../modules/tickets/infrastruct
       envFilePath: ['.env', '../../.env'],
     }),
     DatabaseModule,
-    MaintenanceModule,
   ],
   providers: [
     CleanupExpiredReports,
     ReportRetentionPoller,
     MaintenanceBackupPoller,
+    MaintenanceService,
     ActivateDueScheduledTickets,
     ProcessDueTicketRecurrences,
     ProcessTicketNotificationOutbox,
