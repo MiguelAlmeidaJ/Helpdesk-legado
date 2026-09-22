@@ -146,6 +146,13 @@ export const DEFAULT_NAVIGATION: SeedSection[] = [
         status: 'available',
         visibilityCondition: { anyPermissions: ['system.admin'] },
       },
+      {
+        slug: 'ticket-sla-settings',
+        label: 'SLA de Atendimentos',
+        href: '/administracao/sla-atendimentos',
+        status: 'available',
+        visibilityCondition: { anyPermissions: ['system.admin'] },
+      },
     ],
   },
 ];
