@@ -331,7 +331,7 @@ export function DevOpsTicketsScreen({
           aria-label="Lista de atendimentos DevOps"
         >
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[1050px] border-collapse">
+            <table className="w-full min-w-[1280px] border-collapse">
               <thead>
                 <tr>
                   <th className={TABLE_HEADER_CLASS}>ID</th>
@@ -340,6 +340,8 @@ export function DevOpsTicketsScreen({
                   <th className={TABLE_HEADER_CLASS}>Cliente</th>
                   <th className={TABLE_HEADER_CLASS}>Técnico</th>
                   <th className={TABLE_HEADER_CLASS}>Status</th>
+                  <th className={TABLE_HEADER_CLASS}>Dependência</th>
+                  <th className={TABLE_HEADER_CLASS}>Progresso</th>
                   <th className={TABLE_HEADER_CLASS}>Abertura</th>
                 </tr>
               </thead>
@@ -391,6 +393,36 @@ export function DevOpsTicketsScreen({
                       <span className="inline-flex items-center whitespace-nowrap rounded-full bg-app-surface-muted px-2 py-1 text-xs font-extrabold text-app-text-soft">
                         {ticket.statusLabel}
                       </span>
+                    </td>
+                    <td className={TABLE_CELL_CLASS}>
+                      {ticket.dependencyTaskId > 0 ? (
+                        <div className="grid min-w-[150px] gap-0.5">
+                          <Link
+                            className="text-xs font-bold text-app-brand no-underline hover:underline"
+                            href={`/atendimentos/devops/${ticket.dependencyTaskId}`}
+                          >
+                            #{ticket.dependencyTaskId} · {ticket.dependencyTaskName || 'Tarefa'}
+                          </Link>
+                          <span className={ticket.blockedByDependency ? 'text-[10px] font-semibold text-amber-700 dark:text-amber-300' : 'text-[10px] text-app-muted'}>
+                            {ticket.blockedByDependency ? 'Bloqueada' : 'Liberada'}
+                          </span>
+                        </div>
+                      ) : (
+                        <span className="text-xs text-app-muted">—</span>
+                      )}
+                    </td>
+                    <td className={TABLE_CELL_CLASS}>
+                      <div className="grid min-w-[100px] gap-1">
+                        <div className="h-2 overflow-hidden rounded-full bg-app-border">
+                          <div
+                            className="h-full rounded-full bg-app-brand"
+                            style={{ width: `${ticket.progressPercent}%` }}
+                          />
+                        </div>
+                        <span className="text-[10px] font-bold text-app-text-soft">
+                          {ticket.progressPercent}%
+                        </span>
+                      </div>
                     </td>
                     <td className={TABLE_CELL_CLASS}>
                       {formatDate(ticket.openedAt)}
