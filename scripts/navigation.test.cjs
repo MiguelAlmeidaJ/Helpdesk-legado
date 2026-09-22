@@ -175,6 +175,7 @@ test('all available menu destinations resolve to implemented Next pages', () => 
     'radio',
     'statements',
     'ticket-sla-settings',
+    'maintenance',
   ]) {
     assert.equal(items.find(item => item.slug === slug).status, 'available', slug);
   }
