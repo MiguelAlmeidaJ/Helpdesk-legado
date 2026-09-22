@@ -218,7 +218,7 @@ function qualityBreachedSql(): string {
 
 function clerioBreachedSql(): string {
   return `CASE
-    WHEN a.status IN (1, 2)
+    WHEN a.status IN (1, 2, 3)
       AND (${clerioElapsedSecondsSql()}) >= ((${clerioThresholdMinutesSql()}) * 60)
     THEN 1
     ELSE 0
