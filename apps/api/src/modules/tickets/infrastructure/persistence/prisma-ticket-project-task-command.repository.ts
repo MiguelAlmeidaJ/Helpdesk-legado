@@ -461,8 +461,23 @@ export class PrismaTicketProjectTaskCommandRepository
         return 'not-found';
       }
 
-      if (task.status === 4) {
+      if (task.status !== 2) {
         return 'invalid-state';
+      }
+
+      const currentRows = await transaction.$queryRawUnsafe<
+        Array<{ porcentagem: number | null }>
+      >(
+        'SELECT porcentagem FROM tarefas WHERE id = ? LIMIT 1 FOR UPDATE',
+        input.taskId,
+      );
+      const previous = Math.min(
+        99,
+        Math.max(0, Number(currentRows[0]?.porcentagem ?? 0)),
+      );
+
+      if (previous === input.progress) {
+        return 'updated';
       }
 
       await transaction.$executeRawUnsafe(
@@ -471,6 +486,20 @@ export class PrismaTicketProjectTaskCommandRepository
          WHERE id = ?`,
         input.progress,
         input.taskId,
+      );
+
+      await transaction.$executeRawUnsafe(
+        `INSERT INTO inter_tarefa (
+           inter_tipo,
+           inter_tarefa,
+           inter_user,
+           inter_data,
+           inter_desc
+         )
+         VALUES (9, ?, ?, NOW(), ?)`,
+        input.taskId,
+        input.actorUserId,
+        `Atualizou o progresso da tarefa: ${previous}% -> ${input.progress}%.`,
       );
 
       return 'updated';
