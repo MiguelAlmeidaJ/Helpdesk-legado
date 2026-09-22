@@ -37,6 +37,7 @@ import {
   existsSync,
 } from 'node:fs';
 import {
+  copyFile,
   lstat,
   mkdir,
   readFile,
@@ -815,7 +816,13 @@ export class MaintenanceService implements OnApplicationBootstrap {
       throw new BadRequestException('O dump está vazio.');
     }
 
-    const scan = await this.scanDump(uploaded.path, database);
+    let scan: Awaited<ReturnType<MaintenanceService['scanDump']>>;
+    try {
+      scan = await this.scanDump(uploaded.path, database);
+    } catch (error) {
+      await this.safeUnlink(uploaded.path);
+      throw error;
+    }
     if (scan.blocked.length > 0) {
       await this.safeUnlink(uploaded.path);
       throw new BadRequestException(
@@ -826,7 +833,7 @@ export class MaintenanceService implements OnApplicationBootstrap {
     const token = randomUUID();
     const sqlFile = path.join(importRoot(), token + '.sql');
     const metadataFile = path.join(importRoot(), token + '.json');
-    await rename(uploaded.path, sqlFile);
+    await this.moveFile(uploaded.path, sqlFile);
     const metadata: DumpMetadata = {
       token,
       target: database,
@@ -1446,6 +1453,14 @@ export class MaintenanceService implements OnApplicationBootstrap {
         [/\bSHUTDOWN\b/i, 'SHUTDOWN'],
         [/\bINSTALL\s+PLUGIN\b/i, 'INSTALL PLUGIN'],
         [/\bUNINSTALL\s+PLUGIN\b/i, 'UNINSTALL PLUGIN'],
+        [/\bLOAD\s+DATA\s+LOCAL\s+INFILE\b/i, 'LOAD DATA LOCAL INFILE'],
+        [/\bLOAD_FILE\s*\(/i, 'LOAD_FILE'],
+        [/\bINTO\s+OUTFILE\b/i, 'INTO OUTFILE'],
+        [/\bINTO\s+DUMPFILE\b/i, 'INTO DUMPFILE'],
+        [/^\s*SOURCE\s+/im, 'SOURCE'],
+        [/^\s*SYSTEM\s+/im, 'SYSTEM'],
+        [/^\s*\\!/m, 'comando de shell \\!'],
+        [/^\s*\\\.\s+/m, 'SOURCE \\.'],
       ];
       for (const [pattern, label] of dangerous) {
         if (pattern.test(text)) blocked.add(label);
@@ -1516,6 +1531,20 @@ export class MaintenanceService implements OnApplicationBootstrap {
       } catch {
         await this.safeUnlink(path.join(importRoot(), name));
       }
+    }
+  }
+
+  private async moveFile(source: string, destination: string): Promise<void> {
+    try {
+      await rename(source, destination);
+    } catch (error) {
+      const code =
+        error && typeof error === 'object' && 'code' in error
+          ? String((error as { code?: unknown }).code)
+          : '';
+      if (code !== 'EXDEV') throw error;
+      await copyFile(source, destination);
+      await this.safeUnlink(source);
     }
   }
 
