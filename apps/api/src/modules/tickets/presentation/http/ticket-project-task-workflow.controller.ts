@@ -151,10 +151,10 @@ function progressRequest(body: unknown): TicketProjectTaskProgressRequest {
     typeof progress !== 'number' ||
     !Number.isSafeInteger(progress) ||
     progress < 0 ||
-    progress > 100
+    progress > 99
   ) {
     throw new BadRequestException(
-      'progress deve ser um inteiro entre 0 e 100.',
+      'progress deve ser um inteiro entre 0 e 99. Use Finalizar para concluir a tarefa em 100%.',
     );
   }
 
