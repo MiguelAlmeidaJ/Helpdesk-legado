@@ -2,6 +2,7 @@
 
 import {
   AppPermission,
+  TicketStatus,
   type CurrentUserResponse,
   type TicketFilterOption,
   type TicketListItem,
@@ -22,7 +23,7 @@ import {
   fetchTickets,
   type TicketListQuery,
 } from '../api/tickets-api';
-import { SlaIndicator } from './sla-indicator';
+import { TicketSlaIndicators } from './sla-indicator';
 
 const DEFAULT_STATUS = '1,2,3,5';
 
@@ -69,26 +70,6 @@ function formatDate(value: string | null): string {
     dateStyle: 'short',
     timeStyle: 'short',
   }).format(date);
-}
-
-function formatDuration(seconds: number | null): string {
-  if (seconds === null) {
-    return 'Sem SLA';
-  }
-
-  const overdue = seconds < 0;
-  const absolute = Math.abs(seconds);
-  const days = Math.floor(absolute / 86400);
-  const hours = Math.floor((absolute % 86400) / 3600);
-  const minutes = Math.floor((absolute % 3600) / 60);
-
-  const parts = [
-    days > 0 ? `${days}d` : '',
-    hours > 0 ? `${hours}h` : '',
-    `${minutes}min`,
-  ].filter(Boolean);
-
-  return `${overdue ? 'Atrasado ' : ''}${parts.join(' ')}`;
 }
 
 function partyName(option: TicketFilterOption): string {
@@ -244,6 +225,18 @@ export function TicketsScreen({
       });
 
     return () => controller.abort();
+  }, [query]);
+
+  useEffect(() => {
+    const interval = window.setInterval(() => {
+      void fetchTickets(query)
+        .then((response) => setResult(response))
+        .catch(() => {
+          // O refresh silencioso não substitui a última lista válida.
+        });
+    }, 30_000);
+
+    return () => window.clearInterval(interval);
   }, [query]);
 
   const totalLabel = useMemo(() => {
@@ -491,14 +484,18 @@ export function TicketsScreen({
                   <th className={TABLE_HEADER_CLASS}>Solicitante</th>
                   <th className={TABLE_HEADER_CLASS}>Técnico</th>
                   <th className={TABLE_HEADER_CLASS}>Status</th>
-                  <th className={TABLE_HEADER_CLASS}>SLA</th>
+                  <th className={TABLE_HEADER_CLASS}>SLAs</th>
                   <th className={TABLE_HEADER_CLASS}>Abertura</th>
                 </tr>
               </thead>
               <tbody>
                 {(result?.data ?? []).map((ticket) => (
                   <tr
-                    className="transition-colors hover:bg-app-surface-muted"
+                    className={
+                      ticket.sla.quality.breached
+                        ? 'bg-red-100/90 motion-safe:animate-pulse dark:bg-red-950/35'
+                        : 'transition-colors hover:bg-app-surface-muted'
+                    }
                     key={ticket.id}
                   >
                     <td className={`${TABLE_CELL_CLASS} font-extrabold`}>
@@ -536,15 +533,18 @@ export function TicketsScreen({
                       </span>
                     </td>
                     <td className={TABLE_CELL_CLASS}>
-                      <div className="grid gap-1 whitespace-nowrap">
-                        <strong className="flex items-center text-[13px] text-app-text">
-                          <SlaIndicator bellOrder={ticket.sla.bellOrder} />
-                          {formatDuration(ticket.sla.remainingSeconds)}
-                        </strong>
-                        <span className="text-[11px] text-app-subtle">
-                          Espera {formatDuration(ticket.sla.waitSeconds)}
-                        </span>
-                      </div>
+                      <TicketSlaIndicators
+                        clerio={ticket.sla.clerio}
+                        inactiveLabel={
+                          ticket.status === TicketStatus.Scheduled
+                            ? 'Agendado'
+                            : ticket.status === TicketStatus.Finished ||
+                                ticket.status === TicketStatus.Completed
+                              ? 'Encerrado'
+                              : undefined
+                        }
+                        quality={ticket.sla.quality}
+                      />
                     </td>
                     <td className={TABLE_CELL_CLASS}>{formatDate(ticket.openedAt)}</td>
                   </tr>
