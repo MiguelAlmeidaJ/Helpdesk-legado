@@ -213,6 +213,110 @@ const CREATE_NAVIGATION_ITEMS = [
   ') ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci',
 ].join('\n');
 
+const CREATE_ROLES = [
+  'CREATE TABLE IF NOT EXISTS roles (',
+  '  id INT UNSIGNED NOT NULL AUTO_INCREMENT,',
+  '  name VARCHAR(100) NOT NULL,',
+  '  slug VARCHAR(120) NOT NULL,',
+  '  description VARCHAR(255) NULL,',
+  '  is_system TINYINT(1) NOT NULL DEFAULT 0,',
+  '  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,',
+  '  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,',
+  '  PRIMARY KEY (id),',
+  '  UNIQUE KEY uq_roles_slug (slug)',
+  ') ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci',
+].join('\n');
+
+const CREATE_PERMISSIONS = [
+  'CREATE TABLE IF NOT EXISTS permissions (',
+  '  id INT UNSIGNED NOT NULL AUTO_INCREMENT,',
+  '  name VARCHAR(140) NOT NULL,',
+  '  slug VARCHAR(160) NOT NULL,',
+  '  module VARCHAR(60) NOT NULL,',
+  '  description VARCHAR(255) NULL,',
+  '  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,',
+  '  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,',
+  '  PRIMARY KEY (id),',
+  '  UNIQUE KEY uq_permissions_slug (slug),',
+  '  KEY idx_permissions_module (module)',
+  ') ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci',
+].join('\n');
+
+const CREATE_ROLE_PERMISSIONS = [
+  'CREATE TABLE IF NOT EXISTS role_permissions (',
+  '  role_id INT UNSIGNED NOT NULL,',
+  '  permission_id INT UNSIGNED NOT NULL,',
+  '  granted_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,',
+  '  PRIMARY KEY (role_id, permission_id),',
+  '  KEY idx_role_permissions_permission (permission_id),',
+  '  CONSTRAINT fk_role_permissions_role FOREIGN KEY (role_id)',
+  '    REFERENCES roles(id) ON DELETE CASCADE ON UPDATE RESTRICT,',
+  '  CONSTRAINT fk_role_permissions_permission FOREIGN KEY (permission_id)',
+  '    REFERENCES permissions(id) ON DELETE CASCADE ON UPDATE RESTRICT',
+  ') ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci',
+].join('\n');
+
+const CREATE_USER_ROLES = [
+  'CREATE TABLE IF NOT EXISTS user_roles (',
+  '  user_id INT NOT NULL,',
+  '  role_id INT UNSIGNED NOT NULL,',
+  '  assigned_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,',
+  '  assigned_by INT NULL,',
+  '  PRIMARY KEY (user_id, role_id),',
+  '  KEY idx_user_roles_role (role_id),',
+  '  KEY fk_user_roles_assigned_by (assigned_by),',
+  '  CONSTRAINT fk_user_roles_user FOREIGN KEY (user_id)',
+  '    REFERENCES usuarios(user_id) ON DELETE CASCADE ON UPDATE RESTRICT,',
+  '  CONSTRAINT fk_user_roles_role FOREIGN KEY (role_id)',
+  '    REFERENCES roles(id) ON DELETE CASCADE ON UPDATE RESTRICT,',
+  '  CONSTRAINT fk_user_roles_assigned_by FOREIGN KEY (assigned_by)',
+  '    REFERENCES usuarios(user_id) ON DELETE NO ACTION ON UPDATE RESTRICT',
+  ') ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci',
+].join('\n');
+
+const CREATE_USER_PERMISSIONS = [
+  'CREATE TABLE IF NOT EXISTS user_permissions (',
+  '  user_id INT NOT NULL,',
+  '  permission_id INT UNSIGNED NOT NULL,',
+  "  effect ENUM('allow','deny') NOT NULL DEFAULT 'allow',",
+  '  assigned_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,',
+  '  assigned_by INT NULL,',
+  '  PRIMARY KEY (user_id, permission_id),',
+  '  KEY idx_user_permissions_permission (permission_id),',
+  '  KEY fk_user_permissions_assigned_by (assigned_by),',
+  '  CONSTRAINT fk_user_permissions_user FOREIGN KEY (user_id)',
+  '    REFERENCES usuarios(user_id) ON DELETE CASCADE ON UPDATE RESTRICT,',
+  '  CONSTRAINT fk_user_permissions_permission FOREIGN KEY (permission_id)',
+  '    REFERENCES permissions(id) ON DELETE CASCADE ON UPDATE RESTRICT,',
+  '  CONSTRAINT fk_user_permissions_assigned_by FOREIGN KEY (assigned_by)',
+  '    REFERENCES usuarios(user_id) ON DELETE NO ACTION ON UPDATE RESTRICT',
+  ') ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci',
+].join('\n');
+
+const CREATE_API_SESSIONS = [
+  'CREATE TABLE IF NOT EXISTS api_sessions (',
+  '  id CHAR(36) NOT NULL,',
+  '  family_id CHAR(36) NOT NULL,',
+  '  user_id INT NOT NULL,',
+  '  refresh_token_hash CHAR(64) NOT NULL,',
+  '  replaced_by_id CHAR(36) NULL,',
+  '  device_name VARCHAR(160) NULL,',
+  '  user_agent VARCHAR(500) NULL,',
+  '  ip_address VARCHAR(45) NULL,',
+  '  created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),',
+  '  last_used_at DATETIME(6) NULL,',
+  '  expires_at DATETIME(6) NOT NULL,',
+  '  revoked_at DATETIME(6) NULL,',
+  '  revoke_reason VARCHAR(120) NULL,',
+  '  PRIMARY KEY (id),',
+  '  UNIQUE KEY uq_api_sessions_token_hash (refresh_token_hash),',
+  '  KEY ix_api_sessions_family (family_id),',
+  '  KEY ix_api_sessions_user_active (user_id, revoked_at, expires_at),',
+  '  CONSTRAINT fk_api_sessions_user FOREIGN KEY (user_id)',
+  '    REFERENCES usuarios(user_id) ON DELETE NO ACTION ON UPDATE RESTRICT',
+  ') ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci',
+].join('\n');
+
 const REQUIRED_NIVEL3_TABLES = [
   'usuarios',
   'roles',
@@ -935,6 +1039,7 @@ export class MaintenanceService implements OnApplicationBootstrap {
       this.ensurePromise = null;
       await this.ensureSchema();
       maintenancePrepared = true;
+      await this.ensureAccessSchema();
       await this.ensureNavigation();
       navigationPrepared = true;
     } else {
@@ -1367,6 +1472,30 @@ export class MaintenanceService implements OnApplicationBootstrap {
       detail.slice(0, 20000),
       id,
     );
+  }
+
+  private async ensureAccessSchema(): Promise<void> {
+    const users = await this.nivel3.$queryRawUnsafe<
+      Array<{ found: number | bigint | string }>
+    >(
+      [
+        'SELECT COUNT(*) AS found',
+        'FROM information_schema.TABLES',
+        "WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'usuarios'",
+      ].join('\n'),
+    );
+    if (numberValue(users[0]?.found) === 0) {
+      throw new ConflictException(
+        'A tabela legada usuarios não existe. Importe primeiro um dump válido do nivel3.',
+      );
+    }
+
+    await this.nivel3.$executeRawUnsafe(CREATE_ROLES);
+    await this.nivel3.$executeRawUnsafe(CREATE_PERMISSIONS);
+    await this.nivel3.$executeRawUnsafe(CREATE_ROLE_PERMISSIONS);
+    await this.nivel3.$executeRawUnsafe(CREATE_USER_ROLES);
+    await this.nivel3.$executeRawUnsafe(CREATE_USER_PERMISSIONS);
+    await this.nivel3.$executeRawUnsafe(CREATE_API_SESSIONS);
   }
 
   private async ensureNavigation(): Promise<void> {
