@@ -139,8 +139,8 @@ export function SpecializedTicketWorkflowPanel({
     event.preventDefault();
     if (!actions.progress || progress === '') return;
     const value = Number(progress);
-    if (!Number.isSafeInteger(value) || value < 0 || value > 100) {
-      setFeedback({ text: 'O progresso deve ser um inteiro entre 0 e 100.', error: true });
+    if (!Number.isSafeInteger(value) || value < 0 || value > 99) {
+      setFeedback({ text: 'Use de 0 a 99%. Para chegar a 100%, finalize a tarefa.', error: true });
       return;
     }
     void run(`Progresso atualizado para ${value}%.`, () => actions.progress!(value));
@@ -258,11 +258,11 @@ export function SpecializedTicketWorkflowPanel({
           </details>
         ) : null}
 
-        {actions.progress && status >= 1 && status <= 3 ? (
+        {actions.progress && status === 2 ? (
           <details className={ACTION_CLASS}>
             <summary>Atualizar progresso</summary>
             <form className={FORM_CLASS} onSubmit={submitProgress}>
-              <label><span>Novo percentual</span><input disabled={busy} max={100} min={0} onChange={(event) => setProgress(event.target.value)} placeholder="0–100" required type="number" value={progress} /></label>
+              <label><span>Novo percentual</span><input disabled={busy} max={99} min={0} onChange={(event) => setProgress(event.target.value)} placeholder="0–99" required type="number" value={progress} /></label>
               <button className={BUTTON_CLASS} disabled={busy || progress === ''} type="submit">Atualizar progresso</button>
             </form>
           </details>
