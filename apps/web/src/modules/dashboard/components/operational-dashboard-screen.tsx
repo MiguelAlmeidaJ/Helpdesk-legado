@@ -191,7 +191,7 @@ function RankingRow({
                 style={{ width: `${ticketsWidth}%` }}
                 title={`Atendimentos: ${tickets}`}
               >
-                {ticketsWidth >= 12 ? tickets : null}
+                {tickets}
               </div>
             ) : null}
             {tasks > 0 ? (
@@ -200,7 +200,7 @@ function RankingRow({
                 style={{ width: `${tasksWidth}%` }}
                 title={`Tarefas: ${tasks}`}
               >
-                {tasksWidth >= 12 ? tasks : null}
+                {tasks}
               </div>
             ) : null}
           </div>
