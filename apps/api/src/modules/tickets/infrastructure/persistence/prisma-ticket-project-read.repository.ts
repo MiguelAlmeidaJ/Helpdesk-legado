@@ -59,6 +59,14 @@ interface ProjectRow {
   tecnico_nome: string | null;
   espera_segundos: bigint | number | string | null;
   ultima_interacao: Date | string | null;
+  tarefas_total: bigint | number | string | null;
+  tarefas_agendadas: bigint | number | string | null;
+  tarefas_aguardando: bigint | number | string | null;
+  tarefas_execucao: bigint | number | string | null;
+  tarefas_espera: bigint | number | string | null;
+  tarefas_concluidas: bigint | number | string | null;
+  tarefas_bloqueadas: bigint | number | string | null;
+  progresso_percentual: bigint | number | string | null;
 }
 
 interface TaskRow extends ProjectRow {
@@ -69,6 +77,9 @@ interface TaskRow extends ProjectRow {
   fechamento: Date | string | null;
   dias: number | null;
   tarefas_relacionadas: number | null;
+  porcentagem: number | null;
+  dependencia_nome: string | null;
+  dependencia_status: number | null;
 }
 
 interface Visibility {
@@ -200,6 +211,37 @@ export class PrismaTicketProjectReadRepository extends TicketProjectReadReposito
       LEFT JOIN subcategorias ON projetos.subcategoria = subcategorias.scat_id
       LEFT JOIN itens ON projetos.item = itens.itens_id
       LEFT JOIN usuarios AS tecnico ON projetos.tecnico = tecnico.user_id
+      LEFT JOIN (
+        SELECT
+          t.id_projeto,
+          COUNT(*) AS tarefas_total,
+          SUM(CASE WHEN t.status = 0 THEN 1 ELSE 0 END) AS tarefas_agendadas,
+          SUM(CASE WHEN t.status = 1 THEN 1 ELSE 0 END) AS tarefas_aguardando,
+          SUM(CASE WHEN t.status = 2 THEN 1 ELSE 0 END) AS tarefas_execucao,
+          SUM(CASE WHEN t.status = 3 THEN 1 ELSE 0 END) AS tarefas_espera,
+          SUM(CASE WHEN t.status = 4 THEN 1 ELSE 0 END) AS tarefas_concluidas,
+          SUM(
+            CASE
+              WHEN t.status <> 4
+                AND COALESCE(t.tarefas_relacionadas, 0) > 0
+                AND COALESCE(dep.status, 0) <> 4
+              THEN 1
+              ELSE 0
+            END
+          ) AS tarefas_bloqueadas,
+          ROUND(
+            AVG(
+              CASE
+                WHEN t.status = 4 THEN 100
+                ELSE LEAST(99, GREATEST(0, COALESCE(t.porcentagem, 0)))
+              END
+            )
+          ) AS progresso_percentual
+        FROM tarefas t
+        LEFT JOIN tarefas dep ON dep.id = t.tarefas_relacionadas
+        WHERE COALESCE(t.id_projeto, 0) > 0
+        GROUP BY t.id_projeto
+      ) task_stats ON task_stats.id_projeto = projetos.id
     `;
 
     const countRows = await this.database.$queryRawUnsafe<CountRow[]>(
@@ -258,7 +300,15 @@ export class PrismaTicketProjectReadRepository extends TicketProjectReadReposito
           FROM inter_projeto
           WHERE inter_projeto.inter_projeto = projetos.id
             AND inter_projeto.inter_tipo > 0
-        ) AS ultima_interacao
+        ) AS ultima_interacao,
+        COALESCE(task_stats.tarefas_total, 0) AS tarefas_total,
+        COALESCE(task_stats.tarefas_agendadas, 0) AS tarefas_agendadas,
+        COALESCE(task_stats.tarefas_aguardando, 0) AS tarefas_aguardando,
+        COALESCE(task_stats.tarefas_execucao, 0) AS tarefas_execucao,
+        COALESCE(task_stats.tarefas_espera, 0) AS tarefas_espera,
+        COALESCE(task_stats.tarefas_concluidas, 0) AS tarefas_concluidas,
+        COALESCE(task_stats.tarefas_bloqueadas, 0) AS tarefas_bloqueadas,
+        COALESCE(task_stats.progresso_percentual, 0) AS progresso_percentual
       ${from}
       ${where.sql}
       ORDER BY ${order} ${direction}, projetos.id DESC
@@ -300,6 +350,7 @@ export class PrismaTicketProjectReadRepository extends TicketProjectReadReposito
       LEFT JOIN itens ON tarefas.item = itens.itens_id
       LEFT JOIN usuarios AS tecnico ON tarefas.tecnico = tecnico.user_id
       LEFT JOIN projetos ON tarefas.id_projeto = projetos.id
+      LEFT JOIN tarefas AS dependencia ON tarefas.tarefas_relacionadas = dependencia.id
     `;
 
     const countRows = await this.database.$queryRawUnsafe<CountRow[]>(
@@ -326,6 +377,9 @@ export class PrismaTicketProjectReadRepository extends TicketProjectReadReposito
         tarefas.nome_tarefa,
         tarefas.dias,
         tarefas.tarefas_relacionadas,
+        tarefas.porcentagem,
+        dependencia.nome_tarefa AS dependencia_nome,
+        dependencia.status AS dependencia_status,
         tarefas.status,
         tarefas.tipo,
         tarefas.nivel,
@@ -625,6 +679,16 @@ export class PrismaTicketProjectReadRepository extends TicketProjectReadReposito
       technician: party(row.tecnico_id, row.tecnico_nome),
       waitSeconds: toNumber(row.espera_segundos),
       lastActivityAt: toIsoString(row.ultima_interacao),
+      tasks: {
+        total: toNumber(row.tarefas_total),
+        scheduled: toNumber(row.tarefas_agendadas),
+        waiting: toNumber(row.tarefas_aguardando),
+        inProgress: toNumber(row.tarefas_execucao),
+        onHold: toNumber(row.tarefas_espera),
+        completed: toNumber(row.tarefas_concluidas),
+        blocked: toNumber(row.tarefas_bloqueadas),
+        progressPercent: toNumber(row.progresso_percentual),
+      },
     };
   }
 
@@ -644,6 +708,18 @@ export class PrismaTicketProjectReadRepository extends TicketProjectReadReposito
       statusLabel: statusLabel(taskStatus, true),
       typeId: row.tipo,
       dependencyTaskId: row.tarefas_relacionadas ?? 0,
+      dependencyTaskName: row.dependencia_nome,
+      dependencyStatus:
+        row.dependencia_status !== null
+          ? status(row.dependencia_status)
+          : null,
+      blockedByDependency:
+        (row.tarefas_relacionadas ?? 0) > 0 &&
+        row.dependencia_status !== 4,
+      progressPercent:
+        taskStatus === 4
+          ? 100
+          : Math.min(99, Math.max(0, row.porcentagem ?? 0)),
       level: row.nivel,
       form: row.forma,
       client: party(row.cliente_id, row.cliente_nome),
