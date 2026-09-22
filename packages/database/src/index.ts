@@ -70,3 +70,5 @@ export function createN3rdClient(
 
 export type Nivel3DatabaseClient = ReturnType<typeof createNivel3Client>;
 export type N3rdDatabaseClient = ReturnType<typeof createN3rdClient>;
+
+export { synchronizeNavigation } from './navigation/synchronize-navigation';
