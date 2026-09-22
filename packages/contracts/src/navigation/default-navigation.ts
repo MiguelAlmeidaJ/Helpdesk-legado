@@ -60,7 +60,6 @@ export const DEFAULT_NAVIGATION: SeedSection[] = [
     shortLabel: 'MK',
     items: [
       { slug: 'marketing-tasks', label: 'Lista de Tarefas', href: '/atendimentos/marketing', status: 'available', visibilityCondition: { anyPermissions: ['tickets.read'] } },
-      { slug: 'marketing-availability', label: 'Disponibilidade Técnica', href: '/atendimentos/marketing/disponibilidade', status: 'available', visibilityCondition: { anyPermissions: ['tickets.read'] } },
       { slug: 'marketing-task-new', label: 'Nova Tarefa', href: '/atendimentos/marketing/nova-tarefa', status: 'available', visibilityCondition: { anyPermissions: ['tickets.create'] } },
     ],
   },
