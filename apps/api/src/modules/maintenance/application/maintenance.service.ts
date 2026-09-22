@@ -1003,13 +1003,22 @@ export class MaintenanceService implements OnApplicationBootstrap {
         path.join(importRoot(), token + '.sql'),
       );
       const repair = await this.repair(metadata.target);
+      const adminPreserved =
+        metadata.target === 'nivel3'
+          ? await this.ensureSystemAdmin(actorUserId)
+          : false;
       await this.finishOperation(
         operationId,
         'success',
         'Dump ' +
           metadata.originalName +
           ' importado; backup de segurança: ' +
-          safetyBackup.name,
+          safetyBackup.name +
+          (metadata.target === 'nivel3'
+            ? adminPreserved
+              ? '; administrador executor preservado'
+              : '; usuário executor não existe no dump restaurado'
+            : ''),
       );
       await this.removeStagedDump(token);
       return {
@@ -1528,6 +1537,47 @@ export class MaintenanceService implements OnApplicationBootstrap {
     await this.nivel3.$executeRawUnsafe(CREATE_USER_ROLES);
     await this.nivel3.$executeRawUnsafe(CREATE_USER_PERMISSIONS);
     await this.nivel3.$executeRawUnsafe(CREATE_API_SESSIONS);
+  }
+
+  private async ensureSystemAdmin(userId: number): Promise<boolean> {
+    const users = await this.nivel3.$queryRawUnsafe<Array<{ user_id: number }>>(
+      'SELECT user_id FROM usuarios WHERE user_id = ? LIMIT 1',
+      userId,
+    );
+    if (!users[0]) return false;
+
+    await this.nivel3.$executeRawUnsafe(
+      [
+        'INSERT INTO roles (',
+        '  name, slug, description, is_system, created_at, updated_at',
+        ") VALUES ('Administrador global', 'system-admin',",
+        "          'Acesso administrativo global ao Helpdesk nativo.', 1, NOW(), NOW())",
+        'ON DUPLICATE KEY UPDATE',
+        '  name = VALUES(name), description = VALUES(description),',
+        '  is_system = 1, updated_at = NOW()',
+      ].join('\n'),
+    );
+
+    const roles = await this.nivel3.$queryRawUnsafe<Array<{ id: number }>>(
+      "SELECT id FROM roles WHERE slug = 'system-admin' LIMIT 1",
+    );
+    const roleId = Number(roles[0]?.id ?? 0);
+    if (!roleId) {
+      throw new ConflictException(
+        'O dump foi importado, mas não foi possível preservar a role system-admin.',
+      );
+    }
+
+    await this.nivel3.$executeRawUnsafe(
+      [
+        'INSERT INTO user_roles (user_id, role_id, assigned_by)',
+        'VALUES (?, ?, NULL)',
+        'ON DUPLICATE KEY UPDATE role_id = VALUES(role_id)',
+      ].join('\n'),
+      userId,
+      roleId,
+    );
+    return true;
   }
 
   private async ensureNavigation(): Promise<void> {
