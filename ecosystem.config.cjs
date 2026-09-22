@@ -52,6 +52,10 @@ module.exports = {
         DB_CONNECTION_LIMIT: process.env.DB_CONNECTION_LIMIT,
         LEGACY_SESSION_COOKIE: process.env.LEGACY_SESSION_COOKIE,
         LEGACY_SESSION_PATH: process.env.LEGACY_SESSION_PATH,
+        MAINTENANCE_STORAGE_DIR: process.env.MAINTENANCE_STORAGE_DIR,
+        MAINTENANCE_DUMP_MAX_MB: process.env.MAINTENANCE_DUMP_MAX_MB,
+        MARIADB_DUMP_BIN: process.env.MARIADB_DUMP_BIN,
+        MARIADB_CLIENT_BIN: process.env.MARIADB_CLIENT_BIN,
       }),
     },
     {
@@ -100,6 +104,13 @@ module.exports = {
           process.env.TICKET_RECURRENCE_INTERVAL_MS ?? '60000',
         TICKET_RECURRENCE_BATCH_SIZE:
           process.env.TICKET_RECURRENCE_BATCH_SIZE ?? '100',
+        MAINTENANCE_STORAGE_DIR: process.env.MAINTENANCE_STORAGE_DIR,
+        MARIADB_DUMP_BIN: process.env.MARIADB_DUMP_BIN,
+        MARIADB_CLIENT_BIN: process.env.MARIADB_CLIENT_BIN,
+        MAINTENANCE_BACKUP_WORKER_ENABLED:
+          process.env.MAINTENANCE_BACKUP_WORKER_ENABLED ?? 'true',
+        MAINTENANCE_BACKUP_WORKER_INTERVAL_MS:
+          process.env.MAINTENANCE_BACKUP_WORKER_INTERVAL_MS ?? '30000',
       }),
     },
     {
