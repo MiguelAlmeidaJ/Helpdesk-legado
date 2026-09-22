@@ -12,11 +12,11 @@ import {
   type TicketSlaSettings,
   type UpdateTicketSlaSettingsRequest,
 } from '@helpdesk/contracts';
-import { LEGACY_SESSION_SECURITY } from '../../../core/openapi/openapi.constants';
+import { LEGACY_SESSION_SECURITY } from '../../../../core/openapi/openapi.constants';
 import { LegacySessionGuard } from '../../../access/presentation/http/legacy-session.guard';
 import { PermissionsGuard } from '../../../access/presentation/http/permissions.guard';
 import { RequirePermissions } from '../../../access/presentation/http/require-permissions.decorator';
-import { TicketSlaSettingsService } from '../application/ticket-sla-settings.service';
+import { TicketSlaSettingsService } from '../../application/ticket-sla-settings.service';
 
 function parseMinutes(value: unknown, field: string): number {
   if (
