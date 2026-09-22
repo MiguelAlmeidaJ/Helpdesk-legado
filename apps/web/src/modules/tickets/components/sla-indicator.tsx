@@ -24,7 +24,7 @@ function AlertBell({
       {blinking ? (
         <span
           aria-hidden="true"
-          className="absolute inset-1 rounded-full bg-slate-950/20 motion-safe:animate-ping dark:bg-slate-100/25"
+          className="absolute inset-1 rounded-full bg-slate-950/25 motion-safe:animate-ping dark:bg-slate-400/35"
         />
       ) : null}
 
@@ -32,9 +32,9 @@ function AlertBell({
         aria-hidden="true"
         className={[
           'relative z-[1] inline-flex size-8 items-center justify-center rounded-full',
-          'bg-slate-950/10 text-slate-950 ring-2 ring-slate-950/25',
-          'shadow-[0_0_0_3px_rgba(15,23,42,0.08)]',
-          'dark:bg-slate-100/10 dark:text-slate-100 dark:ring-slate-100/30',
+          'bg-white text-slate-950 ring-2 ring-slate-950/30',
+          'shadow-[0_0_0_3px_rgba(15,23,42,0.10)]',
+          'dark:bg-white dark:text-slate-950 dark:ring-white/50',
           blinking ? 'motion-safe:animate-pulse' : '',
           paused ? 'opacity-80' : '',
         ].join(' ')}
