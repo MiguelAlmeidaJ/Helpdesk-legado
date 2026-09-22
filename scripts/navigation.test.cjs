@@ -125,6 +125,7 @@ test('browser URL translation preserves IDs, filters and unrelated paths', () =>
   assert.equal(portugueseWebHref('/reports/tickets/client-daily'), '/relatorios/atendimentos/diario-por-cliente');
   assert.equal(portugueseWebHref('/logistics/finance/statements'), '/extratos');
   assert.equal(portugueseWebHref('/radio'), '/radio');
+  assert.equal(portugueseWebHref('/admin/ticket-sla'), '/administracao/sla-atendimentos');
   for (const unchanged of ['/api/tickets', '/tickets-other', '/atendimentos', 'https://example.com/tickets']) {
     assert.equal(portugueseWebHref(unchanged), unchanged);
   }
@@ -158,6 +159,7 @@ test('all available menu destinations resolve to implemented Next pages', () => 
     'report-tech-daily',
     'radio',
     'statements',
+    'ticket-sla-settings',
   ]) {
     assert.equal(items.find(item => item.slug === slug).status, 'available', slug);
   }
