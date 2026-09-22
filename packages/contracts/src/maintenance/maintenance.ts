@@ -79,6 +79,7 @@ export interface MaintenanceSystemStatusResponse {
     pid: number;
     nodeVersion: string;
     environment: string;
+    timezone: string;
     memoryRssBytes: number;
     heapUsedBytes: number;
   };
@@ -144,5 +145,6 @@ export interface MaintenanceRepairResponse {
   target: MaintenanceDatabaseKey;
   navigationPrepared: boolean;
   maintenancePrepared: boolean;
+  runtimePrepared: boolean;
   missingRequiredTables: string[];
 }
