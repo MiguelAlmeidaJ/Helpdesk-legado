@@ -190,10 +190,10 @@ export class TicketProjectTaskWorkflow {
     if (
       !Number.isSafeInteger(input.progress) ||
       input.progress < 0 ||
-      input.progress > 100
+      input.progress > 99
     ) {
       throw new BadRequestException(
-        'progress deve ser um inteiro entre 0 e 100.',
+        'progress deve ser um inteiro entre 0 e 99. Use Finalizar para concluir a tarefa em 100%.',
       );
     }
 
