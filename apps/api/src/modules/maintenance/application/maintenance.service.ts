@@ -1573,21 +1573,21 @@ export class MaintenanceService implements OnApplicationBootstrap {
       summary.drops += (upper.match(/\bDROP\s+TABLE\b/g) ?? []).length;
 
       const dangerous: Array<[RegExp, string]> = [
-        [/\bDROP\s+DATABASE\b/i, 'DROP DATABASE'],
-        [/\bCREATE\s+DATABASE\b/i, 'CREATE DATABASE'],
-        [/\bCREATE\s+USER\b/i, 'CREATE USER'],
-        [/\bALTER\s+USER\b/i, 'ALTER USER'],
-        [/\bDROP\s+USER\b/i, 'DROP USER'],
-        [/\bGRANT\b/i, 'GRANT'],
-        [/\bREVOKE\b/i, 'REVOKE'],
-        [/\bSET\s+GLOBAL\b/i, 'SET GLOBAL'],
-        [/\bSHUTDOWN\b/i, 'SHUTDOWN'],
-        [/\bINSTALL\s+PLUGIN\b/i, 'INSTALL PLUGIN'],
-        [/\bUNINSTALL\s+PLUGIN\b/i, 'UNINSTALL PLUGIN'],
-        [/\bLOAD\s+DATA\s+LOCAL\s+INFILE\b/i, 'LOAD DATA LOCAL INFILE'],
-        [/\bLOAD_FILE\s*\(/i, 'LOAD_FILE'],
-        [/\bINTO\s+OUTFILE\b/i, 'INTO OUTFILE'],
-        [/\bINTO\s+DUMPFILE\b/i, 'INTO DUMPFILE'],
+        [/^\s*DROP\s+DATABASE\b/im, 'DROP DATABASE'],
+        [/^\s*CREATE\s+DATABASE\b/im, 'CREATE DATABASE'],
+        [/^\s*CREATE\s+USER\b/im, 'CREATE USER'],
+        [/^\s*ALTER\s+USER\b/im, 'ALTER USER'],
+        [/^\s*DROP\s+USER\b/im, 'DROP USER'],
+        [/^\s*GRANT\b/im, 'GRANT'],
+        [/^\s*REVOKE\b/im, 'REVOKE'],
+        [/^\s*SET\s+GLOBAL\b/im, 'SET GLOBAL'],
+        [/^\s*SHUTDOWN\b/im, 'SHUTDOWN'],
+        [/^\s*INSTALL\s+PLUGIN\b/im, 'INSTALL PLUGIN'],
+        [/^\s*UNINSTALL\s+PLUGIN\b/im, 'UNINSTALL PLUGIN'],
+        [/^\s*LOAD\s+DATA\s+LOCAL\s+INFILE\b/im, 'LOAD DATA LOCAL INFILE'],
+        [/^\s*SELECT\b[^;]*\bLOAD_FILE\s*\(/im, 'LOAD_FILE'],
+        [/^\s*SELECT\b[^;]*\bINTO\s+OUTFILE\b/im, 'INTO OUTFILE'],
+        [/^\s*SELECT\b[^;]*\bINTO\s+DUMPFILE\b/im, 'INTO DUMPFILE'],
         [/^\s*SOURCE\s+/im, 'SOURCE'],
         [/^\s*SYSTEM\s+/im, 'SYSTEM'],
         [/^\s*\\!/m, 'comando de shell \\!'],
@@ -1597,7 +1597,7 @@ export class MaintenanceService implements OnApplicationBootstrap {
         if (pattern.test(text)) blocked.add(label);
       }
 
-      for (const match of text.matchAll(/\bUSE\s+\x60?([A-Za-z0-9_$-]+)\x60?\s*;/gi)) {
+      for (const match of text.matchAll(/^\s*USE\s+\x60?([A-Za-z0-9_$-]+)\x60?\s*;/gim)) {
         if (match[1]?.toLowerCase() !== config.database.toLowerCase()) {
           blocked.add('USE para outro banco (' + String(match[1]) + ')');
         }
