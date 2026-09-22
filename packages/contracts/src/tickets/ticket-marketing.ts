@@ -108,39 +108,3 @@ export interface MarketingTicketDetailResponse
   extends MarketingTicketListItem {
   timeline: MarketingTicketTimelineItem[];
 }
-
-
-export type MarketingTechnicianAvailabilityState =
-  | 'available'
-  | 'busy'
-  | 'offline';
-
-export interface MarketingAvailabilityTechnician {
-  id: number;
-  name: string;
-  online: boolean;
-  state: MarketingTechnicianAvailabilityState;
-  executing: MarketingTicketListItem[];
-}
-
-export interface MarketingAvailabilitySummary {
-  scheduled: number;
-  waitingExecution: number;
-  inProgress: number;
-  onHold: number;
-  finishedToday: number;
-  onlineTechnicians: number;
-  availableTechnicians: number;
-  busyTechnicians: number;
-}
-
-export interface MarketingAvailabilityResponse {
-  generatedAt: string;
-  onlineWindowMinutes: 10;
-  summary: MarketingAvailabilitySummary;
-  technicians: MarketingAvailabilityTechnician[];
-  scheduled: MarketingTicketListItem[];
-  waitingExecution: MarketingTicketListItem[];
-  onHold: MarketingTicketListItem[];
-  finishedToday: MarketingTicketListItem[];
-}
