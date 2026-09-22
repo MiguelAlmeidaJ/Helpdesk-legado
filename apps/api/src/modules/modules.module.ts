@@ -3,6 +3,7 @@ import { AccessModule } from './access/access.module';
 import { CatalogModule } from './catalog/catalog.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { LogisticsModule } from './logistics/logistics.module';
+import { MaintenanceModule } from './maintenance/maintenance.module';
 import { NavigationModule } from './navigation/navigation.module';
 import { ReportsModule } from './reports/reports.module';
 import { RegistrationsModule } from './registrations/registrations.module';
@@ -15,6 +16,7 @@ import { UsersModule } from './users/users.module';
     CatalogModule,
     DashboardModule,
     LogisticsModule,
+    MaintenanceModule,
     NavigationModule,
     ReportsModule,
     RegistrationsModule,
