@@ -124,6 +124,13 @@ type DumpMetadata = {
   confirmation: string;
 };
 
+type DumpScanResult = {
+  sha256: string;
+  blocked: string[];
+  warnings: string[];
+  summary: DumpMetadata['summary'];
+};
+
 const CREATE_BACKUP_JOBS = [
   'CREATE TABLE IF NOT EXISTS maintenance_backup_jobs (',
   '  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,',
@@ -816,7 +823,7 @@ export class MaintenanceService implements OnApplicationBootstrap {
       throw new BadRequestException('O dump está vazio.');
     }
 
-    let scan: Awaited<ReturnType<MaintenanceService['scanDump']>>;
+    let scan: DumpScanResult;
     try {
       scan = await this.scanDump(uploaded.path, database);
     } catch (error) {
@@ -944,7 +951,7 @@ export class MaintenanceService implements OnApplicationBootstrap {
   }
 
   private client(key: MaintenanceDatabaseKey): QueryClient {
-    return key === 'nivel3' ? this.nivel3 : this.n3rd;
+    return (key === 'nivel3' ? this.nivel3 : this.n3rd) as unknown as QueryClient;
   }
 
   private async databaseStatus(
@@ -1417,12 +1424,7 @@ export class MaintenanceService implements OnApplicationBootstrap {
   private async scanDump(
     file: string,
     target: MaintenanceDatabaseKey,
-  ): Promise<{
-    sha256: string;
-    blocked: string[];
-    warnings: string[];
-    summary: DumpMetadata['summary'];
-  }> {
+  ): Promise<DumpScanResult> {
     const config = connectionInfo(target);
     const hash = createHash('sha256');
     const blocked = new Set<string>();
