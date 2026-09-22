@@ -218,7 +218,53 @@ export function DevOpsTicketDetailScreen({
                 <DetailItem label="Abertura">{formatDate(ticket.openedAt)}</DetailItem>
                 <DetailItem label="Fechamento">{formatDate(ticket.closedAt)}</DetailItem>
                 <DetailItem label="Última atividade">{formatDate(ticket.lastActivityAt)}</DetailItem>
+                <DetailItem label="Progresso">{ticket.progressPercent}%</DetailItem>
+                <DetailItem label="Dependência">
+                  {ticket.dependencyTaskId > 0 ? (
+                    <Link
+                      className="font-semibold text-app-brand underline decoration-[var(--app-border-strong)] underline-offset-[0.16em] hover:decoration-current"
+                      href={`/atendimentos/devops/${ticket.dependencyTaskId}`}
+                    >
+                      #{ticket.dependencyTaskId} · {ticket.dependencyTaskName || 'Tarefa'}
+                    </Link>
+                  ) : (
+                    'Sem dependência'
+                  )}
+                </DetailItem>
               </dl>
+            </section>
+
+            <section className={CARD_CLASS}>
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <span className="mb-1 block text-xs font-extrabold uppercase tracking-[0.1em] text-app-muted">
+                    Execução
+                  </span>
+                  <h2 className="m-0 text-[1.05rem] font-bold text-app-text">
+                    Progresso da tarefa
+                  </h2>
+                </div>
+                <strong className="text-2xl font-black text-app-brand">
+                  {ticket.progressPercent}%
+                </strong>
+              </div>
+              <div className="mt-3 h-3 overflow-hidden rounded-full bg-app-border">
+                <div
+                  className="h-full rounded-full bg-app-brand transition-all"
+                  style={{ width: `${ticket.progressPercent}%` }}
+                />
+              </div>
+              {ticket.blockedByDependency ? (
+                <div className="mt-4 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2.5 text-sm font-semibold text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/20 dark:text-amber-200">
+                  Bloqueada pela tarefa #{ticket.dependencyTaskId}
+                  {ticket.dependencyTaskName ? ` · ${ticket.dependencyTaskName}` : ''}.
+                  Ela só poderá ser iniciada depois que essa dependência for finalizada.
+                </div>
+              ) : ticket.dependencyTaskId > 0 ? (
+                <div className="mt-4 rounded-lg bg-app-surface-muted px-3 py-2.5 text-sm text-app-muted">
+                  Dependência #{ticket.dependencyTaskId} concluída. A tarefa está liberada para execução.
+                </div>
+              ) : null}
             </section>
 
             <section className={CARD_CLASS}>
