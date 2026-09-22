@@ -1,24 +1,6 @@
-import type {
-  TicketListClerioSla,
-  TicketListQualitySla,
-} from '@helpdesk/contracts';
+import type { TicketListClerioSla } from '@helpdesk/contracts';
 
-function formatSlaTime(seconds: number): string {
-  const overdue = seconds < 0;
-  const absolute = Math.max(0, Math.abs(seconds));
-  const hours = Math.floor(absolute / 3600);
-  const minutes = Math.floor((absolute % 3600) / 60);
-  const parts = [
-    hours > 0 ? `${hours}h` : '',
-    `${minutes}min`,
-  ].filter(Boolean);
-
-  return overdue
-    ? `Estourado há ${parts.join(' ')}`
-    : `${parts.join(' ')} restantes`;
-}
-
-function Bell({
+function AlertBell({
   blinking,
   paused,
 }: {
@@ -27,104 +9,75 @@ function Bell({
 }) {
   return (
     <span
-      className={[
-        'relative inline-flex size-6 shrink-0 items-center justify-center rounded-lg',
-        paused
-          ? 'text-slate-400 dark:text-slate-500'
-          : 'text-slate-950 dark:text-slate-100',
-        blinking ? 'motion-safe:animate-pulse' : '',
-      ].join(' ')}
+      className="relative inline-flex size-9 shrink-0 items-center justify-center"
       aria-label={
         paused
-          ? 'SLA Clerio pausado visualmente durante a espera'
-          : blinking
-            ? 'SLA Clerio estourado'
-            : 'SLA Clerio dentro do prazo'
+          ? 'Alerta de tempo estourado; animação suspensa durante a espera'
+          : 'Alerta de tempo estourado'
+      }
+      title={
+        paused
+          ? 'Tempo estourado · alerta suspenso durante a espera'
+          : 'Tempo estourado'
       }
     >
-      <svg
+      {blinking ? (
+        <span
+          aria-hidden="true"
+          className="absolute inset-1 rounded-full bg-slate-950/20 motion-safe:animate-ping dark:bg-slate-100/25"
+        />
+      ) : null}
+
+      <span
         aria-hidden="true"
-        className="size-4 fill-current"
-        focusable="false"
-        viewBox="0 0 24 24"
+        className={[
+          'relative z-[1] inline-flex size-8 items-center justify-center rounded-full',
+          'bg-slate-950/10 text-slate-950 ring-2 ring-slate-950/25',
+          'shadow-[0_0_0_3px_rgba(15,23,42,0.08)]',
+          'dark:bg-slate-100/10 dark:text-slate-100 dark:ring-slate-100/30',
+          blinking ? 'motion-safe:animate-pulse' : '',
+          paused ? 'opacity-80' : '',
+        ].join(' ')}
       >
-        <path d="M12 22a2.45 2.45 0 0 0 2.4-2h-4.8A2.45 2.45 0 0 0 12 22Zm7-6v-5a7 7 0 0 0-5-6.71V3a2 2 0 1 0-4 0v1.29A7 7 0 0 0 5 11v5l-2 2v1h18v-1l-2-2Z" />
-      </svg>
+        <svg
+          className="size-5 fill-current"
+          focusable="false"
+          viewBox="0 0 24 24"
+        >
+          <path d="M12 22a2.45 2.45 0 0 0 2.4-2h-4.8A2.45 2.45 0 0 0 12 22Zm7-6v-5a7 7 0 0 0-5-6.71V3a2 2 0 1 0-4 0v1.29A7 7 0 0 0 5 11v5l-2 2v1h18v-1l-2-2Z" />
+        </svg>
+
+        {blinking ? (
+          <span className="absolute -right-1 -top-1 inline-flex size-3.5 items-center justify-center rounded-full bg-slate-950 text-[9px] font-black leading-none text-white ring-2 ring-app-surface dark:bg-slate-100 dark:text-slate-950">
+            !
+          </span>
+        ) : null}
+      </span>
     </span>
   );
 }
 
 export function TicketSlaIndicators({
-  quality,
   clerio,
-  inactiveLabel,
 }: {
-  quality: TicketListQualitySla;
   clerio: TicketListClerioSla;
-  inactiveLabel?: string;
 }) {
-  if (inactiveLabel) {
-    return (
-      <div className="grid gap-1 whitespace-nowrap text-[11px] text-app-subtle">
-        <span>Qualidade · {inactiveLabel}</span>
-        <span className="inline-flex items-center gap-1.5">
-          <Bell blinking={false} paused />
-          Clerio · {inactiveLabel}
-        </span>
-      </div>
-    );
+  if (!clerio.breached) {
+    return <span className="sr-only">Sem alerta de tempo</span>;
   }
 
   return (
-    <div className="grid gap-1.5 whitespace-nowrap">
-      <div className="flex items-center gap-2">
-        <span
-          className={[
-            'inline-flex min-w-[24px] items-center justify-center rounded-md px-1.5 py-1 text-[9px] font-black uppercase',
-            quality.breached
-              ? 'bg-red-600 text-white'
-              : 'bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-300',
-          ].join(' ')}
-          title={
-            quality.lastInteractionAt
-              ? `Última interação: ${quality.lastInteractionAt}`
-              : 'Sem interação registrada'
-          }
-        >
-          Q
-        </span>
-        <span className="grid leading-tight">
-          <strong
-            className={
-              quality.breached
-                ? 'text-[11px] text-red-700 dark:text-red-300'
-                : 'text-[11px] text-app-text'
-            }
-          >
-            Qualidade
-          </strong>
-          <small className="text-[10px] text-app-muted">
-            {formatSlaTime(quality.remainingSeconds)}
-          </small>
-        </span>
-      </div>
-
-      <div className="flex items-center gap-2">
-        <Bell blinking={clerio.breached && !clerio.paused} paused={clerio.paused} />
-        <span className="grid leading-tight">
-          <strong className="text-[11px] text-app-text">Clerio</strong>
-          <small className="text-[10px] text-app-muted">
-            {clerio.paused
-              ? 'Em espera · alerta suspenso'
-              : formatSlaTime(clerio.remainingSeconds)}
-          </small>
-        </span>
-      </div>
+    <div className="flex min-w-10 items-center justify-center">
+      <AlertBell
+        blinking={!clerio.paused}
+        paused={clerio.paused}
+      />
     </div>
   );
 }
 
 // Export legado temporário para não quebrar imports externos durante a transição.
 export function SlaIndicator({ bellOrder }: { bellOrder: number }) {
-  return <Bell blinking={bellOrder === 0} paused={false} />;
+  if (bellOrder !== 0) return null;
+  return <AlertBell blinking paused={false} />;
 }
