@@ -32,7 +32,28 @@ export interface TicketListParty {
   name: string | null;
 }
 
+export interface TicketListQualitySla {
+  thresholdMinutes: number;
+  elapsedSeconds: number;
+  remainingSeconds: number;
+  breached: boolean;
+  lastInteractionAt: string | null;
+}
+
+export interface TicketListClerioSla {
+  thresholdMinutes: number;
+  elapsedSeconds: number;
+  remainingSeconds: number;
+  breached: boolean;
+  paused: boolean;
+}
+
 export interface TicketListSla {
+  quality: TicketListQualitySla;
+  clerio: TicketListClerioSla;
+
+  // Mantidos durante a transição para não quebrar consumidores existentes.
+  // remainingSeconds acompanha o SLA Qualidade; bellOrder reflete o Clerio.
   remainingSeconds: number | null;
   order: number;
   bellOrder: number;
@@ -43,6 +64,16 @@ export interface TicketListSla {
     startedAt: string | null;
     scheduledResumeAt: string | null;
   };
+}
+
+export interface TicketSlaSettings {
+  qualityMinutes: number;
+  clerioMinutes: number;
+}
+
+export interface UpdateTicketSlaSettingsRequest {
+  qualityMinutes: number;
+  clerioMinutes: number;
 }
 
 export interface TicketListItem {
