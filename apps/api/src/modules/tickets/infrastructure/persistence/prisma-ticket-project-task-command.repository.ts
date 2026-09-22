@@ -166,6 +166,36 @@ export class PrismaTicketProjectTaskCommandRepository
         input.taskId,
       );
 
+      if (
+        acceptingForSelf &&
+        task.id_projeto !== null &&
+        task.id_projeto > 0
+      ) {
+        const changedProject = await transaction.$executeRawUnsafe(
+          `UPDATE projetos
+           SET status = 2
+           WHERE id = ?
+             AND status = 1`,
+          task.id_projeto,
+        );
+
+        if (changedProject > 0) {
+          await transaction.$executeRawUnsafe(
+            `INSERT INTO inter_projeto (
+               inter_tipo,
+               inter_projeto,
+               inter_user,
+               inter_data,
+               inter_desc
+             )
+             VALUES (2, ?, ?, NOW(), ?)`,
+            task.id_projeto,
+            input.actorUserId,
+            `Projeto iniciado automaticamente pela tarefa #${input.taskId}.`,
+          );
+        }
+      }
+
       await transaction.$executeRawUnsafe(
         `INSERT INTO inter_tarefa (
            inter_tipo,
@@ -629,6 +659,16 @@ export class PrismaTicketProjectTaskCommandRepository
     }
 
     const description = 'Todas as tarefas finalizadas';
+
+    if (project.status === 3) {
+      await transaction.$executeRawUnsafe(
+        `UPDATE espera_projeto
+         SET espera_end = NOW()
+         WHERE espera_projeto = ?
+           AND espera_end IS NULL`,
+        projectId,
+      );
+    }
 
     await transaction.$executeRawUnsafe(
       `UPDATE projetos
