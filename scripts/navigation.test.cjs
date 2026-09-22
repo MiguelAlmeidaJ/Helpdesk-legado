@@ -141,6 +141,7 @@ test('browser URL translation preserves IDs, filters and unrelated paths', () =>
   assert.equal(portugueseWebHref('/logistics/finance/statements'), '/extratos');
   assert.equal(portugueseWebHref('/radio'), '/radio');
   assert.equal(portugueseWebHref('/admin/ticket-sla'), '/administracao/sla-atendimentos');
+  assert.equal(portugueseWebHref('/admin/maintenance'), '/administracao/manutencao');
   assert.equal(portugueseWebHref('/tickets/availability/legacy'), '/atendimentos/disponibilidade/antiga');
   for (const unchanged of ['/api/tickets', '/tickets-other', '/atendimentos', 'https://example.com/tickets']) {
     assert.equal(portugueseWebHref(unchanged), unchanged);
