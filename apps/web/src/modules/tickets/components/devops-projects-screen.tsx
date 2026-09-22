@@ -148,7 +148,7 @@ export function DevOpsProjectsScreen({
           </div>
         }
         meta={<span className="text-sm text-app-muted max-lg:hidden">{totalLabel}</span>}
-        subtitle="Grupos opcionais de tarefas DevOps. Tarefas avulsas continuam fora de projeto."
+        subtitle="Acompanhe projetos pelo progresso real das tarefas vinculadas."
         title="Projetos DevOps"
         user={currentUser}
       />
@@ -280,13 +280,15 @@ export function DevOpsProjectsScreen({
           aria-label="Lista de projetos DevOps"
         >
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[900px] border-collapse">
+            <table className="w-full min-w-[1120px] border-collapse">
               <thead>
                 <tr>
                   <th className={TABLE_HEADER_CLASS}>ID</th>
                   <th className={TABLE_HEADER_CLASS}>Projeto</th>
                   <th className={TABLE_HEADER_CLASS}>Cliente</th>
                   <th className={TABLE_HEADER_CLASS}>Técnico</th>
+                  <th className={TABLE_HEADER_CLASS}>Tarefas</th>
+                  <th className={TABLE_HEADER_CLASS}>Progresso</th>
                   <th className={TABLE_HEADER_CLASS}>Status</th>
                   <th className={TABLE_HEADER_CLASS}>Abertura</th>
                 </tr>
@@ -312,6 +314,30 @@ export function DevOpsProjectsScreen({
                     </td>
                     <td className={TABLE_CELL_CLASS}>{project.client.name || '—'}</td>
                     <td className={TABLE_CELL_CLASS}>{project.technician.name || 'Não atribuído'}</td>
+                    <td className={TABLE_CELL_CLASS}>
+                      <div className="grid min-w-[145px] gap-1 text-xs">
+                        <strong className="text-app-text">
+                          {project.tasks.completed}/{project.tasks.total} concluídas
+                        </strong>
+                        <span className="text-[10px] text-app-muted">
+                          {project.tasks.inProgress} execução · {project.tasks.onHold} espera
+                          {project.tasks.blocked > 0 ? ` · ${project.tasks.blocked} bloqueada(s)` : ''}
+                        </span>
+                      </div>
+                    </td>
+                    <td className={TABLE_CELL_CLASS}>
+                      <div className="grid min-w-[120px] gap-1.5">
+                        <div className="h-2 overflow-hidden rounded-full bg-app-border">
+                          <div
+                            className="h-full rounded-full bg-app-brand transition-all"
+                            style={{ width: `${project.tasks.progressPercent}%` }}
+                          />
+                        </div>
+                        <strong className="text-[11px] text-app-text-soft">
+                          {project.tasks.progressPercent}%
+                        </strong>
+                      </div>
+                    </td>
                     <td className={TABLE_CELL_CLASS}>
                       <span className="inline-flex items-center rounded-full bg-app-surface-muted px-2 py-1 text-xs font-extrabold whitespace-nowrap text-app-text-soft">
                         {project.statusLabel}
