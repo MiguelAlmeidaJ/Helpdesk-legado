@@ -372,7 +372,7 @@ export class TicketProjectTaskWorkflowController {
       type: 'object',
       required: ['progress'],
       properties: {
-        progress: { type: 'integer', minimum: 0, maximum: 100 },
+        progress: { type: 'integer', minimum: 0, maximum: 99 },
       },
     },
   })
