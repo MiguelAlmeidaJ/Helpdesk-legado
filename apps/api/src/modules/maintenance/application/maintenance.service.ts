@@ -26,7 +26,6 @@ import {
 } from '@helpdesk/contracts';
 import {
   synchronizeNavigation,
-  type N3rdDatabaseClient,
   type Nivel3DatabaseClient,
 } from '@helpdesk/database';
 import { createHash, randomUUID } from 'node:crypto';
@@ -48,10 +47,7 @@ import {
   writeFile,
 } from 'node:fs/promises';
 import path from 'node:path';
-import {
-  N3RD_DATABASE,
-  NIVEL3_DATABASE,
-} from '../../../core/database/database.constants';
+import { NIVEL3_DATABASE } from '../../../core/database/database.constants';
 
 type QueryClient = {
   $queryRawUnsafe<T = unknown>(
@@ -439,9 +435,8 @@ function importRoot(): string {
   return path.join(maintenanceStorageRoot(), 'imports');
 }
 
-function databaseUrl(key: MaintenanceDatabaseKey): string {
-  const variable =
-    key === 'nivel3' ? 'NIVEL3_DATABASE_URL' : 'N3RD_DATABASE_URL';
+function databaseUrl(_key: MaintenanceDatabaseKey): string {
+  const variable = 'NIVEL3_DATABASE_URL';
   const value = process.env[variable]?.trim();
   if (!value) throw new Error('Variável ' + variable + ' não configurada.');
   return value;
@@ -461,9 +456,9 @@ function connectionInfo(key: MaintenanceDatabaseKey) {
 }
 
 function backupKeys(
-  target: MaintenanceBackupTarget,
+  _target: MaintenanceBackupTarget,
 ): MaintenanceDatabaseKey[] {
-  return target === 'all' ? ['nivel3', 'n3rd'] : [target];
+  return ['nivel3'];
 }
 
 function backupPrefix(kind: BackupKind): string {
@@ -494,19 +489,17 @@ function backupKind(name: string): MaintenanceBackupFile['kind'] {
 }
 
 function backupDatabase(name: string): MaintenanceDatabaseKey | null {
-  if (/(^|_)nivel3_/.test(name)) return 'nivel3';
-  if (/(^|_)n3rd_/.test(name)) return 'n3rd';
-  return null;
+  return /(^|_)nivel3_/.test(name) ? 'nivel3' : null;
 }
 
 function validateTarget(value: string): MaintenanceBackupTarget {
-  if (value === 'nivel3' || value === 'n3rd' || value === 'all') return value;
-  throw new BadRequestException('Banco alvo inválido.');
+  if (value === 'nivel3') return value;
+  throw new BadRequestException('Banco alvo inválido. O único banco ativo é nivel3.');
 }
 
 function validateDatabase(value: string): MaintenanceDatabaseKey {
-  if (value === 'nivel3' || value === 'n3rd') return value;
-  throw new BadRequestException('Banco alvo inválido.');
+  if (value === 'nivel3') return value;
+  throw new BadRequestException('Banco alvo inválido. O único banco ativo é nivel3.');
 }
 
 function validateJob(input: MaintenanceBackupJobInput): void {
@@ -615,8 +608,6 @@ export class MaintenanceService implements OnApplicationBootstrap {
   constructor(
     @Inject(NIVEL3_DATABASE)
     private readonly nivel3: Nivel3DatabaseClient,
-    @Inject(N3RD_DATABASE)
-    private readonly n3rd: N3rdDatabaseClient,
   ) {}
 
   onApplicationBootstrap(): void {
@@ -634,6 +625,12 @@ export class MaintenanceService implements OnApplicationBootstrap {
         await this.nivel3.$executeRawUnsafe(CREATE_BACKUP_JOBS);
         await this.nivel3.$executeRawUnsafe(CREATE_WORKER_STATE);
         await this.nivel3.$executeRawUnsafe(CREATE_OPERATIONS);
+        await this.nivel3.$executeRawUnsafe(
+          "UPDATE maintenance_backup_jobs SET target = 'nivel3' WHERE target = 'all'",
+        );
+        await this.nivel3.$executeRawUnsafe(
+          "DELETE FROM maintenance_backup_jobs WHERE target = 'n3rd'",
+        );
         await mkdir(backupRoot(), { recursive: true });
         await mkdir(importRoot(), { recursive: true });
       })().catch((error) => {
@@ -650,7 +647,6 @@ export class MaintenanceService implements OnApplicationBootstrap {
 
     const [
       nivel3,
-      n3rd,
       backups,
       jobs,
       operations,
@@ -660,7 +656,6 @@ export class MaintenanceService implements OnApplicationBootstrap {
       restoreClient,
     ] = await Promise.all([
       this.databaseStatus('nivel3'),
-      this.databaseStatus('n3rd'),
       this.listBackups(),
       this.listJobs(),
       this.listOperations(),
@@ -690,7 +685,7 @@ export class MaintenanceService implements OnApplicationBootstrap {
         dumpClient,
         restoreClient,
       },
-      databases: [nivel3, n3rd],
+      databases: [nivel3],
       backups: backups.slice(0, 30),
       jobs,
       operations,
@@ -1113,19 +1108,14 @@ export class MaintenanceService implements OnApplicationBootstrap {
     let maintenancePrepared = false;
     let runtimePrepared = false;
 
-    if (database === 'nivel3') {
-      this.ensurePromise = null;
-      await this.ensureSchema();
-      maintenancePrepared = true;
-      await this.ensureAccessSchema();
-      await this.ensureNativeRuntimeSchema();
-      runtimePrepared = true;
-      await this.ensureNavigation();
-      navigationPrepared = true;
-    } else {
-      await this.n3rd.$queryRawUnsafe('SELECT 1');
-      runtimePrepared = true;
-    }
+    this.ensurePromise = null;
+    await this.ensureSchema();
+    maintenancePrepared = true;
+    await this.ensureAccessSchema();
+    await this.ensureNativeRuntimeSchema();
+    runtimePrepared = true;
+    await this.ensureNavigation();
+    navigationPrepared = true;
 
     const current = await this.databaseStatus(database);
     return {
@@ -1137,8 +1127,8 @@ export class MaintenanceService implements OnApplicationBootstrap {
     };
   }
 
-  private client(key: MaintenanceDatabaseKey): QueryClient {
-    return (key === 'nivel3' ? this.nivel3 : this.n3rd) as unknown as QueryClient;
+  private client(_key: MaintenanceDatabaseKey): QueryClient {
+    return this.nivel3 as unknown as QueryClient;
   }
 
   private async databaseStatus(
@@ -1151,7 +1141,7 @@ export class MaintenanceService implements OnApplicationBootstrap {
     } catch (error) {
       return {
         key,
-        label: key === 'nivel3' ? 'Nivel3' : 'N3RD',
+        label: 'Nivel3',
         status: 'down',
         host: '—',
         port: 0,
@@ -1194,7 +1184,7 @@ export class MaintenanceService implements OnApplicationBootstrap {
       ]);
 
       const existing = new Set(tableRows.map((row) => row.table_name));
-      const required = key === 'nivel3' ? REQUIRED_NIVEL3_TABLES : [];
+      const required = REQUIRED_NIVEL3_TABLES;
       const missingRequiredTables = required.filter(
         (table) => !existing.has(table),
       );
@@ -1202,7 +1192,7 @@ export class MaintenanceService implements OnApplicationBootstrap {
 
       return {
         key,
-        label: key === 'nivel3' ? 'Nivel3' : 'N3RD',
+        label: 'Nivel3',
         status: missingRequiredTables.length > 0 ? 'degraded' : 'up',
         host: info.host,
         port: info.port,
@@ -1217,7 +1207,7 @@ export class MaintenanceService implements OnApplicationBootstrap {
     } catch (error) {
       return {
         key,
-        label: key === 'nivel3' ? 'Nivel3' : 'N3RD',
+        label: 'Nivel3',
         status: 'down',
         host: info.host,
         port: info.port,
