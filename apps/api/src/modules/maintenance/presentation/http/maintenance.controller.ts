@@ -50,13 +50,13 @@ function recordBody(body: unknown): Record<string, unknown> {
 }
 
 function database(value: unknown): MaintenanceDatabaseKey {
-  if (value === 'nivel3' || value === 'n3rd') return value;
-  throw new BadRequestException('Banco alvo inválido.');
+  if (value === 'nivel3') return value;
+  throw new BadRequestException('Banco alvo inválido. O único banco ativo é nivel3.');
 }
 
-function target(value: unknown): 'nivel3' | 'n3rd' | 'all' {
-  if (value === 'nivel3' || value === 'n3rd' || value === 'all') return value;
-  throw new BadRequestException('Alvo de backup inválido.');
+function target(value: unknown): 'nivel3' {
+  if (value === 'nivel3') return value;
+  throw new BadRequestException('Alvo de backup inválido. O único banco ativo é nivel3.');
 }
 
 function jobInput(body: unknown): MaintenanceBackupJobInput {
