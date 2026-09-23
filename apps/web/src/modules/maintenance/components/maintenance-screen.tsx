@@ -473,27 +473,99 @@ export function MaintenanceScreen({
                 </div>
 
                 {openDatabase === database.key ? (
-                  <div className="mt-4 max-h-[360px] overflow-auto rounded-lg border border-app-border">
-                    <table className="w-full min-w-[560px] border-collapse">
-                      <thead>
-                        <tr>
-                          <th className={TABLE_HEAD}>Tabela</th>
-                          <th className={TABLE_HEAD}>Engine</th>
-                          <th className={TABLE_HEAD}>Linhas estimadas</th>
-                          <th className={TABLE_HEAD}>Tamanho</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {(tables[database.key] ?? []).map((table) => (
-                          <tr key={table.name}>
-                            <td className={TABLE_CELL}><strong>{table.name}</strong></td>
-                            <td className={TABLE_CELL}>{table.engine ?? '—'}</td>
-                            <td className={TABLE_CELL}>{table.estimatedRows.toLocaleString('pt-BR')}</td>
-                            <td className={TABLE_CELL}>{bytes(table.totalBytes)}</td>
+                  <div className="mt-4">
+                    <div className="mb-3 grid grid-cols-2 gap-2 text-xs sm:grid-cols-4">
+                      <div className="rounded-lg bg-app-surface-muted px-3 py-2">
+                        <span className="block text-app-muted">Protegidas</span>
+                        <strong className="mt-1 block text-app-text">
+                          {(tables[database.key] ?? []).filter((table) => table.reviewState === 'protected').length}
+                        </strong>
+                      </div>
+                      <div className="rounded-lg bg-app-surface-muted px-3 py-2">
+                        <span className="block text-app-muted">Relacionadas</span>
+                        <strong className="mt-1 block text-app-text">
+                          {(tables[database.key] ?? []).filter((table) => table.reviewState === 'related').length}
+                        </strong>
+                      </div>
+                      <div className="rounded-lg bg-app-surface-muted px-3 py-2">
+                        <span className="block text-app-muted">Revisar</span>
+                        <strong className="mt-1 block text-app-text">
+                          {(tables[database.key] ?? []).filter((table) => table.reviewState === 'review').length}
+                        </strong>
+                      </div>
+                      <div className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 dark:border-amber-900/70 dark:bg-amber-950/20">
+                        <span className="block text-amber-700 dark:text-amber-300">Vazias p/ revisão</span>
+                        <strong className="mt-1 block text-amber-800 dark:text-amber-200">
+                          {(tables[database.key] ?? []).filter((table) => table.reviewState === 'review-empty').length}
+                        </strong>
+                      </div>
+                    </div>
+
+                    <div className="max-h-[520px] overflow-auto rounded-lg border border-app-border">
+                      <table className="w-full min-w-[1050px] border-collapse">
+                        <thead>
+                          <tr>
+                            <th className={TABLE_HEAD}>Tabela</th>
+                            <th className={TABLE_HEAD}>Auditoria</th>
+                            <th className={TABLE_HEAD}>Linhas estimadas</th>
+                            <th className={TABLE_HEAD}>Tamanho</th>
+                            <th className={TABLE_HEAD}>Relações</th>
+                            <th className={TABLE_HEAD}>Última alteração</th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                        </thead>
+                        <tbody>
+                          {(tables[database.key] ?? []).map((table) => {
+                            const reviewLabel =
+                              table.reviewState === 'protected'
+                                ? 'Protegida'
+                                : table.reviewState === 'related'
+                                  ? 'Relacionada'
+                                  : table.reviewState === 'review-empty'
+                                    ? 'Revisar · vazia'
+                                    : 'Revisar';
+                            const reviewClass =
+                              table.reviewState === 'protected'
+                                ? 'border-emerald-300 bg-emerald-50 text-emerald-800 dark:border-emerald-900/70 dark:bg-emerald-950/20 dark:text-emerald-200'
+                                : table.reviewState === 'related'
+                                  ? 'border-blue-300 bg-blue-50 text-blue-800 dark:border-blue-900/70 dark:bg-blue-950/20 dark:text-blue-200'
+                                  : 'border-amber-300 bg-amber-50 text-amber-800 dark:border-amber-900/70 dark:bg-amber-950/20 dark:text-amber-200';
+
+                            return (
+                              <tr key={table.name} title={table.reviewReason}>
+                                <td className={TABLE_CELL}>
+                                  <strong>{table.name}</strong>
+                                  <div className="mt-1 text-[10px] text-app-muted">
+                                    {table.engine ?? '—'}
+                                  </div>
+                                </td>
+                                <td className={TABLE_CELL}>
+                                  <span className={'inline-flex rounded-full border px-2 py-1 text-[10px] font-bold ' + reviewClass}>
+                                    {reviewLabel}
+                                  </span>
+                                  <div className="mt-1 max-w-[300px] text-[10px] leading-4 text-app-muted">
+                                    {table.reviewReason}
+                                  </div>
+                                </td>
+                                <td className={TABLE_CELL}>{table.estimatedRows.toLocaleString('pt-BR')}</td>
+                                <td className={TABLE_CELL}>{bytes(table.totalBytes)}</td>
+                                <td className={TABLE_CELL}>
+                                  <span className="whitespace-nowrap text-xs">
+                                    {table.outgoingForeignKeys} saída · {table.incomingForeignKeys} entrada
+                                  </span>
+                                </td>
+                                <td className={TABLE_CELL}>
+                                  {date(table.updatedAt ?? table.createdAt)}
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    <p className="mb-0 mt-3 text-xs text-app-muted">
+                      “Revisar” não significa “pode excluir”. A limpeza será feita somente depois de validar as tabelas candidatas e gerar um backup completo do Nivel3.
+                    </p>
                   </div>
                 ) : null}
               </div>
