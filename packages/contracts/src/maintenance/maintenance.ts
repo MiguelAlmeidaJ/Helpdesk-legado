@@ -1,5 +1,5 @@
-export type MaintenanceDatabaseKey = 'nivel3' | 'n3rd';
-export type MaintenanceBackupTarget = MaintenanceDatabaseKey | 'all';
+export type MaintenanceDatabaseKey = 'nivel3';
+export type MaintenanceBackupTarget = 'nivel3';
 export type MaintenanceBackupFrequency = 'daily' | 'weekly';
 export type MaintenanceRunStatus = 'idle' | 'running' | 'success' | 'error';
 
