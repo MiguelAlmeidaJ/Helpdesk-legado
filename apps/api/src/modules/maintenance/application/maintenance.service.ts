@@ -1898,7 +1898,9 @@ export class MaintenanceService implements OnApplicationBootstrap {
         path.join(importRoot(), token + '.json'),
         'utf8',
       );
-      return JSON.parse(raw) as DumpMetadata;
+      const metadata = JSON.parse(raw) as DumpMetadata;
+      validateDatabase(metadata.target);
+      return metadata;
     } catch {
       throw new NotFoundException('Dump validado não encontrado.');
     }
