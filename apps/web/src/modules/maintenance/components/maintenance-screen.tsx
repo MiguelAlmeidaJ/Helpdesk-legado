@@ -64,7 +64,7 @@ type JobDraft = {
 };
 
 const INITIAL_JOB: JobDraft = {
-  target: 'all',
+  target: 'nivel3',
   frequency: 'daily',
   time: '02:00',
   weekday: 1,
@@ -134,9 +134,8 @@ function jobInput(draft: JobDraft): MaintenanceBackupJobInput {
   };
 }
 
-function backupTargetLabel(target: MaintenanceBackupTarget): string {
-  if (target === 'all') return 'Nivel3 + N3RD';
-  return target === 'nivel3' ? 'Nivel3' : 'N3RD';
+function backupTargetLabel(_target: MaintenanceBackupTarget): string {
+  return 'Nivel3';
 }
 
 export function MaintenanceScreen({
@@ -148,7 +147,7 @@ export function MaintenanceScreen({
   const [tables, setTables] = useState<Record<string, MaintenanceDatabaseTable[]>>({});
   const [openDatabase, setOpenDatabase] = useState<MaintenanceDatabaseKey | null>(null);
   const [jobDraft, setJobDraft] = useState<JobDraft>(INITIAL_JOB);
-  const [dumpTarget, setDumpTarget] = useState<MaintenanceDatabaseKey>('nivel3');
+  const dumpTarget: MaintenanceDatabaseKey = 'nivel3';
   const [dumpFile, setDumpFile] = useState<File | null>(null);
   const [stagedDump, setStagedDump] = useState<MaintenanceDumpStageResponse | null>(null);
   const [confirmation, setConfirmation] = useState('');
@@ -514,23 +513,20 @@ export function MaintenanceScreen({
           </div>
 
           <div className="mb-4 flex flex-wrap gap-2">
-            {(['nivel3', 'n3rd', 'all'] as MaintenanceBackupTarget[]).map((target) => (
-              <button
-                className={target === 'all' ? PRIMARY_BUTTON_CLASS : BUTTON_CLASS}
-                disabled={Boolean(busy) || !backupToolsReady}
-                key={target}
-                onClick={() =>
-                  void run(
-                    'backup-' + target,
-                    'Backup de ' + backupTargetLabel(target) + ' concluído.',
-                    () => runMaintenanceBackup(target),
-                  )
-                }
-                type="button"
-              >
-                Backup {backupTargetLabel(target)}
-              </button>
-            ))}
+            <button
+              className={PRIMARY_BUTTON_CLASS}
+              disabled={Boolean(busy) || !backupToolsReady}
+              onClick={() =>
+                void run(
+                  'backup-nivel3',
+                  'Backup de Nivel3 concluído.',
+                  () => runMaintenanceBackup('nivel3'),
+                )
+              }
+              type="button"
+            >
+              Backup Nivel3
+            </button>
           </div>
 
           {!backupToolsReady ? (
@@ -607,15 +603,11 @@ export function MaintenanceScreen({
           <form className="mb-5 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-6" onSubmit={submitJob}>
             <label className={LABEL_CLASS}>
               <span>Banco</span>
-              <select
+              <input
                 className={CONTROL_CLASS}
-                onChange={(event) => setJobDraft({ ...jobDraft, target: event.target.value as MaintenanceBackupTarget })}
-                value={jobDraft.target}
-              >
-                <option value="all">Nivel3 + N3RD</option>
-                <option value="nivel3">Nivel3</option>
-                <option value="n3rd">N3RD</option>
-              </select>
+                disabled
+                value="Nivel3"
+              />
             </label>
             <label className={LABEL_CLASS}>
               <span>Frequência</span>
@@ -746,18 +738,11 @@ export function MaintenanceScreen({
           <form className="grid grid-cols-1 gap-3 md:grid-cols-[220px_minmax(0,1fr)_auto]" onSubmit={validateDump}>
             <label className={LABEL_CLASS}>
               <span>Banco alvo</span>
-              <select
+              <input
                 className={CONTROL_CLASS}
-                disabled={Boolean(stagedDump)}
-                onChange={(event) => {
-                  setDumpTarget(event.target.value as MaintenanceDatabaseKey);
-                  setStagedDump(null);
-                }}
-                value={dumpTarget}
-              >
-                <option value="nivel3">Nivel3</option>
-                <option value="n3rd">N3RD</option>
-              </select>
+                disabled
+                value="Nivel3"
+              />
             </label>
             <label className={LABEL_CLASS}>
               <span>Arquivo .sql</span>
