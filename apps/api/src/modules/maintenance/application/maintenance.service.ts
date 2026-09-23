@@ -102,6 +102,10 @@ type TableRow = {
   table_rows: number | bigint | string | null;
   data_length: number | bigint | string | null;
   index_length: number | bigint | string | null;
+  create_time: Date | string | null;
+  update_time: Date | string | null;
+  outgoing_fk_count: number | bigint | string | null;
+  incoming_fk_count: number | bigint | string | null;
 };
 
 type DumpMetadata = {
@@ -394,6 +398,77 @@ const REQUIRED_NIVEL3_TABLES = [
   'maintenance_worker_state',
   'maintenance_operations',
 ] as const;
+
+const PROTECTED_NIVEL3_TABLES = new Set<string>([
+  ...REQUIRED_NIVEL3_TABLES,
+
+  // Acesso, pessoas e cadastros usados pela aplicação nativa.
+  'pessoas',
+  'clientes',
+  'clientes_usuarios',
+  'locais',
+  'categorias',
+  'subcategorias',
+  'itens',
+  'tipo',
+  'configuracao',
+
+  // Atendimentos, projetos e tarefas atuais.
+  'atendimentos',
+  'interatividade',
+  'espera',
+  'concluido',
+  'projetos',
+  'tarefas',
+  'inter_projeto',
+  'inter_tarefa',
+  'espera_projeto',
+  'espera_tarefas',
+  'imagens',
+  'imagens_tarefa',
+
+  // Marketing ainda ativo.
+  'config_mkt',
+  'tarefas_mkt',
+  'inter_tarefa_mkt',
+  'espera_mkt_tarefa',
+
+  // Catálogos e cadastros financeiros.
+  'catalogos',
+  'catalogos_categoria',
+  'cads_bancos',
+  'cads_centro_custo',
+  'cads_class_contab',
+  'cads_forma_pag',
+  'cads_ind_reaju',
+  'cads_tipo_despe',
+  'cads_tipo_servi',
+  'cads_tipo_taxa',
+  'categorias_grupo',
+  'categorias_subgrupo',
+  'categorias_classificacao',
+  'categorias_tipo_documento',
+  'categorias_empresa_centro_custo',
+  'unidade_negocio',
+  'agenciasbancarias',
+
+  // Financeiro e logística.
+  'agenda_veiculos',
+  'veiculos',
+  'running_balance',
+  'category',
+  'type_keys',
+  'contas_receber',
+  'contas_receber_divisao',
+  'recebimentos',
+  'contas_pagar',
+  'recorrencias',
+  'status_contas',
+
+  // Fontes ainda expostas por relatórios/rotinas atuais.
+  'melhorias',
+  'interatividade_melhorias',
+]);
 
 const TOOL_ERROR_LIMIT = 24000;
 const DUMP_STAGE_TTL_MS = 2 * 60 * 60 * 1000;
@@ -700,26 +775,63 @@ export class MaintenanceService implements OnApplicationBootstrap {
     const rows = await client.$queryRawUnsafe<TableRow[]>(
       [
         'SELECT',
-        '  TABLE_NAME AS table_name,',
-        '  ENGINE AS engine,',
-        '  TABLE_ROWS AS table_rows,',
-        '  DATA_LENGTH AS data_length,',
-        '  INDEX_LENGTH AS index_length',
-        'FROM information_schema.TABLES',
-        'WHERE TABLE_SCHEMA = DATABASE()',
-        'ORDER BY TABLE_NAME ASC',
+        '  t.TABLE_NAME AS table_name,',
+        '  t.ENGINE AS engine,',
+        '  t.TABLE_ROWS AS table_rows,',
+        '  t.DATA_LENGTH AS data_length,',
+        '  t.INDEX_LENGTH AS index_length,',
+        '  t.CREATE_TIME AS create_time,',
+        '  t.UPDATE_TIME AS update_time,',
+        '  (SELECT COUNT(*)',
+        '     FROM information_schema.KEY_COLUMN_USAGE k',
+        '    WHERE k.TABLE_SCHEMA = t.TABLE_SCHEMA',
+        '      AND k.TABLE_NAME = t.TABLE_NAME',
+        '      AND k.REFERENCED_TABLE_NAME IS NOT NULL) AS outgoing_fk_count,',
+        '  (SELECT COUNT(*)',
+        '     FROM information_schema.KEY_COLUMN_USAGE k',
+        '    WHERE k.REFERENCED_TABLE_SCHEMA = t.TABLE_SCHEMA',
+        '      AND k.REFERENCED_TABLE_NAME = t.TABLE_NAME) AS incoming_fk_count',
+        'FROM information_schema.TABLES t',
+        "WHERE t.TABLE_SCHEMA = DATABASE() AND t.TABLE_TYPE = 'BASE TABLE'",
+        'ORDER BY t.TABLE_NAME ASC',
       ].join('\n'),
     );
     return rows.map((row) => {
       const dataBytes = numberValue(row.data_length);
       const indexBytes = numberValue(row.index_length);
+      const estimatedRows = numberValue(row.table_rows);
+      const outgoingForeignKeys = numberValue(row.outgoing_fk_count);
+      const incomingForeignKeys = numberValue(row.incoming_fk_count);
+      const protectedTable = PROTECTED_NIVEL3_TABLES.has(row.table_name);
+      const hasRelations = outgoingForeignKeys > 0 || incomingForeignKeys > 0;
+      const reviewState = protectedTable
+        ? 'protected'
+        : hasRelations
+          ? 'related'
+          : estimatedRows === 0
+            ? 'review-empty'
+            : 'review';
+      const reviewReason = protectedTable
+        ? 'Protegida pela aplicação atual.'
+        : hasRelations
+          ? 'Possui relacionamento por chave estrangeira; revisar dependências antes de remover.'
+          : estimatedRows === 0
+            ? 'Sem linhas estimadas e sem chaves estrangeiras. Candidata prioritária para revisão, não para exclusão automática.'
+            : 'Sem proteção automática. Revisar uso no código e no legado antes de excluir.';
+
       return {
         name: row.table_name,
         engine: row.engine,
-        estimatedRows: numberValue(row.table_rows),
+        estimatedRows,
         dataBytes,
         indexBytes,
         totalBytes: dataBytes + indexBytes,
+        createdAt: iso(row.create_time),
+        updatedAt: iso(row.update_time),
+        outgoingForeignKeys,
+        incomingForeignKeys,
+        reviewState,
+        reviewReason,
       };
     });
   }
