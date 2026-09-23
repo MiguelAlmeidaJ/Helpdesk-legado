@@ -16,7 +16,6 @@ apps/api (NestJS :4004)
   |
   +--> packages/database --> nivel3
   |
-  +--> packages/database --> n3rd
 ```
 
 Locally, Docker is used only for MariaDB on `127.0.0.1:3307`. API and Web run on the host and are managed by PM2. On the server, PM2 remains responsible for API/Web and the database URLs point to the MySQL/MariaDB instance used by XAMPP.
@@ -26,7 +25,7 @@ Locally, Docker is used only for MariaDB on `127.0.0.1:3307`. API and Web run on
 - `apps/api`: NestJS modular monolith.
 - `apps/web`: Next.js frontend organized by feature.
 - `packages/contracts`: framework-free HTTP/domain contracts shared by API and Web.
-- `packages/database`: isolated Prisma clients for `nivel3` and `n3rd`.
+- `packages/database`: Prisma client for the active `nivel3` database.
 - `packages/typescript-config`: shared TypeScript compiler settings.
 - Legacy PHP directories remain available until their equivalent module reaches cutover.
 
@@ -94,7 +93,7 @@ docker compose -f compose.yaml -f compose.seed.yaml up -d --wait database
 
 The dump is imported only when the database volume is empty. Normal startup with
 `pnpm docker:up` reuses the existing data and does not require the dump file.
-Without a dump or existing data, normal startup creates empty `nivel3` and `n3rd`
+Without a dump or existing data, normal startup creates an empty `nivel3`
 databases; the application still needs the legacy schema and data to work.
 
 ```bash
@@ -154,7 +153,6 @@ The same code runs under PM2. Only environment variables change:
 
 ```dotenv
 NIVEL3_DATABASE_URL=mysql://user:password@127.0.0.1:3306/nivel3
-N3RD_DATABASE_URL=mysql://user:password@127.0.0.1:3306/n3rd
 ```
 
 Never commit server credentials.
