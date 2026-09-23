@@ -18,6 +18,12 @@ export interface MaintenanceDatabaseStatus {
   error: string | null;
 }
 
+export type MaintenanceTableReviewState =
+  | 'protected'
+  | 'related'
+  | 'review'
+  | 'review-empty';
+
 export interface MaintenanceDatabaseTable {
   name: string;
   engine: string | null;
@@ -25,6 +31,12 @@ export interface MaintenanceDatabaseTable {
   dataBytes: number;
   indexBytes: number;
   totalBytes: number;
+  createdAt: string | null;
+  updatedAt: string | null;
+  outgoingForeignKeys: number;
+  incomingForeignKeys: number;
+  reviewState: MaintenanceTableReviewState;
+  reviewReason: string;
 }
 
 export interface MaintenanceBackupFile {
