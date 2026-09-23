@@ -45,7 +45,6 @@ module.exports = {
         SMTP_PASS: process.env.SMTP_PASS,
         SMTP_FROM: process.env.SMTP_FROM,
         NIVEL3_DATABASE_URL: process.env.NIVEL3_DATABASE_URL,
-        N3RD_DATABASE_URL: process.env.N3RD_DATABASE_URL,
         TICKET_UPLOAD_DIR: process.env.TICKET_UPLOAD_DIR,
         RD_UPLOAD_DIR: process.env.RD_UPLOAD_DIR,
         REPORT_ARCHIVE_DIR: process.env.REPORT_ARCHIVE_DIR,
@@ -71,7 +70,6 @@ module.exports = {
       env: definedEnv({
         NODE_ENV: 'production',
         NIVEL3_DATABASE_URL: process.env.NIVEL3_DATABASE_URL,
-        N3RD_DATABASE_URL: process.env.N3RD_DATABASE_URL,
         DB_CONNECTION_LIMIT: process.env.DB_CONNECTION_LIMIT,
         WEB_PUBLIC_URL: process.env.WEB_PUBLIC_URL,
         SMTP_HOST: process.env.SMTP_HOST,
