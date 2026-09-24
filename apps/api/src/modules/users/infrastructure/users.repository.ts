@@ -153,7 +153,7 @@ export class UsersRepository {
       this.database.$queryRaw<RoleOptionRow[]>`
         SELECT id, name, slug, is_system
         FROM roles
-        ORDER BY is_system DESC, name, id`,
+        ORDER BY sort_order ASC, id ASC`,
     ]);
     const map = (rows: OptionRow[]): UserOption[] =>
       rows.map((row) => ({ id: row.id, name: row.name ?? `#${row.id}` }));
@@ -296,7 +296,7 @@ export class UsersRepository {
        FROM user_roles ur
        INNER JOIN roles r ON r.id = ur.role_id
        WHERE ur.user_id IN (${placeholders})
-       ORDER BY r.is_system DESC, r.name, r.id`,
+       ORDER BY r.sort_order ASC, r.id ASC`,
       ...ids,
     );
     for (const row of rows) {

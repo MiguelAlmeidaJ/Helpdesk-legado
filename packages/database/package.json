@@ -8,6 +8,7 @@
   "scripts": {
     "build": "pnpm --filter @helpdesk/contracts build && pnpm db:generate && tsc -p tsconfig.build.json",
     "access:audit": "pnpm build && node dist/tools/audit-access.js",
+    "access:bootstrap": "pnpm build && node dist/tools/bootstrap-access.js",
     "access:grant-system-admin": "pnpm build && node dist/tools/grant-system-admin.js",
     "navigation:bootstrap": "pnpm build && node dist/tools/bootstrap-navigation.js",
     "db:pull": "pnpm db:pull:nivel3",

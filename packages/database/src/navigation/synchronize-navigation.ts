@@ -42,6 +42,7 @@ export async function synchronizeNavigation(
     'radio',
     'statements',
   ]);
+  const refreshVisibility = new Set(['catalogs', 'catalog-check']);
   const legacyCreateHrefs = new Map<string, Set<string>>([
     ['devops-task-new', new Set(['/atendimentos/novo?type=devops'])],
     ['marketing-task-new', new Set(['/atendimentos/novo?type=marketing'])],
@@ -74,6 +75,9 @@ export async function synchronizeNavigation(
     let status = row.status;
     let condition = row.visibility_condition;
     let label = row.label;
+    if (definition?.visibilityCondition && refreshVisibility.has(row.slug)) {
+      condition = JSON.stringify(definition.visibilityCondition);
+    }
     if (row.slug === 'dashboard' && label === 'Dashboard') label = 'Painel';
     if (row.slug === 'tickets-timeline' && label === 'Timeline') label = 'Linha do tempo';
     if (migrated.has(row.slug) && !href && status === 'planned' && definition?.status === 'available') {
