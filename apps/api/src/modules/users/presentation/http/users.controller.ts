@@ -165,7 +165,7 @@ export class UsersController {
     const { value, input } = baseInput(body);
     if (value.status !== 1 && value.status !== 2) throw new BadRequestException('status deve ser 1 ou 2.');
     const canManageAccess = hasPermission(actor, AppPermission.UsersManageAccess);
-    if (input.roleIds !== undefined && !canManageAccess) {
+    if (input.roleIds !== undefined && !canManageAccess && input.type !== 2) {
       throw new BadRequestException('Sem permissão para alterar acessos.');
     }
     return this.management.update(id, actor.id, { ...input, status: value.status } as UpdateManagedUserRequest, canManageAccess);
