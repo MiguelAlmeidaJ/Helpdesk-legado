@@ -1,8 +1,34 @@
 export type AppNavigationStatus = 'available' | 'planned';
 
+export const NAVIGATION_ICON_NAMES = [
+  'home',
+  'headset',
+  'code',
+  'megaphone',
+  'truck',
+  'chart',
+  'database',
+  'radio',
+  'wallet',
+  'settings',
+  'shield',
+  'users',
+  'menu',
+  'wrench',
+  'clock',
+  'file',
+  'folder',
+  'building',
+  'list',
+  'grid',
+] as const;
+
+export type NavigationIconName = (typeof NAVIGATION_ICON_NAMES)[number];
+
 export interface AppNavigationItem {
   id: string;
   label: string;
+  icon: NavigationIconName | null;
   href?: string;
   status: AppNavigationStatus;
 }
@@ -11,6 +37,7 @@ export interface AppNavigationSection {
   id: string;
   label: string;
   shortLabel: string;
+  icon: NavigationIconName | null;
   items: AppNavigationItem[];
 }
 
@@ -29,6 +56,7 @@ export interface NavigationAdminItem {
   sectionId: number;
   slug: string;
   label: string;
+  icon: NavigationIconName | null;
   href: string | null;
   status: AppNavigationStatus;
   visibilityCondition: NavigationVisibilityCondition | null;
@@ -41,6 +69,7 @@ export interface NavigationAdminSection {
   slug: string;
   label: string;
   shortLabel: string | null;
+  icon: NavigationIconName | null;
   sortOrder: number;
   active: boolean;
   items: NavigationAdminItem[];
@@ -54,6 +83,7 @@ export interface NavigationAdminSectionInput {
   slug: string;
   label: string;
   shortLabel: string | null;
+  icon?: NavigationIconName | null;
   sortOrder: number;
   active: boolean;
 }
@@ -62,6 +92,7 @@ export interface NavigationAdminItemInput {
   sectionId: number;
   slug: string;
   label: string;
+  icon?: NavigationIconName | null;
   href: string | null;
   status: AppNavigationStatus;
   visibilityCondition: NavigationVisibilityCondition | null;
