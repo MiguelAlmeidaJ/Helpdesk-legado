@@ -22,7 +22,7 @@ export const reportScreenStyles = {
   clientSearch:
     'border-0 border-b border-app-border-soft !rounded-none focus:!ring-0 focus:!border-app-border-soft',
   clientPickerActions:
-    'flex flex-wrap items-center justify-between gap-2 border-b border-app-border-soft bg-app-surface-muted px-2.5 py-2 [&_button]:rounded-md [&_button]:border-0 [&_button]:bg-transparent [&_button]:px-2 [&_button]:py-1 [&_button]:text-xs [&_button]:font-bold [&_button]:text-app-brand [&_button:hover]:bg-app-brand-soft disabled:[&_button]:opacity-40',
+    'flex flex-wrap items-center justify-between gap-2 border-b border-app-border-soft bg-app-surface-muted px-2.5 py-2 [&_button]:rounded-md [&_button]:border-0 [&_button]:bg-transparent [&_button]:px-2 [&_button]:py-1 [&_button]:text-xs [&_button]:font-bold [&_button]:text-app-brand [&_button:hover]:bg-app-brand-soft [&_button:disabled]:opacity-40',
   clientList:
     'grid max-h-[178px] overflow-y-auto p-1.5',
   clientOption:
