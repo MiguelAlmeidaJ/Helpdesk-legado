@@ -66,3 +66,20 @@ export interface UpdateManagedUserRequest {
   companyIds?: number[];
   roleIds?: number[];
 }
+
+export interface UserFunctionSummary {
+  id: number;
+  name: string;
+  status: 1 | 2;
+  activeUserCount: number;
+  linkedUserCount: number;
+}
+
+export interface UserFunctionInput {
+  name: string;
+  status: 1 | 2;
+}
+
+export interface UserFunctionMutationResponse {
+  id: number;
+}

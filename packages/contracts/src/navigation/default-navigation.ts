@@ -147,6 +147,13 @@ export const DEFAULT_NAVIGATION: SeedSection[] = [
         visibilityCondition: { anyPermissions: ['system.admin', 'users.manage-access'] },
       },
       {
+        slug: 'user-functions',
+        label: 'Funções de usuários',
+        href: '/administracao/funcoes-usuarios',
+        status: 'available',
+        visibilityCondition: { anyPermissions: ['system.admin', 'users.manage-access'] },
+      },
+      {
         slug: 'navigation-admin',
         label: 'Navegação',
         href: '/administracao/navegacao',

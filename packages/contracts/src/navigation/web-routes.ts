@@ -47,6 +47,7 @@ export const WEB_ROUTE_TRANSLATIONS = [
   ['/users', '/usuarios'],
   ['/dashboard', '/painel'],
   ['/admin/access', '/administracao/permissoes'],
+  ['/admin/user-functions', '/administracao/funcoes-usuarios'],
   ['/admin/maintenance', '/administracao/manutencao'],
   ['/admin/ticket-sla', '/administracao/sla-atendimentos'],
   ['/admin/navigation', '/administracao/navegacao'],
