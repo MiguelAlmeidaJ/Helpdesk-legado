@@ -43,13 +43,13 @@ interface ConflictRow { user_id: number; user_login: string | null; user_mail: s
 interface InsertIdRow { id: bigint | number }
 interface UserRoleRow {
   user_id: number;
-  id: number;
+  id: number | bigint;
   name: string;
   slug: string;
   is_system: boolean | number | bigint;
 }
 interface RoleOptionRow {
-  id: number;
+  id: number | bigint;
   name: string;
   slug: string;
   is_system: boolean | number | bigint;
@@ -159,7 +159,7 @@ export class UsersRepository {
       companies: map(companies),
       pixKeyTypes: map(pixKeyTypes),
       roles: roles.map((role) => ({
-        id: role.id,
+        id: Number(role.id),
         name: role.name,
         slug: role.slug,
         system: Boolean(role.is_system),
@@ -325,7 +325,7 @@ export class UsersRepository {
     for (const row of rows) {
       const entries = result.get(row.user_id) ?? [];
       entries.push({
-        id: row.id,
+        id: Number(row.id),
         name: row.name,
         slug: row.slug,
         system: Boolean(row.is_system),
