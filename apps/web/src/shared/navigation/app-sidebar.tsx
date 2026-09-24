@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { fetchAppNavigation } from './navigation-api';
+import { NavigationIcon } from './navigation-icon';
 import {
   APP_NAVIGATION_SECTIONS,
   APP_NAVIGATION_STANDALONE,
@@ -18,6 +19,7 @@ const FALLBACK_SECTIONS: NavigationSection[] = [
     id: 'primary',
     label: 'Principal',
     shortLabel: 'IN',
+    icon: 'home',
     items: [DASHBOARD_NAVIGATION_ITEM],
   },
   ...APP_NAVIGATION_SECTIONS,
@@ -25,6 +27,7 @@ const FALLBACK_SECTIONS: NavigationSection[] = [
     id: 'standalone',
     label: 'Outros',
     shortLabel: 'OU',
+    icon: 'menu',
     items: APP_NAVIGATION_STANDALONE,
   },
 ];
@@ -50,16 +53,15 @@ function NavigationLink({
   pathname: string;
   onNavigate: () => void;
 }) {
-  const base =
-    'flex min-h-9 items-center justify-between gap-2.5 rounded-lg px-[9px] py-[7px] no-underline';
+  const base = 'group flex min-h-10 items-center gap-2.5 rounded-lg px-2.5 py-2 no-underline transition-colors';
 
   if (item.status === 'planned' || !item.href) {
     return (
-      <span className={`${base} cursor-not-allowed text-app-subtle`} aria-disabled="true">
-        <span className="min-w-0 text-xs">{item.label}</span>
-        <small className="shrink-0 rounded-full bg-app-surface-muted px-[5px] py-0.5 text-[8px] font-black uppercase tracking-[0.03em] text-app-subtle">
-          Em migração
-        </small>
+      <span className={`${base} cursor-not-allowed text-app-subtle opacity-70`} aria-disabled="true">
+        <span className="grid size-7 shrink-0 place-items-center rounded-md bg-app-surface-muted">
+          <NavigationIcon className="size-4" name={item.icon} />
+        </span>
+        <span className="min-w-0 truncate text-xs font-semibold">{item.label}</span>
       </span>
     );
   }
@@ -70,18 +72,20 @@ function NavigationLink({
     <Link
       className={[
         base,
-        'transition-colors',
         active
           ? 'bg-app-brand-soft font-extrabold text-app-brand'
-          : 'text-app-text-soft hover:bg-app-surface-hover',
+          : 'text-app-text-soft hover:bg-app-surface-hover hover:text-app-text',
       ].join(' ')}
       href={item.href}
       onClick={onNavigate}
     >
-      <span className="min-w-0 text-xs">{item.label}</span>
-      <small className="shrink-0 rounded-full bg-app-success-soft px-[5px] py-0.5 text-[8px] font-black uppercase tracking-[0.03em] text-app-success">
-        Disponível
-      </small>
+      <span className={[
+        'grid size-7 shrink-0 place-items-center rounded-md transition-colors',
+        active ? 'bg-app-surface text-app-brand' : 'bg-app-surface-muted text-app-muted group-hover:text-app-text-soft',
+      ].join(' ')}>
+        <NavigationIcon className="size-4" name={item.icon} />
+      </span>
+      <span className="min-w-0 truncate text-xs">{item.label}</span>
     </Link>
   );
 }
@@ -178,7 +182,7 @@ export function AppSidebar() {
         id="app-navigation-sidebar"
       >
         <div className="flex min-h-[70px] items-center justify-between gap-4 border-b border-app-border-soft px-4 py-3.5">
-          <div className="flex min-w-0 items-center gap-3">
+          <div className="flex min-w-0 items-center">
             <Image
               alt="Helpdesk"
               className="h-auto w-[150px] dark:brightness-0 dark:invert"
@@ -187,9 +191,6 @@ export function AppSidebar() {
               src="/branding/helpdesk-logo.png"
               width={1200}
             />
-            <span className="text-[9px] font-black uppercase tracking-[0.11em] text-app-muted">
-              Navegação
-            </span>
           </div>
           <button
             aria-label="Fechar menu"
@@ -231,16 +232,16 @@ export function AppSidebar() {
               }}
               open={openSectionId === section.id}
             >
-              <summary className="grid min-h-11 cursor-pointer list-none grid-cols-[30px_minmax(0,1fr)_auto] items-center gap-[9px] rounded-[9px] px-2 py-1.5 text-app-text-soft transition-colors hover:bg-app-surface-hover">
-                <span className="grid size-[30px] place-items-center rounded-lg bg-app-surface-muted text-[9px] font-black tracking-[0.04em] text-app-muted">
-                  {section.shortLabel}
+              <summary className="grid min-h-11 cursor-pointer list-none grid-cols-[32px_minmax(0,1fr)_auto] items-center gap-[9px] rounded-[9px] px-2 py-1.5 text-app-text-soft transition-colors hover:bg-app-surface-hover">
+                <span className="grid size-8 place-items-center rounded-lg bg-app-surface-muted text-app-muted">
+                  {section.icon ? <NavigationIcon className="size-[17px]" name={section.icon} /> : <span className="text-[9px] font-black tracking-[0.04em]">{section.shortLabel}</span>}
                 </span>
                 <strong className="text-[13px]">{section.label}</strong>
                 <span className="text-[13px] text-app-subtle transition-transform duration-150 group-open:rotate-180 motion-reduce:transition-none">
                   ⌄
                 </span>
               </summary>
-              <div className="mb-2 ml-[39px] mt-[3px] grid gap-[3px]">
+              <div className="mb-2 ml-[41px] mt-[3px] grid gap-[3px]">
                 {section.items.map((item) => (
                   <NavigationLink
                     item={item}
