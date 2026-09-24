@@ -24,6 +24,7 @@ export const WEB_ROUTE_TRANSLATIONS = [
   ['/reports/tickets/analytics', '/relatorios/atendimentos/analitico'],
   ['/reports/tickets/time', '/relatorios/atendimentos/tempo'],
   ['/reports/archive', '/relatorios/arquivos'],
+  ['/logistics/finance/accounts', '/logistica/financeiro/gestao-de-contas'],
   ['/logistics/finance/receivables-accrual', '/logistica/financeiro/contas-a-receber-competencia'],
   ['/logistics/finance/receivables-cashflow', '/logistica/financeiro/contas-a-receber-fluxo'],
   ['/logistics/finance/payables', '/logistica/financeiro/contas-a-pagar'],
