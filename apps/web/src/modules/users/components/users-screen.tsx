@@ -50,7 +50,7 @@ const styles = {
   permissions:
     'mt-[18px] rounded-[10px] border border-app-border p-3.5 [&_legend]:px-1.5 [&_legend]:font-extrabold [&>p]:mt-0 [&>p]:mb-3 [&>p]:text-xs [&>p]:text-app-muted-strong',
   companyPicker:
-    'col-span-2 grid gap-2 rounded-[10px] border border-app-border p-3.5 max-[620px]:col-span-1',
+    'mt-[18px] grid gap-2 rounded-[10px] border border-app-border p-3.5',
   companyPickerHeader:
     'flex flex-wrap items-center justify-between gap-2 [&_span]:text-xs [&_span]:font-extrabold [&_span]:text-app-muted [&_strong]:text-xs [&_strong]:text-app-text-soft',
   companyPickerBox:
@@ -163,7 +163,7 @@ export function UsersScreen({ currentUser }: { currentUser: CurrentUserResponse 
 
   async function selectUser(id: number) {
     setError(null); setSuccess(null); setLoading(true);
-    try { const user = await fetchUser(id); setSelectedId(id); setForm(fromUser(user)); }
+    try { const user = await fetchUser(id); setSelectedId(id); setForm(fromUser(user)); setCompanyQuery(''); }
     catch (reason) { setError(message(reason)); }
     finally { setLoading(false); }
   }
@@ -241,7 +241,8 @@ export function UsersScreen({ currentUser }: { currentUser: CurrentUserResponse 
                   <label><span>Link</span><input disabled={saving || (!!selectedId && !canEdit)} maxLength={50} onChange={(event) => setForm({ ...form, link: event.target.value })} value={form.link} /></label>
                   <label><span>Tipo de chave Pix</span><select disabled={saving || (!!selectedId && !canEdit)} onChange={(event) => setForm({ ...form, pixKeyType: event.target.value })} value={form.pixKeyType}><option value="">Nenhum</option>{catalogs?.pixKeyTypes.map((option) => <option key={option.id} value={option.id}>{option.name}</option>)}</select></label>
                   <label><span>Chave Pix</span><input disabled={saving || (!!selectedId && !canEdit)} maxLength={255} onChange={(event) => setForm({ ...form, pixKey: event.target.value })} value={form.pixKey} /></label>
-                  <fieldset className={styles.companyPicker}>
+                </div>
+                <fieldset className={styles.companyPicker}>
                     <div className={styles.companyPickerHeader}><span>Empresas vinculadas</span><strong>{form.companyIds.length} selecionada(s)</strong></div>
                     <div className={styles.companyPickerBox}>
                       <input className={styles.companySearch} disabled={saving || (!!selectedId && !canEdit)} onChange={(event) => setCompanyQuery(event.target.value)} placeholder="Buscar empresa..." type="search" value={companyQuery} />
@@ -257,7 +258,6 @@ export function UsersScreen({ currentUser }: { currentUser: CurrentUserResponse 
                       </div>
                     </div>
                   </fieldset>
-                </div>
                 {canManageAccess ? <fieldset className={styles.permissions}><legend>Tipos de usuário</legend><p>Selecione os perfis que este usuário receberá. Cada perfil aplica automaticamente o conjunto de permissões configurado em Administração → Permissões.</p><div className={styles.roleGrid}>{catalogs?.roles.map((role) => { const checked = form.roleIds.includes(role.id); return <label className={styles.roleOption} key={role.id}><input checked={checked} disabled={saving || (!!selectedId && !canEdit)} onChange={() => setForm((current) => ({ ...current, roleIds: checked ? current.roleIds.filter((id) => id !== role.id) : [...current.roleIds, role.id] }))} type="checkbox" /><span><strong>{role.name}</strong><small>{role.system ? 'Perfil interno do sistema' : role.slug}</small></span></label>; })}</div></fieldset> : null}
                 {(selectedId ? canEdit : canCreate) ? <div className={styles.actions}>{selectedId && form.status === 1 ? <button className={styles.button} disabled={saving || selectedId === currentUser.id || selectedId === 1} onClick={() => void deactivate()} type="button">Desativar</button> : null}<button className={styles.buttonPrimary} disabled={saving} type="submit">{saving ? 'Salvando…' : 'Salvar usuário'}</button></div> : null}
               </form>
