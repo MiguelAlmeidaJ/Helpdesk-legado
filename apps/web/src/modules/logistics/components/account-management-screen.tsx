@@ -24,6 +24,21 @@ type DashboardData = {
   accrual: FinanceListResponse;
   cashflow: FinanceListResponse;
   payables: FinanceListResponse;
+  statements: FinanceListResponse;
+};
+
+type ChartPoint = {
+  key: string;
+  label: string;
+  inflow: number;
+  outflow: number;
+  receivable: number;
+  payable: number;
+};
+
+type RankedParty = {
+  name: string;
+  value: number;
 };
 
 function isoToday(): string {
@@ -66,6 +81,288 @@ function dueRows(data: DashboardData): FinanceRow[] {
     .filter((row) => (row.balance ?? 0) > 0 && row.dueDate)
     .sort((left, right) => String(left.dueDate).localeCompare(String(right.dueDate)))
     .slice(0, 10);
+}
+
+function compactMoney(value: number): string {
+  return new Intl.NumberFormat('pt-BR', {
+    notation: 'compact',
+    maximumFractionDigits: 1,
+  }).format(value);
+}
+
+function dateMs(value: string): number {
+  return new Date(value.slice(0, 10) + 'T12:00:00').getTime();
+}
+
+function bucketFor(
+  value: string,
+  startDate: string,
+  endDate: string,
+): { key: string; label: string } {
+  const start = dateMs(startDate);
+  const end = dateMs(endDate);
+  const current = dateMs(value);
+  const days = Math.max(1, Math.round((end - start) / 86400000) + 1);
+
+  if (days <= 45) {
+    return {
+      key: value.slice(0, 10),
+      label: dateLabel(value).slice(0, 5),
+    };
+  }
+
+  if (days <= 180) {
+    const week = Math.max(0, Math.floor((current - start) / (86400000 * 7)));
+    const bucketDate = new Date(start + week * 7 * 86400000);
+    const key = bucketDate.toISOString().slice(0, 10);
+    return {
+      key,
+      label: dateLabel(key).slice(0, 5),
+    };
+  }
+
+  const key = value.slice(0, 7);
+  const [year, month] = key.split('-').map(Number);
+  const label = new Intl.DateTimeFormat('pt-BR', {
+    month: 'short',
+    year: '2-digit',
+  })
+    .format(new Date(year, month - 1, 1))
+    .replace('.', '');
+
+  return { key, label };
+}
+
+function chartSeries(data: DashboardData): ChartPoint[] {
+  const startDate = data.accrual.period.startDate;
+  const endDate = data.accrual.period.endDate;
+  const buckets = new Map<string, ChartPoint>();
+
+  function point(value: string): ChartPoint {
+    const bucket = bucketFor(value, startDate, endDate);
+    const existing = buckets.get(bucket.key);
+    if (existing) return existing;
+    const created: ChartPoint = {
+      key: bucket.key,
+      label: bucket.label,
+      inflow: 0,
+      outflow: 0,
+      receivable: 0,
+      payable: 0,
+    };
+    buckets.set(bucket.key, created);
+    return created;
+  }
+
+  for (const row of data.statements.rows) {
+    if (!row.date) continue;
+    const target = point(row.date);
+    if (row.amount >= 0) target.inflow += row.amount;
+    else target.outflow += Math.abs(row.amount);
+  }
+
+  for (const row of data.accrual.rows) {
+    if (!row.dueDate || (row.balance ?? 0) <= 0) continue;
+    point(row.dueDate).receivable += row.balance ?? 0;
+  }
+
+  for (const row of data.payables.rows) {
+    if (!row.dueDate || (row.balance ?? 0) <= 0) continue;
+    point(row.dueDate).payable += row.balance ?? 0;
+  }
+
+  return [...buckets.values()].sort((left, right) => left.key.localeCompare(right.key));
+}
+
+function topReceivableParties(rows: FinanceRow[]): RankedParty[] {
+  const values = new Map<string, number>();
+
+  for (const row of rows) {
+    const balance = row.balance ?? 0;
+    if (balance <= 0) continue;
+    const name = row.party.trim() || 'Cliente não informado';
+    values.set(name, (values.get(name) ?? 0) + balance);
+  }
+
+  return [...values.entries()]
+    .map(([name, value]) => ({ name, value }))
+    .sort((left, right) => right.value - left.value)
+    .slice(0, 6);
+}
+
+function chartLabelIndexes(length: number): Set<number> {
+  if (length <= 8) return new Set(Array.from({ length }, (_, index) => index));
+  const step = Math.max(1, Math.ceil(length / 6));
+  const indexes = new Set<number>();
+  for (let index = 0; index < length; index += step) indexes.add(index);
+  indexes.add(length - 1);
+  return indexes;
+}
+
+function RealizedCashFlowChart({ points }: { points: ChartPoint[] }) {
+  const width = 760;
+  const height = 270;
+  const left = 54;
+  const right = 18;
+  const top = 22;
+  const bottom = 42;
+  const plotWidth = width - left - right;
+  const plotHeight = height - top - bottom;
+  const maxValue = Math.max(
+    1,
+    ...points.flatMap((point) => [point.inflow, point.outflow]),
+  );
+  const x = (index: number) =>
+    left + (points.length <= 1 ? plotWidth / 2 : (index / (points.length - 1)) * plotWidth);
+  const y = (value: number) => top + plotHeight - (value / maxValue) * plotHeight;
+  const labels = chartLabelIndexes(points.length);
+  const path = (field: 'inflow' | 'outflow') =>
+    points
+      .map((point, index) => {
+        const command = index === 0 ? 'M' : 'L';
+        return command + ' ' + x(index).toFixed(1) + ' ' + y(point[field]).toFixed(1);
+      })
+      .join(' ');
+
+  if (points.length === 0) {
+    return <div className="grid min-h-[260px] place-items-center text-sm text-app-muted">Sem movimentações realizadas no período.</div>;
+  }
+
+  return <div className="overflow-hidden">
+    <div className="mb-3 flex flex-wrap items-center gap-4 text-xs font-bold">
+      <span className="inline-flex items-center gap-2 text-app-text-soft"><i className="size-2.5 rounded-full bg-emerald-500" />Entradas</span>
+      <span className="inline-flex items-center gap-2 text-app-text-soft"><i className="size-2.5 rounded-full bg-rose-500" />Saídas</span>
+    </div>
+    <svg aria-label="Fluxo financeiro realizado" className="h-auto w-full overflow-visible" role="img" viewBox={'0 0 ' + width + ' ' + height}>
+      {[0, 0.25, 0.5, 0.75, 1].map((ratio) => {
+        const value = maxValue * ratio;
+        const py = y(value);
+        return <g key={ratio}>
+          <line className="stroke-app-border-soft" x1={left} x2={width - right} y1={py} y2={py} />
+          <text className="fill-app-subtle text-[10px]" textAnchor="end" x={left - 8} y={py + 3}>{compactMoney(value)}</text>
+        </g>;
+      })}
+      {points.map((point, index) => labels.has(index) ? (
+        <text className="fill-app-subtle text-[10px]" key={point.key} textAnchor="middle" x={x(index)} y={height - 12}>{point.label}</text>
+      ) : null)}
+      <path d={path('inflow')} fill="none" stroke="#10b981" strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" />
+      <path d={path('outflow')} fill="none" stroke="#f43f5e" strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" />
+      {points.map((point, index) => <g key={'cash-' + point.key}>
+        <circle cx={x(index)} cy={y(point.inflow)} fill="#10b981" r="3"><title>{point.label + ' · Entradas: ' + money(point.inflow)}</title></circle>
+        <circle cx={x(index)} cy={y(point.outflow)} fill="#f43f5e" r="3"><title>{point.label + ' · Saídas: ' + money(point.outflow)}</title></circle>
+      </g>)}
+    </svg>
+  </div>;
+}
+
+function OpenPortfolioChart({ points }: { points: ChartPoint[] }) {
+  const values = points.filter((point) => point.receivable > 0 || point.payable > 0);
+  const width = 760;
+  const height = 270;
+  const left = 54;
+  const right = 18;
+  const top = 22;
+  const bottom = 42;
+  const plotWidth = width - left - right;
+  const plotHeight = height - top - bottom;
+  const maxValue = Math.max(
+    1,
+    ...values.flatMap((point) => [point.receivable, point.payable]),
+  );
+  const groupWidth = values.length ? plotWidth / values.length : plotWidth;
+  const barWidth = Math.min(22, Math.max(6, groupWidth * 0.3));
+  const labels = chartLabelIndexes(values.length);
+  const y = (value: number) => top + plotHeight - (value / maxValue) * plotHeight;
+
+  if (values.length === 0) {
+    return <div className="grid min-h-[260px] place-items-center text-sm text-app-muted">Nenhuma conta em aberto no período.</div>;
+  }
+
+  return <div className="overflow-hidden">
+    <div className="mb-3 flex flex-wrap items-center gap-4 text-xs font-bold">
+      <span className="inline-flex items-center gap-2 text-app-text-soft"><i className="size-2.5 rounded-sm bg-sky-500" />A receber</span>
+      <span className="inline-flex items-center gap-2 text-app-text-soft"><i className="size-2.5 rounded-sm bg-amber-500" />A pagar</span>
+    </div>
+    <svg aria-label="Carteira em aberto por vencimento" className="h-auto w-full overflow-visible" role="img" viewBox={'0 0 ' + width + ' ' + height}>
+      {[0, 0.25, 0.5, 0.75, 1].map((ratio) => {
+        const value = maxValue * ratio;
+        const py = y(value);
+        return <g key={ratio}>
+          <line className="stroke-app-border-soft" x1={left} x2={width - right} y1={py} y2={py} />
+          <text className="fill-app-subtle text-[10px]" textAnchor="end" x={left - 8} y={py + 3}>{compactMoney(value)}</text>
+        </g>;
+      })}
+      {values.map((point, index) => {
+        const center = left + groupWidth * index + groupWidth / 2;
+        const receiveY = y(point.receivable);
+        const payY = y(point.payable);
+        return <g key={'open-' + point.key}>
+          <rect fill="#0ea5e9" height={top + plotHeight - receiveY} rx="3" width={barWidth} x={center - barWidth - 2} y={receiveY}>
+            <title>{point.label + ' · A receber: ' + money(point.receivable)}</title>
+          </rect>
+          <rect fill="#f59e0b" height={top + plotHeight - payY} rx="3" width={barWidth} x={center + 2} y={payY}>
+            <title>{point.label + ' · A pagar: ' + money(point.payable)}</title>
+          </rect>
+          {labels.has(index) ? <text className="fill-app-subtle text-[10px]" textAnchor="middle" x={center} y={height - 12}>{point.label}</text> : null}
+        </g>;
+      })}
+    </svg>
+  </div>;
+}
+
+function PortfolioBalanceChart({
+  receivable,
+  payable,
+}: {
+  receivable: number;
+  payable: number;
+}) {
+  const total = receivable + payable;
+  const receivePercent = total > 0 ? (receivable / total) * 100 : 50;
+  const projected = receivable - payable;
+
+  return <div className="grid h-full content-center gap-5">
+    <div className="mx-auto grid size-[190px] place-items-center rounded-full p-[18px]" style={{
+      background: total > 0
+        ? 'conic-gradient(#0ea5e9 0 ' + receivePercent + '%, #f59e0b ' + receivePercent + '% 100%)'
+        : 'var(--app-surface-muted)',
+    }}>
+      <div className="grid size-full place-items-center rounded-full bg-app-surface text-center shadow-inner">
+        <span className="grid gap-1 px-3">
+          <small className="text-[10px] font-extrabold uppercase tracking-wide text-app-muted">Saldo projetado</small>
+          <strong className={projected >= 0 ? 'text-base text-emerald-700 dark:text-emerald-300' : 'text-base text-rose-700 dark:text-rose-300'}>{money(projected)}</strong>
+        </span>
+      </div>
+    </div>
+    <div className="grid gap-2 text-sm">
+      <div className="flex items-center justify-between gap-3"><span className="inline-flex items-center gap-2 text-app-muted"><i className="size-2.5 rounded-sm bg-sky-500" />A receber</span><strong>{money(receivable)}</strong></div>
+      <div className="flex items-center justify-between gap-3"><span className="inline-flex items-center gap-2 text-app-muted"><i className="size-2.5 rounded-sm bg-amber-500" />A pagar</span><strong>{money(payable)}</strong></div>
+    </div>
+  </div>;
+}
+
+function TopClientsChart({ rows }: { rows: FinanceRow[] }) {
+  const parties = topReceivableParties(rows);
+  const maxValue = Math.max(1, ...parties.map((party) => party.value));
+
+  if (parties.length === 0) {
+    return <div className="grid min-h-[240px] place-items-center text-sm text-app-muted">Nenhum saldo de cliente em aberto.</div>;
+  }
+
+  return <div className="grid gap-3">
+    {parties.map((party, index) => {
+      const width = Math.max(3, (party.value / maxValue) * 100);
+      return <div className="grid gap-1.5" key={party.name}>
+        <div className="flex items-center justify-between gap-3 text-xs">
+          <span className="min-w-0 truncate font-semibold text-app-text-soft"><b className="mr-1.5 text-app-subtle">{index + 1}.</b>{party.name}</span>
+          <strong className="shrink-0">{money(party.value)}</strong>
+        </div>
+        <div className="h-2 overflow-hidden rounded-full bg-app-surface-muted">
+          <div className="h-full rounded-full bg-app-brand" style={{ width: width + '%' }} />
+        </div>
+      </div>;
+    })}
+  </div>;
 }
 
 function StatCard({
@@ -151,12 +448,13 @@ export function AccountManagementScreen({
     setError('');
     try {
       const filters = period;
-      const [accrual, cashflow, payables] = await Promise.all([
+      const [accrual, cashflow, payables, statements] = await Promise.all([
         fetchFinanceView('receivables-accrual', filters, signal),
         fetchFinanceView('receivables-cashflow', filters, signal),
         fetchFinanceView('payables', filters, signal),
+        fetchFinanceView('statements', filters, signal),
       ]);
-      setData({ accrual, cashflow, payables });
+      setData({ accrual, cashflow, payables, statements });
     } catch (reason) {
       if (reason instanceof Error && reason.name === 'AbortError') return;
       setError(errorMessage(reason));
@@ -181,6 +479,10 @@ export function AccountManagementScreen({
       received,
       openPayables,
       projected: openReceivables - openPayables,
+      realizedInflow: data.statements.summary.inflow,
+      realizedOutflow: data.statements.summary.outflow,
+      realizedBalance: data.statements.summary.balance,
+      charts: chartSeries(data),
       due: dueRows(data),
     };
   }, [data]);
@@ -227,6 +529,48 @@ export function AccountManagementScreen({
           <StatCard label="Recebido no período" value={money(metrics.received)} detail="Entradas efetivamente recebidas no intervalo." tone="positive" />
           <StatCard label="A pagar em aberto" value={money(metrics.openPayables)} detail="Compromissos ainda não baixados no período." tone="negative" />
           <StatCard label="Saldo projetado" value={money(metrics.projected)} detail="A receber em aberto menos contas a pagar em aberto." tone={metrics.projected >= 0 ? 'positive' : 'negative'} />
+        </section>
+
+
+        <section className="grid grid-cols-[minmax(0,1.65fr)_minmax(280px,0.7fr)] gap-3 max-[1050px]:grid-cols-1">
+          <article className="rounded-xl border border-app-border bg-app-surface p-4 shadow-sm shadow-slate-950/5 dark:shadow-black/10">
+            <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <h2 className="m-0 text-base font-extrabold">Fluxo realizado</h2>
+                <p className="m-0 mt-1 text-xs text-app-muted">Entradas e saídas efetivamente movimentadas no período selecionado.</p>
+              </div>
+              <span className={metrics.realizedBalance >= 0 ? 'rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-extrabold text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300' : 'rounded-full bg-rose-50 px-2.5 py-1 text-xs font-extrabold text-rose-700 dark:bg-rose-950/40 dark:text-rose-300'}>
+                {'Saldo ' + money(metrics.realizedBalance)}
+              </span>
+            </div>
+            <RealizedCashFlowChart points={metrics.charts} />
+          </article>
+
+          <article className="rounded-xl border border-app-border bg-app-surface p-4 shadow-sm shadow-slate-950/5 dark:shadow-black/10">
+            <div className="mb-4">
+              <h2 className="m-0 text-base font-extrabold">Posição em aberto</h2>
+              <p className="m-0 mt-1 text-xs text-app-muted">Peso da carteira a receber e dos compromissos a pagar.</p>
+            </div>
+            <PortfolioBalanceChart payable={metrics.openPayables} receivable={metrics.openReceivables} />
+          </article>
+        </section>
+
+        <section className="grid grid-cols-[minmax(0,1.5fr)_minmax(300px,0.75fr)] gap-3 max-[1050px]:grid-cols-1">
+          <article className="rounded-xl border border-app-border bg-app-surface p-4 shadow-sm shadow-slate-950/5 dark:shadow-black/10">
+            <div className="mb-4">
+              <h2 className="m-0 text-base font-extrabold">Carteira por vencimento</h2>
+              <p className="m-0 mt-1 text-xs text-app-muted">Comparativo dos saldos em aberto de contas a receber e contas a pagar.</p>
+            </div>
+            <OpenPortfolioChart points={metrics.charts} />
+          </article>
+
+          <article className="rounded-xl border border-app-border bg-app-surface p-4 shadow-sm shadow-slate-950/5 dark:shadow-black/10">
+            <div className="mb-4">
+              <h2 className="m-0 text-base font-extrabold">Maiores saldos a receber</h2>
+              <p className="m-0 mt-1 text-xs text-app-muted">Clientes com maior valor ainda em aberto no período.</p>
+            </div>
+            <TopClientsChart rows={data.accrual.rows} />
+          </article>
         </section>
 
         <section>
