@@ -70,4 +70,6 @@ export abstract class CatalogRepository {
     id: number,
     input: CatalogWriteRecordInput,
   ): Promise<CatalogRecord>;
+
+  abstract archive(id: number): Promise<void>;
 }

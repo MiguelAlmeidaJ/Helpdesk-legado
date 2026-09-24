@@ -95,3 +95,7 @@ export function updateCatalog(
     body: JSON.stringify(input),
   });
 }
+
+export async function archiveCatalog(id: number): Promise<void> {
+  await apiRequest<null>(`catalog/${id}/archive`, { method: 'PATCH' });
+}

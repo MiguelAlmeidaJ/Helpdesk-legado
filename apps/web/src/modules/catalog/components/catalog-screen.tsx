@@ -15,6 +15,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { ApiError } from '../../../shared/api/api-client';
 import { AppPageHeader } from '../../../shared/navigation/app-page-header';
 import {
+  archiveCatalog,
   createCatalog,
   fetchCatalog,
   fetchCatalogFilters,
@@ -72,6 +73,7 @@ const styles = {
     `grid grid-cols-1 gap-3.5 p-5 md:grid-cols-3 [&_label]:grid [&_label]:gap-1.5 [&_label]:text-[13px] [&_label]:font-semibold [&_small]:font-normal [&_small]:text-app-muted ${CONTROL_CLASS} [&_textarea]:min-h-[320px] [&_textarea]:w-full [&_textarea]:resize-y [&_textarea]:rounded-[9px] [&_textarea]:border [&_textarea]:border-app-border-strong [&_textarea]:bg-app-surface [&_textarea]:px-[11px] [&_textarea]:py-[9px] [&_textarea]:font-mono [&_textarea]:text-[13px] [&_textarea]:leading-[1.5] [&_textarea]:text-app-text [&_textarea]:outline-none [&_textarea]:transition [&_textarea:focus]:border-app-brand [&_textarea:focus]:ring-3 [&_textarea:focus]:ring-[var(--app-brand-ring)] [&_input:disabled]:cursor-not-allowed [&_input:disabled]:opacity-50 [&_select:disabled]:cursor-not-allowed [&_select:disabled]:opacity-50 [&_textarea:disabled]:cursor-not-allowed [&_textarea:disabled]:opacity-50`,
   wide: 'md:col-span-3',
   editorActions: 'flex justify-end gap-2 px-5 pb-5 max-sm:[&>*]:w-full',
+  detailActions: 'flex flex-wrap justify-end gap-2 max-sm:w-full max-sm:[&>*]:flex-1',
   placeholder:
     'grid min-h-[480px] place-content-center px-5 py-7 text-center text-app-muted [&_h2]:mt-[3px] [&_h2]:mb-0 [&_h2]:text-xl [&_p]:max-w-[420px]',
   empty: 'm-0 px-5 py-7 text-app-muted',
@@ -128,10 +130,11 @@ function hasPermission(user: CurrentUserResponse, permission: AppPermission): bo
   );
 }
 
-function canManageSector(user: CurrentUserResponse, sector: CatalogSector): boolean {
+function canEditSector(user: CurrentUserResponse, sector: CatalogSector): boolean {
+  if (hasPermission(user, AppPermission.CatalogManage)) return true;
   return hasPermission(
     user,
-    sector === 1 ? AppPermission.CatalogTiManage : AppPermission.CatalogDevOpsManage,
+    sector === 1 ? AppPermission.CatalogTiEdit : AppPermission.CatalogDevOpsEdit,
   );
 }
 
@@ -174,7 +177,7 @@ export function CatalogScreen({ currentUser }: { currentUser: CurrentUserRespons
   const [success, setSuccess] = useState<string | null>(null);
 
   const manageableSectors = useMemo(
-    () => (filters?.allowedSectors ?? []).filter((sector) => canManageSector(currentUser, sector)),
+    () => (filters?.allowedSectors ?? []).filter((sector) => canEditSector(currentUser, sector)),
     [currentUser, filters],
   );
 
@@ -239,7 +242,7 @@ export function CatalogScreen({ currentUser }: { currentUser: CurrentUserRespons
   }
 
   function startEdit() {
-    if (!detail || !canManageSector(currentUser, detail.sector)) return;
+    if (!detail || !canEditSector(currentUser, detail.sector)) return;
     setError(null);
     setSuccess(null);
     setForm(formFromDetail(detail));
@@ -288,6 +291,34 @@ export function CatalogScreen({ currentUser }: { currentUser: CurrentUserRespons
     }
   }
 
+  async function archiveSelected() {
+    if (!detail || !hasPermission(currentUser, AppPermission.CatalogManage)) return;
+    if (!window.confirm(`Arquivar o catálogo "${detail.title}"? Ele deixará de aparecer nas consultas e nos atendimentos.`)) return;
+
+    setSaving(true);
+    setError(null);
+    setSuccess(null);
+    try {
+      await archiveCatalog(detail.id);
+      setDetail(null);
+      setForm(null);
+      setOffset(0);
+      setResult(await fetchCatalogs({
+        search: appliedFilters.search || undefined,
+        sector: appliedFilters.sector || undefined,
+        categoryId: appliedFilters.categoryId ? Number(appliedFilters.categoryId) : undefined,
+        clientId: appliedFilters.clientId ? Number(appliedFilters.clientId) : undefined,
+        offset: 0,
+        limit: PAGE_SIZE,
+      }));
+      setSuccess('Catálogo arquivado com sucesso.');
+    } catch (reason) {
+      setError(apiMessage(reason));
+    } finally {
+      setSaving(false);
+    }
+  }
+
   function applyFilters(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setOffset(0);
@@ -304,7 +335,10 @@ export function CatalogScreen({ currentUser }: { currentUser: CurrentUserRespons
     setForm(null);
   }
 
-  const canEditDetail = detail ? canManageSector(currentUser, detail.sector) : false;
+  const canEditDetail = detail ? canEditSector(currentUser, detail.sector) : false;
+  const canArchiveDetail = Boolean(
+    detail && hasPermission(currentUser, AppPermission.CatalogManage),
+  );
 
   return (
     <main className={styles.page}>
@@ -527,8 +561,17 @@ export function CatalogScreen({ currentUser }: { currentUser: CurrentUserRespons
                     <span className={styles.eyebrow}>Catálogo #{detail.id}</span>
                     <h2>{detail.title}</h2>
                   </div>
-                  {canEditDetail ? (
-                    <button className={styles.buttonPrimary} onClick={startEdit} type="button">Editar</button>
+                  {canEditDetail || canArchiveDetail ? (
+                    <div className={styles.detailActions}>
+                      {canEditDetail ? (
+                        <button className={styles.buttonPrimary} disabled={saving} onClick={startEdit} type="button">Editar</button>
+                      ) : null}
+                      {canArchiveDetail ? (
+                        <button className={styles.button} disabled={saving} onClick={() => void archiveSelected()} type="button">
+                          {saving ? 'Arquivando…' : 'Arquivar'}
+                        </button>
+                      ) : null}
+                    </div>
                   ) : null}
                 </div>
                 <dl className={styles.metadata}>

@@ -3,6 +3,8 @@ import {
   Body,
   Controller,
   Get,
+  HttpCode,
+  HttpStatus,
   Param,
   ParseIntPipe,
   Patch,
@@ -197,8 +199,19 @@ export class CatalogController {
     return this.catalog.create(authenticated(user), writeInput(body));
   }
 
+  @Patch(':id/archive')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Arquiva um catálogo' })
+  async archive(
+    @CurrentUser() user: AuthenticatedUser | undefined,
+    @Param('id', ParseIntPipe) id: number,
+  ): Promise<void> {
+    if (id < 1) throw new BadRequestException('id é inválido.');
+    await this.catalog.archive(authenticated(user), id);
+  }
+
   @Patch(':id')
-  @ApiOperation({ summary: 'Edita um catálogo gerenciável pelo usuário' })
+  @ApiOperation({ summary: 'Edita um catálogo permitido ao usuário' })
   update(
     @CurrentUser() user: AuthenticatedUser | undefined,
     @Param('id', ParseIntPipe) id: number,

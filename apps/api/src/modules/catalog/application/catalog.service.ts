@@ -21,10 +21,7 @@ import {
   type CatalogRecord,
 } from './ports/catalog.repository';
 
-function hasPermission(
-  user: AuthenticatedUser,
-  permission: AppPermission,
-): boolean {
+function hasPermission(user: AuthenticatedUser, permission: AppPermission): boolean {
   return user.grants.some(
     (grant) =>
       grant.permission === AppPermission.SystemAdmin ||
@@ -32,23 +29,26 @@ function hasPermission(
   );
 }
 
-function allowedCatalogSectors(user: AuthenticatedUser): CatalogSector[] {
-  const sectors: CatalogSector[] = [];
+function canEditSector(user: AuthenticatedUser, sector: CatalogSector): boolean {
+  if (hasPermission(user, AppPermission.CatalogManage)) return true;
+  return hasPermission(
+    user,
+    sector === 1 ? AppPermission.CatalogTiEdit : AppPermission.CatalogDevOpsEdit,
+  );
+}
 
+function allowedCatalogSectors(user: AuthenticatedUser): CatalogSector[] {
+  if (hasPermission(user, AppPermission.CatalogManage)) return [1, 2];
+
+  const sectors: CatalogSector[] = [];
   if (
     hasPermission(user, AppPermission.CatalogTiRead) ||
-    hasPermission(user, AppPermission.CatalogTiManage)
-  ) {
-    sectors.push(1);
-  }
-
+    hasPermission(user, AppPermission.CatalogTiEdit)
+  ) sectors.push(1);
   if (
     hasPermission(user, AppPermission.CatalogDevOpsRead) ||
-    hasPermission(user, AppPermission.CatalogDevOpsManage)
-  ) {
-    sectors.push(2);
-  }
-
+    hasPermission(user, AppPermission.CatalogDevOpsEdit)
+  ) sectors.push(2);
   return sectors;
 }
 
@@ -67,51 +67,24 @@ function item(record: CatalogRecord): CatalogListItem {
 }
 
 function detail(record: CatalogRecord): CatalogDetailResponse {
-  return {
-    ...item(record),
-    content: record.content,
-    authorUserId: record.authorUserId,
-  };
+  return { ...item(record), content: record.content, authorUserId: record.authorUserId };
 }
 
 @Injectable()
 export class CatalogService {
   constructor(private readonly repository: CatalogRepository) {}
 
-  private sectors(
-    user: AuthenticatedUser,
-    requestedSector?: CatalogSector,
-  ): CatalogSector[] {
+  private sectors(user: AuthenticatedUser, requestedSector?: CatalogSector): CatalogSector[] {
     const allowed = allowedCatalogSectors(user);
-
-    if (allowed.length === 0) {
-      throw new ForbiddenException('Usuário sem acesso ao catálogo.');
-    }
-
-    if (requestedSector === undefined) {
-      return allowed;
-    }
-
-    if (!allowed.includes(requestedSector)) {
-      throw new ForbiddenException('Setor de catálogo não permitido.');
-    }
-
+    if (allowed.length === 0) throw new ForbiddenException('Usuário sem acesso ao catálogo.');
+    if (requestedSector === undefined) return allowed;
+    if (!allowed.includes(requestedSector)) throw new ForbiddenException('Setor de catálogo não permitido.');
     return [requestedSector];
   }
 
-  private requireManageSector(
-    user: AuthenticatedUser,
-    sector: CatalogSector,
-  ): void {
-    const permission =
-      sector === 1
-        ? AppPermission.CatalogTiManage
-        : AppPermission.CatalogDevOpsManage;
-
-    if (!hasPermission(user, permission)) {
-      throw new ForbiddenException(
-        'Usuário sem permissão para alterar este setor do catálogo.',
-      );
+  private requireEditSector(user: AuthenticatedUser, sector: CatalogSector): void {
+    if (!canEditSector(user, sector)) {
+      throw new ForbiddenException('Usuário sem permissão para editar este setor do catálogo.');
     }
   }
 
@@ -120,14 +93,8 @@ export class CatalogService {
       this.repository.clientExists(input.clientId),
       this.repository.categoryExists(input.categoryId),
     ]);
-
-    if (!clientExists) {
-      throw new BadRequestException('Cliente informado não existe.');
-    }
-
-    if (!categoryExists) {
-      throw new BadRequestException('Categoria informada não existe.');
-    }
+    if (!clientExists) throw new BadRequestException('Cliente informado não existe.');
+    if (!categoryExists) throw new BadRequestException('Categoria informada não existe.');
   }
 
   async list(
@@ -136,44 +103,20 @@ export class CatalogService {
   ): Promise<CatalogListResponse> {
     const sectors = this.sectors(user, filters.sector);
     const result = await this.repository.list(filters, sectors);
-    const nextOffset = result.hasMore
-      ? filters.offset + result.items.length
-      : null;
-
-    return {
-      items: result.items.map(item),
-      offset: filters.offset,
-      nextOffset,
-      hasMore: result.hasMore,
-    };
+    const nextOffset = result.hasMore ? filters.offset + result.items.length : null;
+    return { items: result.items.map(item), offset: filters.offset, nextOffset, hasMore: result.hasMore };
   }
 
-  async detail(
-    user: AuthenticatedUser,
-    id: number,
-  ): Promise<CatalogDetailResponse> {
+  async detail(user: AuthenticatedUser, id: number): Promise<CatalogDetailResponse> {
     const record = await this.repository.findById(id, this.sectors(user));
-
-    if (!record) {
-      throw new NotFoundException('Catálogo não encontrado.');
-    }
-
+    if (!record) throw new NotFoundException('Catálogo não encontrado.');
     return detail(record);
   }
 
-  async create(
-    user: AuthenticatedUser,
-    input: CatalogWriteInput,
-  ): Promise<CatalogDetailResponse> {
-    this.requireManageSector(user, input.sector);
+  async create(user: AuthenticatedUser, input: CatalogWriteInput): Promise<CatalogDetailResponse> {
+    this.requireEditSector(user, input.sector);
     await this.validateReferences(input);
-
-    const record = await this.repository.create({
-      ...input,
-      authorUserId: user.id,
-    });
-
-    return detail(record);
+    return detail(await this.repository.create({ ...input, authorUserId: user.id }));
   }
 
   async update(
@@ -182,32 +125,26 @@ export class CatalogService {
     input: CatalogWriteInput,
   ): Promise<CatalogDetailResponse> {
     const existing = await this.repository.findById(id, this.sectors(user));
-
-    if (!existing) {
-      throw new NotFoundException('Catálogo não encontrado.');
-    }
-
-    this.requireManageSector(user, existing.sector);
-    this.requireManageSector(user, input.sector);
+    if (!existing) throw new NotFoundException('Catálogo não encontrado.');
+    this.requireEditSector(user, existing.sector);
+    this.requireEditSector(user, input.sector);
     await this.validateReferences(input);
+    return detail(await this.repository.update(id, { ...input, authorUserId: user.id }));
+  }
 
-    const record = await this.repository.update(id, {
-      ...input,
-      authorUserId: user.id,
-    });
-
-    return detail(record);
+  async archive(user: AuthenticatedUser, id: number): Promise<void> {
+    if (!hasPermission(user, AppPermission.CatalogManage)) {
+      throw new ForbiddenException('Somente quem gerencia todos os catálogos pode arquivar registros.');
+    }
+    const existing = await this.repository.findById(id, [1, 2]);
+    if (!existing) throw new NotFoundException('Catálogo não encontrado.');
+    await this.repository.archive(id);
   }
 
   async filters(user: AuthenticatedUser): Promise<CatalogFiltersResponse> {
     const allowedSectors = this.sectors(user);
     const options = await this.repository.filterOptions();
-
-    return {
-      allowedSectors,
-      categories: options.categories,
-      clients: options.clients,
-    };
+    return { allowedSectors, categories: options.categories, clients: options.clients };
   }
 
   async resolve(
@@ -221,14 +158,8 @@ export class CatalogService {
       categoryId,
       this.sectors(user, requestedSector),
     );
-
     return {
-      status:
-        catalogIds.length === 0
-          ? 'none'
-          : catalogIds.length === 1
-            ? 'single'
-            : 'multiple',
+      status: catalogIds.length === 0 ? 'none' : catalogIds.length === 1 ? 'single' : 'multiple',
       catalogIds,
     };
   }

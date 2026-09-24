@@ -89,6 +89,7 @@ export class PrismaCatalogRepository extends CatalogRepository {
     const search = filters.search?.trim();
     const rows = await this.nivel3.catalogos.findMany({
       where: {
+        arquivado_em: null,
         setor: { in: sectors },
         ...(filters.clientId !== undefined
           ? { cliente_id: filters.clientId }
@@ -126,6 +127,7 @@ export class PrismaCatalogRepository extends CatalogRepository {
     const row = await this.nivel3.catalogos.findFirst({
       where: {
         id,
+        arquivado_em: null,
         setor: { in: sectors },
       },
     });
@@ -173,6 +175,7 @@ export class PrismaCatalogRepository extends CatalogRepository {
   ): Promise<number[]> {
     const rows = await this.nivel3.catalogos.findMany({
       where: {
+        arquivado_em: null,
         cliente_id: clientId,
         catalogo_categoria: categoryId,
         setor: { in: sectors },
@@ -236,5 +239,15 @@ export class PrismaCatalogRepository extends CatalogRepository {
     });
 
     return (await this.decorate([row]))[0]!;
+  }
+
+  async archive(id: number): Promise<void> {
+    await this.nivel3.catalogos.update({
+      where: { id },
+      data: {
+        arquivado_em: new Date(),
+        data_edicao: new Date(),
+      },
+    });
   }
 }

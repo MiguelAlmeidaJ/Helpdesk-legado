@@ -15,10 +15,11 @@ type SeedSection = {
 
 const CATALOG_READ = {
   anyPermissions: [
+    'catalog.manage',
     'catalog.ti.read',
-    'catalog.ti.manage',
+    'catalog.ti.edit',
     'catalog.devops.read',
-    'catalog.devops.manage',
+    'catalog.devops.edit',
   ],
 };
 
