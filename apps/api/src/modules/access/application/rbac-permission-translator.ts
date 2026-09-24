@@ -95,7 +95,7 @@ function addGrant(
 }
 
 function hasAnyPermission(
-  permissions: Set<string>,
+  permissions: ReadonlySet<string>,
   slugs: readonly string[],
 ): boolean {
   return slugs.some((slug) => permissions.has(slug));
