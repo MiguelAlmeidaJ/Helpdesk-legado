@@ -44,6 +44,11 @@ export async function synchronizeNavigation(
     'statements',
   ]);
   const refreshVisibility = new Set(['catalogs', 'catalog-check']);
+  const hiddenFromMenu = new Set([
+    'receivables-accrual',
+    'receivables-cashflow',
+    'payables',
+  ]);
   const legacyCreateHrefs = new Map<string, Set<string>>([
     ['devops-task-new', new Set(['/atendimentos/novo?type=devops'])],
     ['marketing-task-new', new Set(['/atendimentos/novo?type=marketing'])],
@@ -56,6 +61,17 @@ export async function synchronizeNavigation(
   `;
   let updated = 0;
   for (const row of rows) {
+    if (hiddenFromMenu.has(row.slug)) {
+      if (row.is_active !== 0) {
+        await db.$executeRaw`
+          UPDATE navigation_items
+          SET is_active = 0, updated_at = NOW()
+          WHERE id = ${row.id}
+        `;
+        updated++;
+      }
+      continue;
+    }
     if (row.slug === 'marketing-availability') {
       if (row.is_active !== 0) {
         await db.$executeRaw`
