@@ -150,10 +150,7 @@ export class UsersRepository {
         FROM clientes WHERE clt_sts = 1 ORDER BY name`,
       this.database.$queryRaw<OptionRow[]>`
         SELECT id, name_type AS name FROM type_keys ORDER BY id`,
-      this.database.$queryRaw<RoleOptionRow[]>`
-        SELECT id, name, slug, is_system
-        FROM roles
-        ORDER BY sort_order ASC, id ASC`,
+      this.roleOptions(),
     ]);
     const map = (rows: OptionRow[]): UserOption[] =>
       rows.map((row) => ({ id: row.id, name: row.name ?? `#${row.id}` }));
@@ -287,18 +284,44 @@ export class UsersRepository {
     return result;
   }
 
+  private async roleOptions(): Promise<RoleOptionRow[]> {
+    try {
+      return await this.database.$queryRaw<RoleOptionRow[]>`
+        SELECT id, name, slug, is_system
+        FROM roles
+        ORDER BY sort_order ASC, id ASC`;
+    } catch {
+      return this.database.$queryRaw<RoleOptionRow[]>`
+        SELECT id, name, slug, is_system
+        FROM roles
+        ORDER BY is_system DESC, name ASC, id ASC`;
+    }
+  }
+
   private async rolesByUserIds(ids: number[]): Promise<Map<number, AccessRoleOption[]>> {
     const result = new Map<number, AccessRoleOption[]>();
     if (ids.length === 0) return result;
     const placeholders = ids.map(() => '?').join(',');
-    const rows = await this.database.$queryRawUnsafe<UserRoleRow[]>(
-      `SELECT ur.user_id, r.id, r.name, r.slug, r.is_system
-       FROM user_roles ur
-       INNER JOIN roles r ON r.id = ur.role_id
-       WHERE ur.user_id IN (${placeholders})
-       ORDER BY r.sort_order ASC, r.id ASC`,
-      ...ids,
-    );
+    let rows: UserRoleRow[];
+    try {
+      rows = await this.database.$queryRawUnsafe<UserRoleRow[]>(
+        `SELECT ur.user_id, r.id, r.name, r.slug, r.is_system
+         FROM user_roles ur
+         INNER JOIN roles r ON r.id = ur.role_id
+         WHERE ur.user_id IN (${placeholders})
+         ORDER BY r.sort_order ASC, r.id ASC`,
+        ...ids,
+      );
+    } catch {
+      rows = await this.database.$queryRawUnsafe<UserRoleRow[]>(
+        `SELECT ur.user_id, r.id, r.name, r.slug, r.is_system
+         FROM user_roles ur
+         INNER JOIN roles r ON r.id = ur.role_id
+         WHERE ur.user_id IN (${placeholders})
+         ORDER BY r.is_system DESC, r.name ASC, r.id ASC`,
+        ...ids,
+      );
+    }
     for (const row of rows) {
       const entries = result.get(row.user_id) ?? [];
       entries.push({

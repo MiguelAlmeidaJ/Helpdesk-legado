@@ -12,9 +12,25 @@ export const reportScreenStyles = {
   eyebrow:
     'text-[0.78rem] font-extrabold uppercase tracking-[0.08em] text-app-brand',
   filters:
-    'grid grid-cols-[repeat(3,minmax(150px,1fr))_auto] items-end gap-3.5 rounded-2xl border border-app-border bg-app-surface p-[18px] shadow-[0_12px_30px_rgba(38,52,77,0.06)] max-[820px]:grid-cols-2 max-[520px]:grid-cols-1 dark:shadow-black/10 print:hidden [&_label]:grid [&_label]:gap-[7px] [&_label>span]:text-[0.78rem] [&_label>span]:font-bold [&_label>span]:text-app-muted [&_input]:min-h-[42px] [&_input]:w-full [&_input]:rounded-[10px] [&_input]:border [&_input]:border-app-border-strong [&_input]:bg-app-surface [&_input]:px-3 [&_input]:text-app-text [&_input]:outline-none [&_input]:transition [&_select]:min-h-[42px] [&_select]:w-full [&_select]:rounded-[10px] [&_select]:border [&_select]:border-app-border-strong [&_select]:bg-app-surface [&_select]:px-3 [&_select]:text-app-text [&_select]:outline-none [&_select]:transition [&_input:focus]:border-app-brand [&_input:focus]:ring-3 [&_input:focus]:ring-[var(--app-brand-ring)] [&_select:focus]:border-app-brand [&_select:focus]:ring-3 [&_select:focus]:ring-[var(--app-brand-ring)]',
+    'grid grid-cols-[minmax(150px,0.7fr)_minmax(150px,0.7fr)_minmax(340px,1.5fr)_auto] items-end gap-3.5 rounded-2xl border border-app-border bg-app-surface p-[18px] shadow-[0_12px_30px_rgba(38,52,77,0.06)] max-[980px]:grid-cols-2 max-[560px]:grid-cols-1 dark:shadow-black/10 print:hidden [&_label]:grid [&_label]:gap-[7px] [&_label>span]:text-[0.78rem] [&_label>span]:font-bold [&_label>span]:text-app-muted [&_input]:min-h-[42px] [&_input]:w-full [&_input]:rounded-[10px] [&_input]:border [&_input]:border-app-border-strong [&_input]:bg-app-surface [&_input]:px-3 [&_input]:text-app-text [&_input]:outline-none [&_input]:transition [&_input:focus]:border-app-brand [&_input:focus]:ring-3 [&_input:focus]:ring-[var(--app-brand-ring)]',
+  clientPicker:
+    'grid gap-2 max-[980px]:col-span-2 max-[560px]:col-span-1',
+  clientPickerHeader:
+    'flex items-center justify-between gap-3 text-[0.78rem] font-bold text-app-muted [&_strong]:text-app-text-soft',
+  clientPickerBox:
+    'overflow-hidden rounded-[10px] border border-app-border-strong bg-app-surface focus-within:border-app-brand focus-within:ring-3 focus-within:ring-[var(--app-brand-ring)]',
+  clientSearch:
+    'border-0 border-b border-app-border-soft !rounded-none focus:!ring-0 focus:!border-app-border-soft',
+  clientPickerActions:
+    'flex flex-wrap items-center justify-between gap-2 border-b border-app-border-soft bg-app-surface-muted px-2.5 py-2 [&_button]:rounded-md [&_button]:border-0 [&_button]:bg-transparent [&_button]:px-2 [&_button]:py-1 [&_button]:text-xs [&_button]:font-bold [&_button]:text-app-brand [&_button:hover]:bg-app-brand-soft disabled:[&_button]:opacity-40',
+  clientList:
+    'grid max-h-[178px] overflow-y-auto p-1.5',
+  clientOption:
+    'flex min-h-9 cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm text-app-text hover:bg-app-surface-hover [&_input]:!min-h-4 [&_input]:!h-4 [&_input]:!w-4 [&_input]:shrink-0 [&_input]:rounded [&_input]:p-0',
+  clientEmpty:
+    'px-3 py-5 text-center text-sm text-app-muted',
   actions:
-    'flex gap-2 max-[820px]:col-span-2 max-[520px]:col-span-1 [&_button]:min-h-[42px] [&_button]:cursor-pointer [&_button]:rounded-[10px] [&_button]:border-0 [&_button]:bg-app-brand [&_button]:px-4 [&_button]:font-extrabold [&_button]:text-white [&_button]:transition [&_button:hover]:bg-app-brand-hover dark:[&_button]:text-slate-950 max-[520px]:[&_button]:flex-1 [&_button:disabled]:cursor-wait [&_button:disabled]:opacity-65',
+    'flex gap-2 max-[980px]:col-span-2 max-[560px]:col-span-1 [&_button]:min-h-[42px] [&_button]:cursor-pointer [&_button]:rounded-[10px] [&_button]:border-0 [&_button]:bg-app-brand [&_button]:px-4 [&_button]:font-extrabold [&_button]:text-app-brand-contrast [&_button]:transition [&_button:hover]:bg-app-brand-hover max-[560px]:[&_button]:flex-1 [&_button:disabled]:cursor-wait [&_button:disabled]:opacity-65',
   exportActions:
     'my-[18px] flex flex-wrap items-center gap-3 print:hidden [&_button]:cursor-pointer [&_button]:rounded-lg [&_button]:border [&_button]:border-app-border-strong [&_button]:bg-app-surface [&_button]:px-3.5 [&_button]:py-2.5 [&_button]:text-app-text [&_button]:transition [&_button:hover]:bg-app-surface-hover [&_button:disabled]:cursor-wait [&_button:disabled]:opacity-50 [&_span]:text-sm [&_span]:text-app-muted',
   error:
@@ -23,6 +39,8 @@ export const reportScreenStyles = {
     'mt-3 overflow-hidden rounded-[18px] border border-app-border bg-app-surface shadow-[0_14px_36px_rgba(38,52,77,0.07)] dark:shadow-black/10 print:overflow-visible print:border-0 print:shadow-none',
   tableWrap:
     'overflow-x-auto print:overflow-visible print:text-[9pt] [&_table]:w-full [&_table]:border-collapse [&_th]:border-b [&_th]:border-app-border [&_th]:p-3 [&_th]:text-left [&_td]:border-b [&_td]:border-app-border [&_td]:p-3 [&_td]:text-left [&_thead]:bg-app-surface-muted',
+  downloadIconButton:
+    'inline-flex size-10 items-center justify-center rounded-lg border border-app-border-strong bg-app-surface text-app-brand transition hover:border-app-brand hover:bg-app-brand-soft disabled:cursor-wait disabled:opacity-50 [&_svg]:size-5',
   row:
     'border-b border-app-border-soft px-5 py-[18px] last:border-b-0 print:break-inside-avoid print:px-0 print:py-3',
   rowHeader:

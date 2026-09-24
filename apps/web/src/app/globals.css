@@ -19,6 +19,7 @@
   --app-brand: #1f5fa8;
   --app-brand-hover: #194f8d;
   --app-brand-soft: #eaf2fb;
+  --app-brand-contrast: #ffffff;
   --app-brand-ring: rgba(31, 95, 168, 0.12);
   --app-success: #267a4a;
   --app-success-soft: #eaf6ef;
@@ -46,6 +47,7 @@ html.dark {
   --app-brand: #60a5fa;
   --app-brand-hover: #93c5fd;
   --app-brand-soft: #172554;
+  --app-brand-contrast: #0f172a;
   --app-brand-ring: rgba(96, 165, 250, 0.2);
   --app-success: #86efac;
   --app-success-soft: #123322;
@@ -71,6 +73,7 @@ html.dark {
   --color-app-brand: var(--app-brand);
   --color-app-brand-hover: var(--app-brand-hover);
   --color-app-brand-soft: var(--app-brand-soft);
+  --color-app-brand-contrast: var(--app-brand-contrast);
   --color-app-success: var(--app-success);
   --color-app-success-soft: var(--app-success-soft);
   --color-app-danger: var(--app-danger);
@@ -109,6 +112,10 @@ textarea {
 button,
 a {
   -webkit-tap-highlight-color: transparent;
+}
+
+:where(button, a).bg-app-brand {
+  color: var(--app-brand-contrast);
 }
 
 a {
