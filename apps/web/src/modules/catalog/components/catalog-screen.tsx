@@ -233,7 +233,8 @@ export function CatalogScreen({ currentUser }: { currentUser: CurrentUserRespons
   }
 
   function startCreate() {
-    const sector = manageableSectors[0];
+    if (!hasPermission(currentUser, AppPermission.CatalogManage)) return;
+    const sector = (filters?.allowedSectors ?? [])[0];
     if (!sector) return;
     setDetail(null);
     setSuccess(null);
@@ -335,6 +336,7 @@ export function CatalogScreen({ currentUser }: { currentUser: CurrentUserRespons
     setForm(null);
   }
 
+  const canCreateCatalog = hasPermission(currentUser, AppPermission.CatalogManage);
   const canEditDetail = detail ? canEditSector(currentUser, detail.sector) : false;
   const canArchiveDetail = Boolean(
     detail && hasPermission(currentUser, AppPermission.CatalogManage),
@@ -344,7 +346,7 @@ export function CatalogScreen({ currentUser }: { currentUser: CurrentUserRespons
     <main className={styles.page}>
       <AppPageHeader
         actions={
-          manageableSectors.length > 0 ? (
+          canCreateCatalog ? (
             <button className={styles.buttonPrimary} onClick={startCreate} type="button">
               Novo catálogo
             </button>

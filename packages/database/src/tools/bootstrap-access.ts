@@ -10,8 +10,8 @@ const PERMISSIONS = [
   ['Gerenciar catálogos', 'catalogos.gerenciar', 'Criar, editar e arquivar catálogos de TI e DevOps.'],
   ['Visualizar Catálogo de TI', 'catalogos.ti.visualizar', 'Visualizar catálogos do setor de TI.'],
   ['Visualizar Catálogo de DevOps', 'catalogos.devops.visualizar', 'Visualizar catálogos do setor de DevOps.'],
-  ['Editar Catálogo de TI', 'catalogos.ti.editar', 'Criar e editar catálogos do setor de TI.'],
-  ['Editar Catálogo de DevOps', 'catalogos.devops.editar', 'Criar e editar catálogos do setor de DevOps.'],
+  ['Editar Catálogo de TI', 'catalogos.ti.editar', 'Editar catálogos do setor de TI.'],
+  ['Editar Catálogo de DevOps', 'catalogos.devops.editar', 'Editar catálogos do setor de DevOps.'],
 ] as const;
 
 const PERMISSION_MIGRATIONS = [

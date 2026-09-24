@@ -114,7 +114,11 @@ export class CatalogService {
   }
 
   async create(user: AuthenticatedUser, input: CatalogWriteInput): Promise<CatalogDetailResponse> {
-    this.requireEditSector(user, input.sector);
+    if (!hasPermission(user, AppPermission.CatalogManage)) {
+      throw new ForbiddenException(
+        'Somente quem gerencia todos os catálogos pode criar registros.',
+      );
+    }
     await this.validateReferences(input);
     return detail(await this.repository.create({ ...input, authorUserId: user.id }));
   }
