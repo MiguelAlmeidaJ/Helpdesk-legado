@@ -200,6 +200,7 @@ function chartLabelIndexes(length: number): Set<number> {
 }
 
 function RealizedCashFlowChart({ points }: { points: ChartPoint[] }) {
+  const values = points.filter((point) => point.inflow > 0 || point.outflow > 0);
   const width = 760;
   const height = 270;
   const left = 54;
@@ -210,21 +211,21 @@ function RealizedCashFlowChart({ points }: { points: ChartPoint[] }) {
   const plotHeight = height - top - bottom;
   const maxValue = Math.max(
     1,
-    ...points.flatMap((point) => [point.inflow, point.outflow]),
+    ...values.flatMap((point) => [point.inflow, point.outflow]),
   );
   const x = (index: number) =>
-    left + (points.length <= 1 ? plotWidth / 2 : (index / (points.length - 1)) * plotWidth);
+    left + (values.length <= 1 ? plotWidth / 2 : (index / (values.length - 1)) * plotWidth);
   const y = (value: number) => top + plotHeight - (value / maxValue) * plotHeight;
-  const labels = chartLabelIndexes(points.length);
+  const labels = chartLabelIndexes(values.length);
   const path = (field: 'inflow' | 'outflow') =>
-    points
+    values
       .map((point, index) => {
         const command = index === 0 ? 'M' : 'L';
         return command + ' ' + x(index).toFixed(1) + ' ' + y(point[field]).toFixed(1);
       })
       .join(' ');
 
-  if (points.length === 0) {
+  if (values.length === 0) {
     return <div className="grid min-h-[260px] place-items-center text-sm text-app-muted">Sem movimentações realizadas no período.</div>;
   }
 
@@ -242,12 +243,12 @@ function RealizedCashFlowChart({ points }: { points: ChartPoint[] }) {
           <text className="fill-app-subtle text-[10px]" textAnchor="end" x={left - 8} y={py + 3}>{compactMoney(value)}</text>
         </g>;
       })}
-      {points.map((point, index) => labels.has(index) ? (
+      {values.map((point, index) => labels.has(index) ? (
         <text className="fill-app-subtle text-[10px]" key={point.key} textAnchor="middle" x={x(index)} y={height - 12}>{point.label}</text>
       ) : null)}
       <path d={path('inflow')} fill="none" stroke="#10b981" strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" />
       <path d={path('outflow')} fill="none" stroke="#f43f5e" strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" />
-      {points.map((point, index) => <g key={'cash-' + point.key}>
+      {values.map((point, index) => <g key={'cash-' + point.key}>
         <circle cx={x(index)} cy={y(point.inflow)} fill="#10b981" r="3"><title>{point.label + ' · Entradas: ' + money(point.inflow)}</title></circle>
         <circle cx={x(index)} cy={y(point.outflow)} fill="#f43f5e" r="3"><title>{point.label + ' · Saídas: ' + money(point.outflow)}</title></circle>
       </g>)}
