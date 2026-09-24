@@ -5,6 +5,7 @@ type StoredItem = {
   id: number | bigint;
   slug: string;
   label: string;
+  icon: string | null;
   href: string | null;
   status: string;
   visibility_condition: string | null;
@@ -51,7 +52,7 @@ export async function synchronizeNavigation(
     section.items.map((item) => [item.slug, item] as const),
   ));
   const rows = await db.$queryRaw<StoredItem[]>`
-    SELECT id, slug, label, href, status, visibility_condition, is_active FROM navigation_items
+    SELECT id, slug, label, icon, href, status, visibility_condition, is_active FROM navigation_items
   `;
   let updated = 0;
   for (const row of rows) {

@@ -115,7 +115,12 @@ a {
 }
 
 :where(button, a).bg-app-brand {
-  color: var(--app-brand-contrast);
+  background-color: var(--app-brand) !important;
+  color: var(--app-brand-contrast) !important;
+}
+
+:where(button, a).hover\:bg-app-brand-hover:hover {
+  background-color: var(--app-brand-hover) !important;
 }
 
 a {
