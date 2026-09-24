@@ -6,6 +6,7 @@ import type {
   FinanceRow,
 } from '@helpdesk/contracts';
 import Link from 'next/link';
+import type { FormEvent } from 'react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ApiError } from '../../../shared/api/api-client';
 import { AppPageHeader } from '../../../shared/navigation/app-page-header';
@@ -137,6 +138,10 @@ export function AccountManagementScreen({
 }) {
   const [startDate, setStartDate] = useState(firstDayOfMonth);
   const [endDate, setEndDate] = useState(isoToday);
+  const [period, setPeriod] = useState(() => ({
+    startDate: firstDayOfMonth(),
+    endDate: isoToday(),
+  }));
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -145,7 +150,7 @@ export function AccountManagementScreen({
     setLoading(true);
     setError('');
     try {
-      const filters = { startDate, endDate };
+      const filters = period;
       const [accrual, cashflow, payables] = await Promise.all([
         fetchFinanceView('receivables-accrual', filters, signal),
         fetchFinanceView('receivables-cashflow', filters, signal),
@@ -158,7 +163,7 @@ export function AccountManagementScreen({
     } finally {
       if (!signal?.aborted) setLoading(false);
     }
-  }, [endDate, startDate]);
+  }, [period]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -180,13 +185,17 @@ export function AccountManagementScreen({
     };
   }, [data]);
 
-  async function submit(event: React.FormEvent<HTMLFormElement>) {
+  function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (startDate > endDate) {
       setError('Data inicial não pode ser maior que a data final.');
       return;
     }
-    await load();
+    if (period.startDate === startDate && period.endDate === endDate) {
+      void load();
+      return;
+    }
+    setPeriod({ startDate, endDate });
   }
 
   return <main className="min-h-screen bg-app-bg text-app-text">
