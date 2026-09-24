@@ -125,6 +125,14 @@ export function AppSidebar() {
     };
   }, [navigationSections]);
 
+  const activeSectionId = useMemo(
+    () =>
+      regularSections.find((section) =>
+        section.items.some((item) => isActive(pathname, item)),
+      )?.id ?? null,
+    [pathname, regularSections],
+  );
+
   useEffect(() => {
     if (!open) {
       return;
@@ -154,7 +162,7 @@ export function AppSidebar() {
         aria-label="Abrir menu principal"
         className="grid size-10 shrink-0 cursor-pointer content-center gap-1 rounded-[9px] border border-app-border bg-app-surface px-2.5 transition-colors hover:bg-app-surface-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-app-brand"
         onClick={() => {
-          setOpenSectionId(null);
+          setOpenSectionId(activeSectionId);
           setOpen(true);
         }}
         type="button"
