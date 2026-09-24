@@ -2,6 +2,7 @@
 
 import {
   AppPermission,
+  NAVIGATION_ICON_NAMES,
   UserRole,
   type CurrentUserResponse,
   type NavigationAdminItem,
@@ -9,6 +10,7 @@ import {
   type NavigationAdminResponse,
   type NavigationAdminSection,
   type NavigationAdminSectionInput,
+  type NavigationIconName,
   type NavigationVisibilityCondition,
 } from '@helpdesk/contracts';
 import Link from 'next/link';
@@ -16,6 +18,7 @@ import type { ChangeEvent, FormEvent } from 'react';
 import { useEffect, useMemo, useState } from 'react';
 import { ApiError } from '../../../shared/api/api-client';
 import { AppPageHeader } from '../../../shared/navigation/app-page-header';
+import { NavigationIcon } from '../../../shared/navigation/navigation-icon';
 import {
   createNavigationItem,
   createNavigationSection,
@@ -28,6 +31,7 @@ interface SectionForm {
   slug: string;
   label: string;
   shortLabel: string;
+  icon: string;
   sortOrder: string;
   active: boolean;
 }
@@ -36,6 +40,7 @@ interface ItemForm {
   sectionId: string;
   slug: string;
   label: string;
+  icon: string;
   href: string;
   status: 'available' | 'planned';
   sortOrder: string;
@@ -49,6 +54,7 @@ const EMPTY_SECTION: SectionForm = {
   slug: '',
   label: '',
   shortLabel: '',
+  icon: '',
   sortOrder: '0',
   active: true,
 };
@@ -57,6 +63,7 @@ const EMPTY_ITEM: ItemForm = {
   sectionId: '',
   slug: '',
   label: '',
+  icon: '',
   href: '',
   status: 'planned',
   sortOrder: '0',
@@ -68,6 +75,28 @@ const EMPTY_ITEM: ItemForm = {
 
 const PERMISSION_OPTIONS = Object.values(AppPermission).sort();
 const ROLE_OPTIONS = Object.values(UserRole).sort();
+const ICON_LABELS: Record<NavigationIconName, string> = {
+  home: 'Início',
+  headset: 'Atendimento',
+  code: 'Código / DevOps',
+  megaphone: 'Marketing',
+  truck: 'Logística',
+  chart: 'Relatórios / Gráfico',
+  database: 'Cadastros / Banco',
+  radio: 'Rádio',
+  wallet: 'Carteira / Financeiro',
+  settings: 'Configurações',
+  shield: 'Segurança',
+  users: 'Usuários',
+  menu: 'Menu',
+  wrench: 'Manutenção',
+  clock: 'Relógio / Agenda',
+  file: 'Arquivo',
+  folder: 'Pasta',
+  building: 'Empresa',
+  list: 'Lista',
+  grid: 'Grade',
+};
 
 const BUTTON_CLASS =
   'inline-flex min-h-10 items-center justify-center gap-2 rounded-[9px] border border-app-border-strong bg-app-surface px-4 font-bold text-app-text-soft no-underline transition-colors hover:bg-app-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-app-brand disabled:cursor-not-allowed disabled:opacity-50';
@@ -94,6 +123,7 @@ function fromSection(section: NavigationAdminSection): SectionForm {
     slug: section.slug,
     label: section.label,
     shortLabel: section.shortLabel ?? '',
+    icon: section.icon ?? '',
     sortOrder: String(section.sortOrder),
     active: section.active,
   };
@@ -104,6 +134,7 @@ function fromItem(item: NavigationAdminItem): ItemForm {
     sectionId: String(item.sectionId),
     slug: item.slug,
     label: item.label,
+    icon: item.icon ?? '',
     href: item.href ?? '',
     status: item.status,
     sortOrder: String(item.sortOrder),
@@ -153,6 +184,7 @@ function sectionInput(form: SectionForm): NavigationAdminSectionInput {
     slug: form.slug.trim(),
     label: form.label.trim(),
     shortLabel: form.shortLabel.trim() || null,
+    icon: (form.icon || null) as NavigationIconName | null,
     sortOrder: Number(form.sortOrder),
     active: form.active,
   };
@@ -163,6 +195,7 @@ function itemInput(form: ItemForm): NavigationAdminItemInput {
     sectionId: Number(form.sectionId),
     slug: form.slug.trim(),
     label: form.label.trim(),
+    icon: (form.icon || null) as NavigationIconName | null,
     href: form.href.trim() || null,
     status: form.status,
     visibilityCondition: visibility(form),
@@ -379,8 +412,8 @@ export function NavigationAdminScreen({
                   onClick={() => selectSection(section)}
                   type="button"
                 >
-                  <span className="grid h-[34px] min-w-[38px] place-items-center rounded-[9px] bg-app-surface-muted text-[0.76rem] font-bold text-app-text-soft">
-                    {section.shortLabel || '—'}
+                  <span className="grid size-[34px] shrink-0 place-items-center rounded-[9px] bg-app-surface-muted text-app-text-soft">
+                    {section.icon ? <NavigationIcon className="size-[18px]" name={section.icon} /> : <span className="text-[0.76rem] font-bold">{section.shortLabel || '—'}</span>}
                   </span>
                   <span className="grid min-w-0 flex-1 gap-[3px]">
                     <strong>{section.label}</strong>
@@ -450,6 +483,22 @@ export function NavigationAdminScreen({
                       }
                       value={sectionForm.shortLabel}
                     />
+                  </label>
+                  <label className={FIELD_CLASS}>
+                    <span>Ícone</span>
+                    <span className="grid grid-cols-[42px_minmax(0,1fr)] gap-2">
+                      <span className="grid size-[42px] place-items-center rounded-[10px] border border-app-border bg-app-surface-muted text-app-text-soft">
+                        <NavigationIcon className="size-5" name={(sectionForm.icon || null) as NavigationIconName | null} />
+                      </span>
+                      <select
+                        className={CONTROL_CLASS}
+                        onChange={(event) => setSectionForm({ ...sectionForm, icon: event.target.value })}
+                        value={sectionForm.icon}
+                      >
+                        <option value="">Sem ícone</option>
+                        {NAVIGATION_ICON_NAMES.map((icon) => <option key={icon} value={icon}>{ICON_LABELS[icon]}</option>)}
+                      </select>
+                    </span>
                   </label>
                   <label className={FIELD_CLASS}>
                     <span>Ordem</span>
@@ -522,6 +571,9 @@ export function NavigationAdminScreen({
                         onClick={() => selectItem(item)}
                         type="button"
                       >
+                        <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-app-surface-muted text-app-muted">
+                          <NavigationIcon className="size-4" name={item.icon ?? selectedSection?.icon} />
+                        </span>
                         <span className="grid min-w-0 flex-1 gap-[3px]">
                           <strong>{item.label}</strong>
                           <small className="[overflow-wrap:anywhere] text-app-muted">
@@ -589,6 +641,22 @@ export function NavigationAdminScreen({
                             required
                             value={itemForm.label}
                           />
+                        </label>
+                        <label className={FIELD_CLASS}>
+                          <span>Ícone</span>
+                          <span className="grid grid-cols-[42px_minmax(0,1fr)] gap-2">
+                            <span className="grid size-[42px] place-items-center rounded-[10px] border border-app-border bg-app-surface-muted text-app-text-soft">
+                              <NavigationIcon className="size-5" name={(itemForm.icon || selectedSection?.icon || null) as NavigationIconName | null} />
+                            </span>
+                            <select
+                              className={CONTROL_CLASS}
+                              onChange={(event) => setItemForm({ ...itemForm, icon: event.target.value })}
+                              value={itemForm.icon}
+                            >
+                              <option value="">Herdar da seção</option>
+                              {NAVIGATION_ICON_NAMES.map((icon) => <option key={icon} value={icon}>{ICON_LABELS[icon]}</option>)}
+                            </select>
+                          </span>
                         </label>
                         <label className={FIELD_CLASS}>
                           <span>Rota</span>
