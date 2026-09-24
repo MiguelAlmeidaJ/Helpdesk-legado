@@ -169,12 +169,12 @@ export class AccessManagement {
     }
 
     await this.assertPermissionsExist(input.permissionIds);
-    if (!current.system) {
+    if (!Boolean(current.is_system)) {
       await this.assertRoleAvailable(input.name, current.slug, id);
     }
 
     await this.database.$transaction(async (transaction) => {
-      if (!current.system) {
+      if (!Boolean(current.is_system)) {
         await transaction.$executeRawUnsafe(
           `UPDATE roles
            SET name = ?, description = ?, updated_at = NOW()
@@ -197,7 +197,7 @@ export class AccessManagement {
 
   async remove(id: number): Promise<void> {
     const role = await this.roleIdentity(id);
-    if (role.system) {
+    if (Boolean(role.is_system)) {
       throw new ConflictException('Perfis internos do sistema não podem ser excluídos.');
     }
     if (Number(role.user_count) > 0) {
