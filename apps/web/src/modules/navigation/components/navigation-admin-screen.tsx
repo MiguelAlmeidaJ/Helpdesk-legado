@@ -163,6 +163,55 @@ function selectedValues(event: ChangeEvent<HTMLSelectElement>): string[] {
   return Array.from(event.currentTarget.selectedOptions, (option) => option.value);
 }
 
+function IconPicker({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  const selected = value
+    ? NAVIGATION_ICON_NAMES.find((icon) => icon === value) ?? null
+    : null;
+
+  return <div className="grid gap-2">
+    <div className="flex items-center gap-2 rounded-[10px] border border-app-border bg-app-surface-muted px-3 py-2">
+      <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-app-surface text-app-text-soft">
+        <NavigationIcon className="size-5" name={selected} />
+      </span>
+      <span className="grid min-w-0">
+        <strong className="text-xs text-app-text">{selected ? ICON_LABELS[selected] : 'Sem ícone'}</strong>
+        <small className="text-[11px] text-app-muted">Prévia do ícone da seção</small>
+      </span>
+    </div>
+    <div className="grid max-h-[250px] grid-cols-[repeat(auto-fill,minmax(96px,1fr))] gap-2 overflow-y-auto rounded-xl border border-app-border bg-app-surface p-2">
+      <button
+        aria-pressed={!value}
+        className="grid min-h-[76px] place-items-center gap-1 rounded-lg border border-app-border bg-app-surface px-2 py-2 text-app-muted transition hover:border-app-brand hover:bg-app-brand-soft aria-pressed:border-app-brand aria-pressed:bg-app-brand-soft aria-pressed:text-app-brand"
+        onClick={() => onChange('')}
+        type="button"
+      >
+        <span className="text-xl leading-none">—</span>
+        <span className="text-[10px] font-bold">Sem ícone</span>
+      </button>
+      {NAVIGATION_ICON_NAMES.map((icon) => (
+        <button
+          aria-label={ICON_LABELS[icon]}
+          aria-pressed={value === icon}
+          className="grid min-h-[76px] place-items-center gap-1 rounded-lg border border-app-border bg-app-surface px-2 py-2 text-app-muted transition hover:border-app-brand hover:bg-app-brand-soft hover:text-app-text aria-pressed:border-app-brand aria-pressed:bg-app-brand-soft aria-pressed:text-app-brand"
+          key={icon}
+          onClick={() => onChange(icon)}
+          title={ICON_LABELS[icon]}
+          type="button"
+        >
+          <NavigationIcon className="size-5" name={icon} />
+          <span className="max-w-full truncate text-[10px] font-bold">{ICON_LABELS[icon]}</span>
+        </button>
+      ))}
+    </div>
+  </div>;
+}
+
 function visibility(form: ItemForm): NavigationVisibilityCondition | null {
   if (
     form.anyPermissions.length === 0 &&
@@ -484,22 +533,13 @@ export function NavigationAdminScreen({
                       value={sectionForm.shortLabel}
                     />
                   </label>
-                  <label className={FIELD_CLASS}>
-                    <span>Ícone</span>
-                    <span className="grid grid-cols-[42px_minmax(0,1fr)] gap-2">
-                      <span className="grid size-[42px] place-items-center rounded-[10px] border border-app-border bg-app-surface-muted text-app-text-soft">
-                        <NavigationIcon className="size-5" name={(sectionForm.icon || null) as NavigationIconName | null} />
-                      </span>
-                      <select
-                        className={CONTROL_CLASS}
-                        onChange={(event) => setSectionForm({ ...sectionForm, icon: event.target.value })}
-                        value={sectionForm.icon}
-                      >
-                        <option value="">Sem ícone</option>
-                        {NAVIGATION_ICON_NAMES.map((icon) => <option key={icon} value={icon}>{ICON_LABELS[icon]}</option>)}
-                      </select>
-                    </span>
-                  </label>
+                  <div className={`${FIELD_CLASS} col-span-2 max-[640px]:col-span-1`}>
+                    <span>Ícone da seção</span>
+                    <IconPicker
+                      onChange={(icon) => setSectionForm({ ...sectionForm, icon })}
+                      value={sectionForm.icon}
+                    />
+                  </div>
                   <label className={FIELD_CLASS}>
                     <span>Ordem</span>
                     <input
@@ -571,9 +611,6 @@ export function NavigationAdminScreen({
                         onClick={() => selectItem(item)}
                         type="button"
                       >
-                        <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-app-surface-muted text-app-muted">
-                          <NavigationIcon className="size-4" name={item.icon ?? selectedSection?.icon} />
-                        </span>
                         <span className="grid min-w-0 flex-1 gap-[3px]">
                           <strong>{item.label}</strong>
                           <small className="[overflow-wrap:anywhere] text-app-muted">
@@ -642,22 +679,9 @@ export function NavigationAdminScreen({
                             value={itemForm.label}
                           />
                         </label>
-                        <label className={FIELD_CLASS}>
-                          <span>Ícone</span>
-                          <span className="grid grid-cols-[42px_minmax(0,1fr)] gap-2">
-                            <span className="grid size-[42px] place-items-center rounded-[10px] border border-app-border bg-app-surface-muted text-app-text-soft">
-                              <NavigationIcon className="size-5" name={(itemForm.icon || selectedSection?.icon || null) as NavigationIconName | null} />
-                            </span>
-                            <select
-                              className={CONTROL_CLASS}
-                              onChange={(event) => setItemForm({ ...itemForm, icon: event.target.value })}
-                              value={itemForm.icon}
-                            >
-                              <option value="">Herdar da seção</option>
-                              {NAVIGATION_ICON_NAMES.map((icon) => <option key={icon} value={icon}>{ICON_LABELS[icon]}</option>)}
-                            </select>
-                          </span>
-                        </label>
+                        <div className="grid content-center rounded-[10px] border border-app-border bg-app-surface-muted px-3 py-2 text-xs text-app-muted">
+                          Os itens internos não exibem ícone no sidebar.
+                        </div>
                         <label className={FIELD_CLASS}>
                           <span>Rota</span>
                           <input
