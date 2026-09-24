@@ -41,10 +41,11 @@ const styles = {
 
 function hasCatalogAccess(user: CurrentUserResponse): boolean {
   const permissions = new Set([
+    AppPermission.CatalogManage,
     AppPermission.CatalogTiRead,
-    AppPermission.CatalogTiManage,
+    AppPermission.CatalogTiEdit,
     AppPermission.CatalogDevOpsRead,
-    AppPermission.CatalogDevOpsManage,
+    AppPermission.CatalogDevOpsEdit,
   ]);
 
   return user.grants.some(
