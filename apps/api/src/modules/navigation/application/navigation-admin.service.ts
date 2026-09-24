@@ -12,6 +12,7 @@ import type {
   NavigationAdminSection,
   NavigationAdminSectionInput,
   NavigationVisibilityCondition,
+  type NavigationIconName,
 } from '@helpdesk/contracts';
 import type { Nivel3DatabaseClient } from '@helpdesk/database';
 import { NIVEL3_DATABASE } from '../../../core/database/database.constants';
@@ -21,6 +22,7 @@ type SectionRow = {
   slug: string;
   label: string;
   short_label: string | null;
+  icon: NavigationIconName | null;
   sort_order: number;
   is_active: number | bigint | boolean;
 };
@@ -30,6 +32,7 @@ type ItemRow = {
   section_id: number | bigint;
   slug: string;
   label: string;
+  icon: NavigationIconName | null;
   href: string | null;
   status: string;
   visibility_condition: string | null;
@@ -58,6 +61,7 @@ function item(row: ItemRow): NavigationAdminItem {
     sectionId: Number(row.section_id),
     slug: row.slug,
     label: row.label,
+    icon: row.icon,
     href: row.href,
     status: row.status === 'planned' ? 'planned' : 'available',
     visibilityCondition: visibilityCondition(row.visibility_condition),
@@ -76,12 +80,12 @@ export class NavigationAdminService {
   async snapshot(): Promise<NavigationAdminResponse> {
     const [sections, items] = await Promise.all([
       this.nivel3.$queryRaw<SectionRow[]>`
-        SELECT id, slug, label, short_label, sort_order, is_active
+        SELECT id, slug, label, short_label, icon, sort_order, is_active
         FROM navigation_sections
         ORDER BY sort_order ASC, id ASC
       `,
       this.nivel3.$queryRaw<ItemRow[]>`
-        SELECT id, section_id, slug, label, href, status,
+        SELECT id, section_id, slug, label, icon, href, status,
                visibility_condition, sort_order, is_active
         FROM navigation_items
         ORDER BY section_id ASC, sort_order ASC, id ASC
@@ -102,6 +106,7 @@ export class NavigationAdminService {
         slug: section.slug,
         label: section.label,
         shortLabel: section.short_label,
+        icon: section.icon,
         sortOrder: section.sort_order,
         active: Boolean(section.is_active),
         items: itemsBySection.get(Number(section.id)) ?? [],
@@ -116,11 +121,12 @@ export class NavigationAdminService {
 
     await this.nivel3.$executeRaw`
       INSERT INTO navigation_sections (
-        slug, label, short_label, sort_order, is_active, created_at, updated_at
+        slug, label, short_label, icon, sort_order, is_active, created_at, updated_at
       ) VALUES (
         ${input.slug},
         ${input.label},
         ${input.shortLabel},
+        ${input.icon ?? null},
         ${input.sortOrder},
         ${input.active ? 1 : 0},
         NOW(),
@@ -153,6 +159,7 @@ export class NavigationAdminService {
       SET slug = ${input.slug},
           label = ${input.label},
           short_label = ${input.shortLabel},
+          icon = ${input.icon ?? null},
           sort_order = ${input.sortOrder},
           is_active = ${input.active ? 1 : 0},
           updated_at = NOW()
@@ -173,12 +180,13 @@ export class NavigationAdminService {
 
     await this.nivel3.$executeRaw`
       INSERT INTO navigation_items (
-        section_id, slug, label, href, status, visibility_condition,
+        section_id, slug, label, icon, href, status, visibility_condition,
         sort_order, is_active, created_at, updated_at
       ) VALUES (
         ${input.sectionId},
         ${input.slug},
         ${input.label},
+        ${input.icon ?? null},
         ${input.href},
         ${input.status},
         ${condition},
@@ -218,6 +226,7 @@ export class NavigationAdminService {
       SET section_id = ${input.sectionId},
           slug = ${input.slug},
           label = ${input.label},
+          icon = ${input.icon ?? null},
           href = ${input.href},
           status = ${input.status},
           visibility_condition = ${condition},

@@ -12,6 +12,7 @@ import {
 import { ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import {
   AppPermission,
+  NAVIGATION_ICON_NAMES,
   UserRole,
   type NavigationAdminItemInput,
   type NavigationAdminMutationResponse,
@@ -27,6 +28,7 @@ import { NavigationAdminService } from '../../application/navigation-admin.servi
 
 const PERMISSIONS = new Set<string>(Object.values(AppPermission));
 const ROLES = new Set<string>(Object.values(UserRole));
+const ICONS = new Set<string>(NAVIGATION_ICON_NAMES);
 
 function objectBody(body: unknown): Record<string, unknown> {
   if (!body || typeof body !== 'object' || Array.isArray(body)) {
@@ -66,6 +68,14 @@ function nullableString(value: unknown, field: string, max: number): string | nu
     throw new BadRequestException(`${field} possui tamanho inválido.`);
   }
   return normalized || null;
+}
+
+function navigationIcon(value: unknown): (typeof NAVIGATION_ICON_NAMES)[number] | null {
+  if (value === null || value === undefined || value === '') return null;
+  if (typeof value !== 'string' || !ICONS.has(value)) {
+    throw new BadRequestException('icon contém um valor desconhecido.');
+  }
+  return value as (typeof NAVIGATION_ICON_NAMES)[number];
 }
 
 function nonNegativeInteger(value: unknown, field: string): number {
@@ -141,6 +151,7 @@ function sectionInput(body: unknown): NavigationAdminSectionInput {
     slug: slug(input.slug, 'slug', 100),
     label: requiredString(input.label, 'label', 150),
     shortLabel: nullableString(input.shortLabel, 'shortLabel', 20),
+    icon: navigationIcon(input.icon),
     sortOrder: nonNegativeInteger(input.sortOrder, 'sortOrder'),
     active: booleanValue(input.active, 'active'),
   };
@@ -165,6 +176,7 @@ function itemInput(body: unknown): NavigationAdminItemInput {
     sectionId: positiveInteger(input.sectionId, 'sectionId'),
     slug: slug(input.slug, 'slug', 120),
     label: requiredString(input.label, 'label', 160),
+    icon: navigationIcon(input.icon),
     href,
     status,
     visibilityCondition: condition(input.visibilityCondition),

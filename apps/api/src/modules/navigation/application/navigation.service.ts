@@ -4,6 +4,7 @@ import {
   type AppNavigationItem,
   type AppNavigationResponse,
   type AppNavigationStatus,
+  type NavigationIconName,
   type UserRole,
 } from '@helpdesk/contracts';
 import type { Nivel3DatabaseClient } from '@helpdesk/database';
@@ -14,8 +15,10 @@ type NavigationRow = {
   section_slug: string;
   section_label: string;
   short_label: string | null;
+  section_icon: NavigationIconName | null;
   item_slug: string;
   item_label: string;
+  item_icon: NavigationIconName | null;
   href: string | null;
   status: string;
   visibility_condition: string | null;
@@ -32,8 +35,10 @@ SELECT
   s.slug AS section_slug,
   s.label AS section_label,
   s.short_label,
+  s.icon AS section_icon,
   i.slug AS item_slug,
   i.label AS item_label,
+  i.icon AS item_icon,
   i.href,
   i.status,
   i.visibility_condition
@@ -142,7 +147,7 @@ export class NavigationService {
     const rows = await this.nivel3.$queryRawUnsafe<NavigationRow[]>(NAVIGATION_QUERY);
     const sections = new Map<
       string,
-      { id: string; label: string; shortLabel: string; items: AppNavigationItem[] }
+      { id: string; label: string; shortLabel: string; icon: NavigationIconName | null; items: AppNavigationItem[] }
     >();
 
     for (const row of rows) {
@@ -154,6 +159,7 @@ export class NavigationService {
           id: row.section_slug,
           label: row.section_label,
           shortLabel: row.short_label?.trim() || row.section_label.slice(0, 2).toUpperCase(),
+          icon: row.section_icon,
           items: [],
         };
         sections.set(row.section_slug, section);
@@ -162,6 +168,7 @@ export class NavigationService {
       section.items.push({
         id: row.item_slug,
         label: row.item_label,
+        icon: row.item_icon ?? row.section_icon,
         ...(row.href ? { href: row.href } : {}),
         status: status(row.status),
       });
