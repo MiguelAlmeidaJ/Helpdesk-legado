@@ -139,6 +139,13 @@ export const DEFAULT_NAVIGATION: SeedSection[] = [
     shortLabel: 'AD',
     items: [
       {
+        slug: 'access-management',
+        label: 'Permissões',
+        href: '/administracao/permissoes',
+        status: 'available',
+        visibilityCondition: { anyPermissions: ['system.admin', 'users.manage-access'] },
+      },
+      {
         slug: 'navigation-admin',
         label: 'Navegação',
         href: '/administracao/navegacao',

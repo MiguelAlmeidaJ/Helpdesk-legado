@@ -1,5 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import type {
+  AccessRoleOption,
   CreateManagedUserRequest,
   ManagedUserDetail,
   ManagedUserListResponse,
@@ -40,6 +41,19 @@ interface CompanyLinkRow { usuario_id: number; id: number; name: string | null }
 interface OptionRow { id: number; name: string | null }
 interface ConflictRow { user_id: number; user_login: string | null; user_mail: string | null }
 interface InsertIdRow { id: bigint | number }
+interface UserRoleRow {
+  user_id: number;
+  id: number;
+  name: string;
+  slug: string;
+  is_system: boolean | number | bigint;
+}
+interface RoleOptionRow {
+  id: number;
+  name: string;
+  slug: string;
+  is_system: boolean | number | bigint;
+}
 
 function status(value: number | null): 1 | 2 {
   return value === 1 ? 1 : 2;
@@ -80,11 +94,21 @@ export class UsersRepository {
         ...parameters,
       ),
     ]);
-    const companies = await this.companiesByUserIds(rows.map((row) => row.user_id));
+    const userIds = rows.map((row) => row.user_id);
+    const [companies, roles] = await Promise.all([
+      this.companiesByUserIds(userIds),
+      this.rolesByUserIds(userIds),
+    ]);
     const total = Number(totals[0]?.total ?? 0);
 
     return {
-      data: rows.map((row) => this.toSummary(row, companies.get(row.user_id) ?? [])),
+      data: rows.map((row) =>
+        this.toSummary(
+          row,
+          companies.get(row.user_id) ?? [],
+          roles.get(row.user_id) ?? [],
+        ),
+      ),
       meta: { page, limit, total, totalPages: total === 0 ? 0 : Math.ceil(total / limit) },
     };
   }
@@ -99,9 +123,12 @@ export class UsersRepository {
     );
     const row = rows[0];
     if (!row) return null;
-    const companies = await this.companiesByUserIds([id]);
+    const [companies, roles] = await Promise.all([
+      this.companiesByUserIds([id]),
+      this.rolesByUserIds([id]),
+    ]);
     return {
-      ...this.toSummary(row, companies.get(id) ?? []),
+      ...this.toSummary(row, companies.get(id) ?? [], roles.get(id) ?? []),
       link: row.link ?? '',
       pixKeyType: row.pix_type,
       pixKey: row.chavepix ?? '',
@@ -114,7 +141,7 @@ export class UsersRepository {
   }
 
   async catalogs(): Promise<UserManagementCatalogs> {
-    const [functions, companies, pixKeyTypes] = await Promise.all([
+    const [functions, companies, pixKeyTypes, roles] = await Promise.all([
       this.database.$queryRaw<OptionRow[]>`
         SELECT cargo_id AS id, cargo_nome AS name
         FROM cargos_n3 WHERE cargo_sts = 1 ORDER BY cargo_nome`,
@@ -123,10 +150,24 @@ export class UsersRepository {
         FROM clientes WHERE clt_sts = 1 ORDER BY name`,
       this.database.$queryRaw<OptionRow[]>`
         SELECT id, name_type AS name FROM type_keys ORDER BY id`,
+      this.database.$queryRaw<RoleOptionRow[]>`
+        SELECT id, name, slug, is_system
+        FROM roles
+        ORDER BY is_system DESC, name, id`,
     ]);
     const map = (rows: OptionRow[]): UserOption[] =>
       rows.map((row) => ({ id: row.id, name: row.name ?? `#${row.id}` }));
-    return { functions: map(functions), companies: map(companies), pixKeyTypes: map(pixKeyTypes) };
+    return {
+      functions: map(functions),
+      companies: map(companies),
+      pixKeyTypes: map(pixKeyTypes),
+      roles: roles.map((role) => ({
+        id: role.id,
+        name: role.name,
+        slug: role.slug,
+        system: Boolean(role.is_system),
+      })),
+    };
   }
 
   async findConflict(login: string, email: string, exceptId?: number): Promise<'login' | 'email' | null> {
@@ -145,8 +186,25 @@ export class UsersRepository {
     return row.user_login?.toLowerCase() === login.toLowerCase() ? 'login' : 'email';
   }
 
-  async create(input: CreateManagedUserRequest, passwordHash: string): Promise<number> {
-    const modules = input.legacyModules ?? Array(9).fill('0000000000');
+  async rolesExist(roleIds: number[]): Promise<boolean> {
+    if (roleIds.length === 0) return true;
+    const placeholders = roleIds.map(() => '?').join(',');
+    const rows = await this.database.$queryRawUnsafe<CountRow[]>(
+      `SELECT COUNT(*) AS total FROM roles WHERE id IN (${placeholders})`,
+      ...roleIds,
+    );
+    return Number(rows[0]?.total ?? 0) === roleIds.length;
+  }
+
+  async create(
+    input: CreateManagedUserRequest,
+    passwordHash: string,
+    assignedBy: number,
+    canManageAccess: boolean,
+  ): Promise<number> {
+    const modules = canManageAccess && input.legacyModules
+      ? input.legacyModules
+      : Array(9).fill('0000000000');
     return this.database.$transaction(async (transaction) => {
       await transaction.$executeRawUnsafe(
         `INSERT INTO usuarios
@@ -162,11 +220,19 @@ export class UsersRepository {
       const ids = await transaction.$queryRawUnsafe<InsertIdRow[]>('SELECT LAST_INSERT_ID() AS id');
       const id = Number(ids[0]?.id);
       await this.replaceCompanies(transaction, id, input.companyIds ?? []);
+      if (canManageAccess) {
+        await this.replaceRoles(transaction, id, input.roleIds ?? [], assignedBy);
+      }
       return id;
     });
   }
 
-  async update(id: number, input: UpdateManagedUserRequest, canManageAccess: boolean): Promise<boolean> {
+  async update(
+    id: number,
+    input: UpdateManagedUserRequest,
+    canManageAccess: boolean,
+    assignedBy: number,
+  ): Promise<boolean> {
     return this.database.$transaction(async (transaction) => {
       const modulesSql = canManageAccess && input.legacyModules
         ? `, user_modulo_01 = ?, user_modulo_02 = ?, user_modulo_03 = ?,
@@ -185,6 +251,9 @@ export class UsersRepository {
       );
       if (changed === 0) return false;
       await this.replaceCompanies(transaction, id, input.companyIds ?? []);
+      if (canManageAccess && input.roleIds !== undefined) {
+        await this.replaceRoles(transaction, id, input.roleIds, assignedBy);
+      }
       return true;
     });
   }
@@ -218,6 +287,31 @@ export class UsersRepository {
     return result;
   }
 
+  private async rolesByUserIds(ids: number[]): Promise<Map<number, AccessRoleOption[]>> {
+    const result = new Map<number, AccessRoleOption[]>();
+    if (ids.length === 0) return result;
+    const placeholders = ids.map(() => '?').join(',');
+    const rows = await this.database.$queryRawUnsafe<UserRoleRow[]>(
+      `SELECT ur.user_id, r.id, r.name, r.slug, r.is_system
+       FROM user_roles ur
+       INNER JOIN roles r ON r.id = ur.role_id
+       WHERE ur.user_id IN (${placeholders})
+       ORDER BY r.is_system DESC, r.name, r.id`,
+      ...ids,
+    );
+    for (const row of rows) {
+      const entries = result.get(row.user_id) ?? [];
+      entries.push({
+        id: row.id,
+        name: row.name,
+        slug: row.slug,
+        system: Boolean(row.is_system),
+      });
+      result.set(row.user_id, entries);
+    }
+    return result;
+  }
+
   private async replaceCompanies(
     transaction: Pick<Nivel3DatabaseClient, '$executeRawUnsafe'>,
     userId: number,
@@ -233,7 +327,32 @@ export class UsersRepository {
     }
   }
 
-  private toSummary(row: UserRow, companies: UserOption[]): ManagedUserSummary {
+  private async replaceRoles(
+    transaction: Pick<Nivel3DatabaseClient, '$executeRawUnsafe'>,
+    userId: number,
+    roleIds: number[],
+    assignedBy: number,
+  ): Promise<void> {
+    await transaction.$executeRawUnsafe(
+      'DELETE FROM user_roles WHERE user_id = ?',
+      userId,
+    );
+    for (const roleId of roleIds) {
+      await transaction.$executeRawUnsafe(
+        `INSERT INTO user_roles (user_id, role_id, assigned_at, assigned_by)
+         VALUES (?, ?, NOW(), ?)`,
+        userId,
+        roleId,
+        assignedBy,
+      );
+    }
+  }
+
+  private toSummary(
+    row: UserRow,
+    companies: UserOption[],
+    roles: AccessRoleOption[],
+  ): ManagedUserSummary {
     return {
       id: row.user_id,
       status: status(row.user_sts),
@@ -246,6 +365,7 @@ export class UsersRepository {
         ? { id: row.user_funcao, name: row.cargo_nome ?? `#${row.user_funcao}` }
         : null,
       companies,
+      roles,
     };
   }
 }

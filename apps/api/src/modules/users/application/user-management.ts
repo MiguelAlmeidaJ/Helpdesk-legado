@@ -36,10 +36,20 @@ export class UserManagement {
     return this.users.catalogs();
   }
 
-  async create(input: CreateManagedUserRequest): Promise<ManagedUserDetail> {
+  async create(
+    input: CreateManagedUserRequest,
+    actorId: number,
+    canManageAccess: boolean,
+  ): Promise<ManagedUserDetail> {
+    if (!canManageAccess && (input.roleIds !== undefined || input.legacyModules !== undefined)) {
+      throw new ForbiddenException('Sem permissão para definir acessos do usuário.');
+    }
     await this.ensureUnique(input.login, input.email);
+    if (canManageAccess && input.roleIds) {
+      await this.ensureRolesExist(input.roleIds);
+    }
     const passwordHash = await bcrypt.hash(input.password, 12);
-    const id = await this.users.create(input, passwordHash);
+    const id = await this.users.create(input, passwordHash, actorId, canManageAccess);
     return this.detail(id);
   }
 
@@ -52,8 +62,14 @@ export class UserManagement {
     if (input.status === 2 && (id === 1 || id === actorId)) {
       throw new ForbiddenException('O usuário administrador principal e a própria conta não podem ser desativados.');
     }
+    if (!canManageAccess && (input.roleIds !== undefined || input.legacyModules !== undefined)) {
+      throw new ForbiddenException('Sem permissão para alterar acessos do usuário.');
+    }
     await this.ensureUnique(input.login, input.email, id);
-    if (!(await this.users.update(id, input, canManageAccess))) {
+    if (canManageAccess && input.roleIds) {
+      await this.ensureRolesExist(input.roleIds);
+    }
+    if (!(await this.users.update(id, input, canManageAccess, actorId))) {
       throw new NotFoundException('Usuário não encontrado.');
     }
     if (input.status === 2) {
@@ -70,6 +86,12 @@ export class UserManagement {
       throw new NotFoundException('Usuário não encontrado ou já desativado.');
     }
     await this.sessions.revokeAllForUser(id, 'user_deactivated');
+  }
+
+  private async ensureRolesExist(roleIds: number[]): Promise<void> {
+    if (!(await this.users.rolesExist(roleIds))) {
+      throw new NotFoundException('Um ou mais tipos de usuário não existem.');
+    }
   }
 
   private async ensureUnique(login: string, email: string, exceptId?: number): Promise<void> {
