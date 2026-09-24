@@ -48,19 +48,25 @@ function NavigationLink({
   item,
   pathname,
   onNavigate,
+  nested = false,
 }: {
   item: NavigationItem;
   pathname: string;
   onNavigate: () => void;
+  nested?: boolean;
 }) {
-  const base = 'group flex min-h-10 items-center gap-2.5 rounded-lg px-2.5 py-2 no-underline transition-colors';
+  const base = nested
+    ? 'group flex min-h-9 items-center rounded-lg px-3 py-2 no-underline transition-colors'
+    : 'group flex min-h-10 items-center gap-2.5 rounded-lg px-2.5 py-2 no-underline transition-colors';
 
   if (item.status === 'planned' || !item.href) {
     return (
       <span className={`${base} cursor-not-allowed text-app-subtle opacity-70`} aria-disabled="true">
-        <span className="grid size-7 shrink-0 place-items-center rounded-md bg-app-surface-muted">
-          <NavigationIcon className="size-4" name={item.icon} />
-        </span>
+        {!nested ? (
+          <span className="grid size-7 shrink-0 place-items-center rounded-md bg-app-surface-muted">
+            <NavigationIcon className="size-4" name={item.icon} />
+          </span>
+        ) : null}
         <span className="min-w-0 truncate text-xs font-semibold">{item.label}</span>
       </span>
     );
@@ -73,18 +79,22 @@ function NavigationLink({
       className={[
         base,
         active
-          ? 'bg-app-brand-soft font-extrabold text-app-brand'
+          ? nested
+            ? 'bg-app-brand-soft font-extrabold text-app-brand'
+            : 'bg-app-brand-soft font-extrabold text-app-brand'
           : 'text-app-text-soft hover:bg-app-surface-hover hover:text-app-text',
       ].join(' ')}
       href={item.href}
       onClick={onNavigate}
     >
-      <span className={[
-        'grid size-7 shrink-0 place-items-center rounded-md transition-colors',
-        active ? 'bg-app-surface text-app-brand' : 'bg-app-surface-muted text-app-muted group-hover:text-app-text-soft',
-      ].join(' ')}>
-        <NavigationIcon className="size-4" name={item.icon} />
-      </span>
+      {!nested ? (
+        <span className={[
+          'grid size-7 shrink-0 place-items-center rounded-md transition-colors',
+          active ? 'bg-app-surface text-app-brand' : 'bg-app-surface-muted text-app-muted group-hover:text-app-text-soft',
+        ].join(' ')}>
+          <NavigationIcon className="size-4" name={item.icon} />
+        </span>
+      ) : null}
       <span className="min-w-0 truncate text-xs">{item.label}</span>
     </Link>
   );
@@ -245,15 +255,23 @@ export function AppSidebar() {
                   {section.icon ? <NavigationIcon className="size-[17px]" name={section.icon} /> : <span className="text-[9px] font-black tracking-[0.04em]">{section.shortLabel}</span>}
                 </span>
                 <strong className="text-[13px]">{section.label}</strong>
-                <span className="text-[13px] text-app-subtle transition-transform duration-150 group-open:rotate-180 motion-reduce:transition-none">
-                  ⌄
+                <span className="grid size-7 place-items-center rounded-md text-app-subtle transition-colors group-hover:bg-app-surface-muted">
+                  <svg
+                    aria-hidden="true"
+                    className="size-4 transition-transform duration-150 group-open:rotate-90 motion-reduce:transition-none"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <path d="m9 5 7 7-7 7" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.9" />
+                  </svg>
                 </span>
               </summary>
-              <div className="mb-2 ml-[41px] mt-[3px] grid gap-[3px]">
+              <div className="mb-2 ml-[42px] mt-1 grid gap-0.5 border-l border-app-border-soft pl-2">
                 {section.items.map((item) => (
                   <NavigationLink
                     item={item}
                     key={item.id}
+                    nested
                     onNavigate={() => setOpen(false)}
                     pathname={pathname}
                   />
