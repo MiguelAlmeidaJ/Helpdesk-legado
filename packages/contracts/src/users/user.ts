@@ -1,4 +1,5 @@
 import type { PaginationMeta } from '../common/pagination';
+import type { AccessRoleOption } from '../auth/access-management';
 
 export interface UserOption {
   id: number;
@@ -15,6 +16,7 @@ export interface ManagedUserSummary {
   type: 0 | 1 | 2;
   function: UserOption | null;
   companies: UserOption[];
+  roles: AccessRoleOption[];
 }
 
 export interface ManagedUserDetail extends ManagedUserSummary {
@@ -28,6 +30,7 @@ export interface UserManagementCatalogs {
   functions: UserOption[];
   companies: UserOption[];
   pixKeyTypes: UserOption[];
+  roles: AccessRoleOption[];
 }
 
 export interface ManagedUserListResponse {
@@ -47,6 +50,7 @@ export interface CreateManagedUserRequest {
   pixKeyType?: number | null;
   pixKey?: string;
   companyIds?: number[];
+  roleIds?: number[];
   legacyModules?: string[];
 }
 
@@ -62,5 +66,6 @@ export interface UpdateManagedUserRequest {
   pixKeyType?: number | null;
   pixKey?: string;
   companyIds?: number[];
+  roleIds?: number[];
   legacyModules?: string[];
 }

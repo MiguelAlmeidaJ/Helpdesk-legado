@@ -14,8 +14,7 @@ async function waitForApi(apiUrl, { timeoutMs = 120000, intervalMs = 1000 } = {}
       if (
         response.ok &&
         health.status === 'ok' &&
-        health.databases?.nivel3 === 'up' &&
-        health.databases?.n3rd === 'up'
+        health.databases?.nivel3 === 'up'
       ) {
         return;
       }

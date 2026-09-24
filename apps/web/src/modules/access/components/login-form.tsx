@@ -138,7 +138,7 @@ export function LoginForm({ nextPath }: { nextPath: string }) {
       />
 
       <section className="relative z-[1] grid min-h-[510px] w-full max-w-[1030px] grid-cols-[1.06fr_0.94fr] overflow-hidden rounded-3xl border border-white/10 bg-[#15191b] shadow-[0_28px_80px_rgba(0,0,0,0.52)] max-[820px]:max-w-[520px] max-[820px]:grid-cols-1 max-[480px]:min-h-screen max-[480px]:rounded-none max-[480px]:border-0">
-        <div className="flex flex-col items-center justify-center gap-[38px] bg-linear-to-b from-[#011a1d] to-[#001214] px-[66px] py-[54px] text-center max-[820px]:gap-[18px] max-[820px]:px-9 max-[820px]:py-[30px] max-[480px]:px-7 max-[480px]:py-6">
+        <div className="flex flex-col items-center justify-center gap-[8px] bg-linear-to-b from-[#011a1d] to-[#001214] px-[66px] py-[54px] text-center max-[820px]:gap-[18px] max-[820px]:px-9 max-[820px]:py-[30px] max-[480px]:px-7 max-[480px]:py-6">
           <Image
             alt="Helpdesk"
             className="h-auto w-full max-w-[365px] max-[820px]:max-w-[290px]"

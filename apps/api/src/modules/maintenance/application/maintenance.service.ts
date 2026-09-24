@@ -96,6 +96,22 @@ type OperationRow = {
   finished_at: Date | string | null;
 };
 
+type ApiSessionSnapshotRow = {
+  id: string;
+  family_id: string;
+  user_id: number;
+  refresh_token_hash: string;
+  replaced_by_id: string | null;
+  device_name: string | null;
+  user_agent: string | null;
+  ip_address: string | null;
+  created_at: Date | string;
+  last_used_at: Date | string | null;
+  expires_at: Date | string;
+  revoked_at: Date | string | null;
+  revoke_reason: string | null;
+};
+
 type TableRow = {
   table_name: string;
   engine: string | null;
@@ -679,6 +695,7 @@ export class MaintenanceService implements OnApplicationBootstrap {
   private readonly logger = new Logger(MaintenanceService.name);
   private ensurePromise: Promise<void> | null = null;
   private toolCache = new Map<'dump' | 'restore', string | null>();
+  private dumpImportInProgress = false;
 
   constructor(
     @Inject(NIVEL3_DATABASE)
@@ -1155,6 +1172,26 @@ export class MaintenanceService implements OnApplicationBootstrap {
       );
     }
 
+    if (this.dumpImportInProgress) {
+      throw new ConflictException(
+        'Uma importação de dump já está em andamento. Aguarde a conclusão.',
+      );
+    }
+
+    this.dumpImportInProgress = true;
+    try {
+      return await this.applyDumpExclusively(metadata, token, actorUserId);
+    } finally {
+      this.dumpImportInProgress = false;
+    }
+  }
+
+  private async applyDumpExclusively(
+    metadata: DumpMetadata,
+    token: string,
+    actorUserId: number,
+  ): Promise<MaintenanceDumpApplyResponse> {
+    const activeSessions = await this.activeSessionSnapshot(actorUserId);
     const safetyFiles = await this.createBackups(
       metadata.target,
       'pre-import',
@@ -1178,6 +1215,7 @@ export class MaintenanceService implements OnApplicationBootstrap {
         path.join(importRoot(), token + '.sql'),
       );
       const repair = await this.repair(metadata.target);
+      await this.restoreSessionSnapshot(activeSessions);
       const adminPreserved =
         metadata.target === 'nivel3'
           ? await this.ensureSystemAdmin(actorUserId)
@@ -1203,12 +1241,83 @@ export class MaintenanceService implements OnApplicationBootstrap {
         repair,
       };
     } catch (error) {
+      await this.restoreSessionSnapshot(activeSessions).catch(
+        (sessionError: unknown) => {
+          this.logger.error(
+            'Falha ao restaurar a sessão administrativa após a importação: ' +
+              (sessionError instanceof Error
+                ? sessionError.message
+                : String(sessionError)),
+          );
+        },
+      );
       await this.finishOperation(
         operationId,
         'error',
         error instanceof Error ? error.message : String(error),
       );
       throw error;
+    }
+  }
+
+  private async activeSessionSnapshot(
+    userId: number,
+  ): Promise<ApiSessionSnapshotRow[]> {
+    return this.nivel3.$queryRawUnsafe<ApiSessionSnapshotRow[]>(
+      [
+        'SELECT id, family_id, user_id, refresh_token_hash, replaced_by_id,',
+        '       device_name, user_agent, ip_address, created_at, last_used_at,',
+        '       expires_at, revoked_at, revoke_reason',
+        'FROM api_sessions',
+        'WHERE user_id = ? AND revoked_at IS NULL AND expires_at > NOW(6)',
+      ].join('\n'),
+      userId,
+    );
+  }
+
+  private async restoreSessionSnapshot(
+    sessions: readonly ApiSessionSnapshotRow[],
+  ): Promise<void> {
+    if (sessions.length === 0) return;
+
+    await this.ensureAccessSchema();
+    for (const session of sessions) {
+      await this.nivel3.$executeRawUnsafe(
+        [
+          'INSERT INTO api_sessions (',
+          '  id, family_id, user_id, refresh_token_hash, replaced_by_id,',
+          '  device_name, user_agent, ip_address, created_at, last_used_at,',
+          '  expires_at, revoked_at, revoke_reason',
+          ') SELECT ?, ?, user_id, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?',
+          'FROM usuarios WHERE user_id = ?',
+          'ON DUPLICATE KEY UPDATE',
+          '  family_id = VALUES(family_id),',
+          '  user_id = VALUES(user_id),',
+          '  refresh_token_hash = VALUES(refresh_token_hash),',
+          '  replaced_by_id = VALUES(replaced_by_id),',
+          '  device_name = VALUES(device_name),',
+          '  user_agent = VALUES(user_agent),',
+          '  ip_address = VALUES(ip_address),',
+          '  created_at = VALUES(created_at),',
+          '  last_used_at = VALUES(last_used_at),',
+          '  expires_at = VALUES(expires_at),',
+          '  revoked_at = VALUES(revoked_at),',
+          '  revoke_reason = VALUES(revoke_reason)',
+        ].join('\n'),
+        session.id,
+        session.family_id,
+        session.refresh_token_hash,
+        session.replaced_by_id,
+        session.device_name,
+        session.user_agent,
+        session.ip_address,
+        session.created_at,
+        session.last_used_at,
+        session.expires_at,
+        session.revoked_at,
+        session.revoke_reason,
+        session.user_id,
+      );
     }
   }
 

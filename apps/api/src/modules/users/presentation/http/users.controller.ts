@@ -59,10 +59,10 @@ function positiveInteger(value: unknown, field: string): number {
   return value;
 }
 
-function idList(value: unknown): number[] {
+function idList(value: unknown, field: string): number[] {
   if (value === undefined) return [];
-  if (!Array.isArray(value)) throw new BadRequestException('companyIds deve ser uma lista.');
-  const ids = value.map((id) => positiveInteger(id, 'companyIds'));
+  if (!Array.isArray(value)) throw new BadRequestException(`${field} deve ser uma lista.`);
+  const ids = value.map((id) => positiveInteger(id, field));
   return [...new Set(ids)];
 }
 
@@ -80,7 +80,10 @@ function baseInput(body: unknown) {
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new BadRequestException('E-mail inválido.');
   const type = value.type;
   if (type !== 1 && type !== 2) throw new BadRequestException('type deve ser 1 ou 2.');
-  const companyIds = idList(value.companyIds);
+  const companyIds = idList(value.companyIds, 'companyIds');
+  const roleIds = value.roleIds === undefined
+    ? undefined
+    : idList(value.roleIds, 'roleIds');
   if (type === 2 && companyIds.length === 0) throw new BadRequestException('Usuários clientes precisam de ao menos uma empresa.');
   const pixKeyType = value.pixKeyType === null || value.pixKeyType === undefined
     ? null
@@ -100,6 +103,7 @@ function baseInput(body: unknown) {
       pixKeyType,
       pixKey,
       companyIds,
+      roleIds,
       legacyModules: modules(value.legacyModules),
     },
   };
@@ -142,11 +146,20 @@ export class UsersController {
   @RequirePermissions(AppPermission.UsersCreate)
   @ApiOperation({ summary: 'Cadastrar usuário' })
   @ApiResponse({ status: 201, description: 'Usuário cadastrado.' })
-  create(@Body() body: unknown): Promise<ManagedUserDetail> {
+  create(
+    @Body() body: unknown,
+    @CurrentUser() actor: AuthenticatedUser | undefined,
+  ): Promise<ManagedUserDetail> {
+    if (!actor) throw new UnauthorizedException('Usuário não autenticado.');
     const { value, input } = baseInput(body);
     const password = requiredString(value.password, 'password', 100);
     if (!isStrongPassword(password)) throw new BadRequestException(PASSWORD_POLICY_MESSAGE);
-    return this.management.create({ ...input, password } as CreateManagedUserRequest);
+    const canManageAccess = hasPermission(actor, AppPermission.UsersManageAccess);
+    return this.management.create(
+      { ...input, password } as CreateManagedUserRequest,
+      actor.id,
+      canManageAccess,
+    );
   }
 
   @Patch(':id')
@@ -161,7 +174,9 @@ export class UsersController {
     const { value, input } = baseInput(body);
     if (value.status !== 1 && value.status !== 2) throw new BadRequestException('status deve ser 1 ou 2.');
     const canManageAccess = hasPermission(actor, AppPermission.UsersManageAccess);
-    if (input.legacyModules && !canManageAccess) throw new BadRequestException('Sem permissão para alterar acessos.');
+    if ((input.legacyModules || input.roleIds) && !canManageAccess) {
+      throw new BadRequestException('Sem permissão para alterar acessos.');
+    }
     return this.management.update(id, actor.id, { ...input, status: value.status } as UpdateManagedUserRequest, canManageAccess);
   }
 

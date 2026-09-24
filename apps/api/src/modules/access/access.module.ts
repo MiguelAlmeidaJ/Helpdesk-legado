@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { AuthenticateWithPassword } from './application/authenticate-with-password';
+import { AccessManagement } from './application/access-management';
 import { ChangePassword } from './application/change-password';
 import { RequestPasswordReset } from './application/request-password-reset';
 import { ResetPassword } from './application/reset-password';
@@ -11,10 +12,12 @@ import { PasswordRecoveryRepository } from './infrastructure/password-recovery.r
 import { PasswordResetMailer } from './infrastructure/password-reset-mailer';
 import { RbacAccessRepository } from './infrastructure/rbac-access.repository';
 import { AccessController } from './presentation/http/access.controller';
+import { AccessManagementController } from './presentation/http/access-management.controller';
 import { LegacySessionGuard } from './presentation/http/legacy-session.guard';
 import { PermissionsGuard } from './presentation/http/permissions.guard';
 
 const accessProviders = [
+  AccessManagement,
   AccessIdentityRepository,
   ApiSessionRepository,
   LegacyPhpSessionRepository,
@@ -31,7 +34,7 @@ const accessProviders = [
 ];
 
 @Module({
-  controllers: [AccessController],
+  controllers: [AccessController, AccessManagementController],
   providers: accessProviders,
   // Guards referenced by controllers in another module are resolved in that
   // consumer context. Export their dependencies as well, not only the guards.

@@ -3,7 +3,7 @@ const { createServer } = require('node:http');
 const { test } = require('node:test');
 const { waitForApi } = require('./wait-for-api.cjs');
 
-const healthy = { status: 'ok', databases: { nivel3: 'up', n3rd: 'up' } };
+const healthy = { status: 'ok', databases: { nivel3: 'up' } };
 
 async function serve(t, handler) {
   const server = createServer(handler);
@@ -25,7 +25,7 @@ test('waits through unavailable and degraded responses before releasing startup'
     } else {
       res.setHeader('Content-Type', 'application/json');
       res.end(JSON.stringify(requests === 2
-        ? { status: 'ok', databases: { nivel3: 'up', n3rd: 'down' } }
+        ? { status: 'degraded', databases: { nivel3: 'down' } }
         : healthy));
     }
   });
