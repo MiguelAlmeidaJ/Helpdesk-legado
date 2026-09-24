@@ -1,6 +1,9 @@
+import type { NavigationIconName } from './navigation';
+
 type SeedItem = {
   slug: string;
   label: string;
+  icon?: NavigationIconName;
   href?: string;
   status: 'available' | 'planned';
   visibilityCondition?: Record<string, string[]>;
@@ -10,6 +13,7 @@ type SeedSection = {
   slug: string;
   label: string;
   shortLabel: string;
+  icon: NavigationIconName;
   items: SeedItem[];
 };
 
@@ -28,6 +32,7 @@ export const DEFAULT_NAVIGATION: SeedSection[] = [
     slug: 'primary',
     label: 'Principal',
     shortLabel: 'IN',
+    icon: 'home',
     items: [
       { slug: 'dashboard', label: 'Painel', href: '/painel', status: 'available' },
     ],
@@ -36,6 +41,7 @@ export const DEFAULT_NAVIGATION: SeedSection[] = [
     slug: 'tickets',
     label: 'Atendimentos',
     shortLabel: 'AT',
+    icon: 'headset',
     items: [
       { slug: 'tickets-list', label: 'Lista de Atendimentos', href: '/atendimentos', status: 'available', visibilityCondition: { anyPermissions: ['tickets.read'] } },
       { slug: 'tickets-recurrences', label: 'Recorrências', href: '/atendimentos/recorrencias', status: 'available', visibilityCondition: { anyPermissions: ['tickets.read'] } },
@@ -48,6 +54,7 @@ export const DEFAULT_NAVIGATION: SeedSection[] = [
     slug: 'devops',
     label: 'DevOps',
     shortLabel: 'DO',
+    icon: 'code',
     items: [
       { slug: 'devops-projects', label: 'Lista de Projetos', href: '/atendimentos/devops/projetos', status: 'available', visibilityCondition: { anyPermissions: ['tickets.read'] } },
       { slug: 'devops-tasks', label: 'Lista de Tarefas', href: '/atendimentos/devops', status: 'available', visibilityCondition: { anyPermissions: ['tickets.read'] } },
@@ -59,6 +66,7 @@ export const DEFAULT_NAVIGATION: SeedSection[] = [
     slug: 'marketing',
     label: 'Marketing',
     shortLabel: 'MK',
+    icon: 'megaphone',
     items: [
       { slug: 'marketing-tasks', label: 'Lista de Tarefas', href: '/atendimentos/marketing', status: 'available', visibilityCondition: { anyPermissions: ['tickets.read'] } },
       { slug: 'marketing-task-new', label: 'Nova Tarefa', href: '/atendimentos/marketing/nova-tarefa', status: 'available', visibilityCondition: { anyPermissions: ['tickets.create'] } },
@@ -68,6 +76,7 @@ export const DEFAULT_NAVIGATION: SeedSection[] = [
     slug: 'logistics',
     label: 'Logística',
     shortLabel: 'LG',
+    icon: 'truck',
     items: [
       { slug: 'vehicles-agenda', label: 'Agenda Veículos', href: '/logistica/veiculos/agenda', status: 'available', visibilityCondition: { anyPermissions: ['logistics.vehicle-agenda.read', 'logistics.vehicle-agenda.manage'] } },
       { slug: 'rd', label: 'RD', href: '/logistica/despesas', status: 'available', visibilityCondition: { anyPermissions: ['logistics.expenses.read', 'logistics.expenses.manage'] } },
@@ -89,6 +98,7 @@ export const DEFAULT_NAVIGATION: SeedSection[] = [
     slug: 'reports',
     label: 'Relatórios',
     shortLabel: 'RL',
+    icon: 'chart',
     items: [
       { slug: 'report-client-total', label: 'Atd. total por Cliente', href: '/relatorios/atendimentos/por-cliente', status: 'available', visibilityCondition: { anyPermissions: ['tickets.audit'] } },
       { slug: 'report-client-daily', label: 'Atd. diário por Cliente', href: '/relatorios/atendimentos/diario-por-cliente', status: 'available', visibilityCondition: { anyPermissions: ['tickets.audit'] } },
@@ -110,8 +120,9 @@ export const DEFAULT_NAVIGATION: SeedSection[] = [
     slug: 'registrations',
     label: 'Cadastros',
     shortLabel: 'CD',
+    icon: 'database',
     items: [
-      { slug: 'users', label: 'Usuários', href: '/usuarios', status: 'available', visibilityCondition: { anyPermissions: ['users.read', 'users.edit', 'users.manage-access'] } },
+      { slug: 'users', label: 'Usuários', icon: 'users', href: '/usuarios', status: 'available', visibilityCondition: { anyPermissions: ['users.read', 'users.edit', 'users.manage-access'] } },
       { slug: 'clients', label: 'Clientes', href: '/cadastros/clientes', status: 'available', visibilityCondition: { anyPermissions: ['registrations.clients.read', 'registrations.clients.create', 'registrations.clients.edit'] } },
       { slug: 'categories', label: 'Categorias', href: '/cadastros/categorias', status: 'available', visibilityCondition: { anyPermissions: ['registrations.categories.read', 'registrations.categories.create', 'registrations.categories.edit'] } },
       { slug: 'catalogs', label: 'Catálogos', href: '/catalogos', status: 'available', visibilityCondition: CATALOG_READ },
@@ -129,15 +140,17 @@ export const DEFAULT_NAVIGATION: SeedSection[] = [
     slug: 'standalone',
     label: 'Outros',
     shortLabel: 'OU',
+    icon: 'menu',
     items: [
-      { slug: 'radio', label: 'Rádio', href: '/radio', status: 'available' },
-      { slug: 'statements', label: 'Extratos', href: '/extratos', status: 'available', visibilityCondition: { anyPermissions: ['logistics.statements.read'] } },
+      { slug: 'radio', label: 'Rádio', icon: 'radio', href: '/radio', status: 'available' },
+      { slug: 'statements', label: 'Extratos', icon: 'wallet', href: '/extratos', status: 'available', visibilityCondition: { anyPermissions: ['logistics.statements.read'] } },
     ],
   },
   {
     slug: 'administration',
     label: 'Administração',
     shortLabel: 'AD',
+    icon: 'settings',
     items: [
       {
         slug: 'access-management',

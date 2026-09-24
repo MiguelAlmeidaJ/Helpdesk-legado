@@ -1,10 +1,11 @@
-import { DEFAULT_NAVIGATION } from '@helpdesk/contracts';
+import { DEFAULT_NAVIGATION, type NavigationIconName } from '@helpdesk/contracts';
 
 export type NavigationItemStatus = 'available' | 'planned';
 
 export interface NavigationItem {
   id: string;
   label: string;
+  icon: NavigationIconName | null;
   href?: string;
   status: NavigationItemStatus;
 }
@@ -13,12 +14,19 @@ export interface NavigationSection {
   id: string;
   label: string;
   shortLabel: string;
+  icon: NavigationIconName | null;
   items: NavigationItem[];
 }
 
 function items(sectionSlug: string): NavigationItem[] {
   return DEFAULT_NAVIGATION.find((section) => section.slug === sectionSlug)!.items.map(
-    ({ slug, label, href, status }) => ({ id: slug, label, href, status }),
+    ({ slug, label, icon, href, status }) => ({
+      id: slug,
+      label,
+      icon: icon ?? DEFAULT_NAVIGATION.find((section) => section.slug === sectionSlug)?.icon ?? null,
+      href,
+      status,
+    }),
   );
 }
 
@@ -30,6 +38,7 @@ export const APP_NAVIGATION_SECTIONS: NavigationSection[] = DEFAULT_NAVIGATION
     id: section.slug,
     label: section.label,
     shortLabel: section.shortLabel,
+    icon: section.icon,
     items: items(section.slug),
   }));
 
