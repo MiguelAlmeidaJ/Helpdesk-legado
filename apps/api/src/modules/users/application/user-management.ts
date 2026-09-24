@@ -41,15 +41,20 @@ export class UserManagement {
     actorId: number,
     canManageAccess: boolean,
   ): Promise<ManagedUserDetail> {
-    if (!canManageAccess && input.roleIds !== undefined) {
+    if (!canManageAccess && input.roleIds !== undefined && input.type !== 2) {
       throw new ForbiddenException('Sem permissão para definir acessos do usuário.');
     }
     await this.ensureUnique(input.login, input.email);
-    if (canManageAccess && input.roleIds) {
-      await this.ensureRolesExist(input.roleIds);
-    }
+    const roleIds = await this.roleIdsForType(input.type, input.roleIds, canManageAccess);
+    if (roleIds) await this.ensureRolesExist(roleIds);
+    const normalizedInput = { ...input, roleIds };
     const passwordHash = await bcrypt.hash(input.password, 12);
-    const id = await this.users.create(input, passwordHash, actorId, canManageAccess);
+    const id = await this.users.create(
+      normalizedInput,
+      passwordHash,
+      actorId,
+      canManageAccess || input.type === 2,
+    );
     return this.detail(id);
   }
 
@@ -62,14 +67,19 @@ export class UserManagement {
     if (input.status === 2 && (id === 1 || id === actorId)) {
       throw new ForbiddenException('O usuário administrador principal e a própria conta não podem ser desativados.');
     }
-    if (!canManageAccess && input.roleIds !== undefined) {
+    if (!canManageAccess && input.roleIds !== undefined && input.type !== 2) {
       throw new ForbiddenException('Sem permissão para alterar acessos do usuário.');
     }
     await this.ensureUnique(input.login, input.email, id);
-    if (canManageAccess && input.roleIds) {
-      await this.ensureRolesExist(input.roleIds);
-    }
-    if (!(await this.users.update(id, input, canManageAccess, actorId))) {
+    const roleIds = await this.roleIdsForType(input.type, input.roleIds, canManageAccess);
+    if (roleIds) await this.ensureRolesExist(roleIds);
+    const normalizedInput = { ...input, roleIds };
+    if (!(await this.users.update(
+      id,
+      normalizedInput,
+      canManageAccess || input.type === 2,
+      actorId,
+    ))) {
       throw new NotFoundException('Usuário não encontrado.');
     }
     if (input.status === 2) {
@@ -86,6 +96,24 @@ export class UserManagement {
       throw new NotFoundException('Usuário não encontrado ou já desativado.');
     }
     await this.sessions.revokeAllForUser(id, 'user_deactivated');
+  }
+
+  private async roleIdsForType(
+    type: 1 | 2,
+    requestedRoleIds: number[] | undefined,
+    canManageAccess: boolean,
+  ): Promise<number[] | undefined> {
+    const clientRoleId = await this.users.clientRoleId();
+
+    if (type === 2) {
+      if (!clientRoleId) {
+        throw new NotFoundException('O tipo de usuário Cliente não está cadastrado em Permissões.');
+      }
+      return [clientRoleId];
+    }
+
+    if (!canManageAccess) return undefined;
+    return (requestedRoleIds ?? []).filter((id) => id !== clientRoleId);
   }
 
   private async ensureRolesExist(roleIds: number[]): Promise<void> {

@@ -178,6 +178,22 @@ export class UsersRepository {
     return row.user_login?.toLowerCase() === login.toLowerCase() ? 'login' : 'email';
   }
 
+  async clientRoleId(): Promise<number | null> {
+    const rows = await this.database.$queryRawUnsafe<Array<{ id: number | bigint }>>(
+      `SELECT id
+       FROM roles
+       WHERE LOWER(TRIM(name)) = 'cliente'
+          OR LOWER(slug) IN ('cliente', 'client')
+       ORDER BY CASE
+         WHEN LOWER(TRIM(name)) = 'cliente' THEN 0
+         WHEN LOWER(slug) = 'cliente' THEN 1
+         ELSE 2
+       END, id
+       LIMIT 1`,
+    );
+    return rows[0] ? Number(rows[0].id) : null;
+  }
+
   async rolesExist(roleIds: number[]): Promise<boolean> {
     if (roleIds.length === 0) return true;
     const placeholders = roleIds.map(() => '?').join(',');

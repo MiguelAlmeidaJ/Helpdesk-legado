@@ -161,14 +161,49 @@ export function UsersScreen({ currentUser }: { currentUser: CurrentUserResponse 
       : companies;
   }, [catalogs?.companies, companyQuery]);
 
+  const clientRole = useMemo(
+    () => catalogs?.roles.find((role) => {
+      const slug = role.slug.toLocaleLowerCase('pt-BR');
+      const name = role.name.trim().toLocaleLowerCase('pt-BR');
+      return slug === 'cliente' || slug === 'client' || name === 'cliente';
+    }) ?? null,
+    [catalogs?.roles],
+  );
+
+  const visibleRoles = useMemo(
+    () => form.type === 2
+      ? (clientRole ? [clientRole] : [])
+      : (catalogs?.roles ?? []).filter((role) => role.id !== clientRole?.id),
+    [catalogs?.roles, clientRole, form.type],
+  );
+
   async function selectUser(id: number) {
     setError(null); setSuccess(null); setLoading(true);
-    try { const user = await fetchUser(id); setSelectedId(id); setForm(fromUser(user)); setCompanyQuery(''); }
+    try {
+      const user = await fetchUser(id);
+      const next = fromUser(user);
+      if (next.type === 2 && clientRole) next.roleIds = [clientRole.id];
+      setSelectedId(id);
+      setForm(next);
+      setCompanyQuery('');
+    }
     catch (reason) { setError(message(reason)); }
     finally { setLoading(false); }
   }
 
   function newUser() { setSelectedId(null); setForm({ ...EMPTY_FORM, companyIds: [], roleIds: [] }); setCompanyQuery(''); setError(null); setSuccess(null); }
+
+  function changeUserType(type: 1 | 2) {
+    setForm((current) => ({
+      ...current,
+      type,
+      companyIds: type === 2 ? current.companyIds : [],
+      roleIds: type === 2
+        ? (clientRole ? [clientRole.id] : [])
+        : current.roleIds.filter((id) => id !== clientRole?.id),
+    }));
+    if (type === 1) setCompanyQuery('');
+  }
 
   function toggleCompany(companyId: number, checked: boolean) {
     setForm((current) => ({
@@ -188,7 +223,10 @@ export function UsersScreen({ currentUser }: { currentUser: CurrentUserResponse 
 
   async function save(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); setSaving(true); setError(null); setSuccess(null);
-    const base = { status: form.status, name: form.name, email: form.email, phone: form.phone, functionId: Number(form.functionId), login: form.login, type: form.type, link: form.link, pixKeyType: form.pixKeyType ? Number(form.pixKeyType) : null, pixKey: form.pixKey, companyIds: form.companyIds, ...(canManageAccess ? { roleIds: form.roleIds } : {}) };
+    const normalizedRoleIds = form.type === 2
+      ? (clientRole ? [clientRole.id] : [])
+      : form.roleIds.filter((id) => id !== clientRole?.id);
+    const base = { status: form.status, name: form.name, email: form.email, phone: form.phone, functionId: Number(form.functionId), login: form.login, type: form.type, link: form.link, pixKeyType: form.pixKeyType ? Number(form.pixKeyType) : null, pixKey: form.pixKey, companyIds: form.type === 2 ? form.companyIds : [], ...((canManageAccess || form.type === 2) ? { roleIds: normalizedRoleIds } : {}) };
     try {
       const saved = selectedId
         ? await updateUser(selectedId, base)
@@ -236,13 +274,13 @@ export function UsersScreen({ currentUser }: { currentUser: CurrentUserResponse 
                   <label><span>Login</span><input disabled={saving || (!!selectedId && !canEdit)} maxLength={15} onChange={(event) => setForm({ ...form, login: event.target.value })} required value={form.login} /></label>
                   {!selectedId ? <label><span>Senha inicial</span><input disabled={saving} maxLength={100} minLength={12} onChange={(event) => setForm({ ...form, password: event.target.value })} required type="password" value={form.password} /></label> : null}
                   <label><span>Função</span><select disabled={saving || (!!selectedId && !canEdit)} onChange={(event) => setForm({ ...form, functionId: event.target.value })} required value={form.functionId}><option value="">Selecione</option>{catalogs?.functions.map((option) => <option key={option.id} value={option.id}>{option.name}</option>)}</select></label>
-                  <label><span>Tipo</span><select disabled={saving || (!!selectedId && !canEdit)} onChange={(event) => setForm({ ...form, type: Number(event.target.value) as 1 | 2 })} value={form.type}><option value={1}>Interno</option><option value={2}>Cliente</option></select></label>
+                  <label><span>Tipo</span><select disabled={saving || (!!selectedId && !canEdit)} onChange={(event) => changeUserType(Number(event.target.value) as 1 | 2)} value={form.type}><option value={1}>Interno</option><option value={2}>Cliente</option></select></label>
                   <label><span>Situação</span><select disabled={saving || !selectedId || !canEdit} onChange={(event) => setForm({ ...form, status: Number(event.target.value) as 1 | 2 })} value={form.status}><option value={1}>Ativo</option><option value={2}>Inativo</option></select></label>
                   <label><span>Link</span><input disabled={saving || (!!selectedId && !canEdit)} maxLength={50} onChange={(event) => setForm({ ...form, link: event.target.value })} value={form.link} /></label>
                   <label><span>Tipo de chave Pix</span><select disabled={saving || (!!selectedId && !canEdit)} onChange={(event) => setForm({ ...form, pixKeyType: event.target.value })} value={form.pixKeyType}><option value="">Nenhum</option>{catalogs?.pixKeyTypes.map((option) => <option key={option.id} value={option.id}>{option.name}</option>)}</select></label>
                   <label><span>Chave Pix</span><input disabled={saving || (!!selectedId && !canEdit)} maxLength={255} onChange={(event) => setForm({ ...form, pixKey: event.target.value })} value={form.pixKey} /></label>
                 </div>
-                <fieldset className={styles.companyPicker}>
+                {form.type === 2 ? <fieldset className={styles.companyPicker}>
                     <div className={styles.companyPickerHeader}><span>Empresas vinculadas</span><strong>{form.companyIds.length} selecionada(s)</strong></div>
                     <div className={styles.companyPickerBox}>
                       <input className={styles.companySearch} disabled={saving || (!!selectedId && !canEdit)} onChange={(event) => setCompanyQuery(event.target.value)} placeholder="Buscar empresa..." type="search" value={companyQuery} />
@@ -257,8 +295,8 @@ export function UsersScreen({ currentUser }: { currentUser: CurrentUserResponse 
                         }) : <div className={styles.companyEmpty}>Nenhuma empresa encontrada.</div>}
                       </div>
                     </div>
-                  </fieldset>
-                {canManageAccess ? <fieldset className={styles.permissions}><legend>Tipos de usuário</legend><p>Selecione os perfis que este usuário receberá. Cada perfil aplica automaticamente o conjunto de permissões configurado em Administração → Permissões.</p><div className={styles.roleGrid}>{catalogs?.roles.map((role) => { const checked = form.roleIds.includes(role.id); return <label className={styles.roleOption} key={role.id}><input checked={checked} disabled={saving || (!!selectedId && !canEdit)} onChange={() => setForm((current) => ({ ...current, roleIds: checked ? current.roleIds.filter((id) => id !== role.id) : [...current.roleIds, role.id] }))} type="checkbox" /><span><strong>{role.name}</strong><small>{role.system ? 'Perfil interno do sistema' : role.slug}</small></span></label>; })}</div></fieldset> : null}
+                  </fieldset> : null}
+                {canManageAccess ? <fieldset className={styles.permissions}><legend>Tipos de usuário</legend><p>{form.type === 2 ? 'Usuários do tipo Cliente recebem exclusivamente o perfil Cliente.' : 'Selecione os perfis que este usuário receberá. Cada perfil aplica automaticamente o conjunto de permissões configurado em Administração → Permissões.'}</p><div className={styles.roleGrid}>{visibleRoles.map((role) => { const checked = form.type === 2 ? true : form.roleIds.includes(role.id); return <label className={styles.roleOption} key={role.id}><input checked={checked} disabled={form.type === 2 || saving || (!!selectedId && !canEdit)} onChange={() => setForm((current) => ({ ...current, roleIds: checked ? current.roleIds.filter((id) => id !== role.id) : [...current.roleIds, role.id] }))} type="checkbox" /><span><strong>{role.name}</strong><small>{form.type === 2 ? 'Perfil obrigatório para usuário cliente' : role.system ? 'Perfil interno do sistema' : role.slug}</small></span></label>; })}</div></fieldset> : null}
                 {(selectedId ? canEdit : canCreate) ? <div className={styles.actions}>{selectedId && form.status === 1 ? <button className={styles.button} disabled={saving || selectedId === currentUser.id || selectedId === 1} onClick={() => void deactivate()} type="button">Desativar</button> : null}<button className={styles.buttonPrimary} disabled={saving} type="submit">{saving ? 'Salvando…' : 'Salvar usuário'}</button></div> : null}
               </form>
             )}
