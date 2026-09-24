@@ -33,13 +33,9 @@ function objectBody(body: unknown): Record<string, unknown> {
 }
 
 function requiredString(value: unknown, field: string, max: number): string {
-  if (typeof value !== 'string') {
-    throw new BadRequestException(`${field} é obrigatório.`);
-  }
+  if (typeof value !== 'string') throw new BadRequestException(`${field} é obrigatório.`);
   const normalized = value.trim();
-  if (!normalized || normalized.length > max) {
-    throw new BadRequestException(`${field} possui tamanho inválido.`);
-  }
+  if (!normalized || normalized.length > max) throw new BadRequestException(`${field} possui tamanho inválido.`);
   return normalized;
 }
 
@@ -51,13 +47,13 @@ function optionalString(value: unknown, field: string, max: number): string | nu
   return value.trim() || null;
 }
 
-function permissionIds(value: unknown): number[] {
+function idList(value: unknown, field: string): number[] {
   if (!Array.isArray(value) || value.length > 500) {
-    throw new BadRequestException('permissionIds deve ser uma lista válida.');
+    throw new BadRequestException(`${field} deve ser uma lista válida.`);
   }
   const ids = value.map((id) => {
     if (typeof id !== 'number' || !Number.isSafeInteger(id) || id < 1) {
-      throw new BadRequestException('permissionIds contém um identificador inválido.');
+      throw new BadRequestException(`${field} contém um identificador inválido.`);
     }
     return id;
   });
@@ -69,7 +65,7 @@ function input(body: unknown): AccessRoleInput {
   return {
     name: requiredString(value.name, 'name', 100),
     description: optionalString(value.description, 'description', 255),
-    permissionIds: permissionIds(value.permissionIds),
+    permissionIds: idList(value.permissionIds, 'permissionIds'),
   };
 }
 
@@ -93,19 +89,24 @@ export class AccessManagementController {
     return this.access.create(input(body));
   }
 
+  @Patch('roles/order')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Reordenar tipos de usuário' })
+  async reorder(@Body() body: unknown): Promise<void> {
+    const value = objectBody(body);
+    await this.access.reorder(idList(value.roleIds, 'roleIds'));
+  }
+
   @Patch('roles/:id')
   @ApiOperation({ summary: 'Atualizar permissões de um tipo de usuário' })
-  update(
-    @Param('id', ParseIntPipe) id: number,
-    @Body() body: unknown,
-  ): Promise<AccessRoleMutationResponse> {
+  update(@Param('id', ParseIntPipe) id: number, @Body() body: unknown): Promise<AccessRoleMutationResponse> {
     if (id < 1) throw new BadRequestException('id inválido.');
     return this.access.update(id, input(body));
   }
 
   @Delete('roles/:id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiOperation({ summary: 'Excluir um tipo de usuário personalizado' })
+  @ApiOperation({ summary: 'Excluir um tipo de usuário' })
   async remove(@Param('id', ParseIntPipe) id: number): Promise<void> {
     if (id < 1) throw new BadRequestException('id inválido.');
     await this.access.remove(id);

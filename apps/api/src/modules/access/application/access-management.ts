@@ -28,6 +28,7 @@ type RoleRow = {
   slug: string;
   description: string | null;
   is_system: number | bigint | boolean;
+  sort_order: number | bigint;
   created_at: Date | string;
   updated_at: Date | string;
   user_count: number | bigint;
@@ -48,6 +49,7 @@ type RoleIdentityRow = {
 
 type CountRow = { total: number | bigint };
 type IdRow = { id: number | bigint };
+type SortOrderRow = { next_order: number | bigint };
 
 type AccessTransaction = Pick<
   Nivel3DatabaseClient,
@@ -84,13 +86,13 @@ export class AccessManagement {
       ),
       this.database.$queryRawUnsafe<RoleRow[]>(
         `SELECT r.id, r.name, r.slug, r.description, r.is_system,
-                r.created_at, r.updated_at,
+                r.sort_order, r.created_at, r.updated_at,
                 COUNT(DISTINCT ur.user_id) AS user_count
          FROM roles r
          LEFT JOIN user_roles ur ON ur.role_id = r.id
          GROUP BY r.id, r.name, r.slug, r.description, r.is_system,
-                  r.created_at, r.updated_at
-         ORDER BY r.is_system DESC, r.name, r.id`,
+                  r.sort_order, r.created_at, r.updated_at
+         ORDER BY r.sort_order ASC, r.id ASC`,
       ),
       this.database.$queryRawUnsafe<RolePermissionRow[]>(
         `SELECT role_id, permission_id
@@ -123,6 +125,7 @@ export class AccessManagement {
         system: Boolean(role.is_system),
         permissionIds: permissionsByRole.get(Number(role.id)) ?? [],
         userCount: Number(role.user_count),
+        sortOrder: Number(role.sort_order),
         createdAt: iso(role.created_at),
         updatedAt: iso(role.updated_at),
       })),
@@ -138,13 +141,19 @@ export class AccessManagement {
     await this.assertPermissionsExist(input.permissionIds);
 
     const id = await this.database.$transaction(async (transaction) => {
+      const orders = await transaction.$queryRawUnsafe<SortOrderRow[]>(
+        'SELECT COALESCE(MAX(sort_order), -10) + 10 AS next_order FROM roles',
+      );
+      const nextOrder = Number(orders[0]?.next_order ?? 0);
+
       await transaction.$executeRawUnsafe(
         `INSERT INTO roles
-          (name, slug, description, is_system, created_at, updated_at)
-         VALUES (?, ?, ?, 0, NOW(), NOW())`,
+          (name, slug, description, is_system, sort_order, created_at, updated_at)
+         VALUES (?, ?, ?, 0, ?, NOW(), NOW())`,
         input.name,
         slug,
         input.description ?? null,
+        nextOrder,
       );
       const ids = await transaction.$queryRawUnsafe<IdRow[]>(
         'SELECT LAST_INSERT_ID() AS id',
@@ -195,17 +204,41 @@ export class AccessManagement {
     return { id };
   }
 
-  async remove(id: number): Promise<void> {
-    const role = await this.roleIdentity(id);
-    if (Boolean(role.is_system)) {
-      throw new ConflictException('Perfis internos do sistema não podem ser excluídos.');
-    }
-    if (Number(role.user_count) > 0) {
+  async reorder(roleIds: number[]): Promise<void> {
+    const current = await this.database.$queryRawUnsafe<IdRow[]>(
+      'SELECT id FROM roles ORDER BY sort_order ASC, id ASC',
+    );
+    const currentIds = current.map((row) => Number(row.id));
+    const expected = new Set(currentIds);
+
+    if (
+      roleIds.length !== currentIds.length ||
+      new Set(roleIds).size !== roleIds.length ||
+      roleIds.some((id) => !expected.has(id))
+    ) {
       throw new ConflictException(
-        'Remova este perfil dos usuários antes de excluí-lo.',
+        'A lista de tipos de usuário mudou. Atualize a página e tente novamente.',
       );
     }
 
+    await this.database.$transaction(async (transaction) => {
+      for (const [index, roleId] of roleIds.entries()) {
+        await transaction.$executeRawUnsafe(
+          'UPDATE roles SET sort_order = ?, updated_at = NOW() WHERE id = ?',
+          index * 10,
+          roleId,
+        );
+      }
+    });
+  }
+
+  async remove(id: number): Promise<void> {
+    const role = await this.roleIdentity(id);
+    if (role.slug === 'system-admin') {
+      throw new ConflictException(
+        'O perfil Administrador global é protegido e não pode ser excluído.',
+      );
+    }
     await this.database.$executeRawUnsafe('DELETE FROM roles WHERE id = ?', id);
   }
 

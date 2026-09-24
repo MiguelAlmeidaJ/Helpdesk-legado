@@ -44,9 +44,9 @@ function pushCatalogGrants(
   legacyLevel: number,
 ) {
   const tiRead = [1, 2, 5, 6].includes(legacyLevel);
-  const tiManage = [2, 6].includes(legacyLevel);
+  const tiEdit = [2, 6].includes(legacyLevel);
   const devOpsRead = [3, 4, 5, 6].includes(legacyLevel);
-  const devOpsManage = [4, 6].includes(legacyLevel);
+  const devOpsEdit = [4, 6].includes(legacyLevel);
 
   pushGrant(
     grants,
@@ -57,8 +57,8 @@ function pushCatalogGrants(
   );
   pushGrant(
     grants,
-    AppPermission.CatalogTiManage,
-    tiManage ? 1 : 0,
+    AppPermission.CatalogTiEdit,
+    tiEdit ? 1 : 0,
     1,
     PermissionScope.All,
   );
@@ -71,8 +71,8 @@ function pushCatalogGrants(
   );
   pushGrant(
     grants,
-    AppPermission.CatalogDevOpsManage,
-    devOpsManage ? 1 : 0,
+    AppPermission.CatalogDevOpsEdit,
+    devOpsEdit ? 1 : 0,
     1,
     PermissionScope.All,
   );

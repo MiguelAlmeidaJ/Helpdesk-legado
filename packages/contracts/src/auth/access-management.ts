@@ -17,6 +17,7 @@ export interface AccessRole extends AccessRoleOption {
   description: string | null;
   permissionIds: number[];
   userCount: number;
+  sortOrder: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -34,4 +35,8 @@ export interface AccessRoleInput {
 
 export interface AccessRoleMutationResponse {
   id: number;
+}
+
+export interface AccessRoleOrderInput {
+  roleIds: number[];
 }

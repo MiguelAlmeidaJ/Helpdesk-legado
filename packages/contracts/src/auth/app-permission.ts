@@ -12,10 +12,11 @@ export enum AppPermission {
   TicketsAudit = 'tickets.audit',
   TicketsRadio = 'tickets.radio',
 
+  CatalogManage = 'catalog.manage',
   CatalogTiRead = 'catalog.ti.read',
-  CatalogTiManage = 'catalog.ti.manage',
+  CatalogTiEdit = 'catalog.ti.edit',
   CatalogDevOpsRead = 'catalog.devops.read',
-  CatalogDevOpsManage = 'catalog.devops.manage',
+  CatalogDevOpsEdit = 'catalog.devops.edit',
 
   UsersRead = 'users.read',
   UsersCreate = 'users.create',

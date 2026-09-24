@@ -11,17 +11,19 @@ export function fetchAccessManagement(signal?: AbortSignal) {
 
 export function createAccessRole(input: AccessRoleInput) {
   return apiRequest<AccessRoleMutationResponse>('access-management/roles', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(input),
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(input),
   });
 }
 
 export function updateAccessRole(id: number, input: AccessRoleInput) {
   return apiRequest<AccessRoleMutationResponse>(`access-management/roles/${id}`, {
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(input),
+    method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(input),
+  });
+}
+
+export async function reorderAccessRoles(roleIds: number[]): Promise<void> {
+  await apiRequest<null>('access-management/roles/order', {
+    method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ roleIds }),
   });
 }
 

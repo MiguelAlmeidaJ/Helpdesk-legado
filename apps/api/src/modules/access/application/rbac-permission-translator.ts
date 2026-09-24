@@ -37,6 +37,26 @@ const USER_PERMISSION = {
   manageAccess: 'usuarios.editar_acesso',
 } as const;
 
+const CATALOG_PERMISSION = {
+  manage: ['catalogos.gerenciar', 'catalog.manage'],
+  tiRead: ['catalogos.ti.visualizar', 'catalog.ti.read'],
+  tiEdit: [
+    'catalogos.ti.editar',
+    'catalog.ti.edit',
+    'catalogos.ti.gerenciar',
+    'catalogo.ti.gerenciar',
+    'catalog.ti.manage',
+  ],
+  devOpsRead: ['catalogos.devops.visualizar', 'catalog.devops.read'],
+  devOpsEdit: [
+    'catalogos.devops.editar',
+    'catalog.devops.edit',
+    'catalogos.devops.gerenciar',
+    'catalogo.devops.gerenciar',
+    'catalog.devops.manage',
+  ],
+} as const;
+
 const REGISTRATION_PERMISSION = {
   clientsRead: 'cadastros.clientes.visualizar',
   clientsCreate: 'cadastros.clientes.criar',
@@ -74,6 +94,13 @@ function addGrant(
   }
 }
 
+function hasAnyPermission(
+  permissions: Set<string>,
+  slugs: readonly string[],
+): boolean {
+  return slugs.some((slug) => permissions.has(slug));
+}
+
 export function translateRbacAccess(
   session: LegacyUserSession,
   snapshot: RbacAccessSnapshot,
@@ -92,6 +119,12 @@ export function translateRbacAccess(
   addGrant(grants, AppPermission.UsersCreate, permissions.has(USER_PERMISSION.create), PermissionScope.All);
   addGrant(grants, AppPermission.UsersEdit, permissions.has(USER_PERMISSION.edit), PermissionScope.All);
   addGrant(grants, AppPermission.UsersManageAccess, permissions.has(USER_PERMISSION.manageAccess), PermissionScope.All);
+
+  addGrant(grants, AppPermission.CatalogManage, hasAnyPermission(permissions, CATALOG_PERMISSION.manage), PermissionScope.All);
+  addGrant(grants, AppPermission.CatalogTiRead, hasAnyPermission(permissions, CATALOG_PERMISSION.tiRead), PermissionScope.All);
+  addGrant(grants, AppPermission.CatalogTiEdit, hasAnyPermission(permissions, CATALOG_PERMISSION.tiEdit), PermissionScope.All);
+  addGrant(grants, AppPermission.CatalogDevOpsRead, hasAnyPermission(permissions, CATALOG_PERMISSION.devOpsRead), PermissionScope.All);
+  addGrant(grants, AppPermission.CatalogDevOpsEdit, hasAnyPermission(permissions, CATALOG_PERMISSION.devOpsEdit), PermissionScope.All);
 
   const legacyRegistrations = session.modules[2];
   const legacyFinanceRegistrations = session.modules[7];
