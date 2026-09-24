@@ -132,11 +132,6 @@ export class UsersRepository {
       link: row.link ?? '',
       pixKeyType: row.pix_type,
       pixKey: row.chavepix ?? '',
-      legacyModules: [
-        row.user_modulo_01, row.user_modulo_02, row.user_modulo_03,
-        row.user_modulo_04, row.user_modulo_05, row.user_modulo_06,
-        row.user_modulo_07, row.user_modulo_08, row.user_modulo_09,
-      ],
     };
   }
 
@@ -199,20 +194,15 @@ export class UsersRepository {
     assignedBy: number,
     canManageAccess: boolean,
   ): Promise<number> {
-    const modules = canManageAccess && input.legacyModules
-      ? input.legacyModules
-      : Array(9).fill('0000000000');
     return this.database.$transaction(async (transaction) => {
       await transaction.$executeRawUnsafe(
         `INSERT INTO usuarios
           (user_sts, user_nome, user_mail, user_cel, user_funcao, user_login,
-           user_pass, tipo_usuario, link, pix_type, chavepix,
-           user_modulo_01, user_modulo_02, user_modulo_03, user_modulo_04,
-           user_modulo_05, user_modulo_06, user_modulo_07, user_modulo_08, user_modulo_09)
-         VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+           user_pass, tipo_usuario, link, pix_type, chavepix)
+         VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         input.name, input.email, input.phone, input.functionId, input.login,
         passwordHash, input.type, input.link ?? '', input.pixKeyType ?? null,
-        input.pixKey ?? '', ...modules,
+        input.pixKey ?? '',
       );
       const ids = await transaction.$queryRawUnsafe<InsertIdRow[]>('SELECT LAST_INSERT_ID() AS id');
       const id = Number(ids[0]?.id);
@@ -231,20 +221,14 @@ export class UsersRepository {
     assignedBy: number,
   ): Promise<boolean> {
     return this.database.$transaction(async (transaction) => {
-      const modulesSql = canManageAccess && input.legacyModules
-        ? `, user_modulo_01 = ?, user_modulo_02 = ?, user_modulo_03 = ?,
-             user_modulo_04 = ?, user_modulo_05 = ?, user_modulo_06 = ?,
-             user_modulo_07 = ?, user_modulo_08 = ?, user_modulo_09 = ?`
-        : '';
-      const moduleParameters = canManageAccess && input.legacyModules ? input.legacyModules : [];
       const changed = await transaction.$executeRawUnsafe(
         `UPDATE usuarios SET user_sts = ?, user_nome = ?, user_mail = ?,
           user_cel = ?, user_funcao = ?, user_login = ?, tipo_usuario = ?,
-          link = ?, pix_type = ?, chavepix = ? ${modulesSql}
+          link = ?, pix_type = ?, chavepix = ?
          WHERE user_id = ?`,
         input.status, input.name, input.email, input.phone, input.functionId,
         input.login, input.type, input.link ?? '', input.pixKeyType ?? null,
-        input.pixKey ?? '', ...moduleParameters, id,
+        input.pixKey ?? '', id,
       );
       if (changed === 0) return false;
       await this.replaceCompanies(transaction, id, input.companyIds ?? []);

@@ -41,7 +41,7 @@ export class UserManagement {
     actorId: number,
     canManageAccess: boolean,
   ): Promise<ManagedUserDetail> {
-    if (!canManageAccess && (input.roleIds !== undefined || input.legacyModules !== undefined)) {
+    if (!canManageAccess && input.roleIds !== undefined) {
       throw new ForbiddenException('Sem permissão para definir acessos do usuário.');
     }
     await this.ensureUnique(input.login, input.email);
@@ -62,7 +62,7 @@ export class UserManagement {
     if (input.status === 2 && (id === 1 || id === actorId)) {
       throw new ForbiddenException('O usuário administrador principal e a própria conta não podem ser desativados.');
     }
-    if (!canManageAccess && (input.roleIds !== undefined || input.legacyModules !== undefined)) {
+    if (!canManageAccess && input.roleIds !== undefined) {
       throw new ForbiddenException('Sem permissão para alterar acessos do usuário.');
     }
     await this.ensureUnique(input.login, input.email, id);

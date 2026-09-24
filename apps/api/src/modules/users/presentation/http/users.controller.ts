@@ -66,14 +66,6 @@ function idList(value: unknown, field: string): number[] {
   return [...new Set(ids)];
 }
 
-function modules(value: unknown): string[] | undefined {
-  if (value === undefined) return undefined;
-  if (!Array.isArray(value) || value.length !== 9 || value.some((entry) => typeof entry !== 'string' || !/^\d{10}$/.test(entry))) {
-    throw new BadRequestException('legacyModules deve conter nove códigos numéricos de 10 posições.');
-  }
-  return value as string[];
-}
-
 function baseInput(body: unknown) {
   const value = objectBody(body);
   const email = requiredString(value.email, 'email', 60).toLowerCase();
@@ -104,7 +96,6 @@ function baseInput(body: unknown) {
       pixKey,
       companyIds,
       roleIds,
-      legacyModules: modules(value.legacyModules),
     },
   };
 }
@@ -174,7 +165,7 @@ export class UsersController {
     const { value, input } = baseInput(body);
     if (value.status !== 1 && value.status !== 2) throw new BadRequestException('status deve ser 1 ou 2.');
     const canManageAccess = hasPermission(actor, AppPermission.UsersManageAccess);
-    if ((input.legacyModules || input.roleIds) && !canManageAccess) {
+    if (input.roleIds !== undefined && !canManageAccess) {
       throw new BadRequestException('Sem permissão para alterar acessos.');
     }
     return this.management.update(id, actor.id, { ...input, status: value.status } as UpdateManagedUserRequest, canManageAccess);

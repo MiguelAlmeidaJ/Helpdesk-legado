@@ -49,8 +49,22 @@ const styles = {
   wide: 'col-span-2 max-[620px]:col-span-1',
   permissions:
     'mt-[18px] rounded-[10px] border border-app-border p-3.5 [&_legend]:px-1.5 [&_legend]:font-extrabold [&>p]:mt-0 [&>p]:mb-3 [&>p]:text-xs [&>p]:text-app-muted-strong',
-  moduleGrid:
-    `${FIELD_GRID_CLASS} [&_input]:font-mono [&_input]:tracking-[0.08em]`,
+  companyPicker:
+    'col-span-2 grid gap-2 rounded-[10px] border border-app-border p-3.5 max-[620px]:col-span-1',
+  companyPickerHeader:
+    'flex flex-wrap items-center justify-between gap-2 [&_span]:text-xs [&_span]:font-extrabold [&_span]:text-app-muted [&_strong]:text-xs [&_strong]:text-app-text-soft',
+  companyPickerBox:
+    'overflow-hidden rounded-lg border border-app-border-strong bg-app-surface focus-within:border-app-brand focus-within:ring-3 focus-within:ring-[var(--app-brand-ring)]',
+  companySearch:
+    'min-h-10 w-full border-0 border-b border-app-border-soft bg-app-surface px-3 text-app-text outline-none',
+  companyPickerActions:
+    'flex items-center justify-between gap-2 border-b border-app-border-soft bg-app-surface-muted px-2.5 py-2 [&_button]:rounded-md [&_button]:border-0 [&_button]:bg-transparent [&_button]:px-2 [&_button]:py-1 [&_button]:text-xs [&_button]:font-bold [&_button]:text-app-brand [&_button:hover]:bg-app-brand-soft [&_button:disabled]:opacity-40',
+  companyList:
+    'grid max-h-[210px] overflow-y-auto p-1.5 sm:grid-cols-2',
+  companyOption:
+    'flex min-h-9 cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm text-app-text hover:bg-app-surface-hover [&_input]:h-4 [&_input]:w-4 [&_input]:shrink-0',
+  companyEmpty:
+    'col-span-full px-3 py-5 text-center text-sm text-app-muted',
   roleGrid:
     'grid gap-2 sm:grid-cols-2 xl:grid-cols-3',
   roleOption:
@@ -61,9 +75,6 @@ const styles = {
   success:
     'mb-3 rounded-lg border border-emerald-300/70 bg-emerald-50 px-3 py-[11px] text-[13px] text-emerald-800 dark:border-emerald-900/70 dark:bg-emerald-950/40 dark:text-emerald-200',
 } as const;
-
-const EMPTY_MODULES = Array(9).fill('0000000000') as string[];
-const MODULE_LABELS = ['Usuários', 'Cadastros', 'Atendimentos', 'Configurações', 'Relatórios/Projetos', 'Inventário/Facility', 'Financeiro', 'Disponibilidade/Marketing', 'Veículos'];
 
 interface FormState {
   status: 1 | 2;
@@ -79,13 +90,12 @@ interface FormState {
   pixKey: string;
   companyIds: number[];
   roleIds: number[];
-  legacyModules: string[];
 }
 
-const EMPTY_FORM: FormState = { status: 1, name: '', email: '', phone: '', functionId: '', login: '', password: '', type: 1, link: '', pixKeyType: '', pixKey: '', companyIds: [], roleIds: [], legacyModules: EMPTY_MODULES };
+const EMPTY_FORM: FormState = { status: 1, name: '', email: '', phone: '', functionId: '', login: '', password: '', type: 1, link: '', pixKeyType: '', pixKey: '', companyIds: [], roleIds: [] };
 
 function fromUser(user: ManagedUserDetail): FormState {
-  return { status: user.status, name: user.name, email: user.email, phone: user.phone, functionId: user.function?.id.toString() ?? '', login: user.login, password: '', type: user.type === 2 ? 2 : 1, link: user.link, pixKeyType: user.pixKeyType?.toString() ?? '', pixKey: user.pixKey, companyIds: user.companies.map((company) => company.id), roleIds: user.roles.map((role) => role.id), legacyModules: [...user.legacyModules] };
+  return { status: user.status, name: user.name, email: user.email, phone: user.phone, functionId: user.function?.id.toString() ?? '', login: user.login, password: '', type: user.type === 2 ? 2 : 1, link: user.link, pixKeyType: user.pixKeyType?.toString() ?? '', pixKey: user.pixKey, companyIds: user.companies.map((company) => company.id), roleIds: user.roles.map((role) => role.id) };
 }
 
 function message(error: unknown): string {
@@ -116,6 +126,7 @@ export function UsersScreen({ currentUser }: { currentUser: CurrentUserResponse 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [companyQuery, setCompanyQuery] = useState('');
   const canCreate = can(currentUser, AppPermission.UsersCreate);
   const canEdit = can(currentUser, AppPermission.UsersEdit);
   const canManageAccess = can(currentUser, AppPermission.UsersManageAccess);
@@ -142,7 +153,13 @@ export function UsersScreen({ currentUser }: { currentUser: CurrentUserResponse 
   }, [page, appliedSearch]);
 
   const title = selectedId ? `Editar usuário #${selectedId}` : 'Novo usuário';
-  const validModules = useMemo(() => form.legacyModules.every((value) => /^\d{10}$/.test(value)), [form.legacyModules]);
+  const visibleCompanies = useMemo(() => {
+    const query = companyQuery.trim().toLocaleLowerCase('pt-BR');
+    const companies = catalogs?.companies ?? [];
+    return query
+      ? companies.filter((company) => company.name.toLocaleLowerCase('pt-BR').includes(query))
+      : companies;
+  }, [catalogs?.companies, companyQuery]);
 
   async function selectUser(id: number) {
     setError(null); setSuccess(null); setLoading(true);
@@ -151,11 +168,27 @@ export function UsersScreen({ currentUser }: { currentUser: CurrentUserResponse 
     finally { setLoading(false); }
   }
 
-  function newUser() { setSelectedId(null); setForm({ ...EMPTY_FORM, legacyModules: [...EMPTY_MODULES] }); setError(null); setSuccess(null); }
+  function newUser() { setSelectedId(null); setForm({ ...EMPTY_FORM, companyIds: [], roleIds: [] }); setCompanyQuery(''); setError(null); setSuccess(null); }
+
+  function toggleCompany(companyId: number, checked: boolean) {
+    setForm((current) => ({
+      ...current,
+      companyIds: checked
+        ? (current.companyIds.includes(companyId) ? current.companyIds : [...current.companyIds, companyId])
+        : current.companyIds.filter((id) => id !== companyId),
+    }));
+  }
+
+  function selectVisibleCompanies() {
+    setForm((current) => ({
+      ...current,
+      companyIds: [...new Set([...current.companyIds, ...visibleCompanies.map((company) => company.id)])],
+    }));
+  }
 
   async function save(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); setSaving(true); setError(null); setSuccess(null);
-    const base = { status: form.status, name: form.name, email: form.email, phone: form.phone, functionId: Number(form.functionId), login: form.login, type: form.type, link: form.link, pixKeyType: form.pixKeyType ? Number(form.pixKeyType) : null, pixKey: form.pixKey, companyIds: form.companyIds, ...(canManageAccess ? { roleIds: form.roleIds, legacyModules: form.legacyModules } : {}) };
+    const base = { status: form.status, name: form.name, email: form.email, phone: form.phone, functionId: Number(form.functionId), login: form.login, type: form.type, link: form.link, pixKeyType: form.pixKeyType ? Number(form.pixKeyType) : null, pixKey: form.pixKey, companyIds: form.companyIds, ...(canManageAccess ? { roleIds: form.roleIds } : {}) };
     try {
       const saved = selectedId
         ? await updateUser(selectedId, base)
@@ -208,11 +241,25 @@ export function UsersScreen({ currentUser }: { currentUser: CurrentUserResponse 
                   <label><span>Link</span><input disabled={saving || (!!selectedId && !canEdit)} maxLength={50} onChange={(event) => setForm({ ...form, link: event.target.value })} value={form.link} /></label>
                   <label><span>Tipo de chave Pix</span><select disabled={saving || (!!selectedId && !canEdit)} onChange={(event) => setForm({ ...form, pixKeyType: event.target.value })} value={form.pixKeyType}><option value="">Nenhum</option>{catalogs?.pixKeyTypes.map((option) => <option key={option.id} value={option.id}>{option.name}</option>)}</select></label>
                   <label><span>Chave Pix</span><input disabled={saving || (!!selectedId && !canEdit)} maxLength={255} onChange={(event) => setForm({ ...form, pixKey: event.target.value })} value={form.pixKey} /></label>
-                  <label className={styles.wide}><span>Empresas vinculadas</span><select disabled={saving || (!!selectedId && !canEdit)} multiple onChange={(event) => setForm({ ...form, companyIds: Array.from(event.target.selectedOptions, (option) => Number(option.value)) })} value={form.companyIds.map(String)}>{catalogs?.companies.map((option) => <option key={option.id} value={option.id}>{option.name}</option>)}</select></label>
+                  <fieldset className={styles.companyPicker}>
+                    <div className={styles.companyPickerHeader}><span>Empresas vinculadas</span><strong>{form.companyIds.length} selecionada(s)</strong></div>
+                    <div className={styles.companyPickerBox}>
+                      <input className={styles.companySearch} disabled={saving || (!!selectedId && !canEdit)} onChange={(event) => setCompanyQuery(event.target.value)} placeholder="Buscar empresa..." type="search" value={companyQuery} />
+                      <div className={styles.companyPickerActions}>
+                        <button disabled={saving || (!!selectedId && !canEdit) || visibleCompanies.length === 0} onClick={selectVisibleCompanies} type="button">Selecionar visíveis</button>
+                        <button disabled={saving || (!!selectedId && !canEdit) || form.companyIds.length === 0} onClick={() => setForm((current) => ({ ...current, companyIds: [] }))} type="button">Limpar</button>
+                      </div>
+                      <div className={styles.companyList}>
+                        {visibleCompanies.length ? visibleCompanies.map((company) => {
+                          const checked = form.companyIds.includes(company.id);
+                          return <label className={styles.companyOption} key={company.id}><input checked={checked} disabled={saving || (!!selectedId && !canEdit)} onChange={(event) => toggleCompany(company.id, event.target.checked)} type="checkbox" /><span>{company.name}</span></label>;
+                        }) : <div className={styles.companyEmpty}>Nenhuma empresa encontrada.</div>}
+                      </div>
+                    </div>
+                  </fieldset>
                 </div>
                 {canManageAccess ? <fieldset className={styles.permissions}><legend>Tipos de usuário</legend><p>Selecione os perfis que este usuário receberá. Cada perfil aplica automaticamente o conjunto de permissões configurado em Administração → Permissões.</p><div className={styles.roleGrid}>{catalogs?.roles.map((role) => { const checked = form.roleIds.includes(role.id); return <label className={styles.roleOption} key={role.id}><input checked={checked} disabled={saving || (!!selectedId && !canEdit)} onChange={() => setForm((current) => ({ ...current, roleIds: checked ? current.roleIds.filter((id) => id !== role.id) : [...current.roleIds, role.id] }))} type="checkbox" /><span><strong>{role.name}</strong><small>{role.system ? 'Perfil interno do sistema' : role.slug}</small></span></label>; })}</div></fieldset> : null}
-                {canManageAccess ? <fieldset className={styles.permissions}><legend>Acessos legados de transição</legend><p>Cada código contém os dez níveis do módulo e permanece compatível com as telas ainda não migradas.</p><div className={styles.moduleGrid}>{form.legacyModules.map((value, index) => <label key={MODULE_LABELS[index]}><span>{index + 1}. {MODULE_LABELS[index]}</span><input inputMode="numeric" maxLength={10} onChange={(event) => { const next = [...form.legacyModules]; next[index] = event.target.value; setForm({ ...form, legacyModules: next }); }} pattern="\d{10}" required value={value} /></label>)}</div></fieldset> : null}
-                {(selectedId ? canEdit : canCreate) ? <div className={styles.actions}>{selectedId && form.status === 1 ? <button className={styles.button} disabled={saving || selectedId === currentUser.id || selectedId === 1} onClick={() => void deactivate()} type="button">Desativar</button> : null}<button className={styles.buttonPrimary} disabled={saving || !validModules} type="submit">{saving ? 'Salvando…' : 'Salvar usuário'}</button></div> : null}
+                {(selectedId ? canEdit : canCreate) ? <div className={styles.actions}>{selectedId && form.status === 1 ? <button className={styles.button} disabled={saving || selectedId === currentUser.id || selectedId === 1} onClick={() => void deactivate()} type="button">Desativar</button> : null}<button className={styles.buttonPrimary} disabled={saving} type="submit">{saving ? 'Salvando…' : 'Salvar usuário'}</button></div> : null}
               </form>
             )}
           </section>

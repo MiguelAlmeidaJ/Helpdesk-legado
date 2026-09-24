@@ -23,7 +23,6 @@ export interface ManagedUserDetail extends ManagedUserSummary {
   link: string;
   pixKeyType: number | null;
   pixKey: string;
-  legacyModules: string[];
 }
 
 export interface UserManagementCatalogs {
@@ -51,7 +50,6 @@ export interface CreateManagedUserRequest {
   pixKey?: string;
   companyIds?: number[];
   roleIds?: number[];
-  legacyModules?: string[];
 }
 
 export interface UpdateManagedUserRequest {
@@ -67,5 +65,4 @@ export interface UpdateManagedUserRequest {
   pixKey?: string;
   companyIds?: number[];
   roleIds?: number[];
-  legacyModules?: string[];
 }
