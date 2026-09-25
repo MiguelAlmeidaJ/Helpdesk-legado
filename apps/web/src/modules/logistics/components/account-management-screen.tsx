@@ -45,6 +45,12 @@ type RankedParty = {
   value: number;
 };
 
+type BreakdownValue = {
+  name: string;
+  value: number;
+  count: number;
+};
+
 function isoToday(): string {
   return new Date().toISOString().slice(0, 10);
 }
@@ -193,6 +199,116 @@ function topReceivableParties(rows: FinanceRow[]): RankedParty[] {
     .map(([name, value]) => ({ name, value }))
     .sort((left, right) => right.value - left.value)
     .slice(0, 6);
+}
+
+
+function aggregateRows(
+  rows: FinanceRow[],
+  label: (row: FinanceRow) => string,
+  value: (row: FinanceRow) => number = (row) => Math.abs(row.amount),
+): BreakdownValue[] {
+  const grouped = new Map<string, { value: number; count: number }>();
+
+  for (const row of rows) {
+    const name = label(row).trim() || 'Não informado';
+    const current = grouped.get(name) ?? { value: 0, count: 0 };
+    current.value += Math.abs(value(row));
+    current.count += 1;
+    grouped.set(name, current);
+  }
+
+  return [...grouped.entries()]
+    .map(([name, item]) => ({ name, value: item.value, count: item.count }))
+    .sort((left, right) => right.value - left.value);
+}
+
+function metadataNumber(row: FinanceRow, key: string): number {
+  const value = row.metadata?.[key];
+  const parsed = Number(value ?? 0);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function receiptSectorBreakdown(rows: FinanceRow[]): BreakdownValue[] {
+  const sectors = new Map<string, { value: number; count: number }>();
+
+  function add(name: string, value: number) {
+    if (value <= 0) return;
+    const current = sectors.get(name) ?? { value: 0, count: 0 };
+    current.value += value;
+    current.count += 1;
+    sectors.set(name, current);
+  }
+
+  for (const row of rows) {
+    const ti = Math.max(0, metadataNumber(row, 'percentTi'));
+    const devops = Math.max(0, metadataNumber(row, 'percentDevops'));
+    const marketing = Math.max(0, metadataNumber(row, 'percentMarketing'));
+    const totalPercent = Math.min(100, ti + devops + marketing);
+    add('TI', row.amount * ti / 100);
+    add('DevOps', row.amount * devops / 100);
+    add('Marketing', row.amount * marketing / 100);
+    add('Não classificado', row.amount * Math.max(0, 100 - totalPercent) / 100);
+  }
+
+  return [...sectors.entries()]
+    .map(([name, item]) => ({ name, value: item.value, count: item.count }))
+    .sort((left, right) => right.value - left.value);
+}
+
+function overdueClientBreakdown(rows: FinanceRow[]): BreakdownValue[] {
+  const today = isoToday();
+  return aggregateRows(
+    rows.filter((row) => Boolean(row.dueDate) && String(row.dueDate) < today && (row.balance ?? 0) > 0),
+    (row) => row.party || 'Cliente não informado',
+    (row) => row.balance ?? 0,
+  );
+}
+
+function FinancialBreakdownChart({
+  title,
+  subtitle,
+  items,
+  accent = 'brand',
+}: {
+  title: string;
+  subtitle: string;
+  items: BreakdownValue[];
+  accent?: 'brand' | 'orange' | 'emerald' | 'rose';
+}) {
+  const visible = items.slice(0, 8);
+  const maxValue = Math.max(1, ...visible.map((item) => item.value));
+  const barClass =
+    accent === 'orange'
+      ? 'bg-orange-400'
+      : accent === 'emerald'
+        ? 'bg-emerald-500'
+        : accent === 'rose'
+          ? 'bg-rose-500'
+          : 'bg-app-brand';
+
+  return <article className="rounded-xl border border-app-border bg-app-surface p-4 shadow-sm shadow-slate-950/5 dark:shadow-black/10">
+    <div className="mb-4">
+      <h3 className="m-0 text-sm font-extrabold text-app-text">{title}</h3>
+      <p className="m-0 mt-1 text-[11px] text-app-muted">{subtitle}</p>
+    </div>
+    {visible.length ? <div className="grid gap-3">
+      {visible.map((item) => {
+        const width = Math.max(2, (item.value / maxValue) * 100);
+        return <div className="grid gap-1.5" key={item.name}>
+          <div className="flex items-center justify-between gap-3 text-xs">
+            <span className="min-w-0 truncate font-semibold text-app-text-soft" title={item.name}>{item.name}</span>
+            <span className="shrink-0 text-right">
+              <strong>{money(item.value)}</strong>
+              <small className="ml-1.5 text-app-subtle">{item.count}</small>
+            </span>
+          </div>
+          <div className="h-2.5 overflow-hidden rounded-full bg-app-surface-muted">
+            <div className={'h-full rounded-full ' + barClass} style={{ width: width + '%' }} />
+          </div>
+        </div>;
+      })}
+    </div> : <div className="grid min-h-[170px] place-items-center text-sm text-app-muted">Nenhum dado no período.</div>}
+  </article>;
 }
 
 function chartLabelIndexes(length: number): Set<number> {
@@ -655,6 +771,12 @@ export function AccountManagementScreen({
       realizedOutflow: data.statements.summary.outflow,
       realizedBalance: data.statements.summary.balance,
       charts: chartSeries(data),
+      expensesByClassification: aggregateRows(data.payables.rows, (row) => row.classification ?? 'Sem classificação'),
+      expensesByGroup: aggregateRows(data.payables.rows, (row) => row.group ?? 'Sem grupo'),
+      expensesByDocument: aggregateRows(data.payables.rows, (row) => row.documentType ?? 'Sem documento'),
+      expensesByCompany: aggregateRows(data.payables.rows, (row) => row.party || 'Fornecedor não informado'),
+      receiptSectors: receiptSectorBreakdown(data.cashflow.rows),
+      overdueClients: overdueClientBreakdown(data.accrual.rows),
       due: dueRows(data),
     };
   }, [data]);
@@ -746,6 +868,25 @@ export function AccountManagementScreen({
           </article>
         </section>
 
+
+
+        <section>
+          <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <span className="text-[10px] font-black uppercase tracking-[0.1em] text-app-subtle">Composição financeira</span>
+              <h2 className="m-0 mt-1 text-lg font-extrabold">Leituras inspiradas no BI</h2>
+              <p className="m-0 mt-1 text-sm text-app-muted">Classificação das despesas, fornecedores, setores de recebimento e inadimplência no período.</p>
+            </div>
+          </div>
+          <div className="grid grid-cols-3 gap-3 max-[1180px]:grid-cols-2 max-[720px]:grid-cols-1">
+            <FinancialBreakdownChart accent="orange" items={metrics.expensesByClassification} subtitle="Contas a pagar agrupadas pela classificação cadastrada." title="Despesas por Classificação" />
+            <FinancialBreakdownChart accent="orange" items={metrics.expensesByGroup} subtitle="Distribuição das contas a pagar por grupo financeiro." title="Despesas por Grupo" />
+            <FinancialBreakdownChart accent="orange" items={metrics.expensesByDocument} subtitle="Composição pelo tipo de documento informado." title="Despesas por Tipo de Documento" />
+            <FinancialBreakdownChart accent="orange" items={metrics.expensesByCompany} subtitle="Fornecedores com maior volume de despesas no período." title="Despesas por Empresa / Fornecedor" />
+            <FinancialBreakdownChart accent="emerald" items={metrics.receiptSectors} subtitle="Recebimentos distribuídos pelos percentuais TI, DevOps e Marketing." title="Recebimento por Setor" />
+            <FinancialBreakdownChart accent="rose" items={metrics.overdueClients} subtitle="Saldos vencidos e ainda em aberto, agrupados por cliente." title="Inadimplência por Cliente" />
+          </div>
+        </section>
 
         <section className="overflow-hidden rounded-2xl border border-app-border bg-app-surface shadow-sm shadow-slate-950/5 dark:shadow-black/10">
           <header className="flex flex-wrap items-center justify-between gap-4 border-b border-app-border bg-slate-800 px-5 py-4 text-white dark:bg-slate-900">
