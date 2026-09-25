@@ -14,7 +14,7 @@ const PRIMARY_BUTTON_CLASS =
   `${BUTTON_CLASS} border-app-brand bg-app-brand text-white hover:bg-app-brand-hover dark:text-slate-950`;
 
 const FORM_CONTROL_CLASS =
-  '[&_input]:min-h-10 [&_input]:w-full [&_input]:rounded-lg [&_input]:border [&_input]:border-app-border-strong [&_input]:bg-app-surface [&_input]:px-2.5 [&_input]:text-app-text [&_input]:outline-none [&_input]:transition [&_select]:min-h-10 [&_select]:w-full [&_select]:rounded-lg [&_select]:border [&_select]:border-app-border-strong [&_select]:bg-app-surface [&_select]:px-2.5 [&_select]:text-app-text [&_select]:outline-none [&_select]:transition [&_input:focus]:border-app-brand [&_input:focus]:ring-3 [&_input:focus]:ring-[var(--app-brand-ring)] [&_select:focus]:border-app-brand [&_select:focus]:ring-3 [&_select:focus]:ring-[var(--app-brand-ring)] [&_input:disabled]:cursor-not-allowed [&_input:disabled]:opacity-55 [&_select:disabled]:cursor-not-allowed [&_select:disabled]:opacity-55';
+  '[&_input]:min-h-10 [&_input]:w-full [&_input]:rounded-lg [&_input]:border [&_input]:border-app-border-strong [&_input]:bg-app-surface [&_input]:px-2.5 [&_input]:text-app-text [&_input]:outline-none [&_input]:transition [&_select]:min-h-10 [&_select]:w-full [&_select]:rounded-lg [&_select]:border [&_select]:border-app-border-strong [&_select]:bg-app-surface [&_select]:px-2.5 [&_select]:text-app-text [&_select]:outline-none [&_select]:transition [&_textarea]:min-h-24 [&_textarea]:w-full [&_textarea]:resize-y [&_textarea]:rounded-lg [&_textarea]:border [&_textarea]:border-app-border-strong [&_textarea]:bg-app-surface [&_textarea]:p-2.5 [&_textarea]:text-app-text [&_textarea]:outline-none [&_textarea]:transition [&_input:focus]:border-app-brand [&_input:focus]:ring-3 [&_input:focus]:ring-[var(--app-brand-ring)] [&_select:focus]:border-app-brand [&_select:focus]:ring-3 [&_select:focus]:ring-[var(--app-brand-ring)] [&_textarea:focus]:border-app-brand [&_textarea:focus]:ring-3 [&_textarea:focus]:ring-[var(--app-brand-ring)] [&_input:disabled]:cursor-not-allowed [&_input:disabled]:opacity-55 [&_select:disabled]:cursor-not-allowed [&_select:disabled]:opacity-55 [&_textarea:disabled]:cursor-not-allowed [&_textarea:disabled]:opacity-55';
 
 const FIELD_GRID_CLASS =
   `grid grid-cols-2 gap-3 max-[620px]:grid-cols-1 [&_label]:grid [&_label]:gap-1.5 [&_label]:text-xs [&_label]:font-extrabold [&_label]:text-app-muted ${FORM_CONTROL_CLASS}`;
@@ -38,7 +38,9 @@ const styles = {
   listCard:
     'rounded-xl border border-app-border bg-app-surface p-4 shadow-sm shadow-slate-950/5 dark:shadow-black/10',
   search:
-    `mb-3 flex gap-2 ${FORM_CONTROL_CLASS} [&_input]:min-w-0 [&_input]:flex-1`,
+    `mb-2 flex gap-2 ${FORM_CONTROL_CLASS} [&_input]:min-w-0 [&_input]:flex-1`,
+  filters:
+    `mb-3 grid grid-cols-2 gap-2 max-[520px]:grid-cols-1 ${FORM_CONTROL_CLASS} [&_label]:grid [&_label]:gap-1 [&_label>span]:text-[11px] [&_label>span]:font-bold [&_label>span]:text-app-muted`,
   userList:
     'grid max-h-[620px] gap-1.5 overflow-auto [&_button]:flex [&_button]:w-full [&_button]:cursor-pointer [&_button]:items-center [&_button]:justify-between [&_button]:gap-2.5 [&_button]:rounded-[9px] [&_button]:border [&_button]:border-app-border [&_button]:bg-app-surface [&_button]:p-2.5 [&_button]:text-left [&_button]:transition [&_button:hover]:border-app-brand [&_button:hover]:bg-app-surface-hover [&_button[data-active=true]]:border-app-brand [&_button[data-active=true]]:bg-app-brand-soft [&_button_span]:grid [&_button_span]:min-w-0 [&_button_span]:gap-[3px] [&_strong]:overflow-hidden [&_strong]:text-ellipsis [&_strong]:whitespace-nowrap [&_small]:overflow-hidden [&_small]:text-ellipsis [&_small]:whitespace-nowrap [&_small]:text-app-muted-strong [&_em]:rounded-full [&_em]:bg-app-surface-muted [&_em]:px-[7px] [&_em]:py-[3px] [&_em]:text-[10px] [&_em]:font-extrabold [&_em]:not-italic [&_em]:text-app-muted [&_em[data-active=true]]:bg-app-success-soft [&_em[data-active=true]]:text-app-success',
   pagination:
@@ -88,14 +90,15 @@ interface FormState {
   link: string;
   pixKeyType: string;
   pixKey: string;
+  observation: string;
   companyIds: number[];
   roleIds: number[];
 }
 
-const EMPTY_FORM: FormState = { status: 1, name: '', email: '', phone: '', functionId: '', login: '', password: '', type: 1, link: '', pixKeyType: '', pixKey: '', companyIds: [], roleIds: [] };
+const EMPTY_FORM: FormState = { status: 1, name: '', email: '', phone: '', functionId: '', login: '', password: '', type: 1, link: '', pixKeyType: '', pixKey: '', observation: '', companyIds: [], roleIds: [] };
 
 function fromUser(user: ManagedUserDetail): FormState {
-  return { status: user.status, name: user.name, email: user.email, phone: user.phone, functionId: user.function?.id.toString() ?? '', login: user.login, password: '', type: user.type === 2 ? 2 : 1, link: user.link, pixKeyType: user.pixKeyType?.toString() ?? '', pixKey: user.pixKey, companyIds: user.companies.map((company) => company.id), roleIds: user.roles.map((role) => role.id) };
+  return { status: user.status, name: user.name, email: user.email, phone: user.phone, functionId: user.function?.id.toString() ?? '', login: user.login, password: '', type: user.type === 2 ? 2 : 1, link: user.link, pixKeyType: user.pixKeyType?.toString() ?? '', pixKey: user.pixKey, observation: user.observation, companyIds: user.companies.map((company) => company.id), roleIds: user.roles.map((role) => role.id) };
 }
 
 function message(error: unknown): string {
@@ -118,6 +121,8 @@ export function UsersScreen({ currentUser }: { currentUser: CurrentUserResponse 
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const [appliedSearch, setAppliedSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'all' | '1' | '2'>('all');
+  const [roleFilter, setRoleFilter] = useState('');
   const [result, setResult] = useState<ManagedUserListResponse | null>(null);
   const [catalogs, setCatalogs] = useState<UserManagementCatalogs | null>(null);
   const [selectedId, setSelectedId] = useState<number | null>(null);
@@ -135,7 +140,18 @@ export function UsersScreen({ currentUser }: { currentUser: CurrentUserResponse 
     setLoading(true);
     setError(null);
     try {
-      const [users, options] = await Promise.all([fetchUsers(page, appliedSearch, signal), catalogs ? Promise.resolve(catalogs) : fetchUserCatalogs()]);
+      const [users, options] = await Promise.all([
+        fetchUsers(
+          page,
+          {
+            search: appliedSearch,
+            status: statusFilter === 'all' ? null : Number(statusFilter) as 1 | 2,
+            roleId: roleFilter ? Number(roleFilter) : null,
+          },
+          signal,
+        ),
+        catalogs ? Promise.resolve(catalogs) : fetchUserCatalogs(),
+      ]);
       setResult(users);
       setCatalogs(options);
     } catch (reason) {
@@ -150,7 +166,7 @@ export function UsersScreen({ currentUser }: { currentUser: CurrentUserResponse 
     const controller = new AbortController();
     void load(controller.signal);
     return () => controller.abort();
-  }, [page, appliedSearch]);
+  }, [page, appliedSearch, statusFilter, roleFilter]);
 
   const title = selectedId ? `Editar usuário #${selectedId}` : 'Novo usuário';
   const visibleCompanies = useMemo(() => {
@@ -226,7 +242,7 @@ export function UsersScreen({ currentUser }: { currentUser: CurrentUserResponse 
     const normalizedRoleIds = form.type === 2
       ? (clientRole ? [clientRole.id] : [])
       : form.roleIds.filter((id) => id !== clientRole?.id);
-    const base = { status: form.status, name: form.name, email: form.email, phone: form.phone, functionId: Number(form.functionId), login: form.login, type: form.type, link: form.link, pixKeyType: form.pixKeyType ? Number(form.pixKeyType) : null, pixKey: form.pixKey, companyIds: form.type === 2 ? form.companyIds : [], ...((canManageAccess || form.type === 2) ? { roleIds: normalizedRoleIds } : {}) };
+    const base = { status: form.status, name: form.name, email: form.email, phone: form.phone, functionId: Number(form.functionId), login: form.login, type: form.type, link: form.link, pixKeyType: form.pixKeyType ? Number(form.pixKeyType) : null, pixKey: form.pixKey, observation: form.observation, companyIds: form.type === 2 ? form.companyIds : [], ...((canManageAccess || form.type === 2) ? { roleIds: normalizedRoleIds } : {}) };
     try {
       const saved = selectedId
         ? await updateUser(selectedId, base)
@@ -258,6 +274,23 @@ export function UsersScreen({ currentUser }: { currentUser: CurrentUserResponse 
         <div className={styles.layout}>
           <section className={styles.listCard}>
             <form className={styles.search} onSubmit={(event) => { event.preventDefault(); setPage(1); setAppliedSearch(search.trim()); }}><input onChange={(event) => setSearch(event.target.value)} placeholder="Nome, login ou e-mail" type="search" value={search} /><button className={styles.button} type="submit">Buscar</button></form>
+            <div className={styles.filters}>
+              <label>
+                <span>Situação</span>
+                <select onChange={(event) => { setPage(1); setStatusFilter(event.target.value as 'all' | '1' | '2'); }} value={statusFilter}>
+                  <option value="all">Todos</option>
+                  <option value="1">Ativos</option>
+                  <option value="2">Inativos</option>
+                </select>
+              </label>
+              <label>
+                <span>Tipo de usuário</span>
+                <select onChange={(event) => { setPage(1); setRoleFilter(event.target.value); }} value={roleFilter}>
+                  <option value="">Todos os tipos</option>
+                  {catalogs?.roles.map((role) => <option key={role.id} value={role.id}>{role.name}</option>)}
+                </select>
+              </label>
+            </div>
             {loading && !result ? <p>Carregando…</p> : null}
             <div className={styles.userList}>{result?.data.map((user) => <button data-active={selectedId === user.id} key={user.id} onClick={() => void selectUser(user.id)} type="button"><span><strong>{user.name || `Usuário #${user.id}`}</strong><small>@{user.login} · {user.email}</small></span><em data-active={user.status === 1}>{user.status === 1 ? 'Ativo' : 'Inativo'}</em></button>)}</div>
             <div className={styles.pagination}><button className={styles.button} disabled={page <= 1 || loading} onClick={() => setPage((value) => value - 1)} type="button">Anterior</button><span>Página {result?.meta.page ?? page}{result?.meta.totalPages ? ` de ${result.meta.totalPages}` : ''}</span><button className={styles.button} disabled={loading || !result || page >= result.meta.totalPages} onClick={() => setPage((value) => value + 1)} type="button">Próxima</button></div>
@@ -279,6 +312,7 @@ export function UsersScreen({ currentUser }: { currentUser: CurrentUserResponse 
                   <label><span>Link</span><input disabled={saving || (!!selectedId && !canEdit)} maxLength={50} onChange={(event) => setForm({ ...form, link: event.target.value })} value={form.link} /></label>
                   <label><span>Tipo de chave Pix</span><select disabled={saving || (!!selectedId && !canEdit)} onChange={(event) => setForm({ ...form, pixKeyType: event.target.value })} value={form.pixKeyType}><option value="">Nenhum</option>{catalogs?.pixKeyTypes.map((option) => <option key={option.id} value={option.id}>{option.name}</option>)}</select></label>
                   <label><span>Chave Pix</span><input disabled={saving || (!!selectedId && !canEdit)} maxLength={255} onChange={(event) => setForm({ ...form, pixKey: event.target.value })} value={form.pixKey} /></label>
+                  <label className={styles.wide}><span>Observação</span><textarea disabled={saving || (!!selectedId && !canEdit)} maxLength={2000} onChange={(event) => setForm({ ...form, observation: event.target.value })} placeholder="Observações internas sobre este usuário..." rows={4} value={form.observation} /></label>
                 </div>
                 {form.type === 2 ? <fieldset className={styles.companyPicker}>
                     <div className={styles.companyPickerHeader}><span>Empresas vinculadas</span><strong>{form.companyIds.length} selecionada(s)</strong></div>
