@@ -68,6 +68,22 @@ function errorMessage(error: unknown): string {
 function toForm(role: AccessRole): FormState {
   return { name: role.name, description: role.description ?? '', permissionIds: [...role.permissionIds] };
 }
+function permissionModuleLabel(module: string): string {
+  const normalized = module.trim().toLocaleLowerCase('pt-BR');
+  if (normalized === 'projetos' || normalized === 'projeto') {
+    return 'Projetos e Tarefas (DevOps)';
+  }
+  return module;
+}
+
+function permissionModuleHint(module: string): string | null {
+  const normalized = module.trim().toLocaleLowerCase('pt-BR');
+  if (normalized === 'projetos' || normalized === 'projeto') {
+    return 'As mesmas permissões controlam projetos e tarefas do DevOps.';
+  }
+  return null;
+}
+
 function permissionGroups(permissions: AccessPermissionItem[]) {
   const groups = new Map<string, AccessPermissionItem[]>();
   for (const permission of permissions) {
@@ -216,7 +232,8 @@ export function AccessManagementScreen({ currentUser }: { currentUser: CurrentUs
             </div>
             {groups.map(([module, permissions]) => {
               const selectedCount = permissions.filter((permission) => form.permissionIds.includes(permission.id)).length;
-              return <section className={styles.module} key={module}><div className={styles.moduleHeader}><div><strong>{module}</strong><span className="ml-2 text-xs text-app-muted">{selectedCount}/{permissions.length}</span></div><button className={BUTTON_CLASS} disabled={saving || systemAdmin} onClick={() => toggleModule(permissions)} type="button">{selectedCount === permissions.length ? 'Desmarcar módulo' : 'Selecionar módulo'}</button></div><div className={styles.permissionGrid}>{permissions.map((permission) => <label className={styles.permission} key={permission.id}><input checked={form.permissionIds.includes(permission.id)} disabled={saving || systemAdmin} onChange={() => togglePermission(permission.id)} type="checkbox" /><span><strong>{permission.name}</strong><small>{permission.description || permission.slug}</small></span></label>)}</div></section>;
+              const moduleHint = permissionModuleHint(module);
+              return <section className={styles.module} key={module}><div className={styles.moduleHeader}><div><div><strong>{permissionModuleLabel(module)}</strong><span className="ml-2 text-xs text-app-muted">{selectedCount}/{permissions.length}</span></div>{moduleHint ? <small className="mt-0.5 block text-xs text-app-muted">{moduleHint}</small> : null}</div><button className={BUTTON_CLASS} disabled={saving || systemAdmin} onClick={() => toggleModule(permissions)} type="button">{selectedCount === permissions.length ? 'Desmarcar módulo' : 'Selecionar módulo'}</button></div><div className={styles.permissionGrid}>{permissions.map((permission) => <label className={styles.permission} key={permission.id}><input checked={form.permissionIds.includes(permission.id)} disabled={saving || systemAdmin} onChange={() => togglePermission(permission.id)} type="checkbox" /><span><strong>{permission.name}</strong><small>{permission.description || permission.slug}</small></span></label>)}</div></section>;
             })}
             <div className={styles.actions}>
               {selectedRole && !systemAdmin ? <button className={BUTTON_CLASS} disabled={saving} onClick={() => void remove()} type="button">Excluir tipo de usuário</button> : null}
