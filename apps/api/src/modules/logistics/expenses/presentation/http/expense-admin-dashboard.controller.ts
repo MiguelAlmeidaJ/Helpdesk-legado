@@ -68,11 +68,17 @@ function statusParam(value: string | undefined): LogisticsExpenseAdminStatus {
 }
 
 function groupParam(value: string | undefined): LogisticsExpenseAdminGroup {
-  if (value === 'category' || value === 'client' || value === 'collaborator') {
+  if (
+    value === 'category' ||
+    value === 'group' ||
+    value === 'subgroup' ||
+    value === 'client' ||
+    value === 'collaborator'
+  ) {
     return value;
   }
   throw new BadRequestException(
-    'Agrupamento inválido. Use category, client ou collaborator.',
+    'Agrupamento inválido. Use group, subgroup, category, client ou collaborator.',
   );
 }
 
@@ -134,7 +140,7 @@ export class ExpenseAdminDashboardController {
   @ApiQuery({
     name: 'group',
     required: true,
-    enum: ['category', 'client', 'collaborator'],
+    enum: ['group', 'subgroup', 'category', 'client', 'collaborator'],
   })
   @ApiQuery({ name: 'key', required: true })
   async details(

@@ -10,6 +10,7 @@ export function getExpenseAdminDashboard(
   startDate?: string,
   endDate?: string,
   status: LogisticsExpenseAdminStatus = 4,
+  signal?: AbortSignal,
 ): Promise<LogisticsExpenseAdminDashboardResponse> {
   const query = new URLSearchParams();
 
@@ -19,6 +20,7 @@ export function getExpenseAdminDashboard(
 
   return apiRequest<LogisticsExpenseAdminDashboardResponse>(
     `logistics/expenses/admin/summary?${query.toString()}`,
+    { signal },
   );
 }
 
