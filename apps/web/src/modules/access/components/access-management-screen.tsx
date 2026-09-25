@@ -93,6 +93,20 @@ function permissionGroups(permissions: AccessPermissionItem[]) {
   }
   return [...groups.entries()].sort(([a], [b]) => a.localeCompare(b, 'pt-BR'));
 }
+function duplicateRoleName(role: AccessRole, roles: AccessRole[]): string {
+  const existing = new Set(
+    roles.map((entry) => entry.name.trim().toLocaleLowerCase('pt-BR')),
+  );
+  const base = `${role.name} - Cópia`;
+  if (!existing.has(base.toLocaleLowerCase('pt-BR'))) return base;
+
+  let index = 2;
+  while (existing.has(`${base} ${index}`.toLocaleLowerCase('pt-BR'))) {
+    index += 1;
+  }
+  return `${base} ${index}`;
+}
+
 function moveRole(roles: AccessRole[], sourceId: number, targetIndex: number): AccessRole[] {
   const sourceIndex = roles.findIndex((role) => role.id === sourceId);
   if (sourceIndex < 0 || targetIndex < 0 || targetIndex >= roles.length) return roles;
@@ -193,6 +207,26 @@ export function AccessManagementScreen({ currentUser }: { currentUser: CurrentUs
       await load(response.id); setSuccess(editing ? 'Tipo de usuário atualizado.' : 'Tipo de usuário criado.');
     } catch (reason) { setError(errorMessage(reason)); } finally { setSaving(false); }
   }
+  async function duplicate() {
+    if (!selectedRole || systemAdmin || !snapshot) return;
+    setSaving(true);
+    setError(null);
+    setSuccess(null);
+    try {
+      const response = await createAccessRole({
+        name: duplicateRoleName(selectedRole, snapshot.roles),
+        description: selectedRole.description,
+        permissionIds: [...selectedRole.permissionIds],
+      });
+      await load(response.id);
+      setSuccess('Tipo de usuário duplicado. A cópia já está selecionada para edição.');
+    } catch (reason) {
+      setError(errorMessage(reason));
+    } finally {
+      setSaving(false);
+    }
+  }
+
   async function remove() {
     if (!selectedRole || systemAdmin) return;
     const linkedWarning = selectedRole.userCount > 0 ? ` ${selectedRole.userCount} ${selectedRole.userCount === 1 ? 'usuário perderá' : 'usuários perderão'} este tipo de usuário e as permissões herdadas dele.` : '';
@@ -236,6 +270,7 @@ export function AccessManagementScreen({ currentUser }: { currentUser: CurrentUs
               return <section className={styles.module} key={module}><div className={styles.moduleHeader}><div><div><strong>{permissionModuleLabel(module)}</strong><span className="ml-2 text-xs text-app-muted">{selectedCount}/{permissions.length}</span></div>{moduleHint ? <small className="mt-0.5 block text-xs text-app-muted">{moduleHint}</small> : null}</div><button className={BUTTON_CLASS} disabled={saving || systemAdmin} onClick={() => toggleModule(permissions)} type="button">{selectedCount === permissions.length ? 'Desmarcar módulo' : 'Selecionar módulo'}</button></div><div className={styles.permissionGrid}>{permissions.map((permission) => <label className={styles.permission} key={permission.id}><input checked={form.permissionIds.includes(permission.id)} disabled={saving || systemAdmin} onChange={() => togglePermission(permission.id)} type="checkbox" /><span><strong>{permission.name}</strong><small>{permission.description || permission.slug}</small></span></label>)}</div></section>;
             })}
             <div className={styles.actions}>
+              {selectedRole ? <button className={BUTTON_CLASS} disabled={saving || systemAdmin} onClick={() => void duplicate()} title={systemAdmin ? 'O Administrador global possui acesso total implícito e não pode ser duplicado.' : 'Criar uma cópia deste tipo com as mesmas permissões.'} type="button">Duplicar tipo</button> : null}
               {selectedRole && !systemAdmin ? <button className={BUTTON_CLASS} disabled={saving} onClick={() => void remove()} type="button">Excluir tipo de usuário</button> : null}
               {!systemAdmin ? <button className={PRIMARY_BUTTON_CLASS} disabled={saving || !form.name.trim()} type="submit">{saving ? 'Salvando…' : selectedId ? 'Salvar alterações' : 'Criar tipo de usuário'}</button> : null}
             </div>
