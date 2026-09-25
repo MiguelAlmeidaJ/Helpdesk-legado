@@ -23,12 +23,20 @@ interface TotalsRow {
   period_paid: bigint | number | string | null;
   period_pending_count: bigint | number | string | null;
   period_approved_count: bigint | number | string | null;
+  period_paid_count: bigint | number | string | null;
 }
 
 interface BreakdownRow {
   group_key: bigint | number | string | null;
   label: string | null;
   amount: bigint | number | string | null;
+  count: bigint | number | string | null;
+}
+
+interface TimelineRow {
+  day: string;
+  amount: bigint | number | string | null;
+  count: bigint | number | string | null;
 }
 
 interface DetailRow {
@@ -63,13 +71,21 @@ export class ExpenseAdminDashboardRepository {
     const start = `${period.startDate} 00:00:00`;
     const end = `${period.endDate} 23:59:59`;
 
-    const [totalsRows, categoryRows, clientRows, collaboratorRows] =
-      await Promise.all([
-        this.totals(start, end),
-        this.categories(status, start, end),
-        this.clients(status, start, end),
-        this.collaborators(status, start, end),
-      ]);
+    const [
+      totalsRows,
+      groupRows,
+      categoryRows,
+      clientRows,
+      collaboratorRows,
+      timelineRows,
+    ] = await Promise.all([
+      this.totals(start, end),
+      this.groups(status, start, end),
+      this.categories(status, start, end),
+      this.clients(status, start, end),
+      this.collaborators(status, start, end),
+      this.timeline(status, start, end),
+    ]);
 
     const totals = totalsRows[0];
 
@@ -84,10 +100,18 @@ export class ExpenseAdminDashboardRepository {
         periodPaid: numberValue(totals?.period_paid),
         periodPendingCount: numberValue(totals?.period_pending_count),
         periodApprovedCount: numberValue(totals?.period_approved_count),
+        periodPaidCount: numberValue(totals?.period_paid_count),
       },
+      groups: this.breakdown(groupRows),
+      subgroups: this.breakdown(categoryRows),
       categories: this.breakdown(categoryRows),
       clients: this.breakdown(clientRows),
       collaborators: this.breakdown(collaboratorRows),
+      timeline: timelineRows.map((row) => ({
+        date: row.day,
+        amount: numberValue(row.amount),
+        count: numberValue(row.count),
+      })),
     };
   }
 
@@ -105,18 +129,33 @@ export class ExpenseAdminDashboardRepository {
     let joins = '';
     let groupFilter = '';
 
-    if (input.group === 'category') {
+    if (input.group === 'category' || input.group === 'subgroup') {
       joins = `
         LEFT JOIN category legacy_category
           ON legacy_category.id = r.category_id
+          AND r.date_created < '2025-10-01 00:00:00'
         LEFT JOIN categorias_subgrupo current_category
-          ON current_category.id = r.category_id`;
+          ON current_category.id = r.category_id
+          AND r.date_created >= '2025-10-01 00:00:00'`;
       groupFilter = `
         AND (
           legacy_category.categories = ?
           OR current_category.nome = ?
         )`;
       params.push(input.key, input.key);
+    } else if (input.group === 'group') {
+      if (input.key === '__legacy__') {
+        groupFilter = `AND r.date_created < '2025-10-01 00:00:00'`;
+      } else {
+        joins = `
+          JOIN categorias_subgrupo current_category
+            ON current_category.id = r.category_id
+            AND r.date_created >= '2025-10-01 00:00:00'
+          JOIN categorias_grupo current_group
+            ON current_group.id = current_category.id_grupo`;
+        groupFilter = `AND current_group.nome = ?`;
+        params.push(input.key);
+      }
     } else if (input.group === 'client') {
       groupFilter = `AND COALESCE(r.cliente, '') = ?`;
       params.push(input.key);
@@ -212,7 +251,11 @@ export class ExpenseAdminDashboardRepository {
          COALESCE(SUM(CASE
            WHEN r.status = 2 AND r.date_created BETWEEN ? AND ? THEN 1
            ELSE 0
-         END), 0) AS period_approved_count
+         END), 0) AS period_approved_count,
+         COALESCE(SUM(CASE
+           WHEN r.status = 4 AND r.date_created BETWEEN ? AND ? THEN 1
+           ELSE 0
+         END), 0) AS period_paid_count
        FROM running_balance r
        WHERE r.aj = 1`,
       start,
@@ -228,6 +271,56 @@ export class ExpenseAdminDashboardRepository {
     );
   }
 
+  private groups(
+    status: LogisticsExpenseAdminStatus,
+    start: string,
+    end: string,
+  ): Promise<BreakdownRow[]> {
+    return this.database.$queryRawUnsafe<BreakdownRow[]>(
+      `SELECT
+         grouped.group_key,
+         grouped.label,
+         SUM(grouped.amount) AS amount,
+         SUM(grouped.item_count) AS count
+       FROM (
+         SELECT
+           '__legacy__' AS group_key,
+           'Legado / Sem grupo' AS label,
+           r.amount,
+           1 AS item_count
+         FROM running_balance r
+         WHERE r.status = ?
+           AND r.aj = 1
+           AND r.date_created BETWEEN ? AND ?
+           AND r.date_created < '2025-10-01 00:00:00'
+
+         UNION ALL
+
+         SELECT
+           g.nome AS group_key,
+           g.nome AS label,
+           r.amount,
+           1 AS item_count
+         FROM running_balance r
+         JOIN categorias_subgrupo sg ON sg.id = r.category_id
+         JOIN categorias_grupo g ON g.id = sg.id_grupo
+         WHERE r.status = ?
+           AND r.aj = 1
+           AND sg.aplicavel IN ('Ambos', 'RD')
+           AND r.date_created BETWEEN ? AND ?
+           AND r.date_created >= '2025-10-01 00:00:00'
+       ) grouped
+       GROUP BY grouped.group_key, grouped.label
+       ORDER BY amount DESC, label ASC`,
+      status,
+      start,
+      end,
+      status,
+      start,
+      end,
+    );
+  }
+
   private categories(
     status: LogisticsExpenseAdminStatus,
     start: string,
@@ -237,9 +330,10 @@ export class ExpenseAdminDashboardRepository {
       `SELECT
          grouped.category_name AS group_key,
          grouped.category_name AS label,
-         SUM(grouped.amount) AS amount
+         SUM(grouped.amount) AS amount,
+         SUM(grouped.item_count) AS count
        FROM (
-         SELECT c.categories AS category_name, r.amount
+         SELECT c.categories AS category_name, r.amount, 1 AS item_count
          FROM running_balance r
          JOIN category c ON c.id = r.category_id
          WHERE r.status = ?
@@ -249,7 +343,7 @@ export class ExpenseAdminDashboardRepository {
 
          UNION ALL
 
-         SELECT c.nome AS category_name, r.amount
+         SELECT c.nome AS category_name, r.amount, 1 AS item_count
          FROM running_balance r
          JOIN categorias_subgrupo c ON c.id = r.category_id
          WHERE r.status = ?
@@ -278,7 +372,8 @@ export class ExpenseAdminDashboardRepository {
       `SELECT
          COALESCE(r.cliente, '') AS group_key,
          COALESCE(NULLIF(r.cliente, ''), 'Sem cliente') AS label,
-         SUM(r.amount) AS amount
+         SUM(r.amount) AS amount,
+         COUNT(*) AS count
        FROM running_balance r
        WHERE r.status = ?
          AND r.aj = 1
@@ -300,7 +395,8 @@ export class ExpenseAdminDashboardRepository {
       `SELECT
          CAST(r.user_id AS CHAR) AS group_key,
          COALESCE(u.user_nome, CONCAT('Usuário #', r.user_id)) AS label,
-         SUM(r.amount) AS amount
+         SUM(r.amount) AS amount,
+         COUNT(*) AS count
        FROM running_balance r
        LEFT JOIN usuarios u ON u.user_id = r.user_id
        WHERE r.status = ?
@@ -314,11 +410,34 @@ export class ExpenseAdminDashboardRepository {
     );
   }
 
+  private timeline(
+    status: LogisticsExpenseAdminStatus,
+    start: string,
+    end: string,
+  ): Promise<TimelineRow[]> {
+    return this.database.$queryRawUnsafe<TimelineRow[]>(
+      `SELECT
+         DATE_FORMAT(r.date_created, '%Y-%m-%d') AS day,
+         SUM(r.amount) AS amount,
+         COUNT(*) AS count
+       FROM running_balance r
+       WHERE r.status = ?
+         AND r.aj = 1
+         AND r.date_created BETWEEN ? AND ?
+       GROUP BY DATE(r.date_created)
+       ORDER BY DATE(r.date_created) ASC`,
+      status,
+      start,
+      end,
+    );
+  }
+
   private breakdown(rows: BreakdownRow[]): LogisticsExpenseAdminBreakdownItem[] {
     return rows.map((row) => ({
       key: row.group_key === null ? '' : String(row.group_key),
       label: row.label ?? 'Não informado',
       amount: numberValue(row.amount),
+      count: numberValue(row.count),
     }));
   }
 }
