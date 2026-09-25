@@ -11,6 +11,11 @@ export interface TicketTimelineClassification {
   item: string | null;
 }
 
+export interface TicketTimelineTechnician {
+  id: number;
+  name: string;
+}
+
 export interface TicketTimelineEntry {
   interactionId: number;
   ticketId: number;
@@ -26,8 +31,19 @@ export interface TicketTimelineEntry {
   classification: TicketTimelineClassification;
 }
 
+export interface TicketTimelineSummary {
+  interactions: number;
+  tickets: number;
+  firstInteractionAt: string | null;
+  lastInteractionAt: string | null;
+}
+
 export interface TicketTimelineResponse {
   windowHours: 24;
   generatedAt: string;
+  selectedDate: string;
+  selectedTechnicianId: number | null;
+  technicians: TicketTimelineTechnician[];
+  summary: TicketTimelineSummary;
   items: TicketTimelineEntry[];
 }

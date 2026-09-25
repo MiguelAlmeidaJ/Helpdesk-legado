@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Controller,
   DefaultValuePipe,
   Get,
@@ -14,6 +15,21 @@ import { PermissionsGuard } from '../../../access/presentation/http/permissions.
 import { RequirePermissions } from '../../../access/presentation/http/require-permissions.decorator';
 import { GetTicketTimeline } from '../../application/get-ticket-timeline';
 
+function validDate(value: string | undefined): string {
+  if (!value) {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    throw new BadRequestException('date deve estar no formato YYYY-MM-DD.');
+  }
+  return value;
+}
+
 @ApiTags('tickets')
 @Controller('tickets/audit')
 @UseGuards(LegacySessionGuard, PermissionsGuard)
@@ -23,10 +39,20 @@ export class TicketTimelineController {
   constructor(private readonly timeline: GetTicketTimeline) {}
 
   @Get('timeline')
-  @ApiOperation({ summary: 'Timeline global de atendimentos das últimas 24 horas' })
+  @ApiOperation({ summary: 'Timeline diária de interações por técnico' })
   list(
-    @Query('limit', new DefaultValuePipe(200), ParseIntPipe) limit: number,
+    @Query('technicianId') technicianIdValue?: string,
+    @Query('date') dateValue?: string,
+    @Query('limit', new DefaultValuePipe(500), ParseIntPipe) limit = 500,
   ): Promise<TicketTimelineResponse> {
-    return this.timeline.execute(limit);
+    const technicianId = technicianIdValue ? Number(technicianIdValue) : null;
+    if (
+      technicianId !== null &&
+      (!Number.isSafeInteger(technicianId) || technicianId < 1)
+    ) {
+      throw new BadRequestException('technicianId inválido.');
+    }
+
+    return this.timeline.execute(technicianId, validDate(dateValue), limit);
   }
 }

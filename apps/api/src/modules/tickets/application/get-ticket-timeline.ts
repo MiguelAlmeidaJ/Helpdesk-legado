@@ -6,11 +6,19 @@ import { TicketTimelineRepository } from './ports/ticket-timeline.repository';
 export class GetTicketTimeline {
   constructor(private readonly repository: TicketTimelineRepository) {}
 
-  execute(limit = 200): Promise<TicketTimelineResponse> {
+  execute(
+    technicianId: number | null,
+    date: string,
+    limit = 500,
+  ): Promise<TicketTimelineResponse> {
     const safeLimit = Number.isSafeInteger(limit)
       ? Math.max(1, Math.min(500, limit))
-      : 200;
+      : 500;
 
-    return this.repository.last24Hours(safeLimit);
+    return this.repository.find({
+      technicianId,
+      date,
+      limit: safeLimit,
+    });
   }
 }
