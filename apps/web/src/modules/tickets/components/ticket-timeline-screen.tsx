@@ -7,6 +7,7 @@ import {
   type TicketTimelineResponse,
 } from '@helpdesk/contracts';
 import Link from 'next/link';
+import type { FormEvent } from 'react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ApiError } from '../../../shared/api/api-client';
 import { AppPageHeader } from '../../../shared/navigation/app-page-header';
@@ -275,16 +276,16 @@ export function TicketTimelineScreen({
   }, [load]);
 
   useEffect(() => {
-    if (!allowed || !appliedTechnicianId) return;
+    if (!allowed || !appliedTechnicianId || appliedDate !== today()) return;
     const timer = window.setInterval(() => void load(), 60_000);
     return () => window.clearInterval(timer);
-  }, [allowed, appliedTechnicianId, load]);
+  }, [allowed, appliedDate, appliedTechnicianId, load]);
 
   const selectedTechnician = data?.technicians.find(
     (technician) => technician.id === appliedTechnicianId,
   );
 
-  function applyFilters(event: React.FormEvent<HTMLFormElement>) {
+  function applyFilters(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setAppliedTechnicianId(technicianId ? Number(technicianId) : null);
     setAppliedDate(date);

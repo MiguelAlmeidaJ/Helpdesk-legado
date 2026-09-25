@@ -3,8 +3,8 @@ import { requireAuthenticatedUser } from '../../../modules/access/server/current
 import { TicketTimelineScreen } from '../../../modules/tickets/components/ticket-timeline-screen';
 
 export const metadata: Metadata = {
-  title: 'Linha do tempo · Helpdesk',
-  description: 'Interações de atendimentos das últimas 24 horas',
+  title: 'Timeline do Técnico · Helpdesk',
+  description: 'Interações diárias de atendimentos por técnico',
 };
 
 export default async function TicketTimelinePage() {
