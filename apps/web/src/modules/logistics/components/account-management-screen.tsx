@@ -122,7 +122,8 @@ function bucketFor(
   }
 
   const key = value.slice(0, 7);
-  const [year, month] = key.split('-').map(Number);
+  const year = Number(key.slice(0, 4));
+  const month = Number(key.slice(5, 7));
   const label = new Intl.DateTimeFormat('pt-BR', {
     month: 'short',
     year: '2-digit',
