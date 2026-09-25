@@ -1340,6 +1340,7 @@ model usuarios {
   tipo_usuario                                            Int                    @default(1)
   link                                                    String?                @db.VarChar(50)
   chavepix                                                String?                @db.VarChar(255)
+  user_observacao                                         String?                @db.Text
   pix_type                                                Int?
   api_idempotency_keys                                    api_idempotency_keys[]
   api_sessions                                            api_sessions[]

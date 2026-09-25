@@ -11,6 +11,7 @@
     "access:bootstrap": "pnpm build && node dist/tools/bootstrap-access.js",
     "access:grant-system-admin": "pnpm build && node dist/tools/grant-system-admin.js",
     "navigation:bootstrap": "pnpm build && node dist/tools/bootstrap-navigation.js",
+    "users:bootstrap": "pnpm build && node dist/tools/bootstrap-users.js",
     "db:pull": "pnpm db:pull:nivel3",
     "db:pull:nivel3": "prisma db pull --config=prisma/nivel3/prisma.config.ts",
     "db:generate": "pnpm db:generate:nivel3",

@@ -23,6 +23,7 @@ export interface ManagedUserDetail extends ManagedUserSummary {
   link: string;
   pixKeyType: number | null;
   pixKey: string;
+  observation: string;
 }
 
 export interface UserManagementCatalogs {
@@ -30,6 +31,12 @@ export interface UserManagementCatalogs {
   companies: UserOption[];
   pixKeyTypes: UserOption[];
   roles: AccessRoleOption[];
+}
+
+export interface ManagedUserListFilters {
+  search?: string;
+  status?: 1 | 2 | null;
+  roleId?: number | null;
 }
 
 export interface ManagedUserListResponse {
@@ -48,6 +55,7 @@ export interface CreateManagedUserRequest {
   link?: string;
   pixKeyType?: number | null;
   pixKey?: string;
+  observation?: string;
   companyIds?: number[];
   roleIds?: number[];
 }
@@ -63,6 +71,7 @@ export interface UpdateManagedUserRequest {
   link?: string;
   pixKeyType?: number | null;
   pixKey?: string;
+  observation?: string;
   companyIds?: number[];
   roleIds?: number[];
 }
