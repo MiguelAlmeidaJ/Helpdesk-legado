@@ -626,10 +626,14 @@ export class FinanceService {
       `SELECT r.id, r.id_conta_receber, r.valor_recebido, r.data_recebimento,
               r.observacao, cr.descricao,
               COALESCE(NULLIF(c.clt_nomef, ''), c.clt_nomer) AS party,
-              ab.ag_nome AS agency_name
+              ab.ag_nome AS agency_name,
+              COALESCE(d.percentual_ti, 0) AS percent_ti,
+              COALESCE(d.percentual_devops, 0) AS percent_devops,
+              COALESCE(d.percentual_marketing, 0) AS percent_marketing
        FROM recebimentos r
        INNER JOIN contas_receber cr ON cr.id = r.id_conta_receber
        INNER JOIN clientes c ON c.clt_id = cr.id_cliente
+       LEFT JOIN contas_receber_divisao d ON d.id_conta_receber = cr.id
        LEFT JOIN agenciasbancarias ab ON ab.id = r.id_agBancaria
        WHERE DATE(r.data_recebimento) BETWEEN ? AND ?
        ORDER BY r.data_recebimento DESC, r.id DESC
@@ -657,7 +661,12 @@ export class FinanceService {
       observation: row.observacao ? String(row.observacao) : null,
       recurring: false,
       active: null,
-      metadata: { accountId: number(row.id_conta_receber) },
+      metadata: {
+        accountId: number(row.id_conta_receber),
+        percentTi: number(row.percent_ti),
+        percentDevops: number(row.percent_devops),
+        percentMarketing: number(row.percent_marketing),
+      },
     }));
   }
 
