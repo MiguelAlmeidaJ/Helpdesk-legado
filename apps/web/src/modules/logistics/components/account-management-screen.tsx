@@ -4,6 +4,9 @@ import type {
   CurrentUserResponse,
   FinanceListResponse,
   FinanceRow,
+  LogisticsExpenseAdminBreakdownItem,
+  LogisticsExpenseAdminDashboardResponse,
+  LogisticsExpenseAdminStatus,
 } from '@helpdesk/contracts';
 import Link from 'next/link';
 import type { FormEvent } from 'react';
@@ -11,6 +14,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ApiError } from '../../../shared/api/api-client';
 import { AppPageHeader } from '../../../shared/navigation/app-page-header';
 import { NavigationIcon } from '../../../shared/navigation/navigation-icon';
+import { getExpenseAdminDashboard } from '../api/expense-admin-dashboard-api';
 import { fetchFinanceView } from '../api/finance-api';
 
 const BUTTON =
@@ -367,6 +371,143 @@ function TopClientsChart({ rows }: { rows: FinanceRow[] }) {
   </div>;
 }
 
+
+type RdTimelinePoint = {
+  key: string;
+  label: string;
+  amount: number;
+  count: number;
+};
+
+const RD_STATUS_LABELS: Record<LogisticsExpenseAdminStatus, string> = {
+  1: 'Aguardando aprovação',
+  2: 'Aguardando pagamento',
+  4: 'Pagas',
+};
+
+function rdStatusAmount(
+  data: LogisticsExpenseAdminDashboardResponse,
+  status: LogisticsExpenseAdminStatus,
+): number {
+  if (status === 1) return data.totals.periodPending;
+  if (status === 2) return data.totals.periodApproved;
+  return data.totals.periodPaid;
+}
+
+function rdStatusCount(
+  data: LogisticsExpenseAdminDashboardResponse,
+  status: LogisticsExpenseAdminStatus,
+): number {
+  if (status === 1) return data.totals.periodPendingCount;
+  if (status === 2) return data.totals.periodApprovedCount;
+  return data.totals.periodPaidCount;
+}
+
+function rdTimelineSeries(
+  data: LogisticsExpenseAdminDashboardResponse,
+): RdTimelinePoint[] {
+  const buckets = new Map<string, RdTimelinePoint>();
+
+  for (const item of data.timeline) {
+    const bucket = bucketFor(item.date, data.period.startDate, data.period.endDate);
+    const current = buckets.get(bucket.key) ?? {
+      key: bucket.key,
+      label: bucket.label,
+      amount: 0,
+      count: 0,
+    };
+    current.amount += item.amount;
+    current.count += item.count;
+    buckets.set(bucket.key, current);
+  }
+
+  return [...buckets.values()].sort((left, right) => left.key.localeCompare(right.key));
+}
+
+function RdBreakdownChart({
+  title,
+  subtitle,
+  items,
+}: {
+  title: string;
+  subtitle: string;
+  items: LogisticsExpenseAdminBreakdownItem[];
+}) {
+  const visible = items.slice(0, 8);
+  const maxValue = Math.max(1, ...visible.map((item) => item.amount));
+
+  return <article className="rounded-xl border border-app-border bg-app-surface p-4 shadow-sm shadow-slate-950/5 dark:shadow-black/10">
+    <div className="mb-4">
+      <h3 className="m-0 text-sm font-extrabold text-app-text">{title}</h3>
+      <p className="m-0 mt-1 text-[11px] text-app-muted">{subtitle}</p>
+    </div>
+    {visible.length ? <div className="grid gap-3">
+      {visible.map((item) => {
+        const width = Math.max(2, (item.amount / maxValue) * 100);
+        return <div className="grid gap-1.5" key={item.key || item.label}>
+          <div className="flex items-center justify-between gap-3 text-xs">
+            <span className="min-w-0 truncate font-semibold text-app-text-soft" title={item.label}>{item.label}</span>
+            <span className="shrink-0 text-right">
+              <strong>{money(item.amount)}</strong>
+              <small className="ml-1.5 text-app-subtle">{item.count} RD</small>
+            </span>
+          </div>
+          <div className="h-2.5 overflow-hidden rounded-full bg-app-surface-muted">
+            <div className="h-full rounded-full bg-orange-400" style={{ width: width + '%' }} />
+          </div>
+        </div>;
+      })}
+    </div> : <div className="grid min-h-[170px] place-items-center text-sm text-app-muted">Nenhuma RD neste agrupamento.</div>}
+  </article>;
+}
+
+function RdTimelineChart({
+  points,
+  status,
+}: {
+  points: RdTimelinePoint[];
+  status: LogisticsExpenseAdminStatus;
+}) {
+  const width = 920;
+  const height = 245;
+  const left = 58;
+  const right = 18;
+  const top = 18;
+  const bottom = 42;
+  const plotWidth = width - left - right;
+  const plotHeight = height - top - bottom;
+  const maxValue = Math.max(1, ...points.map((point) => point.amount));
+  const groupWidth = points.length ? plotWidth / points.length : plotWidth;
+  const barWidth = Math.min(38, Math.max(4, groupWidth * 0.62));
+  const labels = chartLabelIndexes(points.length);
+  const y = (value: number) => top + plotHeight - (value / maxValue) * plotHeight;
+
+  if (!points.length) {
+    return <div className="grid min-h-[235px] place-items-center text-sm text-app-muted">Nenhuma RD para o status e período selecionados.</div>;
+  }
+
+  return <svg aria-label={'Evolução de RDs ' + RD_STATUS_LABELS[status]} className="h-auto w-full overflow-visible" role="img" viewBox={'0 0 ' + width + ' ' + height}>
+    {[0, 0.25, 0.5, 0.75, 1].map((ratio) => {
+      const value = maxValue * ratio;
+      const py = y(value);
+      return <g key={ratio}>
+        <line className="stroke-app-border-soft" x1={left} x2={width - right} y1={py} y2={py} />
+        <text className="fill-app-subtle text-[10px]" textAnchor="end" x={left - 8} y={py + 3}>{compactMoney(value)}</text>
+      </g>;
+    })}
+    {points.map((point, index) => {
+      const center = left + groupWidth * index + groupWidth / 2;
+      const py = y(point.amount);
+      return <g key={point.key}>
+        <rect fill="#fb923c" height={top + plotHeight - py} rx="4" width={barWidth} x={center - barWidth / 2} y={py}>
+          <title>{point.label + ' · ' + money(point.amount) + ' · ' + point.count + ' RD(s)'}</title>
+        </rect>
+        {labels.has(index) ? <text className="fill-app-subtle text-[10px]" textAnchor="middle" x={center} y={height - 12}>{point.label}</text> : null}
+      </g>;
+    })}
+  </svg>;
+}
+
 function StatCard({
   label,
   value,
@@ -444,6 +585,10 @@ export function AccountManagementScreen({
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [rdStatus, setRdStatus] = useState<LogisticsExpenseAdminStatus>(4);
+  const [rdData, setRdData] = useState<LogisticsExpenseAdminDashboardResponse | null>(null);
+  const [rdLoading, setRdLoading] = useState(true);
+  const [rdError, setRdError] = useState('');
 
   const load = useCallback(async (signal?: AbortSignal) => {
     setLoading(true);
@@ -471,6 +616,31 @@ export function AccountManagementScreen({
     return () => controller.abort();
   }, [load]);
 
+  const loadRd = useCallback(async (signal?: AbortSignal) => {
+    setRdLoading(true);
+    setRdError('');
+    try {
+      const response = await getExpenseAdminDashboard(
+        period.startDate,
+        period.endDate,
+        rdStatus,
+        signal,
+      );
+      setRdData(response);
+    } catch (reason) {
+      if (reason instanceof Error && reason.name === 'AbortError') return;
+      setRdError(errorMessage(reason));
+    } finally {
+      if (!signal?.aborted) setRdLoading(false);
+    }
+  }, [period, rdStatus]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    void loadRd(controller.signal);
+    return () => controller.abort();
+  }, [loadRd]);
+
   const metrics = useMemo(() => {
     if (!data) return null;
     const openReceivables = data.accrual.summary.openReceivables;
@@ -497,6 +667,7 @@ export function AccountManagementScreen({
     }
     if (period.startDate === startDate && period.endDate === endDate) {
       void load();
+      void loadRd();
       return;
     }
     setPeriod({ startDate, endDate });
@@ -573,6 +744,61 @@ export function AccountManagementScreen({
             </div>
             <TopClientsChart rows={data.accrual.rows} />
           </article>
+        </section>
+
+
+        <section className="overflow-hidden rounded-2xl border border-app-border bg-app-surface shadow-sm shadow-slate-950/5 dark:shadow-black/10">
+          <header className="flex flex-wrap items-center justify-between gap-4 border-b border-app-border bg-slate-800 px-5 py-4 text-white dark:bg-slate-900">
+            <div>
+              <span className="text-[10px] font-black uppercase tracking-[0.12em] text-slate-300">Relatório de Despesas</span>
+              <h2 className="m-0 mt-1 text-lg font-extrabold">RD · Visão analítica</h2>
+              <p className="m-0 mt-1 text-xs text-slate-300">Grupo, subgrupo, técnico e empresa com o mesmo período do dashboard financeiro.</p>
+            </div>
+            <Link className="inline-flex min-h-9 items-center rounded-lg border border-white/20 bg-white/10 px-3 text-xs font-bold text-white no-underline transition hover:bg-white/20" href="/logistica/despesas/administracao">Abrir gestão completa de RDs</Link>
+          </header>
+
+          {rdError ? <div className="m-4 rounded-lg border border-app-danger-border bg-app-danger-soft px-4 py-3 text-sm text-app-danger">{rdError}</div> : null}
+
+          {rdData ? <div className="grid gap-4 p-4">
+            <div className="grid grid-cols-3 gap-3 max-[800px]:grid-cols-1">
+              {([1, 2, 4] as const).map((status) => {
+                const active = rdStatus === status;
+                const value = rdStatusAmount(rdData, status);
+                const count = rdStatusCount(rdData, status);
+                return <button
+                  aria-pressed={active}
+                  className="grid min-h-[105px] cursor-pointer gap-1 rounded-xl border border-app-border bg-app-surface p-4 text-left transition hover:border-orange-300 hover:bg-orange-50/50 aria-pressed:border-orange-400 aria-pressed:bg-orange-50 dark:hover:bg-orange-950/20 dark:aria-pressed:bg-orange-950/30"
+                  key={status}
+                  onClick={() => setRdStatus(status)}
+                  type="button"
+                >
+                  <span className="text-[11px] font-extrabold uppercase tracking-[0.04em] text-app-muted">{RD_STATUS_LABELS[status]}</span>
+                  <strong className="text-xl text-app-text">{money(value)}</strong>
+                  <small className="text-xs text-app-subtle">{count} lançamento(s) no período</small>
+                </button>;
+              })}
+            </div>
+
+            <article className="rounded-xl border border-app-border bg-app-surface p-4">
+              <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <h3 className="m-0 text-sm font-extrabold">Evolução das RDs · {RD_STATUS_LABELS[rdStatus]}</h3>
+                  <p className="m-0 mt-1 text-[11px] text-app-muted">Valor das despesas ao longo do período selecionado.</p>
+                </div>
+                <span className="rounded-full bg-orange-50 px-2.5 py-1 text-xs font-extrabold text-orange-700 dark:bg-orange-950/30 dark:text-orange-300">
+                  {money(rdStatusAmount(rdData, rdStatus))}
+                </span>
+              </div>
+              <RdTimelineChart points={rdTimelineSeries(rdData)} status={rdStatus} />
+            </article>
+
+            <div className="grid grid-cols-4 gap-3 max-[1250px]:grid-cols-2 max-[720px]:grid-cols-1">
+              <RdBreakdownChart items={rdData.groups} subtitle="Centro macro da despesa." title="Por Grupo" />
+              <RdBreakdownChart items={rdData.subgroups} subtitle="Natureza detalhada da RD." title="Por Subgrupo" />
+              <RdBreakdownChart items={rdData.collaborators} subtitle="Colaborador responsável pelo lançamento." title="Por Técnico" />
+              <RdBreakdownChart items={rdData.clients} subtitle="Empresa ou cliente relacionado à despesa." title="Por Empresa" />
+            </div>
+          </div> : rdLoading ? <div className="grid min-h-[220px] place-items-center p-5 text-sm text-app-muted">Carregando análise de RDs…</div> : null}
         </section>
 
         <section>
