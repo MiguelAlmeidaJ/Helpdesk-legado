@@ -268,6 +268,8 @@ export class ExpenseAdminDashboardRepository {
       end,
       start,
       end,
+      start,
+      end,
     );
   }
 
