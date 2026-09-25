@@ -275,10 +275,20 @@ export function createTicket(input: CreateTicketRequest): Promise<CreateTicketRe
 }
 
 export function fetchTicketTimeline(
-  limit = 200,
+  technicianId: number | null,
+  date: string,
+  limit = 500,
+  signal?: AbortSignal,
 ): Promise<TicketTimelineResponse> {
+  const params = new URLSearchParams({
+    date,
+    limit: String(limit),
+  });
+  if (technicianId) params.set('technicianId', String(technicianId));
+
   return apiRequest<TicketTimelineResponse>(
-    `tickets/audit/timeline?limit=${limit}`,
+    `tickets/audit/timeline?${params.toString()}`,
+    { signal },
   );
 }
 
