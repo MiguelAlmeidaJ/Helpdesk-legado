@@ -1,0 +1,149 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  color-scheme: light;
+  --app-bg: #f3f6f9;
+  --app-surface: #ffffff;
+  --app-surface-muted: #f8fafb;
+  --app-surface-hover: #f5f8fa;
+  --app-text: #17202a;
+  --app-text-soft: #34495e;
+  --app-muted: #52606d;
+  --app-muted-strong: #687887;
+  --app-subtle: #73808c;
+  --app-border: #dfe6ec;
+  --app-border-soft: #edf1f4;
+  --app-border-strong: #cbd5df;
+  --app-brand: #1f5fa8;
+  --app-brand-hover: #194f8d;
+  --app-brand-soft: #eaf2fb;
+  --app-brand-contrast: #ffffff;
+  --app-brand-ring: rgba(31, 95, 168, 0.12);
+  --app-success: #267a4a;
+  --app-success-soft: #eaf6ef;
+  --app-danger: #8d3030;
+  --app-danger-soft: #fff7f7;
+  --app-danger-border: #e4c8c8;
+  --app-header-bg: rgba(255, 255, 255, 0.96);
+  --app-shadow-lg: 0 18px 60px rgba(23, 32, 42, 0.08);
+}
+
+html.dark {
+  color-scheme: dark;
+  --app-bg: #0b1220;
+  --app-surface: #111827;
+  --app-surface-muted: #172033;
+  --app-surface-hover: #1c2738;
+  --app-text: #e5edf5;
+  --app-text-soft: #cbd5e1;
+  --app-muted: #a7b4c5;
+  --app-muted-strong: #9aa9bc;
+  --app-subtle: #8493a8;
+  --app-border: #293548;
+  --app-border-soft: #222d3e;
+  --app-border-strong: #3a4960;
+  --app-brand: #60a5fa;
+  --app-brand-hover: #93c5fd;
+  --app-brand-soft: #172554;
+  --app-brand-contrast: #0f172a;
+  --app-brand-ring: rgba(96, 165, 250, 0.2);
+  --app-success: #86efac;
+  --app-success-soft: #123322;
+  --app-danger: #fecaca;
+  --app-danger-soft: #3b171b;
+  --app-danger-border: #7f1d1d;
+  --app-header-bg: rgba(17, 24, 39, 0.94);
+  --app-shadow-lg: 0 18px 60px rgba(0, 0, 0, 0.28);
+}
+
+@theme inline {
+  --color-app-bg: var(--app-bg);
+  --color-app-surface: var(--app-surface);
+  --color-app-surface-muted: var(--app-surface-muted);
+  --color-app-surface-hover: var(--app-surface-hover);
+  --color-app-text: var(--app-text);
+  --color-app-text-soft: var(--app-text-soft);
+  --color-app-muted: var(--app-muted);
+  --color-app-subtle: var(--app-subtle);
+  --color-app-border: var(--app-border);
+  --color-app-border-soft: var(--app-border-soft);
+  --color-app-border-strong: var(--app-border-strong);
+  --color-app-brand: var(--app-brand);
+  --color-app-brand-hover: var(--app-brand-hover);
+  --color-app-brand-soft: var(--app-brand-soft);
+  --color-app-brand-contrast: var(--app-brand-contrast);
+  --color-app-success: var(--app-success);
+  --color-app-success-soft: var(--app-success-soft);
+  --color-app-danger: var(--app-danger);
+  --color-app-danger-soft: var(--app-danger-soft);
+  --color-app-danger-border: var(--app-danger-border);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+}
+
+body {
+  font-family:
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+  background: var(--app-bg);
+  color: var(--app-text);
+  transition:
+    background-color 150ms ease,
+    color 150ms ease;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+:where(button, a).bg-app-brand {
+  background-color: var(--app-brand) !important;
+  color: var(--app-brand-contrast) !important;
+}
+
+:where(button, a).hover\:bg-app-brand-hover:hover {
+  background-color: var(--app-brand-hover) !important;
+}
+
+a {
+  color: inherit;
+}
+
+::selection {
+  background: var(--app-brand-soft);
+  color: var(--app-text);
+}
+
+:where(a, button, input, select, textarea):focus-visible {
+  outline: 2px solid var(--app-brand);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

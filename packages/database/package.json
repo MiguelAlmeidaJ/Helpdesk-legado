@@ -1,0 +1,32 @@
+{
+  "name": "@helpdesk/database",
+  "version": "0.0.0",
+  "private": true,
+  "type": "commonjs",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "pnpm --filter @helpdesk/contracts build && pnpm db:generate && tsc -p tsconfig.build.json",
+    "access:audit": "pnpm build && node dist/tools/audit-access.js",
+    "access:bootstrap": "pnpm build && node dist/tools/bootstrap-access.js",
+    "access:grant-system-admin": "pnpm build && node dist/tools/grant-system-admin.js",
+    "navigation:bootstrap": "pnpm build && node dist/tools/bootstrap-navigation.js",
+    "users:bootstrap": "pnpm build && node dist/tools/bootstrap-users.js",
+    "db:pull": "pnpm db:pull:nivel3",
+    "db:pull:nivel3": "prisma db pull --config=prisma/nivel3/prisma.config.ts",
+    "db:generate": "pnpm db:generate:nivel3",
+    "db:generate:nivel3": "prisma generate --no-hints --config=prisma/nivel3/prisma.config.ts",
+    "typecheck": "pnpm db:generate && tsc --noEmit"
+  },
+  "dependencies": {
+    "@helpdesk/contracts": "workspace:*",
+    "@prisma/adapter-mariadb": "7.10.0",
+    "@prisma/client": "7.10.0",
+    "dotenv": "^17.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "prisma": "7.10.0",
+    "typescript": "^5.9.0"
+  }
+}

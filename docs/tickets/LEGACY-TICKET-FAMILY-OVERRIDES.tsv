@@ -1,0 +1,18 @@
+# 0044a manual classification overrides
+#
+# Format (TAB-separated):
+# path	classification	native_owner	retirement_prerequisite	note
+#
+# Valid classifications:
+# MIGRATE_READ | MIGRATE_WRITE | MIGRATE_UI | REPORT | BRIDGE_ONLY | REDIRECT | DEAD | UNKNOWN
+#
+# Rules:
+# - path must point to an existing PHP file in the checkout;
+# - PHPs fisicamente removidos pertencem a LEGACY-TICKET-FAMILY-RETIRED.tsv e nao ficam aqui;
+# - path may add a ticket-related rel/ PHP missed by the content heuristic;
+# - native_owner, retirement_prerequisite and note may be left empty;
+# - DEAD and REDIRECT must only be used with concrete reachability/cutover evidence;
+# - ConnectionMkt() remains nivel3 data; do not use an override to create a mkt datasource.
+#
+# Example (remove the leading # and keep literal TABs between columns):
+# rel/legacy_ticket_report.php	REPORT	tickets/reporting	native report parity + cutover	confirmed ticket report
