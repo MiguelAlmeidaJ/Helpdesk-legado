@@ -3,10 +3,14 @@ import {
   TicketStatus,
   type TicketTimelineEntry,
   type TicketTimelineResponse,
+  type TicketTimelineTechnician,
 } from '@helpdesk/contracts';
 import type { Nivel3DatabaseClient } from '@helpdesk/database';
 import { NIVEL3_DATABASE } from '../../../../core/database/database.constants';
-import { TicketTimelineRepository } from '../../application/ports/ticket-timeline.repository';
+import {
+  TicketTimelineRepository,
+  type TicketTimelineQuery,
+} from '../../application/ports/ticket-timeline.repository';
 
 interface TimelineRow {
   interaction_id: number;
@@ -29,6 +33,11 @@ interface TimelineRow {
   item_name: string | null;
 }
 
+interface TechnicianRow {
+  id: number;
+  name: string | null;
+}
+
 interface NowRow {
   generated_at: string;
 }
@@ -48,7 +57,43 @@ export class PrismaTicketTimelineRepository extends TicketTimelineRepository {
     super();
   }
 
-  async last24Hours(limit: number): Promise<TicketTimelineResponse> {
+  async find(query: TicketTimelineQuery): Promise<TicketTimelineResponse> {
+    const [technicianRows, now] = await Promise.all([
+      this.database.$queryRawUnsafe<TechnicianRow[]>(
+        `SELECT user_id AS id, user_nome AS name
+         FROM usuarios
+         WHERE user_sts = 1
+           AND user_funcao IN (2, 3, 4, 5, 6, 7)
+           AND user_id NOT IN (1, 3)
+         ORDER BY user_nome ASC`,
+      ),
+      this.database.$queryRawUnsafe<NowRow[]>(
+        `SELECT DATE_FORMAT(NOW(), '%Y-%m-%dT%H:%i:%s') AS generated_at`,
+      ),
+    ]);
+
+    const technicians: TicketTimelineTechnician[] = technicianRows.map((row) => ({
+      id: row.id,
+      name: row.name?.trim() || `Usuário #${row.id}`,
+    }));
+
+    if (!query.technicianId) {
+      return {
+        windowHours: 24,
+        generatedAt: now[0]?.generated_at ?? new Date().toISOString(),
+        selectedDate: query.date,
+        selectedTechnicianId: null,
+        technicians,
+        summary: {
+          interactions: 0,
+          tickets: 0,
+          firstInteractionAt: null,
+          lastInteractionAt: null,
+        },
+        items: [],
+      };
+    }
+
     const rows = await this.database.$queryRawUnsafe<TimelineRow[]>(
       `SELECT
          i.inter_id AS interaction_id,
@@ -71,21 +116,24 @@ export class PrismaTicketTimelineRepository extends TicketTimelineRepository {
          item.itens_nome AS item_name
        FROM interatividade i
        INNER JOIN atendimentos a ON a.id = i.inter_atd
-       LEFT JOIN usuarios actor ON actor.user_id = i.inter_user
+       INNER JOIN usuarios actor ON actor.user_id = i.inter_user
        LEFT JOIN clientes c ON c.clt_id = a.cliente
        LEFT JOIN pessoas p ON p.pessoa_id = a.pessoa
        LEFT JOIN usuarios tech ON tech.user_id = a.tecnico
-       LEFT JOIN locais l ON l.local_id = a.\`local\`
+       LEFT JOIN locais l ON l.local_id = a.`local`
        LEFT JOIN categorias cat ON cat.cat_id = a.categoria
        LEFT JOIN subcategorias scat ON scat.scat_id = a.subcategoria
        LEFT JOIN itens item ON item.itens_id = a.item
-       WHERE i.inter_data BETWEEN DATE_SUB(NOW(), INTERVAL 1 DAY) AND NOW()
-       ORDER BY i.inter_data DESC, i.inter_id DESC
-       LIMIT ${limit}`,
-    );
-
-    const now = await this.database.$queryRawUnsafe<NowRow[]>(
-      `SELECT DATE_FORMAT(NOW(), '%Y-%m-%dT%H:%i:%s') AS generated_at`,
+       WHERE a.tecnico = ?
+         AND i.inter_user = ?
+         AND i.inter_data >= CONCAT(?, ' 00:00:00')
+         AND i.inter_data < DATE_ADD(CONCAT(?, ' 00:00:00'), INTERVAL 1 DAY)
+       ORDER BY i.inter_data ASC, i.inter_id ASC
+       LIMIT ${query.limit}`,
+      query.technicianId,
+      query.technicianId,
+      query.date,
+      query.date,
     );
 
     const items: TicketTimelineEntry[] = rows.map((row) => ({
@@ -107,9 +155,20 @@ export class PrismaTicketTimelineRepository extends TicketTimelineRepository {
       },
     }));
 
+    const ticketIds = new Set(items.map((item) => item.ticketId));
+
     return {
       windowHours: 24,
       generatedAt: now[0]?.generated_at ?? new Date().toISOString(),
+      selectedDate: query.date,
+      selectedTechnicianId: query.technicianId,
+      technicians,
+      summary: {
+        interactions: items.length,
+        tickets: ticketIds.size,
+        firstInteractionAt: items[0]?.occurredAt ?? null,
+        lastInteractionAt: items.at(-1)?.occurredAt ?? null,
+      },
       items,
     };
   }
