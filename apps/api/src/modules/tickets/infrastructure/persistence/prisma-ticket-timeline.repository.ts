@@ -38,6 +38,13 @@ interface TechnicianRow {
   name: string | null;
 }
 
+interface TimelineSummaryRow {
+  interactions: bigint | number;
+  tickets: bigint | number;
+  first_interaction_at: string | null;
+  last_interaction_at: string | null;
+}
+
 interface NowRow {
   generated_at: string;
 }
@@ -94,7 +101,8 @@ export class PrismaTicketTimelineRepository extends TicketTimelineRepository {
       };
     }
 
-    const rows = await this.database.$queryRawUnsafe<TimelineRow[]>(
+    const [rows, summaryRows] = await Promise.all([
+      this.database.$queryRawUnsafe<TimelineRow[]>(
       `SELECT
          i.inter_id AS interaction_id,
          a.id AS ticket_id,
@@ -134,7 +142,25 @@ export class PrismaTicketTimelineRepository extends TicketTimelineRepository {
       query.technicianId,
       query.date,
       query.date,
-    );
+      ),
+      this.database.$queryRawUnsafe<TimelineSummaryRow[]>(
+        `SELECT
+           COUNT(*) AS interactions,
+           COUNT(DISTINCT a.id) AS tickets,
+           DATE_FORMAT(MIN(i.inter_data), '%Y-%m-%dT%H:%i:%s') AS first_interaction_at,
+           DATE_FORMAT(MAX(i.inter_data), '%Y-%m-%dT%H:%i:%s') AS last_interaction_at
+         FROM interatividade i
+         INNER JOIN atendimentos a ON a.id = i.inter_atd
+         WHERE a.tecnico = ?
+           AND i.inter_user = ?
+           AND i.inter_data >= CONCAT(?, ' 00:00:00')
+           AND i.inter_data < DATE_ADD(CONCAT(?, ' 00:00:00'), INTERVAL 1 DAY)`,
+        query.technicianId,
+        query.technicianId,
+        query.date,
+        query.date,
+      ),
+    ]);
 
     const items: TicketTimelineEntry[] = rows.map((row) => ({
       interactionId: row.interaction_id,
@@ -155,7 +181,7 @@ export class PrismaTicketTimelineRepository extends TicketTimelineRepository {
       },
     }));
 
-    const ticketIds = new Set(items.map((item) => item.ticketId));
+    const summary = summaryRows[0];
 
     return {
       windowHours: 24,
@@ -164,10 +190,10 @@ export class PrismaTicketTimelineRepository extends TicketTimelineRepository {
       selectedTechnicianId: query.technicianId,
       technicians,
       summary: {
-        interactions: items.length,
-        tickets: ticketIds.size,
-        firstInteractionAt: items[0]?.occurredAt ?? null,
-        lastInteractionAt: items.at(-1)?.occurredAt ?? null,
+        interactions: Number(summary?.interactions ?? 0),
+        tickets: Number(summary?.tickets ?? 0),
+        firstInteractionAt: summary?.first_interaction_at ?? null,
+        lastInteractionAt: summary?.last_interaction_at ?? null,
       },
       items,
     };
