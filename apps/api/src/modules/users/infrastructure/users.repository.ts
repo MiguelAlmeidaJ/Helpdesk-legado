@@ -25,6 +25,7 @@ interface UserRow {
   link: string | null;
   pix_type: number | null;
   chavepix: string | null;
+  user_observacao: string | null;
   user_modulo_01: string;
   user_modulo_02: string;
   user_modulo_03: string;
@@ -70,13 +71,35 @@ export class UsersRepository {
     private readonly database: Nivel3DatabaseClient,
   ) {}
 
-  async list(page: number, limit: number, search: string): Promise<ManagedUserListResponse> {
+  async list(
+    page: number,
+    limit: number,
+    search: string,
+    statusFilter?: 1 | 2,
+    roleId?: number,
+  ): Promise<ManagedUserListResponse> {
     const offset = (page - 1) * limit;
     const pattern = `%${search}%`;
-    const filter = search
-      ? 'WHERE u.user_nome LIKE ? OR u.user_login LIKE ? OR u.user_mail LIKE ?'
-      : '';
-    const parameters = search ? [pattern, pattern, pattern] : [];
+    const conditions: string[] = [];
+    const parameters: Array<string | number> = [];
+
+    if (search) {
+      conditions.push('(u.user_nome LIKE ? OR u.user_login LIKE ? OR u.user_mail LIKE ?)');
+      parameters.push(pattern, pattern, pattern);
+    }
+    if (statusFilter === 1) {
+      conditions.push('u.user_sts = 1');
+    } else if (statusFilter === 2) {
+      conditions.push('(u.user_sts IS NULL OR u.user_sts <> 1)');
+    }
+    if (roleId) {
+      conditions.push(
+        'EXISTS (SELECT 1 FROM user_roles filter_role WHERE filter_role.user_id = u.user_id AND filter_role.role_id = ?)',
+      );
+      parameters.push(roleId);
+    }
+
+    const filter = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
     const [rows, totals] = await Promise.all([
       this.database.$queryRawUnsafe<UserRow[]>(
         `SELECT u.*, c.cargo_nome
@@ -132,6 +155,7 @@ export class UsersRepository {
       link: row.link ?? '',
       pixKeyType: row.pix_type,
       pixKey: row.chavepix ?? '',
+      observation: row.user_observacao ?? '',
     };
   }
 
@@ -214,11 +238,11 @@ export class UsersRepository {
       await transaction.$executeRawUnsafe(
         `INSERT INTO usuarios
           (user_sts, user_nome, user_mail, user_cel, user_funcao, user_login,
-           user_pass, tipo_usuario, link, pix_type, chavepix)
-         VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+           user_pass, tipo_usuario, link, pix_type, chavepix, user_observacao)
+         VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         input.name, input.email, input.phone, input.functionId, input.login,
         passwordHash, input.type, input.link ?? '', input.pixKeyType ?? null,
-        input.pixKey ?? '',
+        input.pixKey ?? '', input.observation ?? '',
       );
       const ids = await transaction.$queryRawUnsafe<InsertIdRow[]>('SELECT LAST_INSERT_ID() AS id');
       const id = Number(ids[0]?.id);
@@ -240,11 +264,11 @@ export class UsersRepository {
       const changed = await transaction.$executeRawUnsafe(
         `UPDATE usuarios SET user_sts = ?, user_nome = ?, user_mail = ?,
           user_cel = ?, user_funcao = ?, user_login = ?, tipo_usuario = ?,
-          link = ?, pix_type = ?, chavepix = ?
+          link = ?, pix_type = ?, chavepix = ?, user_observacao = ?
          WHERE user_id = ?`,
         input.status, input.name, input.email, input.phone, input.functionId,
         input.login, input.type, input.link ?? '', input.pixKeyType ?? null,
-        input.pixKey ?? '', id,
+        input.pixKey ?? '', input.observation ?? '', id,
       );
       if (changed === 0) return false;
       await this.replaceCompanies(transaction, id, input.companyIds ?? []);

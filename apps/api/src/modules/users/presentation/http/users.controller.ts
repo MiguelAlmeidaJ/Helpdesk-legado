@@ -94,6 +94,7 @@ function baseInput(body: unknown) {
       link: optionalString(value.link, 'link', 50),
       pixKeyType,
       pixKey,
+      observation: optionalString(value.observation, 'observation', 2000),
       companyIds,
       roleIds,
     },
@@ -114,13 +115,35 @@ export class UsersController {
   @Get()
   @RequirePermissions(AppPermission.UsersRead)
   @ApiOperation({ summary: 'Listar usuários' })
-  list(@Query('page') pageValue?: string, @Query('limit') limitValue?: string, @Query('search') searchValue?: string): Promise<ManagedUserListResponse> {
+  list(
+    @Query('page') pageValue?: string,
+    @Query('limit') limitValue?: string,
+    @Query('search') searchValue?: string,
+    @Query('status') statusValue?: string,
+    @Query('roleId') roleIdValue?: string,
+  ): Promise<ManagedUserListResponse> {
     const page = pageValue ? Number(pageValue) : 1;
     const limit = limitValue ? Number(limitValue) : 50;
+    const statusFilter = statusValue ? Number(statusValue) : undefined;
+    const roleId = roleIdValue ? Number(roleIdValue) : undefined;
+
     if (!Number.isSafeInteger(page) || page < 1 || !Number.isSafeInteger(limit) || limit < 1 || limit > 100) {
       throw new BadRequestException('Paginação inválida.');
     }
-    return this.management.list(page, limit, searchValue?.trim().slice(0, 100) ?? '');
+    if (statusFilter !== undefined && statusFilter !== 1 && statusFilter !== 2) {
+      throw new BadRequestException('status deve ser 1 ou 2.');
+    }
+    if (roleId !== undefined && (!Number.isSafeInteger(roleId) || roleId < 1)) {
+      throw new BadRequestException('roleId inválido.');
+    }
+
+    return this.management.list(
+      page,
+      limit,
+      searchValue?.trim().slice(0, 100) ?? '',
+      statusFilter,
+      roleId,
+    );
   }
 
   @Get('catalogs')

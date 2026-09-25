@@ -1,15 +1,22 @@
 import type {
   CreateManagedUserRequest,
   ManagedUserDetail,
+  ManagedUserListFilters,
   ManagedUserListResponse,
   UpdateManagedUserRequest,
   UserManagementCatalogs,
 } from '@helpdesk/contracts';
 import { apiRequest } from '../../../shared/api/api-client';
 
-export function fetchUsers(page: number, search: string, signal?: AbortSignal) {
+export function fetchUsers(
+  page: number,
+  filters: ManagedUserListFilters,
+  signal?: AbortSignal,
+) {
   const query = new URLSearchParams({ page: String(page), limit: '50' });
-  if (search) query.set('search', search);
+  if (filters.search) query.set('search', filters.search);
+  if (filters.status) query.set('status', String(filters.status));
+  if (filters.roleId) query.set('roleId', String(filters.roleId));
   return apiRequest<ManagedUserListResponse>(`users?${query}`, { signal });
 }
 

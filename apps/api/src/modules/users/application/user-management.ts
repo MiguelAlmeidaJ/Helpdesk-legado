@@ -22,8 +22,14 @@ export class UserManagement {
     private readonly sessions: ApiSessionRepository,
   ) {}
 
-  list(page: number, limit: number, search: string): Promise<ManagedUserListResponse> {
-    return this.users.list(page, limit, search);
+  list(
+    page: number,
+    limit: number,
+    search: string,
+    statusFilter?: 1 | 2,
+    roleId?: number,
+  ): Promise<ManagedUserListResponse> {
+    return this.users.list(page, limit, search, statusFilter, roleId);
   }
 
   async detail(id: number): Promise<ManagedUserDetail> {
