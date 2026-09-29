@@ -13,6 +13,10 @@ import { ApiError } from '../../../shared/api/api-client';
 import { AppPageHeader } from '../../../shared/navigation/app-page-header';
 import { appButtonClass } from '../../../shared/ui/button-styles';
 import {
+  SearchSelect,
+  type SearchSelectOption,
+} from '../../../shared/ui/search-select';
+import {
   createTicket,
   fetchTicketCreateCatalogs,
   fetchTicketCreateItems,
@@ -43,12 +47,17 @@ function errorMessage(reason: unknown): string {
     : 'Não foi possível concluir a operação.';
 }
 
-function Options({ values }: { values: TicketCatalogOption[] }) {
-  return values.map((option) => (
-    <option key={option.id} value={option.id}>
-      {option.name}
-    </option>
-  ));
+function selectOptions(
+  values: TicketCatalogOption[],
+  extra: SearchSelectOption[] = [],
+): SearchSelectOption[] {
+  return [
+    ...extra,
+    ...values.map((option) => ({
+      value: String(option.id),
+      label: option.name,
+    })),
+  ];
 }
 
 export function TicketCreateScreen({
@@ -268,147 +277,154 @@ export function TicketCreateScreen({
             <div className="border-b border-app-border-soft pb-1 sm:col-span-2 xl:col-span-4">
               <h2 className="m-0 text-xs font-extrabold uppercase tracking-[0.04em] text-app-text-soft">Solicitação</h2>
             </div>
-            <label className={`${FIELD_LABEL_CLASS} xl:col-span-2`}>
-              Cliente
-              <select
-                className={FIELD_CONTROL_CLASS}
+            <div className={`${FIELD_LABEL_CLASS} xl:col-span-2`}>
+              <span>Cliente</span>
+              <SearchSelect
+                compact
                 disabled={saving}
-                onChange={(event) => void changeClient(event.target.value)}
-                required
-                value={clientId}
-              >
-                <option value="">Selecione</option>
-                <Options values={createCatalogs?.clients ?? []} />
-              </select>
-            </label>
-            <label className={FIELD_LABEL_CLASS}>
-              Solicitante
-              <select
-                className={FIELD_CONTROL_CLASS}
+                onChange={(values) => void changeClient(values[0] ?? '')}
+                options={selectOptions(createCatalogs?.clients ?? [])}
+                placeholder="Selecione um cliente"
+                searchPlaceholder="Pesquisar cliente..."
+                value={clientId ? [clientId] : []}
+              />
+            </div>
+            <div className={FIELD_LABEL_CLASS}>
+              <span>Solicitante</span>
+              <SearchSelect
+                compact
                 disabled={saving || !clientId}
-                onChange={(event) => setRequesterId(event.target.value)}
-                required
-                value={requesterId}
-              >
-                <option value="">Selecione</option>
-                <Options values={requesters} />
-              </select>
-            </label>
-            <label className={FIELD_LABEL_CLASS}>
-              Local
-              <select
-                className={FIELD_CONTROL_CLASS}
+                onChange={(values) => setRequesterId(values[0] ?? '')}
+                options={selectOptions(requesters)}
+                placeholder={clientId ? 'Selecione o solicitante' : 'Selecione o cliente primeiro'}
+                searchPlaceholder="Pesquisar solicitante..."
+                value={requesterId ? [requesterId] : []}
+              />
+            </div>
+            <div className={FIELD_LABEL_CLASS}>
+              <span>Local</span>
+              <SearchSelect
+                compact
                 disabled={saving || !clientId}
-                onChange={(event) => setLocationId(event.target.value)}
-                required
-                value={locationId}
-              >
-                <option value="">Selecione</option>
-                <Options values={locations} />
-              </select>
-            </label>
+                onChange={(values) => setLocationId(values[0] ?? '')}
+                options={selectOptions(locations)}
+                placeholder={clientId ? 'Selecione o local' : 'Selecione o cliente primeiro'}
+                searchPlaceholder="Pesquisar local..."
+                value={locationId ? [locationId] : []}
+              />
+            </div>
             <div className="mt-1 border-b border-app-border-soft pb-1 sm:col-span-2 xl:col-span-4">
               <h2 className="m-0 text-xs font-extrabold uppercase tracking-[0.04em] text-app-text-soft">Classificação e execução</h2>
             </div>
-            <label className={FIELD_LABEL_CLASS}>
-              Tipo
-              <select
-                className={FIELD_CONTROL_CLASS}
+            <div className={FIELD_LABEL_CLASS}>
+              <span>Tipo</span>
+              <SearchSelect
+                allowClear={false}
+                compact
                 disabled={saving}
-                onChange={(event) => setTypeId(event.target.value)}
-                required
-                value={typeId}
-              >
-                <Options values={createCatalogs?.types ?? []} />
-              </select>
-            </label>
-            <label className={FIELD_LABEL_CLASS}>
-              Categoria
-              <select
-                className={FIELD_CONTROL_CLASS}
+                onChange={(values) => setTypeId(values[0] ?? typeId)}
+                options={selectOptions(createCatalogs?.types ?? [])}
+                placeholder="Selecione o tipo"
+                searchable={false}
+                value={typeId ? [typeId] : []}
+              />
+            </div>
+            <div className={FIELD_LABEL_CLASS}>
+              <span>Categoria</span>
+              <SearchSelect
+                compact
                 disabled={saving}
-                onChange={(event) => void changeCategory(event.target.value)}
-                required
-                value={categoryId}
-              >
-                <option value="">Selecione</option>
-                <Options values={createCatalogs?.categories ?? []} />
-              </select>
-            </label>
-            <label className={FIELD_LABEL_CLASS}>
-              Subcategoria
-              <select
-                className={FIELD_CONTROL_CLASS}
+                onChange={(values) => void changeCategory(values[0] ?? '')}
+                options={selectOptions(createCatalogs?.categories ?? [])}
+                placeholder="Selecione a categoria"
+                searchPlaceholder="Pesquisar categoria..."
+                value={categoryId ? [categoryId] : []}
+              />
+            </div>
+            <div className={FIELD_LABEL_CLASS}>
+              <span>Subcategoria</span>
+              <SearchSelect
+                allowClear={false}
+                compact
                 disabled={saving || !categoryId}
-                onChange={(event) => void changeSubcategory(event.target.value)}
-                required
-                value={subcategoryId}
-              >
-                <option value="0">Não informado</option>
-                <Options values={subcategories.filter((option) => option.id > 0)} />
-              </select>
-            </label>
-            <label className={FIELD_LABEL_CLASS}>
-              Item
-              <select
-                className={FIELD_CONTROL_CLASS}
+                onChange={(values) => void changeSubcategory(values[0] ?? '0')}
+                options={selectOptions(
+                  subcategories.filter((option) => option.id > 0),
+                  [{ value: '0', label: 'Não informado' }],
+                )}
+                placeholder="Não informado"
+                searchPlaceholder="Pesquisar subcategoria..."
+                value={[subcategoryId]}
+              />
+            </div>
+            <div className={FIELD_LABEL_CLASS}>
+              <span>Item</span>
+              <SearchSelect
+                allowClear={false}
+                compact
                 disabled={saving || subcategoryId === '0'}
-                onChange={(event) => setItemId(event.target.value)}
-                required
-                value={itemId}
-              >
-                <option value="0">Não informado</option>
-                <Options values={items.filter((option) => option.id > 0)} />
-              </select>
-            </label>
-            <label className={FIELD_LABEL_CLASS}>
-              Nível
-              <select
-                className={FIELD_CONTROL_CLASS}
+                onChange={(values) => setItemId(values[0] ?? '0')}
+                options={selectOptions(
+                  items.filter((option) => option.id > 0),
+                  [{ value: '0', label: 'Não informado' }],
+                )}
+                placeholder="Não informado"
+                searchPlaceholder="Pesquisar item..."
+                value={[itemId]}
+              />
+            </div>
+            <div className={FIELD_LABEL_CLASS}>
+              <span>Nível</span>
+              <SearchSelect
+                allowClear={false}
+                compact
                 disabled={saving}
-                onChange={(event) => setLevelId(event.target.value)}
-                required
-                value={levelId}
-              >
-                <Options values={createCatalogs?.levels ?? []} />
-              </select>
-            </label>
-            <label className={FIELD_LABEL_CLASS}>
-              Prioridade
-              <select
-                className={FIELD_CONTROL_CLASS}
+                onChange={(values) => setLevelId(values[0] ?? levelId)}
+                options={selectOptions(createCatalogs?.levels ?? [])}
+                placeholder="Selecione o nível"
+                searchable={false}
+                value={levelId ? [levelId] : []}
+              />
+            </div>
+            <div className={FIELD_LABEL_CLASS}>
+              <span>Prioridade</span>
+              <SearchSelect
+                allowClear={false}
+                compact
                 disabled={saving}
-                onChange={(event) => setPriorityId(event.target.value)}
-                required
-                value={priorityId}
-              >
-                <Options values={createCatalogs?.priorities ?? []} />
-              </select>
-            </label>
-            <label className={FIELD_LABEL_CLASS}>
-              Forma
-              <select
-                className={FIELD_CONTROL_CLASS}
+                onChange={(values) => setPriorityId(values[0] ?? priorityId)}
+                options={selectOptions(createCatalogs?.priorities ?? [])}
+                placeholder="Selecione a prioridade"
+                searchable={false}
+                value={priorityId ? [priorityId] : []}
+              />
+            </div>
+            <div className={FIELD_LABEL_CLASS}>
+              <span>Forma</span>
+              <SearchSelect
+                allowClear={false}
+                compact
                 disabled={saving}
-                onChange={(event) => setFormId(event.target.value)}
-                required
-                value={formId}
-              >
-                <Options values={createCatalogs?.forms ?? []} />
-              </select>
-            </label>
-            <label className={FIELD_LABEL_CLASS}>
-              Técnico
-              <select
-                className={FIELD_CONTROL_CLASS}
+                onChange={(values) => setFormId(values[0] ?? formId)}
+                options={selectOptions(createCatalogs?.forms ?? [])}
+                placeholder="Selecione a forma"
+                searchable={false}
+                value={formId ? [formId] : []}
+              />
+            </div>
+            <div className={FIELD_LABEL_CLASS}>
+              <span>Técnico</span>
+              <SearchSelect
+                allowClear={false}
+                compact
                 disabled={saving}
-                onChange={(event) => setTechnicianId(event.target.value)}
-                required
-                value={technicianId}
-              >
-                <Options values={createCatalogs?.technicians ?? []} />
-              </select>
-            </label>
+                onChange={(values) => setTechnicianId(values[0] ?? '0')}
+                options={selectOptions(createCatalogs?.technicians ?? [])}
+                placeholder="Não determinado"
+                searchPlaceholder="Pesquisar técnico..."
+                value={technicianId ? [technicianId] : []}
+              />
+            </div>
             <label className={FIELD_LABEL_CLASS}>
               Abertura
               <input
@@ -449,59 +465,121 @@ export function TicketCreateScreen({
             </label>
           </div>
 
-          <fieldset className="mt-3 rounded-xl border border-app-border bg-app-surface-muted px-3.5 py-2.5">
-            <legend className="px-1 text-sm font-extrabold text-app-text-soft">
-              <label className="flex cursor-pointer items-center gap-2">
-                <input
-                  checked={recurring}
-                  className="size-4 accent-[var(--app-brand)]"
-                  disabled={saving}
-                  onChange={(event) => setRecurring(event.target.checked)}
-                  type="checkbox"
+          <section
+            className={[
+              'mt-3 overflow-visible rounded-xl border transition-colors',
+              recurring
+                ? 'border-app-brand/40 bg-app-brand-soft/30'
+                : 'border-app-border bg-app-surface-muted/65',
+            ].join(' ')}
+          >
+            <button
+              aria-expanded={recurring}
+              className="flex w-full items-center justify-between gap-4 rounded-xl px-3.5 py-3 text-left transition hover:bg-app-surface-hover/60"
+              disabled={saving}
+              onClick={() => setRecurring((current) => !current)}
+              type="button"
+            >
+              <span className="flex min-w-0 items-center gap-3">
+                <span
+                  className={[
+                    'grid size-9 shrink-0 place-items-center rounded-lg border',
+                    recurring
+                      ? 'border-app-brand/35 bg-app-brand text-app-brand-contrast'
+                      : 'border-app-border bg-app-surface text-app-muted',
+                  ].join(' ')}
+                >
+                  <svg aria-hidden="true" className="size-[18px]" fill="none" viewBox="0 0 24 24">
+                    <path d="M7 3v3M17 3v3M4 9h16" stroke="currentColor" strokeLinecap="round" strokeWidth="1.8" />
+                    <rect height="17" rx="3" stroke="currentColor" strokeWidth="1.8" width="18" x="3" y="4" />
+                    <path d="M8 14h3l-1.5-1.5M16 16h-3l1.5 1.5" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.6" />
+                  </svg>
+                </span>
+                <span className="min-w-0">
+                  <strong className="block text-sm text-app-text">Atendimento recorrente</strong>
+                  <small className="mt-0.5 block text-[11px] leading-relaxed text-app-muted">
+                    Reabra este atendimento automaticamente seguindo uma periodicidade.
+                  </small>
+                </span>
+              </span>
+
+              <span
+                aria-hidden="true"
+                className={[
+                  'relative h-6 w-11 shrink-0 rounded-full border transition-colors',
+                  recurring
+                    ? 'border-app-brand bg-app-brand'
+                    : 'border-app-border-strong bg-app-surface',
+                ].join(' ')}
+              >
+                <span
+                  className={[
+                    'absolute top-0.5 size-5 rounded-full bg-white shadow-sm transition-transform',
+                    recurring ? 'translate-x-[20px]' : 'translate-x-0.5',
+                  ].join(' ')}
                 />
-                Atendimento recorrente
-              </label>
-            </legend>
+              </span>
+            </button>
+
             {recurring ? (
-              <div className="grid grid-cols-1 gap-2.5 pt-1 sm:grid-cols-2 xl:grid-cols-3">
-                <label className={FIELD_LABEL_CLASS}>
-                  Primeira reabertura
-                  <input
-                    className={FIELD_CONTROL_CLASS}
-                    disabled={saving}
-                    onChange={(event) => setRecurrenceAt(event.target.value)}
-                    required
-                    type="datetime-local"
-                    value={recurrenceAt}
-                  />
-                </label>
-                <label className={FIELD_LABEL_CLASS}>
-                  Periodicidade
-                  <select
-                    className={FIELD_CONTROL_CLASS}
-                    disabled={saving}
-                    onChange={(event) => setRecurrenceRule(event.target.value)}
-                    value={recurrenceRule}
-                  >
-                    <Options values={createCatalogs?.recurrenceRules ?? []} />
-                  </select>
-                </label>
-                <label className={FIELD_LABEL_CLASS}>
-                  Quantidade
-                  <input
-                    className={FIELD_CONTROL_CLASS}
-                    disabled={saving}
-                    max={12}
-                    min={1}
-                    onChange={(event) => setRemaining(event.target.value)}
-                    required
-                    type="number"
-                    value={remaining}
-                  />
-                </label>
+              <div className="border-t border-app-brand/20 px-3.5 pb-3.5 pt-3">
+                <div className="mb-2.5 flex items-center gap-2 text-[10px] font-extrabold uppercase tracking-[0.05em] text-app-muted">
+                  <span className="h-px flex-1 bg-app-border-soft" />
+                  Configuração da recorrência
+                  <span className="h-px flex-1 bg-app-border-soft" />
+                </div>
+                <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 xl:grid-cols-3">
+                  <label className={FIELD_LABEL_CLASS}>
+                    Primeira reabertura
+                    <input
+                      className={FIELD_CONTROL_CLASS}
+                      disabled={saving}
+                      onChange={(event) => setRecurrenceAt(event.target.value)}
+                      required
+                      type="datetime-local"
+                      value={recurrenceAt}
+                    />
+                  </label>
+
+                  <div className={FIELD_LABEL_CLASS}>
+                    <span>Periodicidade</span>
+                    <SearchSelect
+                      allowClear={false}
+                      compact
+                      disabled={saving}
+                      onChange={(values) => setRecurrenceRule(values[0] ?? recurrenceRule)}
+                      options={selectOptions(createCatalogs?.recurrenceRules ?? [])}
+                      placeholder="Selecione a periodicidade"
+                      searchable={false}
+                      value={recurrenceRule ? [recurrenceRule] : []}
+                    />
+                  </div>
+
+                  <label className={FIELD_LABEL_CLASS}>
+                    <span className="flex items-center justify-between gap-2">
+                      <span>Quantidade</span>
+                      <small className="font-medium text-app-subtle">máx. 12</small>
+                    </span>
+                    <div className="relative">
+                      <input
+                        className={`${FIELD_CONTROL_CLASS} pr-20`}
+                        disabled={saving}
+                        max={12}
+                        min={1}
+                        onChange={(event) => setRemaining(event.target.value)}
+                        required
+                        type="number"
+                        value={remaining}
+                      />
+                      <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[11px] font-semibold text-app-subtle">
+                        ocorrências
+                      </span>
+                    </div>
+                  </label>
+                </div>
               </div>
             ) : null}
-          </fieldset>
+          </section>
 
           <div className="mt-3 flex flex-wrap items-center justify-between gap-3 border-t border-app-border-soft pt-3">
             <p className="m-0 text-xs text-app-muted">
