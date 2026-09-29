@@ -91,7 +91,7 @@ export function SearchSelect({
         aria-expanded={open}
         aria-haspopup="listbox"
         id={id}
-        className={`group flex w-full items-center justify-between gap-2 rounded-lg border border-app-border-strong bg-app-surface text-left text-sm text-app-text outline-none transition hover:border-app-brand/60 hover:bg-app-surface-hover focus:border-app-brand focus:ring-3 focus:ring-[var(--app-brand-ring)] disabled:cursor-not-allowed disabled:opacity-55 ${compact ? 'min-h-9 px-3' : 'min-h-10 px-3'}`}
+        className={`group flex w-full items-center justify-between gap-2 rounded-lg border border-app-border-strong bg-app-surface text-left text-sm text-app-text outline-none transition hover:border-app-brand hover:bg-app-surface-hover focus:border-app-brand focus:ring-3 focus:ring-[var(--app-brand-ring)] disabled:cursor-not-allowed disabled:opacity-55 ${compact ? 'min-h-9 px-3' : 'min-h-10 px-3'}`}
         disabled={disabled}
         onClick={() => setOpen((current) => !current)}
         type="button"
@@ -107,7 +107,7 @@ export function SearchSelect({
       {open ? (
         <div className="absolute left-0 right-0 top-full z-50 mt-1.5 overflow-hidden rounded-xl border border-app-border bg-app-surface shadow-[0_16px_40px_rgba(15,23,42,0.16)] dark:shadow-[0_16px_40px_rgba(0,0,0,0.36)]">
           {searchable ? (
-            <div className="border-b border-app-border-soft bg-app-surface-muted/40 p-2">
+            <div className="border-b border-app-border-soft bg-app-surface-muted p-2">
               <div className="relative">
                 <svg aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-app-subtle" fill="none" viewBox="0 0 24 24">
                   <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="1.8" />

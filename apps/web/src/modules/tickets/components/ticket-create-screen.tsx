@@ -469,13 +469,13 @@ export function TicketCreateScreen({
             className={[
               'mt-3 overflow-visible rounded-xl border transition-colors',
               recurring
-                ? 'border-app-brand/40 bg-app-brand-soft/30'
+                ? 'border-app-brand bg-app-brand-soft'
                 : 'border-app-border bg-app-surface-muted/65',
             ].join(' ')}
           >
             <button
               aria-expanded={recurring}
-              className="flex w-full items-center justify-between gap-4 rounded-xl px-3.5 py-3 text-left transition hover:bg-app-surface-hover/60"
+              className="flex w-full items-center justify-between gap-4 rounded-xl px-3.5 py-3 text-left transition hover:bg-app-surface-hover"
               disabled={saving}
               onClick={() => setRecurring((current) => !current)}
               type="button"
@@ -485,7 +485,7 @@ export function TicketCreateScreen({
                   className={[
                     'grid size-9 shrink-0 place-items-center rounded-lg border',
                     recurring
-                      ? 'border-app-brand/35 bg-app-brand text-app-brand-contrast'
+                      ? 'border-app-brand bg-app-brand text-app-brand-contrast'
                       : 'border-app-border bg-app-surface text-app-muted',
                   ].join(' ')}
                 >
@@ -522,7 +522,7 @@ export function TicketCreateScreen({
             </button>
 
             {recurring ? (
-              <div className="border-t border-app-brand/20 px-3.5 pb-3.5 pt-3">
+              <div className="border-t border-app-border-soft px-3.5 pb-3.5 pt-3">
                 <div className="mb-2.5 flex items-center gap-2 text-[10px] font-extrabold uppercase tracking-[0.05em] text-app-muted">
                   <span className="h-px flex-1 bg-app-border-soft" />
                   Configuração da recorrência
