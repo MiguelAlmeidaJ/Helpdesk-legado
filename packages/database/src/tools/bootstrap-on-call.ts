@@ -68,11 +68,25 @@ async function main() {
          'plantonista',
          'Permissões temporárias concedidas apenas durante o plantão ativo.',
          1,
-         COALESCE(MAX(sort_order), 0) + 10,
+         next_role.next_order,
          NOW(),
          NOW()
-       FROM roles
-       WHERE NOT EXISTS (SELECT 1 FROM roles WHERE slug = 'plantonista')`,
+       FROM (
+         SELECT COALESCE(MAX(sort_order), 0) + 10 AS next_order
+         FROM roles
+       ) next_role
+       WHERE NOT EXISTS (
+         SELECT 1 FROM roles WHERE slug = 'plantonista'
+       )`,
+    );
+
+    await db.$executeRawUnsafe(
+      `UPDATE roles
+       SET name = 'Plantonista',
+           description = 'Permissões temporárias concedidas apenas durante o plantão ativo.',
+           is_system = 1,
+           updated_at = NOW()
+       WHERE slug = 'plantonista'`,
     );
 
     // O perfil é sempre dinâmico; remove eventual vínculo permanente criado manualmente.
