@@ -123,6 +123,7 @@ export function OnCallManagementScreen({
 
   async function submitWeek(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (!canManage) return;
     if (!tiUserId || !devopsUserId) {
       setError('Selecione os plantonistas de TI e DevOps.');
       return;
@@ -147,6 +148,7 @@ export function OnCallManagementScreen({
 
   async function submitSettings(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (!canManage) return;
     setSavingSettings(true);
     setError('');
     setSuccess('');
