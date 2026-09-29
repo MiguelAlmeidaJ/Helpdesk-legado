@@ -93,6 +93,32 @@ export const DEFAULT_NAVIGATION: SeedSection[] = [
     ],
   },
   {
+    slug: 'quality',
+    label: 'Qualidade',
+    shortLabel: 'QA',
+    icon: 'shield',
+    items: [
+      {
+        slug: 'quality-on-call',
+        label: 'Plantão',
+        href: '/qualidade/plantao',
+        status: 'available',
+        visibilityCondition: {
+          anyPermissions: ['quality.on-call.read', 'quality.on-call.manage'],
+        },
+      },
+      {
+        slug: 'quality-commemorative-dates',
+        label: 'Datas comemorativas',
+        href: '/qualidade/datas-comemorativas',
+        status: 'available',
+        visibilityCondition: {
+          anyPermissions: ['quality.dates.read', 'quality.dates.manage'],
+        },
+      },
+    ],
+  },
+  {
     slug: 'reports',
     label: 'Relatórios',
     shortLabel: 'RL',
@@ -177,13 +203,6 @@ export const DEFAULT_NAVIGATION: SeedSection[] = [
         href: '/administracao/sla-atendimentos',
         status: 'available',
         visibilityCondition: { anyPermissions: ['system.admin'] },
-      },
-      {
-        slug: 'on-call',
-        label: 'Plantão',
-        href: '/administracao/plantao',
-        status: 'available',
-        visibilityCondition: { anyPermissions: ['system.admin', 'users.manage-access'] },
       },
       {
         slug: 'maintenance',

@@ -96,7 +96,7 @@ export async function synchronizeNavigation(
       }
       continue;
     }
-    if (row.slug === 'marketing-availability') {
+    if (row.slug === 'on-call' || row.slug === 'marketing-availability') {
       if (row.is_active !== 0) {
         await db.$executeRaw`
           UPDATE navigation_items
