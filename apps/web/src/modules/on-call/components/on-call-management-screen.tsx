@@ -1,9 +1,10 @@
 "use client";
 
-import type {
-  CurrentUserResponse,
-  OnCallArea,
-  OnCallSnapshot,
+import {
+  AppPermission,
+  type CurrentUserResponse,
+  type OnCallArea,
+  type OnCallSnapshot,
 } from '@helpdesk/contracts';
 import Link from 'next/link';
 import type { FormEvent } from 'react';
@@ -64,6 +65,11 @@ export function OnCallManagementScreen({
 }: {
   currentUser: CurrentUserResponse;
 }) {
+  const canManage = currentUser.grants.some(
+    (grant) =>
+      grant.permission === AppPermission.SystemAdmin ||
+      grant.permission === AppPermission.QualityOnCallManage,
+  );
   const [data, setData] = useState<OnCallSnapshot | null>(null);
   const [week, setWeek] = useState('');
   const [tiUserId, setTiUserId] = useState('');
@@ -259,7 +265,7 @@ export function OnCallManagementScreen({
               <div className="grid gap-1.5 text-xs font-bold text-app-text-soft">
                 Plantonista TI
                 <SearchSelect
-                  disabled={loading || savingWeek}
+                  disabled={loading || savingWeek || !canManage}
                   onChange={(values) => setTiUserId(values[0] ?? '')}
                   options={userOptions}
                   placeholder="Selecione o plantonista de TI"
@@ -271,7 +277,7 @@ export function OnCallManagementScreen({
               <div className="grid gap-1.5 text-xs font-bold text-app-text-soft">
                 Plantonista DevOps
                 <SearchSelect
-                  disabled={loading || savingWeek}
+                  disabled={loading || savingWeek || !canManage}
                   onChange={(values) => setDevopsUserId(values[0] ?? '')}
                   options={userOptions}
                   placeholder="Selecione o plantonista de DevOps"
@@ -281,10 +287,15 @@ export function OnCallManagementScreen({
               </div>
             </div>
 
-            <div className="mt-4 flex justify-end border-t border-app-border-soft pt-3">
-              <button className={PRIMARY} disabled={loading || savingWeek} type="submit">
-                {savingWeek ? 'Salvando…' : 'Salvar escala'}
-              </button>
+            <div className="mt-4 flex items-center justify-between gap-3 border-t border-app-border-soft pt-3">
+              {!canManage ? (
+                <span className="text-xs text-app-muted">Acesso somente para visualização.</span>
+              ) : <span />}
+              {canManage ? (
+                <button className={PRIMARY} disabled={loading || savingWeek} type="submit">
+                  {savingWeek ? 'Salvando…' : 'Salvar escala'}
+                </button>
+              ) : null}
             </div>
           </form>
 
@@ -301,18 +312,23 @@ export function OnCallManagementScreen({
             <div className="mt-4 grid grid-cols-2 gap-3">
               <label className="grid gap-1.5 text-xs font-bold text-app-text-soft">
                 Abre às
-                <input className={INPUT} onChange={(event) => setBusinessStart(event.target.value)} type="time" value={businessStart} />
+                <input className={INPUT} disabled={!canManage} onChange={(event) => setBusinessStart(event.target.value)} type="time" value={businessStart} />
               </label>
               <label className="grid gap-1.5 text-xs font-bold text-app-text-soft">
                 Fecha às
-                <input className={INPUT} onChange={(event) => setBusinessEnd(event.target.value)} type="time" value={businessEnd} />
+                <input className={INPUT} disabled={!canManage} onChange={(event) => setBusinessEnd(event.target.value)} type="time" value={businessEnd} />
               </label>
             </div>
 
-            <div className="mt-4 flex justify-end border-t border-app-border-soft pt-3">
-              <button className={PRIMARY} disabled={savingSettings} type="submit">
-                {savingSettings ? 'Salvando…' : 'Salvar horário'}
-              </button>
+            <div className="mt-4 flex items-center justify-between gap-3 border-t border-app-border-soft pt-3">
+              {!canManage ? (
+                <span className="text-xs text-app-muted">Acesso somente para visualização.</span>
+              ) : <span />}
+              {canManage ? (
+                <button className={PRIMARY} disabled={savingSettings} type="submit">
+                  {savingSettings ? 'Salvando…' : 'Salvar horário'}
+                </button>
+              ) : null}
             </div>
           </form>
         </section>
