@@ -25,7 +25,7 @@ async function bootstrap() {
         return;
       }
 
-      callback(new Error('Origin não autorizada pelo CORS.'), false);
+      callback(null, false);
     },
     credentials: true,
   });

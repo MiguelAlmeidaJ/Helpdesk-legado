@@ -83,16 +83,7 @@ export class BrowserWriteGuard implements CanActivate {
   }
 
   private allowedOrigins(): Set<string> {
-    const raw = this.config.get<string>('WEB_ORIGIN') ?? '';
-
-    return new Set(
-      raw
-        .split(',')
-        .map((value) => value.trim())
-        .filter(Boolean)
-        .map(originOf)
-        .filter((value): value is string => Boolean(value)),
-    );
+    return allowedWebOrigins(this.config.get<string>('WEB_ORIGIN'));
   }
 
   private isSameOrigin(
