@@ -1,3 +1,4 @@
+import { Logger } from '@nestjs/common';
 import type { CorsOptions } from '@nestjs/common/interfaces/external/cors-options.interface';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
@@ -39,4 +40,11 @@ async function bootstrap() {
   await app.listen(port);
 }
 
-void bootstrap();
+void bootstrap().catch((error: unknown) => {
+  const logger = new Logger('Bootstrap');
+  const message =
+    error instanceof Error ? error.stack ?? error.message : String(error);
+
+  logger.error(`Falha ao iniciar API: ${message}`);
+  process.exit(1);
+});
