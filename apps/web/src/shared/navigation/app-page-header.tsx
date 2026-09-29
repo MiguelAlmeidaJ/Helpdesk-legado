@@ -3,6 +3,7 @@
 import type { CurrentUserResponse } from '@helpdesk/contracts';
 import type { ReactNode } from 'react';
 import { SessionUserMenu } from '../../modules/access/components/session-user-menu';
+import { NotificationCenterButton } from '../../modules/notifications/components/notification-center-button';
 import { AppSidebar } from './app-sidebar';
 
 export function AppPageHeader({
@@ -35,6 +36,7 @@ export function AppPageHeader({
       <div className="flex shrink-0 items-center justify-end gap-2.5">
         {meta}
         {actions ? <div className="app-page-header-actions flex items-center gap-2">{actions}</div> : null}
+        <NotificationCenterButton />
         <SessionUserMenu user={user} />
       </div>
     </header>
