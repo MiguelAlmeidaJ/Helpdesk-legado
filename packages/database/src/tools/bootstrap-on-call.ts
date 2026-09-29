@@ -61,22 +61,16 @@ async function main() {
     );
 
     await db.$executeRawUnsafe(
-      `INSERT INTO roles
+      `INSERT IGNORE INTO roles
          (name, slug, description, is_system, sort_order, created_at, updated_at)
-       SELECT
+       VALUES (
          'Plantonista',
          'plantonista',
          'Permissões temporárias concedidas apenas durante o plantão ativo.',
          1,
-         next_role.next_order,
+         9990,
          NOW(),
          NOW()
-       FROM (
-         SELECT COALESCE(MAX(sort_order), 0) + 10 AS next_order
-         FROM roles
-       ) next_role
-       WHERE NOT EXISTS (
-         SELECT 1 FROM roles WHERE slug = 'plantonista'
        )`,
     );
 
