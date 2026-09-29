@@ -78,6 +78,16 @@ test('navigation upgrade enables migrated screens, preserves customization and i
     $queryRaw: async () => rows,
     $executeRaw: async (sql, ...values) => {
       const query = sql.join('');
+      if (query.includes('SET href =') && query.includes('is_active = 0')) {
+        const [href, status, visibility_condition, id] = values;
+        Object.assign(rows.find(row => row.id === id), {
+          href,
+          status,
+          visibility_condition,
+          is_active: 0,
+        });
+        return 1;
+      }
       if (query.includes('SET is_active = 0')) {
         const [id] = values;
         Object.assign(rows.find(row => row.id === id), { is_active: 0 });
@@ -123,6 +133,9 @@ test('navigation upgrade enables migrated screens, preserves customization and i
     const row = rows.find(item => item.slug === slug);
     assert.equal(row.status, 'available', slug);
     assert.equal(row.href, href, slug);
+    if (['receivables-accrual', 'receivables-cashflow', 'payables'].includes(slug)) {
+      assert.equal(row.is_active, 0, slug);
+    }
   }
   assert.equal(await synchronizeNavigation(db), 0);
 });
