@@ -44,10 +44,10 @@ export async function synchronizeNavigation(
     'statements',
   ]);
   const refreshVisibility = new Set(['catalogs', 'catalog-check']);
-  const hiddenFromMenu = new Set([
-    'receivables-accrual',
-    'receivables-cashflow',
-    'payables',
+  const hiddenFromMenu = new Map<string, string>([
+    ['receivables-accrual', '/logistica/financeiro/contas-a-receber-competencia'],
+    ['receivables-cashflow', '/logistica/financeiro/contas-a-receber-fluxo'],
+    ['payables', '/logistica/financeiro/contas-a-pagar'],
   ]);
   const legacyCreateHrefs = new Map<string, Set<string>>([
     ['devops-task-new', new Set(['/atendimentos/novo?type=devops'])],
@@ -61,11 +61,35 @@ export async function synchronizeNavigation(
   `;
   let updated = 0;
   for (const row of rows) {
-    if (hiddenFromMenu.has(row.slug)) {
-      if (row.is_active !== 0) {
+    const hiddenDestination = hiddenFromMenu.get(row.slug);
+    if (hiddenDestination) {
+      const href = row.href ? portugueseWebHref(row.href) : hiddenDestination;
+      const status = row.status === 'planned' ? 'available' : row.status;
+      const definition = defaults.get(row.slug);
+      const condition =
+        row.visibility_condition ??
+        (definition?.visibilityCondition
+          ? JSON.stringify(definition.visibilityCondition)
+          : JSON.stringify({
+              anyPermissions: [
+                'logistics.expenses.admin.read',
+                'logistics.expenses.admin.manage',
+              ],
+            }));
+
+      if (
+        row.is_active !== 0 ||
+        href !== row.href ||
+        status !== row.status ||
+        condition !== row.visibility_condition
+      ) {
         await db.$executeRaw`
           UPDATE navigation_items
-          SET is_active = 0, updated_at = NOW()
+          SET href = ${href},
+              status = ${status},
+              visibility_condition = ${condition},
+              is_active = 0,
+              updated_at = NOW()
           WHERE id = ${row.id}
         `;
         updated++;

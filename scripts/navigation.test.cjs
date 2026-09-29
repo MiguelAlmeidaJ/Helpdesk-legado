@@ -164,9 +164,6 @@ test('all available menu destinations resolve to implemented Next pages', () => 
     'expense-types',
     'service-types',
     'fee-types',
-    'receivables-accrual',
-    'receivables-cashflow',
-    'payables',
     'entries',
     'recurring',
     'accounting',
@@ -176,6 +173,7 @@ test('all available menu destinations resolve to implemented Next pages', () => 
     'radio',
     'statements',
     'ticket-sla-settings',
+    'on-call',
     'maintenance',
   ]) {
     assert.equal(items.find(item => item.slug === slug).status, 'available', slug);
