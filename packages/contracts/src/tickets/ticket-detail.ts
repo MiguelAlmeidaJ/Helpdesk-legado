@@ -62,6 +62,7 @@ export interface TicketDetailResponse {
   closedAt: string | null;
   openingDescription: string | null;
   closingDescription: string | null;
+  machineName: string | null;
   client: TicketDetailClient;
   requester: TicketDetailRequester;
   location: TicketDetailLocation;

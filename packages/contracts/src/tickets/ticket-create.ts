@@ -23,6 +23,7 @@ export interface CreateTicketRequest {
   priorityId: number;
   formId: number;
   openingDescription: string;
+  machineName?: string | null;
   /** Legacy wall-clock time: YYYY-MM-DDTHH:mm[:ss]. */
   openingAt: string;
   technicianId: number;

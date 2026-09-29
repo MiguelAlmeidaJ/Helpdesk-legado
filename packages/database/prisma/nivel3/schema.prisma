@@ -130,6 +130,7 @@ model atendimentos {
   forma            Int?      @default(1)
   desc_abertura    String?   @db.Text
   desc_fechamento  String?   @db.Text
+  nome_maquina     String?   @db.VarChar(255)
   abertura         DateTime? @db.DateTime(0)
   fechamento       DateTime? @db.DateTime(0)
   tecnico          Int?
