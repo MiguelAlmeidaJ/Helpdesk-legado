@@ -2,12 +2,8 @@ import {
   BadRequestException,
   Body,
   Controller,
-  Delete,
   Get,
-  Param,
-  ParseIntPipe,
   Patch,
-  Post,
   Put,
   Query,
   UnauthorizedException,
@@ -15,7 +11,6 @@ import {
 } from '@nestjs/common';
 import {
   AppPermission,
-  type CreateOnCallHolidayRequest,
   type OnCallSettings,
   type OnCallSnapshot,
   type SaveOnCallWeekRequest,
@@ -44,16 +39,17 @@ function positiveId(value: unknown, field: string): number {
 
 @Controller('administration/on-call')
 @UseGuards(LegacySessionGuard, PermissionsGuard)
-@RequirePermissions(AppPermission.UsersManageAccess)
 export class OnCallManagementController {
   constructor(private readonly service: OnCallManagementService) {}
 
   @Get()
+  @RequirePermissions(AppPermission.QualityOnCallRead)
   snapshot(@Query('week') week?: string): Promise<OnCallSnapshot> {
     return this.service.snapshot(week);
   }
 
   @Put('week')
+  @RequirePermissions(AppPermission.QualityOnCallManage)
   async saveWeek(
     @Body() body: unknown,
     @CurrentUser() user: AuthenticatedUser | undefined,
@@ -70,6 +66,7 @@ export class OnCallManagementController {
   }
 
   @Patch('settings')
+  @RequirePermissions(AppPermission.QualityOnCallManage)
   updateSettings(@Body() body: unknown): Promise<OnCallSettings> {
     const value = objectBody(body);
     const input: UpdateOnCallSettingsRequest = {
@@ -79,21 +76,5 @@ export class OnCallManagementController {
         typeof value.businessEnd === 'string' ? value.businessEnd.trim() : '',
     };
     return this.service.updateSettings(input);
-  }
-
-  @Post('holidays')
-  async createHoliday(@Body() body: unknown): Promise<void> {
-    const value = objectBody(body);
-    const input: CreateOnCallHolidayRequest = {
-      date: typeof value.date === 'string' ? value.date.trim() : '',
-      name: typeof value.name === 'string' ? value.name.trim() : '',
-    };
-    await this.service.createHoliday(input);
-  }
-
-  @Delete('holidays/:id')
-  async deleteHoliday(@Param('id', ParseIntPipe) id: number): Promise<void> {
-    if (id < 1) throw new BadRequestException('id inválido.');
-    await this.service.deleteHoliday(id);
   }
 }
