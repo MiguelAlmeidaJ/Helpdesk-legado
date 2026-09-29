@@ -18,6 +18,27 @@ const NATIONAL_HOLIDAYS = [
   ['12-25', 'Natal'],
 ] as const;
 
+function goodFridayDate(year: number): string {
+  // Computus gregoriano (Meeus/Jones/Butcher), dois dias antes da Páscoa.
+  const a = year % 19;
+  const b = Math.floor(year / 100);
+  const c = year % 100;
+  const d = Math.floor(b / 4);
+  const e = b % 4;
+  const f = Math.floor((b + 8) / 25);
+  const g = Math.floor((b - f + 1) / 3);
+  const h = (19 * a + b - d - g + 15) % 30;
+  const i = Math.floor(c / 4);
+  const k = c % 4;
+  const l = (32 + 2 * e + 2 * i - h - k) % 7;
+  const m = Math.floor((a + 11 * h + 22 * l) / 451);
+  const month = Math.floor((h + l - 7 * m + 114) / 31);
+  const day = ((h + l - 7 * m + 114) % 31) + 1;
+  const easter = new Date(Date.UTC(year, month - 1, day));
+  easter.setUTCDate(easter.getUTCDate() - 2);
+  return easter.toISOString().slice(0, 10);
+}
+
 const CREATE_SETTINGS = `
 CREATE TABLE IF NOT EXISTS business_calendar_settings (
   id TINYINT UNSIGNED NOT NULL,
@@ -84,8 +105,14 @@ async function seedNationalHolidays(
   const currentYear = new Date().getFullYear();
 
   for (const year of [currentYear, currentYear + 1]) {
-    for (const [monthDay, name] of NATIONAL_HOLIDAYS) {
-      const date = `${year}-${monthDay}`;
+    const holidays: Array<readonly [string, string]> = [
+      ...NATIONAL_HOLIDAYS.map(
+        ([monthDay, name]) => [`${year}-${monthDay}`, name] as const,
+      ),
+      [goodFridayDate(year), 'Paixão de Cristo'] as const,
+    ];
+
+    for (const [date, name] of holidays) {
       await db.$executeRawUnsafe(
         `INSERT INTO business_holidays
            (holiday_date, name, is_national, created_at)
