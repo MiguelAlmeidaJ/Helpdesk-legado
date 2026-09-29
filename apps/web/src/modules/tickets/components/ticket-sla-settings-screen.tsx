@@ -21,7 +21,6 @@ import {
   updateTicketSlaSettings,
 } from '../api/ticket-sla-settings-api';
 
-const BUTTON = appButtonClass('secondary');
 const PRIMARY = appButtonClass('primary');
 const DANGER = appButtonClass('danger', 'sm');
 const SMALL = appButtonClass('secondary', 'sm');

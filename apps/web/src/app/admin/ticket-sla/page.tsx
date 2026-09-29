@@ -8,8 +8,8 @@ import { requireAuthenticatedUser } from '../../../modules/access/server/current
 import { TicketSlaSettingsScreen } from '../../../modules/tickets/components/ticket-sla-settings-screen';
 
 export const metadata: Metadata = {
-  title: 'SLA de Atendimentos · Administração · Helpdesk',
-  description: 'Configuração dos SLAs Qualidade e Clerio',
+  title: 'Motor de SLA · Administração · Helpdesk',
+  description: 'Padrões e regras hierárquicas de SLA dos atendimentos',
 };
 
 function isSystemAdmin(user: CurrentUserResponse): boolean {

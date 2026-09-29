@@ -206,7 +206,7 @@ export class TicketSlaSettingsService {
       priority: row.priority,
       qualityMinutes: Number(row.quality_minutes),
       clerioMinutes: Number(row.clerio_minutes),
-      active: Boolean(row.active),
+      active: Number(row.active) === 1,
       sortOrder: row.sort_order,
     };
   }
