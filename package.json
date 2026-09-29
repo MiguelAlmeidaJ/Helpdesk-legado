@@ -38,7 +38,9 @@
     "pm2:stop": "pm2 stop ecosystem.config.cjs",
     "pm2:delete": "pm2 delete ecosystem.config.cjs",
     "pm2:status": "pm2 status",
-    "pm2:logs": "pm2 logs"
+    "pm2:logs": "pm2 logs",
+    "prod:bootstrap": "pnpm access:bootstrap && pnpm navigation:bootstrap && pnpm users:bootstrap && pnpm tickets:bootstrap && pnpm notifications:bootstrap && pnpm sla:bootstrap && pnpm oncall:bootstrap",
+    "prod:verify": "pnpm legacy:audit && pnpm legacy:assets:audit && pnpm legacy:catalog:audit && pnpm typecheck && pnpm build && pnpm test:navigation && pnpm test:reports && pnpm test:logistics"
   },
   "devDependencies": {
     "turbo": "2.10.12",

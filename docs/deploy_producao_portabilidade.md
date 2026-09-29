@@ -150,3 +150,33 @@ Em Linux, adaptar para algo como:
 ```bash
 * * * * * /usr/bin/php /var/www/N3TI/atd/jobs/run_home_jobs.php >> /var/log/n3ti_jobs.log 2>&1
 ```
+
+
+## Gate nativo de produção
+
+Antes do deploy, execute os bootstraps idempotentes em ordem:
+
+```bash
+pnpm prod:bootstrap
+```
+
+Depois execute o gate de validação:
+
+```bash
+pnpm prod:verify
+```
+
+O gate executa auditorias do legado, typecheck, build e os testes automatizados existentes de navegação, relatórios e logística.
+
+### CORS / origem do frontend
+
+A produção deve manter `WEB_ORIGIN` restrito às origens autorizadas:
+
+```env
+WEB_ORIGIN=http://localhost:4204,http://192.168.199.234,http://192.168.199.234:4204,https://helpdesk.nivel3ti.com.br
+WEB_PUBLIC_URL=https://helpdesk.nivel3ti.com.br
+SESSION_COOKIE_SECURE=true
+SWAGGER_ENABLED=false
+```
+
+Não use `*` com credenciais.

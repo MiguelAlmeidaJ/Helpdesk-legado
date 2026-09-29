@@ -5,6 +5,7 @@ import {
   Injectable,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { allowedWebOrigins, normalizeOrigin } from './allowed-origins';
 
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
 const MARKER_HEADER = 'x-helpdesk-request';
@@ -24,14 +25,6 @@ function header(value: HeaderValue): string | null {
     : value?.trim() || null;
 }
 
-function originOf(value: string): string | null {
-  try {
-    return new URL(value).origin.toLowerCase();
-  } catch {
-    return null;
-  }
-}
-
 @Injectable()
 export class BrowserWriteGuard implements CanActivate {
   constructor(private readonly config: ConfigService) {}
@@ -47,9 +40,9 @@ export class BrowserWriteGuard implements CanActivate {
     const originHeader = header(request.headers.origin);
     const refererHeader = header(request.headers.referer);
     const origin = originHeader
-      ? originOf(originHeader)
+      ? normalizeOrigin(originHeader)
       : refererHeader
-        ? originOf(refererHeader)
+        ? normalizeOrigin(refererHeader)
         : null;
     const fetchSite = header(request.headers['sec-fetch-site']);
     const marker = header(request.headers[MARKER_HEADER]);
@@ -118,6 +111,6 @@ export class BrowserWriteGuard implements CanActivate {
       return false;
     }
 
-    return originOf(`${proto}://${host}`) === origin;
+    return normalizeOrigin(`${proto}://${host}`) === origin;
   }
 }
