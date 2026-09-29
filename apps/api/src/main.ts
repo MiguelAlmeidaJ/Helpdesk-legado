@@ -1,3 +1,4 @@
+import type { CorsOptions } from '@nestjs/common/interfaces/external/cors-options.interface';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { setupOpenApi } from './core/openapi/setup-openapi';
@@ -10,11 +11,8 @@ async function bootstrap() {
   app.setGlobalPrefix('api');
   const allowedOrigins = allowedWebOrigins(process.env.WEB_ORIGIN);
 
-  app.enableCors({
-    origin(
-      origin: string | undefined,
-      callback: (error: Error | null, allow?: boolean) => void,
-    ) {
+  const corsOptions: CorsOptions = {
+    origin(origin, callback) {
       // Requests without Origin are server-to-server and are not browser CORS.
       if (!origin) {
         callback(null, true);
@@ -31,7 +29,9 @@ async function bootstrap() {
       callback(null, false);
     },
     credentials: true,
-  });
+  };
+
+  app.enableCors(corsOptions);
 
   setupOpenApi(app);
 
