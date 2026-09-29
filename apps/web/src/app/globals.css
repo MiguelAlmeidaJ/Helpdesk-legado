@@ -123,6 +123,85 @@ a {
   background-color: var(--app-brand-hover) !important;
 }
 
+/* Shared button system.
+   Use these classes for actions instead of composing button styles per screen. */
+.app-button {
+  appearance: none;
+  display: inline-flex;
+  min-height: 40px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  padding: 0 16px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    background-color 150ms ease,
+    border-color 150ms ease,
+    color 150ms ease,
+    box-shadow 150ms ease;
+}
+
+.app-button:disabled,
+.app-button[aria-disabled='true'] {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.app-button--secondary {
+  border-color: var(--app-border-strong);
+  background: var(--app-surface);
+  color: var(--app-text-soft);
+}
+
+.app-button--secondary:hover:not(:disabled) {
+  background: var(--app-surface-hover);
+  color: var(--app-text);
+}
+
+.app-button--primary {
+  border-color: var(--app-brand);
+  background: var(--app-brand);
+  color: var(--app-brand-contrast);
+}
+
+.app-button--primary:hover:not(:disabled) {
+  border-color: var(--app-brand-hover);
+  background: var(--app-brand-hover);
+}
+
+.app-button--danger {
+  border-color: var(--app-danger-border);
+  background: var(--app-danger-soft);
+  color: var(--app-danger);
+}
+
+.app-button--danger:hover:not(:disabled) {
+  border-color: var(--app-danger);
+}
+
+.app-button--sm {
+  min-height: 34px;
+  padding-inline: 12px;
+  font-size: 12px;
+}
+
+.app-button--icon {
+  width: 40px;
+  padding-inline: 0;
+}
+
+.app-button--icon.app-button--sm {
+  width: 34px;
+}
+
 a {
   color: inherit;
 }

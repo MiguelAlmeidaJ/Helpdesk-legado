@@ -10,14 +10,15 @@ import Link from 'next/link';
 import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import { ApiError } from '../../../shared/api/api-client';
 import { AppPageHeader } from '../../../shared/navigation/app-page-header';
+import { appButtonClass } from '../../../shared/ui/button-styles';
 import { fetchOperationalDashboard } from '../api/dashboard-api';
 
 const EYEBROW_CLASS =
   'text-[9px] font-black uppercase tracking-[0.09em] text-app-muted';
-const CONTROL_CLASS =
-  'inline-flex min-h-9 items-center justify-center rounded-lg border border-app-border-strong bg-app-surface px-[13px] text-[10px] font-extrabold text-app-text-soft no-underline transition-colors hover:bg-app-surface-hover disabled:cursor-not-allowed disabled:opacity-50';
+const CONTROL_CLASS = appButtonClass('secondary');
+const COMPACT_CONTROL_CLASS = appButtonClass('secondary', 'sm');
 const INPUT_CLASS =
-  'min-h-9 rounded-[7px] border border-app-border-strong bg-app-surface px-[9px] text-app-text outline-none transition focus:border-app-brand focus:ring-3 focus:ring-[var(--app-brand-ring)]';
+  'min-h-10 rounded-lg border border-app-border-strong bg-app-surface px-3 text-sm text-app-text outline-none transition focus:border-app-brand focus:ring-3 focus:ring-[var(--app-brand-ring)]';
 const CARD_CLASS =
   'overflow-hidden rounded-[11px] border border-app-border bg-app-surface';
 const CARD_HEADER_CLASS =
@@ -448,10 +449,10 @@ export function OperationalDashboardScreen({
                 </form>
 
                 <div className="flex items-end gap-2 max-[680px]:flex-wrap max-[680px]:items-stretch">
-                  <button className={`${CONTROL_CLASS} min-h-8`} onClick={() => quickRange('today')} type="button">Hoje</button>
-                  <button className={`${CONTROL_CLASS} min-h-8`} onClick={() => quickRange('week')} type="button">Semana</button>
-                  <button className={`${CONTROL_CLASS} min-h-8`} onClick={() => quickRange('month')} type="button">Mês atual</button>
-                  <button className={`${CONTROL_CLASS} min-h-8`} onClick={() => quickRange('quarter')} type="button">Trimestre</button>
+                  <button className={COMPACT_CONTROL_CLASS} onClick={() => quickRange('today')} type="button">Hoje</button>
+                  <button className={COMPACT_CONTROL_CLASS} onClick={() => quickRange('week')} type="button">Semana</button>
+                  <button className={COMPACT_CONTROL_CLASS} onClick={() => quickRange('month')} type="button">Mês atual</button>
+                  <button className={COMPACT_CONTROL_CLASS} onClick={() => quickRange('quarter')} type="button">Trimestre</button>
                 </div>
               </section>
             ) : null}
