@@ -167,14 +167,36 @@ function appendInFilter(
 function waitSecondsSql(): string {
   return `COALESCE((
     SELECT SUM(
-      CASE
-        WHEN e.espera_end IS NOT NULL
-        THEN TIMESTAMPDIFF(SECOND, e.espera_start, e.espera_end)
-        ELSE 0
-      END
+      GREATEST(
+        0,
+        TIMESTAMPDIFF(
+          SECOND,
+          e.espera_start,
+          COALESCE(e.espera_end, NOW())
+        )
+      )
     )
     FROM espera e
     WHERE e.espera_atd = a.id
+  ), 0)`;
+}
+
+function waitSecondsSinceSql(startExpression: string): string {
+  return `COALESCE((
+    SELECT SUM(
+      GREATEST(
+        0,
+        TIMESTAMPDIFF(
+          SECOND,
+          GREATEST(e.espera_start, ${startExpression}),
+          LEAST(COALESCE(e.espera_end, NOW()), NOW())
+        )
+      )
+    )
+    FROM espera e
+    WHERE e.espera_atd = a.id
+      AND e.espera_start < NOW()
+      AND COALESCE(e.espera_end, NOW()) > ${startExpression}
   ), 0)`;
 }
 
@@ -191,12 +213,11 @@ function clerioThresholdMinutesSql(): string {
 }
 
 function qualityElapsedSecondsSql(): string {
+  const start = qualityLastInteractionSql();
   return `GREATEST(
     0,
-    COALESCE(
-      TIMESTAMPDIFF(SECOND, ${qualityLastInteractionSql()}, NOW()),
-      0
-    )
+    COALESCE(TIMESTAMPDIFF(SECOND, ${start}, NOW()), 0)
+      - (${waitSecondsSinceSql(start)})
   )`;
 }
 
@@ -204,6 +225,7 @@ function clerioElapsedSecondsSql(): string {
   return `GREATEST(
     0,
     COALESCE(TIMESTAMPDIFF(SECOND, a.abertura, NOW()), 0)
+      - (${waitSecondsSinceSql('a.abertura')})
   )`;
 }
 
