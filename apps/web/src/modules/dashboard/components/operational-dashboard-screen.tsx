@@ -212,18 +212,6 @@ function RankingRow({
         )}
       </div>
 
-      {rankingId === 'devops' ? (
-        <div className="mt-1 flex items-center gap-3 text-[9px] font-semibold text-app-subtle">
-          <span className="inline-flex items-center gap-1">
-            <i className="h-2 w-2 rounded-sm bg-[#c23a1b]" />
-            {tickets} atend.
-          </span>
-          <span className="inline-flex items-center gap-1">
-            <i className="h-2 w-2 rounded-sm bg-[#f5981e]" />
-            {tasks} tarefas
-          </span>
-        </div>
-      ) : null}
     </div>
   );
 }
@@ -322,6 +310,7 @@ export function OperationalDashboardScreen({
   const [endDate, setEndDate] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   const load = useCallback(async (start?: string, end?: string) => {
     try {
@@ -377,9 +366,22 @@ export function OperationalDashboardScreen({
     <main className="min-h-screen bg-app-bg text-app-text">
       <AppPageHeader
         actions={
-          <Link className={CONTROL_CLASS} href="/atendimentos">
-            Abrir atendimentos
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link className={CONTROL_CLASS} href="/atendimentos">
+              Abrir atendimentos
+            </Link>
+            {data?.internalUser ? (
+              <button
+                aria-controls="dashboard-filters"
+                aria-expanded={filtersOpen}
+                className={CONTROL_CLASS}
+                onClick={() => setFiltersOpen((current) => !current)}
+                type="button"
+              >
+                {filtersOpen ? 'Fechar Filtros' : 'Abrir Filtros'}
+              </button>
+            ) : null}
+          </div>
         }
         subtitle="Rankings de produção por período e pódio do trimestre atual."
         title="Painel"
@@ -413,41 +415,46 @@ export function OperationalDashboardScreen({
 
         {data?.internalUser ? (
           <>
-            <section className="mb-[18px] flex items-end justify-between gap-3.5 rounded-[11px] border border-app-border bg-app-surface px-3.5 py-3 max-[1100px]:flex-col max-[1100px]:items-stretch">
-              <form
-                className="flex items-end gap-2 max-[680px]:flex-wrap max-[680px]:items-stretch"
-                onSubmit={apply}
+            {filtersOpen ? (
+              <section
+                className="mb-[18px] flex items-end justify-between gap-3.5 rounded-[11px] border border-app-border bg-app-surface px-3.5 py-3 shadow-sm max-[1100px]:flex-col max-[1100px]:items-stretch"
+                id="dashboard-filters"
               >
-                <label className="grid gap-1 text-[9px] font-extrabold uppercase text-app-subtle max-[680px]:flex-[1_1_130px]">
-                  Início
-                  <input
-                    className={INPUT_CLASS}
-                    onChange={(event) => setStartDate(event.target.value)}
-                    type="date"
-                    value={startDate}
-                  />
-                </label>
-                <label className="grid gap-1 text-[9px] font-extrabold uppercase text-app-subtle max-[680px]:flex-[1_1_130px]">
-                  Fim
-                  <input
-                    className={INPUT_CLASS}
-                    onChange={(event) => setEndDate(event.target.value)}
-                    type="date"
-                    value={endDate}
-                  />
-                </label>
-                <button className={CONTROL_CLASS} disabled={loading} type="submit">
-                  {loading ? 'Atualizando…' : 'Aplicar'}
-                </button>
-              </form>
+                <form
+                  className="flex items-end gap-2 max-[680px]:flex-wrap max-[680px]:items-stretch"
+                  onSubmit={apply}
+                >
+                  <label className="grid gap-1 text-[9px] font-extrabold uppercase text-app-subtle max-[680px]:flex-[1_1_130px]">
+                    Início
+                    <input
+                      className={INPUT_CLASS}
+                      onChange={(event) => setStartDate(event.target.value)}
+                      type="date"
+                      value={startDate}
+                    />
+                  </label>
+                  <label className="grid gap-1 text-[9px] font-extrabold uppercase text-app-subtle max-[680px]:flex-[1_1_130px]">
+                    Fim
+                    <input
+                      className={INPUT_CLASS}
+                      onChange={(event) => setEndDate(event.target.value)}
+                      type="date"
+                      value={endDate}
+                    />
+                  </label>
+                  <button className={CONTROL_CLASS} disabled={loading} type="submit">
+                    {loading ? 'Atualizando…' : 'Aplicar'}
+                  </button>
+                </form>
 
-              <div className="flex items-end gap-2 max-[680px]:flex-wrap max-[680px]:items-stretch">
-                <button className={`${CONTROL_CLASS} min-h-8`} onClick={() => quickRange('today')} type="button">Hoje</button>
-                <button className={`${CONTROL_CLASS} min-h-8`} onClick={() => quickRange('week')} type="button">Semana</button>
-                <button className={`${CONTROL_CLASS} min-h-8`} onClick={() => quickRange('month')} type="button">Mês atual</button>
-                <button className={`${CONTROL_CLASS} min-h-8`} onClick={() => quickRange('quarter')} type="button">Trimestre</button>
-              </div>
-            </section>
+                <div className="flex items-end gap-2 max-[680px]:flex-wrap max-[680px]:items-stretch">
+                  <button className={`${CONTROL_CLASS} min-h-8`} onClick={() => quickRange('today')} type="button">Hoje</button>
+                  <button className={`${CONTROL_CLASS} min-h-8`} onClick={() => quickRange('week')} type="button">Semana</button>
+                  <button className={`${CONTROL_CLASS} min-h-8`} onClick={() => quickRange('month')} type="button">Mês atual</button>
+                  <button className={`${CONTROL_CLASS} min-h-8`} onClick={() => quickRange('quarter')} type="button">Trimestre</button>
+                </div>
+              </section>
+            ) : null}
 
             <section className="mt-5">
               <div className="mb-2.5 flex items-center justify-between gap-4 max-[680px]:flex-col max-[680px]:items-stretch">
