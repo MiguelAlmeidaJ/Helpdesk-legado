@@ -299,6 +299,10 @@ export function TicketDetailScreen({
                       <strong>{ticket.form.label}</strong>
                     </div>
                     <div>
+                      <span>Nome da máquina</span>
+                      <strong>{text(ticket.machineName)}</strong>
+                    </div>
+                    <div>
                       <span>Nível</span>
                       <strong>{ticket.level.label}</strong>
                     </div>

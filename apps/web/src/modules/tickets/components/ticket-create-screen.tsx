@@ -268,7 +268,7 @@ export function TicketCreateScreen({
             <div className="border-b border-app-border-soft pb-1 sm:col-span-2 xl:col-span-4">
               <h2 className="m-0 text-xs font-extrabold uppercase tracking-[0.04em] text-app-text-soft">Solicitação</h2>
             </div>
-            <label className={FIELD_LABEL_CLASS}>
+            <label className={`${FIELD_LABEL_CLASS} xl:col-span-2`}>
               Cliente
               <select
                 className={FIELD_CONTROL_CLASS}
