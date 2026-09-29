@@ -333,6 +333,7 @@ export function TicketsScreen({
             <div className="grid gap-1.5">
               <FieldLabel htmlFor="ticket-client">Cliente</FieldLabel>
               <SearchSelect
+                id="ticket-client"
                 onChange={(values) =>
                   setDraft((current) => ({
                     ...current,
@@ -352,6 +353,7 @@ export function TicketsScreen({
             <div className="grid gap-1.5">
               <FieldLabel htmlFor="ticket-technician">Técnico</FieldLabel>
               <SearchSelect
+                id="ticket-technician"
                 multiple
                 multipleLabel="técnicos selecionados"
                 onChange={(values) =>

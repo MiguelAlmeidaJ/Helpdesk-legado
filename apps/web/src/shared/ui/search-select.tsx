@@ -8,6 +8,7 @@ export interface SearchSelectOption {
 }
 
 export function SearchSelect({
+  id,
   options,
   value,
   onChange,
@@ -17,6 +18,7 @@ export function SearchSelect({
   multipleLabel = 'selecionados',
   disabled = false,
 }: {
+  id?: string;
   options: SearchSelectOption[];
   value: string[];
   onChange: (value: string[]) => void;
@@ -81,6 +83,8 @@ export function SearchSelect({
     <div className="relative" ref={rootRef}>
       <button
         aria-expanded={open}
+        aria-haspopup="listbox"
+        id={id}
         className="flex min-h-10 w-full items-center justify-between gap-2 rounded-lg border border-app-border-strong bg-app-surface px-3 text-left text-sm text-app-text outline-none transition hover:bg-app-surface-hover focus:border-app-brand focus:ring-3 focus:ring-[var(--app-brand-ring)] disabled:cursor-not-allowed disabled:opacity-55"
         disabled={disabled}
         onClick={() => setOpen((current) => !current)}
