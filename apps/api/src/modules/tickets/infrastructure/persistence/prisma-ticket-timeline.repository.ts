@@ -128,7 +128,7 @@ export class PrismaTicketTimelineRepository extends TicketTimelineRepository {
        LEFT JOIN clientes c ON c.clt_id = a.cliente
        LEFT JOIN pessoas p ON p.pessoa_id = a.pessoa
        LEFT JOIN usuarios tech ON tech.user_id = a.tecnico
-       LEFT JOIN locais l ON l.local_id = a.`local`
+       LEFT JOIN locais l ON l.local_id = a.local
        LEFT JOIN categorias cat ON cat.cat_id = a.categoria
        LEFT JOIN subcategorias scat ON scat.scat_id = a.subcategoria
        LEFT JOIN itens item ON item.itens_id = a.item
