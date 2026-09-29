@@ -11,7 +11,10 @@ async function bootstrap() {
   const allowedOrigins = allowedWebOrigins(process.env.WEB_ORIGIN);
 
   app.enableCors({
-    origin(origin, callback) {
+    origin(
+      origin: string | undefined,
+      callback: (error: Error | null, allow?: boolean) => void,
+    ) {
       // Requests without Origin are server-to-server and are not browser CORS.
       if (!origin) {
         callback(null, true);
