@@ -16,6 +16,17 @@ import {
   type TicketsReadRepositoryQuery,
   type TicketsReadRepositoryResult,
 } from '../../application/ports/tickets-read.repository';
+import {
+  clerioBreachedSql,
+  clerioElapsedSecondsSql,
+  clerioThresholdMinutesSql,
+  qualityBreachedSql,
+  qualityElapsedSecondsSql,
+  qualityLastInteractionSql,
+  qualityThresholdMinutesSql,
+  slaOrderSql,
+  waitSecondsSql,
+} from './ticket-sla-sql';
 
 interface VisibilityRow {
   tipo_usuario: number;
@@ -162,103 +173,6 @@ function appendInFilter(
 
   where.push(`${column} IN (${normalized.map(() => '?').join(', ')})`);
   params.push(...normalized);
-}
-
-function waitSecondsSql(): string {
-  return `COALESCE((
-    SELECT SUM(
-      GREATEST(
-        0,
-        TIMESTAMPDIFF(
-          SECOND,
-          e.espera_start,
-          COALESCE(e.espera_end, NOW())
-        )
-      )
-    )
-    FROM espera e
-    WHERE e.espera_atd = a.id
-  ), 0)`;
-}
-
-function waitSecondsSinceSql(startExpression: string): string {
-  return `COALESCE((
-    SELECT SUM(
-      GREATEST(
-        0,
-        TIMESTAMPDIFF(
-          SECOND,
-          GREATEST(e.espera_start, ${startExpression}),
-          LEAST(COALESCE(e.espera_end, NOW()), NOW())
-        )
-      )
-    )
-    FROM espera e
-    WHERE e.espera_atd = a.id
-      AND e.espera_start < NOW()
-      AND COALESCE(e.espera_end, NOW()) > ${startExpression}
-  ), 0)`;
-}
-
-function qualityLastInteractionSql(): string {
-  return 'COALESCE(ia.last_interaction_at, a.abertura)';
-}
-
-function qualityThresholdMinutesSql(): string {
-  return 'COALESCE(NULLIF(cfg.tempo_alerta, 0), 40)';
-}
-
-function clerioThresholdMinutesSql(): string {
-  return 'COALESCE(NULLIF(cfg.sla_n1, 0), 60)';
-}
-
-function qualityElapsedSecondsSql(): string {
-  const start = qualityLastInteractionSql();
-  return `GREATEST(
-    0,
-    COALESCE(TIMESTAMPDIFF(SECOND, ${start}, NOW()), 0)
-      - (${waitSecondsSinceSql(start)})
-  )`;
-}
-
-function clerioElapsedSecondsSql(): string {
-  return `GREATEST(
-    0,
-    COALESCE(TIMESTAMPDIFF(SECOND, a.abertura, NOW()), 0)
-      - (${waitSecondsSinceSql('a.abertura')})
-  )`;
-}
-
-function qualityBreachedSql(): string {
-  return `CASE
-    WHEN a.status IN (1, 2, 3)
-      AND (${qualityElapsedSecondsSql()}) >= ((${qualityThresholdMinutesSql()}) * 60)
-    THEN 1
-    ELSE 0
-  END`;
-}
-
-function clerioBreachedSql(): string {
-  return `CASE
-    WHEN a.status IN (1, 2, 3)
-      AND (${clerioElapsedSecondsSql()}) >= ((${clerioThresholdMinutesSql()}) * 60)
-    THEN 1
-    ELSE 0
-  END`;
-}
-
-function slaOrderSql(): string {
-  return `CASE
-    WHEN (${qualityBreachedSql()}) = 1 THEN 0
-    WHEN (${clerioBreachedSql()}) = 1 THEN 1
-    WHEN a.status = 1 THEN 2
-    WHEN a.status = 2 THEN 3
-    WHEN a.status = 3 THEN 4
-    WHEN a.status = 5 THEN 10
-    WHEN a.status = 4 THEN 12
-    WHEN a.status = 0 THEN 13
-    ELSE 14
-  END`;
 }
 
 @Injectable()
