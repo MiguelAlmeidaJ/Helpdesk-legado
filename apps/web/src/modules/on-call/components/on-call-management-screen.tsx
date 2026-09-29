@@ -13,8 +13,6 @@ import { AppPageHeader } from '../../../shared/navigation/app-page-header';
 import { appButtonClass } from '../../../shared/ui/button-styles';
 import { SearchSelect } from '../../../shared/ui/search-select';
 import {
-  createOnCallHoliday,
-  deleteOnCallHoliday,
   fetchOnCallSnapshot,
   saveOnCallWeek,
   updateOnCallSettings,
@@ -22,7 +20,6 @@ import {
 
 const BUTTON = appButtonClass('secondary');
 const PRIMARY = appButtonClass('primary');
-const DANGER = appButtonClass('danger', 'sm');
 const INPUT =
   'min-h-10 w-full rounded-lg border border-app-border-strong bg-app-surface px-3 text-sm text-app-text outline-none transition focus:border-app-brand focus:ring-3 focus:ring-[var(--app-brand-ring)] disabled:cursor-not-allowed disabled:opacity-55';
 
@@ -73,12 +70,9 @@ export function OnCallManagementScreen({
   const [devopsUserId, setDevopsUserId] = useState('');
   const [businessStart, setBusinessStart] = useState('07:00');
   const [businessEnd, setBusinessEnd] = useState('19:00');
-  const [holidayDate, setHolidayDate] = useState('');
-  const [holidayName, setHolidayName] = useState('');
   const [loading, setLoading] = useState(true);
   const [savingWeek, setSavingWeek] = useState(false);
   const [savingSettings, setSavingSettings] = useState(false);
-  const [savingHoliday, setSavingHoliday] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
@@ -163,40 +157,6 @@ export function OnCallManagementScreen({
       setError(message(reason));
     } finally {
       setSavingSettings(false);
-    }
-  }
-
-  async function submitHoliday(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setSavingHoliday(true);
-    setError('');
-    setSuccess('');
-    try {
-      await createOnCallHoliday({
-        date: holidayDate,
-        name: holidayName,
-      });
-      setHolidayDate('');
-      setHolidayName('');
-      setSuccess('Feriado cadastrado. O plantão ficará ativo 24h nessa data.');
-      await load(week);
-    } catch (reason) {
-      setError(message(reason));
-    } finally {
-      setSavingHoliday(false);
-    }
-  }
-
-  async function removeHoliday(id: number) {
-    if (!window.confirm('Excluir este feriado da escala de plantão?')) return;
-    setError('');
-    setSuccess('');
-    try {
-      await deleteOnCallHoliday(id);
-      setSuccess('Feriado removido.');
-      await load(week);
-    } catch (reason) {
-      setError(message(reason));
     }
   }
 
@@ -355,52 +315,6 @@ export function OnCallManagementScreen({
               </button>
             </div>
           </form>
-        </section>
-
-        <section className="rounded-2xl border border-app-border bg-app-surface p-4 shadow-sm">
-          <div className="mb-4">
-            <span className="text-[10px] font-black uppercase tracking-[0.06em] text-app-subtle">Cobertura 24h</span>
-            <h2 className="m-0 mt-1 text-lg font-black">Feriados</h2>
-            <p className="m-0 mt-1 text-xs text-app-muted">
-              Datas cadastradas aqui ativam o perfil Plantonista durante o dia inteiro.
-            </p>
-          </div>
-
-          <form className="grid gap-3 md:grid-cols-[180px_minmax(0,1fr)_auto]" onSubmit={submitHoliday}>
-            <label className="grid gap-1.5 text-xs font-bold text-app-text-soft">
-              Data
-              <input className={INPUT} onChange={(event) => setHolidayDate(event.target.value)} required type="date" value={holidayDate} />
-            </label>
-            <label className="grid gap-1.5 text-xs font-bold text-app-text-soft">
-              Nome
-              <input className={INPUT} maxLength={120} onChange={(event) => setHolidayName(event.target.value)} placeholder="Ex.: Natal" required value={holidayName} />
-            </label>
-            <div className="flex items-end">
-              <button className={PRIMARY} disabled={savingHoliday} type="submit">
-                {savingHoliday ? 'Adicionando…' : 'Adicionar feriado'}
-              </button>
-            </div>
-          </form>
-
-          <div className="mt-4 overflow-hidden rounded-xl border border-app-border">
-            {data?.holidays.length ? (
-              <div className="max-h-[340px] overflow-y-auto">
-                {data.holidays.map((holiday) => (
-                  <div className="flex items-center justify-between gap-3 border-b border-app-border-soft px-3 py-2.5 last:border-b-0" key={holiday.id}>
-                    <div>
-                      <strong className="block text-sm">{holiday.name}</strong>
-                      <span className="text-xs text-app-muted">{formatDate(holiday.date)} · plantão 24h</span>
-                    </div>
-                    <button className={DANGER} onClick={() => void removeHoliday(holiday.id)} type="button">Excluir</button>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="px-4 py-8 text-center text-sm text-app-muted">
-                Nenhum feriado cadastrado.
-              </div>
-            )}
-          </div>
         </section>
 
         <div className="rounded-xl border border-sky-200 bg-sky-50/60 px-4 py-3 text-xs leading-relaxed text-sky-900 dark:border-sky-900/60 dark:bg-sky-950/20 dark:text-sky-200">
