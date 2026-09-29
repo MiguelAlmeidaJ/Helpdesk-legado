@@ -43,6 +43,8 @@ interface CountRow {
   total: number | bigint;
 }
 
+const BRAZIL_NOW_SQL = "CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', '-03:00')";
+
 function validDate(value: string): boolean {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
   const date = new Date(`${value}T00:00:00Z`);
@@ -205,10 +207,10 @@ export class OnCallManagementService {
       this.settings(),
       this.database.$queryRawUnsafe<ClockRow[]>(
         `SELECT
-           DATE_FORMAT(NOW(), '%Y-%m-%dT%H:%i:%s') AS now_value,
-           DATE_FORMAT(CURDATE(), '%Y-%m-%d') AS today_value,
-           WEEKDAY(CURDATE()) AS weekday_value,
-           DATE_FORMAT(NOW(), '%H:%i') AS time_value`,
+           DATE_FORMAT(${BRAZIL_NOW_SQL}, '%Y-%m-%dT%H:%i:%s') AS now_value,
+           DATE_FORMAT(${BRAZIL_NOW_SQL}, '%Y-%m-%d') AS today_value,
+           WEEKDAY(DATE(${BRAZIL_NOW_SQL})) AS weekday_value,
+           DATE_FORMAT(${BRAZIL_NOW_SQL}, '%H:%i') AS time_value`,
       ),
     ]);
 
@@ -229,7 +231,7 @@ export class OnCallManagementService {
     const holidayRows = await this.database.$queryRawUnsafe<Array<{ name: string }>>(
       `SELECT name
        FROM business_holidays
-       WHERE holiday_date = CURDATE()
+       WHERE holiday_date = DATE(${BRAZIL_NOW_SQL})
        LIMIT 1`,
     );
     const holidayName = holidayRows[0]?.name ?? null;
