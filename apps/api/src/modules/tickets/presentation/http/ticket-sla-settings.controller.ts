@@ -49,8 +49,8 @@ function optionalId(value: unknown, field: string): number | null {
 
 function optionalPriority(value: unknown): number | null {
   if (value === undefined || value === null || value === '') return null;
-  if (typeof value !== 'number' || !Number.isSafeInteger(value) || value < 0 || value > 3) {
-    throw new BadRequestException('priority deve ser um inteiro entre 0 e 3.');
+  if (typeof value !== 'number' || !Number.isSafeInteger(value) || value < 0 || value > 4) {
+    throw new BadRequestException('priority deve ser um inteiro entre 0 e 4.');
   }
   return value;
 }

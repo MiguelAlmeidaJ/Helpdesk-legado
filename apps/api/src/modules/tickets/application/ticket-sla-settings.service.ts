@@ -95,21 +95,28 @@ export class TicketSlaSettingsService {
   }
 
   async createRule(input: SaveTicketSlaRuleRequest): Promise<TicketSlaRule> {
-    const result = await this.database.$executeRawUnsafe(
-      `INSERT INTO ticket_sla_rules
-         (name, client_id, category_id, priority, quality_minutes, clerio_minutes, active, sort_order)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      input.name,
-      input.clientId ?? null,
-      input.categoryId ?? null,
-      input.priority ?? null,
-      input.qualityMinutes,
-      input.clerioMinutes,
-      input.active ? 1 : 0,
-      input.sortOrder,
-    );
+    const id = await this.database.$transaction(async (tx) => {
+      await tx.$executeRawUnsafe(
+        `INSERT INTO ticket_sla_rules
+           (name, client_id, category_id, priority, quality_minutes, clerio_minutes, active, sort_order)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        input.name,
+        input.clientId ?? null,
+        input.categoryId ?? null,
+        input.priority ?? null,
+        input.qualityMinutes,
+        input.clerioMinutes,
+        input.active ? 1 : 0,
+        input.sortOrder,
+      );
 
-    return this.ruleById(Number(result));
+      const rows = await tx.$queryRawUnsafe<Array<{ id: bigint | number }>>(
+        'SELECT LAST_INSERT_ID() AS id',
+      );
+      return Number(rows[0]?.id ?? 0);
+    });
+
+    return this.ruleById(id);
   }
 
   async updateRule(id: number, input: SaveTicketSlaRuleRequest): Promise<TicketSlaRule> {
