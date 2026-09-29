@@ -26,6 +26,8 @@ interface ActiveOnCallRow {
   permission_slug: string | null;
 }
 
+const BRAZIL_NOW_SQL = "CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', '-03:00')";
+
 @Injectable()
 export class RbacAccessRepository {
   constructor(
@@ -117,20 +119,24 @@ export class RbacAccessRepository {
          WHERE s.user_id = ?
            AND s.week_start = (
              CASE
-               WHEN WEEKDAY(CURDATE()) = 0 AND TIME(NOW()) < cfg.business_start
-               THEN DATE_SUB(CURDATE(), INTERVAL 7 DAY)
-               ELSE DATE_SUB(CURDATE(), INTERVAL WEEKDAY(CURDATE()) DAY)
+               WHEN WEEKDAY(DATE(${BRAZIL_NOW_SQL})) = 0
+                 AND TIME(${BRAZIL_NOW_SQL}) < cfg.business_start
+               THEN DATE_SUB(DATE(${BRAZIL_NOW_SQL}), INTERVAL 7 DAY)
+               ELSE DATE_SUB(
+                 DATE(${BRAZIL_NOW_SQL}),
+                 INTERVAL WEEKDAY(DATE(${BRAZIL_NOW_SQL})) DAY
+               )
              END
            )
            AND (
-             WEEKDAY(CURDATE()) IN (5, 6)
+             WEEKDAY(DATE(${BRAZIL_NOW_SQL})) IN (5, 6)
              OR EXISTS (
                SELECT 1
                FROM business_holidays h
-               WHERE h.holiday_date = CURDATE()
+               WHERE h.holiday_date = DATE(${BRAZIL_NOW_SQL})
              )
-             OR TIME(NOW()) >= cfg.business_end
-             OR TIME(NOW()) < cfg.business_start
+             OR TIME(${BRAZIL_NOW_SQL}) >= cfg.business_end
+             OR TIME(${BRAZIL_NOW_SQL}) < cfg.business_start
            )`,
         userId,
       );
