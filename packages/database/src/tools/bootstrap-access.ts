@@ -14,6 +14,13 @@ const PERMISSIONS = [
   ['Editar Catálogo de DevOps', 'catalogos.devops.editar', 'Editar catálogos do setor de DevOps.'],
 ] as const;
 
+const QUALITY_PERMISSIONS = [
+  ['Visualizar Plantão', 'qualidade.plantao.visualizar', 'Visualizar a escala semanal e a situação atual do plantão.'],
+  ['Gerenciar Plantão', 'qualidade.plantao.gerenciar', 'Alterar plantonistas e o horário operacional do plantão.'],
+  ['Visualizar Datas comemorativas', 'qualidade.datas.visualizar', 'Visualizar feriados nacionais e datas especiais do calendário corporativo.'],
+  ['Gerenciar Datas comemorativas', 'qualidade.datas.gerenciar', 'Cadastrar e remover datas especiais do calendário corporativo.'],
+] as const;
+
 const PERMISSION_MIGRATIONS = [
   ['catalog.ti.read', 'catalogos.ti.visualizar'],
   ['catalog.ti.manage', 'catalogos.ti.editar'],
@@ -149,6 +156,22 @@ async function main() {
          )`,
     );
 
+    for (const [name, slug, description] of QUALITY_PERMISSIONS) {
+      await db.$executeRawUnsafe(
+        `INSERT INTO permissions
+          (name, slug, module, description, created_at, updated_at)
+         VALUES (?, ?, 'Qualidade', ?, NOW(), NOW())
+         ON DUPLICATE KEY UPDATE
+           name = VALUES(name),
+           module = VALUES(module),
+           description = VALUES(description),
+           updated_at = NOW()`,
+        name,
+        slug,
+        description,
+      );
+    }
+
     for (const [source, target] of PERMISSION_MIGRATIONS) {
       await migratePermission(db, source, target);
     }
@@ -157,6 +180,7 @@ async function main() {
     console.log('  roles.sort_order: OK');
     console.log('  catalogos.arquivado_em: OK');
     console.log('  permissões de catálogo: 5 permissões normalizadas');
+    console.log('  permissões de Qualidade: 4 permissões');
   } finally {
     await db.$disconnect();
   }
