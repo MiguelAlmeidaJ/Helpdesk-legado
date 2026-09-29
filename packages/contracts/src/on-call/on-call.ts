@@ -12,12 +12,6 @@ export interface OnCallAssignment {
   weekStart: string;
 }
 
-export interface OnCallHoliday {
-  id: number;
-  date: string;
-  name: string;
-}
-
 export interface OnCallSettings {
   businessStart: string;
   businessEnd: string;
@@ -43,7 +37,6 @@ export interface OnCallSnapshot {
   settings: OnCallSettings;
   assignments: OnCallAssignment[];
   users: OnCallUserOption[];
-  holidays: OnCallHoliday[];
   current: OnCallCurrentState;
   plantonistaPermissionCount: number;
 }
@@ -59,7 +52,3 @@ export interface UpdateOnCallSettingsRequest {
   businessEnd: string;
 }
 
-export interface CreateOnCallHolidayRequest {
-  date: string;
-  name: string;
-}

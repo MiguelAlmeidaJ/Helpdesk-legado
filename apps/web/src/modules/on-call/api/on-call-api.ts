@@ -1,5 +1,4 @@
 import type {
-  CreateOnCallHolidayRequest,
   OnCallSettings,
   OnCallSnapshot,
   SaveOnCallWeekRequest,
@@ -34,21 +33,5 @@ export function updateOnCallSettings(
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(input),
-  });
-}
-
-export async function createOnCallHoliday(
-  input: CreateOnCallHolidayRequest,
-): Promise<void> {
-  await apiRequest<void>('administration/on-call/holidays', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(input),
-  });
-}
-
-export async function deleteOnCallHoliday(id: number): Promise<void> {
-  await apiRequest<void>(`administration/on-call/holidays/${id}`, {
-    method: 'DELETE',
   });
 }

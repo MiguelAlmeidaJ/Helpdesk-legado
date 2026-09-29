@@ -7,6 +7,7 @@ import { MaintenanceModule } from './maintenance/maintenance.module';
 import { NavigationModule } from './navigation/navigation.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { OnCallModule } from './on-call/on-call.module';
+import { QualityModule } from './quality/quality.module';
 import { ReportsModule } from './reports/reports.module';
 import { RegistrationsModule } from './registrations/registrations.module';
 import { TicketsModule } from './tickets/tickets.module';
@@ -22,6 +23,7 @@ import { UsersModule } from './users/users.module';
     NavigationModule,
     NotificationsModule,
     OnCallModule,
+    QualityModule,
     ReportsModule,
     RegistrationsModule,
     TicketsModule,

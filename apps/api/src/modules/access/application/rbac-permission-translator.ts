@@ -76,6 +76,13 @@ const REGISTRATION_PERMISSION = {
   financeManage: 'cadastros.financeiro.gerenciar',
 } as const;
 
+const QUALITY_PERMISSION = {
+  onCallRead: 'qualidade.plantao.visualizar',
+  onCallManage: 'qualidade.plantao.gerenciar',
+  datesRead: 'qualidade.datas.visualizar',
+  datesManage: 'qualidade.datas.gerenciar',
+} as const;
+
 const SYSTEM_ADMIN_ROLE = 'system-admin';
 
 function permissionLevel(moduleValue: string, index: number): number {
@@ -131,6 +138,33 @@ export function translateRbacAccess(
   addGrant(grants, AppPermission.UsersCreate, permissions.has(USER_PERMISSION.create), PermissionScope.All);
   addGrant(grants, AppPermission.UsersEdit, permissions.has(USER_PERMISSION.edit), PermissionScope.All);
   addGrant(grants, AppPermission.UsersManageAccess, permissions.has(USER_PERMISSION.manageAccess), PermissionScope.All);
+
+  addGrant(
+    grants,
+    AppPermission.QualityOnCallRead,
+    permissions.has(QUALITY_PERMISSION.onCallRead) ||
+      permissions.has(QUALITY_PERMISSION.onCallManage),
+    PermissionScope.All,
+  );
+  addGrant(
+    grants,
+    AppPermission.QualityOnCallManage,
+    permissions.has(QUALITY_PERMISSION.onCallManage),
+    PermissionScope.All,
+  );
+  addGrant(
+    grants,
+    AppPermission.QualityDatesRead,
+    permissions.has(QUALITY_PERMISSION.datesRead) ||
+      permissions.has(QUALITY_PERMISSION.datesManage),
+    PermissionScope.All,
+  );
+  addGrant(
+    grants,
+    AppPermission.QualityDatesManage,
+    permissions.has(QUALITY_PERMISSION.datesManage),
+    PermissionScope.All,
+  );
 
   addGrant(grants, AppPermission.CatalogManage, hasAnyPermission(permissions, CATALOG_PERMISSION.manage), PermissionScope.All);
   addGrant(grants, AppPermission.CatalogTiRead, hasAnyPermission(permissions, CATALOG_PERMISSION.tiRead), PermissionScope.All);

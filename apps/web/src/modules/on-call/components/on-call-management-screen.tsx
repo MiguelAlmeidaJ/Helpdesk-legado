@@ -1,9 +1,10 @@
 "use client";
 
-import type {
-  CurrentUserResponse,
-  OnCallArea,
-  OnCallSnapshot,
+import {
+  AppPermission,
+  type CurrentUserResponse,
+  type OnCallArea,
+  type OnCallSnapshot,
 } from '@helpdesk/contracts';
 import Link from 'next/link';
 import type { FormEvent } from 'react';
@@ -13,8 +14,6 @@ import { AppPageHeader } from '../../../shared/navigation/app-page-header';
 import { appButtonClass } from '../../../shared/ui/button-styles';
 import { SearchSelect } from '../../../shared/ui/search-select';
 import {
-  createOnCallHoliday,
-  deleteOnCallHoliday,
   fetchOnCallSnapshot,
   saveOnCallWeek,
   updateOnCallSettings,
@@ -22,7 +21,6 @@ import {
 
 const BUTTON = appButtonClass('secondary');
 const PRIMARY = appButtonClass('primary');
-const DANGER = appButtonClass('danger', 'sm');
 const INPUT =
   'min-h-10 w-full rounded-lg border border-app-border-strong bg-app-surface px-3 text-sm text-app-text outline-none transition focus:border-app-brand focus:ring-3 focus:ring-[var(--app-brand-ring)] disabled:cursor-not-allowed disabled:opacity-55';
 
@@ -67,18 +65,20 @@ export function OnCallManagementScreen({
 }: {
   currentUser: CurrentUserResponse;
 }) {
+  const canManage = currentUser.grants.some(
+    (grant) =>
+      grant.permission === AppPermission.SystemAdmin ||
+      grant.permission === AppPermission.QualityOnCallManage,
+  );
   const [data, setData] = useState<OnCallSnapshot | null>(null);
   const [week, setWeek] = useState('');
   const [tiUserId, setTiUserId] = useState('');
   const [devopsUserId, setDevopsUserId] = useState('');
   const [businessStart, setBusinessStart] = useState('07:00');
   const [businessEnd, setBusinessEnd] = useState('19:00');
-  const [holidayDate, setHolidayDate] = useState('');
-  const [holidayName, setHolidayName] = useState('');
   const [loading, setLoading] = useState(true);
   const [savingWeek, setSavingWeek] = useState(false);
   const [savingSettings, setSavingSettings] = useState(false);
-  const [savingHoliday, setSavingHoliday] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
@@ -123,6 +123,7 @@ export function OnCallManagementScreen({
 
   async function submitWeek(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (!canManage) return;
     if (!tiUserId || !devopsUserId) {
       setError('Selecione os plantonistas de TI e DevOps.');
       return;
@@ -147,6 +148,7 @@ export function OnCallManagementScreen({
 
   async function submitSettings(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (!canManage) return;
     setSavingSettings(true);
     setError('');
     setSuccess('');
@@ -163,40 +165,6 @@ export function OnCallManagementScreen({
       setError(message(reason));
     } finally {
       setSavingSettings(false);
-    }
-  }
-
-  async function submitHoliday(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setSavingHoliday(true);
-    setError('');
-    setSuccess('');
-    try {
-      await createOnCallHoliday({
-        date: holidayDate,
-        name: holidayName,
-      });
-      setHolidayDate('');
-      setHolidayName('');
-      setSuccess('Feriado cadastrado. O plantão ficará ativo 24h nessa data.');
-      await load(week);
-    } catch (reason) {
-      setError(message(reason));
-    } finally {
-      setSavingHoliday(false);
-    }
-  }
-
-  async function removeHoliday(id: number) {
-    if (!window.confirm('Excluir este feriado da escala de plantão?')) return;
-    setError('');
-    setSuccess('');
-    try {
-      await deleteOnCallHoliday(id);
-      setSuccess('Feriado removido.');
-      await load(week);
-    } catch (reason) {
-      setError(message(reason));
     }
   }
 
@@ -299,7 +267,7 @@ export function OnCallManagementScreen({
               <div className="grid gap-1.5 text-xs font-bold text-app-text-soft">
                 Plantonista TI
                 <SearchSelect
-                  disabled={loading || savingWeek}
+                  disabled={loading || savingWeek || !canManage}
                   onChange={(values) => setTiUserId(values[0] ?? '')}
                   options={userOptions}
                   placeholder="Selecione o plantonista de TI"
@@ -311,7 +279,7 @@ export function OnCallManagementScreen({
               <div className="grid gap-1.5 text-xs font-bold text-app-text-soft">
                 Plantonista DevOps
                 <SearchSelect
-                  disabled={loading || savingWeek}
+                  disabled={loading || savingWeek || !canManage}
                   onChange={(values) => setDevopsUserId(values[0] ?? '')}
                   options={userOptions}
                   placeholder="Selecione o plantonista de DevOps"
@@ -321,10 +289,15 @@ export function OnCallManagementScreen({
               </div>
             </div>
 
-            <div className="mt-4 flex justify-end border-t border-app-border-soft pt-3">
-              <button className={PRIMARY} disabled={loading || savingWeek} type="submit">
-                {savingWeek ? 'Salvando…' : 'Salvar escala'}
-              </button>
+            <div className="mt-4 flex items-center justify-between gap-3 border-t border-app-border-soft pt-3">
+              {!canManage ? (
+                <span className="text-xs text-app-muted">Acesso somente para visualização.</span>
+              ) : <span />}
+              {canManage ? (
+                <button className={PRIMARY} disabled={loading || savingWeek} type="submit">
+                  {savingWeek ? 'Salvando…' : 'Salvar escala'}
+                </button>
+              ) : null}
             </div>
           </form>
 
@@ -341,66 +314,25 @@ export function OnCallManagementScreen({
             <div className="mt-4 grid grid-cols-2 gap-3">
               <label className="grid gap-1.5 text-xs font-bold text-app-text-soft">
                 Abre às
-                <input className={INPUT} onChange={(event) => setBusinessStart(event.target.value)} type="time" value={businessStart} />
+                <input className={INPUT} disabled={!canManage} onChange={(event) => setBusinessStart(event.target.value)} type="time" value={businessStart} />
               </label>
               <label className="grid gap-1.5 text-xs font-bold text-app-text-soft">
                 Fecha às
-                <input className={INPUT} onChange={(event) => setBusinessEnd(event.target.value)} type="time" value={businessEnd} />
+                <input className={INPUT} disabled={!canManage} onChange={(event) => setBusinessEnd(event.target.value)} type="time" value={businessEnd} />
               </label>
             </div>
 
-            <div className="mt-4 flex justify-end border-t border-app-border-soft pt-3">
-              <button className={PRIMARY} disabled={savingSettings} type="submit">
-                {savingSettings ? 'Salvando…' : 'Salvar horário'}
-              </button>
+            <div className="mt-4 flex items-center justify-between gap-3 border-t border-app-border-soft pt-3">
+              {!canManage ? (
+                <span className="text-xs text-app-muted">Acesso somente para visualização.</span>
+              ) : <span />}
+              {canManage ? (
+                <button className={PRIMARY} disabled={savingSettings} type="submit">
+                  {savingSettings ? 'Salvando…' : 'Salvar horário'}
+                </button>
+              ) : null}
             </div>
           </form>
-        </section>
-
-        <section className="rounded-2xl border border-app-border bg-app-surface p-4 shadow-sm">
-          <div className="mb-4">
-            <span className="text-[10px] font-black uppercase tracking-[0.06em] text-app-subtle">Cobertura 24h</span>
-            <h2 className="m-0 mt-1 text-lg font-black">Feriados</h2>
-            <p className="m-0 mt-1 text-xs text-app-muted">
-              Datas cadastradas aqui ativam o perfil Plantonista durante o dia inteiro.
-            </p>
-          </div>
-
-          <form className="grid gap-3 md:grid-cols-[180px_minmax(0,1fr)_auto]" onSubmit={submitHoliday}>
-            <label className="grid gap-1.5 text-xs font-bold text-app-text-soft">
-              Data
-              <input className={INPUT} onChange={(event) => setHolidayDate(event.target.value)} required type="date" value={holidayDate} />
-            </label>
-            <label className="grid gap-1.5 text-xs font-bold text-app-text-soft">
-              Nome
-              <input className={INPUT} maxLength={120} onChange={(event) => setHolidayName(event.target.value)} placeholder="Ex.: Natal" required value={holidayName} />
-            </label>
-            <div className="flex items-end">
-              <button className={PRIMARY} disabled={savingHoliday} type="submit">
-                {savingHoliday ? 'Adicionando…' : 'Adicionar feriado'}
-              </button>
-            </div>
-          </form>
-
-          <div className="mt-4 overflow-hidden rounded-xl border border-app-border">
-            {data?.holidays.length ? (
-              <div className="max-h-[340px] overflow-y-auto">
-                {data.holidays.map((holiday) => (
-                  <div className="flex items-center justify-between gap-3 border-b border-app-border-soft px-3 py-2.5 last:border-b-0" key={holiday.id}>
-                    <div>
-                      <strong className="block text-sm">{holiday.name}</strong>
-                      <span className="text-xs text-app-muted">{formatDate(holiday.date)} · plantão 24h</span>
-                    </div>
-                    <button className={DANGER} onClick={() => void removeHoliday(holiday.id)} type="button">Excluir</button>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="px-4 py-8 text-center text-sm text-app-muted">
-                Nenhum feriado cadastrado.
-              </div>
-            )}
-          </div>
         </section>
 
         <div className="rounded-xl border border-sky-200 bg-sky-50/60 px-4 py-3 text-xs leading-relaxed text-sky-900 dark:border-sky-900/60 dark:bg-sky-950/20 dark:text-sky-200">

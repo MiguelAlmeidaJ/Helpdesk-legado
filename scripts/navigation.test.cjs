@@ -154,6 +154,9 @@ test('browser URL translation preserves IDs, filters and unrelated paths', () =>
   assert.equal(portugueseWebHref('/logistics/finance/statements'), '/extratos');
   assert.equal(portugueseWebHref('/radio'), '/radio');
   assert.equal(portugueseWebHref('/admin/ticket-sla'), '/administracao/sla-atendimentos');
+  assert.equal(portugueseWebHref('/admin/on-call'), '/qualidade/plantao');
+  assert.equal(portugueseWebHref('/quality/on-call'), '/qualidade/plantao');
+  assert.equal(portugueseWebHref('/quality/commemorative-dates'), '/qualidade/datas-comemorativas');
   assert.equal(portugueseWebHref('/admin/maintenance'), '/administracao/manutencao');
   assert.equal(portugueseWebHref('/tickets/availability/legacy'), '/atendimentos/disponibilidade/antiga');
   for (const unchanged of ['/api/tickets', '/tickets-other', '/atendimentos', 'https://example.com/tickets']) {
@@ -186,7 +189,8 @@ test('all available menu destinations resolve to implemented Next pages', () => 
     'radio',
     'statements',
     'ticket-sla-settings',
-    'on-call',
+    'quality-on-call',
+    'quality-commemorative-dates',
     'maintenance',
   ]) {
     assert.equal(items.find(item => item.slug === slug).status, 'available', slug);

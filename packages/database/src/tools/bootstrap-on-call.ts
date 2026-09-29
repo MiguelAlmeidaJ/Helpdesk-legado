@@ -4,6 +4,41 @@ import { createNivel3Client } from '../index';
 
 config({ path: path.resolve(process.cwd(), '../../.env') });
 
+type CountRow = { total: number | bigint };
+
+const NATIONAL_HOLIDAYS = [
+  ['01-01', 'Confraternização Universal'],
+  ['04-21', 'Tiradentes'],
+  ['05-01', 'Dia Mundial do Trabalho'],
+  ['09-07', 'Independência do Brasil'],
+  ['10-12', 'Nossa Senhora Aparecida'],
+  ['11-02', 'Finados'],
+  ['11-15', 'Proclamação da República'],
+  ['11-20', 'Dia Nacional de Zumbi e da Consciência Negra'],
+  ['12-25', 'Natal'],
+] as const;
+
+function goodFridayDate(year: number): string {
+  // Computus gregoriano (Meeus/Jones/Butcher), dois dias antes da Páscoa.
+  const a = year % 19;
+  const b = Math.floor(year / 100);
+  const c = year % 100;
+  const d = Math.floor(b / 4);
+  const e = b % 4;
+  const f = Math.floor((b + 8) / 25);
+  const g = Math.floor((b - f + 1) / 3);
+  const h = (19 * a + b - d - g + 15) % 30;
+  const i = Math.floor(c / 4);
+  const k = c % 4;
+  const l = (32 + 2 * e + 2 * i - h - k) % 7;
+  const m = Math.floor((a + 11 * h + 22 * l) / 451);
+  const month = Math.floor((h + l - 7 * m + 114) / 31);
+  const day = ((h + l - 7 * m + 114) % 31) + 1;
+  const easter = new Date(Date.UTC(year, month - 1, day));
+  easter.setUTCDate(easter.getUTCDate() - 2);
+  return easter.toISOString().slice(0, 10);
+}
+
 const CREATE_SETTINGS = `
 CREATE TABLE IF NOT EXISTS business_calendar_settings (
   id TINYINT UNSIGNED NOT NULL,
@@ -40,11 +75,57 @@ CREATE TABLE IF NOT EXISTS business_holidays (
   id INT UNSIGNED NOT NULL AUTO_INCREMENT,
   holiday_date DATE NOT NULL,
   name VARCHAR(120) NOT NULL,
+  is_national TINYINT(1) NOT NULL DEFAULT 0,
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
   UNIQUE KEY uq_on_call_holiday_date (holiday_date)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 `;
+
+async function columnExists(
+  db: ReturnType<typeof createNivel3Client>,
+  table: string,
+  column: string,
+): Promise<boolean> {
+  const rows = await db.$queryRawUnsafe<CountRow[]>(
+    `SELECT COUNT(*) AS total
+     FROM information_schema.COLUMNS
+     WHERE TABLE_SCHEMA = DATABASE()
+       AND TABLE_NAME = ?
+       AND COLUMN_NAME = ?`,
+    table,
+    column,
+  );
+  return Number(rows[0]?.total ?? 0) > 0;
+}
+
+async function seedNationalHolidays(
+  db: ReturnType<typeof createNivel3Client>,
+): Promise<void> {
+  const currentYear = new Date().getFullYear();
+
+  for (const year of [currentYear, currentYear + 1]) {
+    const holidays: Array<readonly [string, string]> = [
+      ...NATIONAL_HOLIDAYS.map(
+        ([monthDay, name]) => [`${year}-${monthDay}`, name] as const,
+      ),
+      [goodFridayDate(year), 'Paixão de Cristo'] as const,
+    ];
+
+    for (const [date, name] of holidays) {
+      await db.$executeRawUnsafe(
+        `INSERT INTO business_holidays
+           (holiday_date, name, is_national, created_at)
+         VALUES (?, ?, 1, NOW())
+         ON DUPLICATE KEY UPDATE
+           name = VALUES(name),
+           is_national = 1`,
+        date,
+        name,
+      );
+    }
+  }
+}
 
 async function main() {
   const db = createNivel3Client();
@@ -53,6 +134,14 @@ async function main() {
     await db.$executeRawUnsafe(CREATE_SETTINGS);
     await db.$executeRawUnsafe(CREATE_SCHEDULE);
     await db.$executeRawUnsafe(CREATE_HOLIDAYS);
+
+    if (!(await columnExists(db, 'business_holidays', 'is_national'))) {
+      await db.$executeRawUnsafe(
+        'ALTER TABLE business_holidays ADD COLUMN is_national TINYINT(1) NOT NULL DEFAULT 0 AFTER name',
+      );
+    }
+
+    await seedNationalHolidays(db);
 
     await db.$executeRawUnsafe(
       `INSERT INTO business_calendar_settings (id, business_start, business_end)
@@ -95,6 +184,7 @@ async function main() {
     console.log('  business_calendar_settings: OK (07:00 - 19:00)');
     console.log('  on_call_schedules: OK');
     console.log('  business_holidays: OK');
+    console.log('  feriados nacionais: ano atual + próximo ano');
     console.log('  perfil Plantonista: OK');
   } finally {
     await db.$disconnect();

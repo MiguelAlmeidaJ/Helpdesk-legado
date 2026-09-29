@@ -2,13 +2,10 @@ import {
   BadRequestException,
   Inject,
   Injectable,
-  NotFoundException,
 } from '@nestjs/common';
 import type {
-  CreateOnCallHolidayRequest,
   OnCallAssignment,
   OnCallCurrentState,
-  OnCallHoliday,
   OnCallSettings,
   OnCallSnapshot,
   OnCallUserOption,
@@ -33,12 +30,6 @@ interface AssignmentRow {
 interface UserRow {
   id: number;
   name: string | null;
-}
-
-interface HolidayRow {
-  id: number;
-  holiday_date: string;
-  name: string;
 }
 
 interface ClockRow {
@@ -72,10 +63,6 @@ function addDays(value: string, days: number): string {
   return date.toISOString().slice(0, 10);
 }
 
-function normalizeTime(value: string): string {
-  return value.slice(0, 5);
-}
-
 @Injectable()
 export class OnCallManagementService {
   constructor(
@@ -84,11 +71,10 @@ export class OnCallManagementService {
   ) {}
 
   async snapshot(weekDate?: string): Promise<OnCallSnapshot> {
-    const [settings, current, users, holidays, permissionRows] = await Promise.all([
+    const [settings, current, users, permissionRows] = await Promise.all([
       this.settings(),
       this.currentState(),
       this.users(),
-      this.holidays(),
       this.database.$queryRawUnsafe<CountRow[]>(
         `SELECT COUNT(*) AS total
          FROM role_permissions rp
@@ -107,7 +93,6 @@ export class OnCallManagementService {
       settings,
       assignments,
       users,
-      holidays,
       current,
       plantonistaPermissionCount: Number(permissionRows[0]?.total ?? 0),
     };
@@ -157,32 +142,6 @@ export class OnCallManagementService {
     return this.settings();
   }
 
-  async createHoliday(input: CreateOnCallHolidayRequest): Promise<void> {
-    if (!validDate(input.date)) {
-      throw new BadRequestException('Data de feriado inválida.');
-    }
-    const name = input.name.trim();
-    if (!name || name.length > 120) {
-      throw new BadRequestException('Nome do feriado deve ter entre 1 e 120 caracteres.');
-    }
-
-    await this.database.$executeRawUnsafe(
-      `INSERT INTO business_holidays (holiday_date, name, created_at)
-       VALUES (?, ?, NOW())
-       ON DUPLICATE KEY UPDATE name = VALUES(name)`,
-      input.date,
-      name,
-    );
-  }
-
-  async deleteHoliday(id: number): Promise<void> {
-    const changed = await this.database.$executeRawUnsafe(
-      'DELETE FROM business_holidays WHERE id = ?',
-      id,
-    );
-    if (!changed) throw new NotFoundException('Feriado não encontrado.');
-  }
-
   private normalizeWeek(value: string): string {
     if (!validDate(value)) {
       throw new BadRequestException('Semana deve usar uma data válida em YYYY-MM-DD.');
@@ -216,23 +175,6 @@ export class OnCallManagementService {
     return rows.map((row) => ({
       id: row.id,
       name: row.name?.trim() || `Usuário #${row.id}`,
-    }));
-  }
-
-  private async holidays(): Promise<OnCallHoliday[]> {
-    const rows = await this.database.$queryRawUnsafe<HolidayRow[]>(
-      `SELECT
-         id,
-         DATE_FORMAT(holiday_date, '%Y-%m-%d') AS holiday_date,
-         name
-       FROM business_holidays
-       ORDER BY holiday_date ASC
-       LIMIT 300`,
-    );
-    return rows.map((row) => ({
-      id: row.id,
-      date: row.holiday_date,
-      name: row.name,
     }));
   }
 

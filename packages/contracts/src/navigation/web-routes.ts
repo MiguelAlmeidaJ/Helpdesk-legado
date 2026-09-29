@@ -47,10 +47,12 @@ export const WEB_ROUTE_TRANSLATIONS = [
   ['/catalog', '/catalogos'],
   ['/users', '/usuarios'],
   ['/dashboard', '/painel'],
+  ['/quality/commemorative-dates', '/qualidade/datas-comemorativas'],
+  ['/quality/on-call', '/qualidade/plantao'],
   ['/admin/access', '/administracao/permissoes'],
   ['/admin/user-functions', '/administracao/funcoes-usuarios'],
   ['/admin/maintenance', '/administracao/manutencao'],
-  ['/admin/on-call', '/administracao/plantao'],
+  ['/admin/on-call', '/qualidade/plantao'],
   ['/admin/ticket-sla', '/administracao/sla-atendimentos'],
   ['/admin/navigation', '/administracao/navegacao'],
 ] as const;

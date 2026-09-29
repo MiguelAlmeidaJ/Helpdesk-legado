@@ -4,6 +4,11 @@ export enum AppPermission {
   OnCallTi = 'on-call.ti',
   OnCallDevOps = 'on-call.devops',
 
+  QualityOnCallRead = 'quality.on-call.read',
+  QualityOnCallManage = 'quality.on-call.manage',
+  QualityDatesRead = 'quality.dates.read',
+  QualityDatesManage = 'quality.dates.manage',
+
   TicketsRead = 'tickets.read',
   TicketsCreate = 'tickets.create',
   TicketsEdit = 'tickets.edit',
