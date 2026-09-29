@@ -49,3 +49,4 @@ export * from './reports/ticket-breakdown';
 export * from './logistics/finance';
 export * from './maintenance/maintenance';
 export * from './notifications/notification';
+export * from './on-call/on-call';

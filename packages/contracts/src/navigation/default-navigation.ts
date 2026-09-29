@@ -179,6 +179,13 @@ export const DEFAULT_NAVIGATION: SeedSection[] = [
         visibilityCondition: { anyPermissions: ['system.admin'] },
       },
       {
+        slug: 'on-call',
+        label: 'Plantão',
+        href: '/administracao/plantao',
+        status: 'available',
+        visibilityCondition: { anyPermissions: ['system.admin', 'users.manage-access'] },
+      },
+      {
         slug: 'maintenance',
         label: 'Manutenção',
         href: '/administracao/manutencao',

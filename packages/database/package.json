@@ -15,6 +15,7 @@
     "tickets:bootstrap": "pnpm build && node dist/tools/bootstrap-tickets.js",
     "notifications:bootstrap": "pnpm build && node dist/tools/bootstrap-notifications.js",
     "sla:bootstrap": "pnpm build && node dist/tools/bootstrap-ticket-sla.js",
+    "oncall:bootstrap": "pnpm build && node dist/tools/bootstrap-on-call.js",
     "db:pull": "pnpm db:pull:nivel3",
     "db:pull:nivel3": "prisma db pull --config=prisma/nivel3/prisma.config.ts",
     "db:generate": "pnpm db:generate:nivel3",
