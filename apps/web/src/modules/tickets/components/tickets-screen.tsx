@@ -9,6 +9,7 @@ import {
   type TicketStatusCard,
 } from '@helpdesk/contracts';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
   type FormEvent,
   type ReactNode,
@@ -18,6 +19,8 @@ import {
 } from 'react';
 import { ApiError } from '../../../shared/api/api-client';
 import { AppPageHeader } from '../../../shared/navigation/app-page-header';
+import { appButtonClass } from '../../../shared/ui/button-styles';
+import { SearchSelect } from '../../../shared/ui/search-select';
 import {
   fetchTickets,
   type TicketListQuery,
@@ -26,9 +29,8 @@ import { TicketSlaIndicators } from './sla-indicator';
 
 const DEFAULT_STATUS = '1,2,3,5';
 
-const BUTTON_CLASS =
-  'inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-app-border-strong bg-app-surface px-4 text-sm font-bold text-app-text-soft no-underline transition-colors hover:bg-app-surface-hover disabled:cursor-not-allowed disabled:opacity-50';
-const PRIMARY_BUTTON_CLASS = `${BUTTON_CLASS} border-app-brand bg-app-brand text-white hover:bg-app-brand-hover dark:text-slate-950`;
+const BUTTON_CLASS = appButtonClass('secondary');
+const PRIMARY_BUTTON_CLASS = appButtonClass('primary');
 const FIELD_CONTROL_CLASS =
   'min-h-10 w-full rounded-lg border border-app-border-strong bg-app-surface px-3 text-sm text-app-text outline-none transition focus:border-app-brand focus:ring-3 focus:ring-[var(--app-brand-ring)] disabled:cursor-not-allowed disabled:opacity-55';
 const TABLE_CELL_CLASS =
@@ -39,8 +41,7 @@ const TABLE_HEADER_CLASS =
 interface FilterDraft {
   search: string;
   clientId: string;
-  requesterId: string;
-  technicianId: string;
+  technicianIds: string[];
   openedFrom: string;
   openedTo: string;
 }
@@ -48,8 +49,7 @@ interface FilterDraft {
 const EMPTY_DRAFT: FilterDraft = {
   search: '',
   clientId: '',
-  requesterId: '',
-  technicianId: '',
+  technicianIds: [],
   openedFrom: '',
   openedTo: '',
 };
@@ -93,11 +93,11 @@ function buildQuery(
     page: 1,
     search: draft.search.trim() || undefined,
     clientId: draft.clientId || undefined,
-    requesterId:
-      draft.clientId && draft.requesterId
-        ? draft.requesterId
+    requesterId: undefined,
+    technicianId:
+      draft.technicianIds.length > 0
+        ? draft.technicianIds.join(',')
         : undefined,
-    technicianId: draft.technicianId || undefined,
     openedFrom: draft.openedFrom || undefined,
     openedTo: draft.openedTo || undefined,
   };
@@ -188,6 +188,7 @@ export function TicketsScreen({
 }: {
   currentUser: CurrentUserResponse;
 }) {
+  const router = useRouter();
   const [query, setQuery] = useState<TicketListQuery>({
     page: 1,
     limit: 50,
@@ -311,8 +312,8 @@ export function TicketsScreen({
           className="mb-4 rounded-xl border border-app-border bg-app-surface p-4 shadow-sm shadow-slate-950/5 dark:shadow-black/10"
           onSubmit={submitFilters}
         >
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-            <div className="grid gap-1.5 xl:col-span-1">
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+            <div className="grid gap-1.5">
               <FieldLabel htmlFor="ticket-search">Busca</FieldLabel>
               <input
                 className={FIELD_CONTROL_CLASS}
@@ -331,72 +332,42 @@ export function TicketsScreen({
 
             <div className="grid gap-1.5">
               <FieldLabel htmlFor="ticket-client">Cliente</FieldLabel>
-              <select
-                className={FIELD_CONTROL_CLASS}
-                id="ticket-client"
-                onChange={(event) =>
+              <SearchSelect
+                onChange={(values) =>
                   setDraft((current) => ({
                     ...current,
-                    clientId: event.target.value,
-                    requesterId: '',
+                    clientId: values[0] ?? '',
                   }))
                 }
-                value={draft.clientId}
-              >
-                <option value="">Todos</option>
-                {(result?.options.clients ?? []).map((option) => (
-                  <option key={option.id} value={option.id}>
-                    {partyName(option)}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="grid gap-1.5">
-              <FieldLabel htmlFor="ticket-requester">Solicitante</FieldLabel>
-              <select
-                className={FIELD_CONTROL_CLASS}
-                disabled={!draft.clientId}
-                id="ticket-requester"
-                onChange={(event) =>
-                  setDraft((current) => ({
-                    ...current,
-                    requesterId: event.target.value,
-                  }))
-                }
-                value={draft.requesterId}
-              >
-                <option value="">
-                  {draft.clientId ? 'Todos' : 'Selecione um cliente'}
-                </option>
-                {(result?.options.requesters ?? []).map((option) => (
-                  <option key={option.id} value={option.id}>
-                    {partyName(option)}
-                  </option>
-                ))}
-              </select>
+                options={(result?.options.clients ?? []).map((option) => ({
+                  value: String(option.id),
+                  label: partyName(option),
+                }))}
+                placeholder="Todos"
+                searchPlaceholder="Pesquisar cliente..."
+                value={draft.clientId ? [draft.clientId] : []}
+              />
             </div>
 
             <div className="grid gap-1.5">
               <FieldLabel htmlFor="ticket-technician">Técnico</FieldLabel>
-              <select
-                className={FIELD_CONTROL_CLASS}
-                id="ticket-technician"
-                onChange={(event) =>
+              <SearchSelect
+                multiple
+                multipleLabel="técnicos selecionados"
+                onChange={(values) =>
                   setDraft((current) => ({
                     ...current,
-                    technicianId: event.target.value,
+                    technicianIds: values,
                   }))
                 }
-                value={draft.technicianId}
-              >
-                <option value="">Todos</option>
-                {(result?.options.technicians ?? []).map((option) => (
-                  <option key={option.id} value={option.id}>
-                    {partyName(option)}
-                  </option>
-                ))}
-              </select>
+                options={(result?.options.technicians ?? []).map((option) => ({
+                  value: String(option.id),
+                  label: partyName(option),
+                }))}
+                placeholder="Todos"
+                searchPlaceholder="Pesquisar técnico..."
+                value={draft.technicianIds}
+              />
             </div>
 
             <div className="grid gap-1.5">
@@ -492,10 +463,12 @@ export function TicketsScreen({
                   <tr
                     className={
                       ticket.sla.quality.breached
-                        ? 'bg-red-100/90 motion-safe:animate-pulse dark:bg-red-950/35'
-                        : 'transition-colors hover:bg-app-surface-muted'
+                        ? 'cursor-pointer bg-red-100/90 motion-safe:animate-pulse dark:bg-red-950/35'
+                        : 'cursor-pointer transition-colors hover:bg-app-surface-muted'
                     }
                     key={ticket.id}
+                    onDoubleClick={() => router.push(`/atendimentos/${ticket.id}`)}
+                    title="Clique duas vezes para abrir o atendimento"
                   >
                     <td className={`${TABLE_CELL_CLASS} font-extrabold`}>
                       <Link
