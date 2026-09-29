@@ -102,5 +102,6 @@ import { TicketSlaSettingsController } from '../../presentation/http/ticket-sla-
     { provide: TicketsReadRepository, useClass: PrismaTicketsReadRepository },
     { provide: TicketRecurrenceManagementRepository, useClass: PrismaTicketRecurrenceManagementRepository },
   ],
+  exports: [ListTickets],
 })
 export class AtendimentoTicketsModule {}
