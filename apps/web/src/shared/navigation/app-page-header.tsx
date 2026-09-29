@@ -34,7 +34,7 @@ export function AppPageHeader({
 
       <div className="flex shrink-0 items-center justify-end gap-2.5">
         {meta}
-        {actions}
+        {actions ? <div className="app-page-header-actions flex items-center gap-2">{actions}</div> : null}
         <SessionUserMenu user={user} />
       </div>
     </header>

@@ -202,6 +202,22 @@ a {
   width: 34px;
 }
 
+/* Normalize every action rendered in AppPageHeader, including legacy/local classes. */
+.app-page-header-actions :where(a, button) {
+  min-height: 40px;
+  border-radius: 8px;
+  padding-inline: 16px;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.app-page-header-actions :where(a, button).app-button--sm {
+  min-height: 34px;
+  padding-inline: 12px;
+  font-size: 12px;
+}
+
 a {
   color: inherit;
 }
