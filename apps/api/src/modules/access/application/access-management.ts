@@ -234,9 +234,11 @@ export class AccessManagement {
 
   async remove(id: number): Promise<void> {
     const role = await this.roleIdentity(id);
-    if (role.slug === 'system-admin') {
+    if (role.slug === 'system-admin' || role.slug === 'plantonista') {
       throw new ConflictException(
-        'O perfil Administrador global é protegido e não pode ser excluído.',
+        role.slug === 'plantonista'
+          ? 'O perfil Plantonista é gerenciado pela escala e não pode ser excluído.'
+          : 'O perfil Administrador global é protegido e não pode ser excluído.',
       );
     }
     await this.database.$executeRawUnsafe('DELETE FROM roles WHERE id = ?', id);

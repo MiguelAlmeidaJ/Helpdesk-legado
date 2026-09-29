@@ -106,6 +106,23 @@ export class DevOpsPermissionsGuard implements CanActivate {
       return true;
     }
 
+    const devOpsOnCall = user.grants.some(
+      (grant) => grant.permission === AppPermission.OnCallDevOps,
+    );
+
+    if (devOpsOnCall) {
+      const missing = required.filter(
+        (permission) =>
+          !user.grants.some((grant) => grant.permission === permission),
+      );
+      if (missing.length > 0) {
+        throw new ForbiddenException(
+          'O perfil Plantonista não possui as permissões necessárias para esta ação DevOps.',
+        );
+      }
+      return true;
+    }
+
     const snapshot = await this.access.findByUserId(user.id);
     const moduleValue = snapshot.modules[Sector.DevOps];
 

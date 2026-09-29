@@ -20,6 +20,12 @@ interface UserPermissionRow {
   effect: 'allow' | 'deny';
 }
 
+interface ActiveOnCallRow {
+  area: 'ti' | 'devops';
+  role_slug: string;
+  permission_slug: string | null;
+}
+
 @Injectable()
 export class RbacAccessRepository {
   constructor(
@@ -64,9 +70,11 @@ export class RbacAccessRepository {
       `,
     ]);
 
-    const permissionSlugs = new Set(
-      rolePermissions.map((permission) => permission.slug),
-    );
+    const onCall = await this.activeOnCallAccess(userId);
+    const permissionSlugs = new Set([
+      ...rolePermissions.map((permission) => permission.slug),
+      ...onCall.permissionSlugs,
+    ]);
 
     for (const permission of userPermissions) {
       if (permission.effect === 'deny') {
@@ -76,11 +84,75 @@ export class RbacAccessRepository {
       }
     }
 
+    const roleSlugs = [
+      ...roles.map((role) => role.slug),
+      ...(onCall.active ? ['plantonista'] : []),
+    ];
+
     return {
       active: user.user_sts === 1,
-      hasAssignments: roles.length > 0 || userPermissions.length > 0,
-      roleSlugs: roles.map((role) => role.slug),
+      hasAssignments: roleSlugs.length > 0 || userPermissions.length > 0,
+      roleSlugs: [...new Set(roleSlugs)],
       permissionSlugs,
+      onCallAreas: onCall.areas,
     };
+  }
+
+  private async activeOnCallAccess(userId: number): Promise<{
+    active: boolean;
+    areas: ('ti' | 'devops')[];
+    permissionSlugs: string[];
+  }> {
+    try {
+      const rows = await this.database.$queryRawUnsafe<ActiveOnCallRow[]>(
+        `SELECT
+           s.area,
+           r.slug AS role_slug,
+           p.slug AS permission_slug
+         FROM on_call_schedules s
+         INNER JOIN on_call_settings cfg ON cfg.id = 1
+         INNER JOIN roles r ON r.slug = 'plantonista'
+         LEFT JOIN role_permissions rp ON rp.role_id = r.id
+         LEFT JOIN permissions p ON p.id = rp.permission_id
+         WHERE s.user_id = ?
+           AND s.week_start = (
+             CASE
+               WHEN WEEKDAY(CURDATE()) = 0 AND TIME(NOW()) < cfg.business_start
+               THEN DATE_SUB(CURDATE(), INTERVAL 7 DAY)
+               ELSE DATE_SUB(CURDATE(), INTERVAL WEEKDAY(CURDATE()) DAY)
+             END
+           )
+           AND (
+             WEEKDAY(CURDATE()) IN (5, 6)
+             OR EXISTS (
+               SELECT 1
+               FROM on_call_holidays h
+               WHERE h.holiday_date = CURDATE()
+             )
+             OR TIME(NOW()) >= cfg.business_end
+             OR TIME(NOW()) < cfg.business_start
+           )`,
+        userId,
+      );
+
+      const areas = [
+        ...new Set(rows.map((row) => row.area)),
+      ] as ('ti' | 'devops')[];
+
+      return {
+        active: areas.length > 0,
+        areas,
+        permissionSlugs: [
+          ...new Set(
+            rows
+              .map((row) => row.permission_slug)
+              .filter((slug): slug is string => Boolean(slug)),
+          ),
+        ],
+      };
+    } catch {
+      // Mantém autenticação operacional antes do bootstrap ou em manutenção.
+      return { active: false, areas: [], permissionSlugs: [] };
+    }
   }
 }

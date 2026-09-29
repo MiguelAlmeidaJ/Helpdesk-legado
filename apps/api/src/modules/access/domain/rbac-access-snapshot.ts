@@ -3,4 +3,5 @@ export interface RbacAccessSnapshot {
   hasAssignments: boolean;
   roleSlugs: readonly string[];
   permissionSlugs: ReadonlySet<string>;
+  onCallAreas: readonly ('ti' | 'devops')[];
 }

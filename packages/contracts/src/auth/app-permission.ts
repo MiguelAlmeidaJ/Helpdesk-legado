@@ -1,6 +1,9 @@
 export enum AppPermission {
   SystemAdmin = 'system.admin',
 
+  OnCallTi = 'on-call.ti',
+  OnCallDevOps = 'on-call.devops',
+
   TicketsRead = 'tickets.read',
   TicketsCreate = 'tickets.create',
   TicketsEdit = 'tickets.edit',

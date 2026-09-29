@@ -222,7 +222,10 @@ export class UsersRepository {
     if (roleIds.length === 0) return true;
     const placeholders = roleIds.map(() => '?').join(',');
     const rows = await this.database.$queryRawUnsafe<CountRow[]>(
-      `SELECT COUNT(*) AS total FROM roles WHERE id IN (${placeholders})`,
+      `SELECT COUNT(*) AS total
+       FROM roles
+       WHERE id IN (${placeholders})
+         AND slug <> 'plantonista'`,
       ...roleIds,
     );
     return Number(rows[0]?.total ?? 0) === roleIds.length;
@@ -313,11 +316,13 @@ export class UsersRepository {
       return await this.database.$queryRaw<RoleOptionRow[]>`
         SELECT id, name, slug, is_system
         FROM roles
+        WHERE slug <> 'plantonista'
         ORDER BY sort_order ASC, id ASC`;
     } catch {
       return this.database.$queryRaw<RoleOptionRow[]>`
         SELECT id, name, slug, is_system
         FROM roles
+        WHERE slug <> 'plantonista'
         ORDER BY is_system DESC, name ASC, id ASC`;
     }
   }
@@ -333,6 +338,7 @@ export class UsersRepository {
          FROM user_roles ur
          INNER JOIN roles r ON r.id = ur.role_id
          WHERE ur.user_id IN (${placeholders})
+           AND r.slug <> 'plantonista'
          ORDER BY r.sort_order ASC, r.id ASC`,
         ...ids,
       );
@@ -342,6 +348,7 @@ export class UsersRepository {
          FROM user_roles ur
          INNER JOIN roles r ON r.id = ur.role_id
          WHERE ur.user_id IN (${placeholders})
+           AND r.slug <> 'plantonista'
          ORDER BY r.is_system DESC, r.name ASC, r.id ASC`,
         ...ids,
       );

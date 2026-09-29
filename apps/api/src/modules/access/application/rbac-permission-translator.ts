@@ -114,6 +114,18 @@ export function translateRbacAccess(
     snapshot.roleSlugs.includes(SYSTEM_ADMIN_ROLE),
     PermissionScope.All,
   );
+  addGrant(
+    grants,
+    AppPermission.OnCallTi,
+    snapshot.onCallAreas.includes('ti'),
+    PermissionScope.All,
+  );
+  addGrant(
+    grants,
+    AppPermission.OnCallDevOps,
+    snapshot.onCallAreas.includes('devops'),
+    PermissionScope.All,
+  );
 
   addGrant(grants, AppPermission.UsersRead, permissions.has(USER_PERMISSION.read), PermissionScope.All);
   addGrant(grants, AppPermission.UsersCreate, permissions.has(USER_PERMISSION.create), PermissionScope.All);
