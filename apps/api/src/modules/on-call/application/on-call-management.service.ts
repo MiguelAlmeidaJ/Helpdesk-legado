@@ -148,7 +148,7 @@ export class OnCallManagementService {
     }
 
     await this.database.$executeRawUnsafe(
-      `UPDATE on_call_settings
+      `UPDATE business_calendar_settings
        SET business_start = ?, business_end = ?, updated_at = NOW()
        WHERE id = 1`,
       `${input.businessStart}:00`,
@@ -167,7 +167,7 @@ export class OnCallManagementService {
     }
 
     await this.database.$executeRawUnsafe(
-      `INSERT INTO on_call_holidays (holiday_date, name, created_at)
+      `INSERT INTO business_holidays (holiday_date, name, created_at)
        VALUES (?, ?, NOW())
        ON DUPLICATE KEY UPDATE name = VALUES(name)`,
       input.date,
@@ -177,7 +177,7 @@ export class OnCallManagementService {
 
   async deleteHoliday(id: number): Promise<void> {
     const changed = await this.database.$executeRawUnsafe(
-      'DELETE FROM on_call_holidays WHERE id = ?',
+      'DELETE FROM business_holidays WHERE id = ?',
       id,
     );
     if (!changed) throw new NotFoundException('Feriado não encontrado.');
@@ -195,7 +195,7 @@ export class OnCallManagementService {
       `SELECT
          DATE_FORMAT(business_start, '%H:%i') AS business_start,
          DATE_FORMAT(business_end, '%H:%i') AS business_end
-       FROM on_call_settings
+       FROM business_calendar_settings
        WHERE id = 1
        LIMIT 1`,
     );
@@ -225,7 +225,7 @@ export class OnCallManagementService {
          id,
          DATE_FORMAT(holiday_date, '%Y-%m-%d') AS holiday_date,
          name
-       FROM on_call_holidays
+       FROM business_holidays
        ORDER BY holiday_date ASC
        LIMIT 300`,
     );
@@ -286,7 +286,7 @@ export class OnCallManagementService {
 
     const holidayRows = await this.database.$queryRawUnsafe<Array<{ name: string }>>(
       `SELECT name
-       FROM on_call_holidays
+       FROM business_holidays
        WHERE holiday_date = CURDATE()
        LIMIT 1`,
     );

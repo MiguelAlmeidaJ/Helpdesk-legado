@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  AppPermission,
   USER_ROLE_LABELS,
   type CurrentUserResponse,
 } from '@helpdesk/contracts';
@@ -27,6 +28,18 @@ export function SessionUserMenu({ user }: { user: CurrentUserResponse }) {
   const [error, setError] = useState<string | null>(null);
 
   const roleLabel = useMemo(() => {
+    const onCallTi = user.grants.some(
+      (grant) => grant.permission === AppPermission.OnCallTi,
+    );
+    const onCallDevOps = user.grants.some(
+      (grant) => grant.permission === AppPermission.OnCallDevOps,
+    );
+
+    if (onCallTi || onCallDevOps) {
+      if (onCallTi && onCallDevOps) return 'Plantão TI + DevOps ativo';
+      return onCallDevOps ? 'Plantão DevOps ativo' : 'Plantão TI ativo';
+    }
+
     const labels = Array.from(
       new Set(
         user.roleAssignments.map(
@@ -42,7 +55,7 @@ export function SessionUserMenu({ user }: { user: CurrentUserResponse }) {
     return user.accessSource === 'legacy'
       ? 'Permissões legadas'
       : 'Acesso personalizado';
-  }, [user.accessSource, user.roleAssignments]);
+  }, [user.accessSource, user.grants, user.roleAssignments]);
 
   async function logout() {
     setLoggingOut(true);

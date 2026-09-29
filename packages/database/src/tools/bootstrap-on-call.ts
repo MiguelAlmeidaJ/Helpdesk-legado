@@ -5,7 +5,7 @@ import { createNivel3Client } from '../index';
 config({ path: path.resolve(process.cwd(), '../../.env') });
 
 const CREATE_SETTINGS = `
-CREATE TABLE IF NOT EXISTS on_call_settings (
+CREATE TABLE IF NOT EXISTS business_calendar_settings (
   id TINYINT UNSIGNED NOT NULL,
   business_start TIME NOT NULL DEFAULT '07:00:00',
   business_end TIME NOT NULL DEFAULT '19:00:00',
@@ -36,7 +36,7 @@ CREATE TABLE IF NOT EXISTS on_call_schedules (
 `;
 
 const CREATE_HOLIDAYS = `
-CREATE TABLE IF NOT EXISTS on_call_holidays (
+CREATE TABLE IF NOT EXISTS business_holidays (
   id INT UNSIGNED NOT NULL AUTO_INCREMENT,
   holiday_date DATE NOT NULL,
   name VARCHAR(120) NOT NULL,
@@ -55,7 +55,7 @@ async function main() {
     await db.$executeRawUnsafe(CREATE_HOLIDAYS);
 
     await db.$executeRawUnsafe(
-      `INSERT INTO on_call_settings (id, business_start, business_end)
+      `INSERT INTO business_calendar_settings (id, business_start, business_end)
        VALUES (1, '07:00:00', '19:00:00')
        ON DUPLICATE KEY UPDATE id = VALUES(id)`,
     );
@@ -98,9 +98,9 @@ async function main() {
     );
 
     console.log('Estrutura de plantão criada/verificada.');
-    console.log('  on_call_settings: OK (07:00 - 19:00)');
+    console.log('  business_calendar_settings: OK (07:00 - 19:00)');
     console.log('  on_call_schedules: OK');
-    console.log('  on_call_holidays: OK');
+    console.log('  business_holidays: OK');
     console.log('  perfil Plantonista: OK');
   } finally {
     await db.$disconnect();

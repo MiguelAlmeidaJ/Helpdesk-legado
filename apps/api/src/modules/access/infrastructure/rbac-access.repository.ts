@@ -110,7 +110,7 @@ export class RbacAccessRepository {
            r.slug AS role_slug,
            p.slug AS permission_slug
          FROM on_call_schedules s
-         INNER JOIN on_call_settings cfg ON cfg.id = 1
+         INNER JOIN business_calendar_settings cfg ON cfg.id = 1
          INNER JOIN roles r ON r.slug = 'plantonista'
          LEFT JOIN role_permissions rp ON rp.role_id = r.id
          LEFT JOIN permissions p ON p.id = rp.permission_id
@@ -126,7 +126,7 @@ export class RbacAccessRepository {
              WEEKDAY(CURDATE()) IN (5, 6)
              OR EXISTS (
                SELECT 1
-               FROM on_call_holidays h
+               FROM business_holidays h
                WHERE h.holiday_date = CURDATE()
              )
              OR TIME(NOW()) >= cfg.business_end
