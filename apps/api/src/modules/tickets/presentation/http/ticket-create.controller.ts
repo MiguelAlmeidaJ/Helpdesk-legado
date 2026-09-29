@@ -31,6 +31,19 @@ function localDateTime(value: unknown, field: string): string {
   return normalized;
 }
 
+function optionalText(value: unknown, field: string, maxLength: number): string | null {
+  if (value === undefined || value === null || value === '') return null;
+  if (typeof value !== 'string') {
+    throw new BadRequestException(`${field} deve ser texto.`);
+  }
+  const normalized = value.trim();
+  if (!normalized) return null;
+  if (normalized.length > maxLength) {
+    throw new BadRequestException(`${field} deve ter no máximo ${maxLength} caracteres.`);
+  }
+  return normalized;
+}
+
 function parseRequest(body: unknown): CreateTicketRequest {
   if (!body || typeof body !== 'object' || Array.isArray(body)) throw new BadRequestException('Corpo da requisição inválido.');
   const value = body as Record<string, unknown>;
@@ -66,6 +79,7 @@ function parseRequest(body: unknown): CreateTicketRequest {
     priorityId: catalogId(value.priorityId, 'priorityId', CREATE_TICKET_PRIORITIES),
     formId: catalogId(value.formId, 'formId', CREATE_TICKET_FORMS),
     openingDescription,
+    machineName: optionalText(value.machineName, 'machineName', 255),
     openingAt,
     technicianId: integer(value.technicianId, 'technicianId', true),
     recurrence,

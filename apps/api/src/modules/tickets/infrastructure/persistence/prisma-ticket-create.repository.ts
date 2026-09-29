@@ -212,11 +212,11 @@ export class PrismaTicketCreateRepository extends TicketCreateRepository {
       await transaction.$executeRawUnsafe(
         `INSERT INTO atendimentos (
            cliente, pessoa, \`local\`, tipo, categoria, subcategoria, item, nivel,
-           forma, desc_abertura, abertura, tecnico, reincidente, status, recorrente,
+           forma, desc_abertura, nome_maquina, abertura, tecnico, reincidente, status, recorrente,
            data_recorrencia, vezes_reabrir, vezes, semana, prioridade
          )
          VALUES (
-           ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+           ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
            CAST(REPLACE(?, 'T', ' ') AS DATETIME),
            ?, ?, ?, ?,
            CASE
@@ -227,7 +227,8 @@ export class PrismaTicketCreateRepository extends TicketCreateRepository {
          )`,
         input.clientId, input.requesterId, input.locationId, input.typeId,
         input.categoryId, input.subcategoryId, input.itemId, input.levelId,
-        input.formId, input.openingDescription, input.openingAt, input.technicianId,
+        input.formId, input.openingDescription, input.machineName ?? null,
+        input.openingAt, input.technicianId,
         Number(recent[0]?.total ?? 0) > 0 ? 1 : 0, status, recurrence ? 2 : 1,
         recurrence?.recurrenceAt ?? null,
         recurrence?.recurrenceAt ?? null,

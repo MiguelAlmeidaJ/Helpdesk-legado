@@ -35,6 +35,7 @@ interface TicketDetailRow {
   fechamento: Date | string | null;
   desc_abertura: string | null;
   desc_fechamento: string | null;
+  nome_maquina: string | null;
   cliente_id: number;
   cliente_razao: string | null;
   cliente_fantasia: string | null;
@@ -208,6 +209,7 @@ export class PrismaTicketDetailRepository extends TicketDetailRepository {
          a.fechamento,
          a.desc_abertura,
          a.desc_fechamento,
+         a.nome_maquina,
          c.clt_id AS cliente_id,
          c.clt_nomer AS cliente_razao,
          c.clt_nomef AS cliente_fantasia,
@@ -273,6 +275,7 @@ export class PrismaTicketDetailRepository extends TicketDetailRepository {
       closedAt: toIsoString(row.fechamento),
       openingDescription: row.desc_abertura,
       closingDescription: row.desc_fechamento,
+      machineName: row.nome_maquina,
       client: {
         id: row.cliente_id,
         legalName: row.cliente_razao,
