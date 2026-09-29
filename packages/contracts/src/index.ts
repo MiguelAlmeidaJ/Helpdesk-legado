@@ -47,3 +47,4 @@ export * from './registrations/registration';
 export * from './reports/ticket-breakdown';
 export * from './logistics/finance';
 export * from './maintenance/maintenance';
+export * from './notifications/notification';

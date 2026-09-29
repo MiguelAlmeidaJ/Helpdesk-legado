@@ -17,6 +17,7 @@
     "navigation:bootstrap": "pnpm --filter @helpdesk/database navigation:bootstrap",
     "users:bootstrap": "pnpm --filter @helpdesk/database users:bootstrap",
     "tickets:bootstrap": "pnpm --filter @helpdesk/database tickets:bootstrap",
+    "notifications:bootstrap": "pnpm --filter @helpdesk/database notifications:bootstrap",
     "legacy:audit": "node scripts/audit-legacy-php.mjs",
     "legacy:assets:audit": "node scripts/audit-assets-legacy.mjs",
     "legacy:assets:verify": "pnpm legacy:assets:audit && pnpm legacy:audit && pnpm typecheck && pnpm build",
