@@ -6,12 +6,11 @@ import type { FormEvent } from 'react';
 import { useEffect, useMemo, useState } from 'react';
 import { ApiError } from '../../../shared/api/api-client';
 import { AppPageHeader } from '../../../shared/navigation/app-page-header';
+import { appButtonClass } from '../../../shared/ui/button-styles';
 import { createUser, deactivateUser, fetchUser, fetchUserCatalogs, fetchUsers, updateUser } from '../api/users-api';
-const BUTTON_CLASS =
-  'inline-flex min-h-10 items-center justify-center gap-2 rounded-[9px] border border-app-border-strong bg-app-surface px-4 font-bold text-app-text-soft no-underline transition hover:bg-app-surface-hover focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-[var(--app-brand-ring)] disabled:cursor-not-allowed disabled:opacity-50';
 
-const PRIMARY_BUTTON_CLASS =
-  `${BUTTON_CLASS} border-app-brand bg-app-brand text-white hover:bg-app-brand-hover dark:text-slate-950`;
+const BUTTON_CLASS = appButtonClass('secondary');
+const PRIMARY_BUTTON_CLASS = appButtonClass('primary');
 
 const FORM_CONTROL_CLASS =
   '[&_input]:min-h-10 [&_input]:w-full [&_input]:rounded-lg [&_input]:border [&_input]:border-app-border-strong [&_input]:bg-app-surface [&_input]:px-2.5 [&_input]:text-app-text [&_input]:outline-none [&_input]:transition [&_select]:min-h-10 [&_select]:w-full [&_select]:rounded-lg [&_select]:border [&_select]:border-app-border-strong [&_select]:bg-app-surface [&_select]:px-2.5 [&_select]:text-app-text [&_select]:outline-none [&_select]:transition [&_textarea]:min-h-24 [&_textarea]:w-full [&_textarea]:resize-y [&_textarea]:rounded-lg [&_textarea]:border [&_textarea]:border-app-border-strong [&_textarea]:bg-app-surface [&_textarea]:p-2.5 [&_textarea]:text-app-text [&_textarea]:outline-none [&_textarea]:transition [&_input:focus]:border-app-brand [&_input:focus]:ring-3 [&_input:focus]:ring-[var(--app-brand-ring)] [&_select:focus]:border-app-brand [&_select:focus]:ring-3 [&_select:focus]:ring-[var(--app-brand-ring)] [&_textarea:focus]:border-app-brand [&_textarea:focus]:ring-3 [&_textarea:focus]:ring-[var(--app-brand-ring)] [&_input:disabled]:cursor-not-allowed [&_input:disabled]:opacity-55 [&_select:disabled]:cursor-not-allowed [&_select:disabled]:opacity-55 [&_textarea:disabled]:cursor-not-allowed [&_textarea:disabled]:opacity-55';

@@ -14,13 +14,12 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ApiError } from '../../../shared/api/api-client';
 import { AppPageHeader } from '../../../shared/navigation/app-page-header';
 import { NavigationIcon } from '../../../shared/navigation/navigation-icon';
+import { appButtonClass } from '../../../shared/ui/button-styles';
 import { getExpenseAdminDashboard } from '../api/expense-admin-dashboard-api';
 import { fetchFinanceView } from '../api/finance-api';
 
-const BUTTON =
-  'inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-app-border-strong bg-app-surface px-4 text-sm font-bold text-app-text-soft no-underline transition hover:bg-app-surface-hover';
-const PRIMARY =
-  'inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-app-brand bg-app-brand px-4 text-sm font-bold text-app-brand-contrast no-underline transition hover:bg-app-brand-hover';
+const BUTTON = appButtonClass('secondary');
+const PRIMARY = appButtonClass('primary');
 const INPUT =
   'min-h-10 rounded-lg border border-app-border-strong bg-app-surface px-3 text-sm text-app-text outline-none focus:border-app-brand focus:ring-3 focus:ring-[var(--app-brand-ring)]';
 

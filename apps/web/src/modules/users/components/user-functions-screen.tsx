@@ -5,6 +5,7 @@ import type { FormEvent } from 'react';
 import { useEffect, useState } from 'react';
 import { ApiError } from '../../../shared/api/api-client';
 import { AppPageHeader } from '../../../shared/navigation/app-page-header';
+import { appButtonClass } from '../../../shared/ui/button-styles';
 import {
   createUserFunction,
   deleteUserFunction,
@@ -12,10 +13,8 @@ import {
   updateUserFunction,
 } from '../api/user-functions-api';
 
-const BUTTON =
-  'inline-flex min-h-10 items-center justify-center rounded-[9px] border border-app-border-strong bg-app-surface px-4 font-bold text-app-text transition hover:bg-app-surface-hover disabled:cursor-not-allowed disabled:opacity-50';
-const PRIMARY =
-  `${BUTTON} border-app-brand bg-app-brand text-app-brand-contrast hover:bg-app-brand-hover`;
+const BUTTON = appButtonClass('secondary');
+const PRIMARY = appButtonClass('primary');
 
 const styles = {
   page: 'min-h-screen bg-app-bg text-app-text',

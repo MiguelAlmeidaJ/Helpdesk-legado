@@ -19,6 +19,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { ApiError } from '../../../shared/api/api-client';
 import { AppPageHeader } from '../../../shared/navigation/app-page-header';
 import { NavigationIcon } from '../../../shared/navigation/navigation-icon';
+import { appButtonClass } from '../../../shared/ui/button-styles';
 import {
   createNavigationItem,
   createNavigationSection,
@@ -98,10 +99,8 @@ const ICON_LABELS: Record<NavigationIconName, string> = {
   grid: 'Grade',
 };
 
-const BUTTON_CLASS =
-  'inline-flex min-h-10 items-center justify-center gap-2 rounded-[9px] border border-app-border-strong bg-app-surface px-4 font-bold text-app-text-soft no-underline transition-colors hover:bg-app-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-app-brand disabled:cursor-not-allowed disabled:opacity-50';
-const PRIMARY_BUTTON_CLASS =
-  'inline-flex min-h-10 items-center justify-center gap-2 rounded-[9px] border border-app-brand bg-app-brand px-4 font-bold text-white no-underline transition-colors hover:bg-app-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-app-brand disabled:cursor-not-allowed disabled:opacity-50';
+const BUTTON_CLASS = appButtonClass('secondary');
+const PRIMARY_BUTTON_CLASS = appButtonClass('primary');
 const CARD_CLASS =
   'rounded-2xl border border-app-border bg-app-surface p-[18px] shadow-sm';
 const CARD_TITLE_CLASS =

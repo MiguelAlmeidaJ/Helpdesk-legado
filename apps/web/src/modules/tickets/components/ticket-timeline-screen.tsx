@@ -12,12 +12,11 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ApiError } from '../../../shared/api/api-client';
 import { AppPageHeader } from '../../../shared/navigation/app-page-header';
 import { NavigationIcon } from '../../../shared/navigation/navigation-icon';
+import { appButtonClass } from '../../../shared/ui/button-styles';
 import { fetchTicketTimeline } from '../api/tickets-api';
 
-const BUTTON =
-  'inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-app-border-strong bg-app-surface px-4 text-sm font-bold text-app-text-soft transition hover:bg-app-surface-hover disabled:cursor-not-allowed disabled:opacity-50';
-const PRIMARY_BUTTON =
-  'inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-app-brand bg-app-brand px-4 text-sm font-bold text-app-brand-contrast transition hover:bg-app-brand-hover disabled:cursor-not-allowed disabled:opacity-50';
+const BUTTON = appButtonClass('secondary');
+const PRIMARY_BUTTON = appButtonClass('primary');
 const CONTROL =
   'min-h-10 w-full rounded-lg border border-app-border-strong bg-app-surface px-3 text-sm text-app-text outline-none transition focus:border-app-brand focus:ring-3 focus:ring-[var(--app-brand-ring)]';
 
