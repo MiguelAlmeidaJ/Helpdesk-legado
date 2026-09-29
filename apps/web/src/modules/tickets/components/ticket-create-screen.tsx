@@ -421,7 +421,7 @@ export function TicketCreateScreen({
               />
             </label>
             <label className={FIELD_LABEL_CLASS}>
-              Nome da máquina <span className="font-medium text-app-subtle">(opcional)</span>
+              <span>Nome da máquina <span className="font-medium text-app-subtle">(opcional)</span></span>
               <input
                 className={FIELD_CONTROL_CLASS}
                 disabled={saving}
