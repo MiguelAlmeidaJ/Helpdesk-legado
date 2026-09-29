@@ -11,6 +11,7 @@ import type { FormEvent } from 'react';
 import { useEffect, useState } from 'react';
 import { ApiError } from '../../../shared/api/api-client';
 import { AppPageHeader } from '../../../shared/navigation/app-page-header';
+import { appButtonClass } from '../../../shared/ui/button-styles';
 import {
   createTicket,
   fetchTicketCreateCatalogs,
@@ -20,13 +21,12 @@ import {
   fetchTicketRequesters,
 } from '../api/tickets-api';
 
-const BUTTON_CLASS =
-  'inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-app-border-strong bg-app-surface px-4 text-sm font-bold text-app-text-soft no-underline transition-colors hover:bg-app-surface-hover disabled:cursor-not-allowed disabled:opacity-50';
-const PRIMARY_BUTTON_CLASS = `${BUTTON_CLASS} border-app-brand bg-app-brand text-white hover:bg-app-brand-hover dark:text-slate-950`;
-const FIELD_LABEL_CLASS = 'grid min-w-0 gap-1.5 text-xs font-extrabold text-app-muted';
+const BUTTON_CLASS = appButtonClass('secondary');
+const PRIMARY_BUTTON_CLASS = appButtonClass('primary');
+const FIELD_LABEL_CLASS = 'grid min-w-0 gap-1 text-[11px] font-extrabold text-app-muted';
 const FIELD_CONTROL_CLASS =
-  'min-h-10 w-full min-w-0 rounded-lg border border-app-border-strong bg-app-surface px-3 text-sm text-app-text outline-none transition focus:border-app-brand focus:ring-3 focus:ring-[var(--app-brand-ring)] disabled:cursor-not-allowed disabled:opacity-55';
-const TEXTAREA_CLASS = `${FIELD_CONTROL_CLASS} resize-y py-2.5`;
+  'min-h-9 w-full min-w-0 rounded-lg border border-app-border-strong bg-app-surface px-3 text-sm text-app-text outline-none transition focus:border-app-brand focus:ring-3 focus:ring-[var(--app-brand-ring)] disabled:cursor-not-allowed disabled:opacity-55';
+const TEXTAREA_CLASS = `${FIELD_CONTROL_CLASS} resize-y py-2`;
 
 function localDateTime(): string {
   const now = new Date(Date.now() - new Date().getTimezoneOffset() * 60_000);
@@ -75,6 +75,7 @@ export function TicketCreateScreen({
   const [formId, setFormId] = useState('1');
   const [technicianId, setTechnicianId] = useState('0');
   const [openingAt, setOpeningAt] = useState(localDateTime);
+  const [machineName, setMachineName] = useState('');
   const [description, setDescription] = useState('');
   const [recurring, setRecurring] = useState(false);
   const [recurrenceAt, setRecurrenceAt] = useState('');
@@ -162,6 +163,7 @@ export function TicketCreateScreen({
     setFormId('1');
     setTechnicianId('0');
     setOpeningAt(localDateTime());
+    setMachineName('');
     setDescription('');
     setRecurring(false);
     setRecurrenceAt('');
@@ -187,6 +189,7 @@ export function TicketCreateScreen({
         priorityId: Number(priorityId),
         formId: Number(formId),
         openingDescription: description,
+        machineName: machineName.trim() || null,
         openingAt,
         technicianId: Number(technicianId),
         recurrence: recurring
@@ -218,7 +221,7 @@ export function TicketCreateScreen({
         user={currentUser}
       />
 
-      <div className="mx-auto w-full max-w-[1400px] px-6 py-6 max-sm:px-3.5">
+      <div className="mx-auto w-full max-w-[1500px] px-6 py-4 max-sm:px-3.5 max-sm:py-3">
 
         {error ? (
           <div
@@ -239,14 +242,14 @@ export function TicketCreateScreen({
         ) : null}
 
         <form
-          className="rounded-2xl border border-app-border bg-app-surface p-5 shadow-sm shadow-slate-950/5 dark:shadow-black/10 max-sm:p-4"
+          className="rounded-2xl border border-app-border bg-app-surface p-4 shadow-sm shadow-slate-950/5 dark:shadow-black/10 max-sm:p-3.5"
           onSubmit={submit}
         >
-          <div className="mb-5 flex flex-wrap items-center justify-between gap-3 border-b border-app-border-soft pb-4">
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-3 border-b border-app-border-soft pb-3">
             <div>
               <strong className="block text-sm text-app-text">Dados do atendimento</strong>
-              <p className="m-0 mt-1 text-xs text-app-muted">
-                Cliente, solicitante, local, categoria e descrição são essenciais para concluir o cadastro.
+              <p className="m-0 mt-0.5 text-[11px] text-app-muted">
+                Preencha os dados essenciais e cadastre o atendimento.
               </p>
             </div>
             <span
@@ -261,10 +264,9 @@ export function TicketCreateScreen({
             </span>
           </div>
 
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
-            <div className="sm:col-span-2 xl:col-span-3">
-              <h2 className="m-0 text-sm font-extrabold text-app-text-soft">Solicitação</h2>
-              <p className="m-0 mt-1 text-xs text-app-muted">Quem solicitou e onde o atendimento será realizado.</p>
+          <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="border-b border-app-border-soft pb-1 sm:col-span-2 xl:col-span-4">
+              <h2 className="m-0 text-xs font-extrabold uppercase tracking-[0.04em] text-app-text-soft">Solicitação</h2>
             </div>
             <label className={FIELD_LABEL_CLASS}>
               Cliente
@@ -305,9 +307,8 @@ export function TicketCreateScreen({
                 <Options values={locations} />
               </select>
             </label>
-            <div className="mt-2 border-t border-app-border-soft pt-4 sm:col-span-2 xl:col-span-3">
-              <h2 className="m-0 text-sm font-extrabold text-app-text-soft">Classificação</h2>
-              <p className="m-0 mt-1 text-xs text-app-muted">Defina o tipo, categoria, nível e prioridade da solicitação.</p>
+            <div className="mt-1 border-b border-app-border-soft pb-1 sm:col-span-2 xl:col-span-4">
+              <h2 className="m-0 text-xs font-extrabold uppercase tracking-[0.04em] text-app-text-soft">Classificação e execução</h2>
             </div>
             <label className={FIELD_LABEL_CLASS}>
               Tipo
@@ -384,10 +385,6 @@ export function TicketCreateScreen({
                 <Options values={createCatalogs?.priorities ?? []} />
               </select>
             </label>
-            <div className="mt-2 border-t border-app-border-soft pt-4 sm:col-span-2 xl:col-span-3">
-              <h2 className="m-0 text-sm font-extrabold text-app-text-soft">Execução</h2>
-              <p className="m-0 mt-1 text-xs text-app-muted">Escolha a forma, o técnico responsável e a data de abertura.</p>
-            </div>
             <label className={FIELD_LABEL_CLASS}>
               Forma
               <select
@@ -423,7 +420,19 @@ export function TicketCreateScreen({
                 value={openingAt}
               />
             </label>
-            <label className={`${FIELD_LABEL_CLASS} sm:col-span-2 xl:col-span-3`}>
+            <label className={FIELD_LABEL_CLASS}>
+              Nome da máquina <span className="font-medium text-app-subtle">(opcional)</span>
+              <input
+                className={FIELD_CONTROL_CLASS}
+                disabled={saving}
+                maxLength={255}
+                onChange={(event) => setMachineName(event.target.value)}
+                placeholder="Ex.: NTB-FIN-01"
+                type="text"
+                value={machineName}
+              />
+            </label>
+            <label className={`${FIELD_LABEL_CLASS} sm:col-span-2 xl:col-span-2`}>
               <span className="flex items-center justify-between gap-3">
                 <span>Descrição de abertura</span>
                 <small className="font-medium text-app-subtle">{description.length}/10000</small>
@@ -434,13 +443,13 @@ export function TicketCreateScreen({
                 maxLength={10000}
                 onChange={(event) => setDescription(event.target.value)}
                 required
-                rows={5}
+                rows={3}
                 value={description}
               />
             </label>
           </div>
 
-          <fieldset className="mt-5 rounded-xl border border-app-border bg-app-surface-muted p-4">
+          <fieldset className="mt-3 rounded-xl border border-app-border bg-app-surface-muted px-3.5 py-2.5">
             <legend className="px-1 text-sm font-extrabold text-app-text-soft">
               <label className="flex cursor-pointer items-center gap-2">
                 <input
@@ -454,7 +463,7 @@ export function TicketCreateScreen({
               </label>
             </legend>
             {recurring ? (
-              <div className="grid grid-cols-1 gap-3 pt-1 sm:grid-cols-2 xl:grid-cols-3">
+              <div className="grid grid-cols-1 gap-2.5 pt-1 sm:grid-cols-2 xl:grid-cols-3">
                 <label className={FIELD_LABEL_CLASS}>
                   Primeira reabertura
                   <input
@@ -494,7 +503,7 @@ export function TicketCreateScreen({
             ) : null}
           </fieldset>
 
-          <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-app-border-soft pt-4">
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-3 border-t border-app-border-soft pt-3">
             <p className="m-0 text-xs text-app-muted">
               Revise os dados antes de salvar. Após o cadastro, o atendimento será aberto no detalhe.
             </p>
