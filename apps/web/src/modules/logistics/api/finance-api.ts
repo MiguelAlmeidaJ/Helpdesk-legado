@@ -1,6 +1,9 @@
 import type {
   FinanceCatalogsResponse,
   FinanceListResponse,
+  FinanceMasterDataKey,
+  FinanceMasterDataResponse,
+  FinanceMasterDataWriteInput,
   FinancePaymentInput,
   FinancePayableWriteInput,
   FinanceReceiptInput,
@@ -110,5 +113,58 @@ export async function updateRecurringFinance(
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(input),
+  });
+}
+
+
+export function fetchFinanceMasterData(
+  signal?: AbortSignal,
+): Promise<FinanceMasterDataResponse> {
+  return apiRequest<FinanceMasterDataResponse>('logistics/finance/master-data/all', {
+    signal,
+  });
+}
+
+export function createFinanceMasterData(
+  resource: FinanceMasterDataKey,
+  input: FinanceMasterDataWriteInput,
+): Promise<{ id: number }> {
+  return apiRequest<{ id: number }>(`logistics/finance/master-data/${resource}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(input),
+  });
+}
+
+export async function updateFinanceMasterData(
+  resource: FinanceMasterDataKey,
+  id: number,
+  input: FinanceMasterDataWriteInput,
+): Promise<void> {
+  await apiRequest(`logistics/finance/master-data/${resource}/${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(input),
+  });
+}
+
+export async function setFinanceMasterDataStatus(
+  resource: FinanceMasterDataKey,
+  id: number,
+  active: boolean,
+): Promise<void> {
+  await apiRequest(`logistics/finance/master-data/${resource}/${id}/status`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ active }),
+  });
+}
+
+export async function deleteFinanceMasterData(
+  resource: FinanceMasterDataKey,
+  id: number,
+): Promise<void> {
+  await apiRequest(`logistics/finance/master-data/${resource}/${id}`, {
+    method: 'DELETE',
   });
 }
