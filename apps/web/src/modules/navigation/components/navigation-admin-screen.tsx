@@ -14,8 +14,8 @@ import {
   type NavigationVisibilityCondition,
 } from '@helpdesk/contracts';
 import Link from 'next/link';
-import type { ChangeEvent, FormEvent } from 'react';
-import { useEffect, useMemo, useState } from 'react';
+import type { FormEvent } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ApiError } from '../../../shared/api/api-client';
 import { AppPageHeader } from '../../../shared/navigation/app-page-header';
 import { NavigationIcon } from '../../../shared/navigation/navigation-icon';
@@ -66,7 +66,7 @@ const EMPTY_ITEM: ItemForm = {
   label: '',
   icon: '',
   href: '',
-  status: 'planned',
+  status: 'available',
   sortOrder: '0',
   active: true,
   anyPermissions: [],
@@ -76,6 +76,7 @@ const EMPTY_ITEM: ItemForm = {
 
 const PERMISSION_OPTIONS = Object.values(AppPermission).sort();
 const ROLE_OPTIONS = Object.values(UserRole).sort();
+
 const ICON_LABELS: Record<NavigationIconName, string> = {
   home: 'Início',
   headset: 'Atendimento',
@@ -85,13 +86,13 @@ const ICON_LABELS: Record<NavigationIconName, string> = {
   chart: 'Relatórios / Gráfico',
   database: 'Cadastros / Banco',
   radio: 'Rádio',
-  wallet: 'Carteira / Financeiro',
+  wallet: 'Financeiro',
   settings: 'Configurações',
   shield: 'Segurança',
   users: 'Usuários',
   menu: 'Menu',
   wrench: 'Manutenção',
-  clock: 'Relógio / Agenda',
+  clock: 'Agenda',
   file: 'Arquivo',
   folder: 'Pasta',
   building: 'Empresa',
@@ -99,25 +100,37 @@ const ICON_LABELS: Record<NavigationIconName, string> = {
   grid: 'Grade',
 };
 
-const BUTTON_CLASS = appButtonClass('secondary');
-const PRIMARY_BUTTON_CLASS = appButtonClass('primary');
-const CARD_CLASS =
-  'rounded-2xl border border-app-border bg-app-surface p-[18px] shadow-sm';
-const CARD_TITLE_CLASS =
-  'mb-4 flex items-center justify-between gap-3';
-const CARD_KICKER_CLASS = 'text-[0.78rem] text-app-muted';
-const CARD_HEADING_CLASS = 'text-[1.05rem] font-bold';
-const LIST_CLASS = 'grid gap-2';
-const LIST_BUTTON_CLASS =
-  'flex w-full cursor-pointer items-center gap-2.5 rounded-xl border border-app-border bg-app-surface px-3 py-[11px] text-left transition-colors hover:bg-app-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-app-brand data-[active=true]:border-app-muted data-[active=true]:bg-app-surface-muted';
-const FIELD_CLASS =
+const PRIMARY = appButtonClass('primary');
+const SECONDARY = appButtonClass('secondary');
+const FIELD =
   'grid gap-1.5 text-[0.82rem] font-semibold text-app-text-soft';
-const CONTROL_CLASS =
-  'w-full rounded-[10px] border border-app-border-strong bg-app-surface px-[11px] py-2.5 text-app-text outline-none transition-colors focus:border-app-brand focus:ring-2 focus:ring-app-brand disabled:cursor-not-allowed disabled:bg-app-surface-muted disabled:text-app-subtle';
-const MULTI_SELECT_CLASS =
-  'min-h-[150px] w-full rounded-[10px] border border-app-border-strong bg-app-surface px-[11px] py-2.5 text-app-text outline-none transition-colors focus:border-app-brand focus:ring-2 focus:ring-app-brand';
+const CONTROL =
+  'min-h-10 w-full rounded-xl border border-app-border-strong bg-app-surface px-3 py-2 text-sm text-app-text outline-none transition focus:border-app-brand focus:ring-3 focus:ring-[var(--app-brand-ring)] disabled:cursor-not-allowed disabled:bg-app-surface-muted disabled:text-app-subtle';
 
-function fromSection(section: NavigationAdminSection): SectionForm {
+function errorMessage(error: unknown): string {
+  if (error instanceof ApiError) {
+    if (error.status === 403) {
+      return 'Seu usuário não possui permissão para administrar a navegação.';
+    }
+    if (error.status >= 500) {
+      return 'A API de navegação não respondeu corretamente. Verifique o serviço da API e tente novamente.';
+    }
+    if (error.body && typeof error.body === 'object') {
+      const value = (error.body as Record<string, unknown>).message;
+      if (typeof value === 'string') return value;
+      if (Array.isArray(value)) return value.join(' ');
+    }
+    return `A API respondeu com erro ${error.status}.`;
+  }
+  if (error instanceof DOMException && error.name === 'AbortError') {
+    return 'A consulta da navegação demorou demais. Tente novamente.';
+  }
+  return error instanceof Error
+    ? error.message
+    : 'Não foi possível concluir a operação.';
+}
+
+function sectionForm(section: NavigationAdminSection): SectionForm {
   return {
     slug: section.slug,
     label: section.label,
@@ -128,7 +141,7 @@ function fromSection(section: NavigationAdminSection): SectionForm {
   };
 }
 
-function fromItem(item: NavigationAdminItem): ItemForm {
+function itemForm(item: NavigationAdminItem): ItemForm {
   return {
     sectionId: String(item.sectionId),
     slug: item.slug,
@@ -144,22 +157,82 @@ function fromItem(item: NavigationAdminItem): ItemForm {
   };
 }
 
-function errorMessage(error: unknown): string {
-  if (error instanceof ApiError) {
-    if (error.status >= 500) return 'Não foi possível carregar ou salvar a navegação. Tente novamente.';
-    if (error.body && typeof error.body === 'object') {
-      const value = (error.body as Record<string, unknown>).message;
-      if (typeof value === 'string') return value;
-      if (Array.isArray(value)) return value.join(' ');
-    }
-    if (error.status === 403) return 'Somente administradores globais podem alterar o menu.';
-    return `A API respondeu com erro ${error.status}.`;
+function visibility(form: ItemForm): NavigationVisibilityCondition | null {
+  if (
+    !form.anyPermissions.length &&
+    !form.allPermissions.length &&
+    !form.anyRoles.length
+  ) {
+    return null;
   }
-  return error instanceof Error ? error.message : 'Não foi possível concluir a operação.';
+  return {
+    anyPermissions: form.anyPermissions,
+    allPermissions: form.allPermissions,
+    anyRoles: form.anyRoles,
+  };
 }
 
-function selectedValues(event: ChangeEvent<HTMLSelectElement>): string[] {
-  return Array.from(event.currentTarget.selectedOptions, (option) => option.value);
+function toSectionInput(form: SectionForm): NavigationAdminSectionInput {
+  return {
+    slug: form.slug.trim(),
+    label: form.label.trim(),
+    shortLabel: form.shortLabel.trim() || null,
+    icon: (form.icon || null) as NavigationIconName | null,
+    sortOrder: Number(form.sortOrder),
+    active: form.active,
+  };
+}
+
+function toItemInput(form: ItemForm): NavigationAdminItemInput {
+  return {
+    sectionId: Number(form.sectionId),
+    slug: form.slug.trim(),
+    label: form.label.trim(),
+    icon: (form.icon || null) as NavigationIconName | null,
+    href: form.href.trim() || null,
+    status: form.status,
+    visibilityCondition: visibility(form),
+    sortOrder: Number(form.sortOrder),
+    active: form.active,
+  };
+}
+
+function Modal({
+  title,
+  subtitle,
+  children,
+  onClose,
+}: {
+  title: string;
+  subtitle: string;
+  children: React.ReactNode;
+  onClose: () => void;
+}) {
+  return (
+    <div
+      aria-modal="true"
+      className="fixed inset-0 z-[100] grid place-items-center bg-slate-950/55 p-4"
+      role="dialog"
+    >
+      <section className="max-h-[92dvh] w-full max-w-4xl overflow-y-auto rounded-2xl border border-app-border bg-app-surface shadow-2xl">
+        <header className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-app-border bg-app-surface px-5 py-4">
+          <div>
+            <h2 className="m-0 text-lg font-extrabold text-app-text">{title}</h2>
+            <p className="m-0 mt-1 text-sm text-app-muted">{subtitle}</p>
+          </div>
+          <button
+            aria-label="Fechar"
+            className="grid size-9 shrink-0 place-items-center rounded-lg border border-app-border bg-app-surface text-xl text-app-muted hover:bg-app-surface-hover"
+            onClick={onClose}
+            type="button"
+          >
+            ×
+          </button>
+        </header>
+        <div className="p-5">{children}</div>
+      </section>
+    </div>
+  );
 }
 
 function IconPicker({
@@ -176,39 +249,36 @@ function IconPicker({
   return (
     <details className="group rounded-xl border border-app-border bg-app-surface">
       <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 px-3 py-2">
-        <span className="flex min-w-0 items-center gap-3">
-          <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-app-surface-muted text-app-text-soft">
+        <span className="flex items-center gap-3">
+          <span className="grid size-9 place-items-center rounded-lg bg-app-surface-muted text-app-muted">
             <NavigationIcon className="size-5" name={selected} />
           </span>
-          <span className="grid min-w-0">
-            <strong className="truncate text-xs text-app-text">
+          <span className="grid">
+            <strong className="text-xs">
               {selected ? ICON_LABELS[selected] : 'Sem ícone'}
             </strong>
             <small className="text-[11px] text-app-muted">
-              Clique para escolher outro ícone
+              Clique para alterar
             </small>
           </span>
         </span>
         <span className="text-app-muted transition group-open:rotate-180">⌄</span>
       </summary>
-      <div className="grid max-h-[230px] grid-cols-[repeat(auto-fill,minmax(92px,1fr))] gap-2 overflow-y-auto border-t border-app-border-soft p-2">
+      <div className="grid max-h-64 grid-cols-[repeat(auto-fill,minmax(100px,1fr))] gap-2 overflow-y-auto border-t border-app-border-soft p-2">
         <button
           aria-pressed={!value}
-          className="grid min-h-[64px] place-items-center gap-1 rounded-lg border border-app-border bg-app-surface px-2 py-2 text-app-muted transition hover:border-app-brand hover:bg-app-brand-soft aria-pressed:border-app-brand aria-pressed:bg-app-brand-soft aria-pressed:text-app-brand"
+          className="grid min-h-16 place-items-center rounded-lg border border-app-border bg-app-surface p-2 text-xs font-bold text-app-muted hover:bg-app-surface-hover aria-pressed:border-app-brand aria-pressed:bg-app-brand-soft aria-pressed:text-app-brand"
           onClick={() => onChange('')}
           type="button"
         >
-          <span className="text-lg leading-none">—</span>
-          <span className="text-[10px] font-bold">Sem ícone</span>
+          Sem ícone
         </button>
         {NAVIGATION_ICON_NAMES.map((icon) => (
           <button
-            aria-label={ICON_LABELS[icon]}
             aria-pressed={value === icon}
-            className="grid min-h-[64px] place-items-center gap-1 rounded-lg border border-app-border bg-app-surface px-2 py-2 text-app-muted transition hover:border-app-brand hover:bg-app-brand-soft hover:text-app-text aria-pressed:border-app-brand aria-pressed:bg-app-brand-soft aria-pressed:text-app-brand"
+            className="grid min-h-16 place-items-center gap-1 rounded-lg border border-app-border bg-app-surface p-2 text-app-muted hover:bg-app-surface-hover aria-pressed:border-app-brand aria-pressed:bg-app-brand-soft aria-pressed:text-app-brand"
             key={icon}
             onClick={() => onChange(icon)}
-            title={ICON_LABELS[icon]}
             type="button"
           >
             <NavigationIcon className="size-5" name={icon} />
@@ -222,45 +292,66 @@ function IconPicker({
   );
 }
 
-function visibility(form: ItemForm): NavigationVisibilityCondition | null {
-  if (
-    form.anyPermissions.length === 0 &&
-    form.allPermissions.length === 0 &&
-    form.anyRoles.length === 0
-  ) {
-    return null;
-  }
+function MultiChoice({
+  title,
+  values,
+  options,
+  onChange,
+}: {
+  title: string;
+  values: string[];
+  options: string[];
+  onChange: (values: string[]) => void;
+}) {
+  const [query, setQuery] = useState('');
+  const visible = useMemo(() => {
+    const normalized = query.trim().toLocaleLowerCase('pt-BR');
+    if (!normalized) return options;
+    return options.filter((option) =>
+      option.toLocaleLowerCase('pt-BR').includes(normalized),
+    );
+  }, [options, query]);
 
-  return {
-    anyPermissions: form.anyPermissions,
-    allPermissions: form.allPermissions,
-    anyRoles: form.anyRoles,
-  };
-}
-
-function sectionInput(form: SectionForm): NavigationAdminSectionInput {
-  return {
-    slug: form.slug.trim(),
-    label: form.label.trim(),
-    shortLabel: form.shortLabel.trim() || null,
-    icon: (form.icon || null) as NavigationIconName | null,
-    sortOrder: Number(form.sortOrder),
-    active: form.active,
-  };
-}
-
-function itemInput(form: ItemForm): NavigationAdminItemInput {
-  return {
-    sectionId: Number(form.sectionId),
-    slug: form.slug.trim(),
-    label: form.label.trim(),
-    icon: (form.icon || null) as NavigationIconName | null,
-    href: form.href.trim() || null,
-    status: form.status,
-    visibilityCondition: visibility(form),
-    sortOrder: Number(form.sortOrder),
-    active: form.active,
-  };
+  return (
+    <div className="rounded-xl border border-app-border bg-app-surface p-3">
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <strong className="text-xs">{title}</strong>
+        <span className="text-[11px] text-app-muted">{values.length} selecionada(s)</span>
+      </div>
+      <input
+        className={CONTROL}
+        onChange={(event) => setQuery(event.target.value)}
+        placeholder="Buscar…"
+        type="search"
+        value={query}
+      />
+      <div className="mt-2 max-h-52 overflow-y-auto rounded-lg border border-app-border-soft">
+        {visible.map((option) => {
+          const checked = values.includes(option);
+          return (
+            <label
+              className="flex cursor-pointer items-center gap-2 border-b border-app-border-soft px-2.5 py-2 text-xs last:border-b-0 hover:bg-app-surface-hover"
+              key={option}
+            >
+              <input
+                checked={checked}
+                className="size-4 accent-[var(--app-brand)]"
+                onChange={() =>
+                  onChange(
+                    checked
+                      ? values.filter((value) => value !== option)
+                      : [...values, option],
+                  )
+                }
+                type="checkbox"
+              />
+              <span className="min-w-0 break-all">{option}</span>
+            </label>
+          );
+        })}
+      </div>
+    </div>
+  );
 }
 
 export function NavigationAdminScreen({
@@ -270,37 +361,48 @@ export function NavigationAdminScreen({
 }) {
   const [data, setData] = useState<NavigationAdminResponse | null>(null);
   const [selectedSectionId, setSelectedSectionId] = useState<number | null>(null);
-  const [selectedItemId, setSelectedItemId] = useState<number | null>(null);
-  const [sectionForm, setSectionForm] = useState<SectionForm>(EMPTY_SECTION);
-  const [itemForm, setItemForm] = useState<ItemForm>(EMPTY_ITEM);
+  const [sectionSearch, setSectionSearch] = useState('');
+  const [itemSearch, setItemSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const [sectionSearch, setSectionSearch] = useState('');
-  const [itemSearch, setItemSearch] = useState('');
+
+  const [sectionEditorId, setSectionEditorId] = useState<number | null | 'new'>(null);
+  const [itemEditorId, setItemEditorId] = useState<number | null | 'new'>(null);
+  const [sectionEditorForm, setSectionEditorForm] =
+    useState<SectionForm>(EMPTY_SECTION);
+  const [itemEditorForm, setItemEditorForm] = useState<ItemForm>(EMPTY_ITEM);
 
   const selectedSection = useMemo(
     () => data?.sections.find((section) => section.id === selectedSectionId) ?? null,
     [data, selectedSectionId],
   );
-  const selectedItem = useMemo(
-    () =>
-      data?.sections
-        .flatMap((section) => section.items)
-        .find((item) => item.id === selectedItemId) ?? null,
-    [data, selectedItemId],
-  );
+
+  const editingSection =
+    typeof sectionEditorId === 'number'
+      ? data?.sections.find((section) => section.id === sectionEditorId) ?? null
+      : null;
+
+  const editingItem =
+    typeof itemEditorId === 'number'
+      ? data?.sections
+          .flatMap((section) => section.items)
+          .find((item) => item.id === itemEditorId) ?? null
+      : null;
+
   const filteredSections = useMemo(() => {
     const query = sectionSearch.trim().toLocaleLowerCase('pt-BR');
-    if (!query) return data?.sections ?? [];
-    return (data?.sections ?? []).filter((section) =>
+    const sections = data?.sections ?? [];
+    if (!query) return sections;
+    return sections.filter((section) =>
       [section.label, section.slug, section.shortLabel ?? '']
         .join(' ')
         .toLocaleLowerCase('pt-BR')
         .includes(query),
     );
   }, [data, sectionSearch]);
+
   const filteredItems = useMemo(() => {
     const query = itemSearch.trim().toLocaleLowerCase('pt-BR');
     const items = selectedSection?.items ?? [];
@@ -313,7 +415,7 @@ export function NavigationAdminScreen({
     );
   }, [itemSearch, selectedSection]);
 
-  async function load(signal?: AbortSignal): Promise<NavigationAdminResponse | null> {
+  const load = useCallback(async (signal?: AbortSignal) => {
     setLoading(true);
     setError(null);
     try {
@@ -324,87 +426,71 @@ export function NavigationAdminScreen({
           ? current
           : next.sections[0]?.id ?? null,
       );
-      setSelectedItemId((current) =>
-        current && next.sections.some((section) => section.items.some((item) => item.id === current))
-          ? current
-          : null,
-      );
-      return next;
     } catch (reason) {
-      if (reason instanceof Error && reason.name === 'AbortError') return null;
+      if (signal?.aborted) return;
       setError(errorMessage(reason));
-      return null;
     } finally {
       if (!signal?.aborted) setLoading(false);
     }
-  }
-
-  useEffect(() => {
-    const controller = new AbortController();
-    void load(controller.signal);
-    return () => controller.abort();
   }, []);
 
   useEffect(() => {
-    if (selectedSection) setSectionForm(fromSection(selectedSection));
-  }, [selectedSection]);
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), 15000);
+    void load(controller.signal);
+    return () => {
+      window.clearTimeout(timeout);
+      controller.abort();
+    };
+  }, [load]);
 
-  useEffect(() => {
-    if (selectedItem) setItemForm(fromItem(selectedItem));
-  }, [selectedItem]);
-
-  function selectSection(section: NavigationAdminSection) {
-    setSelectedSectionId(section.id);
-    setSelectedItemId(null);
-    setSectionForm(fromSection(section));
-    setError(null);
-    setSuccess(null);
-  }
-
-  function newSection() {
-    setSelectedSectionId(null);
-    setSelectedItemId(null);
-    setSectionForm({
+  function openNewSection() {
+    const lastOrder = data?.sections.at(-1)?.sortOrder ?? -10;
+    setSectionEditorForm({
       ...EMPTY_SECTION,
-      sortOrder: String((data?.sections.at(-1)?.sortOrder ?? -10) + 10),
+      sortOrder: String(lastOrder + 10),
     });
-    setItemForm(EMPTY_ITEM);
+    setSectionEditorId('new');
     setError(null);
-    setSuccess(null);
   }
 
-  function selectItem(item: NavigationAdminItem) {
-    setSelectedSectionId(item.sectionId);
-    setSelectedItemId(item.id);
-    setItemForm(fromItem(item));
+  function openEditSection(section: NavigationAdminSection) {
+    setSectionEditorForm(sectionForm(section));
+    setSectionEditorId(section.id);
     setError(null);
-    setSuccess(null);
   }
 
-  function newItem() {
-    if (!selectedSectionId) return;
-    const items = selectedSection?.items ?? [];
-    setSelectedItemId(null);
-    setItemForm({
+  function openNewItem() {
+    if (!selectedSection) return;
+    setItemEditorForm({
       ...EMPTY_ITEM,
-      sectionId: String(selectedSectionId),
-      sortOrder: String((items.at(-1)?.sortOrder ?? -10) + 10),
+      sectionId: String(selectedSection.id),
+      sortOrder: String((selectedSection.items.at(-1)?.sortOrder ?? -10) + 10),
     });
+    setItemEditorId('new');
     setError(null);
-    setSuccess(null);
+  }
+
+  function openEditItem(item: NavigationAdminItem) {
+    setItemEditorForm(itemForm(item));
+    setItemEditorId(item.id);
+    setError(null);
   }
 
   async function saveSection(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setSaving(true);
     setError(null);
-    setSuccess(null);
     try {
-      const saved = selectedSectionId
-        ? await updateNavigationSection(selectedSectionId, sectionInput(sectionForm))
-        : await createNavigationSection(sectionInput(sectionForm));
+      const saved =
+        sectionEditorId === 'new'
+          ? await createNavigationSection(toSectionInput(sectionEditorForm))
+          : await updateNavigationSection(
+              Number(sectionEditorId),
+              toSectionInput(sectionEditorForm),
+            );
+      setSectionEditorId(null);
       setSelectedSectionId(saved.id);
-      setSelectedItemId(null);
       await load();
       setSuccess('Seção salva com sucesso.');
     } catch (reason) {
@@ -418,15 +504,18 @@ export function NavigationAdminScreen({
     event.preventDefault();
     setSaving(true);
     setError(null);
-    setSuccess(null);
     try {
-      const saved = selectedItemId
-        ? await updateNavigationItem(selectedItemId, itemInput(itemForm))
-        : await createNavigationItem(itemInput(itemForm));
-      setSelectedSectionId(Number(itemForm.sectionId));
-      setSelectedItemId(saved.id);
+      const saved =
+        itemEditorId === 'new'
+          ? await createNavigationItem(toItemInput(itemEditorForm))
+          : await updateNavigationItem(
+              Number(itemEditorId),
+              toItemInput(itemEditorForm),
+            );
+      setSelectedSectionId(Number(itemEditorForm.sectionId));
+      setItemEditorId(null);
       await load();
-      setSuccess('Item salvo com sucesso.');
+      setSuccess(`Item #${saved.id} salvo com sucesso.`);
     } catch (reason) {
       setError(errorMessage(reason));
     } finally {
@@ -435,14 +524,10 @@ export function NavigationAdminScreen({
   }
 
   return (
-    <main className="min-h-screen">
+    <main className="min-h-screen bg-app-bg">
       <AppPageHeader
         actions={
-          <button
-            className={PRIMARY_BUTTON_CLASS}
-            onClick={newSection}
-            type="button"
-          >
+          <button className={PRIMARY} onClick={openNewSection} type="button">
             Nova seção
           </button>
         }
@@ -451,438 +536,501 @@ export function NavigationAdminScreen({
         user={currentUser}
       />
 
-      <div className="mx-auto w-full max-w-[1500px] p-6 max-[760px]:px-3.5">
-
+      <div className="mx-auto w-full max-w-[1500px] p-5 max-sm:px-3">
         {error ? (
-          <div
-            className="mb-4 rounded-[10px] border border-app-danger-border bg-app-danger-soft px-[13px] py-[11px] text-app-danger"
-            role="alert"
-          >
-            {error}
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-app-danger-border bg-app-danger-soft px-4 py-3 text-sm text-app-danger">
+            <span>{error}</span>
+            <button className={SECONDARY} onClick={() => void load()} type="button">
+              Tentar novamente
+            </button>
           </div>
         ) : null}
+
         {success ? (
-          <div
-            className="mb-4 rounded-[10px] border border-app-success bg-app-success-soft px-[13px] py-[11px] text-app-success"
-            role="status"
-          >
+          <div className="mb-4 rounded-xl border border-app-success bg-app-success-soft px-4 py-3 text-sm text-app-success">
             {success}
           </div>
         ) : null}
 
-        <div className="grid grid-cols-[minmax(280px,320px)_minmax(0,1fr)] items-start gap-4 max-[1024px]:grid-cols-1">
-          <section className={`${CARD_CLASS} sticky top-5 max-[960px]:static`}>
-            <div className={CARD_TITLE_CLASS}>
-              <div className="grid gap-0.5">
-                <span className={CARD_KICKER_CLASS}>Estrutura</span>
-                <strong className={CARD_HEADING_CLASS}>Seções</strong>
+        <div className="grid grid-cols-[320px_minmax(0,1fr)] gap-4 max-[980px]:grid-cols-1">
+          <section className="rounded-2xl border border-app-border bg-app-surface p-4 shadow-sm">
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <div>
+                <span className="text-xs text-app-muted">Estrutura</span>
+                <h2 className="m-0 mt-0.5 text-lg font-extrabold">Seções</h2>
               </div>
-              <small className={CARD_KICKER_CLASS}>
-                {data?.sections.length ?? 0} cadastradas
-              </small>
+              <span className="text-xs text-app-muted">
+                {data?.sections.length ?? 0}
+              </span>
             </div>
+
             <input
-              aria-label="Buscar seção"
-              className={`${CONTROL_CLASS} mb-3`}
+              className={CONTROL}
               onChange={(event) => setSectionSearch(event.target.value)}
               placeholder="Buscar seção…"
               type="search"
               value={sectionSearch}
             />
-            {loading && !data ? (
-              <p className="text-sm text-app-muted">Carregando…</p>
-            ) : null}
-            <div className="grid max-h-[calc(100dvh-240px)] gap-2 overflow-y-auto pr-1 max-[1024px]:max-h-none">
-              {filteredSections.map((section) => (
-                <button
-                  aria-pressed={selectedSectionId === section.id}
-                  className={LIST_BUTTON_CLASS}
-                  data-active={selectedSectionId === section.id}
-                  key={section.id}
-                  onClick={() => selectSection(section)}
-                  type="button"
-                >
-                  <span className="grid size-[34px] shrink-0 place-items-center rounded-[9px] bg-app-surface-muted text-app-text-soft">
-                    {section.icon ? <NavigationIcon className="size-[18px]" name={section.icon} /> : <span className="text-[0.76rem] font-bold">{section.shortLabel || '—'}</span>}
-                  </span>
-                  <span className="grid min-w-0 flex-1 gap-[3px]">
-                    <strong>{section.label}</strong>
-                    <small className="[overflow-wrap:anywhere] text-app-muted">
-                      {section.slug} · ordem {section.sortOrder}
-                    </small>
-                  </span>
-                  <em
-                    className="text-[0.72rem] not-italic text-app-muted data-[active=true]:text-app-success"
-                    data-active={section.active}
+
+            {loading ? (
+              <div className="grid gap-2 py-4">
+                {Array.from({ length: 5 }).map((_, index) => (
+                  <div
+                    className="h-16 animate-pulse rounded-xl bg-app-surface-muted"
+                    key={index}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="mt-3 grid max-h-[calc(100dvh-250px)] gap-2 overflow-y-auto pr-1 max-[980px]:max-h-none">
+                {filteredSections.map((section) => (
+                  <button
+                    className={[
+                      'flex w-full items-center gap-3 rounded-xl border px-3 py-3 text-left transition',
+                      selectedSectionId === section.id
+                        ? 'border-app-brand bg-app-brand-soft'
+                        : 'border-app-border bg-app-surface hover:bg-app-surface-hover',
+                    ].join(' ')}
+                    key={section.id}
+                    onClick={() => setSelectedSectionId(section.id)}
+                    type="button"
                   >
-                    {section.active ? 'Ativa' : 'Inativa'}
-                  </em>
-                </button>
-              ))}
-            </div>
+                    <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-app-surface-muted text-app-muted">
+                      <NavigationIcon className="size-5" name={section.icon} />
+                    </span>
+                    <span className="grid min-w-0 flex-1">
+                      <strong className="truncate text-sm">{section.label}</strong>
+                      <small className="truncate text-[11px] text-app-muted">
+                        {section.slug} · ordem {section.sortOrder}
+                      </small>
+                    </span>
+                    <span
+                      className={
+                        section.active
+                          ? 'text-[10px] font-bold text-app-success'
+                          : 'text-[10px] font-bold text-app-muted'
+                      }
+                    >
+                      {section.active ? 'Ativa' : 'Inativa'}
+                    </span>
+                  </button>
+                ))}
+
+                {!filteredSections.length ? (
+                  <p className="py-6 text-center text-sm text-app-muted">
+                    Nenhuma seção encontrada.
+                  </p>
+                ) : null}
+              </div>
+            )}
           </section>
 
-          <div className="grid gap-5">
-            <section className={CARD_CLASS}>
-              <div className={CARD_TITLE_CLASS}>
-                <div className="grid gap-0.5">
-                  <span className={CARD_KICKER_CLASS}>Seção</span>
-                  <strong className={CARD_HEADING_CLASS}>
-                    {selectedSection ? selectedSection.label : 'Nova seção'}
-                  </strong>
-                </div>
-              </div>
-              <form className="grid gap-4" onSubmit={saveSection}>
-                <div className="grid grid-cols-2 gap-3.5 max-[640px]:grid-cols-1">
-                  <label className={FIELD_CLASS}>
-                    <span>Identificador</span>
-                    <input
-                      className={CONTROL_CLASS}
-                      disabled={selectedSectionId !== null}
-                      maxLength={100}
-                      onChange={(event) =>
-                        setSectionForm({ ...sectionForm, slug: event.target.value })
-                      }
-                      pattern="[a-z0-9][a-z0-9-]*"
-                      required
-                      value={sectionForm.slug}
-                    />
-                  </label>
-                  <label className={FIELD_CLASS}>
-                    <span>Nome</span>
-                    <input
-                      className={CONTROL_CLASS}
-                      maxLength={150}
-                      onChange={(event) =>
-                        setSectionForm({ ...sectionForm, label: event.target.value })
-                      }
-                      required
-                      value={sectionForm.label}
-                    />
-                  </label>
-                  <label className={FIELD_CLASS}>
-                    <span>Sigla</span>
-                    <input
-                      className={CONTROL_CLASS}
-                      maxLength={20}
-                      onChange={(event) =>
-                        setSectionForm({
-                          ...sectionForm,
-                          shortLabel: event.target.value,
-                        })
-                      }
-                      value={sectionForm.shortLabel}
-                    />
-                  </label>
-                  <div className={`${FIELD_CLASS} col-span-2 max-[640px]:col-span-1`}>
-                    <span>Ícone da seção</span>
-                    <IconPicker
-                      onChange={(icon) => setSectionForm({ ...sectionForm, icon })}
-                      value={sectionForm.icon}
-                    />
+          <section className="rounded-2xl border border-app-border bg-app-surface p-4 shadow-sm">
+            {selectedSection ? (
+              <>
+                <div className="mb-4 flex flex-wrap items-start justify-between gap-3 border-b border-app-border-soft pb-4">
+                  <div className="flex items-center gap-3">
+                    <span className="grid size-11 place-items-center rounded-xl bg-app-surface-muted text-app-muted">
+                      <NavigationIcon className="size-6" name={selectedSection.icon} />
+                    </span>
+                    <div>
+                      <span className="text-xs text-app-muted">Seção selecionada</span>
+                      <h2 className="m-0 mt-0.5 text-xl font-extrabold">
+                        {selectedSection.label}
+                      </h2>
+                      <p className="m-0 mt-1 text-xs text-app-muted">
+                        {selectedSection.items.length} item(ns) · ordem {selectedSection.sortOrder}
+                      </p>
+                    </div>
                   </div>
-                  <label className={FIELD_CLASS}>
-                    <span>Ordem</span>
-                    <input
-                      className={CONTROL_CLASS}
-                      min={0}
-                      onChange={(event) =>
-                        setSectionForm({
-                          ...sectionForm,
-                          sortOrder: event.target.value,
-                        })
-                      }
-                      required
-                      type="number"
-                      value={sectionForm.sortOrder}
-                    />
-                  </label>
-                </div>
-                <label className="flex items-center gap-[9px] text-[0.82rem] font-semibold text-app-text-soft">
-                  <input
-                    className="h-4 w-4 accent-app-brand"
-                    checked={sectionForm.active}
-                    onChange={(event) =>
-                      setSectionForm({ ...sectionForm, active: event.target.checked })
-                    }
-                    type="checkbox"
-                  />
-                  <span>Seção ativa no menu</span>
-                </label>
-                <div className="flex justify-end">
-                  <button
-                    className={PRIMARY_BUTTON_CLASS}
-                    disabled={saving}
-                    type="submit"
-                  >
-                    {saving ? 'Salvando…' : 'Salvar seção'}
-                  </button>
-                </div>
-              </form>
-            </section>
-
-            <section className={CARD_CLASS}>
-              <div className={CARD_TITLE_CLASS}>
-                <div className="grid gap-0.5">
-                  <span className={CARD_KICKER_CLASS}>Páginas</span>
-                  <strong className={CARD_HEADING_CLASS}>
-                    Itens da seção
-                    {selectedSection ? ` · ${selectedSection.items.length}` : ''}
-                  </strong>
-                </div>
-                <button
-                  className={BUTTON_CLASS}
-                  disabled={!selectedSectionId}
-                  onClick={newItem}
-                  type="button"
-                >
-                  Novo item
-                </button>
-              </div>
-              {!selectedSectionId ? (
-                <p className="text-sm text-app-muted">
-                  Salve ou selecione uma seção para gerenciar seus itens.
-                </p>
-              ) : (
-                <>
-                  <input
-                    aria-label="Buscar item"
-                    className={`${CONTROL_CLASS} mb-3`}
-                    onChange={(event) => setItemSearch(event.target.value)}
-                    placeholder="Buscar página por nome, rota ou identificador…"
-                    type="search"
-                    value={itemSearch}
-                  />
-                  <div className="grid grid-cols-2 gap-2 max-[760px]:grid-cols-1">
-                    {filteredItems.map((item) => (
-                      <button
-                        aria-pressed={selectedItemId === item.id}
-                        className={LIST_BUTTON_CLASS}
-                        data-active={selectedItemId === item.id}
-                        key={item.id}
-                        onClick={() => selectItem(item)}
-                        type="button"
-                      >
-                        <span className="grid min-w-0 flex-1 gap-[3px]">
-                          <strong>{item.label}</strong>
-                          <small className="[overflow-wrap:anywhere] text-app-muted">
-                            {item.href || 'Sem rota'} · ordem {item.sortOrder}
-                          </small>
-                        </span>
-                        <em
-                          className="text-[0.72rem] not-italic text-app-muted data-[active=true]:text-app-success"
-                          data-active={item.active}
-                        >
-                          {item.active ? item.status : 'inativo'}
-                        </em>
-                      </button>
-                    ))}
-                    {selectedSection?.items.length === 0 ? (
-                      <p className="text-sm text-app-muted">Nenhum item nesta seção.</p>
-                    ) : null}
+                  <div className="flex gap-2">
+                    <button
+                      className={SECONDARY}
+                      onClick={() => openEditSection(selectedSection)}
+                      type="button"
+                    >
+                      Editar seção
+                    </button>
+                    <button className={PRIMARY} onClick={openNewItem} type="button">
+                      Novo item
+                    </button>
                   </div>
+                </div>
 
-                  {selectedItemId !== null || itemForm.sectionId ? (
-                    <form className="mt-4 grid gap-4" onSubmit={saveItem}>
-                      <div className="grid grid-cols-2 gap-3.5 max-[640px]:grid-cols-1">
-                        <label className={FIELD_CLASS}>
-                          <span>Seção</span>
-                          <select
-                            className={CONTROL_CLASS}
-                            onChange={(event) =>
-                              setItemForm({
-                                ...itemForm,
-                                sectionId: event.target.value,
-                              })
-                            }
-                            required
-                            value={itemForm.sectionId}
-                          >
-                            {data?.sections.map((section) => (
-                              <option key={section.id} value={section.id}>
-                                {section.label}
-                              </option>
-                            ))}
-                          </select>
-                        </label>
-                        <label className={FIELD_CLASS}>
-                          <span>Identificador</span>
-                          <input
-                            className={CONTROL_CLASS}
-                            disabled={selectedItemId !== null}
-                            maxLength={120}
-                            onChange={(event) =>
-                              setItemForm({ ...itemForm, slug: event.target.value })
-                            }
-                            pattern="[a-z0-9][a-z0-9-]*"
-                            required
-                            value={itemForm.slug}
-                          />
-                        </label>
-                        <label className={FIELD_CLASS}>
-                          <span>Nome</span>
-                          <input
-                            className={CONTROL_CLASS}
-                            maxLength={160}
-                            onChange={(event) =>
-                              setItemForm({ ...itemForm, label: event.target.value })
-                            }
-                            required
-                            value={itemForm.label}
-                          />
-                        </label>
-                        <div className="grid content-center rounded-[10px] border border-app-border bg-app-surface-muted px-3 py-2 text-xs text-app-muted">
-                          Os itens internos não exibem ícone no sidebar.
-                        </div>
-                        <label className={FIELD_CLASS}>
-                          <span>Rota</span>
-                          <input
-                            className={CONTROL_CLASS}
-                            maxLength={500}
-                            onChange={(event) =>
-                              setItemForm({ ...itemForm, href: event.target.value })
-                            }
-                            placeholder="/exemplo"
-                            required={itemForm.status === 'available'}
-                            value={itemForm.href}
-                          />
-                        </label>
-                        <label className={FIELD_CLASS}>
-                          <span>Status</span>
-                          <select
-                            className={CONTROL_CLASS}
-                            onChange={(event) =>
-                              setItemForm({
-                                ...itemForm,
-                                status: event.target.value as 'available' | 'planned',
-                              })
-                            }
-                            value={itemForm.status}
-                          >
-                            <option value="available">Disponível</option>
-                            <option value="planned">Em migração</option>
-                          </select>
-                        </label>
-                        <label className={FIELD_CLASS}>
-                          <span>Ordem</span>
-                          <input
-                            className={CONTROL_CLASS}
-                            min={0}
-                            onChange={(event) =>
-                              setItemForm({
-                                ...itemForm,
-                                sortOrder: event.target.value,
-                              })
-                            }
-                            required
-                            type="number"
-                            value={itemForm.sortOrder}
-                          />
-                        </label>
-                      </div>
+                <input
+                  className={CONTROL}
+                  onChange={(event) => setItemSearch(event.target.value)}
+                  placeholder="Buscar página por nome, rota ou identificador…"
+                  type="search"
+                  value={itemSearch}
+                />
 
-                      <label className="flex items-center gap-[9px] text-[0.82rem] font-semibold text-app-text-soft">
-                        <input
-                          className="h-4 w-4 accent-app-brand"
-                          checked={itemForm.active}
-                          onChange={(event) =>
-                            setItemForm({ ...itemForm, active: event.target.checked })
+                <div className="mt-3 grid grid-cols-2 gap-2 max-[760px]:grid-cols-1">
+                  {filteredItems.map((item) => (
+                    <button
+                      className="grid gap-2 rounded-xl border border-app-border bg-app-surface p-3 text-left transition hover:border-app-border-strong hover:bg-app-surface-hover"
+                      key={item.id}
+                      onClick={() => openEditItem(item)}
+                      type="button"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <strong className="text-sm">{item.label}</strong>
+                        <span
+                          className={
+                            item.active
+                              ? 'text-[10px] font-bold text-app-success'
+                              : 'text-[10px] font-bold text-app-muted'
                           }
-                          type="checkbox"
-                        />
-                        <span>Item ativo no menu</span>
-                      </label>
-
-                      <fieldset className="rounded-xl border border-app-border p-3.5">
-                        <legend className="px-1.5 font-bold">Visibilidade</legend>
-                        <p className="mt-0 mb-3 text-[0.82rem] text-app-muted">
-                          Defina quem enxerga esta página no menu. Em “Qualquer”, uma permissão já libera o item; “Todas” exige o conjunto completo.
-                        </p>
-                        <div className="grid grid-cols-3 gap-3 max-[960px]:grid-cols-1">
-                          <label className={FIELD_CLASS}>
-                            <span>Qualquer permissão</span>
-                            <select
-                              className={MULTI_SELECT_CLASS}
-                              multiple
-                              onChange={(event) =>
-                                setItemForm({
-                                  ...itemForm,
-                                  anyPermissions: selectedValues(event),
-                                })
-                              }
-                              value={itemForm.anyPermissions}
-                            >
-                              {PERMISSION_OPTIONS.map((permission) => (
-                                <option key={permission} value={permission}>
-                                  {permission}
-                                </option>
-                              ))}
-                            </select>
-                          </label>
-                          <label className={FIELD_CLASS}>
-                            <span>Todas as permissões</span>
-                            <select
-                              className={MULTI_SELECT_CLASS}
-                              multiple
-                              onChange={(event) =>
-                                setItemForm({
-                                  ...itemForm,
-                                  allPermissions: selectedValues(event),
-                                })
-                              }
-                              value={itemForm.allPermissions}
-                            >
-                              {PERMISSION_OPTIONS.map((permission) => (
-                                <option key={permission} value={permission}>
-                                  {permission}
-                                </option>
-                              ))}
-                            </select>
-                          </label>
-                          <label className={FIELD_CLASS}>
-                            <span>Qualquer role</span>
-                            <select
-                              className={MULTI_SELECT_CLASS}
-                              multiple
-                              onChange={(event) =>
-                                setItemForm({
-                                  ...itemForm,
-                                  anyRoles: selectedValues(event),
-                                })
-                              }
-                              value={itemForm.anyRoles}
-                            >
-                              {ROLE_OPTIONS.map((role) => (
-                                <option key={role} value={role}>
-                                  {role}
-                                </option>
-                              ))}
-                            </select>
-                          </label>
-                        </div>
-                      </fieldset>
-
-                      <div className="flex justify-end">
-                        <button
-                          className={PRIMARY_BUTTON_CLASS}
-                          disabled={saving}
-                          type="submit"
                         >
-                          {saving ? 'Salvando…' : 'Salvar item'}
-                        </button>
+                          {item.active ? 'Ativo' : 'Inativo'}
+                        </span>
                       </div>
-                    </form>
-                  ) : (
-                    <p className="mt-4 text-sm text-app-muted">
-                      Selecione um item ou clique em “Novo item”.
-                    </p>
-                  )}
-                </>
-              )}
-            </section>
-          </div>
+                      <span className="break-all text-[11px] text-app-muted">
+                        {item.href ?? 'Sem rota'}
+                      </span>
+                      <span className="text-[10px] text-app-subtle">
+                        {item.slug} · ordem {item.sortOrder}
+                      </span>
+                    </button>
+                  ))}
+
+                  {!filteredItems.length ? (
+                    <div className="col-span-full rounded-xl border border-dashed border-app-border px-4 py-10 text-center text-sm text-app-muted">
+                      Nenhum item nesta seção.
+                    </div>
+                  ) : null}
+                </div>
+              </>
+            ) : (
+              <div className="grid min-h-64 place-items-center text-center">
+                <div>
+                  <h2 className="m-0 text-lg font-extrabold">
+                    Selecione uma seção
+                  </h2>
+                  <p className="m-0 mt-2 text-sm text-app-muted">
+                    Os itens e ações de edição aparecerão aqui.
+                  </p>
+                </div>
+              </div>
+            )}
+          </section>
         </div>
       </div>
+
+      {sectionEditorId !== null ? (
+        <Modal
+          onClose={() => setSectionEditorId(null)}
+          subtitle="Defina nome, ordem, status e ícone da seção do menu."
+          title={sectionEditorId === 'new' ? 'Nova seção' : `Editar · ${editingSection?.label ?? 'Seção'}`}
+        >
+          <form className="grid gap-4" onSubmit={saveSection}>
+            <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
+              <label className={FIELD}>
+                Identificador
+                <input
+                  className={CONTROL}
+                  disabled={sectionEditorId !== 'new'}
+                  maxLength={100}
+                  onChange={(event) =>
+                    setSectionEditorForm({
+                      ...sectionEditorForm,
+                      slug: event.target.value,
+                    })
+                  }
+                  pattern="[a-z0-9][a-z0-9-]*"
+                  required
+                  value={sectionEditorForm.slug}
+                />
+              </label>
+              <label className={FIELD}>
+                Nome
+                <input
+                  className={CONTROL}
+                  maxLength={150}
+                  onChange={(event) =>
+                    setSectionEditorForm({
+                      ...sectionEditorForm,
+                      label: event.target.value,
+                    })
+                  }
+                  required
+                  value={sectionEditorForm.label}
+                />
+              </label>
+              <label className={FIELD}>
+                Sigla
+                <input
+                  className={CONTROL}
+                  maxLength={20}
+                  onChange={(event) =>
+                    setSectionEditorForm({
+                      ...sectionEditorForm,
+                      shortLabel: event.target.value,
+                    })
+                  }
+                  value={sectionEditorForm.shortLabel}
+                />
+              </label>
+              <label className={FIELD}>
+                Ordem
+                <input
+                  className={CONTROL}
+                  min={0}
+                  onChange={(event) =>
+                    setSectionEditorForm({
+                      ...sectionEditorForm,
+                      sortOrder: event.target.value,
+                    })
+                  }
+                  required
+                  type="number"
+                  value={sectionEditorForm.sortOrder}
+                />
+              </label>
+            </div>
+
+            <div className={FIELD}>
+              <span>Ícone</span>
+              <IconPicker
+                onChange={(icon) =>
+                  setSectionEditorForm({ ...sectionEditorForm, icon })
+                }
+                value={sectionEditorForm.icon}
+              />
+            </div>
+
+            <label className="flex items-center gap-2 text-sm font-semibold">
+              <input
+                checked={sectionEditorForm.active}
+                className="size-4 accent-[var(--app-brand)]"
+                onChange={(event) =>
+                  setSectionEditorForm({
+                    ...sectionEditorForm,
+                    active: event.target.checked,
+                  })
+                }
+                type="checkbox"
+              />
+              Seção ativa no menu
+            </label>
+
+            <div className="flex justify-end gap-2 border-t border-app-border-soft pt-4">
+              <button
+                className={SECONDARY}
+                disabled={saving}
+                onClick={() => setSectionEditorId(null)}
+                type="button"
+              >
+                Cancelar
+              </button>
+              <button className={PRIMARY} disabled={saving} type="submit">
+                {saving ? 'Salvando…' : 'Salvar seção'}
+              </button>
+            </div>
+          </form>
+        </Modal>
+      ) : null}
+
+      {itemEditorId !== null ? (
+        <Modal
+          onClose={() => setItemEditorId(null)}
+          subtitle="Configure rota, ordem, seção e regras de visibilidade."
+          title={itemEditorId === 'new' ? 'Novo item' : `Editar · ${editingItem?.label ?? 'Item'}`}
+        >
+          <form className="grid gap-4" onSubmit={saveItem}>
+            <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
+              <label className={FIELD}>
+                Seção
+                <select
+                  className={CONTROL}
+                  onChange={(event) =>
+                    setItemEditorForm({
+                      ...itemEditorForm,
+                      sectionId: event.target.value,
+                    })
+                  }
+                  required
+                  value={itemEditorForm.sectionId}
+                >
+                  <option value="">Selecione</option>
+                  {data?.sections.map((section) => (
+                    <option key={section.id} value={section.id}>
+                      {section.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className={FIELD}>
+                Identificador
+                <input
+                  className={CONTROL}
+                  disabled={itemEditorId !== 'new'}
+                  maxLength={120}
+                  onChange={(event) =>
+                    setItemEditorForm({
+                      ...itemEditorForm,
+                      slug: event.target.value,
+                    })
+                  }
+                  pattern="[a-z0-9][a-z0-9-]*"
+                  required
+                  value={itemEditorForm.slug}
+                />
+              </label>
+
+              <label className={FIELD}>
+                Nome
+                <input
+                  className={CONTROL}
+                  maxLength={160}
+                  onChange={(event) =>
+                    setItemEditorForm({
+                      ...itemEditorForm,
+                      label: event.target.value,
+                    })
+                  }
+                  required
+                  value={itemEditorForm.label}
+                />
+              </label>
+
+              <label className={FIELD}>
+                Rota
+                <input
+                  className={CONTROL}
+                  maxLength={500}
+                  onChange={(event) =>
+                    setItemEditorForm({
+                      ...itemEditorForm,
+                      href: event.target.value,
+                    })
+                  }
+                  placeholder="/rota"
+                  required={itemEditorForm.status === 'available'}
+                  value={itemEditorForm.href}
+                />
+              </label>
+
+              <label className={FIELD}>
+                Status
+                <select
+                  className={CONTROL}
+                  onChange={(event) =>
+                    setItemEditorForm({
+                      ...itemEditorForm,
+                      status: event.target.value as 'available' | 'planned',
+                    })
+                  }
+                  value={itemEditorForm.status}
+                >
+                  <option value="available">Disponível</option>
+                  <option value="planned">Planejado</option>
+                </select>
+              </label>
+
+              <label className={FIELD}>
+                Ordem
+                <input
+                  className={CONTROL}
+                  min={0}
+                  onChange={(event) =>
+                    setItemEditorForm({
+                      ...itemEditorForm,
+                      sortOrder: event.target.value,
+                    })
+                  }
+                  required
+                  type="number"
+                  value={itemEditorForm.sortOrder}
+                />
+              </label>
+            </div>
+
+            <div className={FIELD}>
+              <span>Ícone</span>
+              <IconPicker
+                onChange={(icon) =>
+                  setItemEditorForm({ ...itemEditorForm, icon })
+                }
+                value={itemEditorForm.icon}
+              />
+            </div>
+
+            <label className="flex items-center gap-2 text-sm font-semibold">
+              <input
+                checked={itemEditorForm.active}
+                className="size-4 accent-[var(--app-brand)]"
+                onChange={(event) =>
+                  setItemEditorForm({
+                    ...itemEditorForm,
+                    active: event.target.checked,
+                  })
+                }
+                type="checkbox"
+              />
+              Item ativo no menu
+            </label>
+
+            <fieldset className="rounded-xl border border-app-border p-4">
+              <legend className="px-2 font-extrabold">Visibilidade</legend>
+              <p className="mt-0 text-sm text-app-muted">
+                Sem regra, o item fica visível para todos. Em “Qualquer permissão”,
+                uma correspondência já libera o item.
+              </p>
+              <div className="grid grid-cols-3 gap-3 max-[900px]:grid-cols-1">
+                <MultiChoice
+                  onChange={(values) =>
+                    setItemEditorForm({
+                      ...itemEditorForm,
+                      anyPermissions: values,
+                    })
+                  }
+                  options={PERMISSION_OPTIONS}
+                  title="Qualquer permissão"
+                  values={itemEditorForm.anyPermissions}
+                />
+                <MultiChoice
+                  onChange={(values) =>
+                    setItemEditorForm({
+                      ...itemEditorForm,
+                      allPermissions: values,
+                    })
+                  }
+                  options={PERMISSION_OPTIONS}
+                  title="Todas as permissões"
+                  values={itemEditorForm.allPermissions}
+                />
+                <MultiChoice
+                  onChange={(values) =>
+                    setItemEditorForm({
+                      ...itemEditorForm,
+                      anyRoles: values,
+                    })
+                  }
+                  options={ROLE_OPTIONS}
+                  title="Qualquer role"
+                  values={itemEditorForm.anyRoles}
+                />
+              </div>
+            </fieldset>
+
+            <div className="flex justify-end gap-2 border-t border-app-border-soft pt-4">
+              <button
+                className={SECONDARY}
+                disabled={saving}
+                onClick={() => setItemEditorId(null)}
+                type="button"
+              >
+                Cancelar
+              </button>
+              <button className={PRIMARY} disabled={saving} type="submit">
+                {saving ? 'Salvando…' : 'Salvar item'}
+              </button>
+            </div>
+          </form>
+        </Modal>
+      ) : null}
     </main>
   );
 }
