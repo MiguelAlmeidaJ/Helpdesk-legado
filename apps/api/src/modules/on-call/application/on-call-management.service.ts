@@ -231,7 +231,15 @@ export class OnCallManagementService {
     const holidayRows = await this.database.$queryRawUnsafe<Array<{ name: string }>>(
       `SELECT name
        FROM business_holidays
-       WHERE holiday_date = DATE(${BRAZIL_NOW_SQL})
+       WHERE (
+         holiday_date = DATE(${BRAZIL_NOW_SQL})
+         OR (
+           is_national = 0
+           AND MONTH(holiday_date) = MONTH(DATE(${BRAZIL_NOW_SQL}))
+           AND DAY(holiday_date) = DAY(DATE(${BRAZIL_NOW_SQL}))
+         )
+       )
+       ORDER BY is_national DESC, id ASC
        LIMIT 1`,
     );
     const holidayName = holidayRows[0]?.name ?? null;
