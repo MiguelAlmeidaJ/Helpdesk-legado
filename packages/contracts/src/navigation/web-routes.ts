@@ -55,7 +55,6 @@ export const WEB_ROUTE_TRANSLATIONS = [
   ['/admin/maintenance', '/administracao/manutencao'],
   ['/admin/on-call', '/qualidade/plantao'],
   ['/admin/ticket-sla', '/administracao/sla-atendimentos'],
-  ['/admin/navigation', '/administracao/navegacao'],
 ] as const;
 
 export function portugueseWebHref(href: string): string {
