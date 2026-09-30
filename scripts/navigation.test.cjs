@@ -56,26 +56,32 @@ test('visibility saved by the editor remains visible only to authorized users', 
 
 test('navigation upgrade enables migrated screens, preserves customization and is idempotent', async () => {
   const rows = [
-    { id: 1n, slug: 'tickets-recurrences', label: 'Rotinas', href: null, status: 'planned', visibility_condition: null, is_active: 0, sort_order: 99 },
-    { id: 2n, slug: 'devops-task-new', label: 'Nova Tarefa', href: '/custom', status: 'planned', visibility_condition: '{"anyRoles":["custom"]}' },
-    { id: 3n, slug: 'report-client-analytic', label: 'Análise', href: '/reports/tickets/analytics?source=tickets#table', status: 'available', visibility_condition: null, is_active: 1 },
-    { id: 4n, slug: 'marketing-availability', label: 'Disponibilidade', href: null, status: 'planned', visibility_condition: null, is_active: 1 },
-    { id: 5n, slug: 'marketing-task-new', label: 'Nova Tarefa', href: '/tickets/new?type=marketing', status: 'available', visibility_condition: null, is_active: 1 },
-    { id: 6n, slug: 'receivables-accrual', label: 'Contas a Receber - Competência', href: null, status: 'planned', visibility_condition: null, is_active: 1 },
-    { id: 7n, slug: 'receivables-cashflow', label: 'Contas a Receber - Fluxo', href: null, status: 'planned', visibility_condition: null, is_active: 1 },
-    { id: 8n, slug: 'payables', label: 'Contas a Pagar', href: null, status: 'planned', visibility_condition: null, is_active: 1 },
-    { id: 9n, slug: 'entries', label: 'Lançamentos', href: null, status: 'planned', visibility_condition: null, is_active: 1 },
-    { id: 10n, slug: 'recurring', label: 'Recorrentes', href: null, status: 'planned', visibility_condition: null, is_active: 1 },
-    { id: 11n, slug: 'accounting', label: 'Contabilidade', href: null, status: 'planned', visibility_condition: null, is_active: 1 },
-    { id: 12n, slug: 'report-client-daily', label: 'Atd. diário por Cliente', href: null, status: 'planned', visibility_condition: null, is_active: 1 },
-    { id: 13n, slug: 'report-requester', label: 'Atd. por Solicitante', href: null, status: 'planned', visibility_condition: null, is_active: 1 },
-    { id: 14n, slug: 'report-tech-daily', label: 'Atd. diário por Técnico', href: null, status: 'planned', visibility_condition: null, is_active: 1 },
-    { id: 15n, slug: 'radio', label: 'Rádio', href: null, status: 'planned', visibility_condition: null, is_active: 1 },
-    { id: 16n, slug: 'statements', label: 'Extratos', href: null, status: 'planned', visibility_condition: null, is_active: 1 },
+    { id: 1n, section_id: 5, slug: 'tickets-recurrences', label: 'Rotinas', href: null, status: 'planned', visibility_condition: null, is_active: 0, sort_order: 99 },
+    { id: 2n, section_id: 5, slug: 'devops-task-new', label: 'Nova Tarefa', href: '/custom', status: 'planned', visibility_condition: '{"anyRoles":["custom"]}' },
+    { id: 3n, section_id: 5, slug: 'report-client-analytic', label: 'Análise', href: '/reports/tickets/analytics?source=tickets#table', status: 'available', visibility_condition: null, is_active: 1 },
+    { id: 4n, section_id: 5, slug: 'marketing-availability', label: 'Disponibilidade', href: null, status: 'planned', visibility_condition: null, is_active: 1 },
+    { id: 5n, section_id: 5, slug: 'marketing-task-new', label: 'Nova Tarefa', href: '/tickets/new?type=marketing', status: 'available', visibility_condition: null, is_active: 1 },
+    { id: 6n, section_id: 5, slug: 'receivables-accrual', label: 'Contas a Receber - Competência', href: null, status: 'planned', visibility_condition: null, is_active: 1 },
+    { id: 7n, section_id: 5, slug: 'receivables-cashflow', label: 'Contas a Receber - Fluxo', href: null, status: 'planned', visibility_condition: null, is_active: 1 },
+    { id: 8n, section_id: 5, slug: 'payables', label: 'Contas a Pagar', href: null, status: 'planned', visibility_condition: null, is_active: 1 },
+    { id: 9n, section_id: 5, slug: 'entries', label: 'Lançamentos', href: null, status: 'planned', visibility_condition: null, is_active: 1 },
+    { id: 10n, section_id: 5, slug: 'recurring', label: 'Recorrentes', href: null, status: 'planned', visibility_condition: null, is_active: 1 },
+    { id: 11n, section_id: 5, slug: 'accounting', label: 'Contabilidade', href: null, status: 'planned', visibility_condition: null, is_active: 1 },
+    { id: 12n, section_id: 5, slug: 'report-client-daily', label: 'Atd. diário por Cliente', href: null, status: 'planned', visibility_condition: null, is_active: 1 },
+    { id: 13n, section_id: 5, slug: 'report-requester', label: 'Atd. por Solicitante', href: null, status: 'planned', visibility_condition: null, is_active: 1 },
+    { id: 14n, section_id: 5, slug: 'report-tech-daily', label: 'Atd. diário por Técnico', href: null, status: 'planned', visibility_condition: null, is_active: 1 },
+    { id: 15n, section_id: 5, slug: 'radio', label: 'Rádio', href: null, status: 'planned', visibility_condition: null, is_active: 1 },
+    { id: 16n, section_id: 5, slug: 'statements', label: 'Extratos', href: null, status: 'planned', visibility_condition: null, is_active: 1 },
   ];
   const original = structuredClone(rows);
   const db = {
-    $queryRaw: async () => rows,
+    $queryRaw: async (sql) =>
+      sql.join('').includes('FROM navigation_sections')
+        ? [
+            { id: 5n, slug: 'logistics' },
+            { id: 12n, slug: 'finance' },
+          ]
+        : rows,
     $executeRaw: async (sql, ...values) => {
       const query = sql.join('');
       if (query.includes('SET href =') && query.includes('is_active = 0')) {
@@ -153,6 +159,9 @@ test('navigation upgrade enables migrated screens, preserves customization and i
     const row = rows.find(item => item.slug === slug);
     assert.equal(row.status, 'available', slug);
     assert.equal(row.href, href, slug);
+    if (['entries', 'recurring', 'accounting'].includes(slug)) {
+      assert.equal(row.section_id, 12, slug);
+    }
   }
   assert.equal(await synchronizeNavigation(db), 0);
 });
