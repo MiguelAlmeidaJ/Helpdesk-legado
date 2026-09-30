@@ -173,42 +173,53 @@ function IconPicker({
     ? NAVIGATION_ICON_NAMES.find((icon) => icon === value) ?? null
     : null;
 
-  return <div className="grid gap-2">
-    <div className="flex items-center gap-2 rounded-[10px] border border-app-border bg-app-surface-muted px-3 py-2">
-      <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-app-surface text-app-text-soft">
-        <NavigationIcon className="size-5" name={selected} />
-      </span>
-      <span className="grid min-w-0">
-        <strong className="text-xs text-app-text">{selected ? ICON_LABELS[selected] : 'Sem ícone'}</strong>
-        <small className="text-[11px] text-app-muted">Prévia do ícone da seção</small>
-      </span>
-    </div>
-    <div className="grid max-h-[250px] grid-cols-[repeat(auto-fill,minmax(96px,1fr))] gap-2 overflow-y-auto rounded-xl border border-app-border bg-app-surface p-2">
-      <button
-        aria-pressed={!value}
-        className="grid min-h-[76px] place-items-center gap-1 rounded-lg border border-app-border bg-app-surface px-2 py-2 text-app-muted transition hover:border-app-brand hover:bg-app-brand-soft aria-pressed:border-app-brand aria-pressed:bg-app-brand-soft aria-pressed:text-app-brand"
-        onClick={() => onChange('')}
-        type="button"
-      >
-        <span className="text-xl leading-none">—</span>
-        <span className="text-[10px] font-bold">Sem ícone</span>
-      </button>
-      {NAVIGATION_ICON_NAMES.map((icon) => (
+  return (
+    <details className="group rounded-xl border border-app-border bg-app-surface">
+      <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 px-3 py-2">
+        <span className="flex min-w-0 items-center gap-3">
+          <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-app-surface-muted text-app-text-soft">
+            <NavigationIcon className="size-5" name={selected} />
+          </span>
+          <span className="grid min-w-0">
+            <strong className="truncate text-xs text-app-text">
+              {selected ? ICON_LABELS[selected] : 'Sem ícone'}
+            </strong>
+            <small className="text-[11px] text-app-muted">
+              Clique para escolher outro ícone
+            </small>
+          </span>
+        </span>
+        <span className="text-app-muted transition group-open:rotate-180">⌄</span>
+      </summary>
+      <div className="grid max-h-[230px] grid-cols-[repeat(auto-fill,minmax(92px,1fr))] gap-2 overflow-y-auto border-t border-app-border-soft p-2">
         <button
-          aria-label={ICON_LABELS[icon]}
-          aria-pressed={value === icon}
-          className="grid min-h-[76px] place-items-center gap-1 rounded-lg border border-app-border bg-app-surface px-2 py-2 text-app-muted transition hover:border-app-brand hover:bg-app-brand-soft hover:text-app-text aria-pressed:border-app-brand aria-pressed:bg-app-brand-soft aria-pressed:text-app-brand"
-          key={icon}
-          onClick={() => onChange(icon)}
-          title={ICON_LABELS[icon]}
+          aria-pressed={!value}
+          className="grid min-h-[64px] place-items-center gap-1 rounded-lg border border-app-border bg-app-surface px-2 py-2 text-app-muted transition hover:border-app-brand hover:bg-app-brand-soft aria-pressed:border-app-brand aria-pressed:bg-app-brand-soft aria-pressed:text-app-brand"
+          onClick={() => onChange('')}
           type="button"
         >
-          <NavigationIcon className="size-5" name={icon} />
-          <span className="max-w-full truncate text-[10px] font-bold">{ICON_LABELS[icon]}</span>
+          <span className="text-lg leading-none">—</span>
+          <span className="text-[10px] font-bold">Sem ícone</span>
         </button>
-      ))}
-    </div>
-  </div>;
+        {NAVIGATION_ICON_NAMES.map((icon) => (
+          <button
+            aria-label={ICON_LABELS[icon]}
+            aria-pressed={value === icon}
+            className="grid min-h-[64px] place-items-center gap-1 rounded-lg border border-app-border bg-app-surface px-2 py-2 text-app-muted transition hover:border-app-brand hover:bg-app-brand-soft hover:text-app-text aria-pressed:border-app-brand aria-pressed:bg-app-brand-soft aria-pressed:text-app-brand"
+            key={icon}
+            onClick={() => onChange(icon)}
+            title={ICON_LABELS[icon]}
+            type="button"
+          >
+            <NavigationIcon className="size-5" name={icon} />
+            <span className="max-w-full truncate text-[10px] font-bold">
+              {ICON_LABELS[icon]}
+            </span>
+          </button>
+        ))}
+      </div>
+    </details>
+  );
 }
 
 function visibility(form: ItemForm): NavigationVisibilityCondition | null {
@@ -266,6 +277,8 @@ export function NavigationAdminScreen({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [sectionSearch, setSectionSearch] = useState('');
+  const [itemSearch, setItemSearch] = useState('');
 
   const selectedSection = useMemo(
     () => data?.sections.find((section) => section.id === selectedSectionId) ?? null,
@@ -278,6 +291,27 @@ export function NavigationAdminScreen({
         .find((item) => item.id === selectedItemId) ?? null,
     [data, selectedItemId],
   );
+  const filteredSections = useMemo(() => {
+    const query = sectionSearch.trim().toLocaleLowerCase('pt-BR');
+    if (!query) return data?.sections ?? [];
+    return (data?.sections ?? []).filter((section) =>
+      [section.label, section.slug, section.shortLabel ?? '']
+        .join(' ')
+        .toLocaleLowerCase('pt-BR')
+        .includes(query),
+    );
+  }, [data, sectionSearch]);
+  const filteredItems = useMemo(() => {
+    const query = itemSearch.trim().toLocaleLowerCase('pt-BR');
+    const items = selectedSection?.items ?? [];
+    if (!query) return items;
+    return items.filter((item) =>
+      [item.label, item.slug, item.href ?? '']
+        .join(' ')
+        .toLocaleLowerCase('pt-BR')
+        .includes(query),
+    );
+  }, [itemSearch, selectedSection]);
 
   async function load(signal?: AbortSignal): Promise<NavigationAdminResponse | null> {
     setLoading(true);
@@ -436,7 +470,7 @@ export function NavigationAdminScreen({
           </div>
         ) : null}
 
-        <div className="grid grid-cols-[minmax(260px,340px)_minmax(0,1fr)] items-start gap-5 max-[960px]:grid-cols-1">
+        <div className="grid grid-cols-[minmax(280px,320px)_minmax(0,1fr)] items-start gap-4 max-[1024px]:grid-cols-1">
           <section className={`${CARD_CLASS} sticky top-5 max-[960px]:static`}>
             <div className={CARD_TITLE_CLASS}>
               <div className="grid gap-0.5">
@@ -447,11 +481,19 @@ export function NavigationAdminScreen({
                 {data?.sections.length ?? 0} cadastradas
               </small>
             </div>
+            <input
+              aria-label="Buscar seção"
+              className={`${CONTROL_CLASS} mb-3`}
+              onChange={(event) => setSectionSearch(event.target.value)}
+              placeholder="Buscar seção…"
+              type="search"
+              value={sectionSearch}
+            />
             {loading && !data ? (
               <p className="text-sm text-app-muted">Carregando…</p>
             ) : null}
-            <div className={LIST_CLASS}>
-              {data?.sections.map((section) => (
+            <div className="grid max-h-[calc(100dvh-240px)] gap-2 overflow-y-auto pr-1 max-[1024px]:max-h-none">
+              {filteredSections.map((section) => (
                 <button
                   aria-pressed={selectedSectionId === section.id}
                   className={LIST_BUTTON_CLASS}
@@ -486,7 +528,7 @@ export function NavigationAdminScreen({
                 <div className="grid gap-0.5">
                   <span className={CARD_KICKER_CLASS}>Seção</span>
                   <strong className={CARD_HEADING_CLASS}>
-                    {selectedSectionId ? `Editar #${selectedSectionId}` : 'Nova seção'}
+                    {selectedSection ? selectedSection.label : 'Nova seção'}
                   </strong>
                 </div>
               </div>
@@ -583,7 +625,10 @@ export function NavigationAdminScreen({
               <div className={CARD_TITLE_CLASS}>
                 <div className="grid gap-0.5">
                   <span className={CARD_KICKER_CLASS}>Páginas</span>
-                  <strong className={CARD_HEADING_CLASS}>Itens da seção</strong>
+                  <strong className={CARD_HEADING_CLASS}>
+                    Itens da seção
+                    {selectedSection ? ` · ${selectedSection.items.length}` : ''}
+                  </strong>
                 </div>
                 <button
                   className={BUTTON_CLASS}
@@ -600,8 +645,16 @@ export function NavigationAdminScreen({
                 </p>
               ) : (
                 <>
-                  <div className={LIST_CLASS}>
-                    {selectedSection?.items.map((item) => (
+                  <input
+                    aria-label="Buscar item"
+                    className={`${CONTROL_CLASS} mb-3`}
+                    onChange={(event) => setItemSearch(event.target.value)}
+                    placeholder="Buscar página por nome, rota ou identificador…"
+                    type="search"
+                    value={itemSearch}
+                  />
+                  <div className="grid grid-cols-2 gap-2 max-[760px]:grid-cols-1">
+                    {filteredItems.map((item) => (
                       <button
                         aria-pressed={selectedItemId === item.id}
                         className={LIST_BUTTON_CLASS}
@@ -743,7 +796,7 @@ export function NavigationAdminScreen({
                       <fieldset className="rounded-xl border border-app-border p-3.5">
                         <legend className="px-1.5 font-bold">Visibilidade</legend>
                         <p className="mt-0 mb-3 text-[0.82rem] text-app-muted">
-                          Grupos diferentes são combinados com AND. Dentro de “qualquer”, basta uma correspondência.
+                          Defina quem enxerga esta página no menu. Em “Qualquer”, uma permissão já libera o item; “Todas” exige o conjunto completo.
                         </p>
                         <div className="grid grid-cols-3 gap-3 max-[960px]:grid-cols-1">
                           <label className={FIELD_CLASS}>
