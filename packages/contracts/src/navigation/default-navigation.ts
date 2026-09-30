@@ -83,9 +83,17 @@ export const DEFAULT_NAVIGATION: SeedSection[] = [
       { slug: 'rd-management', label: 'Gestão RDs', href: '/logistica/despesas/administracao', status: 'available', visibilityCondition: { anyPermissions: ['logistics.expenses.admin.read', 'logistics.expenses.admin.manage'] } },
       { slug: 'rd-comparison', label: 'Análise Comparativa RDs', href: '/logistica/despesas/administracao/analise', status: 'available', visibilityCondition: { anyPermissions: ['logistics.expenses.admin.read', 'logistics.expenses.admin.manage'] } },
       { slug: 'rd-report', label: 'Relatório RDs', href: '/logistica/despesas/administracao/relatorio', status: 'available', visibilityCondition: { anyPermissions: ['logistics.expenses.admin.read', 'logistics.expenses.admin.manage'] } },
-      { slug: 'rd-data', label: 'Cadastro de Dados Financeiros', href: '/logistica/financeiro/cadastros', status: 'available', visibilityCondition: { anyPermissions: ['logistics.expenses.admin.manage'] } },
       { slug: 'rd-approvals', label: 'Aprovação RDs', href: '/logistica/despesas/administracao/aprovacoes', status: 'available', visibilityCondition: { anyPermissions: ['logistics.expenses.approve'] } },
       { slug: 'rd-payments', label: 'Pagamento RDs', href: '/logistica/despesas/administracao/pagamentos', status: 'available', visibilityCondition: { anyPermissions: ['logistics.expenses.pay'] } },
+    ],
+  },
+  {
+    slug: 'finance',
+    label: 'Financeiro',
+    shortLabel: 'FN',
+    icon: 'wallet',
+    items: [
+      { slug: 'rd-data', label: 'Cadastro de Dados Financeiros', href: '/logistica/financeiro/cadastros', status: 'available', visibilityCondition: { anyPermissions: ['logistics.expenses.admin.manage'] } },
       { slug: 'account-management', label: 'Gestão de Contas', icon: 'wallet', href: '/logistica/financeiro/gestao-de-contas', status: 'available', visibilityCondition: { anyPermissions: ['logistics.expenses.admin.read', 'logistics.expenses.admin.manage'] } },
       { slug: 'entries', label: 'Lançamentos', href: '/logistica/financeiro/lancamentos', status: 'available', visibilityCondition: { anyPermissions: ['logistics.expenses.admin.read', 'logistics.expenses.admin.manage'] } },
       { slug: 'recurring', label: 'Recorrentes', href: '/logistica/financeiro/recorrentes', status: 'available', visibilityCondition: { anyPermissions: ['logistics.expenses.admin.read', 'logistics.expenses.admin.manage'] } },
