@@ -415,11 +415,11 @@ export function NavigationAdminScreen({
     );
   }, [itemSearch, selectedSection]);
 
-  const load = useCallback(async (signal?: AbortSignal) => {
+  const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const next = await fetchNavigationAdmin(signal);
+      const next = await fetchNavigationAdmin();
       setData(next);
       setSelectedSectionId((current) =>
         current && next.sections.some((section) => section.id === current)
@@ -427,21 +427,14 @@ export function NavigationAdminScreen({
           : next.sections[0]?.id ?? null,
       );
     } catch (reason) {
-      if (signal?.aborted) return;
       setError(errorMessage(reason));
     } finally {
-      if (!signal?.aborted) setLoading(false);
+      setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    const controller = new AbortController();
-    const timeout = window.setTimeout(() => controller.abort(), 15000);
-    void load(controller.signal);
-    return () => {
-      window.clearTimeout(timeout);
-      controller.abort();
-    };
+    void load();
   }, [load]);
 
   function openNewSection() {
