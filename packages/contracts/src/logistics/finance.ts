@@ -127,3 +127,35 @@ export interface FinanceRecurringWriteInput {
   percentMarketing?: number;
   active: boolean;
 }
+
+
+export type FinanceMasterDataKey =
+  | 'groups'
+  | 'subgroups'
+  | 'classifications'
+  | 'document-types'
+  | 'payment-methods'
+  | 'agencies';
+
+export interface FinanceMasterDataItem {
+  id: number;
+  name: string;
+  active: boolean;
+  parentId?: number | null;
+  applicable?: string | null;
+}
+
+export interface FinanceMasterDataResponse {
+  groups: FinanceMasterDataItem[];
+  subgroups: FinanceMasterDataItem[];
+  classifications: FinanceMasterDataItem[];
+  documentTypes: FinanceMasterDataItem[];
+  paymentMethods: FinanceMasterDataItem[];
+  agencies: FinanceMasterDataItem[];
+}
+
+export interface FinanceMasterDataWriteInput {
+  name: string;
+  parentId?: number | null;
+  applicable?: string | null;
+}
