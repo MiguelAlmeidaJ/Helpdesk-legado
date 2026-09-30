@@ -104,7 +104,7 @@ export function ExpenseDashboardScreen({
   return (
     <main className={styles.page}>
       <AppPageHeader
-        actions={<Link className={styles.readOnlyBadge} href="/logistica/despesas/cadastro">Gerenciar despesas</Link>}
+        actions={<Link className={styles.readOnlyBadge} href="/logistica/despesas/gerenciar">Gerenciar despesas</Link>}
         subtitle={data?.userName ?? 'Usuário autenticado'}
         title="Minhas Despesas"
         user={currentUser}
