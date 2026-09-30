@@ -46,10 +46,42 @@ export class QualityCalendarService {
        LIMIT 500`,
     );
 
+    const mapped = rows.map((row) => this.map(row));
+    const years = new Set<number>([currentYear, currentYear + 1]);
+
+    for (const item of mapped) {
+      years.add(Number(item.date.slice(0, 4)));
+    }
+
+    const recurring = mapped.filter((item) => !item.national);
+    const recurringItems = [...years]
+      .filter(Number.isFinite)
+      .flatMap((year) =>
+        recurring.map((item) => ({
+          ...item,
+          date: `${year}-${item.date.slice(5)}`,
+        })),
+      );
+
+    const nationalItems = mapped.filter((item) => item.national);
+    const items = [...nationalItems, ...recurringItems]
+      .filter(
+        (item, index, all) =>
+          all.findIndex(
+            (candidate) =>
+              candidate.id === item.id &&
+              candidate.date === item.date &&
+              candidate.national === item.national,
+          ) === index,
+      )
+      .sort((left, right) =>
+        left.date.localeCompare(right.date) || left.id - right.id,
+      );
+
     return {
       currentYear,
       nextYear: currentYear + 1,
-      items: rows.map((row) => this.map(row)),
+      items,
     };
   }
 
@@ -72,22 +104,70 @@ export class QualityCalendarService {
       );
     }
 
-    await this.database.$executeRawUnsafe(
-      `INSERT INTO business_holidays
-         (holiday_date, name, is_national, created_at)
-       VALUES (?, ?, 0, NOW())
-       ON DUPLICATE KEY UPDATE
-         name = VALUES(name),
-         is_national = 0`,
-      input.date,
-      name,
+    const recurringNational = await this.database.$queryRawUnsafe<DateRow[]>(
+      `SELECT
+         id,
+         DATE_FORMAT(holiday_date, '%Y-%m-%d') AS holiday_date,
+         name,
+         is_national
+       FROM business_holidays
+       WHERE is_national = 1
+         AND DATE_FORMAT(holiday_date, '%m-%d') = ?
+       LIMIT 1`,
+      input.date.slice(5),
+    );
+    if (recurringNational[0]) {
+      throw new ConflictException(
+        'Esse dia e mês já correspondem a um feriado nacional.',
+      );
+    }
+
+    const existingCustom = await this.database.$queryRawUnsafe<DateRow[]>(
+      `SELECT
+         id,
+         DATE_FORMAT(holiday_date, '%Y-%m-%d') AS holiday_date,
+         name,
+         is_national
+       FROM business_holidays
+       WHERE is_national = 0
+         AND DATE_FORMAT(holiday_date, '%m-%d') = ?
+       LIMIT 1`,
+      input.date.slice(5),
     );
 
-    const saved = await this.byDate(input.date);
+    if (existingCustom[0]) {
+      await this.database.$executeRawUnsafe(
+        'UPDATE business_holidays SET name = ? WHERE id = ?',
+        name,
+        existingCustom[0].id,
+      );
+    } else {
+      await this.database.$executeRawUnsafe(
+        `INSERT INTO business_holidays
+           (holiday_date, name, is_national, created_at)
+         VALUES (?, ?, 0, NOW())`,
+        input.date,
+        name,
+      );
+    }
+
+    const savedRows = await this.database.$queryRawUnsafe<DateRow[]>(
+      `SELECT
+         id,
+         DATE_FORMAT(holiday_date, '%Y-%m-%d') AS holiday_date,
+         name,
+         is_national
+       FROM business_holidays
+       WHERE is_national = 0
+         AND DATE_FORMAT(holiday_date, '%m-%d') = ?
+       LIMIT 1`,
+      input.date.slice(5),
+    );
+    const saved = savedRows[0] ? this.map(savedRows[0]) : null;
     if (!saved) {
       throw new NotFoundException('Data não encontrada após o cadastro.');
     }
-    return saved;
+    return { ...saved, date: input.date };
   }
 
   async delete(id: number): Promise<void> {
