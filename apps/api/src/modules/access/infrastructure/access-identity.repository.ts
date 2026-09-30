@@ -10,15 +10,6 @@ interface IdentityRow {
   user_login: string | null;
   user_funcao: number | null;
   user_pass: string | null;
-  user_modulo_01: string;
-  user_modulo_02: string;
-  user_modulo_03: string;
-  user_modulo_04: string;
-  user_modulo_05: string;
-  user_modulo_06: string;
-  user_modulo_07: string;
-  user_modulo_08: string;
-  user_modulo_09: string;
 }
 
 interface RecoveryIdentityRow {
@@ -46,16 +37,7 @@ export class AccessIdentityRepository {
          user_nome,
          user_login,
          user_funcao,
-         user_pass,
-         user_modulo_01,
-         user_modulo_02,
-         user_modulo_03,
-         user_modulo_04,
-         user_modulo_05,
-         user_modulo_06,
-         user_modulo_07,
-         user_modulo_08,
-         user_modulo_09
+         user_pass
        FROM usuarios
        WHERE user_login = ?
          AND user_sts = 1
@@ -74,16 +56,7 @@ export class AccessIdentityRepository {
          user_nome,
          user_login,
          user_funcao,
-         user_pass,
-         user_modulo_01,
-         user_modulo_02,
-         user_modulo_03,
-         user_modulo_04,
-         user_modulo_05,
-         user_modulo_06,
-         user_modulo_07,
-         user_modulo_08,
-         user_modulo_09
+         user_pass
        FROM usuarios
        WHERE user_id = ?
          AND user_sts = 1
@@ -144,17 +117,6 @@ export class AccessIdentityRepository {
         name: row.user_nome,
         login: row.user_login,
         functionId: row.user_funcao,
-        modules: {
-          1: row.user_modulo_01,
-          2: row.user_modulo_02,
-          3: row.user_modulo_03,
-          4: row.user_modulo_04,
-          5: row.user_modulo_05,
-          6: row.user_modulo_06,
-          7: row.user_modulo_07,
-          8: row.user_modulo_08,
-          9: row.user_modulo_09,
-        },
       },
     };
   }
