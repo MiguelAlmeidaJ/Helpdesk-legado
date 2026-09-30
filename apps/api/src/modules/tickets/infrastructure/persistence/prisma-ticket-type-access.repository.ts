@@ -13,15 +13,17 @@ type PermissionRow = {
   effect: 'allow' | 'deny';
 };
 
-const PREFIX = {
+type TicketSector = Sector.IT | Sector.DevOps | Sector.Marketing;
+
+const PREFIX: Record<TicketSector, string> = {
   [Sector.IT]: 'atendimentos',
   [Sector.DevOps]: 'devops.atendimentos',
   [Sector.Marketing]: 'marketing.atendimentos',
-} as const;
+};
 
 function has(
   slugs: ReadonlySet<string>,
-  sector: Sector,
+  sector: TicketSector,
   action: string,
 ): boolean {
   return slugs.has(`${PREFIX[sector]}.${action}`);
@@ -29,7 +31,7 @@ function has(
 
 function permissionsFor(
   slugs: ReadonlySet<string>,
-  sector: Sector,
+  sector: TicketSector,
 ): TicketTypePermissions {
   return {
     read: has(slugs, sector, 'visualizar'),
