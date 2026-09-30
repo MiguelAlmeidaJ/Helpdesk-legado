@@ -20,11 +20,6 @@ import {
   type MarketingTicketScope,
 } from './ports/marketing-ticket.repository';
 
-function permissionLevel(moduleValue: string | undefined, index: number): number {
-  const value = moduleValue?.[index];
-  return value && /^\d$/.test(value) ? Number(value) : 0;
-}
-
 function isSystemAdmin(user: AuthenticatedUser): boolean {
   return user.grants.some(
     (grant) => grant.permission === AppPermission.SystemAdmin,
@@ -242,9 +237,8 @@ export class MarketingTickets {
     if (isSystemAdmin(user)) return { actorUserId: user.id };
 
     const snapshot = await this.access.findByUserId(user.id);
-    const moduleValue = snapshot.modules[Sector.Marketing];
-    const accessLevel = permissionLevel(moduleValue, 0);
-    if (accessLevel < 1) {
+    const marketingAccess = snapshot.permissions[Sector.Marketing];
+    if (!marketingAccess?.read) {
       throw new ForbiddenException(
         'Este tipo de ticket é restrito ao setor Marketing.',
       );
@@ -255,7 +249,7 @@ export class MarketingTickets {
     }
 
     if (operation === 'create') {
-      if (permissionLevel(moduleValue, 1) < 2) {
+      if (!marketingAccess.create) {
         throw new ForbiddenException(
           'Você não possui permissão para criar tickets de Marketing.',
         );
@@ -263,10 +257,10 @@ export class MarketingTickets {
       return { actorUserId: user.id };
     }
 
-    const canManageOthers = permissionLevel(moduleValue, 5) >= 2;
+    const canManageOthers = marketingAccess.manageOthers;
 
     if (operation === 'classify') {
-      if (permissionLevel(moduleValue, 1) < 3 && !canManageOthers) {
+      if (!marketingAccess.edit && !canManageOthers) {
         throw new ForbiddenException(
           'Você não possui permissão para editar tickets de Marketing.',
         );
@@ -278,12 +272,10 @@ export class MarketingTickets {
     }
 
     const operationPermission = {
-      assign:
-        permissionLevel(moduleValue, 2) >= 2 ||
-        permissionLevel(moduleValue, 1) >= 3,
-      hold: permissionLevel(moduleValue, 3) >= 2,
-      reject: permissionLevel(moduleValue, 4) >= 2,
-      finalize: permissionLevel(moduleValue, 2) >= 2,
+      assign: marketingAccess.execute || marketingAccess.edit,
+      hold: marketingAccess.hold,
+      reject: marketingAccess.reject,
+      finalize: marketingAccess.execute,
     }[operation];
 
     if (!operationPermission && !canManageOthers) {
