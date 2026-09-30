@@ -8,23 +8,13 @@ export const metadata: Metadata = {
   description: 'Entrar no Helpdesk',
 };
 
-function safeNext(value: string | string[] | undefined): string {
-  const candidate = Array.isArray(value) ? value[0] : value;
-
-  if (!candidate || !candidate.startsWith('/') || candidate.startsWith('//')) {
-    return '/';
-  }
-
-  return candidate;
-}
-
 export default async function LoginPage({
   searchParams,
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const params = await searchParams;
-  const nextPath = safeNext(params.next);
+  await searchParams;
+  const nextPath = '/';
   const currentUser = await getCurrentUser();
 
   if (currentUser) {
