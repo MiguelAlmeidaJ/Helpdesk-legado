@@ -92,6 +92,14 @@ function addGrant(
   }
 }
 
+function hasPermission(
+  permissions: ReadonlySet<string>,
+  canonicalSlug: string,
+  appPermission: AppPermission,
+): boolean {
+  return permissions.has(canonicalSlug) || permissions.has(appPermission);
+}
+
 export function translateRbacAccess(
   session: LegacyUserSession,
   snapshot: RbacAccessSnapshot,
@@ -118,10 +126,10 @@ export function translateRbacAccess(
     PermissionScope.All,
   );
 
-  addGrant(grants, AppPermission.UsersRead, permissions.has(USER_PERMISSION.read), PermissionScope.All);
-  addGrant(grants, AppPermission.UsersCreate, permissions.has(USER_PERMISSION.create), PermissionScope.All);
-  addGrant(grants, AppPermission.UsersEdit, permissions.has(USER_PERMISSION.edit), PermissionScope.All);
-  addGrant(grants, AppPermission.UsersManageAccess, permissions.has(USER_PERMISSION.manageAccess), PermissionScope.All);
+  addGrant(grants, AppPermission.UsersRead, hasPermission(permissions, USER_PERMISSION.read, AppPermission.UsersRead), PermissionScope.All);
+  addGrant(grants, AppPermission.UsersCreate, hasPermission(permissions, USER_PERMISSION.create, AppPermission.UsersCreate), PermissionScope.All);
+  addGrant(grants, AppPermission.UsersEdit, hasPermission(permissions, USER_PERMISSION.edit, AppPermission.UsersEdit), PermissionScope.All);
+  addGrant(grants, AppPermission.UsersManageAccess, hasPermission(permissions, USER_PERMISSION.manageAccess, AppPermission.UsersManageAccess), PermissionScope.All);
 
   addGrant(
     grants,
@@ -146,22 +154,22 @@ export function translateRbacAccess(
   addGrant(grants, AppPermission.CatalogDevOpsRead, permissions.has(CATALOG_PERMISSION.devOpsRead), PermissionScope.All);
   addGrant(grants, AppPermission.CatalogDevOpsEdit, permissions.has(CATALOG_PERMISSION.devOpsEdit), PermissionScope.All);
 
-  addGrant(grants, AppPermission.RegistrationsClientsRead, permissions.has(REGISTRATION_PERMISSION.clientsRead), PermissionScope.All);
-  addGrant(grants, AppPermission.RegistrationsClientsCreate, permissions.has(REGISTRATION_PERMISSION.clientsCreate), PermissionScope.All);
-  addGrant(grants, AppPermission.RegistrationsClientsEdit, permissions.has(REGISTRATION_PERMISSION.clientsEdit), PermissionScope.All);
-  addGrant(grants, AppPermission.RegistrationsClientContactsCreate, permissions.has(REGISTRATION_PERMISSION.contactsCreate), PermissionScope.All);
-  addGrant(grants, AppPermission.RegistrationsClientContactsEdit, permissions.has(REGISTRATION_PERMISSION.contactsEdit), PermissionScope.All);
-  addGrant(grants, AppPermission.RegistrationsClientLocationsCreate, permissions.has(REGISTRATION_PERMISSION.locationsCreate), PermissionScope.All);
-  addGrant(grants, AppPermission.RegistrationsClientLocationsEdit, permissions.has(REGISTRATION_PERMISSION.locationsEdit), PermissionScope.All);
-  addGrant(grants, AppPermission.RegistrationsCategoriesRead, permissions.has(REGISTRATION_PERMISSION.categoriesRead), PermissionScope.All);
-  addGrant(grants, AppPermission.RegistrationsCategoriesCreate, permissions.has(REGISTRATION_PERMISSION.categoriesCreate), PermissionScope.All);
-  addGrant(grants, AppPermission.RegistrationsCategoriesEdit, permissions.has(REGISTRATION_PERMISSION.categoriesEdit), PermissionScope.All);
-  addGrant(grants, AppPermission.RegistrationsSubcategoriesCreate, permissions.has(REGISTRATION_PERMISSION.subcategoriesCreate), PermissionScope.All);
-  addGrant(grants, AppPermission.RegistrationsSubcategoriesEdit, permissions.has(REGISTRATION_PERMISSION.subcategoriesEdit), PermissionScope.All);
-  addGrant(grants, AppPermission.RegistrationsItemsCreate, permissions.has(REGISTRATION_PERMISSION.itemsCreate), PermissionScope.All);
-  addGrant(grants, AppPermission.RegistrationsItemsEdit, permissions.has(REGISTRATION_PERMISSION.itemsEdit), PermissionScope.All);
-  addGrant(grants, AppPermission.RegistrationsFinanceRead, permissions.has(REGISTRATION_PERMISSION.financeRead), PermissionScope.All);
-  addGrant(grants, AppPermission.RegistrationsFinanceManage, permissions.has(REGISTRATION_PERMISSION.financeManage), PermissionScope.All);
+  addGrant(grants, AppPermission.RegistrationsClientsRead, hasPermission(permissions, REGISTRATION_PERMISSION.clientsRead, AppPermission.RegistrationsClientsRead), PermissionScope.All);
+  addGrant(grants, AppPermission.RegistrationsClientsCreate, hasPermission(permissions, REGISTRATION_PERMISSION.clientsCreate, AppPermission.RegistrationsClientsCreate), PermissionScope.All);
+  addGrant(grants, AppPermission.RegistrationsClientsEdit, hasPermission(permissions, REGISTRATION_PERMISSION.clientsEdit, AppPermission.RegistrationsClientsEdit), PermissionScope.All);
+  addGrant(grants, AppPermission.RegistrationsClientContactsCreate, hasPermission(permissions, REGISTRATION_PERMISSION.contactsCreate, AppPermission.RegistrationsClientContactsCreate), PermissionScope.All);
+  addGrant(grants, AppPermission.RegistrationsClientContactsEdit, hasPermission(permissions, REGISTRATION_PERMISSION.contactsEdit, AppPermission.RegistrationsClientContactsEdit), PermissionScope.All);
+  addGrant(grants, AppPermission.RegistrationsClientLocationsCreate, hasPermission(permissions, REGISTRATION_PERMISSION.locationsCreate, AppPermission.RegistrationsClientLocationsCreate), PermissionScope.All);
+  addGrant(grants, AppPermission.RegistrationsClientLocationsEdit, hasPermission(permissions, REGISTRATION_PERMISSION.locationsEdit, AppPermission.RegistrationsClientLocationsEdit), PermissionScope.All);
+  addGrant(grants, AppPermission.RegistrationsCategoriesRead, hasPermission(permissions, REGISTRATION_PERMISSION.categoriesRead, AppPermission.RegistrationsCategoriesRead), PermissionScope.All);
+  addGrant(grants, AppPermission.RegistrationsCategoriesCreate, hasPermission(permissions, REGISTRATION_PERMISSION.categoriesCreate, AppPermission.RegistrationsCategoriesCreate), PermissionScope.All);
+  addGrant(grants, AppPermission.RegistrationsCategoriesEdit, hasPermission(permissions, REGISTRATION_PERMISSION.categoriesEdit, AppPermission.RegistrationsCategoriesEdit), PermissionScope.All);
+  addGrant(grants, AppPermission.RegistrationsSubcategoriesCreate, hasPermission(permissions, REGISTRATION_PERMISSION.subcategoriesCreate, AppPermission.RegistrationsSubcategoriesCreate), PermissionScope.All);
+  addGrant(grants, AppPermission.RegistrationsSubcategoriesEdit, hasPermission(permissions, REGISTRATION_PERMISSION.subcategoriesEdit, AppPermission.RegistrationsSubcategoriesEdit), PermissionScope.All);
+  addGrant(grants, AppPermission.RegistrationsItemsCreate, hasPermission(permissions, REGISTRATION_PERMISSION.itemsCreate, AppPermission.RegistrationsItemsCreate), PermissionScope.All);
+  addGrant(grants, AppPermission.RegistrationsItemsEdit, hasPermission(permissions, REGISTRATION_PERMISSION.itemsEdit, AppPermission.RegistrationsItemsEdit), PermissionScope.All);
+  addGrant(grants, AppPermission.RegistrationsFinanceRead, hasPermission(permissions, REGISTRATION_PERMISSION.financeRead, AppPermission.RegistrationsFinanceRead), PermissionScope.All);
+  addGrant(grants, AppPermission.RegistrationsFinanceManage, hasPermission(permissions, REGISTRATION_PERMISSION.financeManage, AppPermission.RegistrationsFinanceManage), PermissionScope.All);
 
   const operationalScope = permissions.has(TICKET_PERMISSION.manageOthers)
     ? PermissionScope.All
