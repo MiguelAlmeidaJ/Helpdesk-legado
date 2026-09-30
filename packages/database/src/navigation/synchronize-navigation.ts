@@ -67,6 +67,7 @@ export async function synchronizeNavigation(
     ['receivables-cashflow', '/logistica/financeiro/contas-a-receber-fluxo'],
     ['payables', '/logistica/financeiro/contas-a-pagar'],
   ]);
+  const forcedDefaults = new Set(['rd-data']);
   const legacyCreateHrefs = new Map<string, Set<string>>([
     ['devops-task-new', new Set(['/atendimentos/novo?type=devops'])],
     ['marketing-task-new', new Set(['/atendimentos/novo?type=marketing'])],
@@ -127,14 +128,20 @@ export async function synchronizeNavigation(
     }
     const definition = defaults.get(row.slug);
     let href = row.href ? portugueseWebHref(row.href) : null;
+    if (definition && forcedDefaults.has(row.slug)) {
+      href = definition.href ?? null;
+    }
     const legacyCreateHref = legacyCreateHrefs.get(row.slug);
     if (definition?.href && href && legacyCreateHref?.has(href)) {
       href = definition.href;
     }
     let status = row.status;
     let condition = row.visibility_condition;
-    let label = row.label;
-    if (definition?.visibilityCondition && refreshVisibility.has(row.slug)) {
+    let label = forcedDefaults.has(row.slug) && definition ? definition.label : row.label;
+    if (
+      definition?.visibilityCondition &&
+      (refreshVisibility.has(row.slug) || forcedDefaults.has(row.slug))
+    ) {
       condition = JSON.stringify(definition.visibilityCondition);
     }
     if (row.slug === 'dashboard' && label === 'Dashboard') label = 'Painel';
