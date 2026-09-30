@@ -1,6 +1,8 @@
 import type { Nivel3DatabaseClient } from '../index';
 
-type DatabaseClient = Pick<Nivel3DatabaseClient, '$executeRawUnsafe'>;
+type DatabaseClient = Pick<Nivel3DatabaseClient, '$executeRawUnsafe' | '$queryRawUnsafe'>;
+
+type CountRow = { total: number | bigint | string };
 
 type PermissionDefinition = readonly [
   name: string,
@@ -165,7 +167,15 @@ function legacyCondition(rule: LegacyRule): string {
 
 export async function bootstrapRbacPermissions(
   db: DatabaseClient,
-): Promise<{ migratedGrants: number }> {
+): Promise<{ migratedGrants: number; legacyMigrationApplied: boolean }> {
+  await db.$executeRawUnsafe(
+    `CREATE TABLE IF NOT EXISTS access_migrations (
+       migration_key VARCHAR(120) NOT NULL,
+       applied_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+       PRIMARY KEY (migration_key)
+     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
+  );
+
   for (const [name, slug, module, description] of RBAC_PERMISSIONS) {
     await db.$executeRawUnsafe(
       `INSERT INTO permissions
@@ -183,6 +193,16 @@ export async function bootstrapRbacPermissions(
     );
   }
 
+  const migrationKey = 'rbac-only-permissions-v1';
+  const applied = await db.$queryRawUnsafe<CountRow[]>(
+    'SELECT COUNT(*) AS total FROM access_migrations WHERE migration_key = ?',
+    migrationKey,
+  );
+
+  if (Number(applied[0]?.total ?? 0) > 0) {
+    return { migratedGrants: 0, legacyMigrationApplied: false };
+  }
+
   let migratedGrants = 0;
 
   for (const rule of LEGACY_RULES) {
@@ -197,5 +217,10 @@ export async function bootstrapRbacPermissions(
     );
   }
 
-  return { migratedGrants };
+  await db.$executeRawUnsafe(
+    'INSERT INTO access_migrations (migration_key, applied_at) VALUES (?, NOW())',
+    migrationKey,
+  );
+
+  return { migratedGrants, legacyMigrationApplied: true };
 }
