@@ -15,6 +15,9 @@ import { ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import type {
   FinanceCatalogsResponse,
   FinanceListResponse,
+  FinanceMasterDataKey,
+  FinanceMasterDataResponse,
+  FinanceMasterDataWriteInput,
   FinancePaymentInput,
   FinancePayableWriteInput,
   FinanceReceiptInput,
