@@ -65,6 +65,13 @@ const REGISTRATION_PERMISSION = {
   financeManage: 'cadastros.financeiro.gerenciar',
 } as const;
 
+const TICKET_TYPE_PERMISSION = {
+  devOpsRead: 'devops.atendimentos.visualizar',
+  devOpsCreate: 'devops.atendimentos.criar',
+  marketingRead: 'marketing.atendimentos.visualizar',
+  marketingCreate: 'marketing.atendimentos.criar',
+} as const;
+
 const QUALITY_PERMISSION = {
   onCallRead: 'qualidade.plantao.visualizar',
   onCallManage: 'qualidade.plantao.gerenciar',
@@ -176,6 +183,10 @@ export function translateRbacAccess(
     PermissionScope.All,
   );
   addGrant(grants, AppPermission.TicketsRadio, permissions.has(TICKET_PERMISSION.radio), PermissionScope.All);
+  addGrant(grants, AppPermission.TicketsDevOpsRead, permissions.has(TICKET_TYPE_PERMISSION.devOpsRead), PermissionScope.All);
+  addGrant(grants, AppPermission.TicketsDevOpsCreate, permissions.has(TICKET_TYPE_PERMISSION.devOpsCreate), PermissionScope.All);
+  addGrant(grants, AppPermission.TicketsMarketingRead, permissions.has(TICKET_TYPE_PERMISSION.marketingRead), PermissionScope.All);
+  addGrant(grants, AppPermission.TicketsMarketingCreate, permissions.has(TICKET_TYPE_PERMISSION.marketingCreate), PermissionScope.All);
 
   addGrant(
     grants,
