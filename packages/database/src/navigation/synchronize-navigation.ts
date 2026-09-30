@@ -65,12 +65,14 @@ export async function synchronizeNavigation(
   const forcedDefaults = new Set([
     'rd-data',
     'account-management',
-    'receivables-accrual',
-    'receivables-cashflow',
-    'payables',
     'entries',
     'recurring',
     'accounting',
+  ]);
+  const hiddenFromMenu = new Set([
+    'receivables-accrual',
+    'receivables-cashflow',
+    'payables',
   ]);
   const legacyCreateHrefs = new Map<string, Set<string>>([
     ['devops-task-new', new Set(['/atendimentos/novo?type=devops'])],
@@ -84,6 +86,17 @@ export async function synchronizeNavigation(
   `;
   let updated = 0;
   for (const row of rows) {
+    if (hiddenFromMenu.has(row.slug)) {
+      if (row.is_active !== 0) {
+        await db.$executeRaw`
+          UPDATE navigation_items
+          SET is_active = 0, updated_at = NOW()
+          WHERE id = ${row.id}
+        `;
+        updated++;
+      }
+      continue;
+    }
     if (row.slug === 'on-call' || row.slug === 'marketing-availability') {
       if (row.is_active !== 0) {
         await db.$executeRaw`
