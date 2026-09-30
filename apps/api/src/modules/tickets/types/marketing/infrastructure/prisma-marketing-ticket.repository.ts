@@ -160,13 +160,58 @@ export class PrismaMarketingTicketRepository extends MarketingTicketRepository {
           ...params,
         ),
         this.database.$queryRawUnsafe<OptionRow[]>(
-          `SELECT user_id AS id, user_nome AS name
-           FROM usuarios
-           WHERE user_sts = 1
-             AND user_id > 1
-             AND CAST(SUBSTRING(COALESCE(user_modulo_08, '0000000000'), 1, 1) AS UNSIGNED) >= 1
-             AND CAST(SUBSTRING(COALESCE(user_modulo_08, '0000000000'), 3, 1) AS UNSIGNED) >= 2
-           ORDER BY user_nome`,
+          `SELECT u.user_id AS id, u.user_nome AS name
+           FROM usuarios u
+           WHERE u.user_sts = 1
+             AND u.user_id > 1
+             AND (
+               EXISTS (
+                 SELECT 1
+                 FROM user_roles ur
+                 INNER JOIN role_permissions rp ON rp.role_id = ur.role_id
+                 INNER JOIN permissions p ON p.id = rp.permission_id
+                 WHERE ur.user_id = u.user_id
+                   AND p.slug = 'marketing.atendimentos.visualizar'
+               )
+               OR EXISTS (
+                 SELECT 1
+                 FROM user_permissions up
+                 INNER JOIN permissions p ON p.id = up.permission_id
+                 WHERE up.user_id = u.user_id
+                   AND up.effect = 'allow'
+                   AND p.slug = 'marketing.atendimentos.visualizar'
+               )
+             )
+             AND (
+               EXISTS (
+                 SELECT 1
+                 FROM user_roles ur
+                 INNER JOIN role_permissions rp ON rp.role_id = ur.role_id
+                 INNER JOIN permissions p ON p.id = rp.permission_id
+                 WHERE ur.user_id = u.user_id
+                   AND p.slug = 'marketing.atendimentos.executar'
+               )
+               OR EXISTS (
+                 SELECT 1
+                 FROM user_permissions up
+                 INNER JOIN permissions p ON p.id = up.permission_id
+                 WHERE up.user_id = u.user_id
+                   AND up.effect = 'allow'
+                   AND p.slug = 'marketing.atendimentos.executar'
+               )
+             )
+             AND NOT EXISTS (
+               SELECT 1
+               FROM user_permissions up
+               INNER JOIN permissions p ON p.id = up.permission_id
+               WHERE up.user_id = u.user_id
+                 AND up.effect = 'deny'
+                 AND p.slug IN (
+                   'marketing.atendimentos.visualizar',
+                   'marketing.atendimentos.executar'
+                 )
+             )
+           ORDER BY u.user_nome`,
         ),
         this.catalog('tipos_terc_andar'),
         this.catalog('categorias_terc_andar'),

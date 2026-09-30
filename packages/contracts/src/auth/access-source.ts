@@ -1,1 +1,1 @@
-export type AccessSource = 'rbac' | 'legacy';
+export type AccessSource = 'rbac';

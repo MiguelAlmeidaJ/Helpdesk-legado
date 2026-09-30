@@ -2,10 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
-import type {
-  LegacyModuleNumber,
-  LegacyUserSession,
-} from '../domain/legacy-user-session';
+import type { LegacyUserSession } from '../domain/legacy-user-session';
 
 type PhpScalar = string | number | boolean | null;
 
@@ -171,27 +168,11 @@ export class LegacyPhpSessionRepository {
       return null;
     }
 
-    const modules = {} as Record<LegacyModuleNumber, string>;
-
-    for (let moduleNumber = 1; moduleNumber <= 9; moduleNumber += 1) {
-      const typedModuleNumber = moduleNumber as LegacyModuleNumber;
-      const moduleValue = stringValue(
-        readSessionValue(buffer, `allterusN3Modulo${moduleNumber}`),
-      );
-
-      if (!moduleValue) {
-        return null;
-      }
-
-      modules[typedModuleNumber] = moduleValue;
-    }
-
     return {
       id,
       name,
       login,
-      functionId: integerValue(readSessionValue(buffer, 'allterusN3func')),
-      modules,
+      functionId: integerValue(readSessionValue(buffer, 'allterusN3func'))
     };
   }
 

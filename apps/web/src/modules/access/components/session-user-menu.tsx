@@ -52,10 +52,8 @@ export function SessionUserMenu({ user }: { user: CurrentUserResponse }) {
       return labels.join(' · ');
     }
 
-    return user.accessSource === 'legacy'
-      ? 'Permissões legadas'
-      : 'Acesso personalizado';
-  }, [user.accessSource, user.grants, user.roleAssignments]);
+    return 'Acesso personalizado';
+  }, [user.grants, user.roleAssignments]);
 
   async function logout() {
     setLoggingOut(true);

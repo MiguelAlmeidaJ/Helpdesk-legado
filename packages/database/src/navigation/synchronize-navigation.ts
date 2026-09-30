@@ -43,7 +43,25 @@ export async function synchronizeNavigation(
     'radio',
     'statements',
   ]);
-  const refreshVisibility = new Set(['catalogs', 'catalog-check']);
+  const refreshVisibility = new Set([
+    'catalogs',
+    'catalog-check',
+    'clients',
+    'categories',
+    'cost-centers',
+    'accounting-classification',
+    'adjustment-indexes',
+    'payment-methods',
+    'expense-types',
+    'service-types',
+    'fee-types',
+    'devops-projects',
+    'devops-tasks',
+    'devops-project-new',
+    'devops-task-new',
+    'marketing-tasks',
+    'marketing-task-new',
+  ]);
   const hiddenFromMenu = new Map<string, string>([
     ['receivables-accrual', '/logistica/financeiro/contas-a-receber-competencia'],
     ['receivables-cashflow', '/logistica/financeiro/contas-a-receber-fluxo'],

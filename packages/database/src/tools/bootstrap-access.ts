@@ -1,5 +1,6 @@
 import { config } from 'dotenv';
 import path from 'node:path';
+import { bootstrapRbacPermissions } from '../access/rbac-permissions';
 import { createNivel3Client } from '../index';
 
 config({ path: path.resolve(process.cwd(), '../../.env') });
@@ -104,6 +105,8 @@ async function main() {
       );
     }
 
+    const rbac = await bootstrapRbacPermissions(db);
+
     for (const [name, slug, description] of PERMISSIONS) {
       await db.$executeRawUnsafe(
         `INSERT INTO permissions
@@ -181,6 +184,10 @@ async function main() {
     console.log('  catalogos.arquivado_em: OK');
     console.log('  permissões de catálogo: 5 permissões normalizadas');
     console.log('  permissões de Qualidade: 4 permissões');
+    console.log(`  grants legados migrados para RBAC: ${rbac.migratedGrants}`);
+    console.log(
+      `  migração posicional aplicada agora: ${rbac.legacyMigrationApplied ? 'sim' : 'não'}`,
+    );
   } finally {
     await db.$disconnect();
   }

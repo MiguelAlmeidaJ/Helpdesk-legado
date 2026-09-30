@@ -419,6 +419,7 @@ const PROTECTED_NIVEL3_TABLES = new Set<string>([
   ...REQUIRED_NIVEL3_TABLES,
 
   // Acesso, pessoas e cadastros usados pela aplicação nativa.
+  'access_migrations',
   'pessoas',
   'clientes',
   'clientes_usuarios',
