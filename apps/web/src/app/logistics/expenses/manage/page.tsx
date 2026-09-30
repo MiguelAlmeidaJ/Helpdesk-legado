@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 
 export default async function ExpenseManagementPage() {
   const currentUser = await requireAuthenticatedUser(
-    '/logistica/despesas/cadastro',
+    '/logistica/despesas/gerenciar',
   );
 
   return <ExpenseManagementScreen currentUser={currentUser} />;
