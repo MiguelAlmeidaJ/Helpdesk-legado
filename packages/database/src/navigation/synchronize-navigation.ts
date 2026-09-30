@@ -3,6 +3,7 @@ import type { Nivel3DatabaseClient } from '../index';
 
 type StoredItem = {
   id: number | bigint;
+  section_id: number | bigint;
   slug: string;
   label: string;
   icon: string | null;
@@ -74,6 +75,13 @@ export async function synchronizeNavigation(
     'receivables-cashflow',
     'payables',
   ]);
+  const financeItems = new Set([
+    'rd-data',
+    'account-management',
+    'entries',
+    'recurring',
+    'accounting',
+  ]);
   const legacyCreateHrefs = new Map<string, Set<string>>([
     ['devops-task-new', new Set(['/atendimentos/novo?type=devops'])],
     ['marketing-task-new', new Set(['/atendimentos/novo?type=marketing'])],
@@ -81,8 +89,15 @@ export async function synchronizeNavigation(
   const defaults = new Map(DEFAULT_NAVIGATION.flatMap((section) =>
     section.items.map((item) => [item.slug, item] as const),
   ));
+  const sectionRows = await db.$queryRaw<Array<{ id: number | bigint; slug: string }>>`
+    SELECT id, slug FROM navigation_sections
+  `;
+  const sectionIds = new Map(sectionRows.map((row) => [row.slug, Number(row.id)]));
+  const financeSectionId = sectionIds.get('finance') ?? null;
+
   const rows = await db.$queryRaw<StoredItem[]>`
-    SELECT id, slug, label, icon, href, status, visibility_condition, is_active FROM navigation_items
+    SELECT id, section_id, slug, label, icon, href, status, visibility_condition, is_active
+    FROM navigation_items
   `;
   let updated = 0;
   for (const row of rows) {
@@ -136,16 +151,22 @@ export async function synchronizeNavigation(
         : null;
     }
     const active = definition && forcedDefaults.has(row.slug) ? 1 : row.is_active;
+    const targetSectionId =
+      financeSectionId && financeItems.has(row.slug)
+        ? financeSectionId
+        : Number(row.section_id);
     if (
       href === row.href &&
       status === row.status &&
       label === row.label &&
       condition === row.visibility_condition &&
-      active === row.is_active
+      active === row.is_active &&
+      targetSectionId === Number(row.section_id)
     ) continue;
     await db.$executeRaw`
       UPDATE navigation_items
-      SET label = ${label}, href = ${href}, status = ${status},
+      SET section_id = ${targetSectionId},
+          label = ${label}, href = ${href}, status = ${status},
           visibility_condition = ${condition}, is_active = ${active}, updated_at = NOW()
       WHERE id = ${row.id}
     `;
