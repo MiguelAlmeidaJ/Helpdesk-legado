@@ -378,14 +378,6 @@ export function ExpenseAdminDashboardScreen({
 
       <div className={styles.content}>
 
-        <section className={styles.notice}>
-          <strong>Fluxo administrativo de RD totalmente nativo.</strong>
-          <span>
-            As entradas PHP antigas agora existem apenas como bridges ou
-            tombstones de compatibilidade.
-          </span>
-        </section>
-
         <section className={styles.filters}>
           <form onSubmit={apply}>
             <label>
