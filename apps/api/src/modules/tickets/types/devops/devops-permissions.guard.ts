@@ -14,7 +14,10 @@ import {
 } from '@helpdesk/contracts';
 import type { AuthenticatedRequest } from '../../../access/presentation/http/authenticated-request';
 import { REQUIRED_PERMISSIONS_KEY } from '../../../access/presentation/http/require-permissions.decorator';
-import { TicketTypeAccessRepository } from '../../application/ports/ticket-type-access.repository';
+import {
+  TicketTypeAccessRepository,
+  type TicketTypePermissions,
+} from '../../application/ports/ticket-type-access.repository';
 
 function isSystemAdmin(grants: readonly PermissionGrant[]): boolean {
   return grants.some(
@@ -35,9 +38,7 @@ const DEVOPS_TICKET_PERMISSIONS = new Set<AppPermission>([
 
 function devOpsGrant(
   permission: AppPermission,
-  access: NonNullable<
-    Awaited<ReturnType<TicketTypeAccessRepository['findByUserId']>>['permissions'][Sector.DevOps]
-  >,
+  access: TicketTypePermissions,
 ): PermissionGrant | null {
   const operationalScope = access.manageOthers
     ? PermissionScope.All
