@@ -1,103 +1,72 @@
-# RBAC transition
+# RBAC authority
 
-The existing RBAC is active and must be evolved rather than replaced.
+RBAC is the only authorization source for the native Helpdesk.
 
-## Audit result
+## Source of truth
 
-The local production-like dump showed:
-
-```text
-usuarios             109
-active users          59
-active with roles     58
-active without role    1
-user_roles           338
-roles                 25
-permissions           70
-user_permissions       0
-api_sessions          47
-```
-
-The PHP login accepts only `usuarios.user_sts = 1`, so the access layer also rejects users whose current database status is not active.
-
-The existing roles are capability bundles such as:
+Runtime authorization is derived exclusively from:
 
 ```text
-atendimento-operador
-atendimento-gestor
-cadastros-gestao
-logistica-operador
+roles
+permissions
+role_permissions
+user_roles
+user_permissions
 ```
 
-They are not the same concept as the new organizational profiles
-(System Administrator, Administration, Sector Manager, Quality, Technician,
-Intern). Do not overwrite or rename them to force the new model.
+The positional columns `usuarios.user_modulo_01` through
+`usuarios.user_modulo_09` are no longer consulted to grant access.
 
-## Transition authority
+The PHP session may still be accepted temporarily as an authentication/identity
+source, but values carried in that session do not grant permissions.
 
-While the PHP login is still in use:
+## One-time migration
+
+`pnpm access:bootstrap` seeds the canonical permission catalog and performs a
+single compatibility migration from the old positional values to explicit RBAC
+`user_permissions` grants.
+
+The migration is recorded in `access_migrations` with key
+`rbac-only-permissions-v1`. Once recorded, later changes to
+`user_modulo_XX` never recreate or change RBAC permissions.
+
+Direct `user_permissions.deny` entries keep precedence over inherited role
+permissions and over migrated allows.
+
+## Canonical permissions
+
+The database keeps business-facing permission slugs in Portuguese, including:
 
 ```text
-PHPSESSID
-   |
-   v
-PHP session identity
-   |
-   v
-current usuarios.user_sts
-   |
-   +-- RBAC assignment exists --> roles + permissions + user overrides
-   |
-   +-- no RBAC assignment -----> legacy user_modulo_XX fallback
+usuarios.*
+atendimentos.*
+devops.atendimentos.*
+marketing.atendimentos.*
+cadastros.*
+catalogos.*
+logistica.*
+qualidade.*
 ```
 
-RBAC is authoritative whenever a user has at least one `user_roles` or
-`user_permissions` assignment.
+The API translates these canonical slugs to `AppPermission` values consumed by
+guards and application services.
 
-A direct `user_permissions.deny` removes a permission inherited from roles.
-A direct `allow` adds it.
+DevOps and Marketing have their own RBAC permissions. They no longer derive
+authorization from `user_modulo_05` or `user_modulo_08`.
 
-## Atendimento mapping
+## System administrator and plantão
 
-Current database slugs:
+The protected `system-admin` role still grants the implicit
+`AppPermission.SystemAdmin` bypass.
 
-```text
-atendimentos.visualizar
-atendimentos.criar
-atendimentos.editar
-atendimentos.executar
-atendimentos.colocar_espera
-atendimentos.recusar
-atendimentos.editar_terceiros
-```
+Plantão remains a dynamic RBAC extension based on the active on-call schedule.
+It does not restore positional legacy permissions.
 
-Target mapping:
+## Operational rule
 
-```text
-visualizar        -> tickets.read / all
-criar             -> tickets.create / all
-editar            -> tickets.edit + tickets.classify
-executar          -> tickets.execute + tickets.close
-colocar_espera    -> tickets.hold
-recusar           -> tickets.reject
-editar_terceiros  -> widens operational scope from own to all
-```
+After the cutover:
 
-`editar_terceiros` is a scope modifier, not a standalone business action.
-
-The old radio flag currently has no RBAC permission slug. It remains a narrowly
-documented legacy compatibility grant until an explicit permission is created.
-
-## Organizational roles and sectors
-
-`roleAssignments` remains empty during this stage because capability roles
-cannot safely be converted into the new organizational roles or sectors.
-
-The future organizational model is added separately and must not destroy
-the existing capability RBAC.
-
-## Session future
-
-`api_sessions` already supports hashed refresh tokens, expiry and revocation.
-It should be evaluated as the future Nest authentication session mechanism
-before creating any replacement session table.
+1. permission changes must be made in RBAC;
+2. editing `user_modulo_XX` has no authorization effect;
+3. menu visibility and API guards must be driven by the same RBAC grants;
+4. new modules must add explicit permission slugs instead of positional flags.
