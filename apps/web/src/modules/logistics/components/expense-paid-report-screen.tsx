@@ -16,6 +16,7 @@ import {
   useState,
 } from 'react';
 import { AppPageHeader } from '../../../shared/navigation/app-page-header';
+import { DateRangePicker } from '../../../shared/ui/date-range-picker';
 import {
   type ExpensePaidReportFilters,
   getExpensePaidAdminEdit,
@@ -44,9 +45,9 @@ const styles = {
   feedback:
     'mb-4 rounded-[10px] border border-app-border bg-app-surface px-3.5 py-3 text-app-text-soft',
   filters:
-    'mb-4 grid grid-cols-4 gap-3 rounded-[10px] border border-app-border bg-app-surface p-4 max-[900px]:grid-cols-2 max-[560px]:grid-cols-1 print:hidden [&_label]:flex [&_label]:flex-col [&_label]:gap-1.5 [&_label]:text-[0.82rem] [&_label]:font-bold [&_input]:min-h-10 [&_input]:rounded-lg [&_input]:border [&_input]:border-app-border-strong [&_input]:bg-app-surface [&_input]:px-2.5 [&_input]:py-2 [&_input]:text-app-text [&_input]:outline-none [&_select]:min-h-10 [&_select]:rounded-lg [&_select]:border [&_select]:border-app-border-strong [&_select]:bg-app-surface [&_select]:px-2.5 [&_select]:py-2 [&_select]:text-app-text [&_select]:outline-none [&_input:focus]:border-app-brand [&_select:focus]:border-app-brand [&_input:focus]:ring-[3px] [&_select:focus]:ring-[3px] [&_input:focus]:ring-[var(--app-brand-ring)] [&_select:focus]:ring-[var(--app-brand-ring)] [&_button]:min-h-10 [&_button]:cursor-pointer [&_button]:rounded-lg [&_button]:border [&_button]:border-app-border-strong [&_button]:bg-app-surface [&_button]:px-2.5 [&_button]:py-2 [&_button]:text-app-text [&_button:disabled]:cursor-not-allowed [&_button:disabled]:opacity-[0.55]',
+    'mb-4 grid grid-cols-4 gap-3 rounded-xl border border-app-border bg-app-surface p-4 max-[1050px]:grid-cols-2 max-[620px]:grid-cols-1 print:hidden [&_label]:flex [&_label]:flex-col [&_label]:gap-1.5 [&_label]:text-[0.82rem] [&_label]:font-bold [&_select]:min-h-10 [&_select]:appearance-none [&_select]:rounded-lg [&_select]:border [&_select]:border-app-border-strong [&_select]:bg-app-surface [&_select]:px-3 [&_select]:py-2 [&_select]:text-app-text [&_select]:outline-none [&_select:focus]:border-app-brand [&_select:focus]:ring-[3px] [&_select:focus]:ring-[var(--app-brand-ring)] [&_button]:min-h-10 [&_button]:cursor-pointer [&_button]:rounded-lg [&_button]:border [&_button]:border-app-border-strong [&_button]:bg-app-surface [&_button]:px-3 [&_button]:py-2 [&_button]:text-app-text [&_button:disabled]:cursor-not-allowed [&_button:disabled]:opacity-[0.55]',
   categoryField:
-    '[&_select]:min-h-[92px]',
+    'relative flex flex-col gap-1.5 text-[0.82rem] font-bold',
   filterActions:
     'flex self-end gap-2 max-[560px]:w-full max-[560px]:flex-wrap [&_button:first-child]:border-app-brand [&_button:first-child]:bg-app-brand [&_button:first-child]:font-extrabold [&_button:first-child]:text-white',
   reportCard:
@@ -396,36 +397,19 @@ export function ExpensePaidReportScreen({
       />
 
       <div className={styles.content}>
-
-        <section className={styles.notice}>
-          <strong>Relatório e edição administrativa no fluxo nativo.</strong>
-          <span>
-            O cutover do detalharRD.php ocorre no 0042b; alterações são
-            permitidas somente enquanto a RD permanecer paga e ativa.
-          </span>
-        </section>
-
         <form className={styles.filters} onSubmit={submit}>
-          <label>
-            De
-            <input
-              type="date"
-              value={startDate}
-              onChange={(event: ChangeEvent<HTMLInputElement>) =>
-                setStartDate(event.target.value)
-              }
+          <div className="col-span-2 max-[1050px]:col-span-2 max-[620px]:col-span-1">
+            <span className="mb-1.5 block text-[0.82rem] font-bold">Período</span>
+            <DateRangePicker
+              disabled={loading}
+              endDate={endDate}
+              onChange={(range) => {
+                setStartDate(range.startDate);
+                setEndDate(range.endDate);
+              }}
+              startDate={startDate}
             />
-          </label>
-          <label>
-            Até
-            <input
-              type="date"
-              value={endDate}
-              onChange={(event: ChangeEvent<HTMLInputElement>) =>
-                setEndDate(event.target.value)
-              }
-            />
-          </label>
+          </div>
           <label>
             Cliente
             <select
@@ -434,7 +418,7 @@ export function ExpensePaidReportScreen({
                 setClientName(event.target.value)
               }
             >
-              <option value="">Todos</option>
+              <option value="">Todos os clientes</option>
               {report?.options.clients.map((option) => (
                 <option key={option.value} value={option.value}>
                   {option.label}
@@ -453,7 +437,7 @@ export function ExpensePaidReportScreen({
                   )
                 }
               >
-                <option value="">Todos</option>
+                <option value="">Todos os colaboradores</option>
                 {report.options.collaborators.map((option) => (
                   <option key={option.value} value={option.value}>
                     {option.label}
@@ -462,26 +446,49 @@ export function ExpensePaidReportScreen({
               </select>
             </label>
           ) : null}
-          <label className={styles.categoryField}>
-            Categorias
-            <select
-              multiple
-              value={categoryIds.map(String)}
-              onChange={(event: ChangeEvent<HTMLSelectElement>) =>
-                setCategoryIds(
-                  Array.from(event.currentTarget.selectedOptions).map(
-                    (option) => Number(option.value),
-                  ),
-                )
-              }
-            >
-              {report?.options.categories.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </label>
+          <div className={styles.categoryField}>
+            <span>Categorias</span>
+            <details className="group relative">
+              <summary className="flex min-h-10 cursor-pointer list-none items-center justify-between rounded-lg border border-app-border-strong bg-app-surface px-3 py-2 font-medium text-app-text outline-none transition hover:bg-app-surface-hover">
+                <span className="truncate">
+                  {categoryIds.length
+                    ? `${categoryIds.length} categoria(s) selecionada(s)`
+                    : 'Todas as categorias'}
+                </span>
+                <span className="text-app-muted transition group-open:rotate-180">⌄</span>
+              </summary>
+              <div className="absolute left-0 top-[calc(100%+6px)] z-40 max-h-72 w-[min(360px,90vw)] overflow-auto rounded-xl border border-app-border bg-app-surface p-2 shadow-2xl">
+                <button
+                  className="mb-1 w-full text-left text-xs font-bold text-app-brand"
+                  onClick={() => setCategoryIds([])}
+                  type="button"
+                >
+                  Limpar seleção
+                </button>
+                {report?.options.categories.map((option) => {
+                  const id = Number(option.value);
+                  const checked = categoryIds.includes(id);
+                  return (
+                    <label className="flex cursor-pointer flex-row! items-center gap-2 rounded-lg px-2 py-2 font-medium hover:bg-app-surface-hover" key={option.value}>
+                      <input
+                        checked={checked}
+                        className="size-4 accent-[var(--app-brand)]"
+                        onChange={() =>
+                          setCategoryIds((current) =>
+                            checked
+                              ? current.filter((value) => value !== id)
+                              : [...current, id],
+                          )
+                        }
+                        type="checkbox"
+                      />
+                      <span>{option.label}</span>
+                    </label>
+                  );
+                })}
+              </div>
+            </details>
+          </div>
           <div className={styles.filterActions}>
             <button disabled={loading} type="submit">
               {loading ? 'Atualizando…' : 'Filtrar'}
