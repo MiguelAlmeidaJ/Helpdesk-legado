@@ -15,11 +15,6 @@ import {
   type TicketTypeAccessSnapshot,
 } from './ports/ticket-type-access.repository';
 
-function permissionLevel(moduleValue: string | undefined, index: number): number {
-  const value = moduleValue?.[index];
-  return value && /^\d$/.test(value) ? Number(value) : 0;
-}
-
 @Injectable()
 export class TicketTypeRegistry {
   constructor(private readonly access: TicketTypeAccessRepository) {}
@@ -66,7 +61,7 @@ export class TicketTypeRegistry {
 
     if (definition.key === 'atendimento') {
       return (
-        permissionLevel(snapshot.modules[Sector.IT], 0) >= 1 ||
+snapshot.permissions[Sector.IT]?.read === true ||
         this.hasPermission(user, AppPermission.TicketsRead)
       );
     }
@@ -86,13 +81,13 @@ export class TicketTypeRegistry {
     if (!this.canSeeType(user, definition, userSectors, snapshot)) return false;
 
     if (definition.key === 'devops') {
-      return permissionLevel(snapshot.modules[Sector.DevOps], 1) >= 2;
+      return snapshot.permissions[Sector.DevOps]?.create === true;
     }
     if (definition.key === 'marketing') {
-      return permissionLevel(snapshot.modules[Sector.Marketing], 1) >= 2;
+      return snapshot.permissions[Sector.Marketing]?.create === true;
     }
     return (
-      permissionLevel(snapshot.modules[Sector.IT], 1) >= 2 ||
+snapshot.permissions[Sector.IT]?.create === true ||
       this.hasPermission(user, AppPermission.TicketsCreate)
     );
   }
