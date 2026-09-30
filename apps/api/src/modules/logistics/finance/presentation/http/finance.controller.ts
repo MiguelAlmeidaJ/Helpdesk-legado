@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Patch,
@@ -72,6 +73,58 @@ export class FinanceController {
     @CurrentUser() user: AuthenticatedUser | undefined,
   ): Promise<FinanceCatalogsResponse> {
     return this.finance.catalogs(authenticated(user));
+  }
+
+
+  @Get('master-data/all')
+  @ApiOperation({ summary: 'Lista cadastros de dados financeiros' })
+  masterData(
+    @CurrentUser() user: AuthenticatedUser | undefined,
+  ): Promise<FinanceMasterDataResponse> {
+    return this.finance.masterData(authenticated(user));
+  }
+
+  @Post('master-data/:resource')
+  createMasterData(
+    @CurrentUser() user: AuthenticatedUser | undefined,
+    @Param('resource') resource: FinanceMasterDataKey,
+    @Body() body: FinanceMasterDataWriteInput,
+  ): Promise<{ id: number }> {
+    return this.finance.createMasterData(authenticated(user), resource, body);
+  }
+
+  @Patch('master-data/:resource/:id')
+  async updateMasterData(
+    @CurrentUser() user: AuthenticatedUser | undefined,
+    @Param('resource') resource: FinanceMasterDataKey,
+    @Param('id') id: string,
+    @Body() body: FinanceMasterDataWriteInput,
+  ): Promise<void> {
+    await this.finance.updateMasterData(authenticated(user), resource, positiveId(id), body);
+  }
+
+  @Patch('master-data/:resource/:id/status')
+  async setMasterDataStatus(
+    @CurrentUser() user: AuthenticatedUser | undefined,
+    @Param('resource') resource: FinanceMasterDataKey,
+    @Param('id') id: string,
+    @Body() body: { active: boolean },
+  ): Promise<void> {
+    await this.finance.setMasterDataStatus(
+      authenticated(user),
+      resource,
+      positiveId(id),
+      body.active === true,
+    );
+  }
+
+  @Delete('master-data/:resource/:id')
+  async deleteMasterData(
+    @CurrentUser() user: AuthenticatedUser | undefined,
+    @Param('resource') resource: FinanceMasterDataKey,
+    @Param('id') id: string,
+  ): Promise<void> {
+    await this.finance.deleteMasterData(authenticated(user), resource, positiveId(id));
   }
 
   @Get(':view')
