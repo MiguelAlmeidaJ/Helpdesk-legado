@@ -15,6 +15,7 @@ import {
   useState,
 } from 'react';
 import { AppPageHeader } from '../../../shared/navigation/app-page-header';
+import { DateRangePicker } from '../../../shared/ui/date-range-picker';
 import {
   createExpense,
   deleteExpense,
@@ -203,22 +204,18 @@ export function ExpenseManagementScreen({
       <div className={styles.content}>
 
         <section className={styles.filters}>
-          <label>
-            De
-            <input
-              type="date"
-              value={startDate}
-              onChange={(event) => setStartDate(event.target.value)}
+          <div className="min-w-[300px] max-[720px]:w-full">
+            <span className="mb-1 block text-[8px] font-extrabold uppercase text-app-muted">Período</span>
+            <DateRangePicker
+              disabled={loading}
+              endDate={endDate}
+              onChange={(range) => {
+                setStartDate(range.startDate);
+                setEndDate(range.endDate);
+              }}
+              startDate={startDate}
             />
-          </label>
-          <label>
-            Até
-            <input
-              type="date"
-              value={endDate}
-              onChange={(event) => setEndDate(event.target.value)}
-            />
-          </label>
+          </div>
           <button
             disabled={loading}
             onClick={() => void load(startDate, endDate)}
