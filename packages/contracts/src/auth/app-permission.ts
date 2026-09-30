@@ -19,6 +19,10 @@ export enum AppPermission {
   TicketsClose = 'tickets.close',
   TicketsAudit = 'tickets.audit',
   TicketsRadio = 'tickets.radio',
+  TicketsDevOpsRead = 'tickets.devops.read',
+  TicketsDevOpsCreate = 'tickets.devops.create',
+  TicketsMarketingRead = 'tickets.marketing.read',
+  TicketsMarketingCreate = 'tickets.marketing.create',
 
   CatalogManage = 'catalog.manage',
   CatalogTiRead = 'catalog.ti.read',
