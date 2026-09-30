@@ -72,6 +72,7 @@ test('navigation upgrade enables migrated screens, preserves customization and i
     { id: 14n, slug: 'report-tech-daily', label: 'Atd. diário por Técnico', href: null, status: 'planned', visibility_condition: null, is_active: 1 },
     { id: 15n, slug: 'radio', label: 'Rádio', href: null, status: 'planned', visibility_condition: null, is_active: 1 },
     { id: 16n, slug: 'statements', label: 'Extratos', href: null, status: 'planned', visibility_condition: null, is_active: 1 },
+    { id: 17n, slug: 'clients', label: 'Clientes', href: '/cadastros/clientes', status: 'available', visibility_condition: '{"anyPermissions":["cadastros.clientes.visualizar"]}', is_active: 1 },
   ];
   const original = structuredClone(rows);
   const db = {
@@ -103,7 +104,7 @@ test('navigation upgrade enables migrated screens, preserves customization and i
       return 1;
     },
   };
-  assert.equal(await synchronizeNavigation(db), 15);
+  assert.equal(await synchronizeNavigation(db), 16);
   assert.equal(rows[0].href, '/atendimentos/recorrencias');
   assert.equal(rows[0].label, 'Rotinas');
   assert.equal(rows[0].is_active, 0);
@@ -115,6 +116,13 @@ test('navigation upgrade enables migrated screens, preserves customization and i
   assert.equal(rows[3].status, 'planned');
   assert.equal(rows[3].is_active, 0);
   assert.equal(rows[4].href, '/atendimentos/marketing/nova-tarefa');
+  assert.deepEqual(JSON.parse(rows[16].visibility_condition), {
+    anyPermissions: [
+      'registrations.clients.read',
+      'registrations.clients.create',
+      'registrations.clients.edit',
+    ],
+  });
 
   const migratedDestinations = new Map([
     ['receivables-accrual', '/logistica/financeiro/contas-a-receber-competencia'],
