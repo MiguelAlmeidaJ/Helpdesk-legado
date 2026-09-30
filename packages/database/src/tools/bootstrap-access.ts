@@ -23,6 +23,28 @@ const QUALITY_PERMISSIONS = [
 ] as const;
 
 const PERMISSION_MIGRATIONS = [
+  ['users.read', 'usuarios.visualizar'],
+  ['users.create', 'usuarios.criar'],
+  ['users.edit', 'usuarios.editar'],
+  ['users.manage-access', 'usuarios.editar_acesso'],
+
+  ['registrations.clients.read', 'cadastros.clientes.visualizar'],
+  ['registrations.clients.create', 'cadastros.clientes.criar'],
+  ['registrations.clients.edit', 'cadastros.clientes.editar'],
+  ['registrations.clients.contacts.create', 'cadastros.clientes.contatos.criar'],
+  ['registrations.clients.contacts.edit', 'cadastros.clientes.contatos.editar'],
+  ['registrations.clients.locations.create', 'cadastros.clientes.locais.criar'],
+  ['registrations.clients.locations.edit', 'cadastros.clientes.locais.editar'],
+  ['registrations.categories.read', 'cadastros.categorias.visualizar'],
+  ['registrations.categories.create', 'cadastros.categorias.criar'],
+  ['registrations.categories.edit', 'cadastros.categorias.editar'],
+  ['registrations.categories.subcategories.create', 'cadastros.categorias.subcategorias.criar'],
+  ['registrations.categories.subcategories.edit', 'cadastros.categorias.subcategorias.editar'],
+  ['registrations.categories.items.create', 'cadastros.categorias.itens.criar'],
+  ['registrations.categories.items.edit', 'cadastros.categorias.itens.editar'],
+  ['registrations.finance.read', 'cadastros.financeiro.visualizar'],
+  ['registrations.finance.manage', 'cadastros.financeiro.gerenciar'],
+
   ['catalog.ti.read', 'catalogos.ti.visualizar'],
   ['catalog.ti.manage', 'catalogos.ti.editar'],
   ['catalog.ti.edit', 'catalogos.ti.editar'],
