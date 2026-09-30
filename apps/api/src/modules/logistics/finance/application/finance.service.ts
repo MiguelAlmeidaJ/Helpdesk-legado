@@ -10,6 +10,10 @@ import {
   type FinanceCatalogOption,
   type FinanceCatalogsResponse,
   type FinanceListResponse,
+  type FinanceMasterDataItem,
+  type FinanceMasterDataKey,
+  type FinanceMasterDataResponse,
+  type FinanceMasterDataWriteInput,
   type FinancePaymentInput,
   type FinancePayableWriteInput,
   type FinanceReceiptInput,
@@ -523,6 +527,170 @@ export class FinanceService {
       id,
     );
     if (!changed) throw new NotFoundException('Recorrência não encontrada.');
+  }
+
+
+  async masterData(user: AuthenticatedUser): Promise<FinanceMasterDataResponse> {
+    this.assertManage(user);
+    const [groups, subgroups, classifications, documentTypes, paymentMethods, agencies] =
+      await Promise.all([
+        this.database.$queryRawUnsafe<Row[]>('SELECT id, nome AS name, status FROM categorias_grupo ORDER BY status DESC, nome, id'),
+        this.database.$queryRawUnsafe<Row[]>('SELECT id, nome AS name, status, id_grupo AS parent_id, aplicavel FROM categorias_subgrupo ORDER BY status DESC, nome, id'),
+        this.database.$queryRawUnsafe<Row[]>('SELECT id, nome AS name, status FROM categorias_classificacao ORDER BY status DESC, nome, id'),
+        this.database.$queryRawUnsafe<Row[]>('SELECT id, nome AS name, status FROM categorias_tipo_documento ORDER BY status DESC, nome, id'),
+        this.database.$queryRawUnsafe<Row[]>('SELECT id, forma AS name, COALESCE(status, 1) AS status FROM cads_forma_pag ORDER BY COALESCE(status, 1) DESC, forma, id'),
+        this.database.$queryRawUnsafe<Row[]>('SELECT id, ag_nome AS name, COALESCE(status, 1) AS status FROM agenciasbancarias ORDER BY COALESCE(status, 1) DESC, ag_nome, id'),
+      ]);
+
+    const map = (rows: Row[]): FinanceMasterDataItem[] =>
+      rows.map((row) => ({
+        id: number(row.id),
+        name: String(row.name ?? ''),
+        active: number(row.status) === 1,
+        ...(row.parent_id !== undefined ? { parentId: number(row.parent_id) || null } : {}),
+        ...(row.aplicavel !== undefined ? { applicable: row.aplicavel ? String(row.aplicavel) : null } : {}),
+      }));
+
+    return {
+      groups: map(groups),
+      subgroups: map(subgroups),
+      classifications: map(classifications),
+      documentTypes: map(documentTypes),
+      paymentMethods: map(paymentMethods),
+      agencies: map(agencies),
+    };
+  }
+
+  async createMasterData(
+    user: AuthenticatedUser,
+    resource: FinanceMasterDataKey,
+    input: FinanceMasterDataWriteInput,
+  ): Promise<{ id: number }> {
+    this.assertManage(user);
+    const name = text(input.name, 100, true);
+
+    return this.database.$transaction(async (tx) => {
+      if (resource === 'groups') {
+        await tx.$executeRawUnsafe('INSERT INTO categorias_grupo (nome, status) VALUES (?, 1)', name);
+      } else if (resource === 'subgroups') {
+        const parentId = positiveInt(input.parentId, 'parentId');
+        const applicable = text(input.applicable ?? 'Ambos', 50) || 'Ambos';
+        await tx.$executeRawUnsafe(
+          'INSERT INTO categorias_subgrupo (id_grupo, nome, status, aplicavel) VALUES (?, ?, 1, ?)',
+          parentId,
+          name,
+          applicable,
+        );
+      } else if (resource === 'classifications') {
+        await tx.$executeRawUnsafe('INSERT INTO categorias_classificacao (nome, status) VALUES (?, 1)', name);
+      } else if (resource === 'document-types') {
+        await tx.$executeRawUnsafe('INSERT INTO categorias_tipo_documento (nome, status) VALUES (?, 1)', name);
+      } else if (resource === 'payment-methods') {
+        await tx.$executeRawUnsafe('INSERT INTO cads_forma_pag (forma, status) VALUES (?, 1)', name);
+      } else if (resource === 'agencies') {
+        const ids = await tx.$queryRawUnsafe<Array<{ id: number | bigint | string }>>(
+          'SELECT COALESCE(MAX(id), 0) + 1 AS id FROM agenciasbancarias FOR UPDATE',
+        );
+        const id = Number(ids[0]?.id ?? 1);
+        await tx.$executeRawUnsafe(
+          'INSERT INTO agenciasbancarias (id, ag_nome, status) VALUES (?, ?, 1)',
+          id,
+          name,
+        );
+        return { id };
+      } else {
+        throw new NotFoundException('Cadastro financeiro não encontrado.');
+      }
+
+      const ids = await tx.$queryRawUnsafe<Array<{ id: number | bigint | string }>>(
+        'SELECT LAST_INSERT_ID() AS id',
+      );
+      return { id: Number(ids[0]?.id) };
+    });
+  }
+
+  async updateMasterData(
+    user: AuthenticatedUser,
+    resource: FinanceMasterDataKey,
+    id: number,
+    input: FinanceMasterDataWriteInput,
+  ): Promise<void> {
+    this.assertManage(user);
+    const name = text(input.name, 100, true);
+    let changed = 0;
+
+    if (resource === 'groups') {
+      changed = await this.database.$executeRawUnsafe('UPDATE categorias_grupo SET nome=? WHERE id=?', name, id);
+    } else if (resource === 'subgroups') {
+      changed = await this.database.$executeRawUnsafe(
+        'UPDATE categorias_subgrupo SET nome=?, id_grupo=?, aplicavel=? WHERE id=?',
+        name,
+        positiveInt(input.parentId, 'parentId'),
+        text(input.applicable ?? 'Ambos', 50) || 'Ambos',
+        id,
+      );
+    } else if (resource === 'classifications') {
+      changed = await this.database.$executeRawUnsafe('UPDATE categorias_classificacao SET nome=? WHERE id=?', name, id);
+    } else if (resource === 'document-types') {
+      changed = await this.database.$executeRawUnsafe('UPDATE categorias_tipo_documento SET nome=? WHERE id=?', name, id);
+    } else if (resource === 'payment-methods') {
+      changed = await this.database.$executeRawUnsafe('UPDATE cads_forma_pag SET forma=? WHERE id=?', name, id);
+    } else if (resource === 'agencies') {
+      changed = await this.database.$executeRawUnsafe('UPDATE agenciasbancarias SET ag_nome=? WHERE id=?', name, id);
+    } else {
+      throw new NotFoundException('Cadastro financeiro não encontrado.');
+    }
+
+    if (!changed) throw new NotFoundException('Registro financeiro não encontrado.');
+  }
+
+  async setMasterDataStatus(
+    user: AuthenticatedUser,
+    resource: FinanceMasterDataKey,
+    id: number,
+    active: boolean,
+  ): Promise<void> {
+    this.assertManage(user);
+    const status = active ? 1 : 0;
+    const table =
+      resource === 'groups' ? 'categorias_grupo' :
+      resource === 'subgroups' ? 'categorias_subgrupo' :
+      resource === 'classifications' ? 'categorias_classificacao' :
+      resource === 'document-types' ? 'categorias_tipo_documento' :
+      resource === 'payment-methods' ? 'cads_forma_pag' :
+      resource === 'agencies' ? 'agenciasbancarias' : null;
+    if (!table) throw new NotFoundException('Cadastro financeiro não encontrado.');
+    const changed = await this.database.$executeRawUnsafe(
+      `UPDATE ${table} SET status=? WHERE id=?`,
+      status,
+      id,
+    );
+    if (!changed) throw new NotFoundException('Registro financeiro não encontrado.');
+  }
+
+  async deleteMasterData(
+    user: AuthenticatedUser,
+    resource: FinanceMasterDataKey,
+    id: number,
+  ): Promise<void> {
+    this.assertManage(user);
+    const table =
+      resource === 'groups' ? 'categorias_grupo' :
+      resource === 'subgroups' ? 'categorias_subgrupo' :
+      resource === 'classifications' ? 'categorias_classificacao' :
+      resource === 'document-types' ? 'categorias_tipo_documento' :
+      resource === 'payment-methods' ? 'cads_forma_pag' :
+      resource === 'agencies' ? 'agenciasbancarias' : null;
+    if (!table) throw new NotFoundException('Cadastro financeiro não encontrado.');
+    try {
+      const changed = await this.database.$executeRawUnsafe(`DELETE FROM ${table} WHERE id=?`, id);
+      if (!changed) throw new NotFoundException('Registro financeiro não encontrado.');
+    } catch (error) {
+      if (error instanceof NotFoundException) throw error;
+      throw new BadRequestException(
+        'Este registro está em uso e não pode ser excluído. Desative-o em vez disso.',
+      );
+    }
   }
 
   private assertRead(user: AuthenticatedUser, view: FinanceViewKey): void {
