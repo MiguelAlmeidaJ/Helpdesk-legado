@@ -116,7 +116,7 @@ export function CommemorativeDatesScreen({
       await createCommemorativeDate({ date, name });
       setDate('');
       setName('');
-      setSuccess('Data especial cadastrada. Ela já passa a valer no calendário do Plantão.');
+      setSuccess('Data especial cadastrada. Ela passa a valer todos os anos no calendário do Plantão.');
       await load();
     } catch (reason) {
       setError(message(reason));
@@ -172,7 +172,7 @@ export function CommemorativeDatesScreen({
           <article className="rounded-xl border border-app-border bg-app-surface p-4 shadow-sm">
             <span className="text-[10px] font-black uppercase tracking-[0.06em] text-app-muted">Datas adicionais</span>
             <strong className="mt-1.5 block text-2xl">{customCount}</strong>
-            <p className="m-0 mt-2 text-xs text-app-muted">Folgas ou datas especiais cadastradas pela empresa.</p>
+            <p className="m-0 mt-2 text-xs text-app-muted">Datas locais ou especiais que se repetem anualmente.</p>
           </article>
         </section>
 
@@ -182,7 +182,7 @@ export function CommemorativeDatesScreen({
               <span className="text-[10px] font-black uppercase tracking-[0.06em] text-app-subtle">Calendário</span>
               <h2 className="m-0 mt-1 text-lg font-black">Datas do ano</h2>
               <p className="m-0 mt-1 text-xs text-app-muted">
-                Toda data desta lista ativa o Plantão durante 24 horas.
+                Toda data desta lista ativa o Plantão durante 24 horas. Datas adicionais se repetem todos os anos.
               </p>
             </div>
 
@@ -229,7 +229,7 @@ export function CommemorativeDatesScreen({
                     <div className="min-w-0 max-sm:col-span-2 max-sm:row-start-2">
                       <span className="block truncate text-sm font-bold text-app-text">{item.name}</span>
                       <span className="mt-1 inline-flex rounded-full bg-app-surface-muted px-2 py-0.5 text-[10px] font-extrabold text-app-muted">
-                        {item.national ? 'Feriado nacional' : 'Data adicional'}
+                        {item.national ? 'Feriado nacional' : 'Data adicional anual'}
                       </span>
                     </div>
                     <div className="flex justify-end">
