@@ -134,9 +134,6 @@ export function ExpenseDashboardScreen({
               {loading ? 'Atualizando…' : 'Filtrar'}
             </button>
           </form>
-          <small>
-            Cadastro e edição de despesas já estão disponíveis no fluxo nativo.
-          </small>
         </section>
 
         {feedback ? <div className={styles.feedback}>{feedback}</div> : null}
