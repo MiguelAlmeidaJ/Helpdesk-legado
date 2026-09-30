@@ -56,10 +56,10 @@ export const DEFAULT_NAVIGATION: SeedSection[] = [
     shortLabel: 'DO',
     icon: 'code',
     items: [
-      { slug: 'devops-projects', label: 'Lista de Projetos', href: '/atendimentos/devops/projetos', status: 'available', visibilityCondition: { anyPermissions: ['tickets.read'] } },
-      { slug: 'devops-tasks', label: 'Lista de Tarefas', href: '/atendimentos/devops', status: 'available', visibilityCondition: { anyPermissions: ['tickets.read'] } },
-      { slug: 'devops-project-new', label: 'Novo Projeto', href: '/atendimentos/devops/projetos/novo', status: 'available', visibilityCondition: { anyPermissions: ['tickets.create'] } },
-      { slug: 'devops-task-new', label: 'Nova Tarefa', href: '/atendimentos/devops/nova-tarefa', status: 'available', visibilityCondition: { anyPermissions: ['tickets.create'] } },
+      { slug: 'devops-projects', label: 'Lista de Projetos', href: '/atendimentos/devops/projetos', status: 'available', visibilityCondition: { anyPermissions: ['tickets.devops.read'] } },
+      { slug: 'devops-tasks', label: 'Lista de Tarefas', href: '/atendimentos/devops', status: 'available', visibilityCondition: { anyPermissions: ['tickets.devops.read'] } },
+      { slug: 'devops-project-new', label: 'Novo Projeto', href: '/atendimentos/devops/projetos/novo', status: 'available', visibilityCondition: { anyPermissions: ['tickets.devops.create'] } },
+      { slug: 'devops-task-new', label: 'Nova Tarefa', href: '/atendimentos/devops/nova-tarefa', status: 'available', visibilityCondition: { anyPermissions: ['tickets.devops.create'] } },
     ],
   },
   {
@@ -68,8 +68,8 @@ export const DEFAULT_NAVIGATION: SeedSection[] = [
     shortLabel: 'MK',
     icon: 'megaphone',
     items: [
-      { slug: 'marketing-tasks', label: 'Lista de Tarefas', href: '/atendimentos/marketing', status: 'available', visibilityCondition: { anyPermissions: ['tickets.read'] } },
-      { slug: 'marketing-task-new', label: 'Nova Tarefa', href: '/atendimentos/marketing/nova-tarefa', status: 'available', visibilityCondition: { anyPermissions: ['tickets.create'] } },
+      { slug: 'marketing-tasks', label: 'Lista de Tarefas', href: '/atendimentos/marketing', status: 'available', visibilityCondition: { anyPermissions: ['tickets.marketing.read'] } },
+      { slug: 'marketing-task-new', label: 'Nova Tarefa', href: '/atendimentos/marketing/nova-tarefa', status: 'available', visibilityCondition: { anyPermissions: ['tickets.marketing.create'] } },
     ],
   },
   {
