@@ -103,18 +103,27 @@ test('navigation upgrade enables migrated screens, preserves customization and i
       return 1;
     },
   };
-  assert.equal(await synchronizeNavigation(db), 15);
+  assert.equal(await synchronizeNavigation(db), 16);
   assert.equal(rows[0].href, '/atendimentos/recorrencias');
   assert.equal(rows[0].label, 'Rotinas');
   assert.equal(rows[0].is_active, 0);
   assert.equal(rows[0].sort_order, 99);
   assert.deepEqual(JSON.parse(rows[0].visibility_condition), { anyPermissions: ['tickets.read'] });
-  assert.deepEqual(rows[1], original[1]);
+  assert.equal(rows[1].href, original[1].href);
+  assert.equal(rows[1].status, original[1].status);
+  assert.equal(rows[1].label, original[1].label);
+  assert.equal(rows[1].sort_order, original[1].sort_order);
+  assert.deepEqual(JSON.parse(rows[1].visibility_condition), {
+    anyPermissions: ['tickets.devops.create'],
+  });
   assert.equal(rows[2].href, '/relatorios/atendimentos/analitico?source=tickets#table');
   assert.equal(rows[3].href, null);
   assert.equal(rows[3].status, 'planned');
   assert.equal(rows[3].is_active, 0);
   assert.equal(rows[4].href, '/atendimentos/marketing/nova-tarefa');
+  assert.deepEqual(JSON.parse(rows[4].visibility_condition), {
+    anyPermissions: ['tickets.marketing.create'],
+  });
 
   const migratedDestinations = new Map([
     ['receivables-accrual', '/logistica/financeiro/contas-a-receber-competencia'],
