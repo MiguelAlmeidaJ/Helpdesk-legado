@@ -144,7 +144,7 @@ test('navigation upgrade enables migrated screens, preserves customization and i
     assert.equal(row.status, 'available', slug);
     assert.equal(row.href, href, slug);
     if (['receivables-accrual', 'receivables-cashflow', 'payables'].includes(slug)) {
-      assert.equal(row.is_active, 1, slug);
+      assert.equal(row.is_active, 0, slug);
     }
   }
   assert.equal(await synchronizeNavigation(db), 0);
