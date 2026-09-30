@@ -93,12 +93,13 @@ test('navigation upgrade enables migrated screens, preserves customization and i
         Object.assign(rows.find(row => row.id === id), { is_active: 0 });
         return 1;
       }
-      const [label, href, status, visibility_condition, id] = values;
+      const [label, href, status, visibility_condition, is_active, id] = values;
       Object.assign(rows.find(row => row.id === id), {
         label,
         href,
         status,
         visibility_condition,
+        is_active,
       });
       return 1;
     },
@@ -143,7 +144,7 @@ test('navigation upgrade enables migrated screens, preserves customization and i
     assert.equal(row.status, 'available', slug);
     assert.equal(row.href, href, slug);
     if (['receivables-accrual', 'receivables-cashflow', 'payables'].includes(slug)) {
-      assert.equal(row.is_active, 0, slug);
+      assert.equal(row.is_active, 1, slug);
     }
   }
   assert.equal(await synchronizeNavigation(db), 0);
