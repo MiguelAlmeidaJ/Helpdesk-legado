@@ -93,7 +93,6 @@ export class RbacAccessRepository {
 
     return {
       active: user.user_sts === 1,
-      hasAssignments: roles.length > 0 || userPermissions.length > 0,
       roleSlugs: [...new Set(roleSlugs)],
       permissionSlugs,
       onCallAreas: onCall.areas,
