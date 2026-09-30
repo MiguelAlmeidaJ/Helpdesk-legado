@@ -126,10 +126,19 @@ test('navigation upgrade enables migrated screens, preserves customization and i
     anyPermissions: ['tickets.marketing.create'],
   });
 
+  const hiddenFinanceItems = [
+    'receivables-accrual',
+    'receivables-cashflow',
+    'payables',
+  ];
+  for (const slug of hiddenFinanceItems) {
+    const row = rows.find(item => item.slug === slug);
+    assert.equal(row.is_active, 0, slug);
+    assert.equal(row.status, 'planned', slug);
+    assert.equal(row.href, null, slug);
+  }
+
   const migratedDestinations = new Map([
-    ['receivables-accrual', '/logistica/financeiro/contas-a-receber-competencia'],
-    ['receivables-cashflow', '/logistica/financeiro/contas-a-receber-fluxo'],
-    ['payables', '/logistica/financeiro/contas-a-pagar'],
     ['entries', '/logistica/financeiro/lancamentos'],
     ['recurring', '/logistica/financeiro/recorrentes'],
     ['accounting', '/logistica/financeiro/contabilidade'],
@@ -143,9 +152,6 @@ test('navigation upgrade enables migrated screens, preserves customization and i
     const row = rows.find(item => item.slug === slug);
     assert.equal(row.status, 'available', slug);
     assert.equal(row.href, href, slug);
-    if (['receivables-accrual', 'receivables-cashflow', 'payables'].includes(slug)) {
-      assert.equal(row.is_active, 0, slug);
-    }
   }
   assert.equal(await synchronizeNavigation(db), 0);
 });
