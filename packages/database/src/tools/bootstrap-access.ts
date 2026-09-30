@@ -185,6 +185,9 @@ async function main() {
     console.log('  permissões de catálogo: 5 permissões normalizadas');
     console.log('  permissões de Qualidade: 4 permissões');
     console.log(`  grants legados migrados para RBAC: ${rbac.migratedGrants}`);
+    console.log(
+      `  migração posicional aplicada agora: ${rbac.legacyMigrationApplied ? 'sim' : 'não'}`,
+    );
   } finally {
     await db.$disconnect();
   }
