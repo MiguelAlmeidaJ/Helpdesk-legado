@@ -267,15 +267,70 @@ export function AppSidebar() {
                 </span>
               </summary>
               <div className="mb-2 ml-[42px] mt-1 grid gap-0.5 border-l border-app-border-soft pl-2">
-                {section.items.map((item) => (
-                  <NavigationLink
-                    item={item}
-                    key={item.id}
-                    nested
-                    onNavigate={() => setOpen(false)}
-                    pathname={pathname}
-                  />
-                ))}
+                {section.id === 'logistics' ? (
+                  <>
+                    {section.items
+                      .filter((item) => !item.href?.startsWith('/logistica/financeiro/'))
+                      .map((item) => (
+                        <NavigationLink
+                          item={item}
+                          key={item.id}
+                          nested
+                          onNavigate={() => setOpen(false)}
+                          pathname={pathname}
+                        />
+                      ))}
+
+                    {section.items.some((item) =>
+                      item.href?.startsWith('/logistica/financeiro/'),
+                    ) ? (
+                      <details
+                        className="group/finance"
+                        open={pathname.startsWith('/logistica/financeiro/')}
+                      >
+                        <summary className="grid min-h-9 cursor-pointer list-none grid-cols-[24px_minmax(0,1fr)_auto] items-center gap-2 rounded-lg px-2 py-1.5 text-app-text-soft transition-colors hover:bg-app-surface-hover">
+                          <span className="grid size-6 place-items-center rounded-md bg-app-surface-muted text-app-muted">
+                            <NavigationIcon className="size-3.5" name="wallet" />
+                          </span>
+                          <strong className="text-xs">Financeiro</strong>
+                          <svg
+                            aria-hidden="true"
+                            className="size-3.5 text-app-subtle transition-transform duration-150 group-open/finance:rotate-90"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                          >
+                            <path d="m9 5 7 7-7 7" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.9" />
+                          </svg>
+                        </summary>
+                        <div className="ml-3 mt-1 grid gap-0.5 border-l border-app-border-soft pl-2">
+                          {section.items
+                            .filter((item) =>
+                              item.href?.startsWith('/logistica/financeiro/'),
+                            )
+                            .map((item) => (
+                              <NavigationLink
+                                item={item}
+                                key={item.id}
+                                nested
+                                onNavigate={() => setOpen(false)}
+                                pathname={pathname}
+                              />
+                            ))}
+                        </div>
+                      </details>
+                    ) : null}
+                  </>
+                ) : (
+                  section.items.map((item) => (
+                    <NavigationLink
+                      item={item}
+                      key={item.id}
+                      nested
+                      onNavigate={() => setOpen(false)}
+                      pathname={pathname}
+                    />
+                  ))
+                )}
               </div>
             </details>
           ))}
