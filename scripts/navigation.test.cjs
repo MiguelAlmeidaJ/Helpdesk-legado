@@ -93,8 +93,9 @@ test('navigation upgrade enables migrated screens, preserves customization and i
         Object.assign(rows.find(row => row.id === id), { is_active: 0 });
         return 1;
       }
-      const [label, href, status, visibility_condition, is_active, id] = values;
+      const [section_id, label, href, status, visibility_condition, is_active, id] = values;
       Object.assign(rows.find(row => row.id === id), {
+        section_id,
         label,
         href,
         status,
