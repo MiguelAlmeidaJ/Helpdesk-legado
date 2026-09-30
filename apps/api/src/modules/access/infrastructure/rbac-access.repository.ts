@@ -132,7 +132,14 @@ export class RbacAccessRepository {
              OR EXISTS (
                SELECT 1
                FROM business_holidays h
-               WHERE h.holiday_date = DATE(${BRAZIL_NOW_SQL})
+               WHERE (
+                 h.holiday_date = DATE(${BRAZIL_NOW_SQL})
+                 OR (
+                   h.is_national = 0
+                   AND MONTH(h.holiday_date) = MONTH(DATE(${BRAZIL_NOW_SQL}))
+                   AND DAY(h.holiday_date) = DAY(DATE(${BRAZIL_NOW_SQL}))
+                 )
+               )
              )
              OR TIME(${BRAZIL_NOW_SQL}) >= cfg.business_end
              OR TIME(${BRAZIL_NOW_SQL}) < cfg.business_start
