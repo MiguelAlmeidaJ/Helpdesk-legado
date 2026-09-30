@@ -16,11 +16,6 @@ import type { AuthenticatedRequest } from '../../../access/presentation/http/aut
 import { REQUIRED_PERMISSIONS_KEY } from '../../../access/presentation/http/require-permissions.decorator';
 import { TicketTypeAccessRepository } from '../../application/ports/ticket-type-access.repository';
 
-function permissionLevel(moduleValue: string | undefined, index: number): number {
-  const value = moduleValue?.[index];
-  return value && /^\d$/.test(value) ? Number(value) : 0;
-}
-
 function isSystemAdmin(grants: readonly PermissionGrant[]): boolean {
   return grants.some(
     (grant) => grant.permission === AppPermission.SystemAdmin,
@@ -40,40 +35,37 @@ const DEVOPS_TICKET_PERMISSIONS = new Set<AppPermission>([
 
 function devOpsGrant(
   permission: AppPermission,
-  moduleValue: string | undefined,
+  access: NonNullable<
+    Awaited<ReturnType<TicketTypeAccessRepository['findByUserId']>>['permissions'][Sector.DevOps]
+  >,
 ): PermissionGrant | null {
-  const canManageOthers = permissionLevel(moduleValue, 5) >= 2;
-  const operationalScope = canManageOthers
+  const operationalScope = access.manageOthers
     ? PermissionScope.All
     : PermissionScope.Own;
 
-  const access = permissionLevel(moduleValue, 0) >= 1;
-  if (!access) return null;
+  if (!access.read) return null;
 
   switch (permission) {
     case AppPermission.TicketsRead:
       return { permission, scope: PermissionScope.All };
     case AppPermission.TicketsCreate:
-      return permissionLevel(moduleValue, 1) >= 2
-        ? { permission, scope: PermissionScope.All }
-        : null;
+      return access.create ? { permission, scope: PermissionScope.All } : null;
     case AppPermission.TicketsEdit:
     case AppPermission.TicketsClassify:
-      return permissionLevel(moduleValue, 1) >= 3 || canManageOthers
+      return access.edit || access.manageOthers
         ? { permission, scope: operationalScope }
         : null;
     case AppPermission.TicketsExecute:
     case AppPermission.TicketsClose:
-      return permissionLevel(moduleValue, 2) >= 2 || canManageOthers
+      return access.execute || access.manageOthers
         ? { permission, scope: operationalScope }
         : null;
     case AppPermission.TicketsHold:
-      return permissionLevel(moduleValue, 3) >= 2 &&
-        (permissionLevel(moduleValue, 2) >= 2 || canManageOthers)
+      return access.hold && (access.execute || access.manageOthers)
         ? { permission, scope: operationalScope }
         : null;
     case AppPermission.TicketsReject:
-      return permissionLevel(moduleValue, 4) >= 2 || canManageOthers
+      return access.reject || access.manageOthers
         ? { permission, scope: operationalScope }
         : null;
     default:
@@ -124,9 +116,9 @@ export class DevOpsPermissionsGuard implements CanActivate {
     }
 
     const snapshot = await this.access.findByUserId(user.id);
-    const moduleValue = snapshot.modules[Sector.DevOps];
+    const devOpsAccess = snapshot.permissions[Sector.DevOps];
 
-    if (permissionLevel(moduleValue, 0) < 1) {
+    if (!devOpsAccess?.read) {
       throw new ForbiddenException(
         'Este tipo de ticket é restrito ao setor DevOps.',
       );
@@ -144,7 +136,7 @@ export class DevOpsPermissionsGuard implements CanActivate {
         continue;
       }
 
-      const grant = devOpsGrant(permission, moduleValue);
+      const grant = devOpsGrant(permission, devOpsAccess);
       if (!grant) {
         missing.push(permission);
       } else {
@@ -156,9 +148,9 @@ export class DevOpsPermissionsGuard implements CanActivate {
       throw new ForbiddenException('Permissão insuficiente para DevOps.');
     }
 
-    // The existing Project/Task application services still consume the generic
-    // Tickets grants. Prepending request-local DevOps grants keeps those
-    // services unchanged while making m5, not m3, authoritative for this type.
+    // Project/Task application services still consume the generic Tickets
+    // grants. Request-local grants adapt the DevOps-specific RBAC permissions
+    // without reading positional legacy permission strings.
     request.user = {
       ...user,
       grants: [...synthetic, ...user.grants],
