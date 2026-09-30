@@ -3,167 +3,57 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 require('../apps/api/node_modules/reflect-metadata');
-const { NavigationAdminService } = require('../apps/api/dist/modules/navigation/application/navigation-admin.service');
-const { NavigationService } = require('../apps/api/dist/modules/navigation/application/navigation.service');
-const { NavigationAdminController } = require('../apps/api/dist/modules/navigation/presentation/http/navigation-admin.controller');
-const { synchronizeNavigation } = require('../packages/database/dist/navigation/synchronize-navigation');
-const { DEFAULT_NAVIGATION, WEB_ROUTE_TRANSLATIONS, portugueseWebHref } = require('../packages/contracts/dist');
 
-test('admin snapshot serializes unsigned MariaDB IDs and joins items to sections', async () => {
-  const service = new NavigationAdminService({ $queryRaw: async (sql) =>
-    sql.join('').includes('FROM navigation_sections')
-      ? [{ id: 17n, slug: 'tickets', label: 'Atendimentos', short_label: 'AT', sort_order: 10, is_active: 1n }]
-      : [{ id: 111n, section_id: 17, slug: 'recurrences', label: 'Recorrências', href: '/atendimentos/recorrencias', status: 'available', visibility_condition: null, sort_order: 0, is_active: 0n }],
-  });
-  const snapshot = JSON.parse(JSON.stringify(await service.snapshot()));
-  assert.equal(snapshot.sections[0].id, 17);
-  assert.equal(snapshot.sections[0].items[0].id, 111);
-  assert.equal(snapshot.sections[0].items[0].sectionId, 17);
-  assert.equal(snapshot.sections[0].items[0].active, false);
-});
+const {
+  NavigationService,
+} = require('../apps/api/dist/modules/navigation/application/navigation.service');
+const {
+  DEFAULT_NAVIGATION,
+  WEB_ROUTE_TRANSLATIONS,
+  portugueseWebHref,
+} = require('../packages/contracts/dist');
 
-test('section and item creation return JSON-safe numeric IDs', async () => {
-  for (const kind of ['Section', 'Item']) {
-    const service = new NavigationAdminService({
-      $executeRaw: async () => 1,
-      $queryRaw: async (sql) => {
-        const query = sql.join('');
-        if (query.includes('SELECT slug')) return [{ slug: 'tickets' }];
-        if (query.includes('SELECT id')) return calls++ ? [{ id: 4294967295n }] : [];
-        throw new Error(query);
-      },
-    });
-    let calls = 0;
-    const input = { slug: 'new', label: 'Novo', shortLabel: null, sectionId: 17, href: '/atendimentos', status: 'available', sortOrder: 0, active: true, visibilityCondition: null };
-    assert.deepEqual(JSON.parse(JSON.stringify(await service['create' + kind](input))), { id: 4294967295 });
-  }
-});
-
-test('visibility saved by the editor remains visible only to authorized users', async () => {
-  let savedCondition;
-  const controller = new NavigationAdminController({ updateItem: async (_id, input) => { savedCondition = input.visibilityCondition; return { id: 1 }; } });
-  await controller.updateItem(1, { sectionId: 1, slug: 'tickets', label: 'Atendimentos', href: '/atendimentos', status: 'available', sortOrder: 0, active: true, visibilityCondition: { anyPermissions: ['tickets.read'], allPermissions: [], anyRoles: [] } });
-  const row = { section_slug: 'tickets', section_label: 'Atendimentos', short_label: 'AT', item_slug: 'tickets', item_label: 'Lista', href: '/atendimentos', status: 'available', visibility_condition: JSON.stringify(savedCondition) };
-  const service = new NavigationService({ $queryRawUnsafe: async () => [row] });
-  const user = (permission) => ({ grants: permission ? [{ permission }] : [], roleAssignments: [] });
-  assert.equal((await service.forUser(user('tickets.read'))).sections.length, 1);
-  assert.equal((await service.forUser(user())).sections.length, 0);
-  for (const invalid of ['{', '{}', '{"anyPermissions":[]}', '{"anyPermissions":[42]}', '{"unknown":[]}']) {
-    row.visibility_condition = invalid;
-    assert.equal((await service.forUser(user('tickets.read'))).sections.length, 0);
-  }
-});
-
-test('navigation upgrade enables migrated screens, preserves customization and is idempotent', async () => {
-  const rows = [
-    { id: 1n, section_id: 5, slug: 'tickets-recurrences', label: 'Rotinas', href: null, status: 'planned', visibility_condition: null, is_active: 0, sort_order: 99 },
-    { id: 2n, section_id: 5, slug: 'devops-task-new', label: 'Nova Tarefa', href: '/custom', status: 'planned', visibility_condition: '{"anyRoles":["custom"]}' },
-    { id: 3n, section_id: 5, slug: 'report-client-analytic', label: 'Análise', href: '/reports/tickets/analytics?source=tickets#table', status: 'available', visibility_condition: null, is_active: 1 },
-    { id: 4n, section_id: 5, slug: 'marketing-availability', label: 'Disponibilidade', href: null, status: 'planned', visibility_condition: null, is_active: 1 },
-    { id: 5n, section_id: 5, slug: 'marketing-task-new', label: 'Nova Tarefa', href: '/tickets/new?type=marketing', status: 'available', visibility_condition: null, is_active: 1 },
-    { id: 6n, section_id: 5, slug: 'receivables-accrual', label: 'Contas a Receber - Competência', href: null, status: 'planned', visibility_condition: null, is_active: 1 },
-    { id: 7n, section_id: 5, slug: 'receivables-cashflow', label: 'Contas a Receber - Fluxo', href: null, status: 'planned', visibility_condition: null, is_active: 1 },
-    { id: 8n, section_id: 5, slug: 'payables', label: 'Contas a Pagar', href: null, status: 'planned', visibility_condition: null, is_active: 1 },
-    { id: 9n, section_id: 5, slug: 'entries', label: 'Lançamentos', href: null, status: 'planned', visibility_condition: null, is_active: 1 },
-    { id: 10n, section_id: 5, slug: 'recurring', label: 'Recorrentes', href: null, status: 'planned', visibility_condition: null, is_active: 1 },
-    { id: 11n, section_id: 5, slug: 'accounting', label: 'Contabilidade', href: null, status: 'planned', visibility_condition: null, is_active: 1 },
-    { id: 12n, section_id: 5, slug: 'report-client-daily', label: 'Atd. diário por Cliente', href: null, status: 'planned', visibility_condition: null, is_active: 1 },
-    { id: 13n, section_id: 5, slug: 'report-requester', label: 'Atd. por Solicitante', href: null, status: 'planned', visibility_condition: null, is_active: 1 },
-    { id: 14n, section_id: 5, slug: 'report-tech-daily', label: 'Atd. diário por Técnico', href: null, status: 'planned', visibility_condition: null, is_active: 1 },
-    { id: 15n, section_id: 5, slug: 'radio', label: 'Rádio', href: null, status: 'planned', visibility_condition: null, is_active: 1 },
-    { id: 16n, section_id: 5, slug: 'statements', label: 'Extratos', href: null, status: 'planned', visibility_condition: null, is_active: 1 },
-  ];
-  const original = structuredClone(rows);
-  const db = {
-    $queryRaw: async (sql) =>
-      sql.join('').includes('FROM navigation_sections')
-        ? [
-            { id: 5n, slug: 'logistics' },
-            { id: 12n, slug: 'finance' },
-          ]
-        : rows,
-    $executeRaw: async (sql, ...values) => {
-      const query = sql.join('');
-      if (query.includes('SET href =') && query.includes('is_active = 0')) {
-        const [href, status, visibility_condition, id] = values;
-        Object.assign(rows.find(row => row.id === id), {
-          href,
-          status,
-          visibility_condition,
-          is_active: 0,
-        });
-        return 1;
-      }
-      if (query.includes('SET is_active = 0')) {
-        const [id] = values;
-        Object.assign(rows.find(row => row.id === id), { is_active: 0 });
-        return 1;
-      }
-      const [section_id, label, href, status, visibility_condition, is_active, id] = values;
-      Object.assign(rows.find(row => row.id === id), {
-        section_id,
-        label,
-        href,
-        status,
-        visibility_condition,
-        is_active,
-      });
-      return 1;
-    },
+test('code navigation filters sections by RBAC permissions', async () => {
+  const service = new NavigationService();
+  const user = {
+    grants: [
+      { permission: 'quality.on-call.read' },
+      { permission: 'registrations.clients.read' },
+    ],
+    roleAssignments: [],
   };
-  assert.equal(await synchronizeNavigation(db), 16);
-  assert.equal(rows[0].href, '/atendimentos/recorrencias');
-  assert.equal(rows[0].label, 'Rotinas');
-  assert.equal(rows[0].is_active, 0);
-  assert.equal(rows[0].sort_order, 99);
-  assert.deepEqual(JSON.parse(rows[0].visibility_condition), { anyPermissions: ['tickets.read'] });
-  assert.equal(rows[1].href, original[1].href);
-  assert.equal(rows[1].status, original[1].status);
-  assert.equal(rows[1].label, original[1].label);
-  assert.equal(rows[1].sort_order, original[1].sort_order);
-  assert.deepEqual(JSON.parse(rows[1].visibility_condition), {
-    anyPermissions: ['tickets.devops.create'],
-  });
-  assert.equal(rows[2].href, '/relatorios/atendimentos/analitico?source=tickets#table');
-  assert.equal(rows[3].href, null);
-  assert.equal(rows[3].status, 'planned');
-  assert.equal(rows[3].is_active, 0);
-  assert.equal(rows[4].href, '/atendimentos/marketing/nova-tarefa');
-  assert.deepEqual(JSON.parse(rows[4].visibility_condition), {
-    anyPermissions: ['tickets.marketing.create'],
-  });
 
-  const hiddenFinanceItems = [
-    'receivables-accrual',
-    'receivables-cashflow',
-    'payables',
-  ];
-  for (const slug of hiddenFinanceItems) {
-    const row = rows.find(item => item.slug === slug);
-    assert.equal(row.is_active, 0, slug);
-    assert.equal(row.status, 'planned', slug);
-    assert.equal(row.href, null, slug);
-  }
+  const response = await service.forUser(user);
+  const sections = new Map(response.sections.map((section) => [section.id, section]));
 
-  const migratedDestinations = new Map([
-    ['entries', '/logistica/financeiro/lancamentos'],
-    ['recurring', '/logistica/financeiro/recorrentes'],
-    ['accounting', '/logistica/financeiro/contabilidade'],
-    ['report-client-daily', '/relatorios/atendimentos/diario-por-cliente'],
-    ['report-requester', '/relatorios/atendimentos/por-solicitante'],
-    ['report-tech-daily', '/relatorios/atendimentos/diario-por-tecnico'],
-    ['radio', '/radio'],
-    ['statements', '/extratos'],
-  ]);
-  for (const [slug, href] of migratedDestinations) {
-    const row = rows.find(item => item.slug === slug);
-    assert.equal(row.status, 'available', slug);
-    assert.equal(row.href, href, slug);
-    if (['entries', 'recurring', 'accounting'].includes(slug)) {
-      assert.equal(row.section_id, 12, slug);
-    }
-  }
-  assert.equal(await synchronizeNavigation(db), 0);
+  assert.equal(sections.has('primary'), true);
+  assert.equal(sections.has('quality'), true);
+  assert.equal(sections.has('registrations'), true);
+  assert.equal(sections.has('finance'), false);
+  assert.equal(sections.has('administration'), false);
+
+  assert.deepEqual(
+    sections.get('quality').items.map((item) => item.id),
+    ['quality-on-call'],
+  );
+  assert.equal(
+    sections.get('registrations').items.some((item) => item.id === 'clients'),
+    true,
+  );
+});
+
+test('system admin receives all code-defined navigation sections', async () => {
+  const service = new NavigationService();
+  const user = {
+    grants: [{ permission: 'system.admin' }],
+    roleAssignments: [],
+  };
+
+  const response = await service.forUser(user);
+  assert.deepEqual(
+    response.sections.map((section) => section.id),
+    DEFAULT_NAVIGATION.map((section) => section.slug),
+  );
 });
 
 test('browser URL translations never contain identity redirects', () => {
@@ -173,65 +63,93 @@ test('browser URL translations never contain identity redirects', () => {
 });
 
 test('browser URL translation preserves IDs, filters and unrelated paths', () => {
-  assert.equal(portugueseWebHref('/tickets/devops/projects/42?tab=tasks'), '/atendimentos/devops/projetos/42?tab=tasks');
-  assert.equal(portugueseWebHref('/tickets/new?type=devops&projectId=42'), '/atendimentos/novo?type=devops&projectId=42');
-  assert.equal(portugueseWebHref('/registrations/clientes'), '/cadastros/clientes');
-  assert.equal(portugueseWebHref('/reports/tickets/client-daily'), '/relatorios/atendimentos/diario-por-cliente');
-  assert.equal(portugueseWebHref('/logistics/finance/statements'), '/extratos');
+  assert.equal(
+    portugueseWebHref('/tickets/devops/projects/42?tab=tasks'),
+    '/atendimentos/devops/projetos/42?tab=tasks',
+  );
+  assert.equal(
+    portugueseWebHref('/tickets/new?type=devops&projectId=42'),
+    '/atendimentos/novo?type=devops&projectId=42',
+  );
+  assert.equal(
+    portugueseWebHref('/registrations/clientes'),
+    '/cadastros/clientes',
+  );
+  assert.equal(
+    portugueseWebHref('/reports/tickets/client-daily'),
+    '/relatorios/atendimentos/diario-por-cliente',
+  );
+  assert.equal(
+    portugueseWebHref('/logistics/finance/statements'),
+    '/extratos',
+  );
   assert.equal(portugueseWebHref('/radio'), '/radio');
-  assert.equal(portugueseWebHref('/admin/ticket-sla'), '/administracao/sla-atendimentos');
-  assert.equal(portugueseWebHref('/admin/on-call'), '/qualidade/plantao');
-  assert.equal(portugueseWebHref('/quality/on-call'), '/qualidade/plantao');
-  assert.equal(portugueseWebHref('/quality/commemorative-dates'), '/qualidade/datas-comemorativas');
-  assert.equal(portugueseWebHref('/admin/maintenance'), '/administracao/manutencao');
-  assert.equal(portugueseWebHref('/tickets/availability/legacy'), '/atendimentos/disponibilidade/antiga');
-  for (const unchanged of ['/api/tickets', '/tickets-other', '/atendimentos', 'https://example.com/tickets']) {
+  assert.equal(
+    portugueseWebHref('/admin/ticket-sla'),
+    '/administracao/sla-atendimentos',
+  );
+  assert.equal(
+    portugueseWebHref('/admin/on-call'),
+    '/qualidade/plantao',
+  );
+  assert.equal(
+    portugueseWebHref('/quality/on-call'),
+    '/qualidade/plantao',
+  );
+  assert.equal(
+    portugueseWebHref('/quality/commemorative-dates'),
+    '/qualidade/datas-comemorativas',
+  );
+  assert.equal(
+    portugueseWebHref('/admin/maintenance'),
+    '/administracao/manutencao',
+  );
+  assert.equal(
+    portugueseWebHref('/tickets/availability/legacy'),
+    '/atendimentos/disponibilidade/antiga',
+  );
+
+  for (const unchanged of [
+    '/api/tickets',
+    '/tickets-other',
+    '/atendimentos',
+    'https://example.com/tickets',
+  ]) {
     assert.equal(portugueseWebHref(unchanged), unchanged);
   }
 });
 
-test('all available menu destinations resolve to implemented Next pages', () => {
-  const items = DEFAULT_NAVIGATION.flatMap(section => section.items);
-  assert.equal(items.filter(item => item.status === 'planned').length, 0);
-  for (const slug of [
-    'tickets-recurrences',
-    'devops-task-new',
-    'marketing-task-new',
-    'clients',
-    'categories',
-    'cost-centers',
-    'accounting-classification',
-    'adjustment-indexes',
-    'payment-methods',
-    'expense-types',
-    'service-types',
-    'fee-types',
-    'entries',
-    'recurring',
-    'accounting',
-    'report-client-daily',
-    'report-requester',
-    'report-tech-daily',
-    'radio',
-    'statements',
-    'ticket-sla-settings',
-    'quality-on-call',
-    'quality-commemorative-dates',
-    'maintenance',
-  ]) {
-    assert.equal(items.find(item => item.slug === slug).status, 'available', slug);
-  }
+test('all available code-defined menu destinations resolve to implemented Next pages', () => {
+  const items = DEFAULT_NAVIGATION.flatMap((section) => section.items);
+  assert.equal(items.filter((item) => item.status === 'planned').length, 0);
+
   for (const item of items) {
-    if (item.status !== 'available') { assert.equal(item.href, undefined, item.slug); continue; }
+    if (item.status !== 'available') {
+      assert.equal(item.href, undefined, item.slug);
+      continue;
+    }
+
     const pathname = item.href.split('?')[0];
-    const mapping = WEB_ROUTE_TRANSLATIONS.find(([, target]) => pathname === target || pathname.startsWith(target + '/'));
+    const mapping = WEB_ROUTE_TRANSLATIONS.find(
+      ([, target]) => pathname === target || pathname.startsWith(target + '/'),
+    );
     const route = mapping
       ? mapping[0] + pathname.slice(mapping[1].length)
       : pathname;
-    const directPage = path.join(__dirname, '../apps/web/src/app', route, 'page.tsx');
+
+    const directPage = path.join(
+      __dirname,
+      '../apps/web/src/app',
+      route,
+      'page.tsx',
+    );
     const dynamicRegistrationPage = route.startsWith('/registrations/')
-      ? path.join(__dirname, '../apps/web/src/app/registrations/[resource]/page.tsx')
+      ? path.join(
+          __dirname,
+          '../apps/web/src/app/registrations/[resource]/page.tsx',
+        )
       : null;
+
     assert.ok(
       fs.existsSync(directPage) ||
         (dynamicRegistrationPage && fs.existsSync(dynamicRegistrationPage)),
