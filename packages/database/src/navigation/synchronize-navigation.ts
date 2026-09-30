@@ -125,14 +125,15 @@ export async function synchronizeNavigation(
     }
     const definition = defaults.get(row.slug);
     let href = row.href ? portugueseWebHref(row.href) : null;
+    let status = row.status;
     if (definition && forcedDefaults.has(row.slug)) {
       href = definition.href ?? null;
+      status = definition.status;
     }
     const legacyCreateHref = legacyCreateHrefs.get(row.slug);
     if (definition?.href && href && legacyCreateHref?.has(href)) {
       href = definition.href;
     }
-    let status = row.status;
     let condition = row.visibility_condition;
     let label = forcedDefaults.has(row.slug) && definition ? definition.label : row.label;
     if (
