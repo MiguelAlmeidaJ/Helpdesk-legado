@@ -175,8 +175,8 @@ export class FinanceService {
 
   async catalogs(user: AuthenticatedUser): Promise<FinanceCatalogsResponse> {
     if (
-      !has(user, AppPermission.LogisticsExpensesAdminRead) &&
-      !has(user, AppPermission.LogisticsExpensesAdminManage)
+      !has(user, AppPermission.FinanceRead) &&
+      !has(user, AppPermission.FinanceManage)
     ) {
       throw new ForbiddenException('Usuário sem acesso aos cadastros financeiros.');
     }
@@ -696,30 +696,29 @@ export class FinanceService {
   private assertRead(user: AuthenticatedUser, view: FinanceViewKey): void {
     if (view === 'statements') {
       if (
-        !has(user, AppPermission.LogisticsStatementsRead) &&
-        !has(user, AppPermission.LogisticsExpensesAdminRead) &&
-        !has(user, AppPermission.LogisticsExpensesAdminManage)
+        !has(user, AppPermission.FinanceRead) &&
+        !has(user, AppPermission.FinanceManage)
       ) {
         throw new ForbiddenException('Usuário sem acesso aos extratos.');
       }
       return;
     }
     if (
-      !has(user, AppPermission.LogisticsExpensesAdminRead) &&
-      !has(user, AppPermission.LogisticsExpensesAdminManage)
+      !has(user, AppPermission.FinanceRead) &&
+      !has(user, AppPermission.FinanceManage)
     ) {
       throw new ForbiddenException('Usuário sem acesso ao financeiro.');
     }
   }
 
   private assertManage(user: AuthenticatedUser): void {
-    if (!has(user, AppPermission.LogisticsExpensesAdminManage)) {
+    if (!has(user, AppPermission.FinanceManage)) {
       throw new ForbiddenException('Usuário sem permissão para alterar o financeiro.');
     }
   }
 
   private canManage(user: AuthenticatedUser, view: FinanceViewKey): boolean {
-    return view !== 'statements' && has(user, AppPermission.LogisticsExpensesAdminManage);
+    return view !== 'statements' && has(user, AppPermission.FinanceManage);
   }
 
   private async receivables(startDate: string, endDate: string): Promise<FinanceRow[]> {
