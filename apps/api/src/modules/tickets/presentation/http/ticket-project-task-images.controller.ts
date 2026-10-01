@@ -82,7 +82,7 @@ const imageBody: Parameters<typeof ApiBody>[0] = {
 @ApiTags('ticket-project-task-images')
 @Controller('tickets/projects/tasks')
 @UseGuards(LegacySessionGuard, DevOpsPermissionsGuard)
-@RequirePermissions(AppPermission.TicketsRead)
+@RequirePermissions(AppPermission.DevOpsTasksRead)
 @ApiSecurity(LEGACY_SESSION_SECURITY)
 export class TicketProjectTaskImagesController {
   constructor(private readonly images: TicketProjectTaskImages) {}
@@ -119,10 +119,7 @@ export class TicketProjectTaskImagesController {
   }
 
   @Post(':taskId/images')
-  @RequirePermissions(
-    AppPermission.TicketsRead,
-    AppPermission.TicketsExecute,
-  )
+  @RequirePermissions(AppPermission.DevOpsTasksEdit)
   @UseInterceptors(imageUpload)
   @ApiConsumes('multipart/form-data')
   @ApiBody(imageBody)
@@ -140,10 +137,7 @@ export class TicketProjectTaskImagesController {
   }
 
   @Put(':taskId/images/:imageId')
-  @RequirePermissions(
-    AppPermission.TicketsRead,
-    AppPermission.TicketsExecute,
-  )
+  @RequirePermissions(AppPermission.DevOpsTasksEdit)
   @UseInterceptors(imageUpload)
   @ApiConsumes('multipart/form-data')
   @ApiBody(imageBody)
@@ -163,10 +157,7 @@ export class TicketProjectTaskImagesController {
 
   @Delete(':taskId/images/:imageId')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @RequirePermissions(
-    AppPermission.TicketsRead,
-    AppPermission.TicketsExecute,
-  )
+  @RequirePermissions(AppPermission.DevOpsTasksEdit)
   @ApiOperation({ summary: 'Excluir imagem da tarefa de projeto' })
   @ApiResponse({ status: 204, description: 'Imagem excluída.' })
   async remove(
