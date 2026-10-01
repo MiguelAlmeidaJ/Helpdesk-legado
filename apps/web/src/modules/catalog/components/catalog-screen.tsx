@@ -175,6 +175,24 @@ export function CatalogScreen({ currentUser }: { currentUser: CurrentUserRespons
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [fullscreen, setFullscreen] = useState(false);
+
+  useEffect(() => {
+    if (!fullscreen) return;
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') setFullscreen(false);
+    }
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [fullscreen]);
 
   const manageableSectors = useMemo(
     () => (filters?.allowedSectors ?? []).filter((sector) => canEditSector(currentUser, sector)),
@@ -220,6 +238,7 @@ export function CatalogScreen({ currentUser }: { currentUser: CurrentUserRespons
 
   async function openDetail(id: number) {
     setLoadingDetail(true);
+    setFullscreen(false);
     setError(null);
     setSuccess(null);
     setForm(null);
@@ -236,6 +255,7 @@ export function CatalogScreen({ currentUser }: { currentUser: CurrentUserRespons
     if (!hasPermission(currentUser, AppPermission.CatalogManage)) return;
     const sector = (filters?.allowedSectors ?? [])[0];
     if (!sector) return;
+    setFullscreen(false);
     setDetail(null);
     setSuccess(null);
     setError(null);
@@ -244,6 +264,7 @@ export function CatalogScreen({ currentUser }: { currentUser: CurrentUserRespons
 
   function startEdit() {
     if (!detail || !canEditSector(currentUser, detail.sector)) return;
+    setFullscreen(false);
     setError(null);
     setSuccess(null);
     setForm(formFromDetail(detail));
@@ -301,6 +322,7 @@ export function CatalogScreen({ currentUser }: { currentUser: CurrentUserRespons
     setSuccess(null);
     try {
       await archiveCatalog(detail.id);
+      setFullscreen(false);
       setDetail(null);
       setForm(null);
       setOffset(0);
@@ -322,6 +344,7 @@ export function CatalogScreen({ currentUser }: { currentUser: CurrentUserRespons
 
   function applyFilters(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    setFullscreen(false);
     setOffset(0);
     setAppliedFilters({ ...draftFilters, search: draftFilters.search.trim() });
     setDetail(null);
@@ -329,6 +352,7 @@ export function CatalogScreen({ currentUser }: { currentUser: CurrentUserRespons
   }
 
   function clearFilters() {
+    setFullscreen(false);
     setDraftFilters(EMPTY_FILTERS);
     setAppliedFilters(EMPTY_FILTERS);
     setOffset(0);
@@ -563,8 +587,15 @@ export function CatalogScreen({ currentUser }: { currentUser: CurrentUserRespons
                     <span className={styles.eyebrow}>Catálogo #{detail.id}</span>
                     <h2>{detail.title}</h2>
                   </div>
-                  {canEditDetail || canArchiveDetail ? (
-                    <div className={styles.detailActions}>
+                  <div className={styles.detailActions}>
+                      <button
+                        className={styles.button}
+                        onClick={() => setFullscreen(true)}
+                        type="button"
+                      >
+                        <span aria-hidden="true">⛶</span>
+                        Tela cheia
+                      </button>
                       {canEditDetail ? (
                         <button className={styles.buttonPrimary} disabled={saving} onClick={startEdit} type="button">Editar</button>
                       ) : null}
@@ -574,7 +605,6 @@ export function CatalogScreen({ currentUser }: { currentUser: CurrentUserRespons
                         </button>
                       ) : null}
                     </div>
-                  ) : null}
                 </div>
                 <dl className={styles.metadata}>
                   <div><dt>Setor</dt><dd>{sectorLabel(detail.sector)}</dd></div>
@@ -603,6 +633,66 @@ export function CatalogScreen({ currentUser }: { currentUser: CurrentUserRespons
           </section>
         </div>
       </div>
+
+      {fullscreen && detail ? (
+        <div
+          aria-modal="true"
+          className="fixed inset-0 z-[120] grid grid-rows-[auto_auto_minmax(0,1fr)] bg-app-bg"
+          role="dialog"
+        >
+          <header className="flex flex-wrap items-center justify-between gap-4 border-b border-app-border bg-app-surface px-5 py-3 shadow-sm">
+            <div className="min-w-0">
+              <span className={styles.eyebrow}>Catálogo #{detail.id}</span>
+              <h2 className="m-0 truncate text-xl font-extrabold text-app-text">
+                {detail.title}
+              </h2>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              {canEditDetail ? (
+                <button
+                  className={styles.buttonPrimary}
+                  onClick={() => {
+                    setFullscreen(false);
+                    startEdit();
+                  }}
+                  type="button"
+                >
+                  Editar
+                </button>
+              ) : null}
+              <button
+                className={styles.button}
+                onClick={() => setFullscreen(false)}
+                type="button"
+              >
+                Fechar
+              </button>
+            </div>
+          </header>
+
+          <dl className="m-0 grid grid-cols-2 gap-x-5 gap-y-2 border-b border-app-border-soft bg-app-surface px-5 py-3 text-sm md:grid-cols-4 [&_dt]:text-[10px] [&_dt]:font-extrabold [&_dt]:uppercase [&_dt]:text-app-muted [&_dd]:m-0 [&_dd]:truncate [&_dd]:font-semibold [&_dd]:text-app-text-soft">
+            <div><dt>Setor</dt><dd>{sectorLabel(detail.sector)}</dd></div>
+            <div><dt>Cliente</dt><dd>{detail.clientName ?? `#${detail.clientId}`}</dd></div>
+            <div><dt>Categoria</dt><dd>{detail.categoryName ?? `#${detail.categoryId}`}</dd></div>
+            <div><dt>Atualizado</dt><dd>{formatDate(detail.updatedAt ?? detail.createdAt)}</dd></div>
+          </dl>
+
+          <div className="min-h-0 bg-white">
+            {detail.content ? (
+              <iframe
+                className="block h-full min-h-0 w-full border-0 bg-white"
+                sandbox=""
+                srcDoc={detail.content}
+                title={`Conteúdo do catálogo ${detail.title} em tela cheia`}
+              />
+            ) : (
+              <div className="grid h-full place-items-center p-8 text-center text-app-muted">
+                Este catálogo não possui conteúdo.
+              </div>
+            )}
+          </div>
+        </div>
+      ) : null}
     </main>
   );
 }
