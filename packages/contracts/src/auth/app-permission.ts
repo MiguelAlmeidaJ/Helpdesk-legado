@@ -19,6 +19,25 @@ export enum AppPermission {
   TicketsClose = 'tickets.close',
   TicketsAudit = 'tickets.audit',
   TicketsRadio = 'tickets.radio',
+  TicketsRecurrenceCreate = 'tickets.recurrence.create',
+  TicketsTimelineRead = 'tickets.timeline.read',
+
+  DevOpsProjectsRead = 'devops.projects.read',
+  DevOpsProjectsCreate = 'devops.projects.create',
+  DevOpsProjectsEdit = 'devops.projects.edit',
+  DevOpsTasksRead = 'devops.tasks.read',
+  DevOpsTasksCreate = 'devops.tasks.create',
+  DevOpsTasksEdit = 'devops.tasks.edit',
+
+  MarketingTasksRead = 'marketing.tasks.read',
+  MarketingTasksCreate = 'marketing.tasks.create',
+  MarketingTasksEdit = 'marketing.tasks.edit',
+  MarketingTasksHold = 'marketing.tasks.hold',
+  MarketingTasksClose = 'marketing.tasks.close',
+
+  ReportsRead = 'reports.read',
+  ReportsPdf = 'reports.pdf',
+
   TicketsDevOpsRead = 'tickets.devops.read',
   TicketsDevOpsCreate = 'tickets.devops.create',
   TicketsMarketingRead = 'tickets.marketing.read',
@@ -26,8 +45,10 @@ export enum AppPermission {
 
   CatalogManage = 'catalog.manage',
   CatalogTiRead = 'catalog.ti.read',
+  CatalogTiCreate = 'catalog.ti.create',
   CatalogTiEdit = 'catalog.ti.edit',
   CatalogDevOpsRead = 'catalog.devops.read',
+  CatalogDevOpsCreate = 'catalog.devops.create',
   CatalogDevOpsEdit = 'catalog.devops.edit',
 
   UsersRead = 'users.read',
