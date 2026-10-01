@@ -17,6 +17,7 @@ export interface TicketCategoryTotalsReportFilters {
   startDate?: string;
   endDate?: string;
   clientId?: number;
+  clientIds?: number[];
   technicianId?: number;
   categoryId?: number;
   status?: number;
@@ -27,6 +28,7 @@ export interface TicketClientTotalsReportFilters {
   startDate?: string;
   endDate?: string;
   clientId?: number;
+  clientIds?: number[];
   technicianId?: number;
   categoryId?: number;
   status?: number;
@@ -37,6 +39,7 @@ export interface TicketTechnicianTotalsReportFilters {
   startDate?: string;
   endDate?: string;
   clientId?: number;
+  clientIds?: number[];
   technicianId?: number;
   categoryId?: number;
   status?: number;
@@ -48,6 +51,7 @@ function buildReportQuery(filters: {
   endDate?: string;
   level?: number;
   clientId?: number;
+  clientIds?: number[];
   technicianId?: number;
   categoryId?: number;
   status?: number;
@@ -57,6 +61,9 @@ function buildReportQuery(filters: {
   if (filters.startDate) query.set('startDate', filters.startDate);
   if (filters.endDate) query.set('endDate', filters.endDate);
   if (filters.level !== undefined) query.set('level', String(filters.level));
+  if (filters.clientIds?.length) {
+    query.set('clientIds', filters.clientIds.join(','));
+  }
   for (const key of ['clientId', 'technicianId', 'categoryId', 'status'] as const) {
     const value = filters[key];
     if (value) query.set(key, String(value));
@@ -94,6 +101,7 @@ export interface TicketBreakdownReportFilters {
   startDate?: string;
   endDate?: string;
   clientId?: number;
+  clientIds?: number[];
   technicianId?: number;
   categoryId?: number;
   status?: number;
@@ -121,6 +129,7 @@ export function fetchTicketReportDetails(filters: {
   endDate: string;
   level?: number;
   clientId?: number;
+  clientIds?: number[];
   technicianId?: number;
   categoryId?: number;
   status?: number;
@@ -131,7 +140,8 @@ export function fetchTicketReportDetails(filters: {
     startDate: filters.startDate,
     endDate: filters.endDate,
     level: String(filters.level ?? 0),
-    clientId: String(filters.clientId ?? 0),
+    clientId: String(filters.clientIds?.length ? 0 : (filters.clientId ?? 0)),
+    clientIds: filters.clientIds?.join(',') ?? '',
     locationId: '0',
     technicianId: String(filters.technicianId ?? 0),
     categoryId: String(filters.categoryId ?? 0),
