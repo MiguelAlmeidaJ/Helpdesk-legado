@@ -40,6 +40,7 @@ export function TicketCategoryTotalsReportScreen({
   return (
     <TicketTotalsReportScreen
       currentUser={currentUser}
+      focus="category"
       title="Relatório de atendimentos por Categoria"
       description="Compare categorias por período e nível para identificar onde está a maior demanda."
       chartTitle="Atendimentos por Categoria"
