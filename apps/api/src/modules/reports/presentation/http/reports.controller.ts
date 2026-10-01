@@ -59,7 +59,7 @@ function optionalReportId(value: string | undefined, field: string): number {
 @ApiTags('reports')
 @Controller('reports')
 @UseGuards(LegacySessionGuard, PermissionsGuard)
-@RequirePermissions(AppPermission.TicketsAudit)
+@RequirePermissions(AppPermission.ReportsRead)
 @ApiSecurity(LEGACY_SESSION_SECURITY)
 export class ReportsController {
   constructor(
