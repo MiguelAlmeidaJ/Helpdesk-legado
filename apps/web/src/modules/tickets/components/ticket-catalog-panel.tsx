@@ -43,8 +43,10 @@ function hasCatalogAccess(user: CurrentUserResponse): boolean {
   const permissions = new Set([
     AppPermission.CatalogManage,
     AppPermission.CatalogTiRead,
+    AppPermission.CatalogTiCreate,
     AppPermission.CatalogTiEdit,
     AppPermission.CatalogDevOpsRead,
+    AppPermission.CatalogDevOpsCreate,
     AppPermission.CatalogDevOpsEdit,
   ]);
 
