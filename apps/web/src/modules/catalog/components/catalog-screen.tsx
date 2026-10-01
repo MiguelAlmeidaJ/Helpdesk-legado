@@ -131,6 +131,16 @@ function hasPermission(user: CurrentUserResponse, permission: AppPermission): bo
   );
 }
 
+function canCreateSector(user: CurrentUserResponse, sector: CatalogSector): boolean {
+  if (hasPermission(user, AppPermission.CatalogManage)) return true;
+  return hasPermission(
+    user,
+    sector === 1
+      ? AppPermission.CatalogTiCreate
+      : AppPermission.CatalogDevOpsCreate,
+  );
+}
+
 function canEditSector(user: CurrentUserResponse, sector: CatalogSector): boolean {
   if (hasPermission(user, AppPermission.CatalogManage)) return true;
   return hasPermission(
@@ -253,8 +263,9 @@ export function CatalogScreen({ currentUser }: { currentUser: CurrentUserRespons
   }
 
   function startCreate() {
-    if (!hasPermission(currentUser, AppPermission.CatalogManage)) return;
-    const sector = (filters?.allowedSectors ?? [])[0];
+    const sector = (filters?.allowedSectors ?? []).find((candidate) =>
+      canCreateSector(currentUser, candidate),
+    );
     if (!sector) return;
     setFullscreen(false);
     setDetail(null);
@@ -315,7 +326,9 @@ export function CatalogScreen({ currentUser }: { currentUser: CurrentUserRespons
   }
 
   async function archiveSelected() {
-    if (!detail || !hasPermission(currentUser, AppPermission.CatalogManage)) return;
+    if (!detail || !hasPermission(currentUser, AppPermission.CatalogManage) ||
+            hasPermission(currentUser, AppPermission.CatalogTiCreate) ||
+            hasPermission(currentUser, AppPermission.CatalogDevOpsCreate)) return;
     if (!window.confirm(`Arquivar o catálogo "${detail.title}"? Ele deixará de aparecer nas consultas e nos atendimentos.`)) return;
 
     setSaving(true);
@@ -361,10 +374,14 @@ export function CatalogScreen({ currentUser }: { currentUser: CurrentUserRespons
     setForm(null);
   }
 
-  const canCreateCatalog = hasPermission(currentUser, AppPermission.CatalogManage);
+  const canCreateCatalog = hasPermission(currentUser, AppPermission.CatalogManage) ||
+            hasPermission(currentUser, AppPermission.CatalogTiCreate) ||
+            hasPermission(currentUser, AppPermission.CatalogDevOpsCreate);
   const canEditDetail = detail ? canEditSector(currentUser, detail.sector) : false;
   const canArchiveDetail = Boolean(
-    detail && hasPermission(currentUser, AppPermission.CatalogManage),
+    detail && hasPermission(currentUser, AppPermission.CatalogManage) ||
+            hasPermission(currentUser, AppPermission.CatalogTiCreate) ||
+            hasPermission(currentUser, AppPermission.CatalogDevOpsCreate),
   );
 
   return (
