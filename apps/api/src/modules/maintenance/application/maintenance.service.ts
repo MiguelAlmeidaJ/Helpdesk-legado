@@ -1531,6 +1531,7 @@ export class MaintenanceService implements OnApplicationBootstrap {
     maintenancePrepared = true;
     await this.ensureAccessSchema();
     await this.ensureNativeRuntimeSchema();
+    await this.catalogImages.ensureSchema(false);
     runtimePrepared = true;
     await this.ensureNavigation();
     navigationPrepared = true;
