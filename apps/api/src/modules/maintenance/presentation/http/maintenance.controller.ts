@@ -23,6 +23,8 @@ import {
   type MaintenanceBackupJobInput,
   type MaintenanceBackupRunRequest,
   type MaintenanceBackupRunResponse,
+  type MaintenanceCatalogImageMigrationResponse,
+  type MaintenanceCatalogImageMigrationStatus,
   type MaintenanceDatabaseKey,
   type MaintenanceDatabaseTable,
   type MaintenanceDumpApplyRequest,
@@ -223,6 +225,20 @@ export class MaintenanceController {
       input.confirmation,
       actor(user).id,
     );
+  }
+
+  @Get('catalog-images/migration')
+  @ApiOperation({ summary: 'Verificar imagens Base64 legadas dos catálogos' })
+  catalogImageMigrationStatus(): Promise<MaintenanceCatalogImageMigrationStatus> {
+    return this.maintenance.catalogImageMigrationStatus();
+  }
+
+  @Post('catalog-images/migration')
+  @ApiOperation({ summary: 'Migrar imagens Base64 dos catálogos para o storage' })
+  migrateCatalogImages(
+    @CurrentUser() user: AuthenticatedUser | undefined,
+  ): Promise<MaintenanceCatalogImageMigrationResponse> {
+    return this.maintenance.migrateCatalogImages(actor(user).id);
   }
 
   @Post('repair')
