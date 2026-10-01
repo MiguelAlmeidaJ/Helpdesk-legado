@@ -15,7 +15,7 @@ const { LocalGeneratedReportStorage: ReportArchive, generatedReportStorageRoot: 
 const { CleanupExpiredReports } = require(base + 'application/cleanup-expired-reports');
 const { reportRetentionDays } = require(base + 'application/report-retention');
 
-const filters = { startDate: '2026-09-01', endDate: '2026-09-09', clientId: 0, locationId: 0, technicianId: 0, level: 0, source: 'tickets' };
+const filters = { startDate: '2026-09-01', endDate: '2026-09-09', clientId: 0, locationId: 0, technicianId: 0, categoryId: 0, status: 0, level: 0, source: 'tickets' };
 
 test('report query rejects invalid dates, arrays, levels, source and identifier injection', () => {
   assert.throws(() => parseReportQuery('2026-02-30', '2026-03-01'));
