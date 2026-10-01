@@ -98,7 +98,7 @@ function createRequest(body: unknown): DevOpsTicketCreateRequest {
 @ApiTags('ticket-devops-create')
 @Controller('tickets/devops')
 @UseGuards(LegacySessionGuard, DevOpsPermissionsGuard)
-@RequirePermissions(AppPermission.TicketsRead)
+@RequirePermissions(AppPermission.DevOpsTasksCreate)
 @ApiSecurity(LEGACY_SESSION_SECURITY)
 export class DevOpsTicketCreateController {
   constructor(private readonly creator: DevOpsTicketCreator) {}
@@ -142,7 +142,7 @@ export class DevOpsTicketCreateController {
   }
 
   @Post()
-  @RequirePermissions(AppPermission.TicketsCreate)
+  @RequirePermissions(AppPermission.DevOpsTasksCreate)
   @ApiOperation({ summary: 'Criar ticket DevOps sem projeto' })
   create(
     @CurrentUser() user: AuthenticatedUser | undefined,
