@@ -58,8 +58,12 @@ export class PrismaTicketTechnicianTotalsReportRepository extends TicketTechnici
       appendNumberInFilter(where, params, 'a.cliente', visibility.clientIds);
     }
 
+    if (query.clientIds.length) {
+      appendNumberInFilter(where, params, 'a.cliente', query.clientIds);
+    }
+
     for (const [column, value] of [
-      ['a.cliente', query.clientId],
+      ['a.cliente', query.clientIds.length ? 0 : query.clientId],
       ['a.tecnico', query.technicianId],
       ['a.categoria', query.categoryId],
       ['a.status', query.status],
