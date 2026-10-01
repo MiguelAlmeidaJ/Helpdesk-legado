@@ -22,12 +22,12 @@ import { ApiConsumes, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger
 import {
   AppPermission,
   type CatalogDetailResponse,
-  CatalogFiltersResponse,
-  CatalogImageUploadResponse,
-  CatalogListResponse,
-  CatalogResolutionResponse,
-  CatalogSector,
-  CatalogWriteInput,
+  type CatalogFiltersResponse,
+  type CatalogImageUploadResponse,
+  type CatalogListResponse,
+  type CatalogResolutionResponse,
+  type CatalogSector,
+  type CatalogWriteInput,
 } from '@helpdesk/contracts';
 import { LEGACY_SESSION_SECURITY } from '../../../../core/openapi/openapi.constants';
 import type { AuthenticatedUser } from '../../../access/domain/authenticated-user';
@@ -226,7 +226,7 @@ export class CatalogController {
   ): Promise<StreamableFile> {
     const actor = authenticated(user);
     if (!canUseCatalogImages(actor)) {
-      throw new UnauthorizedException('Usuário sem acesso às imagens de catálogo.');
+      throw new ForbiddenException('Usuário sem acesso às imagens de catálogo.');
     }
     const image = await this.images.content(imageId);
     return new StreamableFile(image.data, {
