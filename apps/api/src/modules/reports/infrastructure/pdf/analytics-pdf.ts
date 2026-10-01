@@ -2,6 +2,7 @@ import { Buffer } from 'node:buffer';
 import { TICKET_STATUS_LABELS, type TicketAnalyticsResponse, type TicketStatus } from '@helpdesk/contracts';
 
 const SOURCE_LABELS = { tickets: 'Atendimentos', tasks: 'Tarefas', improvements: 'Melhorias', unified: 'Unificado' };
+const AREA_LABELS: Record<number, string> = { 1: 'Suporte T.I', 2: 'Marketing', 3: 'ADM / DevOps' };
 
 function wrap(text: string, width = 100): string[] {
   const words = text.replace(/\s+/g, ' ').trim().split(' ');
@@ -24,7 +25,8 @@ export function analyticsPdf(report: TicketAnalyticsResponse): Buffer {
   const lines = [
     'HELPDESK - RELATÓRIO ANALÍTICO',
     `Período: ${report.filters.startDate} a ${report.filters.endDate} | Total: ${report.total}`,
-    `Origem: ${SOURCE_LABELS[report.filters.source]} | Nível: ${report.filters.level || 'Todos'} | Cliente: ${report.filters.clientId || 'Todos'} | Local: ${report.filters.locationId || 'Todos'}`,
+    `Origem: ${SOURCE_LABELS[report.filters.source]} | Área: ${AREA_LABELS[report.filters.categorySector] ?? 'Todas'} | Nível: ${report.filters.level || 'Todos'}`,
+    `Cliente: ${report.filters.clientId || 'Todos'} | Local: ${report.filters.locationId || 'Todos'} | Técnico: ${report.filters.technicianId || 'Todos'} | Categoria: ${report.filters.categoryId || 'Todas'} | Status: ${report.filters.status || 'Todos'}`,
     '',
   ];
   for (const row of report.rows) {
