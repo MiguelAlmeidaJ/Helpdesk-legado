@@ -27,6 +27,10 @@ export interface TicketBreakdownInput {
   startDate: string;
   endDate: string;
   level: TicketBreakdownLevel;
+  clientId: number;
+  technicianId: number;
+  categoryId: number;
+  status: number;
 }
 
 @Injectable()
@@ -59,6 +63,18 @@ export class TicketBreakdownReportService {
         return this.empty(input);
       }
       appendNumberInFilter(where, params, 'a.cliente', visibility.clientIds);
+    }
+
+    for (const [column, value] of [
+      ['a.cliente', input.clientId],
+      ['a.tecnico', input.technicianId],
+      ['a.categoria', input.categoryId],
+      ['a.status', input.status],
+    ] as const) {
+      if (value) {
+        where.push(`${column} = ?`);
+        params.push(value);
+      }
     }
 
     const spec = this.spec(input.mode);
