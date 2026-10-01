@@ -379,9 +379,7 @@ export function CatalogScreen({ currentUser }: { currentUser: CurrentUserRespons
             hasPermission(currentUser, AppPermission.CatalogDevOpsCreate);
   const canEditDetail = detail ? canEditSector(currentUser, detail.sector) : false;
   const canArchiveDetail = Boolean(
-    detail && hasPermission(currentUser, AppPermission.CatalogManage) ||
-            hasPermission(currentUser, AppPermission.CatalogTiCreate) ||
-            hasPermission(currentUser, AppPermission.CatalogDevOpsCreate),
+    detail && canEditSector(currentUser, detail.sector),
   );
 
   return (
