@@ -4,6 +4,6 @@ import { TicketAnalyticsScreen } from '../../../../modules/reports/components/ti
 export default async function AnalyticsPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const currentUser = await requireAuthenticatedUser('/relatorios/atendimentos/analitico');
   const query = await searchParams;
-  const filters = Object.fromEntries(['source', 'startDate', 'endDate', 'clientId', 'locationId', 'technicianId', 'level'].flatMap(key => typeof query[key] === 'string' ? [[key, query[key]]] : []));
+  const filters = Object.fromEntries(['source', 'startDate', 'endDate', 'clientId', 'locationId', 'technicianId', 'categoryId', 'categorySector', 'status', 'level', 'lockArea'].flatMap(key => typeof query[key] === 'string' ? [[key, query[key]]] : []));
   return <TicketAnalyticsScreen key={JSON.stringify(filters)} currentUser={currentUser} mode="analytics" initialFilters={filters} />;
 }
