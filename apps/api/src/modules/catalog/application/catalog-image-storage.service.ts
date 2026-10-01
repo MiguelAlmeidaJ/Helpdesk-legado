@@ -110,6 +110,7 @@ export class CatalogImageStorageService implements OnModuleInit {
     data: Buffer;
     width?: number | null;
     height?: number | null;
+    catalogId?: number | null;
   }): Promise<CatalogImageUploadResponse> {
     if (!input.data.length) {
       throw new BadRequestException('Imagem vazia.');
@@ -121,6 +122,32 @@ export class CatalogImageStorageService implements OnModuleInit {
     const detected = imageKind(input.data);
     if (!detected) {
       throw new BadRequestException('Formato de imagem inválido.');
+    }
+
+    const sha256 = createHash('sha256').update(input.data).digest('hex');
+
+    if (input.catalogId) {
+      const existing = await this.database.$queryRawUnsafe<ImageRow[]>(
+        `SELECT id, catalog_id, original_name, stored_name, storage_path,
+                mime_type, size_bytes, width, height, sha256, created_by,
+                NULL AS sector
+         FROM catalog_images
+         WHERE catalog_id = ? AND sha256 = ?
+         LIMIT 1`,
+        input.catalogId,
+        sha256,
+      );
+      const row = existing[0];
+      if (row) {
+        return {
+          id: Number(row.id),
+          contentPath: `catalog/images/${row.id}/content`,
+          mimeType: row.mime_type,
+          width: row.width,
+          height: row.height,
+          sizeBytes: Number(row.size_bytes),
+        };
+      }
     }
 
     const safeName = path
@@ -146,8 +173,9 @@ export class CatalogImageStorageService implements OnModuleInit {
            catalog_id, original_name, stored_name, storage_path,
            mime_type, size_bytes, width, height, sha256, created_by, created_at
          ) VALUES (
-           NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW()
+           ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW()
          )`,
+        input.catalogId ?? null,
         safeName,
         storedName,
         relativePath,
@@ -155,7 +183,7 @@ export class CatalogImageStorageService implements OnModuleInit {
         input.data.length,
         input.width ?? null,
         input.height ?? null,
-        createHash('sha256').update(input.data).digest('hex'),
+        sha256,
         input.actorUserId,
       );
 
