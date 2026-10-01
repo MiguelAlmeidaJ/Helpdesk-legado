@@ -9,6 +9,7 @@ export interface TicketAnalyticsFilters {
   locationId: number;
   technicianId: number;
   categoryId: number;
+  categorySector: number;
   status: number;
   level: number;
 }
