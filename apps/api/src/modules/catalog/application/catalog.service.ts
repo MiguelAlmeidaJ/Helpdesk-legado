@@ -125,7 +125,7 @@ export class CatalogService {
     }
     await this.validateReferences(input);
     const created = await this.repository.create({ ...input, authorUserId: user.id });
-    await this.images.linkContent(created.id, created.content);
+    await this.images.linkContent(created.id, created.content, user.id);
     return detail(created);
   }
 
@@ -140,7 +140,7 @@ export class CatalogService {
     this.requireEditSector(user, input.sector);
     await this.validateReferences(input);
     const updated = await this.repository.update(id, { ...input, authorUserId: user.id });
-    await this.images.linkContent(updated.id, updated.content);
+    await this.images.linkContent(updated.id, updated.content, user.id);
     return detail(updated);
   }
 
