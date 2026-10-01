@@ -64,7 +64,7 @@ function canAudit(user: CurrentUserResponse): boolean {
   return user.grants.some(
     (grant) =>
       grant.permission === AppPermission.SystemAdmin ||
-      grant.permission === AppPermission.TicketsAudit,
+      grant.permission === AppPermission.TicketsRead,
   );
 }
 
