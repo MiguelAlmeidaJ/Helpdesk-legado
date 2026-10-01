@@ -7,76 +7,62 @@ import type { AuthenticatedUser } from '../domain/authenticated-user';
 import type { LegacyUserSession } from '../domain/legacy-user-session';
 import type { RbacAccessSnapshot } from '../domain/rbac-access-snapshot';
 
-const TICKET_PERMISSION = {
-  read: 'atendimentos.visualizar',
-  create: 'atendimentos.criar',
-  edit: 'atendimentos.editar',
-  execute: 'atendimentos.executar',
-  hold: 'atendimentos.colocar_espera',
-  reject: 'atendimentos.recusar',
-  manageOthers: 'atendimentos.editar_terceiros',
-  audit: 'atendimentos.auditar',
-  radio: 'atendimentos.radio',
-} as const;
+const P = {
+  usersRead: 'usuarios.visualizar',
+  usersCreate: 'usuarios.criar',
+  usersEdit: 'usuarios.editar',
+  usersManageAccess: 'usuarios.editar_acesso',
 
-const LOGISTICS_PERMISSION = {
-  vehicleAgendaRead: 'logistica.agenda.visualizar',
-  vehicleAgendaManage: 'logistica.agenda.gerenciar',
-  expensesRead: 'logistica.rd.visualizar',
-  expensesManage: 'logistica.rd.gerenciar',
-  expensesAdminRead: 'logistica.rd.admin.visualizar',
-  expensesAdminManage: 'logistica.rd.admin.gerenciar',
-  expensesApprove: 'logistica.rd.aprovar',
-  expensesPay: 'logistica.rd.pagar',
-  statementsRead: 'logistica.extratos.visualizar',
-} as const;
+  ticketsRead: 'atendimentos.visualizar',
+  ticketsCreate: 'atendimentos.criar',
+  ticketsEdit: 'atendimentos.editar',
+  ticketsHold: 'atendimentos.colocar_espera',
+  ticketsClose: 'atendimentos.finalizar',
+  ticketsRecurrence: 'atendimentos.recorrencia.criar',
+  ticketsTimeline: 'atendimentos.timeline.visualizar',
 
-const USER_PERMISSION = {
-  read: 'usuarios.visualizar',
-  create: 'usuarios.criar',
-  edit: 'usuarios.editar',
-  manageAccess: 'usuarios.editar_acesso',
-} as const;
+  devOpsProjectsRead: 'devops.projetos.visualizar',
+  devOpsProjectsCreate: 'devops.projetos.criar',
+  devOpsProjectsEdit: 'devops.projetos.editar',
+  devOpsTasksRead: 'devops.tarefas.visualizar',
+  devOpsTasksCreate: 'devops.tarefas.criar',
+  devOpsTasksEdit: 'devops.tarefas.editar',
 
-const CATALOG_PERMISSION = {
-  manage: 'catalogos.gerenciar',
-  tiRead: 'catalogos.ti.visualizar',
-  tiEdit: 'catalogos.ti.editar',
-  devOpsRead: 'catalogos.devops.visualizar',
-  devOpsEdit: 'catalogos.devops.editar',
-} as const;
+  marketingRead: 'marketing.tarefas.visualizar',
+  marketingCreate: 'marketing.tarefas.criar',
+  marketingEdit: 'marketing.tarefas.editar',
+  marketingHold: 'marketing.tarefas.colocar_espera',
+  marketingClose: 'marketing.tarefas.finalizar',
 
-const REGISTRATION_PERMISSION = {
+  vehicleSchedule: 'logistica.agenda.agendar',
+  rdRead: 'logistica.rd.visualizar',
+  rdCreate: 'logistica.rd.criar',
+  rdManage: 'logistica.rd.gestao',
+
+  financeRead: 'financeiro.visualizar',
+  financeEdit: 'financeiro.editar',
+
+  reportsRead: 'relatorios.visualizar',
+  reportsPdf: 'relatorios.gerar_pdf',
+
   clientsRead: 'cadastros.clientes.visualizar',
   clientsCreate: 'cadastros.clientes.criar',
   clientsEdit: 'cadastros.clientes.editar',
-  contactsCreate: 'cadastros.clientes.contatos.criar',
-  contactsEdit: 'cadastros.clientes.contatos.editar',
-  locationsCreate: 'cadastros.clientes.locais.criar',
-  locationsEdit: 'cadastros.clientes.locais.editar',
   categoriesRead: 'cadastros.categorias.visualizar',
   categoriesCreate: 'cadastros.categorias.criar',
   categoriesEdit: 'cadastros.categorias.editar',
-  subcategoriesCreate: 'cadastros.categorias.subcategorias.criar',
-  subcategoriesEdit: 'cadastros.categorias.subcategorias.editar',
-  itemsCreate: 'cadastros.categorias.itens.criar',
-  itemsEdit: 'cadastros.categorias.itens.editar',
-  financeRead: 'cadastros.financeiro.visualizar',
-  financeManage: 'cadastros.financeiro.gerenciar',
-} as const;
 
-const TICKET_TYPE_PERMISSION = {
-  devOpsRead: 'devops.atendimentos.visualizar',
-  devOpsCreate: 'devops.atendimentos.criar',
-  marketingRead: 'marketing.atendimentos.visualizar',
-  marketingCreate: 'marketing.atendimentos.criar',
-} as const;
+  catalogTiRead: 'catalogos.ti.visualizar',
+  catalogTiCreate: 'catalogos.ti.criar',
+  catalogTiEdit: 'catalogos.ti.editar',
+  catalogDevOpsRead: 'catalogos.devops.visualizar',
+  catalogDevOpsCreate: 'catalogos.devops.criar',
+  catalogDevOpsEdit: 'catalogos.devops.editar',
 
-const QUALITY_PERMISSION = {
-  onCallRead: 'qualidade.plantao.visualizar',
-  onCallManage: 'qualidade.plantao.gerenciar',
-  datesRead: 'qualidade.datas.visualizar',
-  datesManage: 'qualidade.datas.gerenciar',
+  qualityOnCallRead: 'qualidade.plantao.visualizar',
+  qualityOnCallManage: 'qualidade.plantao.gerenciar',
+  qualityDatesRead: 'qualidade.datas.visualizar',
+  qualityDatesManage: 'qualidade.datas.gerenciar',
 } as const;
 
 const SYSTEM_ADMIN_ROLE = 'system-admin';
@@ -85,19 +71,18 @@ function addGrant(
   grants: PermissionGrant[],
   permission: AppPermission,
   enabled: boolean,
-  scope: PermissionScope,
+  scope: PermissionScope = PermissionScope.All,
 ) {
-  if (enabled) {
+  if (
+    enabled &&
+    !grants.some(
+      (grant) =>
+        grant.permission === permission &&
+        grant.scope === scope,
+    )
+  ) {
     grants.push({ permission, scope });
   }
-}
-
-function hasPermission(
-  permissions: ReadonlySet<string>,
-  canonicalSlug: string,
-  appPermission: AppPermission,
-): boolean {
-  return permissions.has(canonicalSlug) || permissions.has(appPermission);
 }
 
 export function translateRbacAccess(
@@ -106,111 +91,254 @@ export function translateRbacAccess(
 ): AuthenticatedUser {
   const permissions = snapshot.permissionSlugs;
   const grants: PermissionGrant[] = [];
+  const has = (slug: string) => permissions.has(slug);
 
   addGrant(
     grants,
     AppPermission.SystemAdmin,
     snapshot.roleSlugs.includes(SYSTEM_ADMIN_ROLE),
-    PermissionScope.All,
   );
-  addGrant(
-    grants,
-    AppPermission.OnCallTi,
-    snapshot.onCallAreas.includes('ti'),
-    PermissionScope.All,
-  );
+  addGrant(grants, AppPermission.OnCallTi, snapshot.onCallAreas.includes('ti'));
   addGrant(
     grants,
     AppPermission.OnCallDevOps,
     snapshot.onCallAreas.includes('devops'),
-    PermissionScope.All,
   );
 
-  addGrant(grants, AppPermission.UsersRead, hasPermission(permissions, USER_PERMISSION.read, AppPermission.UsersRead), PermissionScope.All);
-  addGrant(grants, AppPermission.UsersCreate, hasPermission(permissions, USER_PERMISSION.create, AppPermission.UsersCreate), PermissionScope.All);
-  addGrant(grants, AppPermission.UsersEdit, hasPermission(permissions, USER_PERMISSION.edit, AppPermission.UsersEdit), PermissionScope.All);
-  addGrant(grants, AppPermission.UsersManageAccess, hasPermission(permissions, USER_PERMISSION.manageAccess, AppPermission.UsersManageAccess), PermissionScope.All);
+  addGrant(grants, AppPermission.UsersRead, has(P.usersRead));
+  addGrant(grants, AppPermission.UsersCreate, has(P.usersCreate));
+  addGrant(grants, AppPermission.UsersEdit, has(P.usersEdit));
+  addGrant(grants, AppPermission.UsersManageAccess, has(P.usersManageAccess));
 
   addGrant(
     grants,
     AppPermission.QualityOnCallRead,
-    permissions.has(QUALITY_PERMISSION.onCallRead) ||
-      permissions.has(QUALITY_PERMISSION.onCallManage),
-    PermissionScope.All,
+    has(P.qualityOnCallRead) || has(P.qualityOnCallManage),
   );
-  addGrant(grants, AppPermission.QualityOnCallManage, permissions.has(QUALITY_PERMISSION.onCallManage), PermissionScope.All);
+  addGrant(
+    grants,
+    AppPermission.QualityOnCallManage,
+    has(P.qualityOnCallManage),
+  );
   addGrant(
     grants,
     AppPermission.QualityDatesRead,
-    permissions.has(QUALITY_PERMISSION.datesRead) ||
-      permissions.has(QUALITY_PERMISSION.datesManage),
-    PermissionScope.All,
+    has(P.qualityDatesRead) || has(P.qualityDatesManage),
   );
-  addGrant(grants, AppPermission.QualityDatesManage, permissions.has(QUALITY_PERMISSION.datesManage), PermissionScope.All);
+  addGrant(
+    grants,
+    AppPermission.QualityDatesManage,
+    has(P.qualityDatesManage),
+  );
 
-  addGrant(grants, AppPermission.CatalogManage, permissions.has(CATALOG_PERMISSION.manage), PermissionScope.All);
-  addGrant(grants, AppPermission.CatalogTiRead, permissions.has(CATALOG_PERMISSION.tiRead), PermissionScope.All);
-  addGrant(grants, AppPermission.CatalogTiEdit, permissions.has(CATALOG_PERMISSION.tiEdit), PermissionScope.All);
-  addGrant(grants, AppPermission.CatalogDevOpsRead, permissions.has(CATALOG_PERMISSION.devOpsRead), PermissionScope.All);
-  addGrant(grants, AppPermission.CatalogDevOpsEdit, permissions.has(CATALOG_PERMISSION.devOpsEdit), PermissionScope.All);
+  addGrant(grants, AppPermission.RegistrationsClientsRead, has(P.clientsRead));
+  addGrant(
+    grants,
+    AppPermission.RegistrationsClientsCreate,
+    has(P.clientsCreate),
+  );
+  addGrant(grants, AppPermission.RegistrationsClientsEdit, has(P.clientsEdit));
+  addGrant(
+    grants,
+    AppPermission.RegistrationsClientContactsCreate,
+    has(P.clientsCreate),
+  );
+  addGrant(
+    grants,
+    AppPermission.RegistrationsClientContactsEdit,
+    has(P.clientsEdit),
+  );
+  addGrant(
+    grants,
+    AppPermission.RegistrationsClientLocationsCreate,
+    has(P.clientsCreate),
+  );
+  addGrant(
+    grants,
+    AppPermission.RegistrationsClientLocationsEdit,
+    has(P.clientsEdit),
+  );
 
-  addGrant(grants, AppPermission.RegistrationsClientsRead, hasPermission(permissions, REGISTRATION_PERMISSION.clientsRead, AppPermission.RegistrationsClientsRead), PermissionScope.All);
-  addGrant(grants, AppPermission.RegistrationsClientsCreate, hasPermission(permissions, REGISTRATION_PERMISSION.clientsCreate, AppPermission.RegistrationsClientsCreate), PermissionScope.All);
-  addGrant(grants, AppPermission.RegistrationsClientsEdit, hasPermission(permissions, REGISTRATION_PERMISSION.clientsEdit, AppPermission.RegistrationsClientsEdit), PermissionScope.All);
-  addGrant(grants, AppPermission.RegistrationsClientContactsCreate, hasPermission(permissions, REGISTRATION_PERMISSION.contactsCreate, AppPermission.RegistrationsClientContactsCreate), PermissionScope.All);
-  addGrant(grants, AppPermission.RegistrationsClientContactsEdit, hasPermission(permissions, REGISTRATION_PERMISSION.contactsEdit, AppPermission.RegistrationsClientContactsEdit), PermissionScope.All);
-  addGrant(grants, AppPermission.RegistrationsClientLocationsCreate, hasPermission(permissions, REGISTRATION_PERMISSION.locationsCreate, AppPermission.RegistrationsClientLocationsCreate), PermissionScope.All);
-  addGrant(grants, AppPermission.RegistrationsClientLocationsEdit, hasPermission(permissions, REGISTRATION_PERMISSION.locationsEdit, AppPermission.RegistrationsClientLocationsEdit), PermissionScope.All);
-  addGrant(grants, AppPermission.RegistrationsCategoriesRead, hasPermission(permissions, REGISTRATION_PERMISSION.categoriesRead, AppPermission.RegistrationsCategoriesRead), PermissionScope.All);
-  addGrant(grants, AppPermission.RegistrationsCategoriesCreate, hasPermission(permissions, REGISTRATION_PERMISSION.categoriesCreate, AppPermission.RegistrationsCategoriesCreate), PermissionScope.All);
-  addGrant(grants, AppPermission.RegistrationsCategoriesEdit, hasPermission(permissions, REGISTRATION_PERMISSION.categoriesEdit, AppPermission.RegistrationsCategoriesEdit), PermissionScope.All);
-  addGrant(grants, AppPermission.RegistrationsSubcategoriesCreate, hasPermission(permissions, REGISTRATION_PERMISSION.subcategoriesCreate, AppPermission.RegistrationsSubcategoriesCreate), PermissionScope.All);
-  addGrant(grants, AppPermission.RegistrationsSubcategoriesEdit, hasPermission(permissions, REGISTRATION_PERMISSION.subcategoriesEdit, AppPermission.RegistrationsSubcategoriesEdit), PermissionScope.All);
-  addGrant(grants, AppPermission.RegistrationsItemsCreate, hasPermission(permissions, REGISTRATION_PERMISSION.itemsCreate, AppPermission.RegistrationsItemsCreate), PermissionScope.All);
-  addGrant(grants, AppPermission.RegistrationsItemsEdit, hasPermission(permissions, REGISTRATION_PERMISSION.itemsEdit, AppPermission.RegistrationsItemsEdit), PermissionScope.All);
-  addGrant(grants, AppPermission.RegistrationsFinanceRead, hasPermission(permissions, REGISTRATION_PERMISSION.financeRead, AppPermission.RegistrationsFinanceRead), PermissionScope.All);
-  addGrant(grants, AppPermission.RegistrationsFinanceManage, hasPermission(permissions, REGISTRATION_PERMISSION.financeManage, AppPermission.RegistrationsFinanceManage), PermissionScope.All);
+  addGrant(
+    grants,
+    AppPermission.RegistrationsCategoriesRead,
+    has(P.categoriesRead),
+  );
+  addGrant(
+    grants,
+    AppPermission.RegistrationsCategoriesCreate,
+    has(P.categoriesCreate),
+  );
+  addGrant(
+    grants,
+    AppPermission.RegistrationsCategoriesEdit,
+    has(P.categoriesEdit),
+  );
+  addGrant(
+    grants,
+    AppPermission.RegistrationsSubcategoriesCreate,
+    has(P.categoriesCreate),
+  );
+  addGrant(
+    grants,
+    AppPermission.RegistrationsSubcategoriesEdit,
+    has(P.categoriesEdit),
+  );
+  addGrant(
+    grants,
+    AppPermission.RegistrationsItemsCreate,
+    has(P.categoriesCreate),
+  );
+  addGrant(
+    grants,
+    AppPermission.RegistrationsItemsEdit,
+    has(P.categoriesEdit),
+  );
 
-  const operationalScope = permissions.has(TICKET_PERMISSION.manageOthers)
-    ? PermissionScope.All
-    : PermissionScope.Own;
+  addGrant(grants, AppPermission.CatalogTiRead, has(P.catalogTiRead));
+  addGrant(grants, AppPermission.CatalogTiCreate, has(P.catalogTiCreate));
+  addGrant(grants, AppPermission.CatalogTiEdit, has(P.catalogTiEdit));
+  addGrant(grants, AppPermission.CatalogDevOpsRead, has(P.catalogDevOpsRead));
+  addGrant(
+    grants,
+    AppPermission.CatalogDevOpsCreate,
+    has(P.catalogDevOpsCreate),
+  );
+  addGrant(grants, AppPermission.CatalogDevOpsEdit, has(P.catalogDevOpsEdit));
 
-  addGrant(grants, AppPermission.TicketsRead, permissions.has(TICKET_PERMISSION.read), PermissionScope.All);
-  addGrant(grants, AppPermission.TicketsCreate, permissions.has(TICKET_PERMISSION.create), PermissionScope.All);
-  addGrant(grants, AppPermission.TicketsEdit, permissions.has(TICKET_PERMISSION.edit), operationalScope);
-  addGrant(grants, AppPermission.TicketsClassify, permissions.has(TICKET_PERMISSION.edit), operationalScope);
-  addGrant(grants, AppPermission.TicketsExecute, permissions.has(TICKET_PERMISSION.execute), operationalScope);
-  addGrant(grants, AppPermission.TicketsClose, permissions.has(TICKET_PERMISSION.execute), operationalScope);
-  addGrant(grants, AppPermission.TicketsHold, permissions.has(TICKET_PERMISSION.hold), operationalScope);
-  addGrant(grants, AppPermission.TicketsReject, permissions.has(TICKET_PERMISSION.reject), operationalScope);
+  addGrant(grants, AppPermission.TicketsRead, has(P.ticketsRead));
+  addGrant(grants, AppPermission.TicketsCreate, has(P.ticketsCreate));
+  addGrant(grants, AppPermission.TicketsEdit, has(P.ticketsEdit));
+  addGrant(grants, AppPermission.TicketsClassify, has(P.ticketsEdit));
+  addGrant(grants, AppPermission.TicketsHold, has(P.ticketsHold));
+  addGrant(grants, AppPermission.TicketsExecute, has(P.ticketsClose));
+  addGrant(grants, AppPermission.TicketsClose, has(P.ticketsClose));
+  addGrant(
+    grants,
+    AppPermission.TicketsRecurrenceCreate,
+    has(P.ticketsRecurrence),
+  );
+  addGrant(
+    grants,
+    AppPermission.TicketsTimelineRead,
+    has(P.ticketsTimeline),
+  );
+
+  addGrant(
+    grants,
+    AppPermission.DevOpsProjectsRead,
+    has(P.devOpsProjectsRead),
+  );
+  addGrant(
+    grants,
+    AppPermission.DevOpsProjectsCreate,
+    has(P.devOpsProjectsCreate),
+  );
+  addGrant(
+    grants,
+    AppPermission.DevOpsProjectsEdit,
+    has(P.devOpsProjectsEdit),
+  );
+  addGrant(grants, AppPermission.DevOpsTasksRead, has(P.devOpsTasksRead));
+  addGrant(grants, AppPermission.DevOpsTasksCreate, has(P.devOpsTasksCreate));
+  addGrant(grants, AppPermission.DevOpsTasksEdit, has(P.devOpsTasksEdit));
+
+  addGrant(
+    grants,
+    AppPermission.TicketsDevOpsRead,
+    has(P.devOpsProjectsRead) ||
+      has(P.devOpsProjectsCreate) ||
+      has(P.devOpsProjectsEdit) ||
+      has(P.devOpsTasksRead) ||
+      has(P.devOpsTasksCreate) ||
+      has(P.devOpsTasksEdit),
+  );
+  addGrant(
+    grants,
+    AppPermission.TicketsDevOpsCreate,
+    has(P.devOpsProjectsCreate) || has(P.devOpsTasksCreate),
+  );
+
+  addGrant(grants, AppPermission.MarketingTasksRead, has(P.marketingRead));
+  addGrant(grants, AppPermission.MarketingTasksCreate, has(P.marketingCreate));
+  addGrant(grants, AppPermission.MarketingTasksEdit, has(P.marketingEdit));
+  addGrant(grants, AppPermission.MarketingTasksHold, has(P.marketingHold));
+  addGrant(grants, AppPermission.MarketingTasksClose, has(P.marketingClose));
+  addGrant(
+    grants,
+    AppPermission.TicketsMarketingRead,
+    has(P.marketingRead) ||
+      has(P.marketingCreate) ||
+      has(P.marketingEdit) ||
+      has(P.marketingHold) ||
+      has(P.marketingClose),
+  );
+  addGrant(
+    grants,
+    AppPermission.TicketsMarketingCreate,
+    has(P.marketingCreate),
+  );
+
+  addGrant(grants, AppPermission.LogisticsVehicleAgendaRead, has(P.vehicleSchedule));
+  addGrant(
+    grants,
+    AppPermission.LogisticsVehicleAgendaManage,
+    has(P.vehicleSchedule),
+  );
+  addGrant(
+    grants,
+    AppPermission.LogisticsExpensesRead,
+    has(P.rdRead) || has(P.rdCreate) || has(P.rdManage),
+    has(P.rdManage) ? PermissionScope.All : PermissionScope.Own,
+  );
+  addGrant(
+    grants,
+    AppPermission.LogisticsExpensesManage,
+    has(P.rdCreate) || has(P.rdManage),
+    has(P.rdManage) ? PermissionScope.All : PermissionScope.Own,
+  );
+  addGrant(
+    grants,
+    AppPermission.LogisticsExpensesAdminRead,
+    has(P.rdManage),
+  );
+  addGrant(
+    grants,
+    AppPermission.LogisticsExpensesAdminManage,
+    has(P.rdManage),
+  );
+  addGrant(grants, AppPermission.LogisticsExpensesApprove, has(P.rdManage));
+  addGrant(grants, AppPermission.LogisticsExpensesPay, has(P.rdManage));
+
+  addGrant(grants, AppPermission.FinanceRead, has(P.financeRead) || has(P.financeEdit));
+  addGrant(grants, AppPermission.FinanceManage, has(P.financeEdit));
+  addGrant(
+    grants,
+    AppPermission.RegistrationsFinanceRead,
+    has(P.financeRead) || has(P.financeEdit),
+  );
+  addGrant(
+    grants,
+    AppPermission.RegistrationsFinanceManage,
+    has(P.financeEdit),
+  );
+  addGrant(
+    grants,
+    AppPermission.LogisticsStatementsRead,
+    has(P.financeRead) || has(P.financeEdit),
+  );
+
+  addGrant(
+    grants,
+    AppPermission.ReportsRead,
+    has(P.reportsRead) || has(P.reportsPdf),
+  );
+  addGrant(grants, AppPermission.ReportsPdf, has(P.reportsPdf));
   addGrant(
     grants,
     AppPermission.TicketsAudit,
-    permissions.has(TICKET_PERMISSION.audit) ||
-      permissions.has(TICKET_PERMISSION.manageOthers),
-    PermissionScope.All,
+    has(P.reportsRead) || has(P.reportsPdf),
   );
-  addGrant(grants, AppPermission.TicketsRadio, permissions.has(TICKET_PERMISSION.radio), PermissionScope.All);
-  addGrant(grants, AppPermission.TicketsDevOpsRead, permissions.has(TICKET_TYPE_PERMISSION.devOpsRead), PermissionScope.All);
-  addGrant(grants, AppPermission.TicketsDevOpsCreate, permissions.has(TICKET_TYPE_PERMISSION.devOpsCreate), PermissionScope.All);
-  addGrant(grants, AppPermission.TicketsMarketingRead, permissions.has(TICKET_TYPE_PERMISSION.marketingRead), PermissionScope.All);
-  addGrant(grants, AppPermission.TicketsMarketingCreate, permissions.has(TICKET_TYPE_PERMISSION.marketingCreate), PermissionScope.All);
-
-  addGrant(
-    grants,
-    AppPermission.LogisticsVehicleAgendaRead,
-    permissions.has(LOGISTICS_PERMISSION.vehicleAgendaRead) ||
-      permissions.has(LOGISTICS_PERMISSION.vehicleAgendaManage),
-    PermissionScope.All,
-  );
-  addGrant(grants, AppPermission.LogisticsVehicleAgendaManage, permissions.has(LOGISTICS_PERMISSION.vehicleAgendaManage), PermissionScope.All);
-  addGrant(grants, AppPermission.LogisticsExpensesRead, permissions.has(LOGISTICS_PERMISSION.expensesRead), PermissionScope.Own);
-  addGrant(grants, AppPermission.LogisticsExpensesManage, permissions.has(LOGISTICS_PERMISSION.expensesManage), PermissionScope.Own);
-  addGrant(grants, AppPermission.LogisticsExpensesAdminRead, permissions.has(LOGISTICS_PERMISSION.expensesAdminRead), PermissionScope.All);
-  addGrant(grants, AppPermission.LogisticsExpensesAdminManage, permissions.has(LOGISTICS_PERMISSION.expensesAdminManage), PermissionScope.All);
-  addGrant(grants, AppPermission.LogisticsExpensesApprove, permissions.has(LOGISTICS_PERMISSION.expensesApprove), PermissionScope.All);
-  addGrant(grants, AppPermission.LogisticsExpensesPay, permissions.has(LOGISTICS_PERMISSION.expensesPay), PermissionScope.All);
-  addGrant(grants, AppPermission.LogisticsStatementsRead, permissions.has(LOGISTICS_PERMISSION.statementsRead), PermissionScope.All);
 
   return {
     id: session.id,
