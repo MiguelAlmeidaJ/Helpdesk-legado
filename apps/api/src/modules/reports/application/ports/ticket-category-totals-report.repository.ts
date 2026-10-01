@@ -7,6 +7,10 @@ export interface TicketCategoryTotalsReportQuery {
   userId: number;
   startDate: string;
   endDate: string;
+  clientId: number;
+  technicianId: number;
+  categoryId: number;
+  status: number;
   level: TicketCategoryTotalsLevel;
 }
 
