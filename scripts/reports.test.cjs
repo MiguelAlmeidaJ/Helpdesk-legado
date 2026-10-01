@@ -64,6 +64,26 @@ test('every branch of unified analytics enforces company scope and exclusive end
   assert.equal(queries.filter(query => query.sql.includes('FROM locais')).length, 0);
 });
 
+test('analytics applies multiple clients with bound IN parameters', async () => {
+  const queries = [];
+  const database = { $queryRawUnsafe: async (sql, ...params) => {
+    queries.push({ sql, params });
+    return sql.includes('SELECT tipo_usuario') ? [{ tipo_usuario: 1 }] : [];
+  } };
+  const repository = new PrismaTicketAnalyticsRepository(database);
+  await repository.analytics(1, {
+    ...filters,
+    clientId: 0,
+    clientIds: [7, 11, 19],
+  });
+  const query = queries.find(item => item.sql.includes('AS openingDescription'));
+  assert.match(query.sql, /a\.cliente IN \(\?, \?, \?\)/);
+  assert.ok(query.params.includes(7));
+  assert.ok(query.params.includes(11));
+  assert.ok(query.params.includes(19));
+  assert.ok(!query.sql.includes('a.cliente IN (7'));
+});
+
 test('analytics applies category and status filters as bound parameters', async () => {
   const queries = [];
   const database = { $queryRawUnsafe: async (sql, ...params) => {
