@@ -3,6 +3,8 @@ import type {
   MaintenanceBackupJobInput,
   MaintenanceBackupRunResponse,
   MaintenanceBackupTarget,
+  MaintenanceCatalogImageMigrationResponse,
+  MaintenanceCatalogImageMigrationStatus,
   MaintenanceDatabaseKey,
   MaintenanceDatabaseTable,
   MaintenanceDumpApplyResponse,
@@ -113,4 +115,19 @@ export function repairMaintenanceDatabase(target: MaintenanceDatabaseKey) {
     headers: JSON_HEADERS,
     body: JSON.stringify({ target }),
   });
+}
+
+
+export function fetchCatalogImageMigrationStatus(signal?: AbortSignal) {
+  return apiRequest<MaintenanceCatalogImageMigrationStatus>(
+    'maintenance/catalog-images/migration',
+    { signal },
+  );
+}
+
+export function migrateCatalogImages() {
+  return apiRequest<MaintenanceCatalogImageMigrationResponse>(
+    'maintenance/catalog-images/migration',
+    { method: 'POST' },
+  );
 }
