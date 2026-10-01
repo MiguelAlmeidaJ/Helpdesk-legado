@@ -54,3 +54,13 @@ export interface CatalogWriteInput {
   title: string;
   content: string;
 }
+
+
+export interface CatalogImageUploadResponse {
+  id: number;
+  contentPath: string;
+  mimeType: string;
+  width: number | null;
+  height: number | null;
+  sizeBytes: number;
+}
