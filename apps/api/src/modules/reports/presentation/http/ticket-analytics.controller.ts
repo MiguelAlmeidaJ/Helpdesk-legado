@@ -38,6 +38,7 @@ export function analyticsFilters(query: Record<string, unknown>): TicketAnalytic
     locationId: reportId(query.locationId, 'locationId'),
     technicianId: reportId(query.technicianId, 'technicianId'),
     categoryId: reportId(query.categoryId, 'categoryId'),
+    categorySector: reportId(query.categorySector, 'categorySector'),
     status: reportId(query.status, 'status'),
   };
 }
