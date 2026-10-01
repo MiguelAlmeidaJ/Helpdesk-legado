@@ -9,6 +9,10 @@ export interface GetTicketClientTotalsReportInput {
   userId: number;
   startDate: string;
   endDate: string;
+  clientId: number;
+  technicianId: number;
+  categoryId: number;
+  status: number;
   level: TicketClientTotalsLevel;
 }
 
