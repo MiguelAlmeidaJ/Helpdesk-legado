@@ -11,6 +11,8 @@ import type {
   MaintenanceDumpStageResponse,
   MaintenanceRepairResponse,
   MaintenanceSystemStatusResponse,
+  MaintenanceTableDropResponse,
+  MaintenanceTableOptimizeResponse,
 } from '@helpdesk/contracts';
 import { apiDownload, apiRequest } from '../../../shared/api/api-client';
 
@@ -129,5 +131,35 @@ export function migrateCatalogImages() {
   return apiRequest<MaintenanceCatalogImageMigrationResponse>(
     'maintenance/catalog-images/migration',
     { method: 'POST' },
+  );
+}
+
+
+export function optimizeMaintenanceTables(
+  target: MaintenanceDatabaseKey,
+  tables: string[],
+) {
+  return apiRequest<MaintenanceTableOptimizeResponse>(
+    'maintenance/tables/optimize',
+    {
+      method: 'POST',
+      headers: JSON_HEADERS,
+      body: JSON.stringify({ target, tables }),
+    },
+  );
+}
+
+export function dropMaintenanceTables(
+  target: MaintenanceDatabaseKey,
+  tables: string[],
+  confirmation: string,
+) {
+  return apiRequest<MaintenanceTableDropResponse>(
+    'maintenance/tables/drop',
+    {
+      method: 'POST',
+      headers: JSON_HEADERS,
+      body: JSON.stringify({ target, tables, confirmation }),
+    },
   );
 }
