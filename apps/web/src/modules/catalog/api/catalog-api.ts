@@ -1,6 +1,7 @@
 import type {
   CatalogDetailResponse,
   CatalogFiltersResponse,
+  CatalogImageUploadResponse,
   CatalogListItem,
   CatalogListResponse,
   CatalogResolutionResponse,
@@ -98,4 +99,22 @@ export function updateCatalog(
 
 export async function archiveCatalog(id: number): Promise<void> {
   await apiRequest<null>(`catalog/${id}/archive`, { method: 'PATCH' });
+}
+
+
+export function uploadCatalogImage(
+  file: Blob,
+  filename: string,
+  width: number,
+  height: number,
+): Promise<CatalogImageUploadResponse> {
+  const body = new FormData();
+  body.append('file', file, filename);
+  body.append('width', String(width));
+  body.append('height', String(height));
+
+  return apiRequest<CatalogImageUploadResponse>('catalog/images', {
+    method: 'POST',
+    body,
+  });
 }
