@@ -81,9 +81,9 @@ export const DEFAULT_NAVIGATION: SeedSection[] = [
     items: [
       { slug: 'vehicles-agenda', label: 'Agenda Veículos', href: '/logistica/veiculos/agenda', status: 'available', visibilityCondition: { anyPermissions: ['logistics.vehicle-agenda.manage'] } },
       { slug: 'rd', label: 'RD', href: '/logistica/despesas', status: 'available', visibilityCondition: { anyPermissions: ['logistics.expenses.read', 'logistics.expenses.manage'] } },
-      { slug: 'rd-management', label: 'Gestão RDs', href: '/logistica/despesas/administracao', status: 'available', visibilityCondition: { anyPermissions: ['finance.read', 'finance.manage'] } },
-      { slug: 'rd-comparison', label: 'Análise Comparativa RDs', href: '/logistica/despesas/administracao/analise', status: 'available', visibilityCondition: { anyPermissions: ['finance.read', 'finance.manage'] } },
-      { slug: 'rd-report', label: 'Relatório RDs', href: '/logistica/despesas/administracao/relatorio', status: 'available', visibilityCondition: { anyPermissions: ['finance.read', 'finance.manage'] } },
+      { slug: 'rd-management', label: 'Gestão RDs', href: '/logistica/despesas/administracao', status: 'available', visibilityCondition: { anyPermissions: ['logistics.expenses.admin.read', 'logistics.expenses.admin.manage'] } },
+      { slug: 'rd-comparison', label: 'Análise Comparativa RDs', href: '/logistica/despesas/administracao/analise', status: 'available', visibilityCondition: { anyPermissions: ['logistics.expenses.admin.read', 'logistics.expenses.admin.manage'] } },
+      { slug: 'rd-report', label: 'Relatório RDs', href: '/logistica/despesas/administracao/relatorio', status: 'available', visibilityCondition: { anyPermissions: ['logistics.expenses.admin.read', 'logistics.expenses.admin.manage'] } },
       { slug: 'rd-approvals', label: 'Aprovação RDs', href: '/logistica/despesas/administracao/aprovacoes', status: 'available', visibilityCondition: { anyPermissions: ['logistics.expenses.approve'] } },
       { slug: 'rd-payments', label: 'Pagamento RDs', href: '/logistica/despesas/administracao/pagamentos', status: 'available', visibilityCondition: { anyPermissions: ['logistics.expenses.pay'] } },
     ],
