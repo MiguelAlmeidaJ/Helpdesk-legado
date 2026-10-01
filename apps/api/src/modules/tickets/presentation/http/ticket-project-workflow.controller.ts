@@ -137,7 +137,7 @@ function finalizeRequest(body: unknown): TicketProjectFinalizeRequest {
 @ApiTags('ticket-project-workflow')
 @Controller('tickets/projects')
 @UseGuards(LegacySessionGuard, DevOpsPermissionsGuard)
-@RequirePermissions(AppPermission.TicketsRead)
+@RequirePermissions(AppPermission.DevOpsProjectsEdit)
 @ApiSecurity(LEGACY_SESSION_SECURITY)
 export class TicketProjectWorkflowController {
   constructor(private readonly workflow: TicketProjectWorkflow) {}
@@ -175,10 +175,7 @@ export class TicketProjectWorkflowController {
 
   @Patch(':projectId/assignment')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @RequirePermissions(
-    AppPermission.TicketsRead,
-    AppPermission.TicketsExecute,
-  )
+  @RequirePermissions(AppPermission.DevOpsProjectsEdit)
   @ApiOperation({ summary: 'Iniciar ou direcionar projeto' })
   @ApiParam({ name: 'projectId', type: Number })
   @ApiBody({
@@ -210,7 +207,7 @@ export class TicketProjectWorkflowController {
 
   @Post(':projectId/hold')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @RequirePermissions(AppPermission.TicketsRead, AppPermission.TicketsHold)
+  @RequirePermissions(AppPermission.DevOpsProjectsEdit)
   @ApiOperation({ summary: 'Colocar projeto em espera' })
   @ApiParam({ name: 'projectId', type: Number })
   @ApiBody({
@@ -247,7 +244,7 @@ export class TicketProjectWorkflowController {
 
   @Post(':projectId/resume')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @RequirePermissions(AppPermission.TicketsRead, AppPermission.TicketsHold)
+  @RequirePermissions(AppPermission.DevOpsProjectsEdit)
   @ApiOperation({ summary: 'Retomar projeto em espera' })
   @ApiParam({ name: 'projectId', type: Number })
   @ApiResponse({ status: 204, description: 'Projeto retomado.' })
@@ -264,7 +261,7 @@ export class TicketProjectWorkflowController {
 
   @Post(':projectId/reject')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @RequirePermissions(AppPermission.TicketsRead, AppPermission.TicketsReject)
+  @RequirePermissions(AppPermission.DevOpsProjectsEdit)
   @ApiOperation({ summary: 'Recusar ou redirecionar projeto' })
   @ApiParam({ name: 'projectId', type: Number })
   @ApiBody({
@@ -302,7 +299,7 @@ export class TicketProjectWorkflowController {
 
   @Post(':projectId/finalize')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @RequirePermissions(AppPermission.TicketsRead, AppPermission.TicketsClose)
+  @RequirePermissions(AppPermission.DevOpsProjectsEdit)
   @ApiOperation({ summary: 'Finalizar projeto manualmente' })
   @ApiParam({ name: 'projectId', type: Number })
   @ApiBody({
