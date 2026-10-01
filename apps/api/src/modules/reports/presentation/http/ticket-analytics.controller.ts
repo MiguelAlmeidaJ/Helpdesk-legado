@@ -28,8 +28,18 @@ export function analyticsFilters(query: Record<string, unknown>): TicketAnalytic
   if (view === 'time' && !query.startDate) dates.startDate = dates.endDate;
   const level = reportId(query.level, 'level');
   if (level > 5) throw new BadRequestException('level deve estar entre 0 e 5.');
-  return { view, startDate: dates.startDate, endDate: dates.endDate, source: source as TicketReportSource, level,
-    clientId: reportId(query.clientId, 'clientId'), locationId: reportId(query.locationId, 'locationId'), technicianId: reportId(query.technicianId, 'technicianId') };
+  return {
+    view,
+    startDate: dates.startDate,
+    endDate: dates.endDate,
+    source: source as TicketReportSource,
+    level,
+    clientId: reportId(query.clientId, 'clientId'),
+    locationId: reportId(query.locationId, 'locationId'),
+    technicianId: reportId(query.technicianId, 'technicianId'),
+    categoryId: reportId(query.categoryId, 'categoryId'),
+    status: reportId(query.status, 'status'),
+  };
 }
 
 export function reportUser(user: AuthenticatedUser | undefined): number {
@@ -52,7 +62,7 @@ export class TicketAnalyticsController {
   }
 
   @Get('catalog')
-  @ApiOperation({ summary: 'Clientes, locais e técnicos disponíveis para relatórios' })
+  @ApiOperation({ summary: 'Clientes, locais, técnicos e categorias disponíveis para relatórios' })
   catalog(@CurrentUser() user: AuthenticatedUser | undefined, @Query('clientId') clientId?: string) {
     return this.reports.catalog(reportUser(user), reportId(clientId, 'clientId'));
   }
