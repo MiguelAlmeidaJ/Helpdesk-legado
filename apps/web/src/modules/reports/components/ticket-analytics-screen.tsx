@@ -24,7 +24,7 @@ export function TicketAnalyticsScreen({ currentUser, mode, initialSource = 'tick
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
   const requestId = useRef(0);
-  const title = mode === 'workload' ? 'Atendimentos abertos por técnico' : mode === 'time' ? 'Tempo de atendimento' : 'Relatório analítico';
+  const title = mode === 'workload' ? 'Tempo médio por técnico' : mode === 'time' ? 'Tempo de atendimento' : 'Relatório analítico';
 
   async function load(values: typeof filters) {
     const id = ++requestId.current;
@@ -75,7 +75,7 @@ export function TicketAnalyticsScreen({ currentUser, mode, initialSource = 'tick
   const periodLabel = report ? `${report.filters.startDate} a ${report.filters.endDate} · ${SOURCE_LABELS[report.filters.source]} · Nível ${report.filters.level || 'Todos'}` : '';
   return <main className={styles.page}>
     <AppPageHeader
-      subtitle={mode === 'workload' ? 'Chamados ativos e tempo acumulado. Atualização a cada 60 segundos.' : 'Consulte os registros por período, cliente, local e técnico.'}
+      subtitle={mode === 'workload' ? 'Resumo de atendimentos abertos, em espera, vencidos e tempo acumulado.' : 'Consulte os registros por período, cliente, local e técnico.'}
       title={title}
       user={currentUser}
     />
@@ -99,7 +99,35 @@ export function TicketAnalyticsScreen({ currentUser, mode, initialSource = 'tick
       }}>Baixar PDF</button></div> : null}
       {error ? <p role="alert" className={styles.error}>{error}</p> : null}
       {loading ? <p role="status">Carregando relatório…</p> : null}
-      {!loading && workload ? <section className={styles.reportCard}><div className={styles.tableWrap}><table><thead><tr><th>Técnico</th><th>Abertos</th><th>Em espera</th><th>Vencidos</th><th>Tempo aberto</th><th>Horas acumuladas</th></tr></thead><tbody>{workload.rows.map(row => <tr key={row.technicianId}><td>{row.technicianName}</td><td>{row.open}</td><td>{row.waiting}</td><td>{row.overdue}</td><td>{duration(row.elapsedSeconds)}</td><td>{(row.elapsedSeconds / 3600).toFixed(2)}</td></tr>)}</tbody></table>{!workload.rows.length ? <p className={styles.empty}>Nenhum registro disponível.</p> : null}</div></section> : null}
+      {!loading && workload ? (
+        <section className="overflow-hidden rounded-2xl border border-app-border bg-app-surface shadow-sm">
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[760px] border-collapse">
+              <thead className="bg-app-surface-muted">
+                <tr>
+                  <th className="px-4 py-3 text-left text-xs font-extrabold uppercase tracking-wide text-app-muted">Técnico</th>
+                  <th className="px-4 py-3 text-center text-xs font-extrabold uppercase tracking-wide text-app-muted">Aberto</th>
+                  <th className="px-4 py-3 text-center text-xs font-extrabold uppercase tracking-wide text-app-muted">Em espera</th>
+                  <th className="px-4 py-3 text-center text-xs font-extrabold uppercase tracking-wide text-app-muted">Vencidos</th>
+                  <th className="px-4 py-3 text-center text-xs font-extrabold uppercase tracking-wide text-app-muted">Tempo acumulado (h)</th>
+                </tr>
+              </thead>
+              <tbody>
+                {workload.rows.map(row => (
+                  <tr className="border-t border-app-border-soft hover:bg-app-surface-hover" key={row.technicianId}>
+                    <td className="px-4 py-3 text-sm font-extrabold">{row.technicianName}</td>
+                    <td className="px-4 py-3 text-center text-sm">{row.open}</td>
+                    <td className="px-4 py-3 text-center text-sm">{row.waiting}</td>
+                    <td className={`px-4 py-3 text-center text-sm ${row.overdue > 0 ? 'font-bold text-app-danger' : ''}`}>{row.overdue}</td>
+                    <td className="px-4 py-3 text-center text-sm">{Math.round(row.elapsedSeconds / 3600).toLocaleString('pt-BR')}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {!workload.rows.length ? <p className={styles.empty}>Nenhum registro disponível.</p> : null}
+          </div>
+        </section>
+      ) : null}
       {!loading && report ? <section className={styles.reportCard}><div className={styles.rowHeader}><strong>{report.total} registros</strong></div>
         {mode === 'time' ? <div className={styles.tableWrap}><table><thead><tr><th>Origem / ID</th><th>Cliente</th><th>Técnico</th><th>Nível / Tipo</th><th>Status</th><th>Abertura</th><th>Tempo desde abertura</th></tr></thead><tbody>{report.rows.map(row => <tr key={`${row.source}-${row.id}`}><td>{SOURCE_LABELS[row.source]} #{row.id}</td><td>{row.clientName}</td><td>{row.technicianName}</td><td>{row.source === 'tasks' ? row.type : row.level}</td><td>{STATUS[row.status] ?? row.status}</td><td>{row.openedAt.replace('T', ' ')}</td><td>{duration(row.elapsedSeconds)}</td></tr>)}</tbody></table></div>
           : report.rows.map(row => <article className={styles.row} key={`${row.source}-${row.id}`}><div className={styles.rowHeader}><strong>{SOURCE_LABELS[row.source]} #{row.id} · {row.clientName}</strong><span>{STATUS[row.status] ?? row.status}</span></div>
