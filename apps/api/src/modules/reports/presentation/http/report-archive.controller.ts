@@ -22,7 +22,7 @@ function filenames(body: unknown): string[] {
 @ApiTags('reports')
 @Controller('reports')
 @UseGuards(LegacySessionGuard, PermissionsGuard)
-@RequirePermissions(AppPermission.TicketsAudit)
+@RequirePermissions(AppPermission.ReportsPdf)
 @ApiSecurity(LEGACY_SESSION_SECURITY)
 export class ReportArchiveController {
   constructor(private readonly archive: GeneratedReportStorage, private readonly reports: GetTicketAnalytics) {}
