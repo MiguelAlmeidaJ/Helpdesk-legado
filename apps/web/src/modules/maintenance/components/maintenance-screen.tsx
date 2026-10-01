@@ -6,6 +6,7 @@ import type {
   MaintenanceBackupJob,
   MaintenanceBackupJobInput,
   MaintenanceBackupTarget,
+  MaintenanceCatalogImageMigrationStatus,
   MaintenanceDatabaseKey,
   MaintenanceDatabaseTable,
   MaintenanceDumpStageResponse,
@@ -21,8 +22,10 @@ import {
   deleteMaintenanceBackup,
   deleteMaintenanceBackupJob,
   downloadMaintenanceBackup,
+  fetchCatalogImageMigrationStatus,
   fetchMaintenanceStatus,
   fetchMaintenanceTables,
+  migrateCatalogImages,
   repairMaintenanceDatabase,
   runMaintenanceBackup,
   stageMaintenanceDump,
@@ -144,6 +147,8 @@ export function MaintenanceScreen({
   currentUser: CurrentUserResponse;
 }) {
   const [status, setStatus] = useState<MaintenanceSystemStatusResponse | null>(null);
+  const [catalogMigration, setCatalogMigration] =
+    useState<MaintenanceCatalogImageMigrationStatus | null>(null);
   const [tables, setTables] = useState<Record<string, MaintenanceDatabaseTable[]>>({});
   const [openDatabase, setOpenDatabase] = useState<MaintenanceDatabaseKey | null>(null);
   const [jobDraft, setJobDraft] = useState<JobDraft>(INITIAL_JOB);
@@ -158,7 +163,12 @@ export function MaintenanceScreen({
   async function load(signal?: AbortSignal) {
     setLoading(true);
     try {
-      setStatus(await fetchMaintenanceStatus(signal));
+      const [nextStatus, nextCatalogMigration] = await Promise.all([
+        fetchMaintenanceStatus(signal),
+        fetchCatalogImageMigrationStatus(signal),
+      ]);
+      setStatus(nextStatus);
+      setCatalogMigration(nextCatalogMigration);
     } catch (reason) {
       if (!(reason instanceof Error && reason.name === 'AbortError')) {
         setFeedback({ text: errorMessage(reason), error: true });
@@ -571,6 +581,95 @@ export function MaintenanceScreen({
               </div>
             ))}
           </div>
+        </section>
+
+        <section className={CARD_CLASS}>
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div className="max-w-3xl">
+              <span className="text-xs font-extrabold uppercase tracking-[0.1em] text-app-muted">
+                Migração de catálogo
+              </span>
+              <h2 className="mb-0 mt-1 text-lg font-bold">
+                Imagens Base64 → storage
+              </h2>
+              <p className="mb-0 mt-1 text-sm text-app-muted">
+                Move imagens incorporadas no HTML dos catálogos para
+                <code className="mx-1 rounded bg-app-surface-muted px-1.5 py-0.5 text-xs">
+                  storage/uploads/catalog
+                </code>
+                e substitui o Base64 por uma URL segura do sistema. A operação é
+                idempotente e pode ser executada novamente após importar o banco de produção.
+              </p>
+            </div>
+
+            <button
+              className={PRIMARY_BUTTON_CLASS}
+              disabled={Boolean(busy) || !catalogMigration?.embeddedImages}
+              onClick={() => {
+                const count = catalogMigration?.embeddedImages ?? 0;
+                if (
+                  !window.confirm(
+                    `Migrar ${count} imagem(ns) Base64 dos catálogos para o storage? Os catálogos serão atualizados somente após cada imagem ser gravada com sucesso.`,
+                  )
+                ) {
+                  return;
+                }
+
+                void run(
+                  'catalog-images-migration',
+                  'Migração das imagens de catálogo concluída.',
+                  async () => {
+                    const result = await migrateCatalogImages();
+                    await load();
+                    setFeedback({
+                      error: result.errors.length > 0,
+                      text:
+                        `Migração concluída: ${result.migratedCatalogs} catálogo(s), ` +
+                        `${result.migratedImages} imagem(ns) gravada(s), ` +
+                        `${result.reusedImages} reutilizada(s), ` +
+                        `${result.skippedImages} ignorada(s).`,
+                    });
+                  },
+                );
+              }}
+              type="button"
+            >
+              {busy === 'catalog-images-migration'
+                ? 'Migrando…'
+                : 'Migrar imagens agora'}
+            </button>
+          </div>
+
+          <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4">
+            <div className="rounded-xl bg-app-surface-muted p-3">
+              <span className="text-xs font-bold text-app-muted">Catálogos pendentes</span>
+              <strong className="mt-1 block text-xl">
+                {(catalogMigration?.candidateCatalogs ?? 0).toLocaleString('pt-BR')}
+              </strong>
+            </div>
+            <div className="rounded-xl bg-app-surface-muted p-3">
+              <span className="text-xs font-bold text-app-muted">Imagens Base64</span>
+              <strong className="mt-1 block text-xl">
+                {(catalogMigration?.embeddedImages ?? 0).toLocaleString('pt-BR')}
+              </strong>
+            </div>
+            <div className="rounded-xl bg-app-surface-muted p-3">
+              <span className="text-xs font-bold text-app-muted">Volume estimado</span>
+              <strong className="mt-1 block text-xl">
+                {bytes(catalogMigration?.embeddedBytesEstimate ?? 0)}
+              </strong>
+            </div>
+            <div className="rounded-xl bg-app-surface-muted p-3">
+              <span className="text-xs font-bold text-app-muted">Imagens no storage</span>
+              <strong className="mt-1 block text-xl">
+                {(catalogMigration?.storedImages ?? 0).toLocaleString('pt-BR')}
+              </strong>
+            </div>
+          </div>
+
+          <p className="mb-0 mt-4 text-xs text-app-muted">
+            Imagens inválidas ou acima do limite permanecem em Base64 e são contabilizadas como ignoradas; o conteúdo original não é removido nesses casos.
+          </p>
         </section>
 
         <section className={CARD_CLASS}>
