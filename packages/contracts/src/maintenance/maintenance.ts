@@ -31,6 +31,7 @@ export interface MaintenanceDatabaseTable {
   dataBytes: number;
   indexBytes: number;
   totalBytes: number;
+  dataFreeBytes: number;
   createdAt: string | null;
   updatedAt: string | null;
   outgoingForeignKeys: number;
@@ -180,4 +181,28 @@ export interface MaintenanceCatalogImageMigrationResponse {
     catalogId: number;
     message: string;
   }>;
+}
+
+
+export interface MaintenanceTableOptimizeRequest {
+  target: MaintenanceDatabaseKey;
+  tables: string[];
+}
+
+export interface MaintenanceTableOptimizeResponse {
+  target: MaintenanceDatabaseKey;
+  tables: string[];
+  reclaimedEstimateBytes: number;
+}
+
+export interface MaintenanceTableDropRequest {
+  target: MaintenanceDatabaseKey;
+  tables: string[];
+  confirmation: string;
+}
+
+export interface MaintenanceTableDropResponse {
+  target: MaintenanceDatabaseKey;
+  droppedTables: string[];
+  safetyBackup: MaintenanceBackupFile;
 }
