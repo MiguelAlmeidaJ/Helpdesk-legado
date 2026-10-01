@@ -34,6 +34,20 @@ import { GetTicketTechnicianTotalsReport } from '../../application/get-ticket-te
 
 import { parseReportQuery } from './report-query';
 
+function optionalReportIds(value: string | undefined, field: string): number[] {
+  if (!value) return [];
+  const raw = [...new Set(value.split(',').map((item) => item.trim()).filter(Boolean))];
+  if (raw.length > 100) {
+    throw new BadRequestException(`${field} aceita no máximo 100 valores.`);
+  }
+  return raw.map((item) => {
+    if (!/^\d+$/.test(item) || !Number.isSafeInteger(Number(item)) || Number(item) < 1) {
+      throw new BadRequestException(`${field} deve conter apenas inteiros positivos.`);
+    }
+    return Number(item);
+  });
+}
+
 function optionalReportId(value: string | undefined, field: string): number {
   if (!value) return 0;
   if (!/^\d+$/.test(value) || !Number.isSafeInteger(Number(value))) {
@@ -65,6 +79,7 @@ export class ReportsController {
     @Query('endDate') endDate?: string,
     @Query('level') level?: string,
     @Query('clientId') clientId?: string,
+    @Query('clientIds') clientIds?: string,
     @Query('technicianId') technicianId?: string,
     @Query('categoryId') categoryId?: string,
     @Query('status') status?: string,
@@ -88,6 +103,7 @@ export class ReportsController {
       mode: modeValue as TicketBreakdownMode,
       ...query,
       clientId: optionalReportId(clientId, 'clientId'),
+      clientIds: optionalReportIds(clientIds, 'clientIds'),
       technicianId: optionalReportId(technicianId, 'technicianId'),
       categoryId: optionalReportId(categoryId, 'categoryId'),
       status: optionalReportId(status, 'status'),
@@ -114,6 +130,7 @@ export class ReportsController {
     @Query('endDate') endDate?: string,
     @Query('level') level?: string,
     @Query('clientId') clientId?: string,
+    @Query('clientIds') clientIds?: string,
     @Query('technicianId') technicianId?: string,
     @Query('categoryId') categoryId?: string,
     @Query('status') status?: string,
@@ -128,6 +145,7 @@ export class ReportsController {
       userId: user.id,
       ...query,
       clientId: optionalReportId(clientId, 'clientId'),
+      clientIds: optionalReportIds(clientIds, 'clientIds'),
       technicianId: optionalReportId(technicianId, 'technicianId'),
       categoryId: optionalReportId(categoryId, 'categoryId'),
       status: optionalReportId(status, 'status'),
@@ -154,6 +172,7 @@ export class ReportsController {
     @Query('endDate') endDate?: string,
     @Query('level') level?: string,
     @Query('clientId') clientId?: string,
+    @Query('clientIds') clientIds?: string,
     @Query('technicianId') technicianId?: string,
     @Query('categoryId') categoryId?: string,
     @Query('status') status?: string,
@@ -168,6 +187,7 @@ export class ReportsController {
       userId: user.id,
       ...query,
       clientId: optionalReportId(clientId, 'clientId'),
+      clientIds: optionalReportIds(clientIds, 'clientIds'),
       technicianId: optionalReportId(technicianId, 'technicianId'),
       categoryId: optionalReportId(categoryId, 'categoryId'),
       status: optionalReportId(status, 'status'),
@@ -194,6 +214,7 @@ export class ReportsController {
     @Query('endDate') endDate?: string,
     @Query('level') level?: string,
     @Query('clientId') clientId?: string,
+    @Query('clientIds') clientIds?: string,
     @Query('technicianId') technicianId?: string,
     @Query('categoryId') categoryId?: string,
     @Query('status') status?: string,
@@ -208,6 +229,7 @@ export class ReportsController {
       userId: user.id,
       ...query,
       clientId: optionalReportId(clientId, 'clientId'),
+      clientIds: optionalReportIds(clientIds, 'clientIds'),
       technicianId: optionalReportId(technicianId, 'technicianId'),
       categoryId: optionalReportId(categoryId, 'categoryId'),
       status: optionalReportId(status, 'status'),
