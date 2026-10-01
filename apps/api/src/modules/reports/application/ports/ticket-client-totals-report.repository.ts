@@ -8,6 +8,7 @@ export interface TicketClientTotalsReportQuery {
   startDate: string;
   endDate: string;
   clientId: number;
+  clientIds: number[];
   technicianId: number;
   categoryId: number;
   status: number;
