@@ -40,6 +40,7 @@ export function TicketTechnicianTotalsReportScreen({
   return (
     <TicketTotalsReportScreen
       currentUser={currentUser}
+      focus="technician"
       title="Relatório de atendimentos por Técnico"
       description="Filtre por período e nível para comparar o volume de chamados entre técnicos."
       chartTitle="Atendimentos por Técnico"
