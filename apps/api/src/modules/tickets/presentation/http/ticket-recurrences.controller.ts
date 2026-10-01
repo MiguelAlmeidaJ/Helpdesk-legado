@@ -54,7 +54,7 @@ export class TicketRecurrencesController {
   constructor(private readonly manager: ManageTicketRecurrences) {}
 
   @Get()
-  @RequirePermissions(AppPermission.TicketsRead)
+  @RequirePermissions(AppPermission.TicketsRecurrenceCreate)
   @ApiOperation({ summary: 'Listar recorrências de atendimentos' })
   list(
     @CurrentUser() user: AuthenticatedUser | undefined,
@@ -71,7 +71,7 @@ export class TicketRecurrencesController {
   }
 
   @Post()
-  @RequirePermissions(AppPermission.TicketsCreate)
+  @RequirePermissions(AppPermission.TicketsRecurrenceCreate)
   @ApiOperation({ summary: 'Cadastrar recorrência' })
   create(@CurrentUser() user: AuthenticatedUser | undefined, @Body() body: unknown): Promise<TicketRecurrenceMutationResponse> {
     if (!user) throw new UnauthorizedException('Usuário não autenticado.');
@@ -79,7 +79,7 @@ export class TicketRecurrencesController {
   }
 
   @Put(':id')
-  @RequirePermissions(AppPermission.TicketsEdit)
+  @RequirePermissions(AppPermission.TicketsRecurrenceCreate)
   @ApiOperation({ summary: 'Editar recorrência' })
   async update(@CurrentUser() user: AuthenticatedUser | undefined, @Param('id', ParseIntPipe) id: number, @Body() body: unknown): Promise<void> {
     if (!user) throw new UnauthorizedException('Usuário não autenticado.');
@@ -87,7 +87,7 @@ export class TicketRecurrencesController {
   }
 
   @Patch(':id/active')
-  @RequirePermissions(AppPermission.TicketsEdit)
+  @RequirePermissions(AppPermission.TicketsRecurrenceCreate)
   @ApiOperation({ summary: 'Ativar ou desativar recorrência' })
   async active(@CurrentUser() user: AuthenticatedUser | undefined, @Param('id', ParseIntPipe) id: number, @Body() body: TicketRecurrenceToggleRequest): Promise<void> {
     if (!user) throw new UnauthorizedException('Usuário não autenticado.');
