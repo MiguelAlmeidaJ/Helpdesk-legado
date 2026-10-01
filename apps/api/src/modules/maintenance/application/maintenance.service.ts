@@ -8,7 +8,6 @@ import {
   type OnApplicationBootstrap,
 } from '@nestjs/common';
 import {
-  DEFAULT_NAVIGATION,
   type MaintenanceBackupFile,
   type MaintenanceBackupFrequency,
   type MaintenanceBackupJob,
@@ -28,10 +27,7 @@ import {
   type MaintenanceTableDropResponse,
   type MaintenanceTableOptimizeResponse,
 } from '@helpdesk/contracts';
-import {
-  synchronizeNavigation,
-  type Nivel3DatabaseClient,
-} from '@helpdesk/database';
+import type { Nivel3DatabaseClient } from '@helpdesk/database';
 import { createHash, randomUUID } from 'node:crypto';
 import { spawn } from 'node:child_process';
 import {
@@ -216,42 +212,7 @@ const CREATE_OPERATIONS = [
   ') ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci',
 ].join('\n');
 
-const CREATE_NAVIGATION_SECTIONS = [
-  'CREATE TABLE IF NOT EXISTS navigation_sections (',
-  '  id INT UNSIGNED NOT NULL AUTO_INCREMENT,',
-  '  slug VARCHAR(100) NOT NULL,',
-  '  label VARCHAR(150) NOT NULL,',
-  '  short_label VARCHAR(20) NULL,',
-  '  sort_order INT NOT NULL DEFAULT 0,',
-  '  is_active TINYINT(1) NOT NULL DEFAULT 1,',
-  '  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,',
-  '  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,',
-  '  PRIMARY KEY (id),',
-  '  UNIQUE KEY uq_navigation_sections_slug (slug),',
-  '  KEY idx_navigation_sections_order (is_active, sort_order, id)',
-  ') ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci',
-].join('\n');
 
-const CREATE_NAVIGATION_ITEMS = [
-  'CREATE TABLE IF NOT EXISTS navigation_items (',
-  '  id INT UNSIGNED NOT NULL AUTO_INCREMENT,',
-  '  section_id INT UNSIGNED NOT NULL,',
-  '  slug VARCHAR(120) NOT NULL,',
-  '  label VARCHAR(160) NOT NULL,',
-  '  href VARCHAR(500) NULL,',
-  "  status VARCHAR(30) NOT NULL DEFAULT 'planned',",
-  '  visibility_condition LONGTEXT NULL,',
-  '  sort_order INT NOT NULL DEFAULT 0,',
-  '  is_active TINYINT(1) NOT NULL DEFAULT 1,',
-  '  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,',
-  '  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,',
-  '  PRIMARY KEY (id),',
-  '  UNIQUE KEY uq_navigation_items_slug (slug),',
-  '  KEY idx_navigation_items_section_order (section_id, is_active, sort_order, id),',
-  '  CONSTRAINT fk_navigation_items_section FOREIGN KEY (section_id)',
-  '    REFERENCES navigation_sections(id) ON DELETE CASCADE ON UPDATE RESTRICT',
-  ') ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci',
-].join('\n');
 
 const CREATE_ROLES = [
   'CREATE TABLE IF NOT EXISTS roles (',
@@ -432,8 +393,6 @@ const REQUIRED_NIVEL3_TABLES = [
   'api_idempotency_keys',
   'api_outbox_events',
   'atendimento_recorrencias',
-  'navigation_sections',
-  'navigation_items',
   'maintenance_backup_jobs',
   'maintenance_worker_state',
   'maintenance_operations',
@@ -1019,23 +978,107 @@ export class MaintenanceService implements OnApplicationBootstrap {
       }
 
       if (dropping) {
-        if (
-          table.reviewState === 'protected' ||
-          table.reviewState === 'related'
-        ) {
+        if (table.reviewState === 'protected') {
           throw new ConflictException(
             `A tabela ${name} não pode ser excluída: ${table.reviewReason}`,
-          );
-        }
-        if (table.outgoingForeignKeys || table.incomingForeignKeys) {
-          throw new ConflictException(
-            `A tabela ${name} possui relacionamentos e não pode ser excluída por esta tela.`,
           );
         }
       }
     }
 
-    return unique;
+    return dropping
+      ? this.orderTablesForDrop(database, unique)
+      : unique;
+  }
+
+  private async orderTablesForDrop(
+    database: MaintenanceDatabaseKey,
+    tables: string[],
+  ): Promise<string[]> {
+    const selected = new Set(tables);
+    const placeholders = tables.map(() => '?').join(', ');
+    const relations = await this.client(database).$queryRawUnsafe<
+      Array<{ child_table: string; parent_table: string }>
+    >(
+      `SELECT TABLE_NAME AS child_table,
+              REFERENCED_TABLE_NAME AS parent_table
+       FROM information_schema.KEY_COLUMN_USAGE
+       WHERE TABLE_SCHEMA = DATABASE()
+         AND REFERENCED_TABLE_SCHEMA = DATABASE()
+         AND REFERENCED_TABLE_NAME IS NOT NULL
+         AND (
+           TABLE_NAME IN (${placeholders})
+           OR REFERENCED_TABLE_NAME IN (${placeholders})
+         )`,
+      ...tables,
+      ...tables,
+    );
+
+    const externalIncoming = relations.filter(
+      (relation) =>
+        selected.has(relation.parent_table) &&
+        !selected.has(relation.child_table),
+    );
+
+    if (externalIncoming.length) {
+      const detail = externalIncoming
+        .map(
+          (relation) =>
+            `${relation.child_table} → ${relation.parent_table}`,
+        )
+        .join(', ');
+      throw new ConflictException(
+        'Existem tabelas fora da seleção que dependem das tabelas escolhidas: ' +
+          detail +
+          '. Inclua as dependências ou mantenha essas tabelas.',
+      );
+    }
+
+    const edges = new Map<string, Set<string>>(
+      tables.map((table) => [table, new Set<string>()]),
+    );
+    const indegree = new Map<string, number>(
+      tables.map((table) => [table, 0]),
+    );
+
+    for (const relation of relations) {
+      if (
+        !selected.has(relation.child_table) ||
+        !selected.has(relation.parent_table) ||
+        relation.child_table === relation.parent_table
+      ) {
+        continue;
+      }
+      const parents = edges.get(relation.child_table)!;
+      if (!parents.has(relation.parent_table)) {
+        parents.add(relation.parent_table);
+        indegree.set(
+          relation.parent_table,
+          (indegree.get(relation.parent_table) ?? 0) + 1,
+        );
+      }
+    }
+
+    const queue = tables.filter((table) => (indegree.get(table) ?? 0) === 0);
+    const ordered: string[] = [];
+
+    while (queue.length) {
+      const table = queue.shift()!;
+      ordered.push(table);
+      for (const parent of edges.get(table) ?? []) {
+        const next = (indegree.get(parent) ?? 0) - 1;
+        indegree.set(parent, next);
+        if (next === 0) queue.push(parent);
+      }
+    }
+
+    if (ordered.length !== tables.length) {
+      throw new ConflictException(
+        'A seleção possui dependências circulares. Revise as chaves estrangeiras antes de excluir.',
+      );
+    }
+
+    return ordered;
   }
 
   async runManualBackup(
@@ -1683,7 +1726,7 @@ export class MaintenanceService implements OnApplicationBootstrap {
     target: MaintenanceDatabaseKey,
   ): Promise<MaintenanceRepairResponse> {
     const database = validateDatabase(target);
-    let navigationPrepared = false;
+    const navigationPrepared = true;
     let maintenancePrepared = false;
     let runtimePrepared = false;
 
@@ -1694,8 +1737,6 @@ export class MaintenanceService implements OnApplicationBootstrap {
     await this.ensureNativeRuntimeSchema();
     await this.catalogImages.ensureSchema(false);
     runtimePrepared = true;
-    await this.ensureNavigation();
-    navigationPrepared = true;
 
     const current = await this.databaseStatus(database);
     return {
@@ -2229,57 +2270,6 @@ export class MaintenanceService implements OnApplicationBootstrap {
     return true;
   }
 
-  private async ensureNavigation(): Promise<void> {
-    await this.nivel3.$executeRawUnsafe(CREATE_NAVIGATION_SECTIONS);
-    await this.nivel3.$executeRawUnsafe(CREATE_NAVIGATION_ITEMS);
-
-    for (const [sectionIndex, section] of DEFAULT_NAVIGATION.entries()) {
-      await this.nivel3.$executeRawUnsafe(
-        [
-          'INSERT IGNORE INTO navigation_sections (',
-          '  slug, label, short_label, sort_order, is_active, created_at, updated_at',
-          ') VALUES (?, ?, ?, ?, 1, NOW(), NOW())',
-        ].join('\n'),
-        section.slug,
-        section.label,
-        section.shortLabel,
-        sectionIndex * 10,
-      );
-    }
-
-    const sections = await this.nivel3.$queryRawUnsafe<
-      Array<{ id: number; slug: string }>
-    >('SELECT id, slug FROM navigation_sections');
-    const sectionIds = new Map(
-      sections.map((section) => [section.slug, Number(section.id)]),
-    );
-
-    for (const section of DEFAULT_NAVIGATION) {
-      const sectionId = sectionIds.get(section.slug);
-      if (!sectionId) continue;
-      for (const [itemIndex, item] of section.items.entries()) {
-        await this.nivel3.$executeRawUnsafe(
-          [
-            'INSERT IGNORE INTO navigation_items (',
-            '  section_id, slug, label, href, status, visibility_condition,',
-            '  sort_order, is_active, created_at, updated_at',
-            ') VALUES (?, ?, ?, ?, ?, ?, ?, 1, NOW(), NOW())',
-          ].join('\n'),
-          sectionId,
-          item.slug,
-          item.label,
-          item.href ?? null,
-          item.status,
-          item.visibilityCondition
-            ? JSON.stringify(item.visibilityCondition)
-            : null,
-          itemIndex * 10,
-        );
-      }
-    }
-
-    await synchronizeNavigation(this.nivel3);
-  }
 
   private async scanDump(
     file: string,
