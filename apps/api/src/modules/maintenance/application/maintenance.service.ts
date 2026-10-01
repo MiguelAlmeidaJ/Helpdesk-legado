@@ -398,6 +398,17 @@ const REQUIRED_NIVEL3_TABLES = [
   'maintenance_operations',
 ] as const;
 
+const KNOWN_RETIRED_NIVEL3_TABLES = new Map<string, string>([
+  [
+    'navigation_sections',
+    'Navegação migrada para DEFAULT_NAVIGATION em código. Remover junto com navigation_items.',
+  ],
+  [
+    'navigation_items',
+    'Navegação migrada para DEFAULT_NAVIGATION em código. Remover junto com navigation_sections.',
+  ],
+]);
+
 const PROTECTED_NIVEL3_TABLES = new Set<string>([
   ...REQUIRED_NIVEL3_TABLES,
 
@@ -816,9 +827,12 @@ export class MaintenanceService implements OnApplicationBootstrap {
           : estimatedRows === 0
             ? 'review-empty'
             : 'review';
+      const retiredReason = KNOWN_RETIRED_NIVEL3_TABLES.get(row.table_name);
       const reviewReason = protectedTable
         ? 'Protegida pela aplicação atual.'
-        : hasRelations
+        : retiredReason
+          ? retiredReason
+          : hasRelations
           ? 'Possui relacionamento por chave estrangeira. Pode ser removida apenas junto das dependências necessárias; a API valida a ordem do DROP.'
           : estimatedRows === 0
             ? 'Sem linhas estimadas e sem chaves estrangeiras. Candidata prioritária para revisão, não para exclusão automática.'
