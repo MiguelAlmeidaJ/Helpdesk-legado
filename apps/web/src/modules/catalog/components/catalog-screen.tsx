@@ -14,6 +14,7 @@ import type { FormEvent } from 'react';
 import { useEffect, useMemo, useState } from 'react';
 import { ApiError } from '../../../shared/api/api-client';
 import { AppPageHeader } from '../../../shared/navigation/app-page-header';
+import { CatalogHtmlEditor } from './catalog-html-editor';
 import {
   archiveCatalog,
   createCatalog,
@@ -560,16 +561,22 @@ export function CatalogScreen({ currentUser }: { currentUser: CurrentUserRespons
                       value={form.title}
                     />
                   </label>
-                  <label className={styles.wide}>
-                    <span>Conteúdo HTML</span>
-                    <textarea
+                  <div className={styles.wide}>
+                    <div className="mb-1.5 flex items-center justify-between gap-3">
+                      <span className="text-[13px] font-semibold">Conteúdo do catálogo</span>
+                      <small className="text-app-muted">
+                        Modo visual ou HTML
+                      </small>
+                    </div>
+                    <CatalogHtmlEditor
                       disabled={saving}
-                      onChange={(event) => setForm({ ...form, content: event.target.value })}
-                      rows={18}
+                      onChange={(content) => setForm({ ...form, content })}
                       value={form.content}
                     />
-                    <small>O conteúdo legado é mantido como HTML. A visualização é isolada em sandbox.</small>
-                  </label>
+                    <small className="mt-1.5 block text-app-muted">
+                      O editor mantém compatibilidade com o HTML existente e permite inserir imagens diretamente no conteúdo.
+                    </small>
+                  </div>
                 </div>
 
                 <div className={styles.editorActions}>
