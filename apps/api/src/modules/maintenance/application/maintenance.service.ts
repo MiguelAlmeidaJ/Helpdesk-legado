@@ -25,6 +25,8 @@ import {
   type MaintenanceOperation,
   type MaintenanceRepairResponse,
   type MaintenanceSystemStatusResponse,
+  type MaintenanceTableDropResponse,
+  type MaintenanceTableOptimizeResponse,
 } from '@helpdesk/contracts';
 import {
   synchronizeNavigation,
@@ -121,6 +123,7 @@ type TableRow = {
   table_rows: number | bigint | string | null;
   data_length: number | bigint | string | null;
   index_length: number | bigint | string | null;
+  data_free: number | bigint | string | null;
   create_time: Date | string | null;
   update_time: Date | string | null;
   outgoing_fk_count: number | bigint | string | null;
@@ -821,6 +824,7 @@ export class MaintenanceService implements OnApplicationBootstrap {
         '  t.TABLE_ROWS AS table_rows,',
         '  t.DATA_LENGTH AS data_length,',
         '  t.INDEX_LENGTH AS index_length,',
+        '  t.DATA_FREE AS data_free,',
         '  t.CREATE_TIME AS create_time,',
         '  t.UPDATE_TIME AS update_time,',
         '  (SELECT COUNT(*)',
@@ -841,6 +845,7 @@ export class MaintenanceService implements OnApplicationBootstrap {
       const dataBytes = numberValue(row.data_length);
       const indexBytes = numberValue(row.index_length);
       const estimatedRows = numberValue(row.table_rows);
+      const dataFreeBytes = numberValue(row.data_free);
       const outgoingForeignKeys = numberValue(row.outgoing_fk_count);
       const incomingForeignKeys = numberValue(row.incoming_fk_count);
       const protectedTable = PROTECTED_NIVEL3_TABLES.has(row.table_name);
@@ -867,6 +872,7 @@ export class MaintenanceService implements OnApplicationBootstrap {
         dataBytes,
         indexBytes,
         totalBytes: dataBytes + indexBytes,
+        dataFreeBytes,
         createdAt: iso(row.create_time),
         updatedAt: iso(row.update_time),
         outgoingForeignKeys,
@@ -875,6 +881,161 @@ export class MaintenanceService implements OnApplicationBootstrap {
         reviewReason,
       };
     });
+  }
+
+  async optimizeTables(
+    target: MaintenanceDatabaseKey,
+    tableNames: string[],
+    actorUserId: number,
+  ): Promise<MaintenanceTableOptimizeResponse> {
+    const database = validateDatabase(target);
+    const tables = await this.validMaintenanceTables(database, tableNames, false);
+    const operationId = await this.beginOperation(
+      'tables-optimize',
+      database,
+      actorUserId,
+    );
+
+    try {
+      const before = await this.databaseTables(database);
+      const freeByName = new Map(before.map((table) => [table.name, table.dataFreeBytes]));
+
+      for (const table of tables) {
+        await this.client(database).$executeRawUnsafe(
+          `OPTIMIZE TABLE \`${table}\``,
+        );
+      }
+
+      const reclaimedEstimateBytes = tables.reduce(
+        (total, table) => total + (freeByName.get(table) ?? 0),
+        0,
+      );
+
+      await this.finishOperation(
+        operationId,
+        'success',
+        `Tabelas otimizadas: ${tables.join(', ')}.`,
+      );
+
+      return {
+        target: database,
+        tables,
+        reclaimedEstimateBytes,
+      };
+    } catch (error) {
+      await this.finishOperation(
+        operationId,
+        'error',
+        error instanceof Error ? error.message : String(error),
+      );
+      throw error;
+    }
+  }
+
+  async dropTables(
+    target: MaintenanceDatabaseKey,
+    tableNames: string[],
+    confirmation: string,
+    actorUserId: number,
+  ): Promise<MaintenanceTableDropResponse> {
+    const database = validateDatabase(target);
+    const tables = await this.validMaintenanceTables(database, tableNames, true);
+    const expected = `EXCLUIR ${tables.length} TABELA${tables.length === 1 ? '' : 'S'}`;
+
+    if (confirmation !== expected) {
+      throw new BadRequestException(
+        `Confirmação inválida. Digite exatamente: ${expected}`,
+      );
+    }
+
+    const operationId = await this.beginOperation(
+      'tables-drop',
+      database,
+      actorUserId,
+    );
+
+    try {
+      const safety = await this.createBackups(database, 'manual');
+      const safetyBackup = safety[0];
+      if (!safetyBackup) {
+        throw new ConflictException(
+          'O backup de segurança não foi criado. Nenhuma tabela foi removida.',
+        );
+      }
+
+      for (const table of tables) {
+        await this.client(database).$executeRawUnsafe(
+          `DROP TABLE \`${table}\``,
+        );
+      }
+
+      await this.finishOperation(
+        operationId,
+        'success',
+        `Backup: ${safetyBackup.name}. Tabelas removidas: ${tables.join(', ')}.`,
+      );
+
+      return {
+        target: database,
+        droppedTables: tables,
+        safetyBackup,
+      };
+    } catch (error) {
+      await this.finishOperation(
+        operationId,
+        'error',
+        error instanceof Error ? error.message : String(error),
+      );
+      throw error;
+    }
+  }
+
+  private async validMaintenanceTables(
+    database: MaintenanceDatabaseKey,
+    tableNames: string[],
+    dropping: boolean,
+  ): Promise<string[]> {
+    const unique = [...new Set(tableNames.map((name) => name.trim()))].filter(Boolean);
+    if (!unique.length) {
+      throw new BadRequestException('Selecione ao menos uma tabela.');
+    }
+    if (unique.length > 50) {
+      throw new BadRequestException('Selecione no máximo 50 tabelas por operação.');
+    }
+
+    for (const name of unique) {
+      if (!/^[A-Za-z0-9_]+$/.test(name)) {
+        throw new BadRequestException(`Nome de tabela inválido: ${name}`);
+      }
+    }
+
+    const current = await this.databaseTables(database);
+    const byName = new Map(current.map((table) => [table.name, table]));
+
+    for (const name of unique) {
+      const table = byName.get(name);
+      if (!table) {
+        throw new NotFoundException(`Tabela não encontrada: ${name}`);
+      }
+
+      if (dropping) {
+        if (
+          table.reviewState === 'protected' ||
+          table.reviewState === 'related'
+        ) {
+          throw new ConflictException(
+            `A tabela ${name} não pode ser excluída: ${table.reviewReason}`,
+          );
+        }
+        if (table.outgoingForeignKeys || table.incomingForeignKeys) {
+          throw new ConflictException(
+            `A tabela ${name} possui relacionamentos e não pode ser excluída por esta tela.`,
+          );
+        }
+      }
+    }
+
+    return unique;
   }
 
   async runManualBackup(
