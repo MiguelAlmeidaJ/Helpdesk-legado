@@ -10,7 +10,22 @@ import { RequirePermissions } from '../../../access/presentation/http/require-pe
 import { GetTicketAnalytics } from '../../application/get-ticket-analytics';
 import { parseReportQuery } from './report-query';
 
-export function reportId(value: unknown, name: string): number {
+export function reportIds(value: unknown, name: string): number[] {
+  if (value === undefined || value === null || value === '') return [];
+  const raw = Array.isArray(value) ? value.map(String) : String(value).split(',');
+  const values = [...new Set(raw.map((item) => item.trim()).filter(Boolean))];
+  if (values.length > 100) {
+    throw new BadRequestException(`${name} aceita no máximo 100 valores.`);
+  }
+  return values.map((item) => {
+    if (!/^\d+$/.test(item) || !Number.isSafeInteger(Number(item)) || Number(item) < 1) {
+      throw new BadRequestException(`${name} deve conter apenas inteiros positivos.`);
+    }
+    return Number(item);
+  });
+}
+
+function reportId(value: unknown, name: string): number {
   if (value === undefined || value === '') return 0;
   if (typeof value !== 'string' || !/^\d+$/.test(value) || !Number.isSafeInteger(Number(value))) throw new BadRequestException(`${name} deve ser um inteiro positivo.`);
   return Number(value);
@@ -35,6 +50,7 @@ export function analyticsFilters(query: Record<string, unknown>): TicketAnalytic
     source: source as TicketReportSource,
     level,
     clientId: reportId(query.clientId, 'clientId'),
+    clientIds: reportIds(query.clientIds, 'clientIds'),
     locationId: reportId(query.locationId, 'locationId'),
     technicianId: reportId(query.technicianId, 'technicianId'),
     categoryId: reportId(query.categoryId, 'categoryId'),
