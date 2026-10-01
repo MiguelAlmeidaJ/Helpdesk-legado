@@ -58,6 +58,18 @@ export class PrismaTicketCategoryTotalsReportRepository extends TicketCategoryTo
       appendNumberInFilter(where, params, 'a.cliente', visibility.clientIds);
     }
 
+    for (const [column, value] of [
+      ['a.cliente', query.clientId],
+      ['a.tecnico', query.technicianId],
+      ['a.categoria', query.categoryId],
+      ['a.status', query.status],
+    ] as const) {
+      if (value) {
+        where.push(`${column} = ?`);
+        params.push(value);
+      }
+    }
+
     const rows = await this.database.$queryRawUnsafe<ReportRow[]>(
       `SELECT
          c.cat_id AS category_id,
