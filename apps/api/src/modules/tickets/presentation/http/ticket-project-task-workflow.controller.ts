@@ -164,7 +164,7 @@ function progressRequest(body: unknown): TicketProjectTaskProgressRequest {
 @ApiTags('tickets')
 @Controller('tickets/projects/tasks')
 @UseGuards(LegacySessionGuard, DevOpsPermissionsGuard)
-@RequirePermissions(AppPermission.TicketsRead)
+@RequirePermissions(AppPermission.DevOpsTasksEdit)
 @ApiSecurity(LEGACY_SESSION_SECURITY)
 export class TicketProjectTaskWorkflowController {
   constructor(private readonly workflow: TicketProjectTaskWorkflow) {}
@@ -202,10 +202,7 @@ export class TicketProjectTaskWorkflowController {
 
   @Patch(':taskId/assignment')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @RequirePermissions(
-    AppPermission.TicketsRead,
-    AppPermission.TicketsExecute,
-  )
+  @RequirePermissions(AppPermission.DevOpsTasksEdit)
   @ApiOperation({ summary: 'Iniciar ou direcionar tarefa de projeto' })
   @ApiParam({ name: 'taskId', type: Number })
   @ApiBody({
@@ -237,7 +234,7 @@ export class TicketProjectTaskWorkflowController {
 
   @Post(':taskId/hold')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @RequirePermissions(AppPermission.TicketsRead, AppPermission.TicketsHold)
+  @RequirePermissions(AppPermission.DevOpsTasksEdit)
   @ApiOperation({ summary: 'Colocar tarefa de projeto em espera' })
   @ApiParam({ name: 'taskId', type: Number })
   @ApiBody({
@@ -274,7 +271,7 @@ export class TicketProjectTaskWorkflowController {
 
   @Post(':taskId/resume')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @RequirePermissions(AppPermission.TicketsRead, AppPermission.TicketsHold)
+  @RequirePermissions(AppPermission.DevOpsTasksEdit)
   @ApiOperation({ summary: 'Retomar tarefa de projeto em espera' })
   @ApiParam({ name: 'taskId', type: Number })
   @ApiResponse({ status: 204, description: 'Tarefa retomada.' })
@@ -291,7 +288,7 @@ export class TicketProjectTaskWorkflowController {
 
   @Post(':taskId/reject')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @RequirePermissions(AppPermission.TicketsRead, AppPermission.TicketsReject)
+  @RequirePermissions(AppPermission.DevOpsTasksEdit)
   @ApiOperation({ summary: 'Recusar ou redirecionar tarefa de projeto' })
   @ApiParam({ name: 'taskId', type: Number })
   @ApiBody({
@@ -329,7 +326,7 @@ export class TicketProjectTaskWorkflowController {
 
   @Post(':taskId/finalize')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @RequirePermissions(AppPermission.TicketsRead, AppPermission.TicketsClose)
+  @RequirePermissions(AppPermission.DevOpsTasksEdit)
   @ApiOperation({ summary: 'Finalizar tarefa de projeto' })
   @ApiParam({ name: 'taskId', type: Number })
   @ApiBody({
@@ -361,10 +358,7 @@ export class TicketProjectTaskWorkflowController {
 
   @Patch(':taskId/progress')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @RequirePermissions(
-    AppPermission.TicketsRead,
-    AppPermission.TicketsExecute,
-  )
+  @RequirePermissions(AppPermission.DevOpsTasksEdit)
   @ApiOperation({ summary: 'Atualizar percentual da tarefa de projeto' })
   @ApiParam({ name: 'taskId', type: Number })
   @ApiBody({
