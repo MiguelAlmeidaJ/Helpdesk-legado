@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Body,
   Controller,
+  ForbiddenException,
   Get,
   HttpCode,
   HttpStatus,
@@ -18,8 +19,9 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiConsumes, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
-import type {
-  CatalogDetailResponse,
+import {
+  AppPermission,
+  type CatalogDetailResponse,
   CatalogFiltersResponse,
   CatalogImageUploadResponse,
   CatalogListResponse,
@@ -193,7 +195,7 @@ export class CatalogController {
   ): Promise<CatalogImageUploadResponse> {
     const actor = authenticated(user);
     if (!canUseCatalogImages(actor)) {
-      throw new UnauthorizedException('Usuário sem acesso às imagens de catálogo.');
+      throw new ForbiddenException('Usuário sem acesso às imagens de catálogo.');
     }
     if (!file?.buffer || file.size < 1) {
       throw new BadRequestException('Imagem não informada ou vazia.');
