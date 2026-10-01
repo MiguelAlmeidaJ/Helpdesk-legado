@@ -622,7 +622,7 @@ export function CatalogScreen({ currentUser }: { currentUser: CurrentUserRespons
                 {detail.content ? (
                   <iframe
                     className={styles.preview}
-                    sandbox=""
+                    sandbox="allow-same-origin"
                     srcDoc={detail.content}
                     title={`Conteúdo do catálogo ${detail.title}`}
                   />
@@ -688,7 +688,7 @@ export function CatalogScreen({ currentUser }: { currentUser: CurrentUserRespons
             {detail.content ? (
               <iframe
                 className="block h-full min-h-0 w-full border-0 bg-white"
-                sandbox=""
+                sandbox="allow-same-origin"
                 srcDoc={detail.content}
                 title={`Conteúdo do catálogo ${detail.title} em tela cheia`}
               />
