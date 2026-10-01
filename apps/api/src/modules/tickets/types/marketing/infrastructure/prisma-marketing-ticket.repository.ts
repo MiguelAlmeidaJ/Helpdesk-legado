@@ -171,7 +171,7 @@ export class PrismaMarketingTicketRepository extends MarketingTicketRepository {
                  INNER JOIN role_permissions rp ON rp.role_id = ur.role_id
                  INNER JOIN permissions p ON p.id = rp.permission_id
                  WHERE ur.user_id = u.user_id
-                   AND p.slug = 'marketing.atendimentos.visualizar'
+                   AND p.slug = 'marketing.tarefas.visualizar'
                )
                OR EXISTS (
                  SELECT 1
@@ -179,7 +179,7 @@ export class PrismaMarketingTicketRepository extends MarketingTicketRepository {
                  INNER JOIN permissions p ON p.id = up.permission_id
                  WHERE up.user_id = u.user_id
                    AND up.effect = 'allow'
-                   AND p.slug = 'marketing.atendimentos.visualizar'
+                   AND p.slug = 'marketing.tarefas.visualizar'
                )
              )
              AND (
@@ -189,7 +189,7 @@ export class PrismaMarketingTicketRepository extends MarketingTicketRepository {
                  INNER JOIN role_permissions rp ON rp.role_id = ur.role_id
                  INNER JOIN permissions p ON p.id = rp.permission_id
                  WHERE ur.user_id = u.user_id
-                   AND p.slug = 'marketing.atendimentos.executar'
+                   AND p.slug = 'marketing.tarefas.finalizar'
                )
                OR EXISTS (
                  SELECT 1
@@ -197,7 +197,7 @@ export class PrismaMarketingTicketRepository extends MarketingTicketRepository {
                  INNER JOIN permissions p ON p.id = up.permission_id
                  WHERE up.user_id = u.user_id
                    AND up.effect = 'allow'
-                   AND p.slug = 'marketing.atendimentos.executar'
+                   AND p.slug = 'marketing.tarefas.finalizar'
                )
              )
              AND NOT EXISTS (
@@ -207,8 +207,8 @@ export class PrismaMarketingTicketRepository extends MarketingTicketRepository {
                WHERE up.user_id = u.user_id
                  AND up.effect = 'deny'
                  AND p.slug IN (
-                   'marketing.atendimentos.visualizar',
-                   'marketing.atendimentos.executar'
+                   'marketing.tarefas.visualizar',
+                   'marketing.tarefas.finalizar'
                  )
              )
            ORDER BY u.user_nome`,
