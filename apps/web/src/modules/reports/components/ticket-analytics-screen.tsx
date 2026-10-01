@@ -1,146 +1,757 @@
 'use client';
 
-import { useEffect, useRef, useState, type FormEvent } from 'react';
-import Link from 'next/link';
-import { TICKET_STATUS_LABELS, type CurrentUserResponse, type TicketAnalyticsResponse, type TicketReportCatalog, type TicketReportSource, type TechnicianWorkloadResponse } from '@helpdesk/contracts';
+import {
+  TICKET_STATUS_LABELS,
+  type CurrentUserResponse,
+  type TicketAnalyticsResponse,
+  type TicketReportCatalog,
+  type TicketReportSource,
+  type TechnicianWorkloadResponse,
+} from '@helpdesk/contracts';
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { apiDownload, apiRequest } from '../../../shared/api/api-client';
 import { AppPageHeader } from '../../../shared/navigation/app-page-header';
+import { DateRangePicker } from '../../../shared/ui/date-range-picker';
+import { appButtonClass } from '../../../shared/ui/button-styles';
 import { downloadCsv, duration, reportError } from '../lib/report-export';
-import { reportScreenStyles as styles } from './report-screen-styles';
 
-const SOURCE_LABELS = { tickets: 'Atendimento', tasks: 'Tarefa', improvements: 'Melhoria', unified: 'Unificado' };
+const SOURCE_LABELS: Record<TicketReportSource, string> = {
+  tickets: 'Atendimentos',
+  tasks: 'Tarefas',
+  improvements: 'Melhorias',
+  unified: 'Unificado',
+};
 const STATUS: Readonly<Record<number, string>> = TICKET_STATUS_LABELS;
-const TYPES: Record<number, string> = { 1: 'Falha', 2: 'Relacionamento', 3: 'Requisição de serviços', 4: 'Requisição de informação', 5: 'Monitoramento' };
-const METHODS: Record<number, string> = { 1: 'Remoto', 2: 'Presencial', 3: 'Remoto — plantão', 4: 'Presencial — plantão' };
-const EMPTY_CATALOG: TicketReportCatalog = { clients: [], locations: [], technicians: [], categories: [] };
+const TYPES: Record<number, string> = {
+  1: 'Falha',
+  2: 'Relacionamento',
+  3: 'Requisição de Serviços',
+  4: 'Requisição de Informação',
+  5: 'Monitoramento',
+};
+const METHODS: Record<number, string> = {
+  1: 'Atendimento Remoto',
+  2: 'Atendimento Presencial',
+  3: 'Remoto — plantão',
+  4: 'Presencial — plantão',
+};
+const AREA_LABELS: Record<number, string> = {
+  1: 'Suporte T.I',
+  2: 'Marketing',
+  3: 'ADM / DevOps',
+};
+const EMPTY_CATALOG: TicketReportCatalog = {
+  clients: [],
+  locations: [],
+  technicians: [],
+  categories: [],
+};
+const PRIMARY = appButtonClass('primary');
+const SECONDARY = appButtonClass('secondary');
+const DANGER_OUTLINE =
+  'inline-flex min-h-10 items-center justify-center rounded-lg border border-red-300 bg-white px-4 text-sm font-bold text-red-700 transition hover:bg-red-50 disabled:opacity-50';
+const CONTROL =
+  'min-h-10 w-full rounded-lg border border-app-border-strong bg-app-surface px-3 text-sm text-app-text outline-none transition focus:border-app-brand focus:ring-3 focus:ring-[var(--app-brand-ring)]';
 
-export function TicketAnalyticsScreen({ currentUser, mode, initialSource = 'tickets', initialFilters = {} }: {
-  currentUser: CurrentUserResponse; mode: 'analytics' | 'workload' | 'time'; initialSource?: TicketReportSource; initialFilters?: Record<string, string>;
+type ScreenFilters = {
+  startDate: string;
+  endDate: string;
+  clientId: string;
+  locationId: string;
+  technicianId: string;
+  categoryId: string;
+  categorySector: string;
+  status: string;
+  level: string;
+  source: string;
+  view: string;
+};
+
+function reportTitle(mode: 'analytics' | 'workload' | 'time', source: string, sector: string) {
+  if (mode === 'workload') return 'Tempo médio por técnico';
+  if (mode === 'time') return 'Relatório de tempo por técnico';
+  if (source === 'tasks') return 'Relatório de tarefas por Cliente';
+  if (source === 'unified') return 'Relatório unificado de atendimentos';
+  if (source === 'improvements') return 'Relatório analítico de Melhorias';
+  if (sector === '1') return 'Relatório de atendimentos da TI por Técnico';
+  return 'Relatório de atendimentos por Cliente';
+}
+
+function reportSubtitle(mode: 'analytics' | 'workload' | 'time', source: string) {
+  if (mode === 'workload') {
+    return 'Resumo de atendimentos abertos, em espera, vencidos e tempo acumulado.';
+  }
+  if (mode === 'time') {
+    return 'Consulte o tempo de atendimento por período, área e técnico.';
+  }
+  if (source === 'tasks') {
+    return 'Consulte as tarefas por cliente, período, local e classificação.';
+  }
+  if (source === 'unified') {
+    return 'Combine atendimentos e tarefas em uma única visão analítica.';
+  }
+  return 'Consulte os registros por cliente, período, local, técnico e classificação.';
+}
+
+function reportHeading(report: TicketAnalyticsResponse) {
+  if (report.filters.source === 'tasks') return 'Relatório analítico de tarefas por Cliente';
+  if (report.filters.source === 'unified') {
+    const area = AREA_LABELS[report.filters.categorySector];
+    return `Relatório analítico de Atendimentos Por Cliente${area ? ` - ${area}` : ''}`;
+  }
+  if (report.filters.source === 'improvements') return 'Relatório analítico de Melhorias';
+  const area = AREA_LABELS[report.filters.categorySector];
+  return `Relatório analítico de Atendimentos Por Cliente${area ? ` - ${area}` : ''}`;
+}
+
+function localDateTime(value: string | null) {
+  if (!value) return '—';
+  const [date = '', time = ''] = value.replace('T', ' ').split(' ');
+  const [year, month, day] = date.split('-');
+  return year && month && day
+    ? `${day}/${month}/${year} ${time.slice(0, 5)}`
+    : value;
+}
+
+function serviceDuration(seconds: number) {
+  const safe = Math.max(0, Math.floor(seconds));
+  const days = Math.floor(safe / 86400);
+  const hours = Math.floor((safe % 86400) / 3600);
+  const minutes = Math.floor((safe % 3600) / 60);
+  const secs = safe % 60;
+  return `${days} dias, ${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+}
+
+function chip(text: string) {
+  return (
+    <span className="inline-flex min-h-7 items-center rounded-full border border-app-border bg-app-surface-muted px-3 text-xs font-semibold text-app-text-soft">
+      {text}
+    </span>
+  );
+}
+
+export function TicketAnalyticsScreen({
+  currentUser,
+  mode,
+  initialSource = 'tickets',
+  initialFilters = {},
+}: {
+  currentUser: CurrentUserResponse;
+  mode: 'analytics' | 'workload' | 'time';
+  initialSource?: TicketReportSource;
+  initialFilters?: Record<string, string>;
 }) {
-  const [filters, setFilters] = useState({ startDate: '', endDate: '', clientId: '0', locationId: '0', technicianId: '0', categoryId: '0', status: '0', level: '0', source: initialSource as string, ...initialFilters, view: mode === 'time' ? 'time' : 'analytics' });
+  const [filters, setFilters] = useState<ScreenFilters>({
+    startDate: '',
+    endDate: '',
+    clientId: '0',
+    locationId: '0',
+    technicianId: '0',
+    categoryId: '0',
+    categorySector: '0',
+    status: '0',
+    level: '0',
+    source: initialSource,
+    ...initialFilters,
+    view: mode === 'time' ? 'time' : 'analytics',
+  });
   const [report, setReport] = useState<TicketAnalyticsResponse | null>(null);
   const [workload, setWorkload] = useState<TechnicianWorkloadResponse | null>(null);
   const [catalog, setCatalog] = useState<TicketReportCatalog>(EMPTY_CATALOG);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
   const requestId = useRef(0);
-  const title = mode === 'workload' ? 'Tempo médio por técnico' : mode === 'time' ? 'Tempo de atendimento' : 'Relatório analítico';
 
-  async function load(values: typeof filters) {
+  const sourceLocked = Boolean(initialFilters.source);
+  const areaLocked = initialFilters.lockArea === '1';
+  const title = reportTitle(mode, filters.source, filters.categorySector);
+
+  async function load(values: ScreenFilters) {
     const id = ++requestId.current;
-    setLoading(true); setError('');
+    setLoading(true);
+    setError('');
     try {
       if (mode === 'workload') {
-        const response = await apiRequest<TechnicianWorkloadResponse>('reports/tickets/workload');
+        const response = await apiRequest<TechnicianWorkloadResponse>(
+          'reports/tickets/workload',
+        );
         if (id === requestId.current) setWorkload(response);
       } else {
-        const query = new URLSearchParams(Object.entries(values).filter(([, value]) => value !== ''));
-        const response = await apiRequest<TicketAnalyticsResponse>(`reports/tickets/analytics?${query}`);
-        if (id === requestId.current) { setReport(response); setFilters(Object.fromEntries(Object.entries(response.filters).map(([key, value]) => [key, String(value)])) as typeof filters); }
+        const query = new URLSearchParams(
+          Object.entries(values).filter(
+            ([key, value]) => key !== 'lockArea' && value !== '',
+          ),
+        );
+        const response = await apiRequest<TicketAnalyticsResponse>(
+          `reports/tickets/analytics?${query}`,
+        );
+        if (id === requestId.current) {
+          setReport(response);
+          setFilters((current) => ({
+            ...current,
+            ...Object.fromEntries(
+              Object.entries(response.filters).map(([key, value]) => [
+                key,
+                String(value),
+              ]),
+            ),
+          }));
+        }
       }
     } catch (reason) {
-      if (id === requestId.current) { setError(reportError(reason)); setReport(null); setWorkload(null); }
-    } finally { if (id === requestId.current) setLoading(false); }
+      if (id === requestId.current) {
+        setError(reportError(reason));
+        setReport(null);
+        setWorkload(null);
+      }
+    } finally {
+      if (id === requestId.current) setLoading(false);
+    }
   }
 
   useEffect(() => {
     void load(filters);
-    const interval = mode === 'workload' ? setInterval(() => void load(filters), 60000) : undefined;
-    return () => { requestId.current++; if (interval) clearInterval(interval); };
-    // Initial request; subsequent filters are submitted explicitly.
+    const interval =
+      mode === 'workload'
+        ? setInterval(() => void load(filters), 60000)
+        : undefined;
+    return () => {
+      requestId.current++;
+      if (interval) clearInterval(interval);
+    };
+    // Initial request only.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mode]);
 
   useEffect(() => {
     if (mode === 'workload') return;
     let active = true;
-    apiRequest<TicketReportCatalog>(`reports/tickets/catalog?clientId=${encodeURIComponent(filters.clientId)}`)
-      .then(value => { if (active) setCatalog(value); })
-      .catch(reason => { if (active) { setCatalog(EMPTY_CATALOG); setError(reportError(reason)); } });
-    return () => { active = false; };
+    apiRequest<TicketReportCatalog>(
+      `reports/tickets/catalog?clientId=${encodeURIComponent(filters.clientId)}`,
+    )
+      .then((value) => {
+        if (active) setCatalog(value);
+      })
+      .catch((reason) => {
+        if (active) {
+          setCatalog(EMPTY_CATALOG);
+          setError(reportError(reason));
+        }
+      });
+    return () => {
+      active = false;
+    };
   }, [filters.clientId, mode]);
 
-  function apply(event: FormEvent) { event.preventDefault(); void load(filters); }
-  function exportCsv() {
-    if (workload) downloadCsv('atendimentos-abertos.csv', [
-      ['Técnico', 'Abertos', 'Em espera', 'Vencidos', 'Tempo aberto'],
-      ...workload.rows.map(row => [row.technicianName, row.open, row.waiting, row.overdue, duration(row.elapsedSeconds)]),
-    ]);
-    if (report) downloadCsv(`analitico-${report.filters.startDate}-${report.filters.endDate}.csv`, [
-      ['Origem', 'ID', 'Cliente', 'Local', 'Endereço', 'Solicitante', 'Técnico', 'Categoria', 'Subcategoria', 'Item', 'Tipo', 'Nível', 'Forma', 'Status', 'Abertura', 'Fechamento', 'Descrição abertura', 'Descrição fechamento', 'Tempo desde abertura'],
-      ...report.rows.map(row => [SOURCE_LABELS[row.source], row.id, row.clientName, row.locationName, row.locationAddress, row.requesterName, row.technicianName, row.categoryName, row.subcategoryName, row.itemName, row.type, row.level, row.method, STATUS[row.status] ?? row.status, row.openedAt, row.closedAt ?? '', row.openingDescription, row.closingDescription, duration(row.elapsedSeconds)]),
-    ]);
+  function apply(event: FormEvent) {
+    event.preventDefault();
+    void load(filters);
   }
 
-  const periodLabel = report ? `${report.filters.startDate} a ${report.filters.endDate} · ${SOURCE_LABELS[report.filters.source]} · Nível ${report.filters.level || 'Todos'}` : '';
-  return <main className={styles.page}>
-    <AppPageHeader
-      subtitle={mode === 'workload' ? 'Resumo de atendimentos abertos, em espera, vencidos e tempo acumulado.' : 'Consulte os registros por período, cliente, local e técnico.'}
-      title={title}
-      user={currentUser}
-    />
-    <div className={styles.content}>
-      {periodLabel ? <p className={styles.printHeading}>{periodLabel}</p> : null}
-      {mode !== 'workload' ? <form className={styles.filters} onSubmit={apply}>
-        <label><span>De</span><input type="date" required value={filters.startDate} onChange={e => setFilters({ ...filters, startDate: e.target.value })} /></label>
-        <label><span>Até</span><input type="date" required value={filters.endDate} onChange={e => setFilters({ ...filters, endDate: e.target.value })} /></label>
-        <label><span>Origem</span><select value={filters.source} onChange={e => setFilters({ ...filters, source: e.target.value })}>{Object.entries(SOURCE_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
-        <label><span>Cliente</span><select value={filters.clientId} onChange={e => setFilters({ ...filters, clientId: e.target.value, locationId: '0' })}><option value="0">Todos</option>{catalog.clients.map(row => <option key={row.id} value={row.id}>{row.name}</option>)}</select></label>
-        <label><span>Local</span><select value={filters.locationId} onChange={e => setFilters({ ...filters, locationId: e.target.value })}><option value="0">Todos</option>{catalog.locations.map(row => <option key={row.id} value={row.id}>{row.name}</option>)}</select></label>
-        <label><span>Técnico</span><select value={filters.technicianId} onChange={e => setFilters({ ...filters, technicianId: e.target.value })}><option value="0">Todos</option>{catalog.technicians.map(row => <option key={row.id} value={row.id}>{row.name}</option>)}</select></label>
-        <label><span>Categoria</span><select value={filters.categoryId} onChange={e => setFilters({ ...filters, categoryId: e.target.value })}><option value="0">Todas</option>{catalog.categories.map(row => <option key={row.id} value={row.id}>{row.name}</option>)}</select></label>
-        <label><span>Status</span><select value={filters.status} onChange={e => setFilters({ ...filters, status: e.target.value })}><option value="0">Todos</option>{Object.entries(STATUS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
-        <label><span>Nível (atendimentos e melhorias)</span><select value={filters.level} onChange={e => setFilters({ ...filters, level: e.target.value })}>{[0, 1, 2, 3, 4, 5].map(level => <option key={level} value={level}>{level || 'Todos'}</option>)}</select></label>
-        <div className={styles.actions}><button disabled={loading}>Filtrar</button></div>
-      </form> : null}
-      <div className={styles.exportActions}><span>{periodLabel}</span><button type="button" disabled={loading} onClick={() => void load(filters)}>Atualizar</button><button type="button" disabled={loading || !!error || (!report && !workload)} onClick={exportCsv}>Exportar CSV</button><button type="button" disabled={loading || !!error || (!report && !workload)} onClick={() => window.print()}>Imprimir / Salvar PDF</button></div>
-      {report ? <div className={styles.exportActions}><button type="button" disabled={loading} onClick={() => {
-        const query = new URLSearchParams(Object.entries(report.filters).map(([key, value]) => [key, String(value)]));
-        setLoading(true);
-        apiDownload(`reports/tickets/analytics.pdf?${query}`, 'relatorio.pdf').catch(reason => setError(reportError(reason))).finally(() => setLoading(false));
-      }}>Baixar PDF</button></div> : null}
-      {error ? <p role="alert" className={styles.error}>{error}</p> : null}
-      {loading ? <p role="status">Carregando relatório…</p> : null}
-      {!loading && workload ? (
-        <section className="overflow-hidden rounded-2xl border border-app-border bg-app-surface shadow-sm">
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[760px] border-collapse">
-              <thead className="bg-app-surface-muted">
-                <tr>
-                  <th className="px-4 py-3 text-left text-xs font-extrabold uppercase tracking-wide text-app-muted">Técnico</th>
-                  <th className="px-4 py-3 text-center text-xs font-extrabold uppercase tracking-wide text-app-muted">Aberto</th>
-                  <th className="px-4 py-3 text-center text-xs font-extrabold uppercase tracking-wide text-app-muted">Em espera</th>
-                  <th className="px-4 py-3 text-center text-xs font-extrabold uppercase tracking-wide text-app-muted">Vencidos</th>
-                  <th className="px-4 py-3 text-center text-xs font-extrabold uppercase tracking-wide text-app-muted">Tempo acumulado (h)</th>
-                </tr>
-              </thead>
-              <tbody>
-                {workload.rows.map(row => (
-                  <tr className="border-t border-app-border-soft hover:bg-app-surface-hover" key={row.technicianId}>
-                    <td className="px-4 py-3 text-sm font-extrabold">{row.technicianName}</td>
-                    <td className="px-4 py-3 text-center text-sm">{row.open}</td>
-                    <td className="px-4 py-3 text-center text-sm">{row.waiting}</td>
-                    <td className={`px-4 py-3 text-center text-sm ${row.overdue > 0 ? 'font-bold text-app-danger' : ''}`}>{row.overdue}</td>
-                    <td className="px-4 py-3 text-center text-sm">{Math.round(row.elapsedSeconds / 3600).toLocaleString('pt-BR')}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            {!workload.rows.length ? <p className={styles.empty}>Nenhum registro disponível.</p> : null}
+  function clear() {
+    const next: ScreenFilters = {
+      ...filters,
+      startDate: '',
+      endDate: '',
+      clientId: '0',
+      locationId: '0',
+      technicianId: '0',
+      categoryId: '0',
+      categorySector: areaLocked ? filters.categorySector : '0',
+      status: '0',
+      level: '0',
+      source: sourceLocked ? filters.source : initialSource,
+      view: mode === 'time' ? 'time' : 'analytics',
+    };
+    setFilters(next);
+    void load(next);
+  }
+
+  function exportCsv() {
+    if (workload) {
+      downloadCsv('atendimentos-abertos.csv', [
+        ['Técnico', 'Abertos', 'Em espera', 'Vencidos', 'Tempo acumulado'],
+        ...workload.rows.map((row) => [
+          row.technicianName,
+          row.open,
+          row.waiting,
+          row.overdue,
+          duration(row.elapsedSeconds),
+        ]),
+      ]);
+    }
+    if (report) {
+      downloadCsv(
+        `analitico-${report.filters.startDate}-${report.filters.endDate}.csv`,
+        [
+          [
+            'Origem',
+            'ID',
+            'Cliente',
+            'Local',
+            'Solicitante',
+            'Técnico',
+            'Categoria',
+            'Subcategoria',
+            'Item',
+            'Tipo',
+            'Nível',
+            'Forma',
+            'Status',
+            'Abertura',
+            'Fechamento',
+            'Descrição abertura',
+            'Descrição fechamento',
+            'Tempo de atendimento',
+          ],
+          ...report.rows.map((row) => [
+            SOURCE_LABELS[row.source],
+            row.id,
+            row.clientName,
+            row.locationName,
+            row.requesterName,
+            row.technicianName,
+            row.categoryName,
+            row.subcategoryName,
+            row.itemName,
+            TYPES[row.type] ?? row.type,
+            row.level,
+            METHODS[row.method] ?? row.method,
+            STATUS[row.status] ?? row.status,
+            row.openedAt,
+            row.closedAt ?? '',
+            row.openingDescription,
+            row.closingDescription,
+            serviceDuration(row.elapsedSeconds),
+          ]),
+        ],
+      );
+    }
+  }
+
+  const timeRows = useMemo(
+    () =>
+      [...(report?.rows ?? [])].sort(
+        (a, b) =>
+          a.technicianName.localeCompare(b.technicianName, 'pt-BR') ||
+          a.openedAt.localeCompare(b.openedAt) ||
+          a.id - b.id,
+      ),
+    [report],
+  );
+
+  return (
+    <main className="min-h-screen bg-app-bg text-app-text print:bg-white">
+      <AppPageHeader
+        subtitle={reportSubtitle(mode, filters.source)}
+        title={title}
+        user={currentUser}
+      />
+
+      <div className="mx-auto w-full max-w-[1550px] px-5 py-5 max-sm:px-3">
+        {mode !== 'workload' ? (
+          <form
+            className="mb-4 rounded-2xl border border-app-border bg-app-surface p-4 shadow-sm print:hidden"
+            onSubmit={apply}
+          >
+            <div className="grid grid-cols-6 items-end gap-3 max-[1200px]:grid-cols-3 max-[760px]:grid-cols-1">
+              {mode !== 'time' ? (
+                <label className="grid gap-1.5 text-xs font-bold text-app-muted">
+                  Cliente
+                  <select
+                    className={CONTROL}
+                    disabled={loading}
+                    onChange={(event) =>
+                      setFilters({
+                        ...filters,
+                        clientId: event.target.value,
+                        locationId: '0',
+                      })
+                    }
+                    value={filters.clientId}
+                  >
+                    <option value="0">Todos</option>
+                    {catalog.clients.map((row) => (
+                      <option key={row.id} value={row.id}>
+                        {row.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ) : null}
+
+              <div className={mode === 'time' ? 'col-span-2 max-[760px]:col-span-1' : 'col-span-2 max-[1200px]:col-span-2 max-[760px]:col-span-1'}>
+                <span className="mb-1.5 block text-xs font-bold text-app-muted">
+                  Período
+                </span>
+                <DateRangePicker
+                  disabled={loading}
+                  endDate={filters.endDate}
+                  onChange={(range) =>
+                    setFilters({
+                      ...filters,
+                      startDate: range.startDate,
+                      endDate: range.endDate,
+                    })
+                  }
+                  startDate={filters.startDate}
+                />
+              </div>
+
+              {mode !== 'time' ? (
+                <label className="grid gap-1.5 text-xs font-bold text-app-muted">
+                  Local
+                  <select
+                    className={CONTROL}
+                    disabled={loading || filters.clientId === '0'}
+                    onChange={(event) =>
+                      setFilters({ ...filters, locationId: event.target.value })
+                    }
+                    value={filters.locationId}
+                  >
+                    <option value="0">Todos</option>
+                    {catalog.locations.map((row) => (
+                      <option key={row.id} value={row.id}>
+                        {row.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ) : null}
+
+              <label className="grid gap-1.5 text-xs font-bold text-app-muted">
+                Área
+                <select
+                  className={CONTROL}
+                  disabled={loading || areaLocked}
+                  onChange={(event) =>
+                    setFilters({
+                      ...filters,
+                      categorySector: event.target.value,
+                    })
+                  }
+                  value={filters.categorySector}
+                >
+                  <option value="0">Todas</option>
+                  {Object.entries(AREA_LABELS).map(([value, label]) => (
+                    <option key={value} value={value}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="grid gap-1.5 text-xs font-bold text-app-muted">
+                Técnico
+                <select
+                  className={CONTROL}
+                  disabled={loading}
+                  onChange={(event) =>
+                    setFilters({
+                      ...filters,
+                      technicianId: event.target.value,
+                    })
+                  }
+                  value={filters.technicianId}
+                >
+                  <option value="0">Todos os técnicos</option>
+                  {catalog.technicians.map((row) => (
+                    <option key={row.id} value={row.id}>
+                      {row.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              {mode !== 'time' ? (
+                <>
+                  <label className="grid gap-1.5 text-xs font-bold text-app-muted">
+                    Nível
+                    <select
+                      className={CONTROL}
+                      disabled={loading}
+                      onChange={(event) =>
+                        setFilters({ ...filters, level: event.target.value })
+                      }
+                      value={filters.level}
+                    >
+                      <option value="0">Todos</option>
+                      {[1, 2, 3, 4, 5].map((level) => (
+                        <option key={level} value={level}>
+                          Nível {level}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+
+                  <label className="grid gap-1.5 text-xs font-bold text-app-muted">
+                    Categoria
+                    <select
+                      className={CONTROL}
+                      disabled={loading}
+                      onChange={(event) =>
+                        setFilters({
+                          ...filters,
+                          categoryId: event.target.value,
+                        })
+                      }
+                      value={filters.categoryId}
+                    >
+                      <option value="0">Todas</option>
+                      {catalog.categories.map((row) => (
+                        <option key={row.id} value={row.id}>
+                          {row.name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+
+                  <label className="grid gap-1.5 text-xs font-bold text-app-muted">
+                    Status
+                    <select
+                      className={CONTROL}
+                      disabled={loading}
+                      onChange={(event) =>
+                        setFilters({ ...filters, status: event.target.value })
+                      }
+                      value={filters.status}
+                    >
+                      <option value="0">Todos</option>
+                      {Object.entries(STATUS).map(([value, label]) => (
+                        <option key={value} value={value}>
+                          {label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+
+                  {!sourceLocked ? (
+                    <label className="grid gap-1.5 text-xs font-bold text-app-muted">
+                      Origem
+                      <select
+                        className={CONTROL}
+                        disabled={loading}
+                        onChange={(event) =>
+                          setFilters({ ...filters, source: event.target.value })
+                        }
+                        value={filters.source}
+                      >
+                        {Object.entries(SOURCE_LABELS).map(([value, label]) => (
+                          <option key={value} value={value}>
+                            {label}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  ) : null}
+                </>
+              ) : null}
+
+              <div className="col-span-full flex flex-wrap justify-end gap-2">
+                <button className={PRIMARY} disabled={loading} type="submit">
+                  {loading ? 'Atualizando…' : 'Filtrar'}
+                </button>
+                {mode !== 'time' ? (
+                  <button
+                    className={SECONDARY}
+                    disabled={loading || !report}
+                    onClick={exportCsv}
+                    type="button"
+                  >
+                    Exportar CSV
+                  </button>
+                ) : null}
+                {report ? (
+                  <button
+                    className={DANGER_OUTLINE}
+                    disabled={loading}
+                    onClick={() => {
+                      const query = new URLSearchParams(
+                        Object.entries(report.filters).map(([key, value]) => [
+                          key,
+                          String(value),
+                        ]),
+                      );
+                      setLoading(true);
+                      apiDownload(
+                        `reports/tickets/analytics.pdf?${query}`,
+                        'relatorio.pdf',
+                      )
+                        .catch((reason) => setError(reportError(reason)))
+                        .finally(() => setLoading(false));
+                    }}
+                    type="button"
+                  >
+                    Gerar PDF
+                  </button>
+                ) : null}
+                <button
+                  className={SECONDARY}
+                  disabled={loading}
+                  onClick={clear}
+                  type="button"
+                >
+                  Limpar
+                </button>
+              </div>
+            </div>
+          </form>
+        ) : null}
+
+        {error ? (
+          <div className="mb-4 rounded-xl border border-app-danger-border bg-app-danger-soft px-4 py-3 text-sm text-app-danger">
+            {error}
           </div>
-        </section>
-      ) : null}
-      {!loading && report ? <section className={styles.reportCard}><div className={styles.rowHeader}><strong>{report.total} registros</strong></div>
-        {mode === 'time' ? <div className={styles.tableWrap}><table><thead><tr><th>Origem / ID</th><th>Cliente</th><th>Técnico</th><th>Nível / Tipo</th><th>Status</th><th>Abertura</th><th>Tempo desde abertura</th></tr></thead><tbody>{report.rows.map(row => <tr key={`${row.source}-${row.id}`}><td>{SOURCE_LABELS[row.source]} #{row.id}</td><td>{row.clientName}</td><td>{row.technicianName}</td><td>{row.source === 'tasks' ? row.type : row.level}</td><td>{STATUS[row.status] ?? row.status}</td><td>{row.openedAt.replace('T', ' ')}</td><td>{duration(row.elapsedSeconds)}</td></tr>)}</tbody></table></div>
-          : report.rows.map(row => <article className={styles.row} key={`${row.source}-${row.id}`}><div className={styles.rowHeader}><strong>{SOURCE_LABELS[row.source]} #{row.id} · {row.clientName}</strong><span>{STATUS[row.status] ?? row.status}</span></div>
-            <p>{row.locationName || 'Local não informado'} · {row.locationAddress} · Solicitante: {row.requesterName || 'Não informado'}</p>
-            <p>Abertura: {row.openedAt.replace('T', ' ')} · Técnico: {row.technicianName} · Nível {row.level} · {TYPES[row.type] ?? row.type} · {METHODS[row.method] ?? row.method}</p>
-            <p>{[row.categoryName, row.subcategoryName, row.itemName].filter(Boolean).join(' / ')}</p>
-            <p className={styles.details}><strong>Descrição de abertura: </strong>{row.openingDescription}</p>
-            {row.closedAt || row.closingDescription ? <p className={styles.details}><strong>Fechamento: {row.closedAt?.replace('T', ' ')} </strong>{row.closingDescription}</p> : null}
-          </article>)}
-        {!report.rows.length ? <p className={styles.empty}>Nenhum registro para os filtros selecionados.</p> : null}
-      </section> : null}
-    </div>
-  </main>;
+        ) : null}
+
+        {loading && !report && !workload ? (
+          <div className="rounded-2xl border border-app-border bg-app-surface p-10 text-center text-sm text-app-muted">
+            Carregando relatório…
+          </div>
+        ) : null}
+
+        {!loading && workload ? (
+          <section className="overflow-hidden rounded-2xl border border-app-border bg-app-surface shadow-sm">
+            <header className="border-b border-app-border-soft px-5 py-4">
+              <h2 className="m-0 text-lg font-extrabold">Tempo médio por técnico</h2>
+            </header>
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[760px] border-collapse">
+                <thead className="bg-app-surface-muted">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-xs font-extrabold uppercase text-app-muted">Técnico</th>
+                    <th className="px-4 py-3 text-center text-xs font-extrabold uppercase text-app-muted">Aberto</th>
+                    <th className="px-4 py-3 text-center text-xs font-extrabold uppercase text-app-muted">Em espera</th>
+                    <th className="px-4 py-3 text-center text-xs font-extrabold uppercase text-app-muted">Vencidos</th>
+                    <th className="px-4 py-3 text-center text-xs font-extrabold uppercase text-app-muted">Tempo acumulado (h)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {workload.rows.map((row) => (
+                    <tr className="border-t border-app-border-soft hover:bg-app-surface-hover" key={row.technicianId}>
+                      <td className="px-4 py-3 text-sm font-extrabold">{row.technicianName}</td>
+                      <td className="px-4 py-3 text-center text-sm">{row.open}</td>
+                      <td className="px-4 py-3 text-center text-sm">{row.waiting}</td>
+                      <td className={`px-4 py-3 text-center text-sm ${row.overdue > 0 ? 'font-bold text-app-danger' : ''}`}>{row.overdue}</td>
+                      <td className="px-4 py-3 text-center text-sm">{Math.round(row.elapsedSeconds / 3600).toLocaleString('pt-BR')}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        ) : null}
+
+        {!loading && report && mode === 'time' ? (
+          <section className="overflow-hidden rounded-2xl border border-app-border bg-app-surface shadow-sm">
+            <header className="flex flex-wrap items-center justify-between gap-3 border-b border-app-border-soft px-5 py-4">
+              <div>
+                <span className="text-xs font-extrabold uppercase tracking-[0.08em] text-app-brand">
+                  Tempo de atendimento por técnico
+                </span>
+                <h2 className="m-0 mt-1 text-lg font-extrabold">
+                  {AREA_LABELS[report.filters.categorySector] ?? 'Todas as áreas'}
+                </h2>
+              </div>
+              <strong>{report.total.toLocaleString('pt-BR')} registro(s)</strong>
+            </header>
+            <div className="max-h-[720px] overflow-auto">
+              <table className="w-full min-w-[900px] border-collapse">
+                <thead className="sticky top-0 z-10 bg-app-surface-muted">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-xs font-extrabold uppercase text-app-muted">ID</th>
+                    <th className="px-4 py-3 text-center text-xs font-extrabold uppercase text-app-muted">Nível</th>
+                    <th className="px-4 py-3 text-left text-xs font-extrabold uppercase text-app-muted">Técnico</th>
+                    <th className="px-4 py-3 text-left text-xs font-extrabold uppercase text-app-muted">Abertura</th>
+                    <th className="px-4 py-3 text-left text-xs font-extrabold uppercase text-app-muted">Status</th>
+                    <th className="px-4 py-3 text-left text-xs font-extrabold uppercase text-app-muted">Tempo de atendimento</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {timeRows.map((row) => (
+                    <tr className="border-t border-app-border-soft hover:bg-app-surface-hover" key={`${row.source}-${row.id}`}>
+                      <td className="px-4 py-3 text-sm font-semibold">#{row.id}</td>
+                      <td className="px-4 py-3 text-center text-sm">{row.level}</td>
+                      <td className="px-4 py-3 text-sm">{row.technicianName}</td>
+                      <td className="px-4 py-3 text-sm">{localDateTime(row.openedAt)}</td>
+                      <td className="px-4 py-3 text-sm">{STATUS[row.status] ?? row.status}</td>
+                      <td className="px-4 py-3 text-sm font-medium">{serviceDuration(row.elapsedSeconds)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        ) : null}
+
+        {!loading && report && mode === 'analytics' ? (
+          <section className="overflow-hidden rounded-2xl border border-app-border bg-app-surface shadow-sm">
+            <header className="border-b border-app-border-soft px-5 py-4">
+              <h2 className="m-0 text-lg font-extrabold">{reportHeading(report)}</h2>
+            </header>
+            <div className="border-b border-app-border-soft px-5 py-4">
+              <strong className="text-base">Total de registros: {report.total.toLocaleString('pt-BR')}</strong>
+            </div>
+
+            <div className="space-y-3 bg-app-surface-muted/35 p-3">
+              {report.rows.map((row) => (
+                <article
+                  className="overflow-hidden rounded-xl border border-app-border bg-app-surface shadow-sm"
+                  key={`${row.source}-${row.id}`}
+                >
+                  <header className="border-b border-app-border-soft bg-app-surface-muted px-4 py-3">
+                    <strong className="text-sm">
+                      {row.source === 'tasks' ? 'Tarefa' : row.source === 'improvements' ? 'Melhoria' : 'ATD'} #{row.id}
+                      {' | '}
+                      {row.locationName || row.clientName}
+                      {' | '}
+                      {row.requesterName || 'Solicitante não informado'}
+                    </strong>
+                  </header>
+
+                  <div className="grid grid-cols-3 gap-6 px-4 py-4 max-[900px]:grid-cols-1">
+                    <div>
+                      <div className="mb-3 flex flex-wrap gap-2">
+                        {chip(`Abertura: ${localDateTime(row.openedAt)}`)}
+                        {chip(METHODS[row.method] ?? `Forma ${row.method || '—'}`)}
+                        {chip(row.source === 'tasks' ? `Tarefa ${row.id}` : `Nível ${row.level}`)}
+                        {chip(TYPES[row.type] ?? `Tipo ${row.type || '—'}`)}
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {row.categoryName ? chip(row.categoryName) : null}
+                        {row.subcategoryName ? chip(row.subcategoryName) : null}
+                        {row.itemName ? chip(row.itemName) : null}
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="mb-3">{chip(`Técnico: ${row.technicianName || 'Sem técnico'}`)}</div>
+                      <p className="m-0 whitespace-pre-wrap text-sm leading-6 text-app-text-soft">
+                        <strong>Descrição de abertura: </strong>
+                        {row.openingDescription || 'Sem descrição.'}
+                      </p>
+                    </div>
+
+                    <div>
+                      <div className="mb-3">{chip(`Fechamento: ${localDateTime(row.closedAt)}`)}</div>
+                      <p className="m-0 whitespace-pre-wrap text-sm leading-6 text-app-text-soft">
+                        <strong>Descrição de fechamento: </strong>
+                        {row.closingDescription || 'Sem descrição de fechamento.'}
+                      </p>
+                    </div>
+                  </div>
+                </article>
+              ))}
+
+              {!report.rows.length ? (
+                <div className="rounded-xl border border-dashed border-app-border bg-app-surface p-10 text-center text-sm text-app-muted">
+                  Nenhum registro para os filtros selecionados.
+                </div>
+              ) : null}
+            </div>
+          </section>
+        ) : null}
+      </div>
+    </main>
+  );
 }
