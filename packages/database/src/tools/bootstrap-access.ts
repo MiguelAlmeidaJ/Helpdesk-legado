@@ -7,21 +7,6 @@ config({ path: path.resolve(process.cwd(), '../../.env') });
 
 type CountRow = { total: number | bigint };
 
-const PERMISSIONS = [
-  ['Gerenciar catálogos', 'catalogos.gerenciar', 'Criar, editar e arquivar catálogos de TI e DevOps.'],
-  ['Visualizar Catálogo de TI', 'catalogos.ti.visualizar', 'Visualizar catálogos do setor de TI.'],
-  ['Visualizar Catálogo de DevOps', 'catalogos.devops.visualizar', 'Visualizar catálogos do setor de DevOps.'],
-  ['Editar Catálogo de TI', 'catalogos.ti.editar', 'Editar catálogos do setor de TI.'],
-  ['Editar Catálogo de DevOps', 'catalogos.devops.editar', 'Editar catálogos do setor de DevOps.'],
-] as const;
-
-const QUALITY_PERMISSIONS = [
-  ['Visualizar Plantão', 'qualidade.plantao.visualizar', 'Visualizar a escala semanal e a situação atual do plantão.'],
-  ['Gerenciar Plantão', 'qualidade.plantao.gerenciar', 'Alterar plantonistas e o horário operacional do plantão.'],
-  ['Visualizar Datas comemorativas', 'qualidade.datas.visualizar', 'Visualizar feriados nacionais e datas especiais do calendário corporativo.'],
-  ['Gerenciar Datas comemorativas', 'qualidade.datas.gerenciar', 'Cadastrar e remover datas especiais do calendário corporativo.'],
-] as const;
-
 const PERMISSION_MIGRATIONS = [
   ['users.read', 'usuarios.visualizar'],
   ['users.create', 'usuarios.criar'],
@@ -31,33 +16,130 @@ const PERMISSION_MIGRATIONS = [
   ['registrations.clients.read', 'cadastros.clientes.visualizar'],
   ['registrations.clients.create', 'cadastros.clientes.criar'],
   ['registrations.clients.edit', 'cadastros.clientes.editar'],
-  ['registrations.clients.contacts.create', 'cadastros.clientes.contatos.criar'],
-  ['registrations.clients.contacts.edit', 'cadastros.clientes.contatos.editar'],
-  ['registrations.clients.locations.create', 'cadastros.clientes.locais.criar'],
-  ['registrations.clients.locations.edit', 'cadastros.clientes.locais.editar'],
+  ['registrations.clients.contacts.create', 'cadastros.clientes.criar'],
+  ['registrations.clients.contacts.edit', 'cadastros.clientes.editar'],
+  ['registrations.clients.locations.create', 'cadastros.clientes.criar'],
+  ['registrations.clients.locations.edit', 'cadastros.clientes.editar'],
+
   ['registrations.categories.read', 'cadastros.categorias.visualizar'],
   ['registrations.categories.create', 'cadastros.categorias.criar'],
   ['registrations.categories.edit', 'cadastros.categorias.editar'],
-  ['registrations.categories.subcategories.create', 'cadastros.categorias.subcategorias.criar'],
-  ['registrations.categories.subcategories.edit', 'cadastros.categorias.subcategorias.editar'],
-  ['registrations.categories.items.create', 'cadastros.categorias.itens.criar'],
-  ['registrations.categories.items.edit', 'cadastros.categorias.itens.editar'],
-  ['registrations.finance.read', 'cadastros.financeiro.visualizar'],
-  ['registrations.finance.manage', 'cadastros.financeiro.gerenciar'],
+  ['registrations.categories.subcategories.create', 'cadastros.categorias.criar'],
+  ['registrations.categories.subcategories.edit', 'cadastros.categorias.editar'],
+  ['registrations.categories.items.create', 'cadastros.categorias.criar'],
+  ['registrations.categories.items.edit', 'cadastros.categorias.editar'],
+
+  ['cadastros.clientes.contatos.criar', 'cadastros.clientes.criar'],
+  ['cadastros.clientes.contatos.editar', 'cadastros.clientes.editar'],
+  ['cadastros.clientes.locais.criar', 'cadastros.clientes.criar'],
+  ['cadastros.clientes.locais.editar', 'cadastros.clientes.editar'],
+  ['cadastros.categorias.subcategorias.criar', 'cadastros.categorias.criar'],
+  ['cadastros.categorias.subcategorias.editar', 'cadastros.categorias.editar'],
+  ['cadastros.categorias.itens.criar', 'cadastros.categorias.criar'],
+  ['cadastros.categorias.itens.editar', 'cadastros.categorias.editar'],
+
+  ['atendimentos.executar', 'atendimentos.finalizar'],
+  ['atendimentos.auditar', 'relatorios.visualizar'],
+  ['atendimentos.auditar', 'relatorios.gerar_pdf'],
+  ['atendimentos.criar', 'atendimentos.recorrencia.criar'],
+  ['atendimentos.visualizar', 'atendimentos.timeline.visualizar'],
+
+  ['devops.atendimentos.visualizar', 'devops.projetos.visualizar'],
+  ['devops.atendimentos.visualizar', 'devops.tarefas.visualizar'],
+  ['devops.atendimentos.criar', 'devops.projetos.criar'],
+  ['devops.atendimentos.criar', 'devops.tarefas.criar'],
+  ['devops.atendimentos.editar', 'devops.projetos.editar'],
+  ['devops.atendimentos.editar', 'devops.tarefas.editar'],
+
+  ['marketing.atendimentos.visualizar', 'marketing.tarefas.visualizar'],
+  ['marketing.atendimentos.criar', 'marketing.tarefas.criar'],
+  ['marketing.atendimentos.editar', 'marketing.tarefas.editar'],
+  ['marketing.atendimentos.colocar_espera', 'marketing.tarefas.colocar_espera'],
+  ['marketing.atendimentos.executar', 'marketing.tarefas.finalizar'],
+
+  ['logistica.agenda.visualizar', 'logistica.agenda.agendar'],
+  ['logistica.agenda.gerenciar', 'logistica.agenda.agendar'],
+  ['logistica.rd.gerenciar', 'logistica.rd.criar'],
+  ['logistica.rd.admin.visualizar', 'logistica.rd.gestao'],
+  ['logistica.rd.admin.gerenciar', 'logistica.rd.gestao'],
+  ['logistica.rd.aprovar', 'logistica.rd.gestao'],
+  ['logistica.rd.pagar', 'logistica.rd.gestao'],
+
+  ['registrations.finance.read', 'financeiro.visualizar'],
+  ['registrations.finance.manage', 'financeiro.editar'],
+  ['cadastros.financeiro.visualizar', 'financeiro.visualizar'],
+  ['cadastros.financeiro.gerenciar', 'financeiro.editar'],
+  ['logistica.extratos.visualizar', 'financeiro.visualizar'],
+  ['logistics.statements.read', 'financeiro.visualizar'],
+  ['finance.read', 'financeiro.visualizar'],
+  ['finance.manage', 'financeiro.editar'],
 
   ['catalog.ti.read', 'catalogos.ti.visualizar'],
+  ['catalog.ti.create', 'catalogos.ti.criar'],
   ['catalog.ti.manage', 'catalogos.ti.editar'],
   ['catalog.ti.edit', 'catalogos.ti.editar'],
   ['catalog.devops.read', 'catalogos.devops.visualizar'],
+  ['catalog.devops.create', 'catalogos.devops.criar'],
   ['catalog.devops.manage', 'catalogos.devops.editar'],
   ['catalog.devops.edit', 'catalogos.devops.editar'],
-  ['catalog.manage', 'catalogos.gerenciar'],
   ['catalogo.ti.visualizar', 'catalogos.ti.visualizar'],
   ['catalogo.ti.gerenciar', 'catalogos.ti.editar'],
   ['catalogo.devops.visualizar', 'catalogos.devops.visualizar'],
   ['catalogo.devops.gerenciar', 'catalogos.devops.editar'],
   ['catalogos.ti.gerenciar', 'catalogos.ti.editar'],
   ['catalogos.devops.gerenciar', 'catalogos.devops.editar'],
+  ['catalogos.gerenciar', 'catalogos.ti.criar'],
+  ['catalogos.gerenciar', 'catalogos.ti.editar'],
+  ['catalogos.gerenciar', 'catalogos.devops.criar'],
+  ['catalogos.gerenciar', 'catalogos.devops.editar'],
+] as const;
+
+const OBSOLETE_PERMISSION_SLUGS = [
+  'atendimentos.executar',
+  'atendimentos.recusar',
+  'atendimentos.editar_terceiros',
+  'atendimentos.auditar',
+  'atendimentos.radio',
+
+  'devops.atendimentos.visualizar',
+  'devops.atendimentos.criar',
+  'devops.atendimentos.editar',
+  'devops.atendimentos.executar',
+  'devops.atendimentos.colocar_espera',
+  'devops.atendimentos.recusar',
+  'devops.atendimentos.editar_terceiros',
+
+  'marketing.atendimentos.visualizar',
+  'marketing.atendimentos.criar',
+  'marketing.atendimentos.editar',
+  'marketing.atendimentos.executar',
+  'marketing.atendimentos.colocar_espera',
+  'marketing.atendimentos.recusar',
+  'marketing.atendimentos.editar_terceiros',
+
+  'cadastros.clientes.contatos.criar',
+  'cadastros.clientes.contatos.editar',
+  'cadastros.clientes.locais.criar',
+  'cadastros.clientes.locais.editar',
+  'cadastros.categorias.subcategorias.criar',
+  'cadastros.categorias.subcategorias.editar',
+  'cadastros.categorias.itens.criar',
+  'cadastros.categorias.itens.editar',
+  'cadastros.financeiro.visualizar',
+  'cadastros.financeiro.gerenciar',
+
+  'catalogos.gerenciar',
+  'catalogos.ti.gerenciar',
+  'catalogos.devops.gerenciar',
+
+  'logistica.agenda.visualizar',
+  'logistica.agenda.gerenciar',
+  'logistica.rd.gerenciar',
+  'logistica.rd.admin.visualizar',
+  'logistica.rd.admin.gerenciar',
+  'logistica.rd.aprovar',
+  'logistica.rd.pagar',
+  'logistica.extratos.visualizar',
 ] as const;
 
 async function columnExists(
@@ -77,7 +159,7 @@ async function columnExists(
   return Number(rows[0]?.total ?? 0) > 0;
 }
 
-async function migratePermission(
+async function copyPermission(
   db: ReturnType<typeof createNivel3Client>,
   sourceSlug: string,
   targetSlug: string,
@@ -106,8 +188,6 @@ async function migratePermission(
     targetSlug,
     sourceSlug,
   );
-
-  await db.$executeRawUnsafe('DELETE FROM permissions WHERE slug = ?', sourceSlug);
 }
 
 async function main() {
@@ -129,83 +209,23 @@ async function main() {
 
     const rbac = await bootstrapRbacPermissions(db);
 
-    for (const [name, slug, description] of PERMISSIONS) {
-      await db.$executeRawUnsafe(
-        `INSERT INTO permissions
-          (name, slug, module, description, created_at, updated_at)
-         VALUES (?, ?, 'Catálogos', ?, NOW(), NOW())
-         ON DUPLICATE KEY UPDATE
-           name = VALUES(name),
-           module = VALUES(module),
-           description = VALUES(description),
-           updated_at = NOW()`,
-        name,
-        slug,
-        description,
-      );
-    }
-
-    // Quem já gerenciava TI e DevOps conserva a gestão global.
-    await db.$executeRawUnsafe(
-      `INSERT IGNORE INTO role_permissions (role_id, permission_id, granted_at)
-       SELECT DISTINCT ti.role_id, global_permission.id, NOW()
-       FROM role_permissions ti
-       INNER JOIN permissions ti_permission ON ti_permission.id = ti.permission_id
-       INNER JOIN role_permissions devops ON devops.role_id = ti.role_id
-       INNER JOIN permissions devops_permission ON devops_permission.id = devops.permission_id
-       INNER JOIN permissions global_permission ON global_permission.slug = 'catalogos.gerenciar'
-       WHERE ti_permission.slug IN (
-         'catalog.ti.manage', 'catalogo.ti.gerenciar', 'catalogos.ti.gerenciar'
-       )
-         AND devops_permission.slug IN (
-           'catalog.devops.manage', 'catalogo.devops.gerenciar', 'catalogos.devops.gerenciar'
-         )`,
-    );
-
-    await db.$executeRawUnsafe(
-      `INSERT IGNORE INTO user_permissions
-         (user_id, permission_id, effect, assigned_at, assigned_by)
-       SELECT DISTINCT ti.user_id, global_permission.id, 'allow', NOW(), ti.assigned_by
-       FROM user_permissions ti
-       INNER JOIN permissions ti_permission ON ti_permission.id = ti.permission_id
-       INNER JOIN user_permissions devops ON devops.user_id = ti.user_id
-       INNER JOIN permissions devops_permission ON devops_permission.id = devops.permission_id
-       INNER JOIN permissions global_permission ON global_permission.slug = 'catalogos.gerenciar'
-       WHERE ti.effect = 'allow'
-         AND devops.effect = 'allow'
-         AND ti_permission.slug IN (
-           'catalog.ti.manage', 'catalogo.ti.gerenciar', 'catalogos.ti.gerenciar'
-         )
-         AND devops_permission.slug IN (
-           'catalog.devops.manage', 'catalogo.devops.gerenciar', 'catalogos.devops.gerenciar'
-         )`,
-    );
-
-    for (const [name, slug, description] of QUALITY_PERMISSIONS) {
-      await db.$executeRawUnsafe(
-        `INSERT INTO permissions
-          (name, slug, module, description, created_at, updated_at)
-         VALUES (?, ?, 'Qualidade', ?, NOW(), NOW())
-         ON DUPLICATE KEY UPDATE
-           name = VALUES(name),
-           module = VALUES(module),
-           description = VALUES(description),
-           updated_at = NOW()`,
-        name,
-        slug,
-        description,
-      );
-    }
-
     for (const [source, target] of PERMISSION_MIGRATIONS) {
-      await migratePermission(db, source, target);
+      await copyPermission(db, source, target);
+    }
+
+    if (OBSOLETE_PERMISSION_SLUGS.length) {
+      const placeholders = OBSOLETE_PERMISSION_SLUGS.map(() => '?').join(',');
+      await db.$executeRawUnsafe(
+        `DELETE FROM permissions WHERE slug IN (${placeholders})`,
+        ...OBSOLETE_PERMISSION_SLUGS,
+      );
     }
 
     console.log('Estrutura de acesso atualizada.');
     console.log('  roles.sort_order: OK');
     console.log('  catalogos.arquivado_em: OK');
-    console.log('  permissões de catálogo: 5 permissões normalizadas');
-    console.log('  permissões de Qualidade: 4 permissões');
+    console.log('  permissões RBAC simplificadas por página e ação: OK');
+    console.log('  permissões legadas conhecidas removidas: OK');
     console.log(`  grants legados migrados para RBAC: ${rbac.migratedGrants}`);
     console.log(
       `  migração posicional aplicada agora: ${rbac.legacyMigrationApplied ? 'sim' : 'não'}`,
