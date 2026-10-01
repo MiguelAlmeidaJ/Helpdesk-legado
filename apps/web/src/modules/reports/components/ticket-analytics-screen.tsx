@@ -13,6 +13,7 @@ import { apiDownload, apiRequest } from '../../../shared/api/api-client';
 import { AppPageHeader } from '../../../shared/navigation/app-page-header';
 import { DateRangePicker } from '../../../shared/ui/date-range-picker';
 import { appButtonClass } from '../../../shared/ui/button-styles';
+import { SearchSelect } from '../../../shared/ui/search-select';
 import { downloadCsv, duration, reportError } from '../lib/report-export';
 
 const SOURCE_LABELS: Record<TicketReportSource, string> = {
@@ -50,13 +51,12 @@ const PRIMARY = appButtonClass('primary');
 const SECONDARY = appButtonClass('secondary');
 const DANGER_OUTLINE =
   'inline-flex min-h-10 items-center justify-center rounded-lg border border-red-300 bg-white px-4 text-sm font-bold text-red-700 transition hover:bg-red-50 disabled:opacity-50';
-const CONTROL =
-  'min-h-10 w-full rounded-lg border border-app-border-strong bg-app-surface px-3 text-sm text-app-text outline-none transition focus:border-app-brand focus:ring-3 focus:ring-[var(--app-brand-ring)]';
 
 type ScreenFilters = {
   startDate: string;
   endDate: string;
   clientId: string;
+  clientIds: string;
   locationId: string;
   technicianId: string;
   categoryId: string;
@@ -145,6 +145,7 @@ export function TicketAnalyticsScreen({
     startDate: '',
     endDate: '',
     clientId: '0',
+    clientIds: '',
     locationId: '0',
     technicianId: '0',
     categoryId: '0',
@@ -192,7 +193,7 @@ export function TicketAnalyticsScreen({
             ...Object.fromEntries(
               Object.entries(response.filters).map(([key, value]) => [
                 key,
-                String(value),
+                Array.isArray(value) ? value.join(',') : String(value),
               ]),
             ),
           }));
@@ -227,7 +228,11 @@ export function TicketAnalyticsScreen({
     if (mode === 'workload') return;
     let active = true;
     apiRequest<TicketReportCatalog>(
-      `reports/tickets/catalog?clientId=${encodeURIComponent(filters.clientId)}`,
+      `reports/tickets/catalog?clientId=${encodeURIComponent(
+        filters.clientIds.split(',').filter(Boolean).length === 1
+          ? filters.clientIds.split(',')[0] ?? '0'
+          : filters.clientId,
+      )}`,
     )
       .then((value) => {
         if (active) setCatalog(value);
@@ -241,7 +246,7 @@ export function TicketAnalyticsScreen({
     return () => {
       active = false;
     };
-  }, [filters.clientId, mode]);
+  }, [filters.clientId, filters.clientIds, mode]);
 
   function apply(event: FormEvent) {
     event.preventDefault();
@@ -254,6 +259,7 @@ export function TicketAnalyticsScreen({
       startDate: '',
       endDate: '',
       clientId: '0',
+      clientIds: '',
       locationId: '0',
       technicianId: '0',
       categoryId: '0',
@@ -357,26 +363,27 @@ export function TicketAnalyticsScreen({
             <div className="grid grid-cols-6 items-end gap-3 max-[1200px]:grid-cols-3 max-[760px]:grid-cols-1">
               {mode !== 'time' ? (
                 <label className="grid gap-1.5 text-xs font-bold text-app-muted">
-                  Cliente
-                  <select
-                    className={CONTROL}
+                  Clientes
+                  <SearchSelect
                     disabled={loading}
-                    onChange={(event) =>
+                    multiple
+                    multipleLabel="clientes selecionados"
+                    onChange={(values) =>
                       setFilters({
                         ...filters,
-                        clientId: event.target.value,
+                        clientId: '0',
+                        clientIds: values.join(','),
                         locationId: '0',
                       })
                     }
-                    value={filters.clientId}
-                  >
-                    <option value="0">Todos</option>
-                    {catalog.clients.map((row) => (
-                      <option key={row.id} value={row.id}>
-                        {row.name}
-                      </option>
-                    ))}
-                  </select>
+                    options={catalog.clients.map((row) => ({
+                      value: String(row.id),
+                      label: row.name,
+                    }))}
+                    placeholder="Todos os clientes"
+                    searchPlaceholder="Pesquisar cliente..."
+                    value={filters.clientIds.split(',').filter(Boolean)}
+                  />
                 </label>
               ) : null}
 
@@ -401,147 +408,164 @@ export function TicketAnalyticsScreen({
               {mode !== 'time' ? (
                 <label className="grid gap-1.5 text-xs font-bold text-app-muted">
                   Local
-                  <select
-                    className={CONTROL}
-                    disabled={loading || filters.clientId === '0'}
-                    onChange={(event) =>
-                      setFilters({ ...filters, locationId: event.target.value })
+                  <SearchSelect
+                    disabled={
+                      loading ||
+                      filters.clientIds.split(',').filter(Boolean).length !== 1
                     }
-                    value={filters.locationId}
-                  >
-                    <option value="0">Todos</option>
-                    {catalog.locations.map((row) => (
-                      <option key={row.id} value={row.id}>
-                        {row.name}
-                      </option>
-                    ))}
-                  </select>
+                    onChange={(values) =>
+                      setFilters({
+                        ...filters,
+                        locationId: values[0] ?? '0',
+                      })
+                    }
+                    options={catalog.locations.map((row) => ({
+                      value: String(row.id),
+                      label: row.name,
+                    }))}
+                    placeholder={
+                      filters.clientIds.split(',').filter(Boolean).length === 1
+                        ? 'Todos os locais'
+                        : 'Selecione apenas 1 cliente'
+                    }
+                    searchPlaceholder="Pesquisar local..."
+                    value={filters.locationId !== '0' ? [filters.locationId] : []}
+                  />
                 </label>
               ) : null}
 
               <label className="grid gap-1.5 text-xs font-bold text-app-muted">
                 Área
-                <select
-                  className={CONTROL}
+                <SearchSelect
                   disabled={loading || areaLocked}
-                  onChange={(event) =>
+                  onChange={(values) =>
                     setFilters({
                       ...filters,
-                      categorySector: event.target.value,
+                      categorySector: values[0] ?? '0',
                     })
                   }
-                  value={filters.categorySector}
-                >
-                  <option value="0">Todas</option>
-                  {Object.entries(AREA_LABELS).map(([value, label]) => (
-                    <option key={value} value={value}>
-                      {label}
-                    </option>
-                  ))}
-                </select>
+                  options={Object.entries(AREA_LABELS).map(([value, label]) => ({
+                    value,
+                    label,
+                  }))}
+                  placeholder="Todas as áreas"
+                  searchable={false}
+                  value={
+                    filters.categorySector !== '0'
+                      ? [filters.categorySector]
+                      : []
+                  }
+                />
               </label>
 
               <label className="grid gap-1.5 text-xs font-bold text-app-muted">
                 Técnico
-                <select
-                  className={CONTROL}
+                <SearchSelect
                   disabled={loading}
-                  onChange={(event) =>
+                  onChange={(values) =>
                     setFilters({
                       ...filters,
-                      technicianId: event.target.value,
+                      technicianId: values[0] ?? '0',
                     })
                   }
-                  value={filters.technicianId}
-                >
-                  <option value="0">Todos os técnicos</option>
-                  {catalog.technicians.map((row) => (
-                    <option key={row.id} value={row.id}>
-                      {row.name}
-                    </option>
-                  ))}
-                </select>
+                  options={catalog.technicians.map((row) => ({
+                    value: String(row.id),
+                    label: row.name,
+                  }))}
+                  placeholder="Todos os técnicos"
+                  searchPlaceholder="Pesquisar técnico..."
+                  value={
+                    filters.technicianId !== '0'
+                      ? [filters.technicianId]
+                      : []
+                  }
+                />
               </label>
 
               {mode !== 'time' ? (
                 <>
                   <label className="grid gap-1.5 text-xs font-bold text-app-muted">
                     Nível
-                    <select
-                      className={CONTROL}
+                    <SearchSelect
                       disabled={loading}
-                      onChange={(event) =>
-                        setFilters({ ...filters, level: event.target.value })
+                      onChange={(values) =>
+                        setFilters({
+                          ...filters,
+                          level: values[0] ?? '0',
+                        })
                       }
-                      value={filters.level}
-                    >
-                      <option value="0">Todos</option>
-                      {[1, 2, 3, 4, 5].map((level) => (
-                        <option key={level} value={level}>
-                          Nível {level}
-                        </option>
-                      ))}
-                    </select>
+                      options={[1, 2, 3, 4, 5].map((value) => ({
+                        value: String(value),
+                        label: `Nível ${value}`,
+                      }))}
+                      placeholder="Todos"
+                      searchable={false}
+                      value={filters.level !== '0' ? [filters.level] : []}
+                    />
                   </label>
 
                   <label className="grid gap-1.5 text-xs font-bold text-app-muted">
                     Categoria
-                    <select
-                      className={CONTROL}
+                    <SearchSelect
                       disabled={loading}
-                      onChange={(event) =>
+                      onChange={(values) =>
                         setFilters({
                           ...filters,
-                          categoryId: event.target.value,
+                          categoryId: values[0] ?? '0',
                         })
                       }
-                      value={filters.categoryId}
-                    >
-                      <option value="0">Todas</option>
-                      {catalog.categories.map((row) => (
-                        <option key={row.id} value={row.id}>
-                          {row.name}
-                        </option>
-                      ))}
-                    </select>
+                      options={catalog.categories.map((row) => ({
+                        value: String(row.id),
+                        label: row.name,
+                      }))}
+                      placeholder="Todas as categorias"
+                      searchPlaceholder="Pesquisar categoria..."
+                      value={
+                        filters.categoryId !== '0'
+                          ? [filters.categoryId]
+                          : []
+                      }
+                    />
                   </label>
 
                   <label className="grid gap-1.5 text-xs font-bold text-app-muted">
                     Status
-                    <select
-                      className={CONTROL}
+                    <SearchSelect
                       disabled={loading}
-                      onChange={(event) =>
-                        setFilters({ ...filters, status: event.target.value })
+                      onChange={(values) =>
+                        setFilters({
+                          ...filters,
+                          status: values[0] ?? '0',
+                        })
                       }
-                      value={filters.status}
-                    >
-                      <option value="0">Todos</option>
-                      {Object.entries(STATUS).map(([value, label]) => (
-                        <option key={value} value={value}>
-                          {label}
-                        </option>
-                      ))}
-                    </select>
+                      options={Object.entries(STATUS).map(([value, label]) => ({
+                        value,
+                        label,
+                      }))}
+                      placeholder="Todos os status"
+                      searchable={false}
+                      value={filters.status !== '0' ? [filters.status] : []}
+                    />
                   </label>
 
                   {!sourceLocked ? (
                     <label className="grid gap-1.5 text-xs font-bold text-app-muted">
                       Origem
-                      <select
-                        className={CONTROL}
+                      <SearchSelect
+                        allowClear={false}
                         disabled={loading}
-                        onChange={(event) =>
-                          setFilters({ ...filters, source: event.target.value })
+                        onChange={(values) =>
+                          setFilters({
+                            ...filters,
+                            source: values[0] ?? initialSource,
+                          })
                         }
-                        value={filters.source}
-                      >
-                        {Object.entries(SOURCE_LABELS).map(([value, label]) => (
-                          <option key={value} value={value}>
-                            {label}
-                          </option>
-                        ))}
-                      </select>
+                        options={Object.entries(SOURCE_LABELS).map(
+                          ([value, label]) => ({ value, label }),
+                        )}
+                        searchable={false}
+                        value={[filters.source]}
+                      />
                     </label>
                   ) : null}
                 </>
