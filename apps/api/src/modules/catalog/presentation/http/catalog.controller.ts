@@ -127,7 +127,9 @@ function hasPermission(
 function canUploadCatalogImages(user: AuthenticatedUser): boolean {
   return (
     hasPermission(user, AppPermission.CatalogManage) ||
+    hasPermission(user, AppPermission.CatalogTiCreate) ||
     hasPermission(user, AppPermission.CatalogTiEdit) ||
+    hasPermission(user, AppPermission.CatalogDevOpsCreate) ||
     hasPermission(user, AppPermission.CatalogDevOpsEdit)
   );
 }
@@ -154,6 +156,7 @@ function canReadCatalogImage(
   if (image.sector === 1) {
     return (
       hasPermission(user, AppPermission.CatalogTiRead) ||
+      hasPermission(user, AppPermission.CatalogTiCreate) ||
       hasPermission(user, AppPermission.CatalogTiEdit)
     );
   }
@@ -161,6 +164,7 @@ function canReadCatalogImage(
   if (image.sector === 2) {
     return (
       hasPermission(user, AppPermission.CatalogDevOpsRead) ||
+      hasPermission(user, AppPermission.CatalogDevOpsCreate) ||
       hasPermission(user, AppPermission.CatalogDevOpsEdit)
     );
   }
