@@ -26,6 +26,8 @@ import {
   fetchMaintenanceStatus,
   fetchMaintenanceTables,
   migrateCatalogImages,
+  optimizeMaintenanceTables,
+  dropMaintenanceTables,
   repairMaintenanceDatabase,
   runMaintenanceBackup,
   stageMaintenanceDump,
@@ -150,6 +152,7 @@ export function MaintenanceScreen({
   const [catalogMigration, setCatalogMigration] =
     useState<MaintenanceCatalogImageMigrationStatus | null>(null);
   const [tables, setTables] = useState<Record<string, MaintenanceDatabaseTable[]>>({});
+  const [selectedTables, setSelectedTables] = useState<Record<string, string[]>>({});
   const [openDatabase, setOpenDatabase] = useState<MaintenanceDatabaseKey | null>(null);
   const [jobDraft, setJobDraft] = useState<JobDraft>(INITIAL_JOB);
   const dumpTarget: MaintenanceDatabaseKey = 'nivel3';
@@ -241,6 +244,112 @@ export function MaintenanceScreen({
     if (!window.confirm('Excluir este job de backup?')) return;
     void run('job-delete-' + job.id, 'Job excluído.', () =>
       deleteMaintenanceBackupJob(job.id),
+    );
+  }
+
+  function toggleTableSelection(database: MaintenanceDatabaseKey, table: string) {
+    setSelectedTables((current) => {
+      const selected = new Set(current[database] ?? []);
+      if (selected.has(table)) selected.delete(table);
+      else selected.add(table);
+      return { ...current, [database]: [...selected] };
+    });
+  }
+
+  function selectEmptyCandidates(database: MaintenanceDatabaseKey) {
+    const candidates = (tables[database] ?? [])
+      .filter((table) => table.reviewState === 'review-empty')
+      .map((table) => table.name);
+    setSelectedTables((current) => ({ ...current, [database]: candidates }));
+  }
+
+  async function optimizeSelected(database: MaintenanceDatabaseKey) {
+    const selected = selectedTables[database] ?? [];
+    if (!selected.length) return;
+
+    await run(
+      'tables-optimize-' + database,
+      'Tabelas otimizadas.',
+      async () => {
+        const result = await optimizeMaintenanceTables(database, selected);
+        setFeedback({
+          error: false,
+          text:
+            `Otimização concluída em ${result.tables.length} tabela(s). ` +
+            `Espaço potencial revisado: ${bytes(result.reclaimedEstimateBytes)}.`,
+        });
+        setTables((current) => {
+          const next = { ...current };
+          delete next[database];
+          return next;
+        });
+        setSelectedTables((current) => ({ ...current, [database]: [] }));
+        if (openDatabase === database) {
+          const refreshed = await fetchMaintenanceTables(database);
+          setTables((current) => ({ ...current, [database]: refreshed }));
+        }
+      },
+    );
+  }
+
+  async function dropSelected(database: MaintenanceDatabaseKey) {
+    const selected = selectedTables[database] ?? [];
+    if (!selected.length) return;
+
+    const tableMap = new Map(
+      (tables[database] ?? []).map((table) => [table.name, table]),
+    );
+    const blocked = selected.filter((name) => {
+      const table = tableMap.get(name);
+      return (
+        !table ||
+        table.reviewState === 'protected' ||
+        table.reviewState === 'related'
+      );
+    });
+
+    if (blocked.length) {
+      setFeedback({
+        error: true,
+        text:
+          'Existem tabelas protegidas ou relacionadas na seleção: ' +
+          blocked.join(', ') +
+          '.',
+      });
+      return;
+    }
+
+    const confirmation =
+      `EXCLUIR ${selected.length} TABELA${selected.length === 1 ? '' : 'S'}`;
+    const typed = window.prompt(
+      'Esta operação cria um backup completo antes do DROP TABLE.\n\n' +
+        'Tabelas: ' +
+        selected.join(', ') +
+        '\n\nDigite exatamente: ' +
+        confirmation,
+    );
+    if (typed !== confirmation) return;
+
+    await run(
+      'tables-drop-' + database,
+      'Tabelas removidas com backup de segurança.',
+      async () => {
+        const result = await dropMaintenanceTables(
+          database,
+          selected,
+          confirmation,
+        );
+        setFeedback({
+          error: false,
+          text:
+            `Removidas ${result.droppedTables.length} tabela(s). ` +
+            `Backup de segurança: ${result.safetyBackup.name}.`,
+        });
+        setSelectedTables((current) => ({ ...current, [database]: [] }));
+        const refreshed = await fetchMaintenanceTables(database);
+        setTables((current) => ({ ...current, [database]: refreshed }));
+        await load();
+      },
     );
   }
 
@@ -543,14 +652,54 @@ export function MaintenanceScreen({
                       </div>
                     </div>
 
+                    <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          className={BUTTON_CLASS}
+                          disabled={Boolean(busy)}
+                          onClick={() => selectEmptyCandidates(database.key)}
+                          type="button"
+                        >
+                          Selecionar candidatas vazias
+                        </button>
+                        <button
+                          className={BUTTON_CLASS}
+                          disabled={
+                            Boolean(busy) ||
+                            !(selectedTables[database.key]?.length)
+                          }
+                          onClick={() => void optimizeSelected(database.key)}
+                          type="button"
+                        >
+                          Otimizar selecionadas
+                        </button>
+                        <button
+                          className={DANGER_BUTTON_CLASS}
+                          disabled={
+                            Boolean(busy) ||
+                            !(selectedTables[database.key]?.length)
+                          }
+                          onClick={() => void dropSelected(database.key)}
+                          type="button"
+                        >
+                          Excluir selecionadas
+                        </button>
+                      </div>
+                      <span className="text-xs text-app-muted">
+                        {(selectedTables[database.key]?.length ?? 0)} selecionada(s)
+                      </span>
+                    </div>
+
                     <div className="max-h-[520px] overflow-auto rounded-lg border border-app-border">
-                      <table className="w-full min-w-[1050px] border-collapse">
+                      <table className="w-full min-w-[1180px] border-collapse">
                         <thead>
                           <tr>
+                            <th className={TABLE_HEAD}>Sel.</th>
                             <th className={TABLE_HEAD}>Tabela</th>
                             <th className={TABLE_HEAD}>Auditoria</th>
                             <th className={TABLE_HEAD}>Linhas estimadas</th>
                             <th className={TABLE_HEAD}>Tamanho</th>
+                            <th className={TABLE_HEAD}>Livre/fragmentado</th>
                             <th className={TABLE_HEAD}>Relações</th>
                             <th className={TABLE_HEAD}>Última alteração</th>
                           </tr>
@@ -575,6 +724,15 @@ export function MaintenanceScreen({
                             return (
                               <tr key={table.name} title={table.reviewReason}>
                                 <td className={TABLE_CELL}>
+                                  <input
+                                    aria-label={'Selecionar ' + table.name}
+                                    checked={(selectedTables[database.key] ?? []).includes(table.name)}
+                                    className="size-4 accent-[var(--app-brand)]"
+                                    onChange={() => toggleTableSelection(database.key, table.name)}
+                                    type="checkbox"
+                                  />
+                                </td>
+                                <td className={TABLE_CELL}>
                                   <strong>{table.name}</strong>
                                   <div className="mt-1 text-[10px] text-app-muted">
                                     {table.engine ?? '—'}
@@ -590,6 +748,7 @@ export function MaintenanceScreen({
                                 </td>
                                 <td className={TABLE_CELL}>{table.estimatedRows.toLocaleString('pt-BR')}</td>
                                 <td className={TABLE_CELL}>{bytes(table.totalBytes)}</td>
+                                <td className={TABLE_CELL}>{bytes(table.dataFreeBytes)}</td>
                                 <td className={TABLE_CELL}>
                                   <span className="whitespace-nowrap text-xs">
                                     {table.outgoingForeignKeys} saída · {table.incomingForeignKeys} entrada
@@ -606,7 +765,7 @@ export function MaintenanceScreen({
                     </div>
 
                     <p className="mb-0 mt-3 text-xs text-app-muted">
-                      “Revisar” não significa “pode excluir”. A limpeza será feita somente depois de validar as tabelas candidatas e gerar um backup completo do Nivel3.
+                      Tabelas protegidas ou com chaves estrangeiras não podem ser excluídas por esta tela. Antes de qualquer DROP TABLE, o sistema cria automaticamente um backup completo do Nivel3 e exige confirmação textual.
                     </p>
                   </div>
                 ) : null}
