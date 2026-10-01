@@ -15,6 +15,7 @@ import {
   type CatalogWriteInput,
 } from '@helpdesk/contracts';
 import type { AuthenticatedUser } from '../../access/domain/authenticated-user';
+import { CatalogImageStorageService } from './catalog-image-storage.service';
 import {
   CatalogRepository,
   type CatalogListFilters,
@@ -72,7 +73,10 @@ function detail(record: CatalogRecord): CatalogDetailResponse {
 
 @Injectable()
 export class CatalogService {
-  constructor(private readonly repository: CatalogRepository) {}
+  constructor(
+    private readonly repository: CatalogRepository,
+    private readonly images: CatalogImageStorageService,
+  ) {}
 
   private sectors(user: AuthenticatedUser, requestedSector?: CatalogSector): CatalogSector[] {
     const allowed = allowedCatalogSectors(user);
@@ -120,7 +124,9 @@ export class CatalogService {
       );
     }
     await this.validateReferences(input);
-    return detail(await this.repository.create({ ...input, authorUserId: user.id }));
+    const created = await this.repository.create({ ...input, authorUserId: user.id });
+    await this.images.linkContent(created.id, created.content);
+    return detail(created);
   }
 
   async update(
@@ -133,7 +139,9 @@ export class CatalogService {
     this.requireEditSector(user, existing.sector);
     this.requireEditSector(user, input.sector);
     await this.validateReferences(input);
-    return detail(await this.repository.update(id, { ...input, authorUserId: user.id }));
+    const updated = await this.repository.update(id, { ...input, authorUserId: user.id });
+    await this.images.linkContent(updated.id, updated.content);
+    return detail(updated);
   }
 
   async archive(user: AuthenticatedUser, id: number): Promise<void> {
