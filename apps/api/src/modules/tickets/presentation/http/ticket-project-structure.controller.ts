@@ -181,7 +181,7 @@ export class TicketProjectStructureController {
   constructor(private readonly structure: TicketProjectStructure) {}
 
   @Post()
-  @RequirePermissions(AppPermission.TicketsCreate)
+  @RequirePermissions(AppPermission.DevOpsProjectsCreate)
   @ApiOperation({ summary: 'Criar projeto de atendimento' })
   @ApiResponse({ status: 201, description: 'Projeto criado.' })
   async createProject(
@@ -196,7 +196,7 @@ export class TicketProjectStructureController {
 
   @Patch(':projectId')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @RequirePermissions(AppPermission.TicketsRead, AppPermission.TicketsEdit)
+  @RequirePermissions(AppPermission.DevOpsProjectsEdit)
   @ApiOperation({ summary: 'Editar classificação e descrição do projeto' })
   @ApiResponse({ status: 204, description: 'Projeto atualizado.' })
   async updateProject(
@@ -235,7 +235,7 @@ export class TicketProjectStructureController {
 
   @Patch('tasks/:taskId')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @RequirePermissions(AppPermission.TicketsRead, AppPermission.TicketsEdit)
+  @RequirePermissions(AppPermission.DevOpsTasksEdit)
   @ApiOperation({ summary: 'Editar classificação e descrição da tarefa' })
   @ApiResponse({ status: 204, description: 'Tarefa atualizada.' })
   async updateTask(
@@ -255,7 +255,7 @@ export class TicketProjectStructureController {
 
   @Patch('tasks/:taskId/dependency')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @RequirePermissions(AppPermission.TicketsRead, AppPermission.TicketsEdit)
+  @RequirePermissions(AppPermission.DevOpsTasksEdit)
   @ApiOperation({ summary: 'Alterar dependência da tarefa de projeto' })
   @ApiResponse({ status: 204, description: 'Dependência atualizada.' })
   async updateDependency(
