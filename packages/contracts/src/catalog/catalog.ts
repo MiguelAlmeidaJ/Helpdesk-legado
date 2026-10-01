@@ -63,4 +63,5 @@ export interface CatalogImageUploadResponse {
   width: number | null;
   height: number | null;
   sizeBytes: number;
+  reused?: boolean;
 }
