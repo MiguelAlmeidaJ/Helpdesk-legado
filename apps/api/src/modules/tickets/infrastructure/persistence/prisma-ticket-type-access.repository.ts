@@ -15,32 +15,63 @@ type PermissionRow = {
 
 type TicketSector = Sector.IT | Sector.DevOps | Sector.Marketing;
 
-const PREFIX: Record<TicketSector, string> = {
-  [Sector.IT]: 'atendimentos',
-  [Sector.DevOps]: 'devops.atendimentos',
-  [Sector.Marketing]: 'marketing.atendimentos',
-};
-
-function has(
-  slugs: ReadonlySet<string>,
-  sector: TicketSector,
-  action: string,
-): boolean {
-  return slugs.has(`${PREFIX[sector]}.${action}`);
-}
-
 function permissionsFor(
   slugs: ReadonlySet<string>,
   sector: TicketSector,
 ): TicketTypePermissions {
+  if (sector === Sector.IT) {
+    return {
+      read: slugs.has('atendimentos.visualizar'),
+      create: slugs.has('atendimentos.criar'),
+      edit: slugs.has('atendimentos.editar'),
+      execute: slugs.has('atendimentos.finalizar'),
+      hold: slugs.has('atendimentos.colocar_espera'),
+      reject: false,
+      manageOthers: slugs.has('atendimentos.editar'),
+    };
+  }
+
+  if (sector === Sector.DevOps) {
+    const projectRead =
+      slugs.has('devops.projetos.visualizar') ||
+      slugs.has('devops.projetos.criar') ||
+      slugs.has('devops.projetos.editar');
+    const taskRead =
+      slugs.has('devops.tarefas.visualizar') ||
+      slugs.has('devops.tarefas.criar') ||
+      slugs.has('devops.tarefas.editar');
+    const edit =
+      slugs.has('devops.projetos.editar') ||
+      slugs.has('devops.tarefas.editar');
+
+    return {
+      read: projectRead || taskRead,
+      create:
+        slugs.has('devops.projetos.criar') ||
+        slugs.has('devops.tarefas.criar'),
+      edit,
+      execute: slugs.has('devops.tarefas.editar'),
+      hold: slugs.has('devops.tarefas.editar'),
+      reject: false,
+      manageOthers: edit,
+    };
+  }
+
+  const read =
+    slugs.has('marketing.tarefas.visualizar') ||
+    slugs.has('marketing.tarefas.criar') ||
+    slugs.has('marketing.tarefas.editar') ||
+    slugs.has('marketing.tarefas.colocar_espera') ||
+    slugs.has('marketing.tarefas.finalizar');
+
   return {
-    read: has(slugs, sector, 'visualizar'),
-    create: has(slugs, sector, 'criar'),
-    edit: has(slugs, sector, 'editar'),
-    execute: has(slugs, sector, 'executar'),
-    hold: has(slugs, sector, 'colocar_espera'),
-    reject: has(slugs, sector, 'recusar'),
-    manageOthers: has(slugs, sector, 'editar_terceiros'),
+    read,
+    create: slugs.has('marketing.tarefas.criar'),
+    edit: slugs.has('marketing.tarefas.editar'),
+    execute: slugs.has('marketing.tarefas.finalizar'),
+    hold: slugs.has('marketing.tarefas.colocar_espera'),
+    reject: false,
+    manageOthers: slugs.has('marketing.tarefas.editar'),
   };
 }
 
