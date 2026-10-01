@@ -301,18 +301,14 @@ export function MaintenanceScreen({
     );
     const blocked = selected.filter((name) => {
       const table = tableMap.get(name);
-      return (
-        !table ||
-        table.reviewState === 'protected' ||
-        table.reviewState === 'related'
-      );
+      return !table || table.reviewState === 'protected';
     });
 
     if (blocked.length) {
       setFeedback({
         error: true,
         text:
-          'Existem tabelas protegidas ou relacionadas na seleção: ' +
+          'Existem tabelas protegidas na seleção: ' +
           blocked.join(', ') +
           '.',
       });
@@ -765,7 +761,7 @@ export function MaintenanceScreen({
                     </div>
 
                     <p className="mb-0 mt-3 text-xs text-app-muted">
-                      Tabelas protegidas ou com chaves estrangeiras não podem ser excluídas por esta tela. Antes de qualquer DROP TABLE, o sistema cria automaticamente um backup completo do Nivel3 e exige confirmação textual.
+                      Tabelas protegidas nunca podem ser excluídas por esta tela. Tabelas relacionadas só são removidas quando todas as dependências necessárias estão na seleção; a API calcula a ordem segura dos DROP TABLE. Antes da exclusão, o sistema cria automaticamente um backup completo do Nivel3 e exige confirmação textual.
                     </p>
                   </div>
                 ) : null}
