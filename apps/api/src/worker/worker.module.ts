@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { DatabaseModule } from '../core/database/database.module';
+import { CatalogImageStorageService } from '../modules/catalog/application/catalog-image-storage.service';
 import { CleanupExpiredReports } from '../modules/reports/application/cleanup-expired-reports';
 import { GeneratedReportStorage } from '../modules/reports/application/ports/generated-report-storage';
 import { ReportRetentionPoller } from '../modules/reports/infrastructure/automation/report-retention.poller';
@@ -38,6 +39,7 @@ import { PrismaTicketRecurrenceRepository } from '../modules/tickets/infrastruct
     ReportRetentionPoller,
     MaintenanceBackupPoller,
     MaintenanceService,
+    CatalogImageStorageService,
     ActivateDueScheduledTickets,
     ProcessDueTicketRecurrences,
     ProcessTicketNotificationOutbox,
