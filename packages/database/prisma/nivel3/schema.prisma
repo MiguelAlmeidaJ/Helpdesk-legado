@@ -233,16 +233,36 @@ model cargos_n3 {
 }
 
 model catalogos {
-  id                 Int       @id @default(autoincrement())
+  id                 Int              @id @default(autoincrement())
   setor              Int
   catalogo_categoria Int
   cliente_id         Int
-  titulo             String    @db.VarChar(255)
-  conteudo           String    @db.LongText
-  data_criacao       DateTime? @default(now()) @db.DateTime(0)
-  data_edicao        DateTime? @default(now()) @db.DateTime(0)
-  arquivado_em       DateTime? @db.DateTime(0)
+  titulo             String           @db.VarChar(255)
+  conteudo           String           @db.LongText
+  data_criacao       DateTime?        @default(now()) @db.DateTime(0)
+  data_edicao        DateTime?        @default(now()) @db.DateTime(0)
+  arquivado_em       DateTime?        @db.DateTime(0)
   usuario_id         Int
+  catalog_images     catalog_images[]
+}
+
+model catalog_images {
+  id            Int       @id @default(autoincrement()) @db.UnsignedInt
+  catalog_id    Int?
+  original_name String    @db.VarChar(255)
+  stored_name   String    @db.VarChar(255)
+  storage_path  String    @db.VarChar(500)
+  mime_type     String    @db.VarChar(100)
+  size_bytes    Int       @db.UnsignedInt
+  width         Int?      @db.UnsignedInt
+  height        Int?      @db.UnsignedInt
+  sha256        String    @db.Char(64)
+  created_by    Int
+  created_at    DateTime  @default(now()) @db.DateTime(0)
+  catalogos     catalogos? @relation(fields: [catalog_id], references: [id], onDelete: SetNull, onUpdate: Restrict, map: "fk_catalog_images_catalog")
+
+  @@index([catalog_id], map: "idx_catalog_images_catalog")
+  @@index([created_by, created_at], map: "idx_catalog_images_creator")
 }
 
 model catalogos_categoria {
