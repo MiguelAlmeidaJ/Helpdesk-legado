@@ -28,7 +28,7 @@ export function legacyReportDestination(name: string, query: URLSearchParams): s
   const destination = DESTINATIONS[name];
   if (!destination) return null;
   const params = new URLSearchParams();
-  for (const [oldName, newName] of Object.entries({ data_1: 'startDate', data_2: 'endDate', data_inicio: 'startDate', data_fim: 'endDate', f_clt: 'clientId', f_local: 'locationId', f_nivel: 'level', tecnico: 'technicianId', startDate: 'startDate', endDate: 'endDate', clientId: 'clientId', locationId: 'locationId', level: 'level', technicianId: 'technicianId' })) {
+  for (const [oldName, newName] of Object.entries({ data_1: 'startDate', data_2: 'endDate', data_inicio: 'startDate', data_fim: 'endDate', f_clt: 'clientId', f_local: 'locationId', f_nivel: 'level', tecnico: 'technicianId', startDate: 'startDate', endDate: 'endDate', clientId: 'clientId', clientIds: 'clientIds', locationId: 'locationId', level: 'level', technicianId: 'technicianId' })) {
     const value = query.get(oldName);
     if (value) params.set(newName, value);
   }
