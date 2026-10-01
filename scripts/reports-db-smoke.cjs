@@ -14,7 +14,7 @@ async function main() {
   const [user] = await db.$queryRawUnsafe('SELECT user_id FROM usuarios WHERE tipo_usuario <> 2 AND user_sts = 1 LIMIT 1');
   assert.ok(user, 'An active internal user is required for read-only parity');
   const userId = user.user_id;
-  const filters = { startDate: '2026-02-01', endDate: '2026-02-28', source: 'tickets', clientId: 0, locationId: 0, technicianId: 0, level: 0 };
+  const filters = { startDate: '2026-02-01', endDate: '2026-02-28', source: 'tickets', clientId: 0, clientIds: [], locationId: 0, technicianId: 0, level: 0 };
   const repo = new PrismaTicketAnalyticsRepository(db);
   const counts = {};
   for (const [source, table] of [['tickets', 'atendimentos'], ['tasks', 'tarefas'], ['improvements', 'melhorias']]) {
