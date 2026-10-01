@@ -15,17 +15,20 @@ import { ApiError } from '../../../shared/api/api-client';
 import { AppPageHeader } from '../../../shared/navigation/app-page-header';
 import { DateRangePicker } from '../../../shared/ui/date-range-picker';
 import { appButtonClass } from '../../../shared/ui/button-styles';
+import { SearchSelect } from '../../../shared/ui/search-select';
 import {
   fetchTicketBreakdownReport,
   fetchTicketReportCatalog,
   fetchTicketReportDetails,
 } from '../api/reports-api';
-import { ReportStackedBarChart } from './report-stacked-bar-chart';
+import {
+  ReportChartTypePicker,
+  ReportChartView,
+  type ReportChartType,
+} from './report-chart-view';
 
 const PRIMARY = appButtonClass('primary');
 const SECONDARY = appButtonClass('secondary');
-const INPUT =
-  'min-h-10 w-full rounded-lg border border-app-border-strong bg-app-surface px-3 text-sm text-app-text outline-none focus:border-app-brand focus:ring-3 focus:ring-[var(--app-brand-ring)]';
 const STATUS = TICKET_STATUS_LABELS as Readonly<Record<number, string>>;
 const PAGE_SIZE = 100;
 
@@ -103,7 +106,7 @@ export function TicketBreakdownReportScreen({
   const [startDate, setStartDate] = useState(firstDayOfMonth);
   const [endDate, setEndDate] = useState(today);
   const [level, setLevel] = useState<TicketBreakdownLevel>(0);
-  const [clientId, setClientId] = useState(0);
+  const [clientIds, setClientIds] = useState<string[]>([]);
   const [technicianId, setTechnicianId] = useState(0);
   const [categoryId, setCategoryId] = useState(0);
   const [status, setStatus] = useState(0);
@@ -118,6 +121,7 @@ export function TicketBreakdownReportScreen({
     endDate: today(),
     level: 0 as TicketBreakdownLevel,
     clientId: 0,
+    clientIds: [] as number[],
     technicianId: 0,
     categoryId: 0,
     status: 0,
@@ -126,6 +130,7 @@ export function TicketBreakdownReportScreen({
     useState<TicketBreakdownReportResponse | null>(null);
   const [details, setDetails] = useState<TicketAnalyticsResponse | null>(null);
   const [detailPage, setDetailPage] = useState(1);
+  const [chartType, setChartType] = useState<ReportChartType>('bar');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -232,7 +237,8 @@ export function TicketBreakdownReportScreen({
       startDate,
       endDate,
       level,
-      clientId,
+      clientId: 0,
+      clientIds: clientIds.map(Number),
       technicianId,
       categoryId,
       status,
@@ -245,6 +251,7 @@ export function TicketBreakdownReportScreen({
       endDate: today(),
       level: 0 as TicketBreakdownLevel,
       clientId: 0,
+      clientIds: [] as number[],
       technicianId: 0,
       categoryId: 0,
       status: 0,
@@ -252,7 +259,7 @@ export function TicketBreakdownReportScreen({
     setStartDate(next.startDate);
     setEndDate(next.endDate);
     setLevel(0);
-    setClientId(0);
+    setClientIds([]);
     setTechnicianId(0);
     setCategoryId(0);
     setStatus(0);
@@ -288,45 +295,83 @@ export function TicketBreakdownReportScreen({
           </div>
 
           <label className="grid gap-1.5 text-xs font-bold text-app-muted">
-            Cliente
-            <select className={INPUT} disabled={loading} onChange={(event) => setClientId(Number(event.target.value))} value={clientId}>
-              <option value={0}>Todos</option>
-              {catalog.clients.map((row) => <option key={row.id} value={row.id}>{row.name}</option>)}
-            </select>
+            Clientes
+            <SearchSelect
+              disabled={loading}
+              multiple
+              multipleLabel="clientes selecionados"
+              onChange={setClientIds}
+              options={catalog.clients.map((row) => ({
+                value: String(row.id),
+                label: row.name,
+              }))}
+              placeholder="Todos os clientes"
+              searchPlaceholder="Pesquisar cliente..."
+              value={clientIds}
+            />
           </label>
 
           <label className="grid gap-1.5 text-xs font-bold text-app-muted">
             Técnico
-            <select className={INPUT} disabled={loading} onChange={(event) => setTechnicianId(Number(event.target.value))} value={technicianId}>
-              <option value={0}>Todos</option>
-              {catalog.technicians.map((row) => <option key={row.id} value={row.id}>{row.name}</option>)}
-            </select>
+            <SearchSelect
+              disabled={loading}
+              onChange={(values) => setTechnicianId(Number(values[0] ?? 0))}
+              options={catalog.technicians.map((row) => ({
+                value: String(row.id),
+                label: row.name,
+              }))}
+              placeholder="Todos os técnicos"
+              searchPlaceholder="Pesquisar técnico..."
+              value={technicianId ? [String(technicianId)] : []}
+            />
           </label>
 
           <label className="grid gap-1.5 text-xs font-bold text-app-muted">
             Categoria
-            <select className={INPUT} disabled={loading} onChange={(event) => setCategoryId(Number(event.target.value))} value={categoryId}>
-              <option value={0}>Todas</option>
-              {catalog.categories.map((row) => <option key={row.id} value={row.id}>{row.name}</option>)}
-            </select>
+            <SearchSelect
+              disabled={loading}
+              onChange={(values) => setCategoryId(Number(values[0] ?? 0))}
+              options={catalog.categories.map((row) => ({
+                value: String(row.id),
+                label: row.name,
+              }))}
+              placeholder="Todas as categorias"
+              searchPlaceholder="Pesquisar categoria..."
+              value={categoryId ? [String(categoryId)] : []}
+            />
           </label>
 
           <label className="grid gap-1.5 text-xs font-bold text-app-muted">
             Nível
-            <select className={INPUT} disabled={loading} onChange={(event) => setLevel(Number(event.target.value) as TicketBreakdownLevel)} value={level}>
-              <option value="0">Todos</option>
-              <option value="1">Nível 1</option>
-              <option value="2">Nível 2</option>
-              <option value="3">Nível 3</option>
-            </select>
+            <SearchSelect
+              disabled={loading}
+              onChange={(values) =>
+                setLevel(Number(values[0] ?? 0) as TicketBreakdownLevel)
+              }
+              options={[
+                { value: '1', label: 'Nível 1' },
+                { value: '2', label: 'Nível 2' },
+                { value: '3', label: 'Nível 3' },
+              ]}
+              placeholder="Todos"
+              searchable={false}
+              value={level ? [String(level)] : []}
+            />
           </label>
 
           <label className="grid gap-1.5 text-xs font-bold text-app-muted">
             Status
-            <select className={INPUT} disabled={loading} onChange={(event) => setStatus(Number(event.target.value))} value={status}>
-              <option value={0}>Todos</option>
-              {Object.entries(STATUS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
-            </select>
+            <SearchSelect
+              disabled={loading}
+              onChange={(values) => setStatus(Number(values[0] ?? 0))}
+              options={Object.entries(STATUS).map(([value, label]) => ({
+                value,
+                label,
+              }))}
+              placeholder="Todos os status"
+              searchable={false}
+              value={status ? [String(status)] : []}
+            />
           </label>
 
           <div className="col-span-5 flex justify-end gap-2 max-[1200px]:col-span-2 max-[720px]:col-span-1">
@@ -361,17 +406,26 @@ export function TicketBreakdownReportScreen({
         <section className="mb-4 overflow-hidden rounded-2xl border border-app-border bg-app-surface shadow-sm">
           <header className="flex flex-wrap items-center justify-between gap-3 border-b border-app-border-soft px-5 py-4">
             <h2 className="m-0 text-lg font-extrabold">{config.chartTitle}</h2>
-            <span className="rounded-full border border-app-brand/30 bg-app-brand-soft px-3 py-1.5 text-xs font-extrabold text-app-brand">
-              Total selecionado: {(result?.total ?? 0).toLocaleString('pt-BR')}
-            </span>
+            <div className="flex flex-wrap items-center gap-2">
+              {mode === 'requester' ? (
+                <ReportChartTypePicker
+                  onChange={setChartType}
+                  value={chartType}
+                />
+              ) : null}
+              <span className="rounded-full border border-app-brand/30 bg-app-brand-soft px-3 py-1.5 text-xs font-extrabold text-app-brand">
+                Total selecionado: {(result?.total ?? 0).toLocaleString('pt-BR')}
+              </span>
+            </div>
           </header>
           <div className="p-4">
             {loading && !result ? (
               <div className="grid min-h-[360px] place-items-center text-sm text-app-muted">Carregando relatório…</div>
             ) : (
-              <ReportStackedBarChart
+              <ReportChartView
                 emptyMessage="Nenhum atendimento encontrado no período informado."
                 rows={chartRows}
+                type={mode === 'requester' ? chartType : 'bar'}
               />
             )}
           </div>
