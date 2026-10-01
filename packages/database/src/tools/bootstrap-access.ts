@@ -13,6 +13,11 @@ const PERMISSION_MIGRATIONS = [
   ['users.edit', 'usuarios.editar'],
   ['users.manage-access', 'usuarios.editar_acesso'],
 
+  ['quality.on-call.read', 'qualidade.plantao.visualizar'],
+  ['quality.on-call.manage', 'qualidade.plantao.gerenciar'],
+  ['quality.dates.read', 'qualidade.datas.visualizar'],
+  ['quality.dates.manage', 'qualidade.datas.gerenciar'],
+
   ['registrations.clients.read', 'cadastros.clientes.visualizar'],
   ['registrations.clients.create', 'cadastros.clientes.criar'],
   ['registrations.clients.edit', 'cadastros.clientes.editar'],
@@ -135,6 +140,33 @@ const PERMISSION_MIGRATIONS = [
 ] as const;
 
 const OBSOLETE_PERMISSION_SLUGS = [
+  'users.read',
+  'users.create',
+  'users.edit',
+  'users.manage-access',
+
+  'quality.on-call.read',
+  'quality.on-call.manage',
+  'quality.dates.read',
+  'quality.dates.manage',
+
+  'registrations.clients.read',
+  'registrations.clients.create',
+  'registrations.clients.edit',
+  'registrations.clients.contacts.create',
+  'registrations.clients.contacts.edit',
+  'registrations.clients.locations.create',
+  'registrations.clients.locations.edit',
+  'registrations.categories.read',
+  'registrations.categories.create',
+  'registrations.categories.edit',
+  'registrations.categories.subcategories.create',
+  'registrations.categories.subcategories.edit',
+  'registrations.categories.items.create',
+  'registrations.categories.items.edit',
+  'registrations.finance.read',
+  'registrations.finance.manage',
+
   'tickets.read',
   'tickets.create',
   'tickets.edit',
@@ -223,6 +255,10 @@ const OBSOLETE_PERMISSION_SLUGS = [
   'catalogos.gerenciar',
   'catalogos.ti.gerenciar',
   'catalogos.devops.gerenciar',
+  'catalogo.ti.visualizar',
+  'catalogo.ti.gerenciar',
+  'catalogo.devops.visualizar',
+  'catalogo.devops.gerenciar',
 
   'logistica.agenda.visualizar',
   'logistica.agenda.gerenciar',
