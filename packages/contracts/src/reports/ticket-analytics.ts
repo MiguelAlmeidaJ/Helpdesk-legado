@@ -6,6 +6,7 @@ export interface TicketAnalyticsFilters {
   endDate: string;
   source: TicketReportSource;
   clientId: number;
+  clientIds: number[];
   locationId: number;
   technicianId: number;
   categoryId: number;
