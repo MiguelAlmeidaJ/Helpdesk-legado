@@ -819,7 +819,7 @@ export class MaintenanceService implements OnApplicationBootstrap {
       const reviewReason = protectedTable
         ? 'Protegida pela aplicação atual.'
         : hasRelations
-          ? 'Possui relacionamento por chave estrangeira; revisar dependências antes de remover.'
+          ? 'Possui relacionamento por chave estrangeira. Pode ser removida apenas junto das dependências necessárias; a API valida a ordem do DROP.'
           : estimatedRows === 0
             ? 'Sem linhas estimadas e sem chaves estrangeiras. Candidata prioritária para revisão, não para exclusão automática.'
             : 'Sem proteção automática. Revisar uso no código e no legado antes de excluir.';
