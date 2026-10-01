@@ -33,6 +33,10 @@ import {
   type MaintenanceRepairRequest,
   type MaintenanceRepairResponse,
   type MaintenanceSystemStatusResponse,
+  type MaintenanceTableDropRequest,
+  type MaintenanceTableDropResponse,
+  type MaintenanceTableOptimizeRequest,
+  type MaintenanceTableOptimizeResponse,
 } from '@helpdesk/contracts';
 import { createReadStream } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -123,6 +127,44 @@ export class MaintenanceController {
     @Param('database') databaseName: string,
   ): Promise<MaintenanceDatabaseTable[]> {
     return this.maintenance.databaseTables(database(databaseName));
+  }
+
+  @Post('tables/optimize')
+  @ApiOperation({ summary: 'Otimizar tabelas selecionadas do Nivel3' })
+  optimizeTables(
+    @CurrentUser() user: AuthenticatedUser | undefined,
+    @Body() body: unknown,
+  ): Promise<MaintenanceTableOptimizeResponse> {
+    const input = recordBody(body) as unknown as MaintenanceTableOptimizeRequest;
+    if (!Array.isArray(input.tables)) {
+      throw new BadRequestException('tables deve ser uma lista.');
+    }
+    return this.maintenance.optimizeTables(
+      database(input.target),
+      input.tables.map(String),
+      actor(user).id,
+    );
+  }
+
+  @Post('tables/drop')
+  @ApiOperation({ summary: 'Remover tabelas revisadas com backup automático' })
+  dropTables(
+    @CurrentUser() user: AuthenticatedUser | undefined,
+    @Body() body: unknown,
+  ): Promise<MaintenanceTableDropResponse> {
+    const input = recordBody(body) as unknown as MaintenanceTableDropRequest;
+    if (!Array.isArray(input.tables)) {
+      throw new BadRequestException('tables deve ser uma lista.');
+    }
+    if (typeof input.confirmation !== 'string') {
+      throw new BadRequestException('Confirmação é obrigatória.');
+    }
+    return this.maintenance.dropTables(
+      database(input.target),
+      input.tables.map(String),
+      input.confirmation,
+      actor(user).id,
+    );
   }
 
   @Post('backups')
