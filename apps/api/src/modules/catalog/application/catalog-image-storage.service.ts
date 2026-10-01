@@ -234,10 +234,10 @@ export class CatalogImageStorageService implements OnModuleInit {
     actorUserId: number,
   ): Promise<void> {
     const ids = new Set<number>();
-    const regex = /catalog\/images\/(\d+)\/content/gi;
+    const regex = /(?:catalog\/images\/(\d+)\/content|catalog-images\/(\d+))/gi;
 
     for (const match of html.matchAll(regex)) {
-      const id = Number(match[1]);
+      const id = Number(match[1] ?? match[2]);
       if (Number.isSafeInteger(id) && id > 0) ids.add(id);
     }
 
