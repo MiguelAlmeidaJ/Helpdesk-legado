@@ -83,6 +83,18 @@ function permissionModuleHint(module: string): string | null {
   return null;
 }
 
+const PERMISSION_MODULE_ORDER = [
+  'Atendimento',
+  'DevOps',
+  'Marketing',
+  'Logística',
+  'Financeiro',
+  'Qualidade',
+  'Relatórios',
+  'Cadastro',
+  'Administração',
+] as const;
+
 function permissionGroups(permissions: AccessPermissionItem[]) {
   const groups = new Map<string, AccessPermissionItem[]>();
   for (const permission of permissions) {
@@ -90,7 +102,14 @@ function permissionGroups(permissions: AccessPermissionItem[]) {
     entries.push(permission);
     groups.set(permission.module, entries);
   }
-  return [...groups.entries()].sort(([a], [b]) => a.localeCompare(b, 'pt-BR'));
+  const order = new Map(
+    PERMISSION_MODULE_ORDER.map((module, index) => [module, index]),
+  );
+  return [...groups.entries()].sort(([a], [b]) => {
+    const left = order.get(a) ?? Number.MAX_SAFE_INTEGER;
+    const right = order.get(b) ?? Number.MAX_SAFE_INTEGER;
+    return left - right || a.localeCompare(b, 'pt-BR');
+  });
 }
 function duplicateRoleName(role: AccessRole, roles: AccessRole[]): string {
   const existing = new Set(
