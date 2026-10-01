@@ -67,7 +67,7 @@ export function reportUser(user: AuthenticatedUser | undefined): number {
 @ApiTags('reports')
 @Controller('reports/tickets')
 @UseGuards(LegacySessionGuard, PermissionsGuard)
-@RequirePermissions(AppPermission.TicketsAudit)
+@RequirePermissions(AppPermission.ReportsRead)
 @ApiSecurity(LEGACY_SESSION_SECURITY)
 export class TicketAnalyticsController {
   constructor(private readonly reports: GetTicketAnalytics) {}
