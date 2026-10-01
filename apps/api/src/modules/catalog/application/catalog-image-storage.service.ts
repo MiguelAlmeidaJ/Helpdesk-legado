@@ -26,6 +26,7 @@ interface ImageRow {
   height: number | null;
   sha256: string;
   created_by: number;
+  sector: number | null;
 }
 
 interface InsertIdRow {
@@ -182,12 +183,22 @@ export class CatalogImageStorageService implements OnModuleInit {
 
   async content(
     id: number,
-  ): Promise<{ data: Buffer; mimeType: string; sha256: string; name: string }> {
+  ): Promise<{
+    data: Buffer;
+    mimeType: string;
+    sha256: string;
+    name: string;
+    catalogId: number | null;
+    createdBy: number;
+    sector: number | null;
+  }> {
     const rows = await this.database.$queryRawUnsafe<ImageRow[]>(
-      `SELECT id, catalog_id, original_name, stored_name, storage_path,
-              mime_type, size_bytes, width, height, sha256, created_by
-       FROM catalog_images
-       WHERE id = ?
+      `SELECT ci.id, ci.catalog_id, ci.original_name, ci.stored_name,
+              ci.storage_path, ci.mime_type, ci.size_bytes, ci.width,
+              ci.height, ci.sha256, ci.created_by, c.setor AS sector
+       FROM catalog_images ci
+       LEFT JOIN catalogos c ON c.id = ci.catalog_id
+       WHERE ci.id = ?
        LIMIT 1`,
       id,
     );
@@ -211,10 +222,17 @@ export class CatalogImageStorageService implements OnModuleInit {
       mimeType: row.mime_type,
       sha256: row.sha256,
       name: row.original_name,
+      catalogId: row.catalog_id,
+      createdBy: row.created_by,
+      sector: row.sector,
     };
   }
 
-  async linkContent(catalogId: number, html: string): Promise<void> {
+  async linkContent(
+    catalogId: number,
+    html: string,
+    actorUserId: number,
+  ): Promise<void> {
     const ids = new Set<number>();
     const regex = /catalog\/images\/(\d+)\/content/gi;
 
@@ -230,10 +248,14 @@ export class CatalogImageStorageService implements OnModuleInit {
       `UPDATE catalog_images
        SET catalog_id = ?
        WHERE id IN (${list.map(() => '?').join(', ')})
-         AND (catalog_id IS NULL OR catalog_id = ?)`,
+         AND (
+           catalog_id = ?
+           OR (catalog_id IS NULL AND created_by = ?)
+         )`,
       catalogId,
       ...list,
       catalogId,
+      actorUserId,
     );
   }
 
