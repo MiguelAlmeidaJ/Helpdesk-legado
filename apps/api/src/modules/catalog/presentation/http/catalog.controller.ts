@@ -113,16 +113,59 @@ function bodyPositiveInteger(value: unknown, field: string): number {
 }
 
 
-function canUseCatalogImages(user: AuthenticatedUser): boolean {
-  const allowed = new Set([
-    AppPermission.SystemAdmin,
-    AppPermission.CatalogManage,
-    AppPermission.CatalogTiRead,
-    AppPermission.CatalogTiEdit,
-    AppPermission.CatalogDevOpsRead,
-    AppPermission.CatalogDevOpsEdit,
-  ]);
-  return user.grants.some((grant) => allowed.has(grant.permission));
+function hasPermission(
+  user: AuthenticatedUser,
+  permission: AppPermission,
+): boolean {
+  return user.grants.some(
+    (grant) =>
+      grant.permission === AppPermission.SystemAdmin ||
+      grant.permission === permission,
+  );
+}
+
+function canUploadCatalogImages(user: AuthenticatedUser): boolean {
+  return (
+    hasPermission(user, AppPermission.CatalogManage) ||
+    hasPermission(user, AppPermission.CatalogTiEdit) ||
+    hasPermission(user, AppPermission.CatalogDevOpsEdit)
+  );
+}
+
+function canReadCatalogImage(
+  user: AuthenticatedUser,
+  image: {
+    catalogId: number | null;
+    createdBy: number;
+    sector: number | null;
+  },
+): boolean {
+  if (
+    hasPermission(user, AppPermission.SystemAdmin) ||
+    hasPermission(user, AppPermission.CatalogManage)
+  ) {
+    return true;
+  }
+
+  if (image.catalogId === null) {
+    return image.createdBy === user.id && canUploadCatalogImages(user);
+  }
+
+  if (image.sector === 1) {
+    return (
+      hasPermission(user, AppPermission.CatalogTiRead) ||
+      hasPermission(user, AppPermission.CatalogTiEdit)
+    );
+  }
+
+  if (image.sector === 2) {
+    return (
+      hasPermission(user, AppPermission.CatalogDevOpsRead) ||
+      hasPermission(user, AppPermission.CatalogDevOpsEdit)
+    );
+  }
+
+  return false;
 }
 
 interface UploadedCatalogImage {
@@ -194,7 +237,7 @@ export class CatalogController {
     @Body() body: Record<string, unknown>,
   ): Promise<CatalogImageUploadResponse> {
     const actor = authenticated(user);
-    if (!canUseCatalogImages(actor)) {
+    if (!canUploadCatalogImages(actor)) {
       throw new ForbiddenException('Usuário sem acesso às imagens de catálogo.');
     }
     if (!file?.buffer || file.size < 1) {
@@ -225,10 +268,10 @@ export class CatalogController {
     @Param('imageId', ParseIntPipe) imageId: number,
   ): Promise<StreamableFile> {
     const actor = authenticated(user);
-    if (!canUseCatalogImages(actor)) {
-      throw new ForbiddenException('Usuário sem acesso às imagens de catálogo.');
-    }
     const image = await this.images.content(imageId);
+    if (!canReadCatalogImage(actor, image)) {
+      throw new ForbiddenException('Usuário sem acesso a esta imagem de catálogo.');
+    }
     return new StreamableFile(image.data, {
       type: image.mimeType,
       disposition: `inline; filename*=UTF-8''${encodeURIComponent(image.name)}`,
