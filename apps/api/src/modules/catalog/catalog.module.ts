@@ -17,5 +17,6 @@ import { CatalogController } from './presentation/http/catalog.controller';
       useClass: PrismaCatalogRepository,
     },
   ],
+  exports: [CatalogImageStorageService],
 })
 export class CatalogModule {}
