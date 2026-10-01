@@ -146,6 +146,7 @@ export class CatalogImageStorageService implements OnModuleInit {
           width: row.width,
           height: row.height,
           sizeBytes: Number(row.size_bytes),
+          reused: true,
         };
       }
     }
@@ -202,6 +203,7 @@ export class CatalogImageStorageService implements OnModuleInit {
         width: input.width ?? null,
         height: input.height ?? null,
         sizeBytes: input.data.length,
+        reused: false,
       };
     } catch (error) {
       await unlink(physical).catch(() => undefined);
