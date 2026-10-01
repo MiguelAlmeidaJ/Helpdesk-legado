@@ -8,6 +8,8 @@ export interface TicketAnalyticsFilters {
   clientId: number;
   locationId: number;
   technicianId: number;
+  categoryId: number;
+  status: number;
   level: number;
 }
 
@@ -16,6 +18,7 @@ export interface TicketReportCatalog {
   clients: ReportOption[];
   locations: ReportOption[];
   technicians: ReportOption[];
+  categories: ReportOption[];
 }
 
 export interface TicketAnalyticsRow {
