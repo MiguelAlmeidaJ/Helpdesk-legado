@@ -15,6 +15,10 @@ function apiBaseUrl(): string {
   return (process.env.NEXT_PUBLIC_API_URL ?? DEFAULT_API_URL).replace(/\/$/, '');
 }
 
+export function apiUrl(path: string): string {
+  return `${apiBaseUrl()}/${path.replace(/^\//, '')}`;
+}
+
 export async function apiRequest<T>(
   path: string,
   init?: RequestInit,
