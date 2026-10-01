@@ -41,33 +41,56 @@ test('legacy positional modules no longer grant application permissions', () => 
   assert.deepEqual(user.grants, []);
 });
 
-test('canonical RBAC slugs grant registrations, logistics and radio', () => {
+test('simplified cadastro and logistics slugs translate to native grants', () => {
   const user = translateRbacAccess(
     legacySession,
     snapshot([
       'cadastros.clientes.visualizar',
-      'logistica.agenda.visualizar',
-      'atendimentos.radio',
+      'logistica.agenda.agendar',
+      'logistica.rd.criar',
     ]),
   );
 
   const permissions = new Set(user.grants.map((grant) => grant.permission));
   assert.equal(permissions.has(AppPermission.RegistrationsClientsRead), true);
-  assert.equal(permissions.has(AppPermission.LogisticsVehicleAgendaRead), true);
-  assert.equal(permissions.has(AppPermission.TicketsRadio), true);
+  assert.equal(permissions.has(AppPermission.LogisticsVehicleAgendaManage), true);
+  assert.equal(permissions.has(AppPermission.LogisticsExpensesManage), true);
 });
 
-test('sector ticket RBAC slugs expose only their navigation grants', () => {
+test('page-granular DevOps and Marketing slugs expose native navigation grants', () => {
   const user = translateRbacAccess(
     legacySession,
     snapshot([
-      'devops.atendimentos.visualizar',
-      'marketing.atendimentos.criar',
+      'devops.projetos.visualizar',
+      'marketing.tarefas.criar',
+      'marketing.tarefas.finalizar',
     ]),
   );
 
   const permissions = new Set(user.grants.map((grant) => grant.permission));
+  assert.equal(permissions.has(AppPermission.DevOpsProjectsRead), true);
   assert.equal(permissions.has(AppPermission.TicketsDevOpsRead), true);
+  assert.equal(permissions.has(AppPermission.MarketingTasksCreate), true);
+  assert.equal(permissions.has(AppPermission.MarketingTasksClose), true);
   assert.equal(permissions.has(AppPermission.TicketsMarketingCreate), true);
   assert.equal(permissions.has(AppPermission.TicketsRead), false);
+});
+
+test('reports and finance use dedicated permissions', () => {
+  const user = translateRbacAccess(
+    legacySession,
+    snapshot([
+      'relatorios.visualizar',
+      'relatorios.gerar_pdf',
+      'financeiro.visualizar',
+      'financeiro.editar',
+    ]),
+  );
+
+  const permissions = new Set(user.grants.map((grant) => grant.permission));
+  assert.equal(permissions.has(AppPermission.ReportsRead), true);
+  assert.equal(permissions.has(AppPermission.ReportsPdf), true);
+  assert.equal(permissions.has(AppPermission.FinanceRead), true);
+  assert.equal(permissions.has(AppPermission.FinanceManage), true);
+  assert.equal(permissions.has(AppPermission.LogisticsStatementsRead), true);
 });
