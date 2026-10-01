@@ -1,8 +1,9 @@
 import {
   BadRequestException,
+  Inject,
   Injectable,
   NotFoundException,
-  OnModuleInit,
+  type OnModuleInit,
 } from '@nestjs/common';
 import type {
   CatalogImageUploadResponse,
@@ -11,7 +12,6 @@ import type { Nivel3DatabaseClient } from '@helpdesk/database';
 import { createHash, randomUUID } from 'node:crypto';
 import { mkdir, readFile, unlink, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import { Inject } from '@nestjs/common';
 import { NIVEL3_DATABASE } from '../../../core/database/database.constants';
 
 interface ImageRow {
