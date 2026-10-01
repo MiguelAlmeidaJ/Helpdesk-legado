@@ -33,6 +33,7 @@ export class PrismaTicketAnalyticsRepository extends TicketAnalyticsRepository {
         ['a.local', filters.locationId],
         ['a.tecnico', filters.technicianId],
         ['a.categoria', filters.categoryId],
+        ['cat.cat_setor', filters.categorySector],
         ['a.status', filters.status],
       ] as const) {
         if (value) {
@@ -54,7 +55,14 @@ export class PrismaTicketAnalyticsRepository extends TicketAnalyticsRepository {
           DATE_FORMAT(a.abertura, '%Y-%m-%dT%H:%i:%s') AS openedAt,
           DATE_FORMAT(a.fechamento, '%Y-%m-%dT%H:%i:%s') AS closedAt,
           COALESCE(a.desc_abertura, '') AS openingDescription, COALESCE(a.desc_fechamento, '') AS closingDescription,
-          GREATEST(0, TIMESTAMPDIFF(SECOND, a.abertura, NOW())) AS elapsedSeconds
+          GREATEST(
+            0,
+            TIMESTAMPDIFF(
+              SECOND,
+              a.abertura,
+              COALESCE(a.fechamento, NOW())
+            )
+          ) AS elapsedSeconds
         FROM ${TABLES[source]} a
         INNER JOIN clientes c ON c.clt_id = a.cliente
         LEFT JOIN locais l ON l.local_id = a.local
