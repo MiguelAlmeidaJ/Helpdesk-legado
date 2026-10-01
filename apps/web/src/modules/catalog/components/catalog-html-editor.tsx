@@ -7,6 +7,8 @@ import {
   useRef,
   useState,
 } from 'react';
+import { apiUrl } from '../../../shared/api/api-client';
+import { uploadCatalogImage } from '../api/catalog-api';
 
 type CatalogHtmlEditorProps = {
   value: string;
@@ -32,6 +34,7 @@ export function CatalogHtmlEditor({
   const imageInputRef = useRef<HTMLInputElement>(null);
   const [mode, setMode] = useState<'visual' | 'html'>('visual');
   const [expanded, setExpanded] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   useEffect(() => {
     if (mode !== 'visual' || !editorRef.current) return;
@@ -81,6 +84,53 @@ export function CatalogHtmlEditor({
     command('createLink', normalized);
   }
 
+  async function optimizeImage(file: File): Promise<{
+    blob: Blob;
+    width: number;
+    height: number;
+    filename: string;
+  }> {
+    const bitmap = await createImageBitmap(file);
+    const maxDimension = 1920;
+    const scale = Math.min(
+      1,
+      maxDimension / Math.max(bitmap.width, bitmap.height),
+    );
+    const width = Math.max(1, Math.round(bitmap.width * scale));
+    const height = Math.max(1, Math.round(bitmap.height * scale));
+
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const context = canvas.getContext('2d');
+    if (!context) {
+      bitmap.close();
+      throw new Error('Não foi possível preparar a imagem.');
+    }
+
+    context.drawImage(bitmap, 0, 0, width, height);
+    bitmap.close();
+
+    const blob = await new Promise<Blob>((resolve, reject) => {
+      canvas.toBlob(
+        (result) =>
+          result
+            ? resolve(result)
+            : reject(new Error('Não foi possível otimizar a imagem.')),
+        'image/webp',
+        0.82,
+      );
+    });
+
+    const base = file.name.replace(/\.[^.]+$/, '').replace(/[^a-zA-Z0-9._-]/g, '_');
+    return {
+      blob,
+      width,
+      height,
+      filename: `${base || 'imagem'}.webp`,
+    };
+  }
+
   async function addImage(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     event.target.value = '';
@@ -91,24 +141,36 @@ export function CatalogHtmlEditor({
       return;
     }
 
-    if (file.size > 5 * 1024 * 1024) {
-      window.alert('A imagem deve ter no máximo 5 MB.');
+    if (file.size > 12 * 1024 * 1024) {
+      window.alert('A imagem original deve ter no máximo 12 MB.');
       return;
     }
 
-    const dataUrl = await new Promise<string>((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () =>
-        typeof reader.result === 'string'
-          ? resolve(reader.result)
-          : reject(new Error('Falha ao ler a imagem.'));
-      reader.onerror = () => reject(reader.error ?? new Error('Falha ao ler a imagem.'));
-      reader.readAsDataURL(file);
-    });
+    try {
+      setUploadingImage(true);
+      const optimized = await optimizeImage(file);
+      const uploaded = await uploadCatalogImage(
+        optimized.blob,
+        optimized.filename,
+        optimized.width,
+        optimized.height,
+      );
+      const contentUrl = apiUrl(uploaded.contentPath);
 
-    editorRef.current?.focus();
-    document.execCommand('insertImage', false, dataUrl);
-    syncVisual();
+      editorRef.current?.focus();
+      document.execCommand(
+        'insertHTML',
+        false,
+        `<img src="${contentUrl}" alt="${file.name.replace(/"/g, '&quot;')}" width="${uploaded.width ?? optimized.width}" height="${uploaded.height ?? optimized.height}" loading="lazy" />`,
+      );
+      syncVisual();
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : 'Não foi possível enviar a imagem.';
+      window.alert(message);
+    } finally {
+      setUploadingImage(false);
+    }
   }
 
   function switchMode(next: 'visual' | 'html') {
@@ -197,7 +259,15 @@ export function CatalogHtmlEditor({
             <button className={TOOL} disabled={disabled} onClick={() => command('justifyCenter')} title="Centralizar" type="button">≡</button>
             <button className={TOOL} disabled={disabled} onClick={() => command('justifyRight')} title="Alinhar à direita" type="button">≡</button>
             <button className={TOOL} disabled={disabled} onClick={createLink} title="Inserir link" type="button">Link</button>
-            <button className={TOOL} disabled={disabled} onClick={() => imageInputRef.current?.click()} title="Inserir imagem" type="button">Imagem</button>
+            <button
+              className={TOOL}
+              disabled={disabled || uploadingImage}
+              onClick={() => imageInputRef.current?.click()}
+              title="Inserir imagem otimizada"
+              type="button"
+            >
+              {uploadingImage ? 'Enviando…' : 'Imagem'}
+            </button>
             <button className={TOOL} disabled={disabled} onClick={() => command('removeFormat')} title="Limpar formatação" type="button">Limpar</button>
 
             <span className="mx-0.5 h-6 w-px bg-app-border" />
@@ -262,7 +332,9 @@ export function CatalogHtmlEditor({
 
       <div className="flex flex-wrap items-center justify-between gap-2 border-t border-app-border-soft bg-app-surface-muted px-3 py-2 text-[11px] text-app-muted">
         <span>
-          Editor visual com HTML compatível com os catálogos atuais.
+          {uploadingImage
+            ? 'Otimizando e enviando imagem…'
+            : 'Imagens novas são otimizadas em WebP e salvas no storage do catálogo.'}
         </span>
         <span>{value.length.toLocaleString('pt-BR')} caracteres</span>
       </div>
