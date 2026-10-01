@@ -36,6 +36,46 @@ const DEVOPS_TICKET_PERMISSIONS = new Set<AppPermission>([
   AppPermission.TicketsReject,
 ]);
 
+const DEVOPS_PAGE_PERMISSIONS = new Set<AppPermission>([
+  AppPermission.DevOpsProjectsRead,
+  AppPermission.DevOpsProjectsCreate,
+  AppPermission.DevOpsProjectsEdit,
+  AppPermission.DevOpsTasksRead,
+  AppPermission.DevOpsTasksCreate,
+  AppPermission.DevOpsTasksEdit,
+]);
+
+function pagePermissionSyntheticGrants(
+  permission: AppPermission,
+): PermissionGrant[] {
+  switch (permission) {
+    case AppPermission.DevOpsProjectsRead:
+    case AppPermission.DevOpsTasksRead:
+      return [
+        { permission: AppPermission.TicketsRead, scope: PermissionScope.All },
+      ];
+    case AppPermission.DevOpsProjectsCreate:
+    case AppPermission.DevOpsTasksCreate:
+      return [
+        { permission: AppPermission.TicketsRead, scope: PermissionScope.All },
+        { permission: AppPermission.TicketsCreate, scope: PermissionScope.All },
+      ];
+    case AppPermission.DevOpsProjectsEdit:
+    case AppPermission.DevOpsTasksEdit:
+      return [
+        { permission: AppPermission.TicketsRead, scope: PermissionScope.All },
+        { permission: AppPermission.TicketsEdit, scope: PermissionScope.All },
+        { permission: AppPermission.TicketsClassify, scope: PermissionScope.All },
+        { permission: AppPermission.TicketsExecute, scope: PermissionScope.All },
+        { permission: AppPermission.TicketsClose, scope: PermissionScope.All },
+        { permission: AppPermission.TicketsHold, scope: PermissionScope.All },
+        { permission: AppPermission.TicketsReject, scope: PermissionScope.All },
+      ];
+    default:
+      return [];
+  }
+}
+
 function devOpsGrant(
   permission: AppPermission,
   access: TicketTypePermissions,
@@ -129,6 +169,18 @@ export class DevOpsPermissionsGuard implements CanActivate {
     const missing: AppPermission[] = [];
 
     for (const permission of required) {
+      if (DEVOPS_PAGE_PERMISSIONS.has(permission)) {
+        const granted = user.grants.some(
+          (grant) => grant.permission === permission,
+        );
+        if (!granted) {
+          missing.push(permission);
+          continue;
+        }
+        synthetic.push(...pagePermissionSyntheticGrants(permission));
+        continue;
+      }
+
       if (!DEVOPS_TICKET_PERMISSIONS.has(permission)) {
         const granted = user.grants.some(
           (grant) => grant.permission === permission,
@@ -152,9 +204,14 @@ export class DevOpsPermissionsGuard implements CanActivate {
     // Project/Task application services still consume the generic Tickets
     // grants. Request-local grants adapt the DevOps-specific RBAC permissions
     // without reading positional legacy permission strings.
+    const merged = new Map<string, PermissionGrant>();
+    for (const grant of [...synthetic, ...user.grants]) {
+      merged.set(`${grant.permission}:${grant.scope}`, grant);
+    }
+
     request.user = {
       ...user,
-      grants: [...synthetic, ...user.grants],
+      grants: [...merged.values()],
     };
 
     return true;
