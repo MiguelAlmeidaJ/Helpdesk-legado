@@ -1471,7 +1471,7 @@ export class MaintenanceService implements OnApplicationBootstrap {
         pieces.push(html.slice(cursor));
 
         if (changed) {
-          await this.nivel3.$executeRawUnsafe(
+          const updated = await this.nivel3.$executeRawUnsafe(
             `UPDATE catalogos
              SET conteudo = ?, data_edicao = NOW()
              WHERE id = ? AND conteudo = ?`,
@@ -1479,7 +1479,15 @@ export class MaintenanceService implements OnApplicationBootstrap {
             row.id,
             html,
           );
-          result.migratedCatalogs++;
+          if (updated > 0) {
+            result.migratedCatalogs++;
+          } else {
+            result.errors.push({
+              catalogId: row.id,
+              message:
+                'O catálogo foi alterado durante a migração e não foi sobrescrito. Execute novamente.',
+            });
+          }
         }
       }
 
