@@ -1,4 +1,12 @@
-const DESTINATIONS: Record<string, { path: string; source?: string }> = {
+const DESTINATIONS: Record<
+  string,
+  {
+    path: string;
+    source?: string;
+    categorySector?: string;
+    lockArea?: string;
+  }
+> = {
   'atd_total_por_cliente.php': { path: '/relatorios/atendimentos/por-cliente' },
   'atd_total_por_tecnico.php': { path: '/relatorios/atendimentos/por-tecnico' },
   'atd_total_por_categoria.php': { path: '/relatorios/atendimentos/por-categoria' },
@@ -25,6 +33,12 @@ export function legacyReportDestination(name: string, query: URLSearchParams): s
     if (value) params.set(newName, value);
   }
   if (destination.source) params.set('source', destination.source);
-  if (name === 'rel_tempo_atd.php') params.set('source', query.get('f_area') === 'devops' ? 'tasks' : 'tickets');
+  if (destination.categorySector) {
+    params.set('categorySector', destination.categorySector);
+  }
+  if (destination.lockArea) params.set('lockArea', destination.lockArea);
+  if (name === 'rel_tempo_atd.php') {
+    params.set('source', query.get('f_area') === 'devops' ? 'tasks' : 'tickets');
+  }
   return destination.path + (params.size ? `?${params}` : '');
 }
