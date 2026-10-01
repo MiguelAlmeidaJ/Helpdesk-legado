@@ -24,7 +24,7 @@ import { buildWaitingTicketsPdf } from '../../infrastructure/report/waiting-tick
 @ApiTags('tickets')
 @Controller('tickets/availability')
 @UseGuards(LegacySessionGuard, PermissionsGuard)
-@RequirePermissions(AppPermission.TicketsAudit)
+@RequirePermissions(AppPermission.TicketsRead)
 @ApiSecurity(LEGACY_SESSION_SECURITY)
 export class TicketAvailabilityController {
   constructor(private readonly availability: GetTicketAvailability) {}
