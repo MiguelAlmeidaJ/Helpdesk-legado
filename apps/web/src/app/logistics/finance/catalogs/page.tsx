@@ -13,7 +13,7 @@ function canManage(user: CurrentUserResponse): boolean {
   return user.grants.some(
     (grant) =>
       grant.permission === AppPermission.SystemAdmin ||
-      grant.permission === AppPermission.LogisticsExpensesAdminManage,
+      grant.permission === AppPermission.FinanceManage,
   );
 }
 
