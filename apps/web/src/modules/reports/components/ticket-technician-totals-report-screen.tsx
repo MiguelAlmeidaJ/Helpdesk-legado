@@ -40,8 +40,9 @@ export function TicketTechnicianTotalsReportScreen({
   return (
     <TicketTotalsReportScreen
       currentUser={currentUser}
-      title="Total por técnico"
-      description="Conta os atendimentos abertos no período, desconsiderando os agendados e agrupando os níveis 1, 2 e 3 por técnico."
+      title="Relatório de atendimentos por Técnico"
+      description="Filtre por período e nível para comparar o volume de chamados entre técnicos."
+      chartTitle="Atendimentos por Técnico"
       emptyMessage="Nenhum atendimento por técnico encontrado para os filtros informados."
       loadErrorMessage="Não foi possível carregar o relatório por técnico."
       loadReport={loadTechnicianReport}
