@@ -40,8 +40,9 @@ export function TicketClientTotalsReportScreen({
   return (
     <TicketTotalsReportScreen
       currentUser={currentUser}
-      title="Total por cliente"
-      description="Conta os atendimentos abertos no período, desconsiderando os agendados e agrupando os níveis 1, 2 e 3 por cliente."
+      title="Relatório de atendimentos por Cliente"
+      description="Filtre por período e nível para comparar o volume de chamados entre clientes."
+      chartTitle="Atendimentos por Cliente"
       emptyMessage="Nenhum atendimento encontrado para os filtros informados."
       loadErrorMessage="Não foi possível carregar o relatório por cliente."
       loadReport={loadClientReport}
