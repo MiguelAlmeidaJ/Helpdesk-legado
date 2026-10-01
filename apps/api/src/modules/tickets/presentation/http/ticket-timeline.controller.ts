@@ -33,7 +33,7 @@ function validDate(value: string | undefined): string {
 @ApiTags('tickets')
 @Controller('tickets/audit')
 @UseGuards(LegacySessionGuard, PermissionsGuard)
-@RequirePermissions(AppPermission.TicketsAudit)
+@RequirePermissions(AppPermission.TicketsTimelineRead)
 @ApiSecurity(LEGACY_SESSION_SECURITY)
 export class TicketTimelineController {
   constructor(private readonly timeline: GetTicketTimeline) {}
