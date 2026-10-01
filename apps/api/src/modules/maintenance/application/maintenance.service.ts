@@ -15,6 +15,8 @@ import {
   type MaintenanceBackupJobInput,
   type MaintenanceBackupRunResponse,
   type MaintenanceBackupTarget,
+  type MaintenanceCatalogImageMigrationResponse,
+  type MaintenanceCatalogImageMigrationStatus,
   type MaintenanceDatabaseKey,
   type MaintenanceDatabaseStatus,
   type MaintenanceDatabaseTable,
@@ -48,6 +50,7 @@ import {
 } from 'node:fs/promises';
 import path from 'node:path';
 import { NIVEL3_DATABASE } from '../../../core/database/database.constants';
+import { CatalogImageStorageService } from '../../catalog/application/catalog-image-storage.service';
 
 type QueryClient = {
   $queryRawUnsafe<T = unknown>(
@@ -146,6 +149,24 @@ type DumpScanResult = {
   warnings: string[];
   summary: DumpMetadata['summary'];
 };
+
+type CatalogEmbeddedImageRow = {
+  id: number;
+  conteudo: string;
+};
+
+const EMBEDDED_CATALOG_IMAGE =
+  /data:image\/(png|jpe?g|webp);base64,([A-Za-z0-9+/=\r\n]+)/gi;
+
+function embeddedCatalogImages(html: string) {
+  return [...html.matchAll(new RegExp(EMBEDDED_CATALOG_IMAGE.source, 'gi'))];
+}
+
+function migratedImageName(catalogId: number, index: number, mime: string): string {
+  const extension =
+    mime === 'png' ? 'png' : mime === 'webp' ? 'webp' : 'jpg';
+  return `catalogo-${catalogId}-imagem-${index + 1}.${extension}`;
+}
 
 const CREATE_BACKUP_JOBS = [
   'CREATE TABLE IF NOT EXISTS maintenance_backup_jobs (',
@@ -702,6 +723,7 @@ export class MaintenanceService implements OnApplicationBootstrap {
   constructor(
     @Inject(NIVEL3_DATABASE)
     private readonly nivel3: Nivel3DatabaseClient,
+    private readonly catalogImages: CatalogImageStorageService,
   ) {}
 
   onApplicationBootstrap(): void {
@@ -1320,6 +1342,160 @@ export class MaintenanceService implements OnApplicationBootstrap {
         session.revoke_reason,
         session.user_id,
       );
+    }
+  }
+
+  async catalogImageMigrationStatus(): Promise<MaintenanceCatalogImageMigrationStatus> {
+    const rows = await this.nivel3.$queryRawUnsafe<CatalogEmbeddedImageRow[]>(
+      `SELECT id, conteudo
+       FROM catalogos
+       WHERE conteudo LIKE '%data:image/%;base64,%'`,
+    );
+
+    let embeddedImages = 0;
+    let embeddedBytesEstimate = 0;
+
+    for (const row of rows) {
+      for (const match of embeddedCatalogImages(row.conteudo ?? '')) {
+        embeddedImages++;
+        const base64 = match[2]?.replace(/[\r\n]/g, '') ?? '';
+        embeddedBytesEstimate += Math.floor((base64.length * 3) / 4);
+      }
+    }
+
+    const stored = await this.nivel3.$queryRawUnsafe<
+      Array<{ total: number | bigint | string }>
+    >('SELECT COUNT(*) AS total FROM catalog_images');
+
+    return {
+      candidateCatalogs: rows.length,
+      embeddedImages,
+      embeddedBytesEstimate,
+      storedImages: numberValue(stored[0]?.total),
+    };
+  }
+
+  async migrateCatalogImages(
+    actorUserId: number,
+  ): Promise<MaintenanceCatalogImageMigrationResponse> {
+    const operationId = await this.beginOperation(
+      'catalog-images-migration',
+      'nivel3',
+      actorUserId,
+    );
+
+    const result: MaintenanceCatalogImageMigrationResponse = {
+      candidateCatalogs: 0,
+      migratedCatalogs: 0,
+      migratedImages: 0,
+      reusedImages: 0,
+      skippedImages: 0,
+      freedBase64Characters: 0,
+      errors: [],
+    };
+
+    try {
+      const rows = await this.nivel3.$queryRawUnsafe<CatalogEmbeddedImageRow[]>(
+        `SELECT id, conteudo
+         FROM catalogos
+         WHERE conteudo LIKE '%data:image/%;base64,%'
+         ORDER BY id ASC`,
+      );
+      result.candidateCatalogs = rows.length;
+
+      for (const row of rows) {
+        const html = row.conteudo ?? '';
+        const matches = embeddedCatalogImages(html);
+        if (!matches.length) continue;
+
+        let cursor = 0;
+        let changed = false;
+        const pieces: string[] = [];
+
+        for (let index = 0; index < matches.length; index++) {
+          const match = matches[index]!;
+          const start = match.index ?? 0;
+          const full = match[0];
+          const mime = (match[1] ?? '').toLowerCase();
+          const encoded = (match[2] ?? '').replace(/[\r\n]/g, '');
+
+          pieces.push(html.slice(cursor, start));
+
+          try {
+            const data = Buffer.from(encoded, 'base64');
+            if (!data.length) {
+              result.skippedImages++;
+              pieces.push(full);
+              cursor = start + full.length;
+              continue;
+            }
+
+            const stored = await this.catalogImages.store({
+              actorUserId,
+              catalogId: row.id,
+              originalName: migratedImageName(row.id, index, mime),
+              mimeType:
+                mime === 'png'
+                  ? 'image/png'
+                  : mime === 'webp'
+                    ? 'image/webp'
+                    : 'image/jpeg',
+              data,
+            });
+
+            const replacement = `/catalog-images/${stored.id}`;
+            pieces.push(replacement);
+            cursor = start + full.length;
+            changed = true;
+            result.freedBase64Characters += Math.max(
+              0,
+              full.length - replacement.length,
+            );
+
+            if (stored.reused) result.reusedImages++;
+            else result.migratedImages++;
+          } catch (error) {
+            result.skippedImages++;
+            pieces.push(full);
+            cursor = start + full.length;
+            result.errors.push({
+              catalogId: row.id,
+              message:
+                error instanceof Error
+                  ? error.message
+                  : 'Falha ao migrar uma imagem incorporada.',
+            });
+          }
+        }
+
+        pieces.push(html.slice(cursor));
+
+        if (changed) {
+          await this.nivel3.$executeRawUnsafe(
+            `UPDATE catalogos
+             SET conteudo = ?, data_edicao = NOW()
+             WHERE id = ? AND conteudo = ?`,
+            pieces.join(''),
+            row.id,
+            html,
+          );
+          result.migratedCatalogs++;
+        }
+      }
+
+      const detail =
+        `Catálogos: ${result.migratedCatalogs}/${result.candidateCatalogs}; ` +
+        `imagens novas: ${result.migratedImages}; reutilizadas: ${result.reusedImages}; ` +
+        `ignoradas: ${result.skippedImages}.`;
+      await this.finishOperation(operationId, 'success', detail);
+      return result;
+    } catch (error) {
+      await this.finishOperation(
+        operationId,
+        'error',
+        error instanceof Error ? error.message : String(error),
+      );
+      throw error;
     }
   }
 
