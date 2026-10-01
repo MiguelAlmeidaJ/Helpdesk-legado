@@ -56,7 +56,6 @@ interface TicketTotalsReportScreenProps {
   chartTitle?: string;
   emptyMessage: string;
   loadErrorMessage: string;
-  focus: 'client' | 'technician' | 'category';
   loadReport: (
     filters?: TicketTotalsReportFilters,
   ) => Promise<TicketTotalsReportViewResponse>;
@@ -84,7 +83,6 @@ export function TicketTotalsReportScreen({
   chartTitle = 'Atendimentos',
   emptyMessage,
   loadErrorMessage,
-  focus,
   loadReport,
 }: TicketTotalsReportScreenProps) {
   const [data, setData] = useState<TicketTotalsReportViewResponse | null>(null);
