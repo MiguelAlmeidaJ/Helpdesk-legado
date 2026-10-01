@@ -10,13 +10,18 @@ import {
   Patch,
   Post,
   Query,
+  StreamableFile,
   UnauthorizedException,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
-import { ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { ApiConsumes, ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import type {
   CatalogDetailResponse,
   CatalogFiltersResponse,
+  CatalogImageUploadResponse,
   CatalogListResponse,
   CatalogResolutionResponse,
   CatalogSector,
@@ -26,6 +31,7 @@ import { LEGACY_SESSION_SECURITY } from '../../../../core/openapi/openapi.consta
 import type { AuthenticatedUser } from '../../../access/domain/authenticated-user';
 import { CurrentUser } from '../../../access/presentation/http/current-user.decorator';
 import { LegacySessionGuard } from '../../../access/presentation/http/legacy-session.guard';
+import { CatalogImageStorageService } from '../../application/catalog-image-storage.service';
 import { CatalogService } from '../../application/catalog.service';
 
 function positiveInteger(value: string | undefined, field: string): number {
@@ -104,6 +110,26 @@ function bodyPositiveInteger(value: unknown, field: string): number {
   return value;
 }
 
+
+function canUseCatalogImages(user: AuthenticatedUser): boolean {
+  const allowed = new Set([
+    AppPermission.SystemAdmin,
+    AppPermission.CatalogManage,
+    AppPermission.CatalogTiRead,
+    AppPermission.CatalogTiEdit,
+    AppPermission.CatalogDevOpsRead,
+    AppPermission.CatalogDevOpsEdit,
+  ]);
+  return user.grants.some((grant) => allowed.has(grant.permission));
+}
+
+interface UploadedCatalogImage {
+  originalname: string;
+  mimetype: string;
+  size: number;
+  buffer: Buffer;
+}
+
 function writeInput(body: unknown): CatalogWriteInput {
   if (!body || typeof body !== 'object' || Array.isArray(body)) {
     throw new BadRequestException('Corpo da requisição é inválido.');
@@ -143,7 +169,69 @@ function writeInput(body: unknown): CatalogWriteInput {
 @UseGuards(LegacySessionGuard)
 @ApiSecurity(LEGACY_SESSION_SECURITY)
 export class CatalogController {
-  constructor(private readonly catalog: CatalogService) {}
+  constructor(
+    private readonly catalog: CatalogService,
+    private readonly images: CatalogImageStorageService,
+  ) {}
+
+
+  @Post('images')
+  @UseInterceptors(
+    FileInterceptor('file', {
+      limits: {
+        fileSize: 8 * 1024 * 1024,
+        files: 1,
+      },
+    }),
+  )
+  @ApiConsumes('multipart/form-data')
+  @ApiOperation({ summary: 'Armazena imagem otimizada usada em catálogo' })
+  async uploadImage(
+    @CurrentUser() user: AuthenticatedUser | undefined,
+    @UploadedFile() file: UploadedCatalogImage | undefined,
+    @Body() body: Record<string, unknown>,
+  ): Promise<CatalogImageUploadResponse> {
+    const actor = authenticated(user);
+    if (!canUseCatalogImages(actor)) {
+      throw new UnauthorizedException('Usuário sem acesso às imagens de catálogo.');
+    }
+    if (!file?.buffer || file.size < 1) {
+      throw new BadRequestException('Imagem não informada ou vazia.');
+    }
+
+    const width = typeof body.width === 'string' && /^\d+$/.test(body.width)
+      ? Number(body.width)
+      : null;
+    const height = typeof body.height === 'string' && /^\d+$/.test(body.height)
+      ? Number(body.height)
+      : null;
+
+    return this.images.store({
+      actorUserId: actor.id,
+      originalName: file.originalname,
+      mimeType: file.mimetype,
+      data: file.buffer,
+      width,
+      height,
+    });
+  }
+
+  @Get('images/:imageId/content')
+  @ApiOperation({ summary: 'Abre imagem armazenada de catálogo' })
+  async imageContent(
+    @CurrentUser() user: AuthenticatedUser | undefined,
+    @Param('imageId', ParseIntPipe) imageId: number,
+  ): Promise<StreamableFile> {
+    const actor = authenticated(user);
+    if (!canUseCatalogImages(actor)) {
+      throw new UnauthorizedException('Usuário sem acesso às imagens de catálogo.');
+    }
+    const image = await this.images.content(imageId);
+    return new StreamableFile(image.data, {
+      type: image.mimeType,
+      disposition: `inline; filename*=UTF-8''${encodeURIComponent(image.name)}`,
+    });
+  }
 
   @Get('filters')
   @ApiOperation({ summary: 'Opções de filtro disponíveis para o catálogo' })
