@@ -91,9 +91,13 @@ export function TicketRecurrencesScreen({
 }: {
   currentUser: CurrentUserResponse;
 }) {
-  const canRead = hasPermission(currentUser, AppPermission.TicketsRead);
-  const canCreate = hasPermission(currentUser, AppPermission.TicketsCreate);
-  const canEdit = hasPermission(currentUser, AppPermission.TicketsEdit);
+  const canManage = hasPermission(
+    currentUser,
+    AppPermission.TicketsRecurrenceCreate,
+  );
+  const canRead = canManage;
+  const canCreate = canManage;
+  const canEdit = canManage;
   const [data, setData] = useState<
     Awaited<ReturnType<typeof fetchTicketRecurrences>> | null
   >(null);
