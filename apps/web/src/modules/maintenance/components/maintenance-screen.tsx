@@ -277,6 +277,38 @@ export function MaintenanceScreen({
     });
   }
 
+  async function runCatalogImageMigration() {
+    const count = catalogMigration?.embeddedImages ?? 0;
+    if (!count) return;
+
+    if (
+      !window.confirm(
+        `Migrar ${count} imagem(ns) Base64 dos catálogos para o storage? Os catálogos serão atualizados somente após cada imagem ser gravada com sucesso.`,
+      )
+    ) {
+      return;
+    }
+
+    setBusy('catalog-images-migration');
+    setFeedback(null);
+    try {
+      const result = await migrateCatalogImages();
+      await load();
+      setFeedback({
+        error: result.errors.length > 0,
+        text:
+          `Migração concluída: ${result.migratedCatalogs} catálogo(s), ` +
+          `${result.migratedImages} imagem(ns) gravada(s), ` +
+          `${result.reusedImages} reutilizada(s), ` +
+          `${result.skippedImages} ignorada(s).`,
+      });
+    } catch (reason) {
+      setFeedback({ text: errorMessage(reason), error: true });
+    } finally {
+      setBusy(null);
+    }
+  }
+
   const backupToolsReady = Boolean(status?.tools.dumpClient);
   const restoreToolsReady = Boolean(status?.tools.restoreClient);
   const storagePercent = useMemo(() => {
@@ -605,33 +637,7 @@ export function MaintenanceScreen({
             <button
               className={PRIMARY_BUTTON_CLASS}
               disabled={Boolean(busy) || !catalogMigration?.embeddedImages}
-              onClick={() => {
-                const count = catalogMigration?.embeddedImages ?? 0;
-                if (
-                  !window.confirm(
-                    `Migrar ${count} imagem(ns) Base64 dos catálogos para o storage? Os catálogos serão atualizados somente após cada imagem ser gravada com sucesso.`,
-                  )
-                ) {
-                  return;
-                }
-
-                void run(
-                  'catalog-images-migration',
-                  'Migração das imagens de catálogo concluída.',
-                  async () => {
-                    const result = await migrateCatalogImages();
-                    await load();
-                    setFeedback({
-                      error: result.errors.length > 0,
-                      text:
-                        `Migração concluída: ${result.migratedCatalogs} catálogo(s), ` +
-                        `${result.migratedImages} imagem(ns) gravada(s), ` +
-                        `${result.reusedImages} reutilizada(s), ` +
-                        `${result.skippedImages} ignorada(s).`,
-                    });
-                  },
-                );
-              }}
+              onClick={() => void runCatalogImageMigration()}
               type="button"
             >
               {busy === 'catalog-images-migration'
