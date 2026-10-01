@@ -260,9 +260,15 @@ export class CatalogImageStorageService implements OnModuleInit {
   }
 
   private uploadRoot(): string {
+    const cwd = process.cwd();
+    const workspaceRoot =
+      path.basename(cwd) === 'api' && path.basename(path.dirname(cwd)) === 'apps'
+        ? path.resolve(cwd, '../..')
+        : cwd;
+
     return path.resolve(
       process.env.CATALOG_UPLOAD_DIR?.trim() ||
-        path.join(process.cwd(), 'storage', 'uploads', 'catalog'),
+        path.join(workspaceRoot, 'storage', 'uploads', 'catalog'),
     );
   }
 
