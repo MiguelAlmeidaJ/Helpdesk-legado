@@ -160,3 +160,24 @@ export interface MaintenanceRepairResponse {
   runtimePrepared: boolean;
   missingRequiredTables: string[];
 }
+
+
+export interface MaintenanceCatalogImageMigrationStatus {
+  candidateCatalogs: number;
+  embeddedImages: number;
+  embeddedBytesEstimate: number;
+  storedImages: number;
+}
+
+export interface MaintenanceCatalogImageMigrationResponse {
+  candidateCatalogs: number;
+  migratedCatalogs: number;
+  migratedImages: number;
+  reusedImages: number;
+  skippedImages: number;
+  freedBase64Characters: number;
+  errors: Array<{
+    catalogId: number;
+    message: string;
+  }>;
+}
