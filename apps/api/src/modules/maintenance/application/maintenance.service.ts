@@ -452,6 +452,7 @@ const PROTECTED_NIVEL3_TABLES = new Set<string>([
 
   // Catálogos e cadastros financeiros.
   'catalogos',
+  'catalog_images',
   'catalogos_categoria',
   'cads_bancos',
   'cads_centro_custo',
