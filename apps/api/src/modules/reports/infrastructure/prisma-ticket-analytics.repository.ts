@@ -28,8 +28,12 @@ export class PrismaTicketAnalyticsRepository extends TicketAnalyticsRepository {
       if (filters.view !== 'time') where.push('a.status > 0');
       const params: unknown[] = [filters.startDate, filters.endDate];
       scope(where, params, visibility, 'a.cliente');
+      if (filters.clientIds.length) {
+        appendNumberInFilter(where, params, 'a.cliente', filters.clientIds);
+      }
+
       for (const [column, value] of [
-        ['a.cliente', filters.clientId],
+        ['a.cliente', filters.clientIds.length ? 0 : filters.clientId],
         ['a.local', filters.locationId],
         ['a.tecnico', filters.technicianId],
         ['a.categoria', filters.categoryId],
