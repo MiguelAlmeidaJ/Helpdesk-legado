@@ -64,6 +64,26 @@ test('every branch of unified analytics enforces company scope and exclusive end
   assert.equal(queries.filter(query => query.sql.includes('FROM locais')).length, 0);
 });
 
+test('analytics applies category and status filters as bound parameters', async () => {
+  const queries = [];
+  const database = { $queryRawUnsafe: async (sql, ...params) => {
+    queries.push({ sql, params });
+    return sql.includes('SELECT tipo_usuario') ? [{ tipo_usuario: 1 }] : [];
+  } };
+  const repository = new PrismaTicketAnalyticsRepository(database);
+  await repository.analytics(1, {
+    ...filters,
+    categoryId: 9,
+    status: 3,
+  });
+  const query = queries.find(item => item.sql.includes('AS openingDescription'));
+  assert.match(query.sql, /a\.categoria = \?/);
+  assert.match(query.sql, /a\.status = \?/);
+  assert.ok(query.params.includes(9));
+  assert.ok(query.params.includes(3));
+  assert.ok(!query.sql.includes('a.categoria = 9'));
+});
+
 test('time report preserves scheduled tickets and all levels when no level is selected', async () => {
   const queries = [];
   const repository = new PrismaTicketAnalyticsRepository({ $queryRawUnsafe: async sql => {
