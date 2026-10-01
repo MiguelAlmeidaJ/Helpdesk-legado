@@ -71,12 +71,37 @@ function extension(mimeType: string): string {
 
 @Injectable()
 export class CatalogImageStorageService implements OnModuleInit {
+  private schemaReady = false;
+
   constructor(
     @Inject(NIVEL3_DATABASE)
     private readonly database: Nivel3DatabaseClient,
   ) {}
 
   async onModuleInit(): Promise<void> {
+    await this.ensureSchema(false);
+  }
+
+  async ensureSchema(required = true): Promise<boolean> {
+    if (this.schemaReady) return true;
+
+    const parent = await this.database.$queryRawUnsafe<
+      Array<{ found: number | bigint | string }>
+    >(
+      `SELECT COUNT(*) AS found
+       FROM information_schema.TABLES
+       WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'catalogos'`,
+    );
+
+    if (Number(parent[0]?.found ?? 0) === 0) {
+      if (required) {
+        throw new NotFoundException(
+          'A tabela catalogos ainda não existe. Importe ou repare o banco antes de usar o storage.',
+        );
+      }
+      return false;
+    }
+
     await this.database.$executeRawUnsafe(
       `CREATE TABLE IF NOT EXISTS catalog_images (
          id INT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -101,6 +126,8 @@ export class CatalogImageStorageService implements OnModuleInit {
     );
 
     await mkdir(this.uploadRoot(), { recursive: true });
+    this.schemaReady = true;
+    return true;
   }
 
   async store(input: {
@@ -112,6 +139,7 @@ export class CatalogImageStorageService implements OnModuleInit {
     height?: number | null;
     catalogId?: number | null;
   }): Promise<CatalogImageUploadResponse> {
+    await this.ensureSchema();
     if (!input.data.length) {
       throw new BadRequestException('Imagem vazia.');
     }
@@ -222,6 +250,7 @@ export class CatalogImageStorageService implements OnModuleInit {
     createdBy: number;
     sector: number | null;
   }> {
+    await this.ensureSchema();
     const rows = await this.database.$queryRawUnsafe<ImageRow[]>(
       `SELECT ci.id, ci.catalog_id, ci.original_name, ci.stored_name,
               ci.storage_path, ci.mime_type, ci.size_bytes, ci.width,
@@ -263,6 +292,7 @@ export class CatalogImageStorageService implements OnModuleInit {
     html: string,
     actorUserId: number,
   ): Promise<void> {
+    await this.ensureSchema();
     const ids = new Set<number>();
     const regex = /(?:catalog\/images\/(\d+)\/content|catalog-images\/(\d+))/gi;
 
