@@ -12,12 +12,12 @@ const SOURCE_LABELS = { tickets: 'Atendimento', tasks: 'Tarefa', improvements: '
 const STATUS: Readonly<Record<number, string>> = TICKET_STATUS_LABELS;
 const TYPES: Record<number, string> = { 1: 'Falha', 2: 'Relacionamento', 3: 'Requisição de serviços', 4: 'Requisição de informação', 5: 'Monitoramento' };
 const METHODS: Record<number, string> = { 1: 'Remoto', 2: 'Presencial', 3: 'Remoto — plantão', 4: 'Presencial — plantão' };
-const EMPTY_CATALOG: TicketReportCatalog = { clients: [], locations: [], technicians: [] };
+const EMPTY_CATALOG: TicketReportCatalog = { clients: [], locations: [], technicians: [], categories: [] };
 
 export function TicketAnalyticsScreen({ currentUser, mode, initialSource = 'tickets', initialFilters = {} }: {
   currentUser: CurrentUserResponse; mode: 'analytics' | 'workload' | 'time'; initialSource?: TicketReportSource; initialFilters?: Record<string, string>;
 }) {
-  const [filters, setFilters] = useState({ startDate: '', endDate: '', clientId: '0', locationId: '0', technicianId: '0', level: '0', source: initialSource as string, ...initialFilters, view: mode === 'time' ? 'time' : 'analytics' });
+  const [filters, setFilters] = useState({ startDate: '', endDate: '', clientId: '0', locationId: '0', technicianId: '0', categoryId: '0', status: '0', level: '0', source: initialSource as string, ...initialFilters, view: mode === 'time' ? 'time' : 'analytics' });
   const [report, setReport] = useState<TicketAnalyticsResponse | null>(null);
   const [workload, setWorkload] = useState<TechnicianWorkloadResponse | null>(null);
   const [catalog, setCatalog] = useState<TicketReportCatalog>(EMPTY_CATALOG);
@@ -88,6 +88,8 @@ export function TicketAnalyticsScreen({ currentUser, mode, initialSource = 'tick
         <label><span>Cliente</span><select value={filters.clientId} onChange={e => setFilters({ ...filters, clientId: e.target.value, locationId: '0' })}><option value="0">Todos</option>{catalog.clients.map(row => <option key={row.id} value={row.id}>{row.name}</option>)}</select></label>
         <label><span>Local</span><select value={filters.locationId} onChange={e => setFilters({ ...filters, locationId: e.target.value })}><option value="0">Todos</option>{catalog.locations.map(row => <option key={row.id} value={row.id}>{row.name}</option>)}</select></label>
         <label><span>Técnico</span><select value={filters.technicianId} onChange={e => setFilters({ ...filters, technicianId: e.target.value })}><option value="0">Todos</option>{catalog.technicians.map(row => <option key={row.id} value={row.id}>{row.name}</option>)}</select></label>
+        <label><span>Categoria</span><select value={filters.categoryId} onChange={e => setFilters({ ...filters, categoryId: e.target.value })}><option value="0">Todas</option>{catalog.categories.map(row => <option key={row.id} value={row.id}>{row.name}</option>)}</select></label>
+        <label><span>Status</span><select value={filters.status} onChange={e => setFilters({ ...filters, status: e.target.value })}><option value="0">Todos</option>{Object.entries(STATUS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
         <label><span>Nível (atendimentos e melhorias)</span><select value={filters.level} onChange={e => setFilters({ ...filters, level: e.target.value })}>{[0, 1, 2, 3, 4, 5].map(level => <option key={level} value={level}>{level || 'Todos'}</option>)}</select></label>
         <div className={styles.actions}><button disabled={loading}>Filtrar</button></div>
       </form> : null}
