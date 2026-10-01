@@ -30,6 +30,16 @@ function hasPermission(user: AuthenticatedUser, permission: AppPermission): bool
   );
 }
 
+function canCreateSector(user: AuthenticatedUser, sector: CatalogSector): boolean {
+  if (hasPermission(user, AppPermission.CatalogManage)) return true;
+  return hasPermission(
+    user,
+    sector === 1
+      ? AppPermission.CatalogTiCreate
+      : AppPermission.CatalogDevOpsCreate,
+  );
+}
+
 function canEditSector(user: AuthenticatedUser, sector: CatalogSector): boolean {
   if (hasPermission(user, AppPermission.CatalogManage)) return true;
   return hasPermission(
@@ -44,10 +54,12 @@ function allowedCatalogSectors(user: AuthenticatedUser): CatalogSector[] {
   const sectors: CatalogSector[] = [];
   if (
     hasPermission(user, AppPermission.CatalogTiRead) ||
+    hasPermission(user, AppPermission.CatalogTiCreate) ||
     hasPermission(user, AppPermission.CatalogTiEdit)
   ) sectors.push(1);
   if (
     hasPermission(user, AppPermission.CatalogDevOpsRead) ||
+    hasPermission(user, AppPermission.CatalogDevOpsCreate) ||
     hasPermission(user, AppPermission.CatalogDevOpsEdit)
   ) sectors.push(2);
   return sectors;
@@ -118,9 +130,9 @@ export class CatalogService {
   }
 
   async create(user: AuthenticatedUser, input: CatalogWriteInput): Promise<CatalogDetailResponse> {
-    if (!hasPermission(user, AppPermission.CatalogManage)) {
+    if (!canCreateSector(user, input.sector)) {
       throw new ForbiddenException(
-        'Somente quem gerencia todos os catálogos pode criar registros.',
+        'Usuário sem permissão para criar catálogos neste setor.',
       );
     }
     await this.validateReferences(input);
@@ -145,11 +157,9 @@ export class CatalogService {
   }
 
   async archive(user: AuthenticatedUser, id: number): Promise<void> {
-    if (!hasPermission(user, AppPermission.CatalogManage)) {
-      throw new ForbiddenException('Somente quem gerencia todos os catálogos pode arquivar registros.');
-    }
-    const existing = await this.repository.findById(id, [1, 2]);
+    const existing = await this.repository.findById(id, this.sectors(user));
     if (!existing) throw new NotFoundException('Catálogo não encontrado.');
+    this.requireEditSector(user, existing.sector);
     await this.repository.archive(id);
   }
 
