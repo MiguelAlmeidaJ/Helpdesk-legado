@@ -7,7 +7,6 @@ import {
   useRef,
   useState,
 } from 'react';
-import { apiUrl } from '../../../shared/api/api-client';
 import { uploadCatalogImage } from '../api/catalog-api';
 
 type CatalogHtmlEditorProps = {
@@ -155,7 +154,7 @@ export function CatalogHtmlEditor({
         optimized.width,
         optimized.height,
       );
-      const contentUrl = apiUrl(uploaded.contentPath);
+      const contentUrl = `/catalog-images/${uploaded.id}`;
 
       editorRef.current?.focus();
       document.execCommand(
