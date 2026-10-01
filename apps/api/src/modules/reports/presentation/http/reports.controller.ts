@@ -34,6 +34,14 @@ import { GetTicketTechnicianTotalsReport } from '../../application/get-ticket-te
 
 import { parseReportQuery } from './report-query';
 
+function optionalReportId(value: string | undefined, field: string): number {
+  if (!value) return 0;
+  if (!/^\d+$/.test(value) || !Number.isSafeInteger(Number(value))) {
+    throw new BadRequestException(`${field} deve ser um inteiro positivo.`);
+  }
+  return Number(value);
+}
+
 @ApiTags('reports')
 @Controller('reports')
 @UseGuards(LegacySessionGuard, PermissionsGuard)
@@ -56,6 +64,10 @@ export class ReportsController {
     @Query('startDate') startDate?: string,
     @Query('endDate') endDate?: string,
     @Query('level') level?: string,
+    @Query('clientId') clientId?: string,
+    @Query('technicianId') technicianId?: string,
+    @Query('categoryId') categoryId?: string,
+    @Query('status') status?: string,
   ): Promise<TicketBreakdownReportResponse> {
     if (!user) {
       throw new UnauthorizedException('Usuário não autenticado.');
@@ -75,6 +87,10 @@ export class ReportsController {
       userId: user.id,
       mode: modeValue as TicketBreakdownMode,
       ...query,
+      clientId: optionalReportId(clientId, 'clientId'),
+      technicianId: optionalReportId(technicianId, 'technicianId'),
+      categoryId: optionalReportId(categoryId, 'categoryId'),
+      status: optionalReportId(status, 'status'),
     });
   }
 
@@ -97,6 +113,10 @@ export class ReportsController {
     @Query('startDate') startDate?: string,
     @Query('endDate') endDate?: string,
     @Query('level') level?: string,
+    @Query('clientId') clientId?: string,
+    @Query('technicianId') technicianId?: string,
+    @Query('categoryId') categoryId?: string,
+    @Query('status') status?: string,
   ): Promise<TicketCategoryTotalsReportResponse> {
     if (!user) {
       throw new UnauthorizedException('Usuário não autenticado.');
@@ -107,6 +127,10 @@ export class ReportsController {
     return this.getTicketCategoryTotalsReport.execute({
       userId: user.id,
       ...query,
+      clientId: optionalReportId(clientId, 'clientId'),
+      technicianId: optionalReportId(technicianId, 'technicianId'),
+      categoryId: optionalReportId(categoryId, 'categoryId'),
+      status: optionalReportId(status, 'status'),
     });
   }
 
@@ -129,6 +153,10 @@ export class ReportsController {
     @Query('startDate') startDate?: string,
     @Query('endDate') endDate?: string,
     @Query('level') level?: string,
+    @Query('clientId') clientId?: string,
+    @Query('technicianId') technicianId?: string,
+    @Query('categoryId') categoryId?: string,
+    @Query('status') status?: string,
   ): Promise<TicketClientTotalsReportResponse> {
     if (!user) {
       throw new UnauthorizedException('Usuário não autenticado.');
@@ -139,6 +167,10 @@ export class ReportsController {
     return this.getTicketClientTotalsReport.execute({
       userId: user.id,
       ...query,
+      clientId: optionalReportId(clientId, 'clientId'),
+      technicianId: optionalReportId(technicianId, 'technicianId'),
+      categoryId: optionalReportId(categoryId, 'categoryId'),
+      status: optionalReportId(status, 'status'),
     });
   }
 
@@ -161,6 +193,10 @@ export class ReportsController {
     @Query('startDate') startDate?: string,
     @Query('endDate') endDate?: string,
     @Query('level') level?: string,
+    @Query('clientId') clientId?: string,
+    @Query('technicianId') technicianId?: string,
+    @Query('categoryId') categoryId?: string,
+    @Query('status') status?: string,
   ): Promise<TicketTechnicianTotalsReportResponse> {
     if (!user) {
       throw new UnauthorizedException('Usuário não autenticado.');
@@ -171,6 +207,10 @@ export class ReportsController {
     return this.getTicketTechnicianTotalsReport.execute({
       userId: user.id,
       ...query,
+      clientId: optionalReportId(clientId, 'clientId'),
+      technicianId: optionalReportId(technicianId, 'technicianId'),
+      categoryId: optionalReportId(categoryId, 'categoryId'),
+      status: optionalReportId(status, 'status'),
     });
   }
 }
