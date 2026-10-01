@@ -40,8 +40,9 @@ export function TicketCategoryTotalsReportScreen({
   return (
     <TicketTotalsReportScreen
       currentUser={currentUser}
-      title="Total por categoria"
-      description="Conta os atendimentos abertos no período, desconsiderando os agendados e agrupando os níveis 1, 2 e 3 por categoria."
+      title="Relatório de atendimentos por Categoria"
+      description="Compare categorias por período e nível para identificar onde está a maior demanda."
+      chartTitle="Atendimentos por Categoria"
       emptyMessage="Nenhum atendimento por categoria encontrado para os filtros informados."
       loadErrorMessage="Não foi possível carregar o relatório por categoria."
       loadReport={loadCategoryReport}
