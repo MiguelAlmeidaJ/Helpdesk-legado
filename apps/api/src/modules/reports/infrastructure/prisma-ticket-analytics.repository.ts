@@ -28,8 +28,17 @@ export class PrismaTicketAnalyticsRepository extends TicketAnalyticsRepository {
       if (filters.view !== 'time') where.push('a.status > 0');
       const params: unknown[] = [filters.startDate, filters.endDate];
       scope(where, params, visibility, 'a.cliente');
-      for (const [column, value] of [['a.cliente', filters.clientId], ['a.local', filters.locationId], ['a.tecnico', filters.technicianId]] as const) {
-        if (value) { where.push(`${column} = ?`); params.push(value); }
+      for (const [column, value] of [
+        ['a.cliente', filters.clientId],
+        ['a.local', filters.locationId],
+        ['a.tecnico', filters.technicianId],
+        ['a.categoria', filters.categoryId],
+        ['a.status', filters.status],
+      ] as const) {
+        if (value) {
+          where.push(`${column} = ?`);
+          params.push(value);
+        }
       }
       // The unified legacy report filters TI levels and includes all tasks.
       if (source !== 'tasks' && (filters.view !== 'time' || filters.level)) appendNumberInFilter(where, params, 'a.nivel', filters.level ? [filters.level] : [1, 2, 3, 4, 5]);
@@ -73,7 +82,15 @@ export class PrismaTicketAnalyticsRepository extends TicketAnalyticsRepository {
       ? await this.database.$queryRawUnsafe<ReportOption[]>(`SELECT local_id AS id, local_nom AS name FROM locais WHERE local_clt = ? ORDER BY local_nom`, clientId) : [];
     const technicians = visibility.restrictClients && !visibility.clientIds.length ? [] : await this.database.$queryRawUnsafe<ReportOption[]>(
       `SELECT user_id AS id, user_nome AS name FROM usuarios WHERE user_sts = 1 AND user_funcao IN (5, 6) ORDER BY user_nome`);
-    return { clients, locations, technicians };
+    const categories = visibility.restrictClients && !visibility.clientIds.length
+      ? []
+      : await this.database.$queryRawUnsafe<ReportOption[]>(
+          `SELECT cat_id AS id, cat_nome AS name
+           FROM categorias
+           WHERE cat_sts = 1
+           ORDER BY cat_nome`,
+        );
+    return { clients, locations, technicians, categories };
   }
 
   async workload(userId: number): Promise<TechnicianWorkloadResponse> {
