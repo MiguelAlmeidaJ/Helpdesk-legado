@@ -32,12 +32,12 @@ import {
 @ApiTags('tickets')
 @Controller('tickets/projects')
 @UseGuards(LegacySessionGuard, DevOpsPermissionsGuard)
-@RequirePermissions(AppPermission.TicketsRead)
 @ApiSecurity(LEGACY_SESSION_SECURITY)
 export class TicketProjectsController {
   constructor(private readonly listTicketProjects: ListTicketProjects) {}
 
   @Get()
+  @RequirePermissions(AppPermission.DevOpsProjectsRead)
   @ApiOperation({ summary: 'Listar projetos da família de atendimentos' })
   projects(
     @CurrentUser() user: AuthenticatedUser | undefined,
@@ -55,6 +55,7 @@ export class TicketProjectsController {
   }
 
   @Get('tasks')
+  @RequirePermissions(AppPermission.DevOpsTasksRead)
   @ApiOperation({ summary: 'Listar tarefas de projetos' })
   tasks(
     @CurrentUser() user: AuthenticatedUser | undefined,
@@ -72,6 +73,7 @@ export class TicketProjectsController {
   }
 
   @Get(':projectId/tasks')
+  @RequirePermissions(AppPermission.DevOpsTasksRead)
   @ApiOperation({ summary: 'Listar tarefas de um projeto' })
   projectTasks(
     @CurrentUser() user: AuthenticatedUser | undefined,
