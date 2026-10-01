@@ -1,10 +1,13 @@
 "use client";
 
-import type {
-  CurrentUserResponse,
-  TicketBreakdownLevel,
-  TicketBreakdownMode,
-  TicketBreakdownReportResponse,
+import {
+  TICKET_STATUS_LABELS,
+  type CurrentUserResponse,
+  type TicketAnalyticsResponse,
+  type TicketBreakdownLevel,
+  type TicketBreakdownMode,
+  type TicketBreakdownReportResponse,
+  type TicketReportCatalog,
 } from '@helpdesk/contracts';
 import type { FormEvent } from 'react';
 import { useEffect, useMemo, useState } from 'react';
@@ -12,13 +15,19 @@ import { ApiError } from '../../../shared/api/api-client';
 import { AppPageHeader } from '../../../shared/navigation/app-page-header';
 import { DateRangePicker } from '../../../shared/ui/date-range-picker';
 import { appButtonClass } from '../../../shared/ui/button-styles';
-import { fetchTicketBreakdownReport } from '../api/reports-api';
+import {
+  fetchTicketBreakdownReport,
+  fetchTicketReportCatalog,
+  fetchTicketReportDetails,
+} from '../api/reports-api';
 import { ReportStackedBarChart } from './report-stacked-bar-chart';
 
 const PRIMARY = appButtonClass('primary');
 const SECONDARY = appButtonClass('secondary');
 const INPUT =
   'min-h-10 w-full rounded-lg border border-app-border-strong bg-app-surface px-3 text-sm text-app-text outline-none focus:border-app-brand focus:ring-3 focus:ring-[var(--app-brand-ring)]';
+const STATUS = TICKET_STATUS_LABELS as Readonly<Record<number, string>>;
+const PAGE_SIZE = 100;
 
 const CONFIG: Record<
   TicketBreakdownMode,
@@ -27,29 +36,25 @@ const CONFIG: Record<
     subtitle: string;
     chartTitle: string;
     entityLabel: string;
-    showDate: boolean;
   }
 > = {
   'client-daily': {
     title: 'Atendimentos diários por Cliente',
-    subtitle: 'Consulte o volume diário e acompanhe a distribuição por nível.',
+    subtitle: 'Consulte até 31 dias e filtre por cliente para analisar os chamados de cada dia.',
     chartTitle: 'Chamados por dia',
     entityLabel: 'Cliente',
-    showDate: true,
   },
   requester: {
     title: 'Atendimentos por Solicitante',
-    subtitle: 'Consulte o volume e a distribuição de chamados abertos por solicitante.',
+    subtitle: 'Consulte o volume e os chamados abertos por cada solicitante.',
     chartTitle: 'Totais por solicitante',
     entityLabel: 'Solicitante',
-    showDate: false,
   },
   'technician-daily': {
     title: 'Atendimentos diários por Técnico',
-    subtitle: 'Consulte o volume diário e acompanhe a distribuição por nível.',
+    subtitle: 'Consulte até 31 dias e filtre por técnico para analisar os chamados de cada dia.',
     chartTitle: 'Chamados por dia',
     entityLabel: 'Técnico',
-    showDate: true,
   },
 };
 
@@ -68,6 +73,11 @@ function formatDate(value: string | null): string {
   if (!value) return '—';
   const [year, month, day] = value.slice(0, 10).split('-');
   return `${day}/${month}/${year}`;
+}
+
+function formatOpened(value: string): string {
+  const [date = '', time = ''] = value.replace('T', ' ').split(' ');
+  return `${formatDate(date)} ${time.slice(0, 5)}`;
 }
 
 function errorMessage(reason: unknown): string {
@@ -93,26 +103,64 @@ export function TicketBreakdownReportScreen({
   const [startDate, setStartDate] = useState(firstDayOfMonth);
   const [endDate, setEndDate] = useState(today);
   const [level, setLevel] = useState<TicketBreakdownLevel>(0);
+  const [clientId, setClientId] = useState(0);
+  const [technicianId, setTechnicianId] = useState(0);
+  const [categoryId, setCategoryId] = useState(0);
+  const [status, setStatus] = useState(0);
+  const [catalog, setCatalog] = useState<TicketReportCatalog>({
+    clients: [],
+    locations: [],
+    technicians: [],
+    categories: [],
+  });
   const [applied, setApplied] = useState({
     startDate: firstDayOfMonth(),
     endDate: today(),
     level: 0 as TicketBreakdownLevel,
+    clientId: 0,
+    technicianId: 0,
+    categoryId: 0,
+    status: 0,
   });
   const [result, setResult] =
     useState<TicketBreakdownReportResponse | null>(null);
+  const [details, setDetails] = useState<TicketAnalyticsResponse | null>(null);
+  const [detailPage, setDetailPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
     let active = true;
+    fetchTicketReportCatalog()
+      .then((response) => {
+        if (active) setCatalog(response);
+      })
+      .catch(() => undefined);
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let active = true;
     setLoading(true);
     setError('');
-    fetchTicketBreakdownReport(mode, applied)
-      .then((response) => {
-        if (active) setResult(response);
+    Promise.all([
+      fetchTicketBreakdownReport(mode, applied),
+      fetchTicketReportDetails(applied),
+    ])
+      .then(([breakdown, detailResponse]) => {
+        if (!active) return;
+        setResult(breakdown);
+        setDetails(detailResponse);
+        setDetailPage(1);
       })
       .catch((reason) => {
-        if (active) setError(errorMessage(reason));
+        if (active) {
+          setResult(null);
+          setDetails(null);
+          setError(errorMessage(reason));
+        }
       })
       .finally(() => {
         if (active) setLoading(false);
@@ -126,7 +174,7 @@ export function TicketBreakdownReportScreen({
     if (!result) return [];
 
     if (mode === 'requester') {
-      return result.rows.slice(0, 18).map((row) => ({
+      return result.rows.slice(0, 24).map((row) => ({
         key: row.key,
         label: row.label,
         level1: row.level1,
@@ -165,9 +213,30 @@ export function TicketBreakdownReportScreen({
       }));
   }, [mode, result]);
 
+  const totalPages = Math.max(
+    1,
+    Math.ceil((details?.rows.length ?? 0) / PAGE_SIZE),
+  );
+  const detailRows = useMemo(
+    () =>
+      (details?.rows ?? []).slice(
+        (detailPage - 1) * PAGE_SIZE,
+        detailPage * PAGE_SIZE,
+      ),
+    [detailPage, details],
+  );
+
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setApplied({ startDate, endDate, level });
+    setApplied({
+      startDate,
+      endDate,
+      level,
+      clientId,
+      technicianId,
+      categoryId,
+      status,
+    });
   }
 
   function clear() {
@@ -175,10 +244,18 @@ export function TicketBreakdownReportScreen({
       startDate: firstDayOfMonth(),
       endDate: today(),
       level: 0 as TicketBreakdownLevel,
+      clientId: 0,
+      technicianId: 0,
+      categoryId: 0,
+      status: 0,
     };
     setStartDate(next.startDate);
     setEndDate(next.endDate);
     setLevel(0);
+    setClientId(0);
+    setTechnicianId(0);
+    setCategoryId(0);
+    setStatus(0);
     setApplied(next);
   }
 
@@ -190,12 +267,12 @@ export function TicketBreakdownReportScreen({
         user={currentUser}
       />
 
-      <div className="mx-auto w-full max-w-[1500px] px-5 py-5 max-sm:px-3.5">
+      <div className="mx-auto w-full max-w-[1550px] px-5 py-5 max-sm:px-3.5">
         <form
-          className="mb-4 grid grid-cols-[minmax(300px,1.5fr)_180px_auto] items-end gap-3 rounded-2xl border border-app-border bg-app-surface p-4 shadow-sm max-[760px]:grid-cols-1"
+          className="mb-4 grid grid-cols-6 items-end gap-3 rounded-2xl border border-app-border bg-app-surface p-4 shadow-sm max-[1200px]:grid-cols-3 max-[720px]:grid-cols-1"
           onSubmit={submit}
         >
-          <div>
+          <div className="col-span-2 max-[1200px]:col-span-3 max-[720px]:col-span-1">
             <span className="mb-1.5 block text-xs font-bold text-app-muted">
               Período
             </span>
@@ -211,15 +288,32 @@ export function TicketBreakdownReportScreen({
           </div>
 
           <label className="grid gap-1.5 text-xs font-bold text-app-muted">
+            Cliente
+            <select className={INPUT} disabled={loading} onChange={(event) => setClientId(Number(event.target.value))} value={clientId}>
+              <option value={0}>Todos</option>
+              {catalog.clients.map((row) => <option key={row.id} value={row.id}>{row.name}</option>)}
+            </select>
+          </label>
+
+          <label className="grid gap-1.5 text-xs font-bold text-app-muted">
+            Técnico
+            <select className={INPUT} disabled={loading} onChange={(event) => setTechnicianId(Number(event.target.value))} value={technicianId}>
+              <option value={0}>Todos</option>
+              {catalog.technicians.map((row) => <option key={row.id} value={row.id}>{row.name}</option>)}
+            </select>
+          </label>
+
+          <label className="grid gap-1.5 text-xs font-bold text-app-muted">
+            Categoria
+            <select className={INPUT} disabled={loading} onChange={(event) => setCategoryId(Number(event.target.value))} value={categoryId}>
+              <option value={0}>Todas</option>
+              {catalog.categories.map((row) => <option key={row.id} value={row.id}>{row.name}</option>)}
+            </select>
+          </label>
+
+          <label className="grid gap-1.5 text-xs font-bold text-app-muted">
             Nível
-            <select
-              className={INPUT}
-              disabled={loading}
-              onChange={(event) =>
-                setLevel(Number(event.target.value) as TicketBreakdownLevel)
-              }
-              value={level}
-            >
+            <select className={INPUT} disabled={loading} onChange={(event) => setLevel(Number(event.target.value) as TicketBreakdownLevel)} value={level}>
               <option value="0">Todos</option>
               <option value="1">Nível 1</option>
               <option value="2">Nível 2</option>
@@ -227,26 +321,26 @@ export function TicketBreakdownReportScreen({
             </select>
           </label>
 
-          <div className="flex flex-wrap gap-2">
+          <label className="grid gap-1.5 text-xs font-bold text-app-muted">
+            Status
+            <select className={INPUT} disabled={loading} onChange={(event) => setStatus(Number(event.target.value))} value={status}>
+              <option value={0}>Todos</option>
+              {Object.entries(STATUS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+            </select>
+          </label>
+
+          <div className="col-span-5 flex justify-end gap-2 max-[1200px]:col-span-2 max-[720px]:col-span-1">
             <button className={PRIMARY} disabled={loading} type="submit">
               {loading ? 'Atualizando…' : 'Filtrar'}
             </button>
-            <button
-              className={SECONDARY}
-              disabled={loading}
-              onClick={clear}
-              type="button"
-            >
+            <button className={SECONDARY} disabled={loading} onClick={clear} type="button">
               Limpar
             </button>
           </div>
         </form>
 
         {error ? (
-          <div
-            className="mb-4 rounded-xl border border-app-danger-border bg-app-danger-soft px-4 py-3 text-sm text-app-danger"
-            role="alert"
-          >
+          <div className="mb-4 rounded-xl border border-app-danger-border bg-app-danger-soft px-4 py-3 text-sm text-app-danger" role="alert">
             {error}
           </div>
         ) : null}
@@ -255,39 +349,25 @@ export function TicketBreakdownReportScreen({
           <div className="mb-4 grid grid-cols-2 gap-3 max-sm:grid-cols-1">
             <div className="rounded-2xl border border-app-border bg-app-surface p-4 text-center shadow-sm">
               <span className="text-xs text-app-muted">Atendimentos no período</span>
-              <strong className="mt-1 block text-2xl">
-                {(result?.total ?? 0).toLocaleString('pt-BR')}
-              </strong>
+              <strong className="mt-1 block text-2xl">{(result?.total ?? 0).toLocaleString('pt-BR')}</strong>
             </div>
             <div className="rounded-2xl border border-app-border bg-app-surface p-4 text-center shadow-sm">
               <span className="text-xs text-app-muted">Solicitantes</span>
-              <strong className="mt-1 block text-2xl">
-                {(result?.rows.length ?? 0).toLocaleString('pt-BR')}
-              </strong>
+              <strong className="mt-1 block text-2xl">{(result?.rows.length ?? 0).toLocaleString('pt-BR')}</strong>
             </div>
           </div>
         ) : null}
 
         <section className="mb-4 overflow-hidden rounded-2xl border border-app-border bg-app-surface shadow-sm">
           <header className="flex flex-wrap items-center justify-between gap-3 border-b border-app-border-soft px-5 py-4">
-            <div>
-              <span className="text-[11px] font-extrabold uppercase tracking-[0.08em] text-app-brand">
-                Relatório
-              </span>
-              <h2 className="m-0 mt-1 text-lg font-extrabold">
-                {config.chartTitle}
-              </h2>
-            </div>
+            <h2 className="m-0 text-lg font-extrabold">{config.chartTitle}</h2>
             <span className="rounded-full border border-app-brand/30 bg-app-brand-soft px-3 py-1.5 text-xs font-extrabold text-app-brand">
               Total selecionado: {(result?.total ?? 0).toLocaleString('pt-BR')}
             </span>
           </header>
-
           <div className="p-4">
             {loading && !result ? (
-              <div className="grid min-h-[360px] place-items-center text-sm text-app-muted">
-                Carregando relatório…
-              </div>
+              <div className="grid min-h-[360px] place-items-center text-sm text-app-muted">Carregando relatório…</div>
             ) : (
               <ReportStackedBarChart
                 emptyMessage="Nenhum atendimento encontrado no período informado."
@@ -297,73 +377,58 @@ export function TicketBreakdownReportScreen({
           </div>
         </section>
 
-        {mode === 'requester' ? (
-          <section className="overflow-hidden rounded-2xl border border-app-border bg-app-surface shadow-sm">
-            <header className="border-b border-app-border-soft px-5 py-4">
-              <h2 className="m-0 text-base font-extrabold">Totais por solicitante</h2>
-            </header>
-            <div className="max-h-[560px] overflow-auto">
-              <table className="w-full min-w-[760px] border-collapse">
-                <thead className="sticky top-0 bg-app-surface-muted">
-                  <tr>
-                    <th className="px-4 py-3 text-left text-xs font-extrabold uppercase text-app-muted">
-                      Solicitante
-                    </th>
-                    <th className="px-4 py-3 text-right text-xs font-extrabold uppercase text-app-muted">N1</th>
-                    <th className="px-4 py-3 text-right text-xs font-extrabold uppercase text-app-muted">N2</th>
-                    <th className="px-4 py-3 text-right text-xs font-extrabold uppercase text-app-muted">N3</th>
-                    <th className="px-4 py-3 text-right text-xs font-extrabold uppercase text-app-muted">Total</th>
+        <section className="overflow-hidden rounded-2xl border border-app-border bg-app-surface shadow-sm">
+          <header className="flex items-center justify-between gap-3 border-b border-app-border-soft px-5 py-4">
+            <h2 className="m-0 text-base font-extrabold">
+              {mode === 'requester' ? 'Solicitações do período' : 'Chamados do período'}
+            </h2>
+            <span className="text-xs font-bold text-app-muted">{(details?.total ?? 0).toLocaleString('pt-BR')} chamado(s)</span>
+          </header>
+
+          <div className="max-h-[620px] overflow-auto">
+            <table className="w-full min-w-[1180px] border-collapse">
+              <thead className="sticky top-0 z-10 bg-app-surface-muted">
+                <tr>
+                  <th className="px-3 py-3 text-left text-xs font-extrabold uppercase text-app-muted">Chamado</th>
+                  <th className="px-3 py-3 text-left text-xs font-extrabold uppercase text-app-muted">Abertura</th>
+                  <th className="px-3 py-3 text-left text-xs font-extrabold uppercase text-app-muted">Cliente / solicitante</th>
+                  <th className="px-3 py-3 text-left text-xs font-extrabold uppercase text-app-muted">Técnico</th>
+                  <th className="px-3 py-3 text-left text-xs font-extrabold uppercase text-app-muted">Categoria</th>
+                  <th className="px-3 py-3 text-center text-xs font-extrabold uppercase text-app-muted">Nível</th>
+                  <th className="px-3 py-3 text-left text-xs font-extrabold uppercase text-app-muted">Status</th>
+                  <th className="px-3 py-3 text-left text-xs font-extrabold uppercase text-app-muted">Descrição</th>
+                </tr>
+              </thead>
+              <tbody>
+                {detailRows.map((row) => (
+                  <tr className="border-t border-app-border-soft align-top hover:bg-app-surface-hover" key={row.id}>
+                    <td className="px-3 py-3 text-sm font-bold text-app-brand">#{row.id}</td>
+                    <td className="whitespace-nowrap px-3 py-3 text-sm">{formatOpened(row.openedAt)}</td>
+                    <td className="px-3 py-3 text-sm"><strong className="block">{row.clientName}</strong><span className="text-xs text-app-muted">{row.requesterName || 'Não informado'}</span></td>
+                    <td className="px-3 py-3 text-sm">{row.technicianName}</td>
+                    <td className="px-3 py-3 text-sm">{row.categoryName || 'Sem categoria'}</td>
+                    <td className="px-3 py-3 text-center text-sm font-bold">N{row.level}</td>
+                    <td className="px-3 py-3 text-sm">{STATUS[row.status] ?? row.status}</td>
+                    <td className="max-w-[460px] px-3 py-3 text-sm leading-5">{row.openingDescription}</td>
                   </tr>
-                </thead>
-                <tbody>
-                  {(result?.rows ?? []).map((row) => (
-                    <tr className="border-t border-app-border-soft hover:bg-app-surface-hover" key={row.key}>
-                      <td className="px-4 py-3 text-sm font-semibold">{row.label}</td>
-                      <td className="px-4 py-3 text-right text-sm">{row.level1}</td>
-                      <td className="px-4 py-3 text-right text-sm">{row.level2}</td>
-                      <td className="px-4 py-3 text-right text-sm">{row.level3}</td>
-                      <td className="px-4 py-3 text-right text-sm font-extrabold">{row.total}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </section>
-        ) : (
-          <section className="overflow-hidden rounded-2xl border border-app-border bg-app-surface shadow-sm">
-            <header className="border-b border-app-border-soft px-5 py-4">
-              <h2 className="m-0 text-base font-extrabold">
-                Detalhamento por {config.entityLabel.toLowerCase()}
-              </h2>
-            </header>
-            <div className="max-h-[520px] overflow-auto">
-              <table className="w-full min-w-[820px] border-collapse">
-                <thead className="sticky top-0 bg-app-surface-muted">
-                  <tr>
-                    <th className="px-4 py-3 text-left text-xs font-extrabold uppercase text-app-muted">Data</th>
-                    <th className="px-4 py-3 text-left text-xs font-extrabold uppercase text-app-muted">{config.entityLabel}</th>
-                    <th className="px-4 py-3 text-right text-xs font-extrabold uppercase text-app-muted">N1</th>
-                    <th className="px-4 py-3 text-right text-xs font-extrabold uppercase text-app-muted">N2</th>
-                    <th className="px-4 py-3 text-right text-xs font-extrabold uppercase text-app-muted">N3</th>
-                    <th className="px-4 py-3 text-right text-xs font-extrabold uppercase text-app-muted">Total</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {(result?.rows ?? []).map((row) => (
-                    <tr className="border-t border-app-border-soft hover:bg-app-surface-hover" key={row.key}>
-                      <td className="px-4 py-3 text-sm text-app-muted-strong">{formatDate(row.date)}</td>
-                      <td className="px-4 py-3 text-sm font-semibold">{row.label}</td>
-                      <td className="px-4 py-3 text-right text-sm">{row.level1}</td>
-                      <td className="px-4 py-3 text-right text-sm">{row.level2}</td>
-                      <td className="px-4 py-3 text-right text-sm">{row.level3}</td>
-                      <td className="px-4 py-3 text-right text-sm font-extrabold">{row.total}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </section>
-        )}
+                ))}
+              </tbody>
+            </table>
+            {!loading && !detailRows.length ? (
+              <div className="p-8 text-center text-sm text-app-muted">Nenhum chamado para os filtros selecionados.</div>
+            ) : null}
+          </div>
+
+          {(details?.rows.length ?? 0) > PAGE_SIZE ? (
+            <footer className="flex items-center justify-between gap-3 border-t border-app-border-soft px-4 py-3">
+              <span className="text-xs text-app-muted">Página {detailPage} de {totalPages}</span>
+              <div className="flex gap-2">
+                <button className={SECONDARY} disabled={detailPage <= 1} onClick={() => setDetailPage((page) => Math.max(1, page - 1))} type="button">Anterior</button>
+                <button className={SECONDARY} disabled={detailPage >= totalPages} onClick={() => setDetailPage((page) => Math.min(totalPages, page + 1))} type="button">Próxima</button>
+              </div>
+            </footer>
+          ) : null}
+        </section>
       </div>
     </main>
   );
