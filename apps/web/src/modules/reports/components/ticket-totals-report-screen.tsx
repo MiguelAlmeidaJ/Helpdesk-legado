@@ -11,12 +11,17 @@ import { ApiError } from '../../../shared/api/api-client';
 import { AppPageHeader } from '../../../shared/navigation/app-page-header';
 import { DateRangePicker } from '../../../shared/ui/date-range-picker';
 import { appButtonClass } from '../../../shared/ui/button-styles';
+import { SearchSelect } from '../../../shared/ui/search-select';
 import {
   fetchTicketReportCatalog,
   fetchTicketReportDetails,
 } from '../api/reports-api';
 import { downloadCsv } from '../lib/report-export';
-import { ReportStackedBarChart } from './report-stacked-bar-chart';
+import {
+  ReportChartTypePicker,
+  ReportChartView,
+  type ReportChartType,
+} from './report-chart-view';
 
 export type TicketTotalsLevel = 0 | 1 | 2 | 3;
 
@@ -25,6 +30,7 @@ export interface TicketTotalsReportFilters {
   endDate?: string;
   level?: TicketTotalsLevel;
   clientId?: number;
+  clientIds?: number[];
   technicianId?: number;
   categoryId?: number;
   status?: number;
@@ -63,8 +69,6 @@ interface TicketTotalsReportScreenProps {
 
 const PRIMARY = appButtonClass('primary');
 const SECONDARY = appButtonClass('secondary');
-const CONTROL =
-  'min-h-10 w-full rounded-lg border border-app-border-strong bg-app-surface px-3 text-sm text-app-text outline-none transition focus:border-app-brand focus:ring-3 focus:ring-[var(--app-brand-ring)]';
 const STATUS = TICKET_STATUS_LABELS as Readonly<Record<number, string>>;
 const PAGE_SIZE = 100;
 
@@ -96,11 +100,12 @@ export function TicketTotalsReportScreen({
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [level, setLevel] = useState<TicketTotalsLevel>(0);
-  const [clientId, setClientId] = useState(0);
+  const [clientIds, setClientIds] = useState<string[]>([]);
   const [technicianId, setTechnicianId] = useState(0);
   const [categoryId, setCategoryId] = useState(0);
   const [status, setStatus] = useState(0);
   const [detailPage, setDetailPage] = useState(1);
+  const [chartType, setChartType] = useState<ReportChartType>('bar');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -126,7 +131,8 @@ export function TicketTotalsReportScreen({
           startDate: response.period.startDate,
           endDate: response.period.endDate,
           level: response.level,
-          clientId: filters.clientId ?? 0,
+          clientId: 0,
+          clientIds: filters.clientIds ?? [],
           technicianId: filters.technicianId ?? 0,
           categoryId: filters.categoryId ?? 0,
           status: filters.status ?? 0,
@@ -138,7 +144,7 @@ export function TicketTotalsReportScreen({
         setStartDate(response.period.startDate);
         setEndDate(response.period.endDate);
         setLevel(response.level);
-        setClientId(effectiveFilters.clientId);
+        setClientIds(effectiveFilters.clientIds.map(String));
         setTechnicianId(effectiveFilters.technicianId);
         setCategoryId(effectiveFilters.categoryId);
         setStatus(effectiveFilters.status);
@@ -169,7 +175,10 @@ export function TicketTotalsReportScreen({
       level: ([0, 1, 2, 3].includes(selectedLevel)
         ? selectedLevel
         : 0) as TicketTotalsLevel,
-      clientId: Number(query.get('clientId') ?? 0),
+      clientIds: (query.get('clientIds') ?? query.get('clientId') ?? '')
+        .split(',')
+        .map((value) => Number(value))
+        .filter((value) => Number.isSafeInteger(value) && value > 0),
       technicianId: Number(query.get('technicianId') ?? 0),
       categoryId: Number(query.get('categoryId') ?? 0),
       status: Number(query.get('status') ?? 0),
@@ -207,7 +216,7 @@ export function TicketTotalsReportScreen({
       startDate,
       endDate,
       level,
-      clientId,
+      clientIds: clientIds.map(Number),
       technicianId,
       categoryId,
       status,
@@ -220,7 +229,7 @@ export function TicketTotalsReportScreen({
   }
 
   function clear() {
-    setClientId(0);
+    setClientIds([]);
     setTechnicianId(0);
     setCategoryId(0);
     setStatus(0);
@@ -270,46 +279,82 @@ export function TicketTotalsReportScreen({
 
           <label className="grid gap-1.5 text-xs font-bold text-app-muted">
             Nível
-            <select className={CONTROL} disabled={loading} onChange={(event) => setLevel(Number(event.target.value) as TicketTotalsLevel)} value={level}>
-              <option value={0}>Todos</option>
-              <option value={1}>Nível 1</option>
-              <option value={2}>Nível 2</option>
-              <option value={3}>Nível 3</option>
-            </select>
+            <SearchSelect
+              disabled={loading}
+              options={[
+                { value: '1', label: 'Nível 1' },
+                { value: '2', label: 'Nível 2' },
+                { value: '3', label: 'Nível 3' },
+              ]}
+              onChange={(values) =>
+                setLevel(Number(values[0] ?? 0) as TicketTotalsLevel)
+              }
+              placeholder="Todos"
+              searchable={false}
+              value={level ? [String(level)] : []}
+            />
           </label>
 
           <label className="grid gap-1.5 text-xs font-bold text-app-muted">
-            Cliente
-            <select className={CONTROL} disabled={loading} onChange={(event) => setClientId(Number(event.target.value))} value={clientId}>
-              <option value={0}>Todos</option>
-              {catalog.clients.map((row) => <option key={row.id} value={row.id}>{row.name}</option>)}
-            </select>
+            Clientes
+            <SearchSelect
+              disabled={loading}
+              multiple
+              multipleLabel="clientes selecionados"
+              onChange={setClientIds}
+              options={catalog.clients.map((row) => ({
+                value: String(row.id),
+                label: row.name,
+              }))}
+              placeholder="Todos os clientes"
+              searchPlaceholder="Pesquisar cliente..."
+              value={clientIds}
+            />
           </label>
 
           <label className="grid gap-1.5 text-xs font-bold text-app-muted">
             Técnico
-            <select className={CONTROL} disabled={loading} onChange={(event) => setTechnicianId(Number(event.target.value))} value={technicianId}>
-              <option value={0}>Todos</option>
-              {catalog.technicians.map((row) => <option key={row.id} value={row.id}>{row.name}</option>)}
-            </select>
+            <SearchSelect
+              disabled={loading}
+              onChange={(values) => setTechnicianId(Number(values[0] ?? 0))}
+              options={catalog.technicians.map((row) => ({
+                value: String(row.id),
+                label: row.name,
+              }))}
+              placeholder="Todos os técnicos"
+              searchPlaceholder="Pesquisar técnico..."
+              value={technicianId ? [String(technicianId)] : []}
+            />
           </label>
 
           <label className="grid gap-1.5 text-xs font-bold text-app-muted">
             Categoria
-            <select className={CONTROL} disabled={loading} onChange={(event) => setCategoryId(Number(event.target.value))} value={categoryId}>
-              <option value={0}>Todas</option>
-              {catalog.categories.map((row) => <option key={row.id} value={row.id}>{row.name}</option>)}
-            </select>
+            <SearchSelect
+              disabled={loading}
+              onChange={(values) => setCategoryId(Number(values[0] ?? 0))}
+              options={catalog.categories.map((row) => ({
+                value: String(row.id),
+                label: row.name,
+              }))}
+              placeholder="Todas as categorias"
+              searchPlaceholder="Pesquisar categoria..."
+              value={categoryId ? [String(categoryId)] : []}
+            />
           </label>
 
           <label className="grid gap-1.5 text-xs font-bold text-app-muted">
             Status
-            <select className={CONTROL} disabled={loading} onChange={(event) => setStatus(Number(event.target.value))} value={status}>
-              <option value={0}>Todos</option>
-              {Object.entries(STATUS).map(([value, label]) => (
-                <option key={value} value={value}>{label}</option>
-              ))}
-            </select>
+            <SearchSelect
+              disabled={loading}
+              onChange={(values) => setStatus(Number(values[0] ?? 0))}
+              options={Object.entries(STATUS).map(([value, label]) => ({
+                value,
+                label,
+              }))}
+              placeholder="Todos os status"
+              searchable={false}
+              value={status ? [String(status)] : []}
+            />
           </label>
 
           <div className="col-span-5 flex flex-wrap justify-end gap-2 max-[1200px]:col-span-2 max-[720px]:col-span-1">
@@ -335,6 +380,10 @@ export function TicketTotalsReportScreen({
               <h2 className="m-0 mt-1 text-lg font-extrabold">{chartTitle}</h2>
             </div>
             <div className="flex flex-wrap items-center gap-2 print:hidden">
+              <ReportChartTypePicker
+                onChange={setChartType}
+                value={chartType}
+              />
               <span className="rounded-full border border-app-brand/30 bg-app-brand-soft px-3 py-1.5 text-xs font-extrabold text-app-brand">
                 Total selecionado: {(data?.total ?? 0).toLocaleString('pt-BR')}
               </span>
@@ -346,7 +395,11 @@ export function TicketTotalsReportScreen({
             {loading && !data ? (
               <div className="grid min-h-[360px] place-items-center text-sm text-app-muted">Carregando relatório…</div>
             ) : (
-              <ReportStackedBarChart rows={chartRows} emptyMessage={emptyMessage} />
+              <ReportChartView
+                emptyMessage={emptyMessage}
+                rows={chartRows}
+                type={chartType}
+              />
             )}
           </div>
         </section>
