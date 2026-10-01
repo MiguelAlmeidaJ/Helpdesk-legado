@@ -1346,6 +1346,16 @@ export class MaintenanceService implements OnApplicationBootstrap {
   }
 
   async catalogImageMigrationStatus(): Promise<MaintenanceCatalogImageMigrationStatus> {
+    const storageReady = await this.catalogImages.ensureSchema(false);
+    if (!storageReady) {
+      return {
+        candidateCatalogs: 0,
+        embeddedImages: 0,
+        embeddedBytesEstimate: 0,
+        storedImages: 0,
+      };
+    }
+
     const rows = await this.nivel3.$queryRawUnsafe<CatalogEmbeddedImageRow[]>(
       `SELECT id, conteudo
        FROM catalogos
@@ -1378,6 +1388,7 @@ export class MaintenanceService implements OnApplicationBootstrap {
   async migrateCatalogImages(
     actorUserId: number,
   ): Promise<MaintenanceCatalogImageMigrationResponse> {
+    await this.catalogImages.ensureSchema();
     const operationId = await this.beginOperation(
       'catalog-images-migration',
       'nivel3',
