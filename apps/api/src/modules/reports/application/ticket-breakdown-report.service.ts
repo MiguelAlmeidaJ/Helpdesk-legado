@@ -28,6 +28,7 @@ export interface TicketBreakdownInput {
   endDate: string;
   level: TicketBreakdownLevel;
   clientId: number;
+  clientIds: number[];
   technicianId: number;
   categoryId: number;
   status: number;
@@ -65,8 +66,12 @@ export class TicketBreakdownReportService {
       appendNumberInFilter(where, params, 'a.cliente', visibility.clientIds);
     }
 
+    if (input.clientIds.length) {
+      appendNumberInFilter(where, params, 'a.cliente', input.clientIds);
+    }
+
     for (const [column, value] of [
-      ['a.cliente', input.clientId],
+      ['a.cliente', input.clientIds.length ? 0 : input.clientId],
       ['a.tecnico', input.technicianId],
       ['a.categoria', input.categoryId],
       ['a.status', input.status],
