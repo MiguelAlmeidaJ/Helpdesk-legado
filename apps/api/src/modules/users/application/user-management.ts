@@ -94,7 +94,7 @@ export class UserManagement {
     if (!(await this.users.update(
       id,
       normalizedInput,
-      (canAssignRole && !protectedGlobalAdmin) || input.type === 2,
+      !protectedGlobalAdmin && (canAssignRole || input.type === 2),
       actorId,
     ))) {
       throw new NotFoundException('Usuário não encontrado.');
