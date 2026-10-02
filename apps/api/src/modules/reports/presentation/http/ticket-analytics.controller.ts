@@ -1,6 +1,6 @@
 import { BadRequestException, Controller, Get, Query, UnauthorizedException, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
-import { AppPermission, type TicketAnalyticsFilters, type TicketReportSource } from '@helpdesk/contracts';
+import { AppPermission, type TicketAnalyticsFilters, type TicketReportSource, type TicketTechnicianTimingFilters } from '@helpdesk/contracts';
 import { LEGACY_SESSION_SECURITY } from '../../../../core/openapi/openapi.constants';
 import type { AuthenticatedUser } from '../../../access/domain/authenticated-user';
 import { CurrentUser } from '../../../access/presentation/http/current-user.decorator';
@@ -59,6 +59,34 @@ export function analyticsFilters(query: Record<string, unknown>): TicketAnalytic
   };
 }
 
+function technicianTimingFilters(
+  query: Record<string, unknown>,
+): TicketTechnicianTimingFilters {
+  for (const field of ['startDate', 'endDate']) {
+    if (query[field] !== undefined && typeof query[field] !== 'string') {
+      throw new BadRequestException(`${field} inválido.`);
+    }
+  }
+  const dates = parseReportQuery(
+    query.startDate as string | undefined,
+    query.endDate as string | undefined,
+  );
+  const level = reportId(query.level, 'level');
+  if (level > 5) {
+    throw new BadRequestException('level deve estar entre 0 e 5.');
+  }
+  return {
+    startDate: dates.startDate,
+    endDate: dates.endDate,
+    clientIds: reportIds(query.clientIds ?? query.clientId, 'clientIds'),
+    technicianIds: reportIds(
+      query.technicianIds ?? query.technicianId,
+      'technicianIds',
+    ),
+    level,
+  };
+}
+
 export function reportUser(user: AuthenticatedUser | undefined): number {
   if (!user) throw new UnauthorizedException('Usuário não autenticado.');
   return user.id;
@@ -82,6 +110,18 @@ export class TicketAnalyticsController {
   @ApiOperation({ summary: 'Clientes, locais, técnicos e categorias disponíveis para relatórios' })
   catalog(@CurrentUser() user: AuthenticatedUser | undefined, @Query('clientId') clientId?: string) {
     return this.reports.catalog(reportUser(user), reportId(clientId, 'clientId'));
+  }
+
+  @Get('technician-timing')
+  @ApiOperation({ summary: 'Tempo de aceite e conclusão dos atendimentos por técnico' })
+  technicianTiming(
+    @CurrentUser() user: AuthenticatedUser | undefined,
+    @Query() query: Record<string, unknown>,
+  ) {
+    return this.reports.technicianTiming(
+      reportUser(user),
+      technicianTimingFilters(query),
+    );
   }
 
   @Get('workload')
