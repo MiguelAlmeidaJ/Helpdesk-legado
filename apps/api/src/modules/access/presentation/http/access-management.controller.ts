@@ -105,9 +105,19 @@ export class AccessManagementController {
   @RequirePermissions(AppPermission.UsersManageAccess)
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Reordenar tipos de usuário' })
-  async reorder(@Body() body: unknown): Promise<void> {
+  async reorder(
+    @Body() body: unknown,
+    @CurrentUser() actor: AuthenticatedUser | undefined,
+  ): Promise<void> {
+    if (!actor) throw new BadRequestException('Usuário não autenticado.');
     const value = objectBody(body);
-    await this.access.reorder(idList(value.roleIds, 'roleIds'));
+    const isSystemAdmin = actor.grants.some(
+      (grant) => grant.permission === AppPermission.SystemAdmin,
+    );
+    await this.access.reorder(
+      idList(value.roleIds, 'roleIds'),
+      isSystemAdmin,
+    );
   }
 
   @Patch('roles/:id')
