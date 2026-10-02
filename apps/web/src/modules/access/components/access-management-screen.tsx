@@ -102,7 +102,7 @@ function permissionGroups(permissions: AccessPermissionItem[]) {
     entries.push(permission);
     groups.set(permission.module, entries);
   }
-  const order = new Map(
+  const order = new Map<string, number>(
     PERMISSION_MODULE_ORDER.map((module, index) => [module, index]),
   );
   return [...groups.entries()].sort(([a], [b]) => {
