@@ -70,6 +70,10 @@ const RBAC_PERMISSIONS: readonly PermissionDefinition[] = [
 
   ['Gerenciar permissões', 'usuarios.editar_acesso', 'Administração', 'Vincular tipos de usuário e administrar permissões.'],
 ];
+export const RBAC_PERMISSION_SLUGS = RBAC_PERMISSIONS.map(
+  ([, slug]) => slug,
+) as readonly string[];
+
 type LegacyRule = {
   slug: string;
   column: string;
