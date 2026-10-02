@@ -148,6 +148,7 @@ export const DEFAULT_NAVIGATION: SeedSection[] = [
       { slug: 'report-it-only', label: 'Relatório Somente TI', href: '/relatorios/atendimentos/analitico?source=tickets&categorySector=1&lockArea=1', status: 'available', visibilityCondition: { anyPermissions: ['reports.read'] } },
       { slug: 'report-improvements', label: 'Analítico de Melhorias', href: '/relatorios/atendimentos/analitico?source=improvements', status: 'available', visibilityCondition: { anyPermissions: ['reports.read'] } },
       { slug: 'report-service-time', label: 'Tempo de Atendimento por Técnico', href: '/relatorios/atendimentos/tempo', status: 'available', visibilityCondition: { anyPermissions: ['reports.read'] } },
+      { slug: 'report-technician-timing', label: 'Tempo de Aceite e Conclusão', href: '/relatorios/atendimentos/tempo-aceite-conclusao', status: 'available', visibilityCondition: { anyPermissions: ['reports.read'] } },
       { slug: 'report-pdf', label: 'Gerar PDF', href: '/relatorios/arquivos', status: 'available', visibilityCondition: { anyPermissions: ['reports.pdf'] } },
     ],
   },
