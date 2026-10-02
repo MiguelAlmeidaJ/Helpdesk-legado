@@ -79,13 +79,22 @@ export class UserManagement {
       throw new ForbiddenException('Sem permissão para alterar acessos do usuário.');
     }
     await this.ensureUnique(input.login, input.email, id);
-    const roleIds = await this.roleIdsForType(input.type, input.roleIds, canAssignRole, actorIsSystemAdmin);
+    const protectedGlobalAdmin =
+      !actorIsSystemAdmin && (await this.users.userHasSystemAdminRole(id));
+    const roleIds = protectedGlobalAdmin
+      ? undefined
+      : await this.roleIdsForType(
+          input.type,
+          input.roleIds,
+          canAssignRole,
+          actorIsSystemAdmin,
+        );
     if (roleIds) await this.ensureRolesExist(roleIds);
     const normalizedInput = { ...input, roleIds };
     if (!(await this.users.update(
       id,
       normalizedInput,
-      canAssignRole || input.type === 2,
+      (canAssignRole && !protectedGlobalAdmin) || input.type === 2,
       actorId,
     ))) {
       throw new NotFoundException('Usuário não encontrado.');
