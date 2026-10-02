@@ -149,7 +149,14 @@ export class UsersController {
   @Get('catalogs')
   @RequirePermissions(AppPermission.UsersRead)
   @ApiOperation({ summary: 'Obter catálogos da gestão de usuários' })
-  catalogs(): Promise<UserManagementCatalogs> { return this.management.catalogs(); }
+  catalogs(
+    @CurrentUser() actor: AuthenticatedUser | undefined,
+  ): Promise<UserManagementCatalogs> {
+    if (!actor) throw new UnauthorizedException('Usuário não autenticado.');
+    return this.management.catalogs(
+      hasPermission(actor, AppPermission.SystemAdmin),
+    );
+  }
 
   @Get(':id')
   @RequirePermissions(AppPermission.UsersRead)
@@ -168,11 +175,16 @@ export class UsersController {
     const { value, input } = baseInput(body);
     const password = requiredString(value.password, 'password', 100);
     if (!isStrongPassword(password)) throw new BadRequestException(PASSWORD_POLICY_MESSAGE);
-    const canManageAccess = hasPermission(actor, AppPermission.UsersManageAccess);
+    const canAssignRole = hasPermission(actor, AppPermission.UsersAssignRole);
+    const actorIsSystemAdmin = hasPermission(
+      actor,
+      AppPermission.SystemAdmin,
+    );
     return this.management.create(
       { ...input, password } as CreateManagedUserRequest,
       actor.id,
-      canManageAccess,
+      canAssignRole,
+      actorIsSystemAdmin,
     );
   }
 
@@ -187,11 +199,21 @@ export class UsersController {
     if (!actor) throw new UnauthorizedException('Usuário não autenticado.');
     const { value, input } = baseInput(body);
     if (value.status !== 1 && value.status !== 2) throw new BadRequestException('status deve ser 1 ou 2.');
-    const canManageAccess = hasPermission(actor, AppPermission.UsersManageAccess);
-    if (input.roleIds !== undefined && !canManageAccess && input.type !== 2) {
-      throw new BadRequestException('Sem permissão para alterar acessos.');
+    const canAssignRole = hasPermission(actor, AppPermission.UsersAssignRole);
+    const actorIsSystemAdmin = hasPermission(
+      actor,
+      AppPermission.SystemAdmin,
+    );
+    if (input.roleIds !== undefined && !canAssignRole && input.type !== 2) {
+      throw new BadRequestException('Sem permissão para atribuir tipo de usuário.');
     }
-    return this.management.update(id, actor.id, { ...input, status: value.status } as UpdateManagedUserRequest, canManageAccess);
+    return this.management.update(
+      id,
+      actor.id,
+      { ...input, status: value.status } as UpdateManagedUserRequest,
+      canAssignRole,
+      actorIsSystemAdmin,
+    );
   }
 
   @Delete(':id')
