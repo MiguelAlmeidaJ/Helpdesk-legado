@@ -405,9 +405,14 @@ export class AccessManagement {
     return { id };
   }
 
-  async reorder(roleIds: number[]): Promise<void> {
+  async reorder(
+    roleIds: number[],
+    includeSystemAdmin = true,
+  ): Promise<void> {
     const current = await this.database.$queryRawUnsafe<IdRow[]>(
-      'SELECT id FROM roles ORDER BY sort_order ASC, id ASC',
+      includeSystemAdmin
+        ? 'SELECT id FROM roles ORDER BY sort_order ASC, id ASC'
+        : "SELECT id FROM roles WHERE slug <> 'system-admin' ORDER BY sort_order ASC, id ASC",
     );
     const currentIds = current.map((row) => Number(row.id));
     const expected = new Set(currentIds);
