@@ -94,3 +94,21 @@ test('reports and finance use dedicated permissions', () => {
   assert.equal(permissions.has(AppPermission.FinanceManage), true);
   assert.equal(permissions.has(AppPermission.LogisticsStatementsRead), true);
 });
+
+
+test('user administration permissions translate independently', () => {
+  const user = translateRbacAccess(
+    legacySession,
+    snapshot([
+      'usuarios.editar',
+      'usuarios.atribuir_tipo',
+      'usuarios.permissoes_usuario',
+    ]),
+  );
+
+  const permissions = new Set(user.grants.map((grant) => grant.permission));
+  assert.equal(permissions.has(AppPermission.UsersEdit), true);
+  assert.equal(permissions.has(AppPermission.UsersAssignRole), true);
+  assert.equal(permissions.has(AppPermission.UsersManageOverrides), true);
+  assert.equal(permissions.has(AppPermission.UsersManageAccess), false);
+});
