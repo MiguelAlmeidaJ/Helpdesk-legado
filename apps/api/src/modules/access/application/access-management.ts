@@ -11,7 +11,10 @@ import type {
   AccessRoleInput,
   AccessRoleMutationResponse,
 } from '@helpdesk/contracts';
-import type { Nivel3DatabaseClient } from '@helpdesk/database';
+import {
+  RBAC_PERMISSION_SLUGS,
+  type Nivel3DatabaseClient,
+} from '@helpdesk/database';
 import { NIVEL3_DATABASE } from '../../../core/database/database.constants';
 
 type PermissionRow = {
@@ -101,8 +104,19 @@ export class AccessManagement {
       ),
     ]);
 
+    const canonicalSlugs = new Set(RBAC_PERMISSION_SLUGS);
+    const canonicalPermissions = permissions.filter((permission) =>
+      canonicalSlugs.has(permission.slug),
+    );
+    const canonicalPermissionIds = new Set(
+      canonicalPermissions.map((permission) => Number(permission.id)),
+    );
+
     const permissionsByRole = new Map<number, number[]>();
     for (const assignment of assignments) {
+      if (!canonicalPermissionIds.has(Number(assignment.permission_id))) {
+        continue;
+      }
       const roleId = Number(assignment.role_id);
       const entries = permissionsByRole.get(roleId) ?? [];
       entries.push(Number(assignment.permission_id));
@@ -110,7 +124,7 @@ export class AccessManagement {
     }
 
     return {
-      permissions: permissions.map<AccessPermissionItem>((permission) => ({
+      permissions: canonicalPermissions.map<AccessPermissionItem>((permission) => ({
         id: Number(permission.id),
         name: permission.name,
         slug: permission.slug,
