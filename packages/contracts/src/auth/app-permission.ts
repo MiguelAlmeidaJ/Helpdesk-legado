@@ -55,6 +55,8 @@ export enum AppPermission {
   UsersCreate = 'users.create',
   UsersEdit = 'users.edit',
   UsersManageAccess = 'users.manage-access',
+  UsersAssignRole = 'users.assign-role',
+  UsersManageOverrides = 'users.manage-overrides',
 
   RegistrationsClientsRead = 'registrations.clients.read',
   RegistrationsClientsCreate = 'registrations.clients.create',
