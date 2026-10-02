@@ -12,6 +12,8 @@ const P = {
   usersCreate: 'usuarios.criar',
   usersEdit: 'usuarios.editar',
   usersManageAccess: 'usuarios.editar_acesso',
+  usersAssignRole: 'usuarios.atribuir_tipo',
+  usersManageOverrides: 'usuarios.permissoes_usuario',
 
   ticketsRead: 'atendimentos.visualizar',
   ticketsCreate: 'atendimentos.criar',
@@ -109,6 +111,12 @@ export function translateRbacAccess(
   addGrant(grants, AppPermission.UsersCreate, has(P.usersCreate));
   addGrant(grants, AppPermission.UsersEdit, has(P.usersEdit));
   addGrant(grants, AppPermission.UsersManageAccess, has(P.usersManageAccess));
+  addGrant(grants, AppPermission.UsersAssignRole, has(P.usersAssignRole));
+  addGrant(
+    grants,
+    AppPermission.UsersManageOverrides,
+    has(P.usersManageOverrides),
+  );
 
   addGrant(
     grants,
