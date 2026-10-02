@@ -14,7 +14,11 @@ const PERMISSION_MIGRATIONS = [
   ['users.read', 'usuarios.visualizar'],
   ['users.create', 'usuarios.criar'],
   ['users.edit', 'usuarios.editar'],
+  ['usuarios.editar_acesso', 'usuarios.atribuir_tipo'],
+  ['usuarios.editar_acesso', 'usuarios.permissoes_usuario'],
   ['users.manage-access', 'usuarios.editar_acesso'],
+  ['users.manage-access', 'usuarios.atribuir_tipo'],
+  ['users.manage-access', 'usuarios.permissoes_usuario'],
 
   ['quality.on-call.read', 'qualidade.plantao.visualizar'],
   ['quality.on-call.manage', 'qualidade.plantao.gerenciar'],
