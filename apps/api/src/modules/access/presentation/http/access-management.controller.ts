@@ -84,8 +84,14 @@ export class AccessManagementController {
   @Get()
   @RequirePermissions(AppPermission.UsersManageAccess)
   @ApiOperation({ summary: 'Listar tipos de usuário e permissões do sistema' })
-  snapshot(): Promise<AccessManagementSnapshot> {
-    return this.access.snapshot();
+  snapshot(
+    @CurrentUser() actor: AuthenticatedUser | undefined,
+  ): Promise<AccessManagementSnapshot> {
+    if (!actor) throw new BadRequestException('Usuário não autenticado.');
+    const isSystemAdmin = actor.grants.some(
+      (grant) => grant.permission === AppPermission.SystemAdmin,
+    );
+    return this.access.snapshot(isSystemAdmin);
   }
 
   @Post('roles')
