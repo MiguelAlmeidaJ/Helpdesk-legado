@@ -102,7 +102,7 @@ export class AccessManagement {
     private readonly database: Nivel3DatabaseClient,
   ) {}
 
-  async snapshot(): Promise<AccessManagementSnapshot> {
+  async snapshot(includeSystemAdmin = true): Promise<AccessManagementSnapshot> {
     const [permissions, roles, assignments] = await Promise.all([
       this.database.$queryRawUnsafe<PermissionRow[]>(
         `SELECT id, name, slug, module, description
@@ -145,6 +145,10 @@ export class AccessManagement {
       permissionsByRole.set(roleId, entries);
     }
 
+    const visibleRoles = includeSystemAdmin
+      ? roles
+      : roles.filter((role) => role.slug !== 'system-admin');
+
     return {
       permissions: canonicalPermissions.map<AccessPermissionItem>((permission) => ({
         id: Number(permission.id),
@@ -153,7 +157,7 @@ export class AccessManagement {
         module: permission.module,
         description: permission.description,
       })),
-      roles: roles.map<AccessRole>((role) => ({
+      roles: visibleRoles.map<AccessRole>((role) => ({
         id: Number(role.id),
         name: role.name,
         slug: role.slug,
@@ -235,7 +239,7 @@ export class AccessManagement {
       throw new NotFoundException('Usuário não encontrado ou protegido.');
     }
 
-    const snapshot = await this.snapshot();
+    const snapshot = await this.snapshot(includeSystemAdmin);
     const [rolePermissions, overrides] = await Promise.all([
       this.database.$queryRawUnsafe<Array<{ permission_id: number | bigint }>>(
         `SELECT DISTINCT rp.permission_id
