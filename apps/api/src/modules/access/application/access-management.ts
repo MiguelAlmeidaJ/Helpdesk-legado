@@ -7,6 +7,9 @@ import {
 import type {
   AccessManagementSnapshot,
   AccessPermissionItem,
+  AccessUserPermissionEffect,
+  AccessUserPermissionSnapshot,
+  AccessUserPermissionTarget,
   AccessRole,
   AccessRoleInput,
   AccessRoleMutationResponse,
@@ -53,6 +56,25 @@ type RoleIdentityRow = {
 type CountRow = { total: number | bigint };
 type IdRow = { id: number | bigint };
 type SortOrderRow = { next_order: number | bigint };
+
+type AccessUserRow = {
+  id: number;
+  name: string | null;
+  login: string | null;
+};
+
+type AccessUserRoleRow = {
+  user_id: number;
+  id: number | bigint;
+  name: string;
+  slug: string;
+  is_system: number | bigint | boolean;
+};
+
+type UserPermissionStateRow = {
+  permission_id: number | bigint;
+  effect: AccessUserPermissionEffect;
+};
 
 type AccessTransaction = Pick<
   Nivel3DatabaseClient,
@@ -144,6 +166,167 @@ export class AccessManagement {
         updatedAt: iso(role.updated_at),
       })),
     };
+  }
+
+  async userTargets(
+    includeSystemAdmin: boolean,
+  ): Promise<AccessUserPermissionTarget[]> {
+    const rows = await this.database.$queryRawUnsafe<AccessUserRow[]>(
+      `SELECT u.user_id AS id, u.user_nome AS name, u.user_login AS login
+       FROM usuarios u
+       WHERE u.user_sts = 1
+         AND (
+           ? = 1
+           OR NOT EXISTS (
+             SELECT 1
+             FROM user_roles ur
+             INNER JOIN roles r ON r.id = ur.role_id
+             WHERE ur.user_id = u.user_id
+               AND r.slug = 'system-admin'
+           )
+         )
+       ORDER BY u.user_nome ASC, u.user_id ASC`,
+      includeSystemAdmin ? 1 : 0,
+    );
+
+    if (!rows.length) return [];
+
+    const ids = rows.map((row) => row.id);
+    const placeholders = ids.map(() => '?').join(',');
+    const roleRows = await this.database.$queryRawUnsafe<AccessUserRoleRow[]>(
+      `SELECT ur.user_id, r.id, r.name, r.slug, r.is_system
+       FROM user_roles ur
+       INNER JOIN roles r ON r.id = ur.role_id
+       WHERE ur.user_id IN (${placeholders})
+         AND r.slug <> 'plantonista'
+         AND (? = 1 OR r.slug <> 'system-admin')
+       ORDER BY r.sort_order ASC, r.id ASC`,
+      ...ids,
+      includeSystemAdmin ? 1 : 0,
+    );
+
+    const rolesByUser = new Map<number, AccessUserPermissionTarget['roles']>();
+    for (const role of roleRows) {
+      const list = rolesByUser.get(role.user_id) ?? [];
+      list.push({
+        id: Number(role.id),
+        name: role.name,
+        slug: role.slug,
+        system: Boolean(role.is_system),
+      });
+      rolesByUser.set(role.user_id, list);
+    }
+
+    return rows.map((row) => ({
+      id: row.id,
+      name: row.name ?? `Usuário #${row.id}`,
+      login: row.login ?? '',
+      roles: rolesByUser.get(row.id) ?? [],
+    }));
+  }
+
+  async userPermissionSnapshot(
+    userId: number,
+    includeSystemAdmin: boolean,
+  ): Promise<AccessUserPermissionSnapshot> {
+    const users = await this.userTargets(includeSystemAdmin);
+    const user = users.find((candidate) => candidate.id === userId);
+    if (!user) {
+      throw new NotFoundException('Usuário não encontrado ou protegido.');
+    }
+
+    const snapshot = await this.snapshot();
+    const [rolePermissions, overrides] = await Promise.all([
+      this.database.$queryRawUnsafe<Array<{ permission_id: number | bigint }>>(
+        `SELECT DISTINCT rp.permission_id
+         FROM user_roles ur
+         INNER JOIN role_permissions rp ON rp.role_id = ur.role_id
+         WHERE ur.user_id = ?`,
+        userId,
+      ),
+      this.database.$queryRawUnsafe<UserPermissionStateRow[]>(
+        `SELECT permission_id, effect
+         FROM user_permissions
+         WHERE user_id = ?`,
+        userId,
+      ),
+    ]);
+
+    const roleGranted = new Set(
+      rolePermissions.map((row) => Number(row.permission_id)),
+    );
+    const overrideByPermission = new Map(
+      overrides.map((row) => [Number(row.permission_id), row.effect] as const),
+    );
+
+    return {
+      user,
+      permissions: snapshot.permissions.map((permission) => {
+        const inherited = roleGranted.has(permission.id);
+        const override = overrideByPermission.get(permission.id) ?? null;
+        return {
+          ...permission,
+          roleGranted: inherited,
+          override,
+          effective:
+            override === 'allow'
+              ? true
+              : override === 'deny'
+                ? false
+                : inherited,
+        };
+      }),
+    };
+  }
+
+  async updateUserPermissions(
+    userId: number,
+    overrides: Array<{
+      permissionId: number;
+      effect: AccessUserPermissionEffect;
+    }>,
+    assignedBy: number,
+    actorIsSystemAdmin: boolean,
+  ): Promise<void> {
+    const target = await this.userPermissionSnapshot(
+      userId,
+      actorIsSystemAdmin,
+    );
+    if (target.user.roles.some((role) => role.slug === 'system-admin')) {
+      throw new ConflictException(
+        'Permissões diretas não são aplicadas ao Administrador global.',
+      );
+    }
+
+    const canonicalIds = new Set(
+      target.permissions.map((permission) => permission.id),
+    );
+    for (const override of overrides) {
+      if (!canonicalIds.has(override.permissionId)) {
+        throw new NotFoundException(
+          `Permissão #${override.permissionId} não existe na matriz atual.`,
+        );
+      }
+    }
+
+    await this.database.$transaction(async (transaction) => {
+      await transaction.$executeRawUnsafe(
+        'DELETE FROM user_permissions WHERE user_id = ?',
+        userId,
+      );
+
+      for (const override of overrides) {
+        await transaction.$executeRawUnsafe(
+          `INSERT INTO user_permissions
+             (user_id, permission_id, effect, assigned_at, assigned_by)
+           VALUES (?, ?, ?, NOW(), ?)`,
+          userId,
+          override.permissionId,
+          override.effect,
+          assignedBy,
+        );
+      }
+    });
   }
 
   async create(input: AccessRoleInput): Promise<AccessRoleMutationResponse> {
