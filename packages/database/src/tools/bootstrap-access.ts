@@ -1,6 +1,9 @@
 import { config } from 'dotenv';
 import path from 'node:path';
-import { bootstrapRbacPermissions } from '../access/rbac-permissions';
+import {
+  bootstrapRbacPermissions,
+  RBAC_PERMISSION_SLUGS,
+} from '../access/rbac-permissions';
 import { createNivel3Client } from '../index';
 
 config({ path: path.resolve(process.cwd(), '../../.env') });
@@ -139,136 +142,7 @@ const PERMISSION_MIGRATIONS = [
   ['catalogos.gerenciar', 'catalogos.devops.editar'],
 ] as const;
 
-const OBSOLETE_PERMISSION_SLUGS = [
-  'users.read',
-  'users.create',
-  'users.edit',
-  'users.manage-access',
 
-  'quality.on-call.read',
-  'quality.on-call.manage',
-  'quality.dates.read',
-  'quality.dates.manage',
-
-  'registrations.clients.read',
-  'registrations.clients.create',
-  'registrations.clients.edit',
-  'registrations.clients.contacts.create',
-  'registrations.clients.contacts.edit',
-  'registrations.clients.locations.create',
-  'registrations.clients.locations.edit',
-  'registrations.categories.read',
-  'registrations.categories.create',
-  'registrations.categories.edit',
-  'registrations.categories.subcategories.create',
-  'registrations.categories.subcategories.edit',
-  'registrations.categories.items.create',
-  'registrations.categories.items.edit',
-  'registrations.finance.read',
-  'registrations.finance.manage',
-
-  'tickets.read',
-  'tickets.create',
-  'tickets.edit',
-  'tickets.classify',
-  'tickets.execute',
-  'tickets.hold',
-  'tickets.reject',
-  'tickets.close',
-  'tickets.audit',
-  'tickets.radio',
-  'tickets.recurrence.create',
-  'tickets.timeline.read',
-  'tickets.devops.read',
-  'tickets.devops.create',
-  'tickets.marketing.read',
-  'tickets.marketing.create',
-
-  'devops.projects.read',
-  'devops.projects.create',
-  'devops.projects.edit',
-  'devops.tasks.read',
-  'devops.tasks.create',
-  'devops.tasks.edit',
-
-  'marketing.tasks.read',
-  'marketing.tasks.create',
-  'marketing.tasks.edit',
-  'marketing.tasks.hold',
-  'marketing.tasks.close',
-
-  'logistics.vehicle-agenda.read',
-  'logistics.vehicle-agenda.manage',
-  'logistics.expenses.read',
-  'logistics.expenses.manage',
-  'logistics.expenses.admin.read',
-  'logistics.expenses.admin.manage',
-  'logistics.expenses.approve',
-  'logistics.expenses.pay',
-  'logistics.statements.read',
-
-  'finance.read',
-  'finance.manage',
-  'reports.read',
-  'reports.pdf',
-  'catalog.manage',
-  'catalog.ti.read',
-  'catalog.ti.create',
-  'catalog.ti.edit',
-  'catalog.devops.read',
-  'catalog.devops.create',
-  'catalog.devops.edit',
-
-  'atendimentos.executar',
-  'atendimentos.recusar',
-  'atendimentos.editar_terceiros',
-  'atendimentos.auditar',
-  'atendimentos.radio',
-
-  'devops.atendimentos.visualizar',
-  'devops.atendimentos.criar',
-  'devops.atendimentos.editar',
-  'devops.atendimentos.executar',
-  'devops.atendimentos.colocar_espera',
-  'devops.atendimentos.recusar',
-  'devops.atendimentos.editar_terceiros',
-
-  'marketing.atendimentos.visualizar',
-  'marketing.atendimentos.criar',
-  'marketing.atendimentos.editar',
-  'marketing.atendimentos.executar',
-  'marketing.atendimentos.colocar_espera',
-  'marketing.atendimentos.recusar',
-  'marketing.atendimentos.editar_terceiros',
-
-  'cadastros.clientes.contatos.criar',
-  'cadastros.clientes.contatos.editar',
-  'cadastros.clientes.locais.criar',
-  'cadastros.clientes.locais.editar',
-  'cadastros.categorias.subcategorias.criar',
-  'cadastros.categorias.subcategorias.editar',
-  'cadastros.categorias.itens.criar',
-  'cadastros.categorias.itens.editar',
-  'cadastros.financeiro.visualizar',
-  'cadastros.financeiro.gerenciar',
-
-  'catalogos.gerenciar',
-  'catalogos.ti.gerenciar',
-  'catalogos.devops.gerenciar',
-  'catalogo.ti.visualizar',
-  'catalogo.ti.gerenciar',
-  'catalogo.devops.visualizar',
-  'catalogo.devops.gerenciar',
-
-  'logistica.agenda.visualizar',
-  'logistica.agenda.gerenciar',
-  'logistica.rd.gerenciar',
-  'logistica.rd.admin.visualizar',
-  'logistica.rd.admin.gerenciar',
-  'logistica.rd.aprovar',
-  'logistica.rd.pagar',
-  'logistica.extratos.visualizar',
-] as const;
 
 async function columnExists(
   db: ReturnType<typeof createNivel3Client>,
@@ -341,19 +215,45 @@ async function main() {
       await copyPermission(db, source, target);
     }
 
-    if (OBSOLETE_PERMISSION_SLUGS.length) {
-      const placeholders = OBSOLETE_PERMISSION_SLUGS.map(() => '?').join(',');
-      await db.$executeRawUnsafe(
-        `DELETE FROM permissions WHERE slug IN (${placeholders})`,
-        ...OBSOLETE_PERMISSION_SLUGS,
-      );
+    if (!RBAC_PERMISSION_SLUGS.length) {
+      throw new Error('Catálogo canônico de permissões está vazio; limpeza abortada.');
     }
+
+    const canonicalPlaceholders = RBAC_PERMISSION_SLUGS.map(() => '?').join(',');
+
+    // Remove grants ligados a permissões que não fazem mais parte da matriz
+    // antes de excluir as permissões antigas. Isso deixa o bootstrap seguro
+    // mesmo em bancos onde as FKs não estejam configuradas com CASCADE.
+    await db.$executeRawUnsafe(
+      `DELETE rp
+       FROM role_permissions rp
+       INNER JOIN permissions p ON p.id = rp.permission_id
+       WHERE p.slug NOT IN (${canonicalPlaceholders})`,
+      ...RBAC_PERMISSION_SLUGS,
+    );
+
+    await db.$executeRawUnsafe(
+      `DELETE up
+       FROM user_permissions up
+       INNER JOIN permissions p ON p.id = up.permission_id
+       WHERE p.slug NOT IN (${canonicalPlaceholders})`,
+      ...RBAC_PERMISSION_SLUGS,
+    );
+
+    await db.$executeRawUnsafe(
+      `DELETE FROM permissions
+       WHERE slug NOT IN (${canonicalPlaceholders})`,
+      ...RBAC_PERMISSION_SLUGS,
+    );
 
     console.log('Estrutura de acesso atualizada.');
     console.log('  roles.sort_order: OK');
     console.log('  catalogos.arquivado_em: OK');
     console.log('  permissões RBAC simplificadas por página e ação: OK');
-    console.log('  permissões legadas conhecidas removidas: OK');
+    console.log(
+      `  catálogo canônico de permissões: ${RBAC_PERMISSION_SLUGS.length} permissões`,
+    );
+    console.log('  permissões fora da matriz atual removidas: OK');
     console.log(`  grants legados migrados para RBAC: ${rbac.migratedGrants}`);
     console.log(
       `  migração posicional aplicada agora: ${rbac.legacyMigrationApplied ? 'sim' : 'não'}`,
