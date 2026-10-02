@@ -10,6 +10,7 @@ import type {
   TicketTechnicianTotalsReportResponse,
   TicketAnalyticsResponse,
   TicketReportCatalog,
+  TicketTechnicianTimingResponse,
 } from '@helpdesk/contracts';
 import { apiRequest } from '../../../shared/api/api-client';
 
@@ -149,5 +150,33 @@ export function fetchTicketReportDetails(filters: {
   });
   return apiRequest<TicketAnalyticsResponse>(
     `reports/tickets/analytics?${query.toString()}`,
+  );
+}
+
+
+export interface TicketTechnicianTimingReportFilters {
+  startDate?: string;
+  endDate?: string;
+  clientIds?: number[];
+  technicianIds?: number[];
+  level?: number;
+}
+
+export function fetchTicketTechnicianTimingReport(
+  filters: TicketTechnicianTimingReportFilters = {},
+): Promise<TicketTechnicianTimingResponse> {
+  const query = new URLSearchParams();
+  if (filters.startDate) query.set('startDate', filters.startDate);
+  if (filters.endDate) query.set('endDate', filters.endDate);
+  if (filters.clientIds?.length) {
+    query.set('clientIds', filters.clientIds.join(','));
+  }
+  if (filters.technicianIds?.length) {
+    query.set('technicianIds', filters.technicianIds.join(','));
+  }
+  if (filters.level) query.set('level', String(filters.level));
+  const suffix = query.size ? `?${query.toString()}` : '';
+  return apiRequest<TicketTechnicianTimingResponse>(
+    `reports/tickets/technician-timing${suffix}`,
   );
 }
