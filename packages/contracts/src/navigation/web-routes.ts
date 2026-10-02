@@ -23,6 +23,7 @@ export const WEB_ROUTE_TRANSLATIONS = [
   ['/reports/tickets/workload', '/relatorios/atendimentos/tempo-medio'],
   ['/reports/tickets/analytics', '/relatorios/atendimentos/analitico'],
   ['/reports/tickets/time', '/relatorios/atendimentos/tempo'],
+  ['/reports/tickets/technician-timing', '/relatorios/atendimentos/tempo-aceite-conclusao'],
   ['/reports/archive', '/relatorios/arquivos'],
   ['/logistics/finance/accounts', '/logistica/financeiro/gestao-de-contas'],
   ['/logistics/finance/receivables-accrual', '/logistica/financeiro/contas-a-receber-competencia'],
