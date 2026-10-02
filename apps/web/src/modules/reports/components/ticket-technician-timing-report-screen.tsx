@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  AppPermission,
   TICKET_STATUS_LABELS,
   type CurrentUserResponse,
   type TicketReportCatalog,
@@ -68,6 +69,11 @@ export function TicketTechnicianTimingReportScreen({
   const [level, setLevel] = useState('0');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const canGeneratePdf = currentUser.grants.some(
+    (grant) =>
+      grant.permission === AppPermission.SystemAdmin ||
+      grant.permission === AppPermission.ReportsPdf,
+  );
 
   async function load(filters?: {
     startDate?: string;
@@ -292,7 +298,9 @@ export function TicketTechnicianTimingReportScreen({
             </div>
             <div className="flex gap-2 print:hidden">
               <button className={SECONDARY} disabled={!data || loading} onClick={exportCsv} type="button">Exportar CSV</button>
-              <button className={SECONDARY} disabled={!data || loading} onClick={() => window.print()} type="button">Imprimir / PDF</button>
+              {canGeneratePdf ? (
+                <button className={SECONDARY} disabled={!data || loading} onClick={() => window.print()} type="button">Imprimir / PDF</button>
+              ) : null}
             </div>
           </header>
 
