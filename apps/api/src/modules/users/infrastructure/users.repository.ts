@@ -218,6 +218,18 @@ export class UsersRepository {
     return rows[0] ? Number(rows[0].id) : null;
   }
 
+  async userHasSystemAdminRole(userId: number): Promise<boolean> {
+    const rows = await this.database.$queryRawUnsafe<CountRow[]>(
+      `SELECT COUNT(*) AS total
+       FROM user_roles ur
+       INNER JOIN roles r ON r.id = ur.role_id
+       WHERE ur.user_id = ?
+         AND r.slug = 'system-admin'`,
+      userId,
+    );
+    return Number(rows[0]?.total ?? 0) > 0;
+  }
+
   async containsSystemAdminRole(roleIds: number[]): Promise<boolean> {
     if (roleIds.length === 0) return false;
     const placeholders = roleIds.map(() => '?').join(',');
