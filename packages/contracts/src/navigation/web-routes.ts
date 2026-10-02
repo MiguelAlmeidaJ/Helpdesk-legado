@@ -52,6 +52,7 @@ export const WEB_ROUTE_TRANSLATIONS = [
   ['/quality/on-call', '/qualidade/plantao'],
   ['/admin/access', '/administracao/permissoes'],
   ['/admin/user-functions', '/administracao/funcoes-usuarios'],
+  ['/admin/user-permissions', '/administracao/permissoes-usuario'],
   ['/admin/maintenance', '/administracao/manutencao'],
   ['/admin/on-call', '/qualidade/plantao'],
   ['/admin/ticket-sla', '/administracao/sla-atendimentos'],
