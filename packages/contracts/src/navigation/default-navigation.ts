@@ -201,6 +201,15 @@ export const DEFAULT_NAVIGATION: SeedSection[] = [
         visibilityCondition: { anyPermissions: ['system.admin', 'users.manage-access'] },
       },
       {
+        slug: 'user-permissions',
+        label: 'Permissões por usuário',
+        href: '/administracao/permissoes-usuario',
+        status: 'available',
+        visibilityCondition: {
+          anyPermissions: ['system.admin', 'users.manage-overrides'],
+        },
+      },
+      {
         slug: 'ticket-sla-settings',
         label: 'SLA de Atendimentos',
         href: '/administracao/sla-atendimentos',
