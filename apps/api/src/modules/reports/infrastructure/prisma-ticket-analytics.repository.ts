@@ -1,6 +1,6 @@
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import type { Nivel3DatabaseClient } from '@helpdesk/database';
-import type { TicketAnalyticsFilters, TicketAnalyticsResponse, TicketAnalyticsRow, TicketReportCatalog, TechnicianWorkloadResponse, ReportOption } from '@helpdesk/contracts';
+import type { TicketAnalyticsFilters, TicketAnalyticsResponse, TicketAnalyticsRow, TicketReportCatalog, TicketTechnicianTimingDetail, TicketTechnicianTimingFilters, TicketTechnicianTimingResponse, TechnicianWorkloadResponse, ReportOption } from '@helpdesk/contracts';
 import { NIVEL3_DATABASE } from '../../../core/database/database.constants';
 import { TicketAnalyticsRepository } from '../application/ports/ticket-analytics.repository';
 import { appendNumberInFilter, resolveTicketReportVisibility, type TicketReportVisibility } from './ticket-report-visibility';
@@ -103,6 +103,193 @@ export class PrismaTicketAnalyticsRepository extends TicketAnalyticsRepository {
            ORDER BY cat_nome`,
         );
     return { clients, locations, technicians, categories };
+  }
+
+  async technicianTiming(
+    userId: number,
+    filters: TicketTechnicianTimingFilters,
+  ): Promise<TicketTechnicianTimingResponse> {
+    const visibility = await resolveTicketReportVisibility(this.database, userId);
+    const where = [
+      'a.abertura >= ?',
+      'a.abertura < DATE_ADD(?, INTERVAL 1 DAY)',
+      'COALESCE(a.tecnico, 0) > 0',
+    ];
+    const params: unknown[] = [filters.startDate, filters.endDate];
+
+    scope(where, params, visibility, 'a.cliente');
+    if (filters.clientIds.length) {
+      appendNumberInFilter(where, params, 'a.cliente', filters.clientIds);
+    }
+    if (filters.technicianIds.length) {
+      appendNumberInFilter(where, params, 'a.tecnico', filters.technicianIds);
+    }
+    if (filters.level) {
+      where.push('a.nivel = ?');
+      params.push(filters.level);
+    }
+
+    type TimingDbRow = {
+      ticketId: number;
+      clientId: number;
+      clientName: string;
+      requesterName: string;
+      technicianId: number;
+      technicianName: string;
+      level: number;
+      status: number;
+      openedAt: string;
+      acceptedAt: string | null;
+      closedAt: string | null;
+      acceptanceSeconds: bigint | number | null;
+      resolutionSeconds: bigint | number | null;
+      handlingSeconds: bigint | number | null;
+    };
+
+    const result = await this.database.$queryRawUnsafe<TimingDbRow[]>(
+      `SELECT
+         a.id AS ticketId,
+         a.cliente AS clientId,
+         COALESCE(NULLIF(c.clt_nomer, ''), c.clt_nomef, '') AS clientName,
+         COALESCE(p.pessoa_nom, '') AS requesterName,
+         a.tecnico AS technicianId,
+         COALESCE(u.user_nome, CONCAT('Técnico #', a.tecnico)) AS technicianName,
+         COALESCE(a.nivel, 0) AS level,
+         COALESCE(a.status, 0) AS status,
+         DATE_FORMAT(a.abertura, '%Y-%m-%dT%H:%i:%s') AS openedAt,
+         DATE_FORMAT(acc.accepted_at, '%Y-%m-%dT%H:%i:%s') AS acceptedAt,
+         DATE_FORMAT(a.fechamento, '%Y-%m-%dT%H:%i:%s') AS closedAt,
+         CASE
+           WHEN acc.accepted_at IS NULL THEN NULL
+           ELSE GREATEST(0, TIMESTAMPDIFF(SECOND, a.abertura, acc.accepted_at))
+         END AS acceptanceSeconds,
+         CASE
+           WHEN a.fechamento IS NULL THEN NULL
+           ELSE GREATEST(0, TIMESTAMPDIFF(SECOND, a.abertura, a.fechamento))
+         END AS resolutionSeconds,
+         CASE
+           WHEN acc.accepted_at IS NULL OR a.fechamento IS NULL THEN NULL
+           ELSE GREATEST(0, TIMESTAMPDIFF(SECOND, acc.accepted_at, a.fechamento))
+         END AS handlingSeconds
+       FROM atendimentos a
+       INNER JOIN clientes c ON c.clt_id = a.cliente
+       LEFT JOIN pessoas p ON p.pessoa_id = a.pessoa
+       LEFT JOIN usuarios u ON u.user_id = a.tecnico
+       LEFT JOIN (
+         SELECT inter_atd, inter_user, MIN(inter_data) AS accepted_at
+         FROM interatividade
+         WHERE inter_tipo = 2
+         GROUP BY inter_atd, inter_user
+       ) acc
+         ON acc.inter_atd = a.id
+        AND acc.inter_user = a.tecnico
+       WHERE ${where.join(' AND ')}
+       ORDER BY u.user_nome, a.abertura, a.id
+       LIMIT ${MAX_ROWS + 1}`,
+      ...params,
+    );
+
+    if (result.length > MAX_ROWS) {
+      throw new BadRequestException(
+        'Relatório acima de 20.000 registros. Reduza o período ou os filtros.',
+      );
+    }
+
+    const details: TicketTechnicianTimingDetail[] = result.map((row) => ({
+      ...row,
+      ticketId: Number(row.ticketId),
+      clientId: Number(row.clientId),
+      technicianId: Number(row.technicianId),
+      level: Number(row.level),
+      status: Number(row.status),
+      acceptanceSeconds:
+        row.acceptanceSeconds === null ? null : Number(row.acceptanceSeconds),
+      resolutionSeconds:
+        row.resolutionSeconds === null ? null : Number(row.resolutionSeconds),
+      handlingSeconds:
+        row.handlingSeconds === null ? null : Number(row.handlingSeconds),
+    }));
+
+    type Aggregate = {
+      technicianId: number;
+      technicianName: string;
+      ticketCount: number;
+      acceptance: number[];
+      resolution: number[];
+      handling: number[];
+    };
+
+    const byTechnician = new Map<number, Aggregate>();
+    for (const detail of details) {
+      const aggregate = byTechnician.get(detail.technicianId) ?? {
+        technicianId: detail.technicianId,
+        technicianName: detail.technicianName,
+        ticketCount: 0,
+        acceptance: [],
+        resolution: [],
+        handling: [],
+      };
+      aggregate.ticketCount += 1;
+      if (detail.acceptanceSeconds !== null) {
+        aggregate.acceptance.push(detail.acceptanceSeconds);
+      }
+      if (detail.resolutionSeconds !== null) {
+        aggregate.resolution.push(detail.resolutionSeconds);
+      }
+      if (detail.handlingSeconds !== null) {
+        aggregate.handling.push(detail.handlingSeconds);
+      }
+      byTechnician.set(detail.technicianId, aggregate);
+    }
+
+    const average = (values: number[]): number | null =>
+      values.length
+        ? Math.round(values.reduce((total, value) => total + value, 0) / values.length)
+        : null;
+    const maximum = (values: number[]): number | null =>
+      values.length ? Math.max(...values) : null;
+
+    const rows = [...byTechnician.values()]
+      .map((aggregate) => ({
+        technicianId: aggregate.technicianId,
+        technicianName: aggregate.technicianName,
+        ticketCount: aggregate.ticketCount,
+        acceptedCount: aggregate.acceptance.length,
+        completedCount: aggregate.resolution.length,
+        averageAcceptanceSeconds: average(aggregate.acceptance),
+        averageResolutionSeconds: average(aggregate.resolution),
+        averageHandlingSeconds: average(aggregate.handling),
+        maxAcceptanceSeconds: maximum(aggregate.acceptance),
+        maxResolutionSeconds: maximum(aggregate.resolution),
+      }))
+      .sort(
+        (left, right) =>
+          left.technicianName.localeCompare(right.technicianName, 'pt-BR') ||
+          left.technicianId - right.technicianId,
+      );
+
+    const acceptance = details.flatMap((row) =>
+      row.acceptanceSeconds === null ? [] : [row.acceptanceSeconds],
+    );
+    const resolution = details.flatMap((row) =>
+      row.resolutionSeconds === null ? [] : [row.resolutionSeconds],
+    );
+    const handling = details.flatMap((row) =>
+      row.handlingSeconds === null ? [] : [row.handlingSeconds],
+    );
+
+    return {
+      filters,
+      generatedAt: new Date().toISOString(),
+      totalTickets: details.length,
+      acceptedTickets: acceptance.length,
+      completedTickets: resolution.length,
+      averageAcceptanceSeconds: average(acceptance),
+      averageResolutionSeconds: average(resolution),
+      averageHandlingSeconds: average(handling),
+      rows,
+      details,
+    };
   }
 
   async workload(userId: number): Promise<TechnicianWorkloadResponse> {
