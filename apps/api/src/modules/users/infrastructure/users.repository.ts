@@ -159,7 +159,7 @@ export class UsersRepository {
     };
   }
 
-  async catalogs(): Promise<UserManagementCatalogs> {
+  async catalogs(includeSystemAdmin = false): Promise<UserManagementCatalogs> {
     const [functions, companies, pixKeyTypes, roles] = await Promise.all([
       this.database.$queryRaw<OptionRow[]>`
         SELECT cargo_id AS id, cargo_nome AS name
@@ -169,7 +169,7 @@ export class UsersRepository {
         FROM clientes WHERE clt_sts = 1 ORDER BY name`,
       this.database.$queryRaw<OptionRow[]>`
         SELECT id, name_type AS name FROM type_keys ORDER BY id`,
-      this.roleOptions(),
+      this.roleOptions(includeSystemAdmin),
     ]);
     const map = (rows: OptionRow[]): UserOption[] =>
       rows.map((row) => ({ id: row.id, name: row.name ?? `#${row.id}` }));
@@ -216,6 +216,19 @@ export class UsersRepository {
        LIMIT 1`,
     );
     return rows[0] ? Number(rows[0].id) : null;
+  }
+
+  async containsSystemAdminRole(roleIds: number[]): Promise<boolean> {
+    if (roleIds.length === 0) return false;
+    const placeholders = roleIds.map(() => '?').join(',');
+    const rows = await this.database.$queryRawUnsafe<CountRow[]>(
+      `SELECT COUNT(*) AS total
+       FROM roles
+       WHERE id IN (${placeholders})
+         AND slug = 'system-admin'`,
+      ...roleIds,
+    );
+    return Number(rows[0]?.total ?? 0) > 0;
   }
 
   async rolesExist(roleIds: number[]): Promise<boolean> {
@@ -311,19 +324,24 @@ export class UsersRepository {
     return result;
   }
 
-  private async roleOptions(): Promise<RoleOptionRow[]> {
+  private async roleOptions(includeSystemAdmin: boolean): Promise<RoleOptionRow[]> {
+    const systemFilter = includeSystemAdmin
+      ? "slug <> 'plantonista'"
+      : "slug NOT IN ('plantonista', 'system-admin')";
     try {
-      return await this.database.$queryRaw<RoleOptionRow[]>`
-        SELECT id, name, slug, is_system
-        FROM roles
-        WHERE slug <> 'plantonista'
-        ORDER BY sort_order ASC, id ASC`;
+      return await this.database.$queryRawUnsafe<RoleOptionRow[]>(
+        `SELECT id, name, slug, is_system
+         FROM roles
+         WHERE ${systemFilter}
+         ORDER BY sort_order ASC, id ASC`,
+      );
     } catch {
-      return this.database.$queryRaw<RoleOptionRow[]>`
-        SELECT id, name, slug, is_system
-        FROM roles
-        WHERE slug <> 'plantonista'
-        ORDER BY is_system DESC, name ASC, id ASC`;
+      return this.database.$queryRawUnsafe<RoleOptionRow[]>(
+        `SELECT id, name, slug, is_system
+         FROM roles
+         WHERE ${systemFilter}
+         ORDER BY is_system DESC, name ASC, id ASC`,
+      );
     }
   }
 
