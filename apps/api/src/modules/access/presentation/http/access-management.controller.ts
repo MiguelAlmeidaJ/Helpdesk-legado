@@ -18,8 +18,13 @@ import {
   type AccessManagementSnapshot,
   type AccessRoleInput,
   type AccessRoleMutationResponse,
+  type AccessUserPermissionEffect,
+  type AccessUserPermissionSnapshot,
+  type AccessUserPermissionTarget,
 } from '@helpdesk/contracts';
 import { LEGACY_SESSION_SECURITY } from '../../../../core/openapi/openapi.constants';
+import type { AuthenticatedUser } from '../../domain/authenticated-user';
+import { CurrentUser } from './current-user.decorator';
 import { AccessManagement } from '../../application/access-management';
 import { LegacySessionGuard } from './legacy-session.guard';
 import { PermissionsGuard } from './permissions.guard';
@@ -72,24 +77,26 @@ function input(body: unknown): AccessRoleInput {
 @ApiTags('access-management')
 @Controller('access-management')
 @UseGuards(LegacySessionGuard, PermissionsGuard)
-@RequirePermissions(AppPermission.UsersManageAccess)
 @ApiSecurity(LEGACY_SESSION_SECURITY)
 export class AccessManagementController {
   constructor(private readonly access: AccessManagement) {}
 
   @Get()
+  @RequirePermissions(AppPermission.UsersManageAccess)
   @ApiOperation({ summary: 'Listar tipos de usuário e permissões do sistema' })
   snapshot(): Promise<AccessManagementSnapshot> {
     return this.access.snapshot();
   }
 
   @Post('roles')
+  @RequirePermissions(AppPermission.UsersManageAccess)
   @ApiOperation({ summary: 'Criar um tipo de usuário' })
   create(@Body() body: unknown): Promise<AccessRoleMutationResponse> {
     return this.access.create(input(body));
   }
 
   @Patch('roles/order')
+  @RequirePermissions(AppPermission.UsersManageAccess)
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Reordenar tipos de usuário' })
   async reorder(@Body() body: unknown): Promise<void> {
@@ -98,6 +105,7 @@ export class AccessManagementController {
   }
 
   @Patch('roles/:id')
+  @RequirePermissions(AppPermission.UsersManageAccess)
   @ApiOperation({ summary: 'Atualizar permissões de um tipo de usuário' })
   update(@Param('id', ParseIntPipe) id: number, @Body() body: unknown): Promise<AccessRoleMutationResponse> {
     if (id < 1) throw new BadRequestException('id inválido.');
@@ -105,10 +113,87 @@ export class AccessManagementController {
   }
 
   @Delete('roles/:id')
+  @RequirePermissions(AppPermission.UsersManageAccess)
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Excluir um tipo de usuário' })
   async remove(@Param('id', ParseIntPipe) id: number): Promise<void> {
     if (id < 1) throw new BadRequestException('id inválido.');
     await this.access.remove(id);
+  }
+
+  @Get('users')
+  @RequirePermissions(AppPermission.UsersManageOverrides)
+  @ApiOperation({ summary: 'Listar usuários disponíveis para permissão direta' })
+  userTargets(
+    @CurrentUser() actor: AuthenticatedUser | undefined,
+  ): Promise<AccessUserPermissionTarget[]> {
+    if (!actor) throw new BadRequestException('Usuário não autenticado.');
+    const isSystemAdmin = actor.grants.some(
+      (grant) => grant.permission === AppPermission.SystemAdmin,
+    );
+    return this.access.userTargets(isSystemAdmin);
+  }
+
+  @Get('users/:id')
+  @RequirePermissions(AppPermission.UsersManageOverrides)
+  @ApiOperation({ summary: 'Obter permissões diretas e herdadas de um usuário' })
+  userPermissionSnapshot(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUser() actor: AuthenticatedUser | undefined,
+  ): Promise<AccessUserPermissionSnapshot> {
+    if (id < 1) throw new BadRequestException('id inválido.');
+    if (!actor) throw new BadRequestException('Usuário não autenticado.');
+    const isSystemAdmin = actor.grants.some(
+      (grant) => grant.permission === AppPermission.SystemAdmin,
+    );
+    return this.access.userPermissionSnapshot(id, isSystemAdmin);
+  }
+
+  @Patch('users/:id')
+  @RequirePermissions(AppPermission.UsersManageOverrides)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Atualizar permissões diretas de um usuário' })
+  async updateUserPermissions(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() body: unknown,
+    @CurrentUser() actor: AuthenticatedUser | undefined,
+  ): Promise<void> {
+    if (id < 1) throw new BadRequestException('id inválido.');
+    if (!actor) throw new BadRequestException('Usuário não autenticado.');
+
+    const value = objectBody(body);
+    if (!Array.isArray(value.overrides) || value.overrides.length > 500) {
+      throw new BadRequestException('overrides deve ser uma lista válida.');
+    }
+
+    const overrides = value.overrides.map((entry) => {
+      const item = objectBody(entry);
+      const permissionId = Number(item.permissionId);
+      const effect = item.effect;
+      if (!Number.isSafeInteger(permissionId) || permissionId < 1) {
+        throw new BadRequestException('permissionId inválido.');
+      }
+      if (effect !== 'allow' && effect !== 'deny') {
+        throw new BadRequestException('effect deve ser allow ou deny.');
+      }
+      return {
+        permissionId,
+        effect: effect as AccessUserPermissionEffect,
+      };
+    });
+
+    const unique = new Map(
+      overrides.map((override) => [override.permissionId, override] as const),
+    );
+    const isSystemAdmin = actor.grants.some(
+      (grant) => grant.permission === AppPermission.SystemAdmin,
+    );
+
+    await this.access.updateUserPermissions(
+      id,
+      [...unique.values()],
+      actor.id,
+      isSystemAdmin,
+    );
   }
 }
