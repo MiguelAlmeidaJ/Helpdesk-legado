@@ -133,7 +133,7 @@ export function UsersScreen({ currentUser }: { currentUser: CurrentUserResponse 
   const [companyQuery, setCompanyQuery] = useState('');
   const canCreate = can(currentUser, AppPermission.UsersCreate);
   const canEdit = can(currentUser, AppPermission.UsersEdit);
-  const canManageAccess = can(currentUser, AppPermission.UsersManageAccess);
+  const canAssignRole = can(currentUser, AppPermission.UsersAssignRole);
 
   async function load(signal?: AbortSignal) {
     setLoading(true);
@@ -241,7 +241,7 @@ export function UsersScreen({ currentUser }: { currentUser: CurrentUserResponse 
     const normalizedRoleIds = form.type === 2
       ? (clientRole ? [clientRole.id] : [])
       : form.roleIds.filter((id) => id !== clientRole?.id);
-    const base = { status: form.status, name: form.name, email: form.email, phone: form.phone, functionId: Number(form.functionId), login: form.login, type: form.type, link: form.link, pixKeyType: form.pixKeyType ? Number(form.pixKeyType) : null, pixKey: form.pixKey, observation: form.observation, companyIds: form.type === 2 ? form.companyIds : [], ...((canManageAccess || form.type === 2) ? { roleIds: normalizedRoleIds } : {}) };
+    const base = { status: form.status, name: form.name, email: form.email, phone: form.phone, functionId: Number(form.functionId), login: form.login, type: form.type, link: form.link, pixKeyType: form.pixKeyType ? Number(form.pixKeyType) : null, pixKey: form.pixKey, observation: form.observation, companyIds: form.type === 2 ? form.companyIds : [], ...((canAssignRole || form.type === 2) ? { roleIds: normalizedRoleIds } : {}) };
     try {
       const saved = selectedId
         ? await updateUser(selectedId, base)
@@ -329,7 +329,7 @@ export function UsersScreen({ currentUser }: { currentUser: CurrentUserResponse 
                       </div>
                     </div>
                   </fieldset> : null}
-                {canManageAccess ? <fieldset className={styles.permissions}><legend>Tipos de usuário</legend><p>{form.type === 2 ? 'Usuários do tipo Cliente recebem exclusivamente o perfil Cliente.' : 'Selecione os perfis que este usuário receberá. Cada perfil aplica automaticamente o conjunto de permissões configurado em Administração → Permissões.'}</p><div className={styles.roleGrid}>{visibleRoles.map((role) => { const checked = form.type === 2 ? true : form.roleIds.includes(role.id); return <label className={styles.roleOption} key={role.id}><input checked={checked} disabled={form.type === 2 || saving || (!!selectedId && !canEdit)} onChange={() => setForm((current) => ({ ...current, roleIds: checked ? current.roleIds.filter((id) => id !== role.id) : [...current.roleIds, role.id] }))} type="checkbox" /><span><strong>{role.name}</strong><small>{form.type === 2 ? 'Perfil obrigatório para usuário cliente' : role.system ? 'Perfil interno do sistema' : role.slug}</small></span></label>; })}</div></fieldset> : null}
+                {canAssignRole ? <fieldset className={styles.permissions}><legend>Tipos de usuário</legend><p>{form.type === 2 ? 'Usuários do tipo Cliente recebem exclusivamente o perfil Cliente.' : 'Selecione os perfis que este usuário receberá. Cada perfil aplica automaticamente o conjunto de permissões configurado em Administração → Permissões.'}</p><div className={styles.roleGrid}>{visibleRoles.map((role) => { const checked = form.type === 2 ? true : form.roleIds.includes(role.id); return <label className={styles.roleOption} key={role.id}><input checked={checked} disabled={form.type === 2 || saving || (!!selectedId && !canEdit)} onChange={() => setForm((current) => ({ ...current, roleIds: checked ? current.roleIds.filter((id) => id !== role.id) : [...current.roleIds, role.id] }))} type="checkbox" /><span><strong>{role.name}</strong><small>{form.type === 2 ? 'Perfil obrigatório para usuário cliente' : role.system ? 'Perfil interno do sistema' : role.slug}</small></span></label>; })}</div></fieldset> : null}
                 {(selectedId ? canEdit : canCreate) ? <div className={styles.actions}>{selectedId && form.status === 1 ? <button className={styles.button} disabled={saving || selectedId === currentUser.id || selectedId === 1} onClick={() => void deactivate()} type="button">Desativar</button> : null}<button className={styles.buttonPrimary} disabled={saving} type="submit">{saving ? 'Salvando…' : 'Salvar usuário'}</button></div> : null}
               </form>
             )}
