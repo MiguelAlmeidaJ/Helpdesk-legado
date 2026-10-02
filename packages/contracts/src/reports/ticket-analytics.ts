@@ -65,3 +65,55 @@ export interface TechnicianWorkloadResponse {
   generatedAt: string;
   rows: TechnicianWorkloadRow[];
 }
+
+
+export interface TicketTechnicianTimingFilters {
+  startDate: string;
+  endDate: string;
+  clientIds: number[];
+  technicianIds: number[];
+  level: number;
+}
+
+export interface TicketTechnicianTimingRow {
+  technicianId: number;
+  technicianName: string;
+  ticketCount: number;
+  acceptedCount: number;
+  completedCount: number;
+  averageAcceptanceSeconds: number | null;
+  averageResolutionSeconds: number | null;
+  averageHandlingSeconds: number | null;
+  maxAcceptanceSeconds: number | null;
+  maxResolutionSeconds: number | null;
+}
+
+export interface TicketTechnicianTimingDetail {
+  ticketId: number;
+  clientId: number;
+  clientName: string;
+  requesterName: string;
+  technicianId: number;
+  technicianName: string;
+  level: number;
+  status: number;
+  openedAt: string;
+  acceptedAt: string | null;
+  closedAt: string | null;
+  acceptanceSeconds: number | null;
+  resolutionSeconds: number | null;
+  handlingSeconds: number | null;
+}
+
+export interface TicketTechnicianTimingResponse {
+  filters: TicketTechnicianTimingFilters;
+  generatedAt: string;
+  totalTickets: number;
+  acceptedTickets: number;
+  completedTickets: number;
+  averageAcceptanceSeconds: number | null;
+  averageResolutionSeconds: number | null;
+  averageHandlingSeconds: number | null;
+  rows: TicketTechnicianTimingRow[];
+  details: TicketTechnicianTimingDetail[];
+}
