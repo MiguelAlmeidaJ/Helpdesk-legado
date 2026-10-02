@@ -52,6 +52,7 @@ const RBAC_PERMISSIONS: readonly PermissionDefinition[] = [
   ['Ver Usuários', 'usuarios.visualizar', 'Cadastro', 'Visualizar usuários e seus dados básicos.'],
   ['Criar Usuários', 'usuarios.criar', 'Cadastro', 'Cadastrar novos usuários.'],
   ['Editar Usuários', 'usuarios.editar', 'Cadastro', 'Editar usuários existentes.'],
+  ['Atribuir tipo de usuário', 'usuarios.atribuir_tipo', 'Cadastro', 'Atribuir ou alterar o tipo de usuário no cadastro.'],
 
   ['Ver Clientes', 'cadastros.clientes.visualizar', 'Cadastro', 'Visualizar clientes, contatos e locais.'],
   ['Criar Clientes', 'cadastros.clientes.criar', 'Cadastro', 'Cadastrar clientes, contatos e locais.'],
@@ -69,6 +70,7 @@ const RBAC_PERMISSIONS: readonly PermissionDefinition[] = [
   ['Editar Catálogos de DevOps', 'catalogos.devops.editar', 'Cadastro', 'Editar e arquivar catálogos do setor de DevOps.'],
 
   ['Gerenciar permissões', 'usuarios.editar_acesso', 'Administração', 'Vincular tipos de usuário e administrar permissões.'],
+  ['Permissões por usuário', 'usuarios.permissoes_usuario', 'Administração', 'Conceder ou negar permissões diretamente para um usuário.'],
 ];
 export const RBAC_PERMISSION_SLUGS = RBAC_PERMISSIONS.map(
   ([, slug]) => slug,
