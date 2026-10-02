@@ -61,3 +61,5 @@ export function createNivel3Client(
 export type Nivel3DatabaseClient = ReturnType<typeof createNivel3Client>;
 
 export { synchronizeNavigation } from './navigation/synchronize-navigation';
+
+export { RBAC_PERMISSION_SLUGS } from './access/rbac-permissions';
