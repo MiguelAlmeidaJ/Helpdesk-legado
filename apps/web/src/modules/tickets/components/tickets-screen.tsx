@@ -617,7 +617,6 @@ export function TicketsScreen({
             </div>
           </div>
         </section>
-        </section>
       </div>
     </main>
   );
