@@ -9,6 +9,10 @@ if (fs.existsSync(rootEnvPath)) {
   process.loadEnvFile(rootEnvPath);
 }
 
+const internalApiBaseUrl = (
+  process.env.API_INTERNAL_URL ?? 'http://127.0.0.1:4004/api'
+).replace(/\/$/, '');
+
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   async redirects() {
@@ -21,12 +25,20 @@ const nextConfig: NextConfig = {
       }));
   },
   async rewrites() {
-    return WEB_ROUTE_TRANSLATIONS
+    const routeTranslations = WEB_ROUTE_TRANSLATIONS
       .filter(([destination, source]) => destination !== source)
       .map(([destination, source]) => ({
         source: `${source}/:path*`,
         destination: `${destination}/:path*`,
       }));
+
+    return [
+      {
+        source: '/api/:path*',
+        destination: `${internalApiBaseUrl}/:path*`,
+      },
+      ...routeTranslations,
+    ];
   },
 };
 
