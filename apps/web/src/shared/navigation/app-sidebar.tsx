@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { fetchAppNavigation } from './navigation-api';
 import { NavigationIcon } from './navigation-icon';
 import {
@@ -103,6 +103,7 @@ function NavigationLink({
 export function AppSidebar() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const sidebarRef = useRef<HTMLElement | null>(null);
   const [openSectionId, setOpenSectionId] = useState<string | null>(null);
   const [navigationSections, setNavigationSections] =
     useState<NavigationSection[]>(FALLBACK_SECTIONS);
@@ -154,13 +155,23 @@ export function AppSidebar() {
       }
     }
 
+    function onPointerDown(event: PointerEvent) {
+      const target = event.target;
+      if (!(target instanceof Node)) return;
+      if (!sidebarRef.current?.contains(target)) {
+        setOpen(false);
+      }
+    }
+
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     document.addEventListener('keydown', onKeyDown);
+    document.addEventListener('pointerdown', onPointerDown);
 
     return () => {
       document.body.style.overflow = previousOverflow;
       document.removeEventListener('keydown', onKeyDown);
+      document.removeEventListener('pointerdown', onPointerDown);
     };
   }, [open]);
 
@@ -185,7 +196,7 @@ export function AppSidebar() {
       {open ? (
         <button
           aria-label="Fechar menu"
-          className="fixed inset-0 z-[79] cursor-default border-0 bg-slate-950/45"
+          className="fixed inset-0 z-[79] cursor-default border-0 bg-black/45 dark:bg-black/65"
           onClick={() => setOpen(false)}
           type="button"
         />
@@ -194,10 +205,11 @@ export function AppSidebar() {
       <aside
         aria-hidden={!open}
         className={[
-          'fixed left-0 top-0 z-[80] grid h-dvh max-h-dvh w-[min(380px,calc(100vw-28px))] grid-rows-[auto_minmax(0,1fr)] border-r border-app-border bg-app-surface shadow-[18px_0_55px_rgba(15,23,42,0.18)] transition-transform duration-200 motion-reduce:transition-none dark:shadow-[18px_0_55px_rgba(0,0,0,0.4)]',
+          'fixed left-0 top-0 z-[80] grid h-dvh max-h-dvh w-[min(380px,calc(100vw-28px))] grid-rows-[auto_minmax(0,1fr)] border-r border-app-border bg-app-surface shadow-[18px_0_55px_rgba(4,14,8,0.22)] transition-transform duration-200 motion-reduce:transition-none dark:shadow-[18px_0_55px_rgba(0,0,0,0.52)]',
           open ? 'visible translate-x-0' : 'invisible -translate-x-[102%]',
         ].join(' ')}
         id="app-navigation-sidebar"
+        ref={sidebarRef}
       >
         <div className="flex min-h-[70px] items-center justify-between gap-4 border-b border-app-border-soft px-4 py-3.5">
           <div className="flex min-w-0 items-center">
