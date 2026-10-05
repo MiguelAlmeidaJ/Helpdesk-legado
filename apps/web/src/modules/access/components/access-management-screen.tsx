@@ -24,8 +24,8 @@ const PRIMARY_BUTTON_CLASS = appButtonClass('primary');
 
 const styles = {
   page: 'min-h-screen bg-app-bg text-app-text',
-  content: 'mx-auto w-full max-w-[1500px] p-6 max-sm:px-3.5',
-  layout: 'grid items-start gap-4 min-[980px]:grid-cols-[minmax(320px,0.78fr)_minmax(620px,1.65fr)]',
+  content: 'mx-auto w-full max-w-[2100px] px-6 py-6 max-sm:px-3.5 min-[1800px]:px-8',
+  layout: 'grid items-start gap-4 min-[980px]:grid-cols-[minmax(320px,0.72fr)_minmax(620px,1.7fr)] min-[1600px]:grid-cols-[minmax(360px,0.62fr)_minmax(900px,2.1fr)] min-[2000px]:grid-cols-[minmax(390px,0.58fr)_minmax(1100px,2.35fr)]',
   card: 'rounded-xl border border-app-border bg-app-surface p-4 shadow-sm shadow-slate-950/5 dark:shadow-black/10',
   list: 'grid gap-2',
   roleItem: 'flex items-stretch gap-1 rounded-lg border border-app-border bg-app-surface transition data-[dragging=true]:opacity-50 data-[over=true]:border-app-brand data-[active=true]:border-app-brand data-[active=true]:bg-app-brand-soft',
@@ -41,8 +41,8 @@ const styles = {
   wide: 'col-span-2 max-sm:col-span-1',
   module: 'mt-4 overflow-hidden rounded-lg border border-app-border',
   moduleHeader: 'flex flex-wrap items-center justify-between gap-3 border-b border-app-border bg-app-surface-muted px-3 py-2.5',
-  permissionGrid: 'grid gap-px bg-app-border md:grid-cols-2',
-  permission: 'flex cursor-pointer items-start gap-2.5 bg-app-surface px-3 py-3 text-sm hover:bg-app-surface-hover [&_input]:mt-0.5 [&_input]:h-4 [&_input]:w-4 [&_span]:grid [&_small]:mt-0.5 [&_small]:text-xs [&_small]:text-app-muted',
+  permissionGrid: 'grid gap-px bg-app-border md:grid-cols-2 min-[1800px]:grid-cols-3',
+  permission: 'flex min-w-0 cursor-pointer items-start gap-2.5 bg-app-surface px-3 py-3 text-sm hover:bg-app-surface-hover min-[1800px]:px-4 [&_input]:mt-0.5 [&_input]:h-4 [&_input]:w-4 [&_span]:grid [&_span]:min-w-0 [&_small]:mt-0.5 [&_small]:text-xs [&_small]:text-app-muted',
   actions: 'mt-4 flex flex-wrap justify-end gap-2',
   error: 'mb-3 rounded-lg border border-app-danger-border bg-app-danger-soft px-3 py-[11px] text-[13px] text-app-danger',
   success: 'mb-3 rounded-lg border border-emerald-300/70 bg-emerald-50 px-3 py-[11px] text-[13px] text-emerald-800 dark:border-emerald-900/70 dark:bg-emerald-950/40 dark:text-emerald-200',
