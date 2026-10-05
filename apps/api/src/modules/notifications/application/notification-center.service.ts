@@ -145,6 +145,8 @@ function severityOrder(item: AppNotificationItem): number {
 
 @Injectable()
 export class NotificationCenterService {
+  private notificationStateReady: Promise<void> | null = null;
+
   constructor(
     private readonly listTickets: ListTickets,
     @Inject(NIVEL3_DATABASE)
@@ -208,6 +210,7 @@ export class NotificationCenterService {
   }
 
   async markRead(userId: number, keys: string[]): Promise<void> {
+    await this.ensureNotificationStateTable();
     for (const key of keys) {
       await this.database.$executeRawUnsafe(
         `INSERT INTO notification_states
@@ -220,8 +223,35 @@ export class NotificationCenterService {
     }
   }
 
+  private ensureNotificationStateTable(): Promise<void> {
+    if (!this.notificationStateReady) {
+      this.notificationStateReady = this.database
+        .$executeRawUnsafe(
+          `CREATE TABLE IF NOT EXISTS notification_states (
+             user_id INT NOT NULL,
+             notification_key VARCHAR(190) NOT NULL,
+             read_at DATETIME NULL,
+             updated_at DATETIME NOT NULL
+               DEFAULT CURRENT_TIMESTAMP
+               ON UPDATE CURRENT_TIMESTAMP,
+             PRIMARY KEY (user_id, notification_key),
+             KEY idx_notification_states_user_read (user_id, read_at)
+           ) ENGINE=InnoDB
+             DEFAULT CHARSET=utf8mb4
+             COLLATE=utf8mb4_unicode_ci`,
+        )
+        .then(() => undefined)
+        .catch((error) => {
+          this.notificationStateReady = null;
+          throw error;
+        });
+    }
+    return this.notificationStateReady;
+  }
+
   private async readKeys(userId: number, keys: string[]): Promise<Set<string>> {
     if (keys.length === 0) return new Set();
+    await this.ensureNotificationStateTable();
 
     const placeholders = keys.map(() => '?').join(', ');
     const rows = await this.database.$queryRawUnsafe<ReadStateRow[]>(
