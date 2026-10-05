@@ -192,14 +192,14 @@ export const DEFAULT_NAVIGATION: SeedSection[] = [
         label: 'Permissões',
         href: '/administracao/permissoes',
         status: 'available',
-        visibilityCondition: { anyPermissions: ['system.admin', 'users.manage-access'] },
+        visibilityCondition: { anyPermissions: ['system.admin'] },
       },
       {
         slug: 'user-functions',
         label: 'Funções de usuários',
         href: '/administracao/funcoes-usuarios',
         status: 'available',
-        visibilityCondition: { anyPermissions: ['system.admin', 'users.manage-access'] },
+        visibilityCondition: { anyPermissions: ['system.admin'] },
       },
       {
         slug: 'user-permissions',
@@ -207,7 +207,7 @@ export const DEFAULT_NAVIGATION: SeedSection[] = [
         href: '/administracao/permissoes-usuario',
         status: 'available',
         visibilityCondition: {
-          anyPermissions: ['system.admin', 'users.manage-overrides'],
+          anyPermissions: ['system.admin'],
         },
       },
       {
