@@ -112,7 +112,7 @@ function RankingCard({ ranking }: { ranking: DashboardRanking }) {
       className="overflow-hidden rounded-[5px] border border-app-border bg-app-surface shadow-sm"
       data-ranking={ranking.id}
     >
-      <header className="flex min-h-[44px] items-center justify-between gap-3 border-b border-app-border bg-app-surface-muted px-5 py-3">
+      <header className="flex min-h-[44px] items-center justify-between gap-3 border-b border-app-border bg-app-surface-muted px-5 py-3 min-[1800px]:px-6">
         <div className="flex min-w-0 items-center gap-2">
           <span
             className={`shrink-0 text-[15px] font-black ${rankingAccent(ranking.id)}`}
@@ -120,16 +120,16 @@ function RankingCard({ ranking }: { ranking: DashboardRanking }) {
           >
             {rankingIcon(ranking.id)}
           </span>
-          <h3 className="m-0 truncate text-[14px] font-bold text-app-text">
+          <h3 className="m-0 truncate text-[14px] font-bold text-app-text min-[1800px]:text-[15px]">
             {ranking.label}
           </h3>
         </div>
-        <strong className="whitespace-nowrap text-[13px] font-black text-app-text">
+        <strong className="whitespace-nowrap text-[13px] font-black text-app-text min-[1800px]:text-[14px]">
           Total: {ranking.total}
         </strong>
       </header>
 
-      <div className="h-[375px] overflow-y-auto px-5 py-2">
+      <div className="h-[clamp(375px,34vh,520px)] overflow-y-auto px-5 py-2 min-[1800px]:px-6">
         {ranking.entries.length === 0 ? (
           <p className="m-0 px-0.5 py-5 text-xs text-app-subtle">
             Nenhum dado no período.
@@ -170,7 +170,7 @@ function RankingRow({
   return (
     <div className="border-b border-app-border-soft py-[11px] last:border-b-0">
       <div className="flex items-center justify-between gap-3">
-        <strong className="min-w-0 truncate text-[14px] font-bold text-app-text">
+        <strong className="min-w-0 truncate text-[14px] font-bold text-app-text min-[1800px]:text-[15px]">
           {index === 0 ? (
             <span className="mr-1.5 text-[20px] leading-none" aria-label="Primeiro colocado">
               👑
@@ -178,7 +178,7 @@ function RankingRow({
           ) : null}
           {entry.name}
         </strong>
-        <b className="shrink-0 text-[14px] font-black text-app-text">
+        <b className="shrink-0 text-[14px] font-black text-app-text min-[1800px]:text-[15px]">
           {entry.total}
         </b>
       </div>
@@ -389,7 +389,7 @@ export function OperationalDashboardScreen({
         user={currentUser}
       />
 
-      <div className="mx-auto w-[min(1440px,calc(100%-32px))] pt-6 pb-12 max-[680px]:w-[calc(100%-20px)]">
+      <div className="mx-auto w-[min(2100px,calc(100%-48px))] pt-6 pb-12 max-[1180px]:w-[calc(100%-32px)] max-[680px]:w-[calc(100%-20px)]">
 
         {error ? (
           <div
