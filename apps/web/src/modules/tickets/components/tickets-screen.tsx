@@ -9,7 +9,6 @@ import {
   type TicketStatusCard,
 } from '@helpdesk/contracts';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import {
   type FormEvent,
   type ReactNode,
@@ -25,6 +24,7 @@ import {
   fetchTickets,
   type TicketListQuery,
 } from '../api/tickets-api';
+import { TicketListActions } from './ticket-list-actions';
 import { TicketSlaIndicators } from './sla-indicator';
 
 const DEFAULT_STATUS = '1,2,3,5';
@@ -33,10 +33,6 @@ const BUTTON_CLASS = appButtonClass('secondary');
 const PRIMARY_BUTTON_CLASS = appButtonClass('primary');
 const FIELD_CONTROL_CLASS =
   'min-h-10 w-full rounded-lg border border-app-border-strong bg-app-surface px-3 text-sm text-app-text outline-none transition focus:border-app-brand focus:ring-3 focus:ring-[var(--app-brand-ring)] disabled:cursor-not-allowed disabled:opacity-55';
-const TABLE_CELL_CLASS =
-  'border-b border-app-border-soft px-3 py-3 align-top text-left text-[13px]';
-const TABLE_HEADER_CLASS =
-  'sticky top-0 border-b border-app-border-soft bg-app-surface-muted px-3 py-3 text-left text-[11px] font-extrabold uppercase tracking-[0.04em] text-app-muted';
 
 interface FilterDraft {
   search: string;
@@ -188,7 +184,6 @@ export function TicketsScreen({
 }: {
   currentUser: CurrentUserResponse;
 }) {
-  const router = useRouter();
   const [query, setQuery] = useState<TicketListQuery>({
     page: 1,
     limit: 50,
@@ -271,6 +266,15 @@ export function TicketsScreen({
       page: 1,
       status: card.statuses.join(','),
     }));
+  }
+
+  async function refreshList() {
+    try {
+      const response = await fetchTickets(query);
+      setResult(response);
+    } catch {
+      // A ação já foi concluída; o próximo refresh automático tenta novamente.
+    }
   }
 
   const meta = result?.meta;
@@ -443,77 +447,128 @@ export function TicketsScreen({
         ) : null}
 
         <section
-          className="overflow-hidden rounded-xl border border-app-border bg-app-surface shadow-sm shadow-slate-950/5 dark:shadow-black/10"
+          className="rounded-xl border border-app-border bg-app-surface p-3 shadow-sm shadow-slate-950/5 dark:shadow-black/10"
           aria-label="Lista de atendimentos"
         >
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[1100px] border-collapse">
-              <thead>
-                <tr>
-                  <th className={TABLE_HEADER_CLASS}>ID</th>
-                  <th className={TABLE_HEADER_CLASS}>Atendimento</th>
-                  <th className={TABLE_HEADER_CLASS}>Cliente</th>
-                  <th className={TABLE_HEADER_CLASS}>Solicitante</th>
-                  <th className={TABLE_HEADER_CLASS}>Técnico</th>
-                  <th className={TABLE_HEADER_CLASS}>Status</th>
-                  <th className={`${TABLE_HEADER_CLASS} text-center`}>Alerta</th>
-                  <th className={TABLE_HEADER_CLASS}>Abertura</th>
-                </tr>
-              </thead>
-              <tbody>
-                {(result?.data ?? []).map((ticket) => (
-                  <tr
-                    className={
-                      ticket.sla.quality.breached
-                        ? 'cursor-pointer bg-red-100/90 motion-safe:animate-pulse dark:bg-red-950/35'
-                        : 'cursor-pointer transition-colors hover:bg-app-surface-muted'
-                    }
-                    key={ticket.id}
-                    onDoubleClick={() => router.push(`/atendimentos/${ticket.id}`)}
-                    title="Clique duas vezes para abrir o atendimento"
-                  >
-                    <td className={`${TABLE_CELL_CLASS} font-extrabold`}>
+          <div className="grid gap-3">
+            {(result?.data ?? []).map((ticket) => (
+              <article
+                className={[
+                  'overflow-hidden rounded-xl border bg-app-surface transition',
+                  ticket.sla.quality.breached
+                    ? 'border-red-300 bg-red-50/60 dark:border-red-900/70 dark:bg-red-950/15'
+                    : 'border-app-border hover:border-app-border-strong hover:shadow-sm',
+                ].join(' ')}
+                key={ticket.id}
+              >
+                <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-4 border-b border-app-border-soft bg-app-surface-muted/65 px-4 py-3 max-[760px]:grid-cols-1">
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                       <Link
-                        className="font-extrabold text-app-brand no-underline hover:underline focus-visible:underline"
+                        className="text-sm font-extrabold text-app-brand no-underline hover:underline"
                         href={`/atendimentos/${ticket.id}`}
                       >
                         #{ticket.id}
                       </Link>
-                    </td>
-                    <td className={TABLE_CELL_CLASS}>
-                      <div className="grid gap-1">
-                        <strong className="text-[13px] text-app-text">
-                          {ticket.category.name || 'Sem categoria'}
-                          {ticket.subcategory.name
-                            ? ` · ${ticket.subcategory.name}`
-                            : ''}
-                        </strong>
-                        <span
-                          className="max-w-[360px] overflow-hidden text-ellipsis whitespace-nowrap text-app-muted-strong"
-                          title={ticketDescription(ticket)}
-                        >
-                          {ticketDescription(ticket)}
-                        </span>
-                      </div>
-                    </td>
-                    <td className={TABLE_CELL_CLASS}>{ticket.client.name || '—'}</td>
-                    <td className={TABLE_CELL_CLASS}>{ticket.requester.name || '—'}</td>
-                    <td className={TABLE_CELL_CLASS}>
-                      {ticket.technician.name || 'Não atribuído'}
-                    </td>
-                    <td className={TABLE_CELL_CLASS}>
-                      <span className="inline-flex items-center whitespace-nowrap rounded-full bg-app-surface-muted px-2 py-1 text-xs font-extrabold text-app-text-soft ring-1 ring-inset ring-app-border-soft">
-                        {ticket.statusLabel}
+                      <span className="text-app-subtle">•</span>
+                      <strong className="truncate text-sm text-app-text">
+                        {ticket.category.name || 'Sem categoria'}
+                        {ticket.subcategory.name
+                          ? ` · ${ticket.subcategory.name}`
+                          : ''}
+                      </strong>
+                    </div>
+                    <p
+                      className="m-0 mt-1 line-clamp-2 text-sm leading-5 text-app-muted-strong"
+                      title={ticketDescription(ticket)}
+                    >
+                      {ticketDescription(ticket)}
+                    </p>
+                  </div>
+
+                  <div className="flex items-start justify-end gap-2 max-[760px]:justify-start">
+                    <TicketListActions
+                      currentUser={currentUser}
+                      onChanged={refreshList}
+                      ticket={ticket}
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-[1.2fr_1.1fr_1.1fr_1fr_auto] gap-x-5 gap-y-3 px-4 py-3.5 max-[1050px]:grid-cols-3 max-[720px]:grid-cols-2 max-[480px]:grid-cols-1">
+                  <div>
+                    <span className="block text-[10px] font-extrabold uppercase tracking-[0.05em] text-app-subtle">
+                      Cliente
+                    </span>
+                    <strong className="mt-1 block text-sm font-semibold text-app-text-soft">
+                      {ticket.client.name || '—'}
+                    </strong>
+                    {ticket.location.name ? (
+                      <span className="mt-0.5 block text-xs text-app-muted">
+                        {ticket.location.name}
                       </span>
-                    </td>
-                    <td className={`${TABLE_CELL_CLASS} w-[82px] text-center`}>
-                      <TicketSlaIndicators clerio={ticket.sla.clerio} />
-                    </td>
-                    <td className={TABLE_CELL_CLASS}>{formatDate(ticket.openedAt)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                    ) : null}
+                  </div>
+
+                  <div>
+                    <span className="block text-[10px] font-extrabold uppercase tracking-[0.05em] text-app-subtle">
+                      Solicitante
+                    </span>
+                    <strong className="mt-1 block text-sm font-semibold text-app-text-soft">
+                      {ticket.requester.name || '—'}
+                    </strong>
+                  </div>
+
+                  <div>
+                    <span className="block text-[10px] font-extrabold uppercase tracking-[0.05em] text-app-subtle">
+                      Técnico
+                    </span>
+                    <strong className="mt-1 block text-sm font-semibold text-app-text-soft">
+                      {ticket.technician.name || 'Não atribuído'}
+                    </strong>
+                  </div>
+
+                  <div>
+                    <span className="block text-[10px] font-extrabold uppercase tracking-[0.05em] text-app-subtle">
+                      Status
+                    </span>
+                    <span className="mt-1 inline-flex items-center whitespace-nowrap rounded-full bg-app-surface-muted px-2.5 py-1 text-xs font-extrabold text-app-text-soft ring-1 ring-inset ring-app-border-soft">
+                      {ticket.statusLabel}
+                    </span>
+                  </div>
+
+                  <div>
+                    <span className="block text-[10px] font-extrabold uppercase tracking-[0.05em] text-app-subtle">
+                      Abertura
+                    </span>
+                    <strong className="mt-1 block whitespace-nowrap text-sm font-semibold text-app-text-soft">
+                      {formatDate(ticket.openedAt)}
+                    </strong>
+                  </div>
+                </div>
+
+                <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-app-border-soft px-4 py-2.5">
+                  <div className="flex flex-wrap items-center gap-2 text-xs text-app-muted">
+                    {ticket.level ? (
+                      <span className="rounded-full bg-app-surface-muted px-2 py-1 font-bold">
+                        N{ticket.level}
+                      </span>
+                    ) : null}
+                    {ticket.recurrent ? (
+                      <span className="rounded-full bg-app-brand-soft px-2 py-1 font-bold text-app-brand">
+                        Recorrente
+                      </span>
+                    ) : null}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-extrabold uppercase tracking-[0.05em] text-app-subtle">
+                      SLA
+                    </span>
+                    <TicketSlaIndicators clerio={ticket.sla.clerio} />
+                  </div>
+                </footer>
+              </article>
+            ))}
           </div>
 
           {!loading && !error && result?.data.length === 0 ? (
@@ -522,7 +577,7 @@ export function TicketsScreen({
             </div>
           ) : null}
 
-          <div className="flex items-center justify-between gap-3 border-t border-app-border-soft px-4 py-3.5 max-sm:flex-col max-sm:items-stretch">
+          <div className="mt-3 flex items-center justify-between gap-3 border-t border-app-border-soft px-1 pt-3.5 max-sm:flex-col max-sm:items-stretch">
             <span className="text-[13px] text-app-muted-strong">
               Página {currentPage}
               {totalPages > 0 ? ` de ${totalPages}` : ''}
@@ -561,6 +616,7 @@ export function TicketsScreen({
               </button>
             </div>
           </div>
+        </section>
         </section>
       </div>
     </main>
