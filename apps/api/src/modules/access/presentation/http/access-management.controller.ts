@@ -82,7 +82,7 @@ export class AccessManagementController {
   constructor(private readonly access: AccessManagement) {}
 
   @Get()
-  @RequirePermissions(AppPermission.UsersManageAccess)
+  @RequirePermissions(AppPermission.SystemAdmin)
   @ApiOperation({ summary: 'Listar tipos de usuário e permissões do sistema' })
   snapshot(
     @CurrentUser() actor: AuthenticatedUser | undefined,
@@ -95,14 +95,14 @@ export class AccessManagementController {
   }
 
   @Post('roles')
-  @RequirePermissions(AppPermission.UsersManageAccess)
+  @RequirePermissions(AppPermission.SystemAdmin)
   @ApiOperation({ summary: 'Criar um tipo de usuário' })
   create(@Body() body: unknown): Promise<AccessRoleMutationResponse> {
     return this.access.create(input(body));
   }
 
   @Patch('roles/order')
-  @RequirePermissions(AppPermission.UsersManageAccess)
+  @RequirePermissions(AppPermission.SystemAdmin)
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Reordenar tipos de usuário' })
   async reorder(
@@ -121,7 +121,7 @@ export class AccessManagementController {
   }
 
   @Patch('roles/:id')
-  @RequirePermissions(AppPermission.UsersManageAccess)
+  @RequirePermissions(AppPermission.SystemAdmin)
   @ApiOperation({ summary: 'Atualizar permissões de um tipo de usuário' })
   update(@Param('id', ParseIntPipe) id: number, @Body() body: unknown): Promise<AccessRoleMutationResponse> {
     if (id < 1) throw new BadRequestException('id inválido.');
@@ -129,7 +129,7 @@ export class AccessManagementController {
   }
 
   @Delete('roles/:id')
-  @RequirePermissions(AppPermission.UsersManageAccess)
+  @RequirePermissions(AppPermission.SystemAdmin)
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Excluir um tipo de usuário' })
   async remove(@Param('id', ParseIntPipe) id: number): Promise<void> {
@@ -138,7 +138,7 @@ export class AccessManagementController {
   }
 
   @Get('users')
-  @RequirePermissions(AppPermission.UsersManageOverrides)
+  @RequirePermissions(AppPermission.SystemAdmin)
   @ApiOperation({ summary: 'Listar usuários disponíveis para permissão direta' })
   userTargets(
     @CurrentUser() actor: AuthenticatedUser | undefined,
@@ -151,7 +151,7 @@ export class AccessManagementController {
   }
 
   @Get('users/:id')
-  @RequirePermissions(AppPermission.UsersManageOverrides)
+  @RequirePermissions(AppPermission.SystemAdmin)
   @ApiOperation({ summary: 'Obter permissões diretas e herdadas de um usuário' })
   userPermissionSnapshot(
     @Param('id', ParseIntPipe) id: number,
@@ -166,7 +166,7 @@ export class AccessManagementController {
   }
 
   @Patch('users/:id')
-  @RequirePermissions(AppPermission.UsersManageOverrides)
+  @RequirePermissions(AppPermission.SystemAdmin)
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Atualizar permissões diretas de um usuário' })
   async updateUserPermissions(
