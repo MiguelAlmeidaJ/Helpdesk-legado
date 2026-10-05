@@ -42,6 +42,24 @@ test('code navigation filters sections by RBAC permissions', async () => {
   );
 });
 
+test('administration stays hidden for delegated access permissions', async () => {
+  const service = new NavigationService();
+  const user = {
+    grants: [
+      { permission: 'users.manage-access' },
+      { permission: 'users.manage-overrides' },
+      { permission: 'users.assign-role' },
+    ],
+    roleAssignments: [],
+  };
+
+  const response = await service.forUser(user);
+  assert.equal(
+    response.sections.some((section) => section.id === 'administration'),
+    false,
+  );
+});
+
 test('system admin receives all code-defined navigation sections', async () => {
   const service = new NavigationService();
   const user = {
