@@ -46,7 +46,7 @@ function input(body: unknown): UserFunctionInput {
 @ApiTags('user-functions')
 @Controller('user-functions')
 @UseGuards(LegacySessionGuard, PermissionsGuard)
-@RequirePermissions(AppPermission.UsersManageAccess)
+@RequirePermissions(AppPermission.SystemAdmin)
 @ApiSecurity(LEGACY_SESSION_SECURITY)
 export class UserFunctionsController {
   constructor(private readonly management: UserFunctionManagement) {}
