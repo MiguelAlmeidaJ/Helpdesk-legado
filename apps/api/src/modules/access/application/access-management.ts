@@ -109,16 +109,7 @@ export class AccessManagement {
          FROM permissions
          ORDER BY module, name, id`,
       ),
-      this.database.$queryRawUnsafe<RoleRow[]>(
-        `SELECT r.id, r.name, r.slug, r.description, r.is_system,
-                r.sort_order, r.created_at, r.updated_at,
-                COUNT(DISTINCT ur.user_id) AS user_count
-         FROM roles r
-         LEFT JOIN user_roles ur ON ur.role_id = r.id
-         GROUP BY r.id, r.name, r.slug, r.description, r.is_system,
-                  r.sort_order, r.created_at, r.updated_at
-         ORDER BY r.sort_order ASC, r.id ASC`,
-      ),
+      this.roleRows(),
       this.database.$queryRawUnsafe<RolePermissionRow[]>(
         `SELECT role_id, permission_id
          FROM role_permissions
@@ -170,6 +161,42 @@ export class AccessManagement {
         updatedAt: iso(role.updated_at),
       })),
     };
+  }
+
+  private async roleRows(): Promise<RoleRow[]> {
+    try {
+      return await this.database.$queryRawUnsafe<RoleRow[]>(
+        `SELECT r.id, r.name, r.slug, r.description, r.is_system,
+                r.sort_order, r.created_at, r.updated_at,
+                COUNT(DISTINCT ur.user_id) AS user_count
+         FROM roles r
+         LEFT JOIN user_roles ur ON ur.role_id = r.id
+         GROUP BY r.id, r.name, r.slug, r.description, r.is_system,
+                  r.sort_order, r.created_at, r.updated_at
+         ORDER BY r.sort_order ASC, r.id ASC`,
+      );
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      if (!/sort_order/i.test(message)) throw error;
+
+      const rows = await this.database.$queryRawUnsafe<
+        Omit<RoleRow, 'sort_order'>[]
+      >(
+        `SELECT r.id, r.name, r.slug, r.description, r.is_system,
+                r.created_at, r.updated_at,
+                COUNT(DISTINCT ur.user_id) AS user_count
+         FROM roles r
+         LEFT JOIN user_roles ur ON ur.role_id = r.id
+         GROUP BY r.id, r.name, r.slug, r.description, r.is_system,
+                  r.created_at, r.updated_at
+         ORDER BY r.is_system DESC, r.name ASC, r.id ASC`,
+      );
+
+      return rows.map((row, index) => ({
+        ...row,
+        sort_order: index * 10,
+      }));
+    }
   }
 
   async userTargets(
