@@ -4,7 +4,14 @@ import Link from 'next/link';
 import type { FormEvent } from 'react';
 import { useState } from 'react';
 import { ApiError, apiRequest } from '../../../shared/api/api-client';
-import { authFormStyles } from './auth-form-styles';
+import {
+  AuthScreenShell,
+  authBackLinkClass,
+  authControlClass,
+  authErrorClass,
+  authPrimaryButtonClass,
+  authSuccessClass,
+} from './auth-screen-shell';
 
 function apiMessage(error: ApiError): string | null {
   if (!error.body || typeof error.body !== 'object') return null;
@@ -17,7 +24,9 @@ export function ResetPasswordForm({ token }: { token: string }) {
   const [confirmation, setConfirmation] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [complete, setComplete] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(
+    token ? null : 'O link de recuperação está incompleto ou inválido.',
+  );
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -38,7 +47,10 @@ export function ResetPasswordForm({ token }: { token: string }) {
     } catch (reason: unknown) {
       setError(
         reason instanceof ApiError
-          ? apiMessage(reason) ?? `Não foi possível redefinir a senha (erro ${reason.status}).`
+          ? apiMessage(reason) ??
+              'Não foi possível redefinir a senha (erro ' +
+                reason.status +
+                ').'
           : 'Não foi possível conectar à API.',
       );
     } finally {
@@ -47,60 +59,80 @@ export function ResetPasswordForm({ token }: { token: string }) {
   }
 
   return (
-    <main className={authFormStyles.page}>
-      <section className={authFormStyles.card}>
-        <div className={authFormStyles.brand}>
-          <span className={authFormStyles.brandEyebrow}>Helpdesk</span>
-          <strong className={authFormStyles.brandTitle}>Nova senha</strong>
-          <p className={authFormStyles.brandDescription}>
-            Use ao menos 12 caracteres, com maiúscula, minúscula, número e símbolo.
-          </p>
+    <AuthScreenShell
+      description="Defina uma nova senha segura para voltar a acessar o Helpdesk."
+      title="Nova senha"
+    >
+      {complete ? (
+        <div className="grid gap-5">
+          <div className={authSuccessClass} role="status">
+            Senha alterada com sucesso. Você já pode entrar com a nova senha.
+          </div>
+          <Link className={authBackLinkClass} href="/login">
+            Ir para o login
+          </Link>
         </div>
+      ) : (
+        <form className="grid gap-[17px]" onSubmit={submit}>
+          <div className="rounded-lg border border-white/10 bg-white/[0.035] px-3 py-2.5 text-xs leading-5 text-[#aeb8b4]">
+            Use ao menos 12 caracteres, com maiúscula, minúscula, número e símbolo.
+          </div>
 
-        {complete ? (
-          <div className={authFormStyles.success} role="status">Senha alterada com sucesso.</div>
-        ) : (
-          <form className={authFormStyles.form} onSubmit={submit}>
-            <label className={authFormStyles.field}>
-              <span className={authFormStyles.fieldLabel}>Nova senha</span>
-              <input
-                autoComplete="new-password"
-                className={authFormStyles.input}
-                disabled={submitting}
-                maxLength={100}
-                minLength={12}
-                onChange={(event) => setPassword(event.target.value)}
-                required
-                type="password"
-                value={password}
-              />
-            </label>
-            <label className={authFormStyles.field}>
-              <span className={authFormStyles.fieldLabel}>Confirmar nova senha</span>
-              <input
-                autoComplete="new-password"
-                className={authFormStyles.input}
-                disabled={submitting}
-                maxLength={100}
-                minLength={12}
-                onChange={(event) => setConfirmation(event.target.value)}
-                required
-                type="password"
-                value={confirmation}
-              />
-            </label>
-            {error ? <div className={authFormStyles.error} role="alert">{error}</div> : null}
-            <button
-              className={authFormStyles.button}
-              disabled={submitting || !token}
-              type="submit"
-            >
-              {submitting ? 'Salvando…' : 'Salvar nova senha'}
-            </button>
-          </form>
-        )}
-        <Link className={authFormStyles.backLink} href="/login">Ir para o login</Link>
-      </section>
-    </main>
+          <label className="grid gap-1.5">
+            <span className="text-xs font-extrabold text-[#c9d0cd]">
+              Nova senha
+            </span>
+            <input
+              autoComplete="new-password"
+              className={authControlClass}
+              disabled={submitting}
+              maxLength={100}
+              minLength={12}
+              onChange={(event) => setPassword(event.target.value)}
+              required
+              type="password"
+              value={password}
+            />
+          </label>
+
+          <label className="grid gap-1.5">
+            <span className="text-xs font-extrabold text-[#c9d0cd]">
+              Confirmar nova senha
+            </span>
+            <input
+              autoComplete="new-password"
+              className={authControlClass}
+              disabled={submitting}
+              maxLength={100}
+              minLength={12}
+              onChange={(event) => setConfirmation(event.target.value)}
+              required
+              type="password"
+              value={confirmation}
+            />
+          </label>
+
+          {error ? (
+            <div className={authErrorClass} role="alert">
+              {error}
+            </div>
+          ) : null}
+
+          <button
+            className={authPrimaryButtonClass}
+            disabled={submitting || !token}
+            type="submit"
+          >
+            {submitting ? 'Salvando…' : 'Salvar nova senha'}
+          </button>
+
+          <div className="flex justify-end">
+            <Link className={authBackLinkClass} href="/login">
+              Voltar ao login
+            </Link>
+          </div>
+        </form>
+      )}
+    </AuthScreenShell>
   );
 }
