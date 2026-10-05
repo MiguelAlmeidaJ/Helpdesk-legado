@@ -213,6 +213,18 @@ async function main() {
       );
     }
 
+    await db.$executeRawUnsafe(
+      `CREATE TABLE IF NOT EXISTS token_senha (
+         id INT NOT NULL AUTO_INCREMENT,
+         token VARCHAR(200) NULL,
+         expire VARCHAR(200) NULL,
+         email VARCHAR(100) NULL,
+         PRIMARY KEY (id),
+         INDEX idx_token_senha_token (token),
+         INDEX idx_token_senha_email (email)
+       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
+    );
+
     const rbac = await bootstrapRbacPermissions(db);
 
     for (const [source, target] of PERMISSION_MIGRATIONS) {
@@ -253,6 +265,7 @@ async function main() {
     console.log('Estrutura de acesso atualizada.');
     console.log('  roles.sort_order: OK');
     console.log('  catalogos.arquivado_em: OK');
+    console.log('  token_senha: OK');
     console.log('  permissões RBAC simplificadas por página e ação: OK');
     console.log(
       `  catálogo canônico de permissões: ${RBAC_PERMISSION_SLUGS.length} permissões`,
