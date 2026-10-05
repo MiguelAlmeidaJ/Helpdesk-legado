@@ -11,9 +11,7 @@ export const metadata: Metadata = {
 
 function canManageAccess(user: CurrentUserResponse): boolean {
   return user.grants.some(
-    (grant) =>
-      grant.permission === AppPermission.SystemAdmin ||
-      grant.permission === AppPermission.UsersManageAccess,
+    (grant) => grant.permission === AppPermission.SystemAdmin,
   );
 }
 
