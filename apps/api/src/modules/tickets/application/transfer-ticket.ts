@@ -30,10 +30,10 @@ export class TransferTicket {
     technicianId: number,
   ): Promise<void> {
     const access = resolveTicketOperationAccess(user, AppPermission.TicketsEdit);
-    const ticket = await this.detailRepository.findById(ticketId, {
+    const ticket = await this.detailRepository.findById({
+      ticketId,
+      userId: user.id,
       ownerTechnicianId: access.ownerTechnicianId,
-      clientIds: undefined,
-      descriptionContains: undefined,
     });
 
     if (!ticket) {
