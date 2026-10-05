@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { AccessModule } from '../../../access/access.module';
+import { AcceptTicket } from '../../application/accept-ticket';
 import { AddTicketInteraction } from '../../application/add-ticket-interaction';
 import { CreateTicket } from '../../application/create-ticket';
 import { ConcludeTicket } from '../../application/conclude-ticket';
@@ -29,6 +30,7 @@ import { PutTicketOnHold } from '../../application/put-ticket-on-hold';
 import { RejectTicket } from '../../application/reject-ticket';
 import { ResumeTicket } from '../../application/resume-ticket';
 import { TicketAttachments } from '../../application/ticket-attachments';
+import { TransferTicket } from '../../application/transfer-ticket';
 import { UpdateTicketAssignment } from '../../application/update-ticket-assignment';
 import { UpdateTicketClassification } from '../../application/update-ticket-classification';
 import { TicketSlaSettingsService } from '../../application/ticket-sla-settings.service';
@@ -69,6 +71,7 @@ import { TicketSlaSettingsController } from '../../presentation/http/ticket-sla-
     TicketTimelineController,
   ],
   providers: [
+    AcceptTicket,
     AddTicketInteraction,
     CreateTicket,
     ConcludeTicket,
@@ -85,6 +88,7 @@ import { TicketSlaSettingsController } from '../../presentation/http/ticket-sla-
     RejectTicket,
     ResumeTicket,
     TicketAttachments,
+    TransferTicket,
     UpdateTicketAssignment,
     UpdateTicketClassification,
     TicketSlaSettingsService,
