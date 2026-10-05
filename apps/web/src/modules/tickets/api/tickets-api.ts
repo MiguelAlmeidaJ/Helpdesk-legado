@@ -94,6 +94,31 @@ export async function createTicketInteraction(
   });
 }
 
+export async function acceptTicketQuick(ticketId: number): Promise<void> {
+  await apiRequest<null>(`tickets/${ticketId}/accept`, {
+    method: 'POST',
+  });
+}
+
+export async function fetchTicketTransferTechnicians(): Promise<TicketAssignmentOptionsResponse> {
+  return apiRequest<TicketAssignmentOptionsResponse>(
+    'tickets/transfer/technicians',
+  );
+}
+
+export async function transferTicketQuick(
+  ticketId: number,
+  technicianId: number,
+): Promise<void> {
+  await apiRequest<null>(`tickets/${ticketId}/transfer`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ technicianId }),
+  });
+}
+
 export async function fetchTicketAssignmentTechnicians(): Promise<TicketAssignmentOptionsResponse> {
   return apiRequest<TicketAssignmentOptionsResponse>(
     'tickets/assignment/technicians',
