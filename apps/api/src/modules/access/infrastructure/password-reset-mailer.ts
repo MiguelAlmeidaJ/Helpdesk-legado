@@ -21,11 +21,15 @@ export class PasswordResetMailer {
     const port = Number(this.config.get<string>('SMTP_PORT') ?? 587);
     const secure =
       this.config.get<string>('SMTP_SECURE')?.trim().toLowerCase() === 'true';
-    const webUrl = (
+    const configuredOrigin =
       this.config.get<string>('WEB_PUBLIC_URL')?.trim() ||
-      this.config.get<string>('WEB_ORIGIN')?.trim() ||
-      'http://localhost:3000'
-    ).replace(/\/$/, '');
+      this.config
+        .get<string>('WEB_ORIGIN')
+        ?.split(',')
+        .map((value) => value.trim())
+        .find(Boolean) ||
+      'http://localhost:3000';
+    const webUrl = configuredOrigin.replace(/\/$/, '');
     const resetUrl = `${webUrl}/reset-password?token=${encodeURIComponent(token)}`;
     const from =
       this.config.get<string>('SMTP_FROM')?.trim() ||
@@ -37,6 +41,9 @@ export class PasswordResetMailer {
         port: Number.isInteger(port) && port > 0 ? port : 587,
         secure,
         auth: { user, pass: password },
+        connectionTimeout: 15_000,
+        greetingTimeout: 15_000,
+        socketTimeout: 20_000,
       });
 
       await transport.sendMail({
