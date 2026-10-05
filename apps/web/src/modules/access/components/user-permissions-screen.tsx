@@ -158,7 +158,7 @@ export function UserPermissionsScreen({
         user={currentUser}
       />
 
-      <div className="mx-auto grid w-full max-w-[1500px] grid-cols-[330px_minmax(0,1fr)] gap-4 p-5 max-[900px]:grid-cols-1 max-sm:px-3">
+      <div className="mx-auto grid w-full max-w-[2100px] grid-cols-[330px_minmax(0,1fr)] gap-4 px-5 py-5 max-[900px]:grid-cols-1 max-sm:px-3 min-[1600px]:grid-cols-[380px_minmax(0,1fr)] min-[1800px]:px-8">
         <aside className="rounded-2xl border border-app-border bg-app-surface p-3 shadow-sm">
           <input
             className="mb-3 min-h-10 w-full rounded-lg border border-app-border-strong bg-app-surface px-3 text-sm outline-none focus:border-app-brand focus:ring-3 focus:ring-[var(--app-brand-ring)]"
