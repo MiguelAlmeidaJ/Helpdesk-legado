@@ -4,7 +4,20 @@ import Link from 'next/link';
 import type { FormEvent } from 'react';
 import { useState } from 'react';
 import { ApiError, apiRequest } from '../../../shared/api/api-client';
-import { authFormStyles } from './auth-form-styles';
+import {
+  AuthScreenShell,
+  authBackLinkClass,
+  authControlClass,
+  authErrorClass,
+  authPrimaryButtonClass,
+  authSuccessClass,
+} from './auth-screen-shell';
+
+function apiMessage(error: ApiError): string | null {
+  if (!error.body || typeof error.body !== 'object') return null;
+  const message = (error.body as Record<string, unknown>).message;
+  return typeof message === 'string' ? message : null;
+}
 
 export function ForgotPasswordForm() {
   const [email, setEmail] = useState('');
@@ -21,60 +34,81 @@ export function ForgotPasswordForm() {
       await apiRequest<null>('auth/password/forgot', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email: email.trim() }),
       });
       setSent(true);
     } catch (reason: unknown) {
-      setError(
-        reason instanceof ApiError
-          ? `Não foi possível processar a solicitação (erro ${reason.status}).`
-          : 'Não foi possível conectar à API.',
-      );
+      if (reason instanceof ApiError) {
+        setError(
+          apiMessage(reason) ??
+            (reason.status >= 500
+              ? 'O serviço de recuperação está temporariamente indisponível.'
+              : 'Não foi possível processar a solicitação (erro ' +
+                reason.status +
+                ').'),
+        );
+      } else {
+        setError('Não foi possível conectar à API.');
+      }
     } finally {
       setSubmitting(false);
     }
   }
 
   return (
-    <main className={authFormStyles.page}>
-      <section className={authFormStyles.card}>
-        <div className={authFormStyles.brand}>
-          <span className={authFormStyles.brandEyebrow}>Helpdesk</span>
-          <strong className={authFormStyles.brandTitle}>Recuperar senha</strong>
-          <p className={authFormStyles.brandDescription}>
-            Informe o e-mail cadastrado para receber um link temporário.
-          </p>
-        </div>
-
-        {sent ? (
-          <div className={authFormStyles.success} role="status">
-            Se o e-mail estiver cadastrado e ativo, enviaremos as instruções de recuperação.
+    <AuthScreenShell
+      description="Informe o e-mail cadastrado para receber um link temporário de redefinição."
+      title="Recuperar senha"
+    >
+      {sent ? (
+        <div className="grid gap-5">
+          <div className={authSuccessClass} role="status">
+            Se o e-mail estiver cadastrado e ativo, enviaremos as instruções de
+            recuperação. Verifique também a caixa de spam.
           </div>
-        ) : (
-          <form className={authFormStyles.form} onSubmit={submit}>
-            <label className={authFormStyles.field}>
-              <span className={authFormStyles.fieldLabel}>E-mail</span>
-              <input
-                autoComplete="email"
-                autoFocus
-                className={authFormStyles.input}
-                disabled={submitting}
-                maxLength={100}
-                onChange={(event) => setEmail(event.target.value)}
-                required
-                type="email"
-                value={email}
-              />
-            </label>
-            {error ? <div className={authFormStyles.error} role="alert">{error}</div> : null}
-            <button className={authFormStyles.button} disabled={submitting} type="submit">
-              {submitting ? 'Enviando…' : 'Enviar recuperação'}
-            </button>
-          </form>
-        )}
+          <Link className={authBackLinkClass} href="/login">
+            Voltar ao login
+          </Link>
+        </div>
+      ) : (
+        <form className="grid gap-[17px]" onSubmit={submit}>
+          <label className="grid gap-1.5">
+            <span className="text-xs font-extrabold text-[#c9d0cd]">E-mail</span>
+            <input
+              autoComplete="email"
+              autoFocus
+              className={authControlClass}
+              disabled={submitting}
+              maxLength={100}
+              onChange={(event) => setEmail(event.target.value)}
+              placeholder="seu.email@empresa.com.br"
+              required
+              type="email"
+              value={email}
+            />
+          </label>
 
-        <Link className={authFormStyles.backLink} href="/login">Voltar ao login</Link>
-      </section>
-    </main>
+          {error ? (
+            <div className={authErrorClass} role="alert">
+              {error}
+            </div>
+          ) : null}
+
+          <button
+            className={authPrimaryButtonClass}
+            disabled={submitting}
+            type="submit"
+          >
+            {submitting ? 'Enviando…' : 'Enviar recuperação'}
+          </button>
+
+          <div className="flex justify-end">
+            <Link className={authBackLinkClass} href="/login">
+              Voltar ao login
+            </Link>
+          </div>
+        </form>
+      )}
+    </AuthScreenShell>
   );
 }
