@@ -41,6 +41,7 @@ import { CurrentUser } from '../../../access/presentation/http/current-user.deco
 import { LegacySessionGuard } from '../../../access/presentation/http/legacy-session.guard';
 import { PermissionsGuard } from '../../../access/presentation/http/permissions.guard';
 import { RequirePermissions } from '../../../access/presentation/http/require-permissions.decorator';
+import { AcceptTicket } from '../../application/accept-ticket';
 import { AddTicketInteraction } from '../../application/add-ticket-interaction';
 import { GetTicketDetail } from '../../application/get-ticket-detail';
 import { ListTicketAssignmentOptions } from '../../application/list-ticket-assignment-options';
@@ -49,6 +50,7 @@ import { ListTickets } from '../../application/list-tickets';
 import { PutTicketOnHold } from '../../application/put-ticket-on-hold';
 import { RejectTicket } from '../../application/reject-ticket';
 import { ResumeTicket } from '../../application/resume-ticket';
+import { TransferTicket } from '../../application/transfer-ticket';
 import { UpdateTicketAssignment } from '../../application/update-ticket-assignment';
 import { parseTicketListQuery } from './dto/list-tickets.query';
 
@@ -197,6 +199,8 @@ function holdRequest(body: unknown): ParsedHoldRequest {
 export class TicketsController {
   constructor(
     private readonly listTickets: ListTickets,
+    private readonly acceptTicket: AcceptTicket,
+    private readonly transferTicket: TransferTicket,
     private readonly getTicketDetail: GetTicketDetail,
     private readonly addTicketInteraction: AddTicketInteraction,
     private readonly listAssignmentOptions: ListTicketAssignmentOptions,
@@ -344,6 +348,58 @@ export class TicketsController {
       limit: parsed.limit,
       filters: parsed.filters,
     });
+  }
+
+  @Post(':id/accept')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({
+    summary: 'Aceitar atendimento atribuído ao próprio técnico',
+  })
+  async accept(
+    @CurrentUser() user: AuthenticatedUser | undefined,
+    @Param('id', ParseIntPipe) ticketId: number,
+  ): Promise<void> {
+    if (!user) {
+      throw new UnauthorizedException('Usuário não autenticado.');
+    }
+    await this.acceptTicket.execute(user, ticketId);
+  }
+
+  @Get('transfer/technicians')
+  @RequirePermissions(AppPermission.TicketsRead, AppPermission.TicketsEdit)
+  @ApiOperation({
+    summary: 'Listar técnicos disponíveis para transferência rápida',
+  })
+  async transferTechnicians(
+    @CurrentUser() user: AuthenticatedUser | undefined,
+  ): Promise<TicketAssignmentOptionsResponse> {
+    if (!user) {
+      throw new UnauthorizedException('Usuário não autenticado.');
+    }
+    return {
+      technicians: await this.transferTicket.listTechnicians(user),
+    };
+  }
+
+  @Patch(':id/transfer')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @RequirePermissions(AppPermission.TicketsRead, AppPermission.TicketsEdit)
+  @ApiOperation({
+    summary: 'Transferir atendimento para outro técnico',
+  })
+  async transfer(
+    @CurrentUser() user: AuthenticatedUser | undefined,
+    @Param('id', ParseIntPipe) ticketId: number,
+    @Body() body: UpdateTicketAssignmentRequest,
+  ): Promise<void> {
+    if (!user) {
+      throw new UnauthorizedException('Usuário não autenticado.');
+    }
+    await this.transferTicket.execute(
+      user,
+      ticketId,
+      assignmentTechnicianId(body),
+    );
   }
 
   @Get('assignment/technicians')
