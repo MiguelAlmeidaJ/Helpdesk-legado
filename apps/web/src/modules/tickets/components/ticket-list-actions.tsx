@@ -130,6 +130,10 @@ function permissionScope(
 }
 
 function canHold(user: CurrentUserResponse, ticket: TicketListItem) {
+  if (!hasPermission(user, AppPermission.TicketsHold)) {
+    return false;
+  }
+
   if (
     ticket.status !== TicketStatus.WaitingExecution &&
     ticket.status !== TicketStatus.InProgress

@@ -32,26 +32,31 @@ const FALLBACK_SECTIONS: NavigationSection[] = [
   },
 ];
 
-function isActive(pathname: string, item: NavigationItem): boolean {
+function navigationPath(item: NavigationItem): string | null {
   if (!item.href) {
-    return false;
+    return null;
   }
 
-  if (item.href === '/painel') {
-    return pathname === item.href;
-  }
+  return item.href.split(/[?#]/, 1)[0] ?? null;
+}
 
-  return pathname === item.href || pathname.startsWith(`${item.href}/`);
+function matchScore(pathname: string, item: NavigationItem): number {
+  const href = navigationPath(item);
+  if (!href) return -1;
+
+  if (pathname === href) return href.length + 1;
+  if (href !== '/painel' && pathname.startsWith(`${href}/`)) return href.length;
+  return -1;
 }
 
 function NavigationLink({
   item,
-  pathname,
+  activeItemId,
   onNavigate,
   nested = false,
 }: {
   item: NavigationItem;
-  pathname: string;
+  activeItemId: string | null;
   onNavigate: () => void;
   nested?: boolean;
 }) {
@@ -72,10 +77,11 @@ function NavigationLink({
     );
   }
 
-  const active = isActive(pathname, item);
+  const active = item.id === activeItemId;
 
   return (
     <Link
+      aria-current={active ? 'page' : undefined}
       className={[
         base,
         active
@@ -136,12 +142,32 @@ export function AppSidebar() {
     };
   }, [navigationSections]);
 
+  const activeItemId = useMemo(() => {
+    const items = [
+      ...primaryItems,
+      ...regularSections.flatMap((section) => section.items),
+      ...standaloneItems,
+    ];
+    let selected: NavigationItem | null = null;
+    let selectedScore = -1;
+
+    for (const item of items) {
+      const score = matchScore(pathname, item);
+      if (score > selectedScore) {
+        selected = item;
+        selectedScore = score;
+      }
+    }
+
+    return selected?.id ?? null;
+  }, [pathname, primaryItems, regularSections, standaloneItems]);
+
   const activeSectionId = useMemo(
     () =>
       regularSections.find((section) =>
-        section.items.some((item) => isActive(pathname, item)),
+        section.items.some((item) => item.id === activeItemId),
       )?.id ?? null,
-    [pathname, regularSections],
+    [activeItemId, regularSections],
   );
 
   useEffect(() => {
@@ -242,8 +268,8 @@ export function AppSidebar() {
                 <NavigationLink
                   item={item}
                   key={item.id}
+                  activeItemId={activeItemId}
                   onNavigate={() => setOpen(false)}
-                  pathname={pathname}
                 />
               ))}
             </div>
@@ -283,9 +309,9 @@ export function AppSidebar() {
                   <NavigationLink
                     item={item}
                     key={item.id}
+                    activeItemId={activeItemId}
                     nested
                     onNavigate={() => setOpen(false)}
-                    pathname={pathname}
                   />
                 ))}
               </div>
@@ -298,8 +324,8 @@ export function AppSidebar() {
                 <NavigationLink
                   item={item}
                   key={item.id}
+                  activeItemId={activeItemId}
                   onNavigate={() => setOpen(false)}
-                  pathname={pathname}
                 />
               ))}
             </div>

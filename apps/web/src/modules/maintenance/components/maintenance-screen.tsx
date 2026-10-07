@@ -12,7 +12,7 @@ import type {
   MaintenanceDumpStageResponse,
   MaintenanceSystemStatusResponse,
 } from '@helpdesk/contracts';
-import type { ChangeEvent, FormEvent } from 'react';
+import type { ChangeEvent, FormEvent, KeyboardEvent } from 'react';
 import { useEffect, useMemo, useState } from 'react';
 import { ApiError } from '../../../shared/api/api-client';
 import { AppPageHeader } from '../../../shared/navigation/app-page-header';
@@ -49,6 +49,10 @@ const TABLE_HEAD =
   'border-b border-app-border-soft bg-app-surface-muted px-3 py-2.5 text-left text-[11px] font-extrabold uppercase tracking-[0.04em] text-app-muted';
 const TABLE_CELL =
   'border-b border-app-border-soft px-3 py-3 align-top text-[13px] text-app-text-soft';
+const TAB_CLASS =
+  'min-h-10 shrink-0 cursor-pointer rounded-lg border-0 bg-transparent px-4 text-xs font-extrabold text-app-muted transition hover:bg-app-surface-hover hover:text-app-text focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-app-brand';
+const ACTIVE_TAB_CLASS =
+  'bg-app-brand! text-white! shadow-sm hover:bg-app-brand-hover! hover:text-white! dark:text-slate-950! dark:hover:text-slate-950!';
 
 const WEEKDAYS = [
   'Domingo',
@@ -67,6 +71,24 @@ type JobDraft = {
   weekday: number;
   retentionDays: number;
 };
+
+type MaintenanceSection =
+  | 'database'
+  | 'backups'
+  | 'automation'
+  | 'migration'
+  | 'audit';
+
+const MAINTENANCE_SECTIONS: ReadonlyArray<{
+  id: MaintenanceSection;
+  label: string;
+}> = [
+  { id: 'database', label: 'Banco de dados' },
+  { id: 'backups', label: 'Backups' },
+  { id: 'automation', label: 'Automação' },
+  { id: 'migration', label: 'Migração e restore' },
+  { id: 'audit', label: 'Auditoria' },
+];
 
 const INITIAL_JOB: JobDraft = {
   target: 'nivel3',
@@ -143,6 +165,11 @@ function backupTargetLabel(_target: MaintenanceBackupTarget): string {
   return 'Nivel3';
 }
 
+function toolName(value: string | null | undefined): string {
+  if (!value) return 'Não encontrada';
+  return value.split(/[\\/]/).pop() || value;
+}
+
 export function MaintenanceScreen({
   currentUser,
 }: {
@@ -162,6 +189,8 @@ export function MaintenanceScreen({
   const [busy, setBusy] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [feedback, setFeedback] = useState<{ text: string; error: boolean } | null>(null);
+  const [activeSection, setActiveSection] =
+    useState<MaintenanceSection>('backups');
 
   async function load(signal?: AbortSignal) {
     setLoading(true);
@@ -184,7 +213,14 @@ export function MaintenanceScreen({
   useEffect(() => {
     const controller = new AbortController();
     void load(controller.signal);
-    return () => controller.abort();
+    const refreshTimer = window.setInterval(() => {
+      void load(controller.signal);
+    }, 30_000);
+
+    return () => {
+      window.clearInterval(refreshTimer);
+      controller.abort();
+    };
   }, []);
 
   async function run(key: string, success: string, operation: () => Promise<unknown>) {
@@ -225,6 +261,32 @@ export function MaintenanceScreen({
       await createMaintenanceBackupJob(jobInput(jobDraft));
       setJobDraft(INITIAL_JOB);
     });
+  }
+
+  function selectSectionFromKeyboard(
+    event: KeyboardEvent<HTMLButtonElement>,
+    currentIndex: number,
+  ) {
+    let nextIndex: number | null = null;
+    if (event.key === 'ArrowRight') {
+      nextIndex = (currentIndex + 1) % MAINTENANCE_SECTIONS.length;
+    } else if (event.key === 'ArrowLeft') {
+      nextIndex =
+        (currentIndex - 1 + MAINTENANCE_SECTIONS.length) %
+        MAINTENANCE_SECTIONS.length;
+    } else if (event.key === 'Home') {
+      nextIndex = 0;
+    } else if (event.key === 'End') {
+      nextIndex = MAINTENANCE_SECTIONS.length - 1;
+    }
+    if (nextIndex === null) return;
+
+    const nextSection = MAINTENANCE_SECTIONS[nextIndex];
+    if (!nextSection) return;
+
+    event.preventDefault();
+    setActiveSection(nextSection.id);
+    document.getElementById(`maintenance-tab-${nextSection.id}`)?.focus();
   }
 
   function toggleJob(job: MaintenanceBackupJob) {
@@ -422,6 +484,20 @@ export function MaintenanceScreen({
       ((status.storage.totalBytes - status.storage.freeBytes) / status.storage.totalBytes) * 100,
     );
   }, [status]);
+  const systemIssues = useMemo(() => {
+    if (!status) return [];
+
+    const issues: string[] = [];
+    if (status.worker.status !== 'up') issues.push('Worker sem heartbeat recente');
+    if (!status.tools.dumpClient) issues.push('Ferramenta de backup indisponível');
+    if (!status.tools.restoreClient) issues.push('Ferramenta de restore indisponível');
+    for (const database of status.databases) {
+      if (database.status !== 'up') {
+        issues.push(`${database.label} está ${database.status}`);
+      }
+    }
+    return issues;
+  }, [status]);
 
   return (
     <main className="min-h-screen bg-app-bg text-app-text">
@@ -454,6 +530,52 @@ export function MaintenanceScreen({
         {loading && !status ? (
           <div className="h-1 animate-pulse rounded-full bg-app-brand" />
         ) : null}
+
+        <section
+          className={
+            'flex flex-wrap items-center justify-between gap-4 rounded-2xl border px-5 py-4 shadow-sm ' +
+            (systemIssues.length === 0
+              ? 'border-emerald-300 bg-emerald-50/80 dark:border-emerald-900/70 dark:bg-emerald-950/20'
+              : 'border-amber-300 bg-amber-50/80 dark:border-amber-900/70 dark:bg-amber-950/20')
+          }
+        >
+          <div className="flex min-w-0 items-start gap-3">
+            <span
+              aria-hidden="true"
+              className={
+                'mt-1.5 size-2.5 shrink-0 rounded-full ring-4 ' +
+                (systemIssues.length === 0
+                  ? 'bg-emerald-500 ring-emerald-500/15'
+                  : 'bg-amber-500 ring-amber-500/15')
+              }
+            />
+            <div>
+              <strong className="text-sm text-app-text">
+                {systemIssues.length === 0
+                  ? 'Ambiente operacional'
+                  : `${systemIssues.length} ponto(s) precisam de atenção`}
+              </strong>
+              <p className="mb-0 mt-1 text-xs leading-5 text-app-muted">
+                {systemIssues.length === 0
+                  ? 'API, worker, banco e ferramentas de backup estão disponíveis.'
+                  : systemIssues.join(' · ')}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="text-[11px] text-app-subtle">
+              Atualização automática a cada 30s
+            </span>
+            <button
+              className={BUTTON_CLASS}
+              disabled={loading}
+              onClick={() => void load()}
+              type="button"
+            >
+              {loading ? 'Atualizando…' : 'Atualizar agora'}
+            </button>
+          </div>
+        </section>
 
         <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
           <div className={CARD_CLASS}>
@@ -525,16 +647,53 @@ export function MaintenanceScreen({
             <div className="mt-3 grid gap-2 text-sm">
               <div className="flex justify-between gap-3">
                 <span>Backup</span>
-                <strong>{status?.tools.dumpClient ?? 'Não encontrada'}</strong>
+                <strong title={status?.tools.dumpClient ?? undefined}>
+                  {toolName(status?.tools.dumpClient)}
+                </strong>
               </div>
               <div className="flex justify-between gap-3">
                 <span>Restore</span>
-                <strong>{status?.tools.restoreClient ?? 'Não encontrada'}</strong>
+                <strong title={status?.tools.restoreClient ?? undefined}>
+                  {toolName(status?.tools.restoreClient)}
+                </strong>
               </div>
             </div>
           </div>
         </section>
 
+        <div
+          aria-label="Áreas de manutenção"
+          className="flex max-w-full gap-1 overflow-x-auto rounded-xl border border-app-border bg-app-surface p-1 shadow-sm"
+          role="tablist"
+        >
+          {MAINTENANCE_SECTIONS.map((section, index) => {
+            const selected = activeSection === section.id;
+            return (
+              <button
+                aria-controls={`maintenance-panel-${section.id}`}
+                aria-selected={selected}
+                className={`${TAB_CLASS} ${selected ? ACTIVE_TAB_CLASS : ''}`}
+                id={`maintenance-tab-${section.id}`}
+                key={section.id}
+                onClick={() => setActiveSection(section.id)}
+                onKeyDown={(event) => selectSectionFromKeyboard(event, index)}
+                role="tab"
+                tabIndex={selected ? 0 : -1}
+                type="button"
+              >
+                {section.label}
+              </button>
+            );
+          })}
+        </div>
+
+        <div
+          aria-labelledby="maintenance-tab-database"
+          className={activeSection === 'database' ? 'grid gap-5' : 'hidden'}
+          hidden={activeSection !== 'database'}
+          id="maintenance-panel-database"
+          role="tabpanel"
+        >
         <section className={CARD_CLASS}>
           <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
             <div>
@@ -769,7 +928,15 @@ export function MaintenanceScreen({
             ))}
           </div>
         </section>
+        </div>
 
+        <div
+          aria-labelledby="maintenance-tab-migration"
+          className={activeSection === 'migration' ? 'grid gap-5' : 'hidden'}
+          hidden={activeSection !== 'migration'}
+          id="maintenance-panel-migration"
+          role="tabpanel"
+        >
         <section className={CARD_CLASS}>
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="max-w-3xl">
@@ -832,19 +999,26 @@ export function MaintenanceScreen({
             Imagens inválidas ou acima do limite permanecem em Base64 e são contabilizadas como ignoradas; o conteúdo original não é removido nesses casos.
           </p>
         </section>
+        </div>
 
+        <div
+          aria-labelledby="maintenance-tab-backups"
+          className={activeSection === 'backups' ? 'grid gap-5' : 'hidden'}
+          hidden={activeSection !== 'backups'}
+          id="maintenance-panel-backups"
+          role="tabpanel"
+        >
         <section className={CARD_CLASS}>
-          <div className="mb-4">
-            <span className="text-xs font-extrabold uppercase tracking-[0.1em] text-app-muted">
-              Backups
-            </span>
-            <h2 className="mb-0 mt-1 text-lg font-bold">Backup manual e arquivos</h2>
-            <p className="mb-0 mt-1 text-sm text-app-muted">
-              O dump nativo inclui tabelas, triggers, procedures e eventos.
-            </p>
-          </div>
-
-          <div className="mb-4 flex flex-wrap gap-2">
+          <div className="mb-4 flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <span className="text-xs font-extrabold uppercase tracking-[0.1em] text-app-muted">
+                Backups
+              </span>
+              <h2 className="mb-0 mt-1 text-lg font-bold">Backup manual e arquivos</h2>
+              <p className="mb-0 mt-1 text-sm text-app-muted">
+                O dump nativo inclui tabelas, triggers, procedures e eventos.
+              </p>
+            </div>
             <button
               className={PRIMARY_BUTTON_CLASS}
               disabled={Boolean(busy) || !backupToolsReady}
@@ -857,8 +1031,29 @@ export function MaintenanceScreen({
               }
               type="button"
             >
-              Backup Nivel3
+              {busy === 'backup-nivel3' ? 'Criando backup…' : 'Criar backup agora'}
             </button>
+          </div>
+
+          <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <div className="rounded-xl bg-app-surface-muted p-3">
+              <span className="text-[11px] font-bold uppercase text-app-muted">Ferramenta</span>
+              <strong className="mt-1 block text-sm">
+                {backupToolsReady ? toolName(status?.tools.dumpClient) : 'Indisponível'}
+              </strong>
+            </div>
+            <div className="rounded-xl bg-app-surface-muted p-3">
+              <span className="text-[11px] font-bold uppercase text-app-muted">Arquivos</span>
+              <strong className="mt-1 block text-sm">
+                {(status?.backups.length ?? 0).toLocaleString('pt-BR')} armazenado(s)
+              </strong>
+            </div>
+            <div className="rounded-xl bg-app-surface-muted p-3">
+              <span className="text-[11px] font-bold uppercase text-app-muted">Espaço livre</span>
+              <strong className="mt-1 block text-sm">
+                {bytes(status?.storage.freeBytes ?? null)}
+              </strong>
+            </div>
           </div>
 
           {!backupToolsReady ? (
@@ -923,7 +1118,15 @@ export function MaintenanceScreen({
             </table>
           </div>
         </section>
+        </div>
 
+        <div
+          aria-labelledby="maintenance-tab-automation"
+          className={activeSection === 'automation' ? 'grid gap-5' : 'hidden'}
+          hidden={activeSection !== 'automation'}
+          id="maintenance-panel-automation"
+          role="tabpanel"
+        >
         <section className={CARD_CLASS}>
           <div className="mb-4">
             <span className="text-xs font-extrabold uppercase tracking-[0.1em] text-app-muted">
@@ -1055,7 +1258,13 @@ export function MaintenanceScreen({
             </table>
           </div>
         </section>
+        </div>
 
+        <div
+          aria-label="Importação de dump"
+          className={activeSection === 'migration' ? 'grid gap-5' : 'hidden'}
+          hidden={activeSection !== 'migration'}
+        >
         <section className={CARD_CLASS}>
           <div className="mb-4">
             <span className="text-xs font-extrabold uppercase tracking-[0.1em] text-app-muted">
@@ -1149,7 +1358,15 @@ export function MaintenanceScreen({
             </div>
           ) : null}
         </section>
+        </div>
 
+        <div
+          aria-labelledby="maintenance-tab-audit"
+          className={activeSection === 'audit' ? 'grid gap-5' : 'hidden'}
+          hidden={activeSection !== 'audit'}
+          id="maintenance-panel-audit"
+          role="tabpanel"
+        >
         <section className={CARD_CLASS}>
           <div className="mb-4">
             <span className="text-xs font-extrabold uppercase tracking-[0.1em] text-app-muted">
@@ -1185,6 +1402,7 @@ export function MaintenanceScreen({
             </table>
           </div>
         </section>
+        </div>
       </div>
     </main>
   );

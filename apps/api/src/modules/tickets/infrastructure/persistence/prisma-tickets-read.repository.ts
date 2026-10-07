@@ -393,10 +393,21 @@ export class PrismaTicketsReadRepository extends TicketsReadRepository {
 
     if (effectiveSearch) {
       where.push(
-        '(LOWER(a.desc_abertura) LIKE LOWER(?) OR LOWER(a.desc_fechamento) LIKE LOWER(?))',
+        `(
+          CAST(a.id AS CHAR) LIKE ?
+          OR CONCAT('#', CAST(a.id AS CHAR)) LIKE ?
+          OR LOWER(a.desc_abertura) LIKE LOWER(?)
+          OR LOWER(a.desc_fechamento) LIKE LOWER(?)
+          OR EXISTS (
+            SELECT 1
+            FROM pessoas search_requester
+            WHERE search_requester.pessoa_id = a.pessoa
+              AND LOWER(search_requester.pessoa_nom) LIKE LOWER(?)
+          )
+        )`,
       );
       const like = `%${effectiveSearch}%`;
-      params.push(like, like);
+      params.push(like, like, like, like, like);
     }
 
     appendInFilter(where, params, 'a.tecnico', filters.technicianIds);

@@ -1,13 +1,14 @@
 "use client";
 
-import type {
-  CurrentUserResponse,
-  TicketCatalogOption,
-  TicketProjectListItem,
-  TicketProjectTaskListItem,
+import {
+  AppPermission,
+  type CurrentUserResponse,
+  type TicketCatalogOption,
+  type TicketProjectListItem,
+  type TicketProjectTaskListItem,
 } from '@helpdesk/contracts';
 import Link from 'next/link';
-import type { ReactNode } from 'react';
+import type { KeyboardEvent, ReactNode } from 'react';
 import { useEffect, useState } from 'react';
 import { ApiError } from '../../../shared/api/api-client';
 import { AppPageHeader } from '../../../shared/navigation/app-page-header';
@@ -26,6 +27,7 @@ import {
   resumeDevOpsProject,
 } from '../api/modular-ticket-workflow-api';
 import { DevOpsTicketClassificationEditor } from './devops-ticket-classification-editor';
+import { DevOpsProjectFlowchart } from './devops-project-flowchart';
 import { SpecializedTicketWorkflowPanel } from './specialized-ticket-workflow-panel';
 
 const BUTTON_CLASS =
@@ -37,6 +39,15 @@ const TABLE_HEADER_CLASS =
   'sticky top-0 border-b border-app-border-soft bg-app-surface-muted px-3 py-3 text-left text-[11px] font-extrabold uppercase tracking-[0.04em] text-app-muted';
 const CARD_CLASS =
   'mb-4 rounded-xl border border-app-border bg-app-surface p-[18px] shadow-sm shadow-slate-950/5 dark:shadow-black/10';
+
+type ProjectTab = 'overview' | 'flow' | 'tasks' | 'settings';
+
+const PROJECT_TABS: Array<{ id: ProjectTab; label: string }> = [
+  { id: 'overview', label: 'Visão geral' },
+  { id: 'flow', label: 'Fluxograma' },
+  { id: 'tasks', label: 'Tarefas' },
+  { id: 'settings', label: 'Configuração e ações' },
+];
 
 function formatDate(value: string | null): string {
   if (!value) return '—';
@@ -80,6 +91,7 @@ export function DevOpsProjectDetailScreen({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [refreshToken, setRefreshToken] = useState(0);
+  const [activeTab, setActiveTab] = useState<ProjectTab>('overview');
 
   useEffect(() => {
     const controller = new AbortController();
@@ -119,6 +131,16 @@ export function DevOpsProjectDetailScreen({
 
   function refresh() {
     setRefreshToken((value) => value + 1);
+  }
+
+  function handleTabKeyDown(event: KeyboardEvent<HTMLButtonElement>, tab: ProjectTab) {
+    if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+    event.preventDefault();
+    const index = PROJECT_TABS.findIndex((item) => item.id === tab);
+    const direction = event.key === 'ArrowRight' ? 1 : -1;
+    const next = PROJECT_TABS[(index + direction + PROJECT_TABS.length) % PROJECT_TABS.length]!;
+    setActiveTab(next.id);
+    document.getElementById(`project-tab-${next.id}`)?.focus();
   }
 
   return (
@@ -190,6 +212,40 @@ export function DevOpsProjectDetailScreen({
               </dl>
             </section>
 
+            <nav
+              aria-label="Seções do projeto"
+              className="mb-4 flex gap-1 overflow-x-auto rounded-xl border border-app-border bg-app-surface p-1.5 shadow-sm shadow-slate-950/5 dark:shadow-black/10"
+              role="tablist"
+            >
+              {PROJECT_TABS.map((tab) => {
+                const selected = activeTab === tab.id;
+                return (
+                  <button
+                    aria-controls={`project-panel-${tab.id}`}
+                    aria-selected={selected}
+                    className={`min-h-10 shrink-0 rounded-lg px-4 text-sm font-extrabold transition-colors focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-[var(--app-brand-ring)] ${selected ? 'bg-app-brand text-white shadow-sm dark:text-slate-950' : 'text-app-muted-strong hover:bg-app-surface-hover hover:text-app-text'}`}
+                    id={`project-tab-${tab.id}`}
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    onKeyDown={(event) => handleTabKeyDown(event, tab.id)}
+                    role="tab"
+                    tabIndex={selected ? 0 : -1}
+                    type="button"
+                  >
+                    {tab.label}
+                    {tab.id === 'tasks' ? ` (${tickets.length})` : ''}
+                  </button>
+                );
+              })}
+            </nav>
+
+            <div
+              aria-labelledby="project-tab-overview"
+              hidden={activeTab !== 'overview'}
+              id="project-panel-overview"
+              role="tabpanel"
+            >
+
             <section className={CARD_CLASS}>
               <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                 <div>
@@ -241,6 +297,35 @@ export function DevOpsProjectDetailScreen({
                 {project.openingDescription || 'Sem descrição.'}
               </p>
             </section>
+            </div>
+
+            <div
+              aria-labelledby="project-tab-flow"
+              hidden={activeTab !== 'flow'}
+              id="project-panel-flow"
+              role="tabpanel"
+            >
+              <DevOpsProjectFlowchart
+                editable={
+                  project.status !== 4 &&
+                  currentUser.grants.some(
+                    (grant) =>
+                      grant.permission === AppPermission.SystemAdmin ||
+                      grant.permission === AppPermission.DevOpsProjectsEdit,
+                  )
+                }
+                onChanged={refresh}
+                projectId={projectId}
+                tasks={tickets}
+              />
+            </div>
+
+            <div
+              aria-labelledby="project-tab-settings"
+              hidden={activeTab !== 'settings'}
+              id="project-panel-settings"
+              role="tabpanel"
+            >
 
             <DevOpsTicketClassificationEditor
               onChanged={refresh}
@@ -274,6 +359,14 @@ export function DevOpsProjectDetailScreen({
               statusLabel={project.statusLabel}
               technicians={technicians}
             />
+            </div>
+
+            <div
+              aria-labelledby="project-tab-tasks"
+              hidden={activeTab !== 'tasks'}
+              id="project-panel-tasks"
+              role="tabpanel"
+            >
 
             <section
               className="mb-4 overflow-hidden rounded-xl border border-app-border bg-app-surface shadow-sm shadow-slate-950/5 dark:shadow-black/10"
@@ -369,6 +462,7 @@ export function DevOpsProjectDetailScreen({
                 </div>
               ) : null}
             </section>
+            </div>
           </>
         ) : null}
       </div>

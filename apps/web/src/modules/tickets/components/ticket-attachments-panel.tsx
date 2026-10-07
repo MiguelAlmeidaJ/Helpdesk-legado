@@ -22,6 +22,8 @@ const styles = {
     'flex items-center justify-between gap-3 border-b border-app-border-soft bg-app-surface-muted px-4 py-2.5 max-[600px]:flex-col max-[600px]:items-stretch [&_h2]:m-0 [&_h2]:text-[15px] [&_span]:text-[11px] [&_span]:text-app-subtle',
   upload:
     'inline-flex min-h-[34px] cursor-pointer items-center rounded-lg border border-app-brand px-3 text-[10px] font-extrabold text-app-brand transition hover:bg-app-brand-soft [&_input]:hidden',
+  pasteHint:
+    'mx-4 mt-4 grid gap-1 rounded-xl border border-dashed border-app-border-strong bg-app-surface-muted px-4 py-3 [&_strong]:text-xs [&_strong]:text-app-text-soft [&_span]:text-[11px] [&_span]:leading-5 [&_span]:text-app-muted',
   body:
     'grid [&>p]:m-0 [&>p]:px-4 [&>p]:py-3.5 [&>p]:text-xs [&>p]:text-app-subtle',
   item:
@@ -32,7 +34,10 @@ const styles = {
     'border-t border-app-border-soft bg-app-surface-hover px-4 py-[9px] text-[11px] text-app-muted',
 } as const;
 
-function canMutate(user: CurrentUserResponse, ticket: TicketDetailResponse) {
+export function canMutateTicketAttachments(
+  user: CurrentUserResponse,
+  ticket: TicketDetailResponse,
+) {
   if (user.grants.some((g) => g.permission === AppPermission.SystemAdmin)) {
     return true;
   }
@@ -48,12 +53,14 @@ export function TicketAttachmentsPanel({
   currentUser,
   ticket,
   onUpdated,
+  refreshToken = 0,
 }: {
   currentUser: CurrentUserResponse;
   ticket: TicketDetailResponse;
   onUpdated: (ticket: TicketDetailResponse) => void;
+  refreshToken?: number;
 }) {
-  const mutate = canMutate(currentUser, ticket);
+  const mutate = canMutateTicketAttachments(currentUser, ticket);
   const [items, setItems] = useState<TicketAttachment[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -77,7 +84,7 @@ export function TicketAttachmentsPanel({
         if (active) setLoading(false);
       });
     return () => { active = false; };
-  }, [ticket.id]);
+  }, [refreshToken, ticket.id]);
 
   async function upload(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
@@ -129,7 +136,12 @@ export function TicketAttachmentsPanel({
   return (
     <section className={styles.card}>
       <div className={styles.header}>
-        <div><h2>Anexos</h2><span>{items.length} item(ns)</span></div>
+        <div>
+          <h2>Anexos</h2>
+          <span>
+            {items.length} {items.length === 1 ? 'arquivo' : 'arquivos'}
+          </span>
+        </div>
         {mutate ? (
           <label className={styles.upload}>
             {saving ? 'Processando…' : 'Adicionar arquivo'}
@@ -137,6 +149,14 @@ export function TicketAttachmentsPanel({
           </label>
         ) : null}
       </div>
+      {mutate ? (
+        <div className={styles.pasteHint}>
+          <strong>Colar imagem da área de transferência</strong>
+          <span>
+            Pressione Ctrl + V nesta ou em qualquer outra aba do atendimento.
+          </span>
+        </div>
+      ) : null}
       <div className={styles.body}>
         {loading ? <p>Carregando anexos…</p> : null}
         {!loading && items.length === 0 ? <p>Nenhum anexo.</p> : null}

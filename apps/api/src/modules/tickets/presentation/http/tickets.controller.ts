@@ -260,7 +260,8 @@ export class TicketsController {
     name: 'search',
     required: false,
     type: String,
-    description: 'Busca nas descrições de abertura e fechamento.',
+    description:
+      'Busca por código do atendimento, solicitante ou descrições de abertura e fechamento.',
   })
   @ApiQuery({
     name: 'type',

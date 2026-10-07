@@ -22,10 +22,6 @@ const PRIMARY_BUTTON_CLASS = `${BUTTON_CLASS} border-app-brand bg-app-brand text
 const FIELD_CONTROL_CLASS =
   'min-h-10 w-full rounded-lg border border-app-border-strong bg-app-surface px-3 text-sm text-app-text outline-none transition focus:border-app-brand focus:ring-3 focus:ring-[var(--app-brand-ring)] disabled:cursor-not-allowed disabled:opacity-55';
 const FIELD_LABEL_CLASS = 'text-xs font-extrabold text-app-muted';
-const TABLE_CELL_CLASS =
-  'border-b border-app-border-soft px-3 py-3 align-top text-left text-[13px]';
-const TABLE_HEADER_CLASS =
-  'sticky top-0 border-b border-app-border-soft bg-app-surface-muted px-3 py-3 text-left text-[11px] font-extrabold uppercase tracking-[0.04em] text-app-muted';
 
 interface Draft {
   search: string;
@@ -63,6 +59,13 @@ function errorMessage(reason: unknown): string {
   return reason instanceof Error
     ? reason.message
     : 'Não foi possível carregar os projetos DevOps.';
+}
+
+function projectStatusClass(status: number): string {
+  if (status === 4) return 'border-emerald-400/35 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300';
+  if (status === 2) return 'border-app-brand/30 bg-[var(--app-brand-soft)] text-app-brand';
+  if (status === 3) return 'border-amber-400/35 bg-amber-500/10 text-amber-700 dark:text-amber-300';
+  return 'border-app-border bg-app-surface-muted text-app-text-soft';
 }
 
 export function DevOpsProjectsScreen({
@@ -104,6 +107,19 @@ export function DevOpsProjectsScreen({
     return `${result.meta.total.toLocaleString('pt-BR')} projeto${
       result.meta.total === 1 ? '' : 's'
     }`;
+  }, [result]);
+
+  const visibleSummary = useMemo(() => {
+    const projects = result?.data ?? [];
+    const taskCount = projects.reduce((total, project) => total + project.tasks.total, 0);
+    const blockedCount = projects.filter((project) => project.tasks.blocked > 0).length;
+    const averageProgress = projects.length
+      ? Math.round(
+          projects.reduce((total, project) => total + project.tasks.progressPercent, 0) /
+            projects.length,
+        )
+      : 0;
+    return { taskCount, blockedCount, averageProgress };
   }, [result]);
 
   function submit(event: FormEvent<HTMLFormElement>) {
@@ -275,80 +291,98 @@ export function DevOpsProjectsScreen({
           </div>
         ) : null}
 
-        <section
-          className="overflow-hidden rounded-xl border border-app-border bg-app-surface shadow-sm shadow-slate-950/5 dark:shadow-black/10"
-          aria-label="Lista de projetos DevOps"
-        >
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[1120px] border-collapse">
-              <thead>
-                <tr>
-                  <th className={TABLE_HEADER_CLASS}>ID</th>
-                  <th className={TABLE_HEADER_CLASS}>Projeto</th>
-                  <th className={TABLE_HEADER_CLASS}>Cliente</th>
-                  <th className={TABLE_HEADER_CLASS}>Técnico</th>
-                  <th className={TABLE_HEADER_CLASS}>Tarefas</th>
-                  <th className={TABLE_HEADER_CLASS}>Progresso</th>
-                  <th className={TABLE_HEADER_CLASS}>Status</th>
-                  <th className={TABLE_HEADER_CLASS}>Abertura</th>
-                </tr>
-              </thead>
-              <tbody>
-                {(result?.data ?? []).map((project) => (
-                  <tr className="transition-colors hover:bg-app-surface-muted" key={project.id}>
-                    <td className={`${TABLE_CELL_CLASS} font-extrabold`}>
-                      <Link
-                        className="font-extrabold text-app-brand no-underline hover:underline focus-visible:underline"
-                        href={`/atendimentos/devops/projetos/${project.id}`}
-                      >
-                        #{project.id}
-                      </Link>
-                    </td>
-                    <td className={TABLE_CELL_CLASS}>
-                      <div className="grid min-w-[220px] gap-0.5">
-                        <strong className="text-app-text">{project.name || 'Sem nome'}</strong>
-                        <span className="max-w-[420px] truncate text-app-muted-strong">
-                          {project.openingDescription || project.category.name || 'Sem descrição'}
-                        </span>
-                      </div>
-                    </td>
-                    <td className={TABLE_CELL_CLASS}>{project.client.name || '—'}</td>
-                    <td className={TABLE_CELL_CLASS}>{project.technician.name || 'Não atribuído'}</td>
-                    <td className={TABLE_CELL_CLASS}>
-                      <div className="grid min-w-[145px] gap-1 text-xs">
-                        <strong className="text-app-text">
-                          {project.tasks.completed}/{project.tasks.total} concluídas
-                        </strong>
-                        <span className="text-[10px] text-app-muted">
-                          {project.tasks.inProgress} execução · {project.tasks.onHold} espera
-                          {project.tasks.blocked > 0 ? ` · ${project.tasks.blocked} bloqueada(s)` : ''}
-                        </span>
-                      </div>
-                    </td>
-                    <td className={TABLE_CELL_CLASS}>
-                      <div className="grid min-w-[120px] gap-1.5">
-                        <div className="h-2 overflow-hidden rounded-full bg-app-border">
-                          <div
-                            className="h-full rounded-full bg-app-brand transition-all"
-                            style={{ width: `${project.tasks.progressPercent}%` }}
-                          />
-                        </div>
-                        <strong className="text-[11px] text-app-text-soft">
-                          {project.tasks.progressPercent}%
-                        </strong>
-                      </div>
-                    </td>
-                    <td className={TABLE_CELL_CLASS}>
-                      <span className="inline-flex items-center rounded-full bg-app-surface-muted px-2 py-1 text-xs font-extrabold whitespace-nowrap text-app-text-soft">
+        <section aria-label="Lista de projetos DevOps">
+          <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
+            {[
+              ['Projetos encontrados', result?.meta.total ?? 0],
+              ['Tarefas nesta página', visibleSummary.taskCount],
+              ['Progresso médio', `${visibleSummary.averageProgress}%`],
+              ['Projetos bloqueados', visibleSummary.blockedCount],
+            ].map(([label, value]) => (
+              <div
+                className="rounded-xl border border-app-border bg-app-surface p-4 shadow-sm shadow-slate-950/5 dark:shadow-black/10"
+                key={label}
+              >
+                <span className="text-[11px] font-extrabold uppercase tracking-[0.06em] text-app-muted">
+                  {label}
+                </span>
+                <strong className="mt-2 block text-2xl text-app-text">{value}</strong>
+              </div>
+            ))}
+          </div>
+
+          <ul className="m-0 flex list-none flex-col gap-3 p-0">
+            {(result?.data ?? []).map((project) => (
+              <li
+                className="group rounded-xl border border-app-border bg-app-surface shadow-sm shadow-slate-950/5 transition hover:border-app-border-strong hover:shadow-md dark:shadow-black/10"
+                key={project.id}
+              >
+                <div className="grid gap-4 p-4 lg:grid-cols-[minmax(260px,1.5fr)_minmax(160px,.75fr)_minmax(180px,.8fr)_minmax(220px,1fr)_auto] lg:items-center">
+                  <div className="min-w-0 lg:border-r lg:border-app-border-soft lg:pr-4">
+                    <Link
+                      className="text-xs font-extrabold text-app-brand no-underline hover:underline focus-visible:underline"
+                      href={`/atendimentos/devops/projetos/${project.id}`}
+                    >
+                      Projeto #{project.id}
+                    </Link>
+                    <h2 className="mt-1 truncate text-lg font-extrabold text-app-text">
+                      {project.name || 'Sem nome'}
+                    </h2>
+                    <p className="mt-1 line-clamp-2 text-sm leading-5 text-app-muted-strong">
+                      {project.openingDescription || project.category.name || 'Sem descrição cadastrada.'}
+                    </p>
+                  </div>
+
+                  <dl className="contents text-sm">
+                    <div className="min-w-0">
+                      <dt className="text-[11px] font-extrabold uppercase tracking-wide text-app-muted">Cliente</dt>
+                      <dd className="mt-1 truncate font-semibold text-app-text-soft">{project.client.name || '—'}</dd>
+                      <dd className="mt-1 truncate text-xs text-app-muted">{project.technician.name || 'Não atribuído'}</dd>
+                    </div>
+                    <div>
+                      <dt className="text-[11px] font-extrabold uppercase tracking-wide text-app-muted">Tarefas</dt>
+                      <dd className="mt-1 font-semibold text-app-text-soft">{project.tasks.completed} de {project.tasks.total} concluídas</dd>
+                      <dd className="mt-1 text-xs text-app-muted">
+                        {project.tasks.inProgress} em execução · {project.tasks.onHold} em espera
+                      </dd>
+                    </div>
+                  </dl>
+
+                  <div className="min-w-0">
+                    <div className="mb-2 flex items-center justify-between gap-3 text-xs">
+                      <span className={`inline-flex items-center rounded-full border px-2.5 py-1 font-extrabold ${projectStatusClass(project.status)}`}>
                         {project.statusLabel}
                       </span>
-                    </td>
-                    <td className={TABLE_CELL_CLASS}>{formatDate(project.openedAt)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                      <strong className="text-app-text">{project.tasks.progressPercent}%</strong>
+                    </div>
+                    <div
+                      aria-label={`${project.tasks.progressPercent}% concluído`}
+                      aria-valuemax={100}
+                      aria-valuemin={0}
+                      aria-valuenow={project.tasks.progressPercent}
+                      className="h-2.5 overflow-hidden rounded-full bg-app-border"
+                      role="progressbar"
+                    >
+                      <div
+                        className={`h-full rounded-full transition-all ${project.tasks.blocked > 0 ? 'bg-amber-500' : 'bg-app-brand'}`}
+                        style={{ width: `${project.tasks.progressPercent}%` }}
+                      />
+                    </div>
+                    <span className="mt-1.5 block truncate text-[11px] text-app-muted">
+                      Atualizado {formatDate(project.lastActivityAt)}
+                    </span>
+                  </div>
+
+                  <Link
+                    className={`${BUTTON_CLASS} w-full lg:w-auto`}
+                    href={`/atendimentos/devops/projetos/${project.id}`}
+                  >
+                    Abrir
+                  </Link>
+                </div>
+              </li>
+            ))}
+          </ul>
 
           {!loading && !error && result?.data.length === 0 ? (
             <div className="px-5 py-10 text-center text-app-muted-strong">
@@ -356,7 +390,7 @@ export function DevOpsProjectsScreen({
             </div>
           ) : null}
 
-          <div className="flex items-center justify-between gap-3 px-4 py-3.5 max-sm:flex-col max-sm:items-stretch">
+          <div className="mt-4 flex items-center justify-between gap-3 rounded-xl border border-app-border bg-app-surface px-4 py-3.5 shadow-sm shadow-slate-950/5 max-sm:flex-col max-sm:items-stretch dark:shadow-black/10">
             <span className="text-[13px] text-app-muted-strong">
               Página {page}{totalPages > 0 ? ` de ${totalPages}` : ''}
             </span>

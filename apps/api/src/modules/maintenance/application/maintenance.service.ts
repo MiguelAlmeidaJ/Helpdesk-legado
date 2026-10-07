@@ -484,10 +484,62 @@ const PROTECTED_NIVEL3_TABLES = new Set<string>([
 
 const TOOL_ERROR_LIMIT = 24000;
 const DUMP_STAGE_TTL_MS = 2 * 60 * 60 * 1000;
+const MAINTENANCE_TIME_ZONE = 'America/Sao_Paulo';
+const DATABASE_DATE_FORMATTER = new Intl.DateTimeFormat('en-CA', {
+  day: '2-digit',
+  hour: '2-digit',
+  hourCycle: 'h23',
+  minute: '2-digit',
+  month: '2-digit',
+  second: '2-digit',
+  timeZone: MAINTENANCE_TIME_ZONE,
+  year: 'numeric',
+});
+
+function timeZoneOffsetMs(date: Date): number {
+  const values = Object.fromEntries(
+    DATABASE_DATE_FORMATTER.formatToParts(date)
+      .filter((part) => part.type !== 'literal')
+      .map((part) => [part.type, Number(part.value)]),
+  );
+  const representedAsUtc = Date.UTC(
+    values.year,
+    values.month - 1,
+    values.day,
+    values.hour,
+    values.minute,
+    values.second,
+  );
+
+  return representedAsUtc - Math.floor(date.getTime() / 1000) * 1000;
+}
+
+function databaseWallTime(value: Date | string): Date {
+  if (typeof value === 'string' && /(?:Z|[+-]\d{2}:?\d{2})$/i.test(value)) {
+    return new Date(value);
+  }
+
+  const parsed = value instanceof Date ? value : new Date(value.replace(' ', 'T') + 'Z');
+  if (Number.isNaN(parsed.getTime())) return parsed;
+
+  const wallTimeAsUtc = Date.UTC(
+    parsed.getUTCFullYear(),
+    parsed.getUTCMonth(),
+    parsed.getUTCDate(),
+    parsed.getUTCHours(),
+    parsed.getUTCMinutes(),
+    parsed.getUTCSeconds(),
+    parsed.getUTCMilliseconds(),
+  );
+  const firstPass = new Date(wallTimeAsUtc);
+  const candidate = new Date(wallTimeAsUtc - timeZoneOffsetMs(firstPass));
+
+  return new Date(wallTimeAsUtc - timeZoneOffsetMs(candidate));
+}
 
 function iso(value: Date | string | null): string | null {
   if (value === null) return null;
-  const date = value instanceof Date ? value : new Date(value);
+  const date = databaseWallTime(value);
   return Number.isNaN(date.getTime()) ? String(value) : date.toISOString();
 }
 
@@ -2131,14 +2183,23 @@ export class MaintenanceService implements OnApplicationBootstrap {
     MaintenanceSystemStatusResponse['worker']
   > {
     const rows = await this.nivel3.$queryRawUnsafe<
-      Array<{ last_heartbeat_at: Date | string }>
+      Array<{
+        last_heartbeat_at: Date | string;
+        heartbeat_age_seconds: number | bigint | string;
+      }>
     >(
-      "SELECT last_heartbeat_at FROM maintenance_worker_state WHERE worker_key = 'backup-worker' LIMIT 1",
+      [
+        'SELECT last_heartbeat_at,',
+        '       TIMESTAMPDIFF(SECOND, last_heartbeat_at, NOW()) AS heartbeat_age_seconds',
+        'FROM maintenance_worker_state',
+        "WHERE worker_key = 'backup-worker'",
+        'LIMIT 1',
+      ].join('\n'),
     );
     const last = rows[0]?.last_heartbeat_at;
     if (!last) return { status: 'unknown', lastHeartbeatAt: null };
-    const timestampValue = new Date(last).getTime();
-    const up = Date.now() - timestampValue <= 120000;
+    const ageSeconds = numberValue(rows[0]?.heartbeat_age_seconds);
+    const up = ageSeconds >= -5 && ageSeconds <= 120;
     return {
       status: up ? 'up' : 'down',
       lastHeartbeatAt: iso(last),

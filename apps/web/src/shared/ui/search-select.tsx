@@ -2,6 +2,15 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 
+const DIACRITIC_MARKS = /\p{Diacritic}/gu;
+
+function normalizeSearchText(value: string): string {
+  return value
+    .normalize('NFD')
+    .replace(DIACRITIC_MARKS, '')
+    .toLocaleLowerCase('pt-BR');
+}
+
 export interface SearchSelectOption {
   value: string;
   label: string;
@@ -55,11 +64,11 @@ export function SearchSelect({
   );
 
   const filtered = useMemo(() => {
-    const query = search.trim().toLocaleLowerCase('pt-BR');
+    const query = normalizeSearchText(search.trim());
     if (!query) return options;
 
     return options.filter((option) =>
-      option.label.toLocaleLowerCase('pt-BR').includes(query),
+      normalizeSearchText(option.label).includes(query),
     );
   }, [options, search]);
 

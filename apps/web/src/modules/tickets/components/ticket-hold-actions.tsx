@@ -221,7 +221,7 @@ export function TicketHoldActions({
     <section className={styles.card}>
       <div className={styles.header}>
         <div>
-          <h2>Ações</h2>
+          <h2>Controle de espera</h2>
           <span>
             {resumeAllowed
               ? 'Atendimento em espera'

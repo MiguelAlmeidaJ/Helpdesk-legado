@@ -170,7 +170,7 @@ export function TicketAssignmentActions({
     <section className={styles.card}>
       <div className={styles.header}>
         <div>
-          <h2>Ações</h2>
+          <h2>Responsável</h2>
           <span>Atendimento aguardando execução</span>
         </div>
         <button onClick={toggle} type="button">

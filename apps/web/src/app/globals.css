@@ -123,6 +123,48 @@ a {
   background-color: var(--app-brand-hover) !important;
 }
 
+@keyframes ticket-sla-breached-alert {
+  0%,
+  100% {
+    border-color: #dc2626;
+    background-color: #fee2e2;
+    box-shadow: 0 0 0 1px rgba(220, 38, 38, 0.16);
+  }
+
+  50% {
+    border-color: #f87171;
+    background-color: #fff1f2;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2);
+  }
+}
+
+.ticket-sla-breached {
+  border-color: #dc2626;
+  background-color: #fee2e2;
+  animation: ticket-sla-breached-alert 1.25s ease-in-out infinite;
+}
+
+html.dark .ticket-sla-breached {
+  border-color: #f87171;
+  background-color: #4c1014;
+  animation-name: ticket-sla-breached-alert-dark;
+}
+
+@keyframes ticket-sla-breached-alert-dark {
+  0%,
+  100% {
+    border-color: #f87171;
+    background-color: #4c1014;
+    box-shadow: 0 0 0 1px rgba(248, 113, 113, 0.28);
+  }
+
+  50% {
+    border-color: #ef4444;
+    background-color: #2f0a0d;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.3);
+  }
+}
+
 /* Shared button system.
    Use these classes for actions instead of composing button styles per screen. */
 .app-button {
