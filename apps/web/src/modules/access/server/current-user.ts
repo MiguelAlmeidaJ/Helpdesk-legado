@@ -35,6 +35,13 @@ const ROUTE_POLICIES: readonly RoutePolicy[] = [
     anyPermissions: [AppPermission.DevOpsProjectsCreate],
   },
   {
+    prefix: '/atendimentos/devops/fluxos',
+    anyPermissions: [
+      AppPermission.DevOpsProjectsRead,
+      AppPermission.DevOpsProjectsEdit,
+    ],
+  },
+  {
     prefix: '/atendimentos/devops/projetos',
     anyPermissions: [
       AppPermission.DevOpsProjectsRead,

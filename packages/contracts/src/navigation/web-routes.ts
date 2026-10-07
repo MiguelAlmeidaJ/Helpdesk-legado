@@ -7,6 +7,7 @@ export const WEB_ROUTE_TRANSLATIONS = [
   ['/tickets/marketing/new', '/atendimentos/marketing/nova-tarefa'],
   ['/tickets/devops/projects/new', '/atendimentos/devops/projetos/novo'],
   ['/tickets/devops/projects', '/atendimentos/devops/projetos'],
+  ['/tickets/devops/flow-templates', '/atendimentos/devops/fluxos'],
   ['/tickets/devops/reports/tasks', '/atendimentos/devops/relatorios/tarefas'],
   ['/tickets/marketing/reports/tasks', '/atendimentos/marketing/relatorios/tarefas'],
   ['/tickets/recurrences', '/atendimentos/recorrencias'],

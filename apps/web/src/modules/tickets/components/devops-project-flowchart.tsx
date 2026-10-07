@@ -1,11 +1,18 @@
 "use client";
 
-import type { TicketProjectTaskListItem } from '@helpdesk/contracts';
+import type {
+  TicketProjectFlowTemplate,
+  TicketProjectTaskListItem,
+} from '@helpdesk/contracts';
 import Link from 'next/link';
 import type { FormEvent } from 'react';
 import { useEffect, useMemo, useState } from 'react';
 import { ApiError } from '../../../shared/api/api-client';
 import { updateDevOpsTaskDependency } from '../api/modular-ticket-edit-api';
+import {
+  applyProjectFlowTemplate,
+  fetchProjectFlowTemplates,
+} from '../api/project-flow-template-api';
 
 const FIELD_CLASS =
   'min-h-9 w-full rounded-lg border border-app-border-strong bg-app-surface px-2.5 text-xs text-app-text outline-none transition focus:border-app-brand focus:ring-3 focus:ring-[var(--app-brand-ring)] disabled:cursor-not-allowed disabled:opacity-55';
@@ -181,6 +188,41 @@ export function DevOpsProjectFlowchart({
 }) {
   const stages = useMemo(() => buildStages(tasks), [tasks]);
   const startCount = stages[0]?.length ?? 0;
+  const [templates, setTemplates] = useState<TicketProjectFlowTemplate[]>([]);
+  const [templateId, setTemplateId] = useState('');
+  const [applying, setApplying] = useState(false);
+  const [applyFeedback, setApplyFeedback] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!editable) return;
+    const controller = new AbortController();
+    fetchProjectFlowTemplates(controller.signal)
+      .then((response) => setTemplates(response.data))
+      .catch((reason: unknown) => {
+        if (!(reason instanceof Error && reason.name === 'AbortError')) {
+          setApplyFeedback(errorMessage(reason));
+        }
+      });
+    return () => controller.abort();
+  }, [editable]);
+
+  async function applyTemplate() {
+    const selected = templates.find((template) => template.id === Number(templateId));
+    if (!selected) return;
+    if (!window.confirm(`Aplicar “${selected.name}” e criar ${selected.steps.length} tarefa(s) neste projeto?`)) return;
+    setApplying(true);
+    setApplyFeedback(null);
+    try {
+      const result = await applyProjectFlowTemplate(projectId, selected.id);
+      setTemplateId('');
+      setApplyFeedback(`${result.createdTaskIds.length} tarefa(s) criadas pelo template “${selected.name}”.`);
+      onChanged();
+    } catch (reason) {
+      setApplyFeedback(errorMessage(reason));
+    } finally {
+      setApplying(false);
+    }
+  }
 
   return (
     <section
@@ -201,14 +243,56 @@ export function DevOpsProjectFlowchart({
           </p>
         </div>
         {editable ? (
-          <Link
-            className={BUTTON_CLASS}
-            href={`/atendimentos/devops/nova-tarefa?projectId=${projectId}`}
-          >
-            Adicionar etapa
-          </Link>
+          <div className="flex flex-wrap justify-end gap-2">
+            <Link
+              className={BUTTON_CLASS}
+              href="/atendimentos/devops/fluxos"
+            >
+              Gerenciar templates
+            </Link>
+            <Link
+              className={BUTTON_CLASS}
+              href={`/atendimentos/devops/nova-tarefa?projectId=${projectId}`}
+            >
+              Adicionar etapa
+            </Link>
+          </div>
         ) : null}
       </header>
+
+      {editable ? (
+        <div className="grid gap-3 border-b border-app-border-soft bg-[var(--app-brand-soft)] p-4 md:grid-cols-[minmax(240px,1fr)_auto] md:items-end">
+          <label className="grid gap-1.5">
+            <span className="text-xs font-extrabold text-app-brand">Aplicar um template pronto</span>
+            <select
+              className={FIELD_CLASS}
+              disabled={applying || templates.length === 0}
+              onChange={(event) => setTemplateId(event.target.value)}
+              value={templateId}
+            >
+              <option value="">{templates.length === 0 ? 'Nenhum template disponível' : 'Selecione um fluxo'}</option>
+              {templates.map((template) => (
+                <option key={template.id} value={template.id}>
+                  {template.name} · {template.steps.length} etapa(s)
+                </option>
+              ))}
+            </select>
+          </label>
+          <button
+            className={BUTTON_CLASS}
+            disabled={applying || !templateId}
+            onClick={applyTemplate}
+            type="button"
+          >
+            {applying ? 'Aplicando…' : 'Usar template'}
+          </button>
+          {applyFeedback ? (
+            <p className="m-0 text-xs font-semibold text-app-text-soft md:col-span-2" role="status">
+              {applyFeedback}
+            </p>
+          ) : null}
+        </div>
+      ) : null}
 
       {tasks.length === 0 ? (
         <div className="grid justify-items-center gap-3 px-5 py-12 text-center">

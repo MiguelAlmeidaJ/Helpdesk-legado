@@ -973,6 +973,43 @@ model projetos {
   status          Int?      @default(1)
 }
 
+model devops_flow_templates {
+  id          Int      @id @default(autoincrement()) @db.UnsignedInt
+  name        String   @db.VarChar(160)
+  description String   @default("") @db.Text
+  is_active   Boolean  @default(true)
+  created_by  Int
+  created_at  DateTime @default(now()) @db.DateTime(0)
+  updated_at  DateTime @default(now()) @db.DateTime(0)
+
+  @@index([is_active, name], map: "idx_devops_flow_templates_active_name")
+}
+
+model devops_flow_template_steps {
+  id             Int     @id @default(autoincrement()) @db.UnsignedInt
+  template_id    Int     @db.UnsignedInt
+  step_key       String  @db.VarChar(64)
+  name           String  @db.VarChar(160)
+  description    String  @default("") @db.Text
+  duration_days  Int     @default(1) @db.UnsignedSmallInt
+  depends_on_key String? @db.VarChar(64)
+  sort_order     Int     @default(0)
+
+  @@unique([template_id, step_key], map: "uq_devops_flow_template_step_key")
+  @@index([template_id, sort_order, id], map: "idx_devops_flow_template_steps_order")
+}
+
+model devops_flow_template_applications {
+  id          Int      @id @default(autoincrement()) @db.UnsignedInt
+  project_id  Int
+  template_id Int      @db.UnsignedInt
+  applied_by  Int
+  applied_at  DateTime @default(now()) @db.DateTime(0)
+
+  @@unique([project_id, template_id], map: "uq_devops_flow_template_application")
+  @@index([template_id, applied_at], map: "idx_devops_flow_template_applications")
+}
+
 /// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 model recebimentos {
   id                 Int             @id @default(autoincrement())

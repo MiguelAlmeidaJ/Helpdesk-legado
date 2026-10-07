@@ -20,6 +20,7 @@ export * from './tickets/ticket-sla-policy';
 export * from './tickets/ticket-marketing';
 export * from './tickets/ticket-project';
 export * from './tickets/ticket-project-image';
+export * from './tickets/ticket-project-flow-template';
 export * from './tickets/ticket-rejection';
 export * from './tickets/ticket-status';
 export * from './tickets/ticket-workflow';

@@ -58,6 +58,7 @@ export const DEFAULT_NAVIGATION: SeedSection[] = [
     icon: 'code',
     items: [
       { slug: 'devops-projects', label: 'Lista de Projetos', href: '/atendimentos/devops/projetos', status: 'available', visibilityCondition: { anyPermissions: ['devops.projects.read', 'devops.projects.edit'] } },
+      { slug: 'devops-flow-templates', label: 'Fluxos de Projetos', href: '/atendimentos/devops/fluxos', status: 'available', visibilityCondition: { anyPermissions: ['devops.projects.read', 'devops.projects.edit'] } },
       { slug: 'devops-tasks', label: 'Lista de Tarefas', href: '/atendimentos/devops', status: 'available', visibilityCondition: { anyPermissions: ['devops.tasks.read', 'devops.tasks.edit'] } },
       { slug: 'devops-project-new', label: 'Novo Projeto', href: '/atendimentos/devops/projetos/novo', status: 'available', visibilityCondition: { anyPermissions: ['devops.projects.create'] } },
       { slug: 'devops-task-new', label: 'Nova Tarefa', href: '/atendimentos/devops/nova-tarefa', status: 'available', visibilityCondition: { anyPermissions: ['devops.tasks.create'] } },

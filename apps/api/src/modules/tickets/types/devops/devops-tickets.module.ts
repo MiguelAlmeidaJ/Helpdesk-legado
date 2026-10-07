@@ -7,6 +7,7 @@ import { TicketProjectScheduleActivation } from '../../application/ticket-projec
 import { TicketProjectWorkflow } from '../../application/ticket-project-workflow';
 import { TicketProjectTaskImages } from '../../application/ticket-project-task-images';
 import { TicketProjectTaskWorkflow } from '../../application/ticket-project-task-workflow';
+import { TicketProjectFlowTemplatesService } from '../../application/ticket-project-flow-templates.service';
 import { TicketProjectCommandRepository } from '../../application/ports/ticket-project-command.repository';
 import { TicketProjectReadRepository } from '../../application/ports/ticket-project-read.repository';
 import { TicketProjectScheduleActivationRepository } from '../../application/ports/ticket-project-schedule-activation.repository';
@@ -25,6 +26,7 @@ import { TicketProjectStructureController } from '../../presentation/http/ticket
 import { TicketProjectWorkflowController } from '../../presentation/http/ticket-project-workflow.controller';
 import { TicketProjectTaskImagesController } from '../../presentation/http/ticket-project-task-images.controller';
 import { TicketProjectTaskWorkflowController } from '../../presentation/http/ticket-project-task-workflow.controller';
+import { TicketProjectFlowTemplatesController } from '../../presentation/http/ticket-project-flow-templates.controller';
 import { DevOpsPermissionsGuard } from './devops-permissions.guard';
 import { DevOpsTicketCreator } from './application/devops-ticket-creator';
 import { DevOpsTicketCreateRepository } from './application/ports/devops-ticket-create.repository';
@@ -39,6 +41,7 @@ import { DevOpsTicketCreateController } from './presentation/devops-ticket-creat
     TicketProjectWorkflowController,
     TicketProjectTaskImagesController,
     TicketProjectTaskWorkflowController,
+    TicketProjectFlowTemplatesController,
     DevOpsTicketCreateController,
   ],
   providers: [
@@ -49,6 +52,7 @@ import { DevOpsTicketCreateController } from './presentation/devops-ticket-creat
     TicketProjectWorkflow,
     TicketProjectTaskImages,
     TicketProjectTaskWorkflow,
+    TicketProjectFlowTemplatesService,
     DevOpsPermissionsGuard,
     DevOpsTicketCreator,
     {
