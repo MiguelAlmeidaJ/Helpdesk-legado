@@ -174,15 +174,6 @@ export const DEFAULT_NAVIGATION: SeedSection[] = [
     ],
   },
   {
-    slug: 'standalone',
-    label: 'Outros',
-    shortLabel: 'OU',
-    icon: 'menu',
-    items: [
-      { slug: 'radio', label: 'Rádio', icon: 'radio', href: '/radio', status: 'available' },
-    ],
-  },
-  {
     slug: 'administration',
     label: 'Administração',
     shortLabel: 'AD',

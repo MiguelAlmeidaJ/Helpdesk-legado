@@ -8,7 +8,6 @@ export const NAVIGATION_ICON_NAMES = [
   'truck',
   'chart',
   'database',
-  'radio',
   'wallet',
   'settings',
   'shield',

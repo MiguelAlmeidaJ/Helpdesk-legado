@@ -41,7 +41,6 @@ export async function synchronizeNavigation(
     'report-client-daily',
     'report-requester',
     'report-tech-daily',
-    'radio',
     'statements',
   ]);
   const refreshVisibility = new Set([
