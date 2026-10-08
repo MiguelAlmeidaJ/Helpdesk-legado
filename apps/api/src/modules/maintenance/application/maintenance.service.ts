@@ -30,6 +30,8 @@ import {
 import type { Nivel3DatabaseClient } from '@helpdesk/database';
 import { createHash, randomUUID } from 'node:crypto';
 import { spawn } from 'node:child_process';
+import { Transform } from 'node:stream';
+import { pipeline } from 'node:stream/promises';
 import {
   createReadStream,
   createWriteStream,
@@ -2192,6 +2194,34 @@ export class MaintenanceService implements OnApplicationBootstrap {
     return files;
   }
 
+  private async preparePortableDump(input: string, output: string): Promise<number> {
+    // Dumps copied across servers can contain root@localhost DEFINER clauses.
+    // Substitute only SQL definer declarations, never arbitrary usernames.
+    const definer = /\bDEFINER\s*=\s*(?:`[^`]*`|'[^']*'|"[^"]*"|[a-zA-Z0-9_$.-]+)\s*@\s*(?:`[^`]*`|'[^']*'|"[^"]*"|[a-zA-Z0-9_%.$-]+)/gi;
+    const overlap = 1024;
+    let carry = '';
+    let replaced = 0;
+    const converter = new Transform({
+      transform(chunk: Buffer, _encoding, callback) {
+        const combined = carry + chunk.toString('utf8');
+        // Keep complete last line if small, otherwise retain a safe overlap to
+        // preserve possible split declarations while streaming large INSERT rows.
+        let cut = combined.lastIndexOf('\n');
+        if (cut < 0 || combined.length - cut > overlap) cut = Math.max(0, combined.length - overlap);
+        else cut += 1;
+        const complete = combined.slice(0, cut);
+        carry = combined.slice(cut);
+        const converted = complete.replace(definer, () => { replaced++; return 'DEFINER=CURRENT_USER'; });
+        callback(null, Buffer.from(converted, 'utf8'));
+      },
+      flush(callback) {
+        callback(null, Buffer.from(carry.replace(definer, () => { replaced++; return 'DEFINER=CURRENT_USER'; }), 'utf8'));
+      },
+    });
+    await pipeline(createReadStream(input), converter, createWriteStream(output, { flags: 'wx' }));
+    return replaced;
+  }
+
   private async restoreDump(
     key: MaintenanceDatabaseKey,
     sqlFile: string,
@@ -2206,10 +2236,17 @@ export class MaintenanceService implements OnApplicationBootstrap {
       '--binary-mode',
       config.database,
     ];
-    await this.runProcess(executable as string, args, {
-      stdinFile: sqlFile,
-      env: { MYSQL_PWD: config.password },
-    });
+    const portable = path.join(importRoot(), 'portable-' + randomUUID() + '.sql');
+    try {
+      const rewritten = await this.preparePortableDump(sqlFile, portable);
+      if (rewritten) this.logger.warn('Importação de dump: ' + rewritten + ' declaração(ões) DEFINER convertidas para CURRENT_USER.');
+      await this.runProcess(executable as string, args, {
+        stdinFile: portable,
+        env: { MYSQL_PWD: config.password },
+      });
+    } finally {
+      await this.safeUnlink(portable);
+    }
   }
 
   private async resolveTool(
