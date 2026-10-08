@@ -169,3 +169,7 @@ export function runMaintenanceSql(sql: string) {
     method: 'POST', headers: JSON_HEADERS, body: JSON.stringify({ sql }),
   });
 }
+
+export type MaintenanceSqlUpdatePreview = { token: string; expiresAt: string; table: string; column: string; key: string; id: string; before: unknown; after: unknown; rowsAffected: number };
+export function previewMaintenanceSqlUpdate(sql: string) {return apiRequest<MaintenanceSqlUpdatePreview>('maintenance/sql-console/update/preview', {method: 'POST', headers: JSON_HEADERS, body: JSON.stringify({sql})});}
+export function applyMaintenanceSqlUpdate(token: string, confirmation: string) {return apiRequest<{affectedRows:number;table:string;column:string}>('maintenance/sql-console/update/apply', {method:'POST', headers:JSON_HEADERS, body: JSON.stringify({token,confirmation})});}
