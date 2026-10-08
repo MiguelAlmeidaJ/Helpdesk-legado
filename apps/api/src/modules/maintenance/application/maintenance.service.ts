@@ -833,6 +833,38 @@ export class MaintenanceService implements OnApplicationBootstrap {
     };
   }
 
+
+  async runSqlConsole(sql: string, actorUserId: number): Promise<{
+    columns: string[]; rows: Array<Record<string, unknown>>; affectedRows: number | null; truncated: boolean;
+  }> {
+    const input = sql.trim();
+    if (!input || input.length > 12000) throw new BadRequestException('SQL vazio ou muito longo.');
+    // No stacked queries, comments or optimizer hints. Conservative by design.
+    if (/;|--|#|\/\*|\*\//.test(input)) {
+      throw new BadRequestException('Comentários e múltiplas instruções não são permitidos.');
+    }
+    const forbidden = /\b(INTO|OUTFILE|DUMPFILE|LOAD_FILE|SLEEP|BENCHMARK|GET_LOCK|RELEASE_LOCK|FOR\s+UPDATE|LOCK\s+IN\s+SHARE\s+MODE|PROCEDURE|INFORMATION_SCHEMA|PERFORMANCE_SCHEMA|MYSQL|SYS|UNION|WITH|HANDLER|CALL|EXECUTE|PREPARE|SET|INSERT|DELETE|DROP|ALTER|CREATE|TRUNCATE|REPLACE|GRANT|REVOKE|KILL|SHUTDOWN)\b/i;
+    if (/^SELECT\s/i.test(input)) {
+      if (forbidden.test(input) || /@|\\/.test(input)) {
+        throw new BadRequestException('A consulta utiliza um recurso não autorizado pelo terminal.');
+      }
+      const begin = Date.now();
+      const result = await this.nivel3.$queryRawUnsafe<Array<Record<string, unknown>>>(
+        `SELECT * FROM (${input}) AS maintenance_sql_result LIMIT 201`,
+      );
+      const rows = result.slice(0, 200).map((row) =>
+        Object.fromEntries(Object.entries(row).map(([key, value]) => [
+          key, typeof value === 'bigint' ? value.toString() :
+          value instanceof Date ? value.toISOString() :
+          typeof value === 'object' && value !== null ? JSON.stringify(value) : value,
+        ])),
+      );
+      this.logger.log(`SQL SELECT admin=${actorUserId} durationMs=${Date.now() - begin} rows=${rows.length}`);
+      return { columns: Object.keys(rows[0] ?? {}), rows, affectedRows: null, truncated: result.length > 200 };
+    }
+    throw new BadRequestException('Somente SELECT é permitido no terminal SQL. Alterações devem utilizar rotinas administrativas específicas.');
+  }
+
   async databaseTables(
     key: MaintenanceDatabaseKey,
   ): Promise<MaintenanceDatabaseTable[]> {
