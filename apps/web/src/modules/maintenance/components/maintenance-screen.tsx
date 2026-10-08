@@ -32,6 +32,7 @@ import {
   runMaintenanceBackup,
   stageMaintenanceDump,
   updateMaintenanceBackupJob,
+  runMaintenanceSql,
 } from '../api/maintenance-api';
 
 const BUTTON_CLASS =
@@ -175,6 +176,10 @@ export function MaintenanceScreen({
 }: {
   currentUser: CurrentUserResponse;
 }) {
+  const [sqlText, setSqlText] = useState('SELECT * FROM usuarios LIMIT 20');
+  const [sqlResult, setSqlResult] = useState<{columns: string[]; rows: Record<string, unknown>[]; truncated: boolean} | null>(null);
+  const [sqlError, setSqlError] = useState<string | null>(null);
+  const [sqlBusy, setSqlBusy] = useState(false);
   const [status, setStatus] = useState<MaintenanceSystemStatusResponse | null>(null);
   const [catalogMigration, setCatalogMigration] =
     useState<MaintenanceCatalogImageMigrationStatus | null>(null);
@@ -694,6 +699,42 @@ export function MaintenanceScreen({
           id="maintenance-panel-database"
           role="tabpanel"
         >
+
+        <section className={CARD_CLASS}>
+          <div className="mb-4">
+            <span className="text-xs font-extrabold uppercase tracking-[0.1em] text-app-muted">Terminal MySQL</span>
+            <h2 className="mt-1 text-lg font-bold">Consultas SQL seguras</h2>
+            <p className="text-sm text-app-muted">Banco nivel3 · somente SELECT · máximo de 200 linhas por consulta. Comandos de escrita e alterações de estrutura são bloqueados no servidor.</p>
+          </div>
+          <form onSubmit={async (event) => {
+            event.preventDefault();
+            setSqlBusy(true);
+            setSqlError(null);
+            setSqlResult(null);
+            try { setSqlResult(await runMaintenanceSql(sqlText)); }
+            catch (error) { setSqlError(errorMessage(error)); }
+            finally { setSqlBusy(false); }
+          }} className="grid gap-3">
+            <label className={LABEL_CLASS} htmlFor="maintenance-sql-editor">Comando SQL</label>
+            <textarea id="maintenance-sql-editor" spellCheck={false} className={CONTROL_CLASS + ' min-h-32 font-mono text-xs'} value={sqlText} onChange={(event) => setSqlText(event.target.value)} maxLength={12000} />
+            <div className="flex flex-wrap items-center gap-3">
+              <button className={PRIMARY_BUTTON_CLASS} disabled={sqlBusy || !sqlText.trim()} type="submit">{sqlBusy ? 'Executando...' : 'Executar SELECT'}</button>
+              <span className="text-xs text-app-muted">Evite consultar senhas, tokens e outras informações sensíveis.</span>
+            </div>
+          </form>
+          {sqlError ? <p role="alert" className="mt-3 text-sm text-app-danger">{sqlError}</p> : null}
+          {sqlResult ? (
+            <div className="mt-4 grid gap-2">
+              <p role="status" className="text-sm text-app-muted">{sqlResult.rows.length} linha(s) retornada(s){sqlResult.truncated ? ' · Exibição limitada a 200' : ''}.</p>
+              <div className="max-h-96 overflow-auto rounded-lg border border-app-border">
+                <table className="w-full min-w-max text-left text-xs">
+                  <thead><tr>{sqlResult.columns.map((column) => <th className={TABLE_HEAD} key={column}>{column}</th>)}</tr></thead>
+                  <tbody>{sqlResult.rows.map((row, index) => <tr key={index}>{sqlResult.columns.map((column) => <td className={TABLE_CELL + ' max-w-80 truncate font-mono'} title={String(row[column] ?? '')} key={column}>{row[column] === null ? 'NULL' : String(row[column] ?? '')}</td>)}</tr>)}</tbody>
+                </table>
+              </div>
+            </div>
+          ) : null}
+        </section>
         <section className={CARD_CLASS}>
           <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
             <div>
