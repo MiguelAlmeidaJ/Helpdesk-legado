@@ -704,6 +704,12 @@ export function AccountManagementScreen({
     endDate: isoToday(),
   }));
   const [data, setData] = useState<DashboardData | null>(null);
+  const [cashStartDate, setCashStartDate] = useState(firstDayOfMonth);
+  const [cashEndDate, setCashEndDate] = useState(isoToday);
+  const [cashPeriod, setCashPeriod] = useState(() => ({startDate:firstDayOfMonth(),endDate:isoToday()}));
+  const [portfolioStartDate, setPortfolioStartDate] = useState(firstDayOfMonth);
+  const [portfolioEndDate, setPortfolioEndDate] = useState(isoToday);
+  const [portfolioPeriod, setPortfolioPeriod] = useState(() => ({startDate:firstDayOfMonth(),endDate:isoToday()}));
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [cashChartView, setCashChartView] = useState<'daily' | 'summary'>('daily');
@@ -716,12 +722,11 @@ export function AccountManagementScreen({
     setLoading(true);
     setError('');
     try {
-      const filters = period;
       const [accrual, cashflow, payables, statements] = await Promise.all([
-        fetchFinanceView('receivables-accrual', filters, signal),
-        fetchFinanceView('receivables-cashflow', filters, signal),
-        fetchFinanceView('payables', filters, signal),
-        fetchFinanceView('statements', filters, signal),
+        fetchFinanceView('receivables-accrual', portfolioPeriod, signal),
+        fetchFinanceView('receivables-cashflow', cashPeriod, signal),
+        fetchFinanceView('payables', portfolioPeriod, signal),
+        fetchFinanceView('statements', cashPeriod, signal),
       ]);
       setData({ accrual, cashflow, payables, statements });
     } catch (reason) {
@@ -730,7 +735,7 @@ export function AccountManagementScreen({
     } finally {
       if (!signal?.aborted) setLoading(false);
     }
-  }, [period]);
+  }, [cashPeriod, portfolioPeriod]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -787,6 +792,33 @@ export function AccountManagementScreen({
     };
   }, [data]);
 
+  function submitFinancialPeriods(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (cashStartDate > cashEndDate || portfolioStartDate > portfolioEndDate) {
+      setError('A data inicial não pode ser posterior à final.');
+      return;
+    }
+    setCashPeriod({startDate:cashStartDate,endDate:cashEndDate});
+    setPortfolioPeriod({startDate:portfolioStartDate,endDate:portfolioEndDate});
+    if (cashStartDate === cashPeriod.startDate && cashEndDate === cashPeriod.endDate &&
+        portfolioStartDate === portfolioPeriod.startDate && portfolioEndDate === portfolioPeriod.endDate) void load();
+  }
+
+  const monthlySummary = useMemo(() => {
+    if (!data) return [];
+    const map = new Map<string,{month:string;received:number;spent:number;receivable:number;payable:number}>();
+    const add = (value:string, field:'received'|'spent'|'receivable'|'payable',amount:number) => {
+      const month = value.slice(0,7);
+      const row = map.get(month) ?? {month,received:0,spent:0,receivable:0,payable:0};
+      row[field] += amount;
+      map.set(month,row);
+    };
+    for (const row of data.statements.rows) if (row.date) add(row.date,row.amount >= 0 ? 'received':'spent',Math.abs(row.amount));
+    for (const row of data.accrual.rows) if (row.dueDate && (row.balance ?? 0)>0) add(row.dueDate,'receivable',row.balance ?? 0);
+    for (const row of data.payables.rows) if (row.dueDate && (row.balance ?? 0)>0) add(row.dueDate,'payable',row.balance ?? 0);
+    return [...map.values()].sort((a,b)=>a.month.localeCompare(b.month));
+  },[data]);
+
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (startDate > endDate) {
@@ -822,11 +854,34 @@ export function AccountManagementScreen({
         <button className={PRIMARY} disabled={loading} type="submit">{loading ? 'Atualizando…' : 'Atualizar dashboard'}</button>
       </form>
 
+      <form className="grid gap-4 rounded-xl border border-app-border bg-app-surface p-4 shadow-sm lg:grid-cols-2" onSubmit={submitFinancialPeriods}>
+        <fieldset className="grid gap-2">
+          <legend className="text-sm font-extrabold">Fluxo de caixa · data da movimentação</legend>
+          <p className="text-xs text-app-muted">Recebimentos e pagamentos efetivamente realizados.</p>
+          <div className="flex flex-wrap gap-2">
+            <label className="grid gap-1 text-xs text-app-muted">Início<input className={INPUT} type="date" required value={cashStartDate} onChange={event=>setCashStartDate(event.target.value)}/></label>
+            <label className="grid gap-1 text-xs text-app-muted">Fim<input className={INPUT} type="date" required value={cashEndDate} onChange={event=>setCashEndDate(event.target.value)}/></label>
+          </div>
+        </fieldset>
+        <fieldset className="grid gap-2">
+          <legend className="text-sm font-extrabold">Carteira e vencimentos · data de vencimento</legend>
+          <p className="text-xs text-app-muted">Saldos de contas por vencimento, não competência contábil.</p>
+          <div className="flex flex-wrap gap-2">
+            <label className="grid gap-1 text-xs text-app-muted">Início<input className={INPUT} type="date" required value={portfolioStartDate} onChange={event=>setPortfolioStartDate(event.target.value)}/></label>
+            <label className="grid gap-1 text-xs text-app-muted">Fim<input className={INPUT} type="date" required value={portfolioEndDate} onChange={event=>setPortfolioEndDate(event.target.value)}/></label>
+          </div>
+        </fieldset>
+        <div className="lg:col-span-2 flex items-center justify-between gap-3">
+          <p className="text-xs text-app-muted">Cada visão utiliza seu próprio intervalo. O período geral acima continua controlando o relatório de RDs.</p>
+          <button className={PRIMARY} type="submit" disabled={loading}>{loading ? 'Atualizando…':'Aplicar períodos financeiros'}</button>
+        </div>
+      </form>
+
       {error ? <div className="rounded-xl border border-app-danger-border bg-app-danger-soft px-4 py-3 text-sm text-app-danger" role="alert">{error}</div> : null}
 
       {metrics && data ? <>
         <section className="grid grid-cols-4 gap-3 max-[1100px]:grid-cols-2 max-[620px]:grid-cols-1">
-          <StatCard label="A receber em aberto" value={money(metrics.openReceivables)} detail="Saldo das contas por competência no período." tone="positive" />
+          <StatCard label="A receber em aberto" value={money(metrics.openReceivables)} detail="Saldo das contas por data de vencimento no período." tone="positive" />
           <StatCard label="Recebido no período" value={money(metrics.received)} detail="Entradas efetivamente recebidas no intervalo." tone="positive" />
           <StatCard label="A pagar em aberto" value={money(metrics.openPayables)} detail="Compromissos ainda não baixados no período." tone="negative" />
           <StatCard label="Saldo projetado" value={money(metrics.projected)} detail="A receber em aberto menos contas a pagar em aberto." tone={metrics.projected >= 0 ? 'positive' : 'negative'} />
@@ -860,6 +915,29 @@ export function AccountManagementScreen({
             </div>
             <PortfolioBalanceChart payable={metrics.openPayables} receivable={metrics.openReceivables} />
           </article>
+        </section>
+
+        <section className="rounded-xl border border-app-border bg-app-surface p-5 shadow-sm">
+          <div className="mb-4">
+            <h2 className="text-base font-extrabold">Evolução mensal · comparativo financeiro</h2>
+            <p className="mt-1 text-xs text-app-muted">Separação por mês de movimentação (realizado) e mês de vencimento (carteira). Os períodos podem ser diferentes.</p>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[680px] text-left text-sm">
+              <thead className="border-b border-app-border bg-app-surface-muted text-xs text-app-muted">
+                <tr>{['Mês','Entradas realizadas','Saídas realizadas','Saldo realizado','A receber no vencimento','A pagar no vencimento'].map(label=><th className="px-3 py-3" key={label}>{label}</th>)}</tr>
+              </thead>
+              <tbody>{monthlySummary.map(row=><tr className="border-b border-app-border-soft" key={row.month}>
+                <td className="px-3 py-3 font-semibold">{row.month.slice(5,7)+'/'+row.month.slice(0,4)}</td>
+                <td className="px-3 py-3 text-emerald-600">{money(row.received)}</td>
+                <td className="px-3 py-3 text-rose-600">{money(row.spent)}</td>
+                <td className="px-3 py-3 font-bold">{money(row.received-row.spent)}</td>
+                <td className="px-3 py-3">{money(row.receivable)}</td>
+                <td className="px-3 py-3">{money(row.payable)}</td>
+              </tr>)}</tbody>
+            </table>
+            {monthlySummary.length===0 ? <p className="py-6 text-center text-sm text-app-muted">Nenhum movimento no período selecionado.</p>:null}
+          </div>
         </section>
 
         <section className="grid grid-cols-2 gap-3 max-[720px]:grid-cols-1">
