@@ -282,7 +282,10 @@ export class MaintenanceController {
   chunkStatus(@Param('uploadId') uploadId: string) { return this.maintenance.dumpChunkStatus(uploadId); }
 
   @Post('dumps/chunks/:uploadId/assemble')
-  assembleChunks(@Param('uploadId') uploadId: string) { return this.maintenance.assembleDumpChunks(uploadId); }
+  assembleChunks(@Param('uploadId') uploadId: string) { return this.maintenance.startDumpAssembly(uploadId); }
+
+  @Get('dumps/chunks/:uploadId/assembly-status')
+  assemblyStatus(@Param('uploadId') uploadId: string) { return this.maintenance.dumpAssemblyStatus(uploadId); }
 
 
   @Post('dumps/chunks/:uploadId/:index')
