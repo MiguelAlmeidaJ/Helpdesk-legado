@@ -910,6 +910,16 @@ export class MaintenanceService implements OnApplicationBootstrap {
     const query = `UPDATE ${quote(preview.table)} SET ${quote(preview.column)} = ? WHERE ${quote(preview.key)} = ? AND ${quote(preview.column)} <=> ? LIMIT 1`;
     const count = await this.nivel3.$executeRawUnsafe(query, preview.value, preview.id, old);
     this.logger.warn(`SQL UPDATE admin=${userId} table=${preview.table} column=${preview.column} pk=${preview.id} changed=${count}`);
+    try {
+      await this.ensureSchema();
+      await this.nivel3.$executeRawUnsafe(
+        "INSERT INTO maintenance_operations (action, target, actor_user_id, status, detail, created_at, finished_at) VALUES (?, ?, ?, ?, ?, NOW(), NOW())",
+        'sql-update', 'nivel3', userId, count === 1 ? 'success' : 'error',
+        JSON.stringify({ table: preview.table, column: preview.column, key: preview.key, id: preview.id, affectedRows: count }),
+      );
+    } catch (error) {
+      this.logger.error('Falha ao registrar auditoria do UPDATE: ' + String(error));
+    }
     if (count !== 1) throw new ConflictException('O registro mudou desde a prévia, ou o valor já era igual. Revise antes de tentar novamente.');
     return { affectedRows: count, table: preview.table, column: preview.column };
   }
