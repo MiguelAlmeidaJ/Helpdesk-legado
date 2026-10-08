@@ -1549,66 +1549,76 @@ export class MaintenanceService implements OnApplicationBootstrap {
     return { received: names.filter(name => /^\\d{5}\\.part$/.test(name)).map(name => Number(name.slice(0,5))) };
   }
 
-  async assembleDumpChunks(uploadId: string): Promise<MaintenanceDumpStageResponse> {
+  private readonly dumpAssemblies = new Map<string, {
+    status: 'processing' | 'done' | 'error';
+    phase: 'assembling' | 'validating' | 'complete';
+    progress: number;
+    result?: MaintenanceDumpStageResponse;
+    error?: string;
+  }>();
+
+  async startDumpAssembly(uploadId: string) {
     if (!/^[a-f0-9-]{36}$/.test(uploadId)) throw new BadRequestException('Identificador inválido.');
+    const previous = this.dumpAssemblies.get(uploadId);
+    if (previous) return { status: previous.status, phase: previous.phase, progress: previous.progress };
+    const state: {status:'processing'|'done'|'error';phase:'assembling'|'validating'|'complete';progress:number;result?:MaintenanceDumpStageResponse;error?:string} =
+      {status:'processing',phase:'assembling',progress:0};
+    this.dumpAssemblies.set(uploadId,state);
+    void this.assembleDumpChunks(uploadId,state).then(result=>{
+      state.result=result; state.progress=100;state.phase='complete';state.status='done';
+    }).catch(error=>{
+      state.error = error instanceof Error ? error.message : String(error);
+      state.status='error';
+      this.logger.error('Falha na montagem/validação de dump '+uploadId+': '+(error instanceof Error ? error.stack ?? error.message : String(error)));
+    });
+    return { status: state.status, phase: state.phase, progress: state.progress };
+  }
+
+  dumpAssemblyStatus(uploadId: string) {
+    if (!/^[a-f0-9-]{36}$/.test(uploadId)) throw new BadRequestException('Identificador inválido.');
+    const state=this.dumpAssemblies.get(uploadId);
+    if (!state) throw new NotFoundException('Processamento não encontrado. Se a API reiniciou, solicite novamente a montagem.');
+    return state;
+  }
+
+  private async assembleDumpChunks(uploadId: string, state: {phase:'assembling'|'validating'|'complete';progress:number}): Promise<MaintenanceDumpStageResponse> {
     await this.ensureSchema();
     const directory = path.join(importRoot(), 'chunk-' + uploadId);
     let manifest: {filename:string;total:number;size:number};
-    try {
-      manifest = JSON.parse(await readFile(path.join(directory, 'manifest.json'), 'utf8'));
-    } catch {
-      throw new BadRequestException('Manifesto do upload ausente. Reenvie o arquivo.');
-    }
-    if (!Number.isSafeInteger(manifest.total) || manifest.total < 1 || manifest.total > 1024 ||
-        !Number.isSafeInteger(manifest.size) || manifest.size < 1 || manifest.size > 1024 * 1024 * 1024 ||
+    try { manifest=JSON.parse(await readFile(path.join(directory,'manifest.json'),'utf8')); }
+    catch { throw new BadRequestException('Manifesto do upload ausente.'); }
+    if (!Number.isSafeInteger(manifest.total) || manifest.total<1 || manifest.total>1024 ||
+        !Number.isSafeInteger(manifest.size) || manifest.size<1 || manifest.size>1024*1024*1024 ||
         typeof manifest.filename !== 'string' || !manifest.filename.toLowerCase().endsWith('.sql')) {
-      throw new BadRequestException('Manifesto do upload inválido.');
+      throw new BadRequestException('Manifesto inválido.');
     }
-    const assembled = path.join(importRoot(), uploadId + '-assembled.sql');
-    // An earlier failed assembly can leave this file behind. Assemble atomically into
-    // a distinct temporary file instead of failing with EEXIST on every retry.
-    const temporary = path.join(importRoot(), uploadId + '-' + randomUUID() + '.assembling');
-    let finished = false;
-    const output = createWriteStream(temporary, {flags:'wx'});
-    // Attach the error listener immediately, including errors before the first write.
-    const streamError = new Promise<never>((_,reject) => output.once('error',reject));
+    const temporary=path.join(importRoot(),uploadId+'-'+randomUUID()+'.assembling');
+    const assembled=path.join(importRoot(),uploadId+'-assembled.sql');
     try {
-      const assembling = async () => {
-        for (let i = 0; i < manifest.total; i++) {
-          const part = path.join(directory, String(i).padStart(5,'0') + '.part');
-          if (!existsSync(part)) throw new BadRequestException('Bloco ' + (i+1) + ' de ' + manifest.total + ' ainda não recebido.');
-          for await (const chunk of createReadStream(part)) {
-            if (!output.write(chunk)) {
-              await new Promise<void>((resolve,reject) => {
-                output.once('drain',resolve);
-                output.once('error',reject);
-              });
-            }
-          }
+      // Pipeline each individual part into a single stream and let Node own drain/error handling.
+      const { open } = await import('node:fs/promises');
+      const writer=await open(temporary,'wx');
+      try {
+        for (let i=0;i<manifest.total;i++) {
+          const part=path.join(directory,String(i).padStart(5,'0')+'.part');
+          if (!existsSync(part)) throw new BadRequestException('Bloco '+(i+1)+' de '+manifest.total+' ausente.');
+          const input=createReadStream(part);
+          for await (const chunk of input) await writer.write(chunk as Buffer);
+          state.progress=Math.round((i+1)/manifest.total*70);
         }
-        output.end();
-        await new Promise<void>((resolve,reject) => {
-          if (output.writableFinished) return resolve();
-          output.once('finish',resolve);
-          output.once('error',reject);
-        });
-      };
-      await Promise.race([assembling(),streamError]);
-      finished = true;
-      const size = (await lstat(temporary)).size;
-      if (size !== manifest.size) {
-        throw new BadRequestException('O dump reconstruído possui ' + size + ' bytes, mas eram esperados ' + manifest.size + '. Reenvie os blocos inconsistentes.');
-      }
+        await writer.sync();
+      } finally { await writer.close(); }
+      const {size}=await lstat(temporary);
+      if (size!==manifest.size) throw new BadRequestException('Tamanho divergente: '+size+' de '+manifest.size+' bytes.');
       await this.safeUnlink(assembled);
-      await rename(temporary, assembled);
-      const staged = await this.stageDump('nivel3', {path:assembled,originalname:manifest.filename,size});
-      const { rm } = await import('node:fs/promises');
-      await rm(directory, {recursive:true,force:true});
+      await rename(temporary,assembled);
+      state.phase='validating'; state.progress=75;
+      const staged=await this.stageDump('nivel3',{path:assembled,originalname:manifest.filename,size});
+      const {rm}=await import('node:fs/promises');
+      await rm(directory,{recursive:true,force:true});
       return staged;
     } catch(error) {
-      if (!finished) output.destroy();
       await this.safeUnlink(temporary);
-      this.logger.error('Falha ao montar dump ' + uploadId + ': ' + (error instanceof Error ? error.stack ?? error.message : String(error)));
       throw error;
     }
   }
