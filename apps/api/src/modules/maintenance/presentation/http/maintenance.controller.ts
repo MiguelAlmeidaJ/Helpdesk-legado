@@ -18,7 +18,6 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { MulterError } from 'multer';
 import { Catch, type ArgumentsHost, type ExceptionFilter } from '@nestjs/common';
 import { ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import {
@@ -110,10 +109,16 @@ function maxDumpBytes(): number {
   return Math.floor(safeMb * 1024 * 1024);
 }
 
-@Catch(MulterError)
+@Catch()
 class DumpUploadErrorFilter implements ExceptionFilter {
-  catch(exception: MulterError, host: ArgumentsHost) {
+  catch(exception: Error & { code?: string }, host: ArgumentsHost) {
     const response = host.switchToHttp().getResponse();
+    if (!exception.code?.startsWith('LIMIT_')) {
+      const status = typeof (exception as Error & { getStatus?: () => number }).getStatus === 'function'
+        ? (exception as Error & { getStatus: () => number }).getStatus() : 500;
+      response.status(status).json({ statusCode: status, message: status >= 500 ? 'Falha interna na validação do dump.' : exception.message });
+      return;
+    }
     const tooLarge = exception.code === 'LIMIT_FILE_SIZE';
     response.status(tooLarge ? 413 : 400).json({
       statusCode: tooLarge ? 413 : 400,
