@@ -278,6 +278,21 @@ export class MaintenanceController {
     await this.maintenance.removeJob(id);
   }
 
+  @Post('dumps/chunks/:uploadId/:index')
+  @UseInterceptors(FileInterceptor('file', { dest: tmpdir(), limits: {fileSize: 6 * 1024 * 1024, files:1} }))
+  async receiveChunk(@Param('uploadId') uploadId: string, @Param('index') index: string,
+    @UploadedFile() file: {path:string;originalname:string;size:number} | undefined, @Body() body: unknown) {
+    if (!file) throw new BadRequestException('Bloco não informado.');
+    const data = recordBody(body);
+    return this.maintenance.receiveDumpChunk(uploadId, Number(index), Number(data.total), String(data.filename ?? ''), Number(data.size), file);
+  }
+
+  @Get('dumps/chunks/:uploadId')
+  chunkStatus(@Param('uploadId') uploadId: string) { return this.maintenance.dumpChunkStatus(uploadId); }
+
+  @Post('dumps/chunks/:uploadId/assemble')
+  assembleChunks(@Param('uploadId') uploadId: string) { return this.maintenance.assembleDumpChunks(uploadId); }
+
   @Post('dumps/stage')
   @UseFilters(DumpUploadErrorFilter)
   @UseInterceptors(
