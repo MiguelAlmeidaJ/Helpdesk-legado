@@ -168,3 +168,12 @@ export async function deleteFinanceMasterData(
     method: 'DELETE',
   });
 }
+
+export interface FinancePortfolioOverview {
+  asOf: string;
+  receivable: {open:number;overdue:number;dueNext30:number;count:number;overdueCount:number};
+  payable: {open:number;overdue:number;dueNext30:number;count:number;overdueCount:number};
+}
+export function fetchFinancePortfolioOverview(signal?: AbortSignal) {
+  return apiRequest<FinancePortfolioOverview>('logistics/finance/portfolio/overview', {signal});
+}
