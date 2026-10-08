@@ -854,7 +854,9 @@ export class MaintenanceService implements OnApplicationBootstrap {
       );
       const rows = result.slice(0, 200).map((row) =>
         Object.fromEntries(Object.entries(row).map(([key, value]) => [
-          key, typeof value === 'bigint' ? value.toString() :
+          key, /(^|_)(pass(word)?|pwd|secret|token|api_key|private_key|hash|salt|credencial|senha)(_|$)/i.test(key)
+            ? '[PROTEGIDO]'
+            : typeof value === 'bigint' ? value.toString() :
           value instanceof Date ? value.toISOString() :
           typeof value === 'object' && value !== null ? JSON.stringify(value) : value,
         ])),
