@@ -14,9 +14,12 @@ import {
   UnauthorizedException,
   UploadedFile,
   UseGuards,
+  UseFilters,
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { MulterError } from 'multer';
+import { Catch, type ArgumentsHost, type ExceptionFilter } from '@nestjs/common';
 import { ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import {
   AppPermission,
@@ -105,6 +108,20 @@ function maxDumpBytes(): number {
   const mb = Number(process.env.MAINTENANCE_DUMP_MAX_MB ?? 1024);
   const safeMb = Number.isFinite(mb) ? Math.max(1, Math.min(4096, mb)) : 1024;
   return Math.floor(safeMb * 1024 * 1024);
+}
+
+@Catch(MulterError)
+class DumpUploadErrorFilter implements ExceptionFilter {
+  catch(exception: MulterError, host: ArgumentsHost) {
+    const response = host.switchToHttp().getResponse();
+    const tooLarge = exception.code === 'LIMIT_FILE_SIZE';
+    response.status(tooLarge ? 413 : 400).json({
+      statusCode: tooLarge ? 413 : 400,
+      message: tooLarge
+        ? 'O dump excede o limite de upload configurado no servidor.'
+        : 'Falha ao receber o arquivo SQL: ' + exception.message,
+    });
+  }
 }
 
 @ApiTags('maintenance')
@@ -257,6 +274,7 @@ export class MaintenanceController {
   }
 
   @Post('dumps/stage')
+  @UseFilters(DumpUploadErrorFilter)
   @UseInterceptors(
     FileInterceptor('file', {
       dest: tmpdir(),
