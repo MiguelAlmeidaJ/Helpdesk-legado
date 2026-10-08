@@ -127,6 +127,56 @@ export function stageMaintenanceDump(
   });
 }
 
+export async function stageMaintenanceDumpChunked(
+  target: MaintenanceDatabaseKey, file: File,
+  options: { onProgress?: (percent: number) => void; signal?: AbortSignal } = {},
+): Promise<MaintenanceDumpStageResponse> {
+  if (target !== 'nivel3') throw new Error('Banco não autorizado.');
+  const chunkSize = 5 * 1024 * 1024;
+  const count = Math.ceil(file.size / chunkSize);
+  const identity = [file.name, file.size, file.lastModified].join(':');
+  const key = 'maintenance-dump-id-' + identity;
+  const existing = sessionStorage.getItem(key);
+  const uploadId = existing ?? crypto.randomUUID();
+  if (!existing) sessionStorage.setItem(key, uploadId);
+  const state = await apiRequest<{received:number[]}>('maintenance/dumps/chunks/' + uploadId);
+  const done = new Set(state.received);
+  for (let i = 0; i < count; i++) {
+    if (options.signal?.aborted) throw new Error('Envio cancelado.');
+    if (done.has(i)) {options.onProgress?.(Math.round((i + 1) / count * 95)); continue;}
+    const body = new FormData();
+    body.set('filename', file.name);
+    body.set('total', String(count));
+    body.set('size', String(file.size));
+    body.set('file', file.slice(i * chunkSize, Math.min(file.size, (i + 1) * chunkSize)), file.name + '.part');
+    await new Promise<void>((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', apiUrl('maintenance/dumps/chunks/' + uploadId + '/' + i));
+      xhr.withCredentials = true;
+      xhr.timeout = 120000;
+      xhr.setRequestHeader('X-Helpdesk-Request', 'browser');
+      const cancel = () => xhr.abort();
+      options.signal?.addEventListener('abort', cancel, {once:true});
+      const cleanup = () => options.signal?.removeEventListener('abort', cancel);
+      xhr.upload.onprogress = e => {
+        if (e.lengthComputable) options.onProgress?.(Math.min(95, Math.round(((i + e.loaded / e.total) / count) * 95)));
+      };
+      xhr.onload = () => {cleanup();if(xhr.status>=200&&xhr.status<300)resolve();else reject(new Error('Falha no bloco '+(i+1)+': HTTP '+xhr.status+' '+xhr.responseText.slice(0,200)));};
+      xhr.onerror = () => {cleanup();reject(new Error('Conexão interrompida no bloco '+(i+1)+'. Tente novamente para retomar.'));};
+      xhr.ontimeout = () => {cleanup();reject(new Error('Tempo limite no bloco '+(i+1)+'. Tente novamente para retomar.'));};
+      xhr.onabort = () => {cleanup();reject(new Error('Envio interrompido. É possível retomar depois.'));};
+      xhr.send(body);
+    });
+  }
+  options.onProgress?.(96);
+  const result = await apiRequest<MaintenanceDumpStageResponse>('maintenance/dumps/chunks/' + uploadId + '/assemble', {
+    method:'POST',
+  });
+  sessionStorage.removeItem(key);
+  options.onProgress?.(100);
+  return result;
+}
+
 export function applyMaintenanceDump(
   token: string,
   confirmation: string,
