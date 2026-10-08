@@ -263,6 +263,35 @@ function overdueClientBreakdown(rows: FinanceRow[]): BreakdownValue[] {
   );
 }
 
+function maturitySummary(rows: FinanceRow[], referenceDate: string) {
+  const active = rows.filter(row => (row.balance ?? 0) > 0 && Boolean(row.dueDate));
+  const total = active.reduce((sum,row) => sum + Math.max(0,row.balance ?? 0),0);
+  const overdue = active.filter(row => String(row.dueDate).slice(0,10) < referenceDate);
+  const dueSoon = active.filter(row => String(row.dueDate).slice(0,10) >= referenceDate && String(row.dueDate).slice(0,10) <= new Date(dateMs(referenceDate)+7*86400000).toISOString().slice(0,10));
+  return {
+    total, count:active.length,
+    overdue: overdue.reduce((sum,row) => sum + Math.max(0,row.balance ?? 0),0),
+    overdueCount:overdue.length,
+    dueSoon:dueSoon.reduce((sum,row) => sum + Math.max(0,row.balance ?? 0),0),
+    dueSoonCount:dueSoon.length,
+  };
+}
+
+function MaturityInsight({title,rows,referenceDate}:{title:string;rows:FinanceRow[];referenceDate:string}) {
+  const value = maturitySummary(rows,referenceDate);
+  const pct = value.total > 0 ? 100 * value.overdue/value.total : 0;
+  return <article className="rounded-xl border border-app-border bg-app-surface p-4 shadow-sm">
+    <h3 className="text-sm font-extrabold">{title}</h3>
+    <p className="mt-1 text-xs text-app-muted">Saldos dos registros retornados no período · vencimentos relativos a {dateLabel(referenceDate)}</p>
+    <div className="mt-4 grid grid-cols-2 gap-3">
+      <div><span className="text-xs text-app-muted">Vencido ({value.overdueCount})</span><strong className="mt-1 block text-lg text-rose-600">{money(value.overdue)}</strong></div>
+      <div><span className="text-xs text-app-muted">Vence em 7 dias ({value.dueSoonCount})</span><strong className="mt-1 block text-lg text-amber-600">{money(value.dueSoon)}</strong></div>
+    </div>
+    <div className="mt-4 h-2.5 overflow-hidden rounded-full bg-app-surface-muted"><div className="h-full rounded-full bg-rose-500" style={{width:pct+'%'}}/></div>
+    <p className="mt-2 text-xs text-app-muted">{pct.toFixed(1).replace('.',',')}% do saldo listado está vencido · {value.count} conta(s) em aberto</p>
+  </article>;
+}
+
 function FinancialBreakdownChart({
   title,
   subtitle,
@@ -321,57 +350,34 @@ function chartLabelIndexes(length: number): Set<number> {
 
 function RealizedCashFlowChart({ points }: { points: ChartPoint[] }) {
   const values = points.filter((point) => point.inflow > 0 || point.outflow > 0);
-  const width = 760;
-  const height = 270;
-  const left = 54;
-  const right = 18;
-  const top = 22;
-  const bottom = 42;
-  const plotWidth = width - left - right;
-  const plotHeight = height - top - bottom;
-  const maxValue = Math.max(
-    1,
-    ...values.flatMap((point) => [point.inflow, point.outflow]),
-  );
-  const x = (index: number) =>
-    left + (values.length <= 1 ? plotWidth / 2 : (index / (values.length - 1)) * plotWidth);
-  const y = (value: number) => top + plotHeight - (value / maxValue) * plotHeight;
+  if (!values.length) return <div className="grid min-h-[260px] place-items-center text-sm text-app-muted">Sem movimentações realizadas no período.</div>;
+  const width = 760, height = 282, left = 65, right = 16, top = 24, bottom = 42;
+  const plotHeight = height - top - bottom, plotWidth = width - left - right;
+  const max = Math.max(1, ...values.flatMap((p) => [p.inflow, p.outflow]));
+  const y = (v: number) => top + plotHeight * (1 - v / max);
+  const group = plotWidth / values.length;
+  const bar = Math.min(24, group * 0.3);
   const labels = chartLabelIndexes(values.length);
-  const path = (field: 'inflow' | 'outflow') =>
-    values
-      .map((point, index) => {
-        const command = index === 0 ? 'M' : 'L';
-        return command + ' ' + x(index).toFixed(1) + ' ' + y(point[field]).toFixed(1);
-      })
-      .join(' ');
-
-  if (values.length === 0) {
-    return <div className="grid min-h-[260px] place-items-center text-sm text-app-muted">Sem movimentações realizadas no período.</div>;
-  }
-
-  return <div className="overflow-hidden">
-    <div className="mb-3 flex flex-wrap items-center gap-4 text-xs font-bold">
-      <span className="inline-flex items-center gap-2 text-app-text-soft"><i className="size-2.5 rounded-full bg-emerald-500" />Entradas</span>
-      <span className="inline-flex items-center gap-2 text-app-text-soft"><i className="size-2.5 rounded-full bg-rose-500" />Saídas</span>
+  const totals = values.reduce((acc, p) => ({inflow: acc.inflow + p.inflow, outflow: acc.outflow + p.outflow}), {inflow: 0, outflow: 0});
+  return <div>
+    <div className="mb-4 grid grid-cols-2 gap-3 rounded-lg bg-app-surface-muted p-3 text-xs">
+      <span className="text-app-muted">Entradas realizadas<strong className="mt-1 block text-base text-emerald-600">{money(totals.inflow)}</strong></span>
+      <span className="text-app-muted">Saídas realizadas<strong className="mt-1 block text-base text-rose-600">{money(totals.outflow)}</strong></span>
     </div>
-    <svg aria-label="Fluxo financeiro realizado" className="h-auto w-full overflow-visible" role="img" viewBox={'0 0 ' + width + ' ' + height}>
-      {[0, 0.25, 0.5, 0.75, 1].map((ratio) => {
-        const value = maxValue * ratio;
-        const py = y(value);
-        return <g key={ratio}>
-          <line className="stroke-app-border-soft" x1={left} x2={width - right} y1={py} y2={py} />
-          <text className="fill-app-subtle text-[10px]" textAnchor="end" x={left - 8} y={py + 3}>{compactMoney(value)}</text>
+    <div className="mb-2 flex gap-4 text-xs font-semibold text-app-muted"><span>🟢 Entradas</span><span>🔴 Saídas</span></div>
+    <svg aria-label="Colunas de entradas e saídas efetivamente movimentadas, sem interpolação entre datas" role="img" className="h-auto w-full" viewBox={'0 0 ' + width + ' ' + height}>
+      {[0,0.25,0.5,0.75,1].map(v => <g key={v}>
+        <line className="stroke-app-border-soft" x1={left} x2={width-right} y1={y(max*v)} y2={y(max*v)}/>
+        <text x={left-8} y={y(max*v)+4} textAnchor="end" className="fill-app-subtle text-[10px]">{compactMoney(max*v)}</text>
+      </g>)}
+      {values.map((point,index) => {
+        const center = left + group*(index+0.5);
+        return <g key={point.key}>
+          <rect x={center-bar-2} y={y(point.inflow)} width={bar} height={Math.max(0,y(0)-y(point.inflow))} rx="3" fill="#10b981"><title>{point.label + ' · Entradas ' + money(point.inflow)}</title></rect>
+          <rect x={center+2} y={y(point.outflow)} width={bar} height={Math.max(0,y(0)-y(point.outflow))} rx="3" fill="#f43f5e"><title>{point.label + ' · Saídas ' + money(point.outflow)}</title></rect>
+          {labels.has(index) ? <text x={center} y={height-10} textAnchor="middle" className="fill-app-subtle text-[10px]">{point.label}</text> : null}
         </g>;
       })}
-      {values.map((point, index) => labels.has(index) ? (
-        <text className="fill-app-subtle text-[10px]" key={point.key} textAnchor="middle" x={x(index)} y={height - 12}>{point.label}</text>
-      ) : null)}
-      <path d={path('inflow')} fill="none" stroke="#10b981" strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" />
-      <path d={path('outflow')} fill="none" stroke="#f43f5e" strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" />
-      {values.map((point, index) => <g key={'cash-' + point.key}>
-        <circle cx={x(index)} cy={y(point.inflow)} fill="#10b981" r="3"><title>{point.label + ' · Entradas: ' + money(point.inflow)}</title></circle>
-        <circle cx={x(index)} cy={y(point.outflow)} fill="#f43f5e" r="3"><title>{point.label + ' · Saídas: ' + money(point.outflow)}</title></circle>
-      </g>)}
     </svg>
   </div>;
 }
@@ -700,6 +706,7 @@ export function AccountManagementScreen({
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [cashChartView, setCashChartView] = useState<'daily' | 'summary'>('daily');
   const [rdStatus, setRdStatus] = useState<LogisticsExpenseAdminStatus>(4);
   const [rdData, setRdData] = useState<LogisticsExpenseAdminDashboardResponse | null>(null);
   const [rdLoading, setRdLoading] = useState(true);
@@ -833,11 +840,17 @@ export function AccountManagementScreen({
                 <h2 className="m-0 text-base font-extrabold">Fluxo realizado</h2>
                 <p className="m-0 mt-1 text-xs text-app-muted">Entradas e saídas efetivamente movimentadas no período selecionado.</p>
               </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="flex rounded-lg border border-app-border p-1 text-xs print:hidden">
+                  <button type="button" className={cashChartView === 'daily' ? PRIMARY : BUTTON} onClick={() => setCashChartView('daily')}>Por data</button>
+                  <button type="button" className={cashChartView === 'summary' ? PRIMARY : BUTTON} onClick={() => setCashChartView('summary')}>Resumo</button>
+                </div>
               <span className={metrics.realizedBalance >= 0 ? 'rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-extrabold text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300' : 'rounded-full bg-rose-50 px-2.5 py-1 text-xs font-extrabold text-rose-700 dark:bg-rose-950/40 dark:text-rose-300'}>
                 {'Saldo ' + money(metrics.realizedBalance)}
               </span>
+              </div>
             </div>
-            <RealizedCashFlowChart points={metrics.charts} />
+            {cashChartView === 'daily' ? <RealizedCashFlowChart points={metrics.charts} /> : <div className="grid gap-4 py-6"><FinancialBreakdownChart title="Movimentações realizadas" subtitle="Entradas e saídas agregadas no período" items={[{name:'Entradas',value:Math.abs(metrics.realizedInflow),count:0},{name:'Saídas',value:Math.abs(metrics.realizedOutflow),count:0}]} accent="brand"/><p className="text-xs text-app-muted">Este resumo mostra totais realizados, não contas futuras.</p></div>}
           </article>
 
           <article className="rounded-xl border border-app-border bg-app-surface p-4 shadow-sm shadow-slate-950/5 dark:shadow-black/10">
@@ -847,6 +860,11 @@ export function AccountManagementScreen({
             </div>
             <PortfolioBalanceChart payable={metrics.openPayables} receivable={metrics.openReceivables} />
           </article>
+        </section>
+
+        <section className="grid grid-cols-2 gap-3 max-[720px]:grid-cols-1">
+          <MaturityInsight title="Contas a receber · risco de atraso" rows={data.accrual.rows} referenceDate={isoToday()} />
+          <MaturityInsight title="Contas a pagar · compromissos" rows={data.payables.rows} referenceDate={isoToday()} />
         </section>
 
         <section className="grid grid-cols-[minmax(0,1.5fr)_minmax(300px,0.75fr)] gap-3 max-[1050px]:grid-cols-1">
