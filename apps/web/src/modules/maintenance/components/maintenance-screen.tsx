@@ -75,6 +75,7 @@ type JobDraft = {
 
 type MaintenanceSection =
   | 'database'
+  | 'sql'
   | 'backups'
   | 'automation'
   | 'migration'
@@ -85,6 +86,7 @@ const MAINTENANCE_SECTIONS: ReadonlyArray<{
   label: string;
 }> = [
   { id: 'database', label: 'Banco de dados' },
+  { id: 'sql', label: 'Terminal SQL' },
   { id: 'backups', label: 'Backups' },
   { id: 'automation', label: 'Automação' },
   { id: 'migration', label: 'Migração e restore' },
@@ -692,14 +694,7 @@ export function MaintenanceScreen({
           })}
         </div>
 
-        <div
-          aria-labelledby="maintenance-tab-database"
-          className={activeSection === 'database' ? 'grid gap-5' : 'hidden'}
-          hidden={activeSection !== 'database'}
-          id="maintenance-panel-database"
-          role="tabpanel"
-        >
-
+        <div aria-labelledby="maintenance-tab-sql" className={activeSection === 'sql' ? 'grid gap-5' : 'hidden'} hidden={activeSection !== 'sql'} id="maintenance-panel-sql" role="tabpanel">
         <section className={CARD_CLASS}>
           <div className="mb-4">
             <span className="text-xs font-extrabold uppercase tracking-[0.1em] text-app-muted">Terminal MySQL</span>
@@ -735,6 +730,16 @@ export function MaintenanceScreen({
             </div>
           ) : null}
         </section>
+        </div>
+
+        <div
+          aria-labelledby="maintenance-tab-database"
+          className={activeSection === 'database' ? 'grid gap-5' : 'hidden'}
+          hidden={activeSection !== 'database'}
+          id="maintenance-panel-database"
+          role="tabpanel"
+        >
+
         <section className={CARD_CLASS}>
           <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
             <div>
