@@ -182,6 +182,11 @@ export function MaintenanceScreen({
   const [sqlResult, setSqlResult] = useState<{columns: string[]; rows: Record<string, unknown>[]; truncated: boolean} | null>(null);
   const [sqlError, setSqlError] = useState<string | null>(null);
   const [sqlBusy, setSqlBusy] = useState(false);
+  const [sqlDuration, setSqlDuration] = useState<number | null>(null);
+  const [sqlHistory, setSqlHistory] = useState<string[]>([]);
+  const [sqlFilter, setSqlFilter] = useState('');
+  const [sqlPage, setSqlPage] = useState(0);
+  const [sqlCopied, setSqlCopied] = useState(false);
   const [status, setStatus] = useState<MaintenanceSystemStatusResponse | null>(null);
   const [catalogMigration, setCatalogMigration] =
     useState<MaintenanceCatalogImageMigrationStatus | null>(null);
@@ -695,40 +700,94 @@ export function MaintenanceScreen({
         </div>
 
         <div aria-labelledby="maintenance-tab-sql" className={activeSection === 'sql' ? 'grid gap-5' : 'hidden'} hidden={activeSection !== 'sql'} id="maintenance-panel-sql" role="tabpanel">
-        <section className={CARD_CLASS}>
-          <div className="mb-4">
-            <span className="text-xs font-extrabold uppercase tracking-[0.1em] text-app-muted">Terminal MySQL</span>
-            <h2 className="mt-1 text-lg font-bold">Consultas SQL seguras</h2>
-            <p className="text-sm text-app-muted">Banco nivel3 · somente SELECT · máximo de 200 linhas por consulta. Comandos de escrita e alterações de estrutura são bloqueados no servidor.</p>
+        <section className={CARD_CLASS + ' overflow-hidden'}>
+          <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <span className="text-xs font-extrabold uppercase tracking-[0.1em] text-app-muted">Ferramentas de manutenção</span>
+              <h2 className="mt-1 text-xl font-bold">Terminal MySQL</h2>
+              <p className="mt-1 text-sm text-app-muted">Execute consultas no banco nivel3 sem sair do Helpdesk.</p>
+            </div>
+            <span className="rounded-full border border-emerald-300 bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-200">Somente leitura · SELECT</span>
+          </div>
+          <div className="mb-4 flex flex-wrap gap-2">
+            {[
+              { label: 'Usuários', sql: 'SELECT user_id, user_nome, user_mail, user_login FROM usuarios LIMIT 20' },
+              { label: 'Quantidade de usuários', sql: 'SELECT COUNT(*) AS total FROM usuarios' },
+              { label: 'Data do banco', sql: 'SELECT NOW() AS data_servidor' },
+            ].map((example) => (
+              <button key={example.label} type="button" className={BUTTON_CLASS + ' min-h-8 px-3 text-xs'} onClick={() => setSqlText(example.sql)}>{example.label}</button>
+            ))}
+            <button type="button" className={BUTTON_CLASS + ' min-h-8 px-3 text-xs'} onClick={() => {setSqlText('');setSqlResult(null);setSqlError(null);}}>Limpar editor</button>
           </div>
           <form onSubmit={async (event) => {
             event.preventDefault();
             setSqlBusy(true);
             setSqlError(null);
             setSqlResult(null);
-            try { setSqlResult(await runMaintenanceSql(sqlText)); }
-            catch (error) { setSqlError(errorMessage(error)); }
+            setSqlDuration(null);
+            setSqlPage(0);
+            setSqlFilter('');
+            const began = performance.now();
+            try {
+              const result = await runMaintenanceSql(sqlText);
+              setSqlResult(result);
+              setSqlDuration(Math.round(performance.now() - began));
+              setSqlHistory((previous) => [sqlText, ...previous.filter((item) => item !== sqlText)].slice(0, 8));
+            } catch (error) { setSqlError(errorMessage(error)); }
             finally { setSqlBusy(false); }
           }} className="grid gap-3">
-            <label className={LABEL_CLASS} htmlFor="maintenance-sql-editor">Comando SQL</label>
-            <textarea id="maintenance-sql-editor" spellCheck={false} className={CONTROL_CLASS + ' min-h-32 font-mono text-xs'} value={sqlText} onChange={(event) => setSqlText(event.target.value)} maxLength={12000} />
-            <div className="flex flex-wrap items-center gap-3">
-              <button className={PRIMARY_BUTTON_CLASS} disabled={sqlBusy || !sqlText.trim()} type="submit">{sqlBusy ? 'Executando...' : 'Executar SELECT'}</button>
-              <span className="text-xs text-app-muted">Evite consultar senhas, tokens e outras informações sensíveis.</span>
+            <label className={LABEL_CLASS} htmlFor="maintenance-sql-editor">Editor SQL</label>
+            <div className="overflow-hidden rounded-xl border border-app-border-strong bg-app-surface-muted focus-within:border-app-brand">
+              <div className="flex items-center justify-between border-b border-app-border px-3 py-2 text-[11px] text-app-muted"><span className="font-mono">nivel3 / query.sql</span><span>Máximo 12.000 caracteres</span></div>
+              <textarea id="maintenance-sql-editor" spellCheck={false} className="block min-h-40 w-full resize-y border-0 bg-transparent p-4 font-mono text-[13px] leading-6 text-app-text outline-none" value={sqlText} onChange={(event) => setSqlText(event.target.value)} onKeyDown={(event) => {if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {event.preventDefault();event.currentTarget.form?.requestSubmit();}}} maxLength={12000} placeholder="SELECT coluna FROM tabela LIMIT 20" />
+            </div>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <button className={PRIMARY_BUTTON_CLASS} disabled={sqlBusy || !sqlText.trim()} type="submit">{sqlBusy ? 'Executando consulta...' : '▶ Executar consulta'}</button>
+              <span className="text-xs text-app-muted">Ctrl + Enter para executar · até 200 linhas · campos de credenciais mascarados</span>
             </div>
           </form>
-          {sqlError ? <p role="alert" className="mt-3 text-sm text-app-danger">{sqlError}</p> : null}
-          {sqlResult ? (
-            <div className="mt-4 grid gap-2">
-              <p role="status" className="text-sm text-app-muted">{sqlResult.rows.length} linha(s) retornada(s){sqlResult.truncated ? ' · Exibição limitada a 200' : ''}.</p>
-              <div className="max-h-96 overflow-auto rounded-lg border border-app-border">
-                <table className="w-full min-w-max text-left text-xs">
-                  <thead><tr>{sqlResult.columns.map((column) => <th className={TABLE_HEAD} key={column}>{column}</th>)}</tr></thead>
-                  <tbody>{sqlResult.rows.map((row, index) => <tr key={index}>{sqlResult.columns.map((column) => <td className={TABLE_CELL + ' max-w-80 truncate font-mono'} title={String(row[column] ?? '')} key={column}>{row[column] === null ? 'NULL' : String(row[column] ?? '')}</td>)}</tr>)}</tbody>
-                </table>
+          {sqlHistory.length > 0 ? (
+            <details className="mt-4 rounded-lg border border-app-border p-3">
+              <summary className="cursor-pointer text-xs font-bold text-app-text">Histórico desta sessão ({sqlHistory.length})</summary>
+              <div className="mt-2 grid gap-1">
+                {sqlHistory.map((item, index) => <button className="truncate rounded-md px-2 py-2 text-left font-mono text-xs hover:bg-app-surface-hover" type="button" key={index} onClick={() => setSqlText(item)} title={item}>{item}</button>)}
               </div>
-            </div>
+            </details>
           ) : null}
+          {sqlError ? <p role="alert" className="mt-4 rounded-lg border border-app-danger-border bg-app-danger-soft p-3 text-sm text-app-danger">{sqlError}</p> : null}
+          {sqlResult ? (() => {
+            const filtered = sqlResult.rows.filter((row) => !sqlFilter || sqlResult.columns.some((column) => String(row[column] ?? '').toLowerCase().includes(sqlFilter.toLowerCase())));
+            const totalPages = Math.max(1, Math.ceil(filtered.length / 25));
+            const currentPage = Math.min(sqlPage, totalPages - 1);
+            const visible = filtered.slice(currentPage * 25, (currentPage + 1) * 25);
+            const csv = [sqlResult.columns, ...filtered.map((row) => sqlResult.columns.map((column) => row[column] === null ? '' : String(row[column] ?? '')))].map((cells) => cells.map((cell) => '"' + String(cell).replace(/"/g, '""') + '"').join(';')).join('\\r\\n');
+            return (
+              <div className="mt-6 grid gap-3">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <h3 className="text-base font-bold">Resultados</h3>
+                    <p role="status" className="text-xs text-app-muted">{sqlResult.rows.length} linha(s) recebidas · {sqlDuration ?? 0} ms{sqlResult.truncated ? ' · limitado a 200 linhas' : ''}</p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <button type="button" className={BUTTON_CLASS + ' min-h-9 text-xs'} onClick={() => {void navigator.clipboard.writeText(csv);setSqlCopied(true);}}> {sqlCopied ? 'Copiado' : 'Copiar CSV'} </button>
+                    <button type="button" className={BUTTON_CLASS + ' min-h-9 text-xs'} onClick={() => {const blob = new Blob(['\\uFEFF' + csv], {type: 'text/csv;charset=utf-8'});const url = URL.createObjectURL(blob);const a = document.createElement('a');a.href=url;a.download='helpdesk-consulta.csv';a.click();URL.revokeObjectURL(url);}}>Exportar CSV</button>
+                  </div>
+                </div>
+                <input aria-label="Filtrar resultados" className={CONTROL_CLASS} placeholder="Filtrar linhas retornadas..." value={sqlFilter} onChange={(event) => {setSqlFilter(event.target.value);setSqlPage(0);}} />
+                <div className="max-h-[520px] overflow-auto rounded-xl border border-app-border">
+                  <table className="w-full min-w-max border-collapse text-left text-xs">
+                    <thead className="sticky top-0 z-10"><tr><th className={TABLE_HEAD}>#</th>{sqlResult.columns.map((column) => <th className={TABLE_HEAD} key={column}>{column}</th>)}</tr></thead>
+                    <tbody>{visible.map((row, index) => <tr className="even:bg-app-surface-muted hover:bg-app-surface-hover" key={index}><td className={TABLE_CELL + ' text-app-muted'}>{currentPage * 25 + index + 1}</td>{sqlResult.columns.map((column) => <td className={TABLE_CELL + ' max-w-72 truncate font-mono'} title={String(row[column] ?? '')} key={column}>{row[column] === null ? <span className="italic text-app-muted">NULL</span> : String(row[column] ?? '')}</td>)}</tr>)}</tbody>
+                  </table>
+                  {visible.length === 0 ? <p className="p-5 text-center text-sm text-app-muted">Nenhum registro encontrado.</p> : null}
+                </div>
+                <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-app-muted">
+                  <span>Exibindo {visible.length} de {filtered.length} linha(s) · página {currentPage + 1} de {totalPages}</span>
+                  <div className="flex gap-2"><button type="button" className={BUTTON_CLASS + ' min-h-8 px-3'} disabled={currentPage === 0} onClick={() => setSqlPage(currentPage - 1)}>Anterior</button><button type="button" className={BUTTON_CLASS + ' min-h-8 px-3'} disabled={currentPage >= totalPages - 1} onClick={() => setSqlPage(currentPage + 1)}>Próxima</button></div>
+                </div>
+              </div>
+            );
+          })() : null}
         </section>
         </div>
 
