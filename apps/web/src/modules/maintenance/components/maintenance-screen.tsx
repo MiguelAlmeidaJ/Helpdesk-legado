@@ -33,6 +33,9 @@ import {
   stageMaintenanceDump,
   updateMaintenanceBackupJob,
   runMaintenanceSql,
+  previewMaintenanceSqlUpdate,
+  applyMaintenanceSqlUpdate,
+  type MaintenanceSqlUpdatePreview,
 } from '../api/maintenance-api';
 
 const BUTTON_CLASS =
@@ -178,10 +181,13 @@ export function MaintenanceScreen({
 }: {
   currentUser: CurrentUserResponse;
 }) {
-  const [sqlText, setSqlText] = useState('SELECT * FROM usuarios LIMIT 20');
+  const [sqlText, setSqlText] = useState('SHOW TABLES');
   const [sqlResult, setSqlResult] = useState<{columns: string[]; rows: Record<string, unknown>[]; truncated: boolean} | null>(null);
   const [sqlError, setSqlError] = useState<string | null>(null);
   const [sqlBusy, setSqlBusy] = useState(false);
+  const [sqlPreview, setSqlPreview] = useState<MaintenanceSqlUpdatePreview | null>(null);
+  const [sqlConfirmation, setSqlConfirmation] = useState('');
+  const [sqlSuccess, setSqlSuccess] = useState<string | null>(null);
   const [sqlDuration, setSqlDuration] = useState<number | null>(null);
   const [sqlHistory, setSqlHistory] = useState<string[]>([]);
   const [sqlFilter, setSqlFilter] = useState('');
@@ -707,21 +713,25 @@ export function MaintenanceScreen({
               <h2 className="mt-1 text-xl font-bold">Terminal MySQL</h2>
               <p className="mt-1 text-sm text-app-muted">Execute consultas no banco nivel3 sem sair do Helpdesk.</p>
             </div>
-            <span className="rounded-full border border-emerald-300 bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-200">Somente leitura · SELECT</span>
+            <span className="rounded-full border border-emerald-300 bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-200">SELECT · SHOW · UPDATE controlado</span>
           </div>
           <div className="mb-4 flex flex-wrap gap-2">
             {[
               { label: 'Usuários', sql: 'SELECT user_id, user_nome, user_mail, user_login FROM usuarios LIMIT 20' },
               { label: 'Quantidade de usuários', sql: 'SELECT COUNT(*) AS total FROM usuarios' },
               { label: 'Data do banco', sql: 'SELECT NOW() AS data_servidor' },
+              { label: 'Tabelas', sql: 'SHOW TABLES' },
+              { label: 'Estrutura de usuários', sql: 'SHOW COLUMNS FROM usuarios' },
             ].map((example) => (
               <button key={example.label} type="button" className={BUTTON_CLASS + ' min-h-8 px-3 text-xs'} onClick={() => setSqlText(example.sql)}>{example.label}</button>
             ))}
-            <button type="button" className={BUTTON_CLASS + ' min-h-8 px-3 text-xs'} onClick={() => {setSqlText('');setSqlResult(null);setSqlError(null);}}>Limpar editor</button>
+            <button type="button" className={BUTTON_CLASS + ' min-h-8 px-3 text-xs'} onClick={() => {setSqlText('');setSqlResult(null);setSqlError(null);setSqlPreview(null);setSqlSuccess(null);}}>Limpar editor</button>
           </div>
           <form onSubmit={async (event) => {
             event.preventDefault();
             setSqlBusy(true);
+            setSqlPreview(null);
+            setSqlSuccess(null);
             setSqlError(null);
             setSqlResult(null);
             setSqlDuration(null);
@@ -729,6 +739,13 @@ export function MaintenanceScreen({
             setSqlFilter('');
             const began = performance.now();
             try {
+              if (/^UPDATE\s/i.test(sqlText.trim())) {
+                const preview = await previewMaintenanceSqlUpdate(sqlText);
+                setSqlPreview(preview);
+                setSqlConfirmation('');
+                setSqlDuration(Math.round(performance.now() - began));
+                return;
+              }
               const result = await runMaintenanceSql(sqlText);
               setSqlResult(result);
               setSqlDuration(Math.round(performance.now() - began));
@@ -743,7 +760,7 @@ export function MaintenanceScreen({
             </div>
             <div className="flex flex-wrap items-center justify-between gap-3">
               <button className={PRIMARY_BUTTON_CLASS} disabled={sqlBusy || !sqlText.trim()} type="submit">{sqlBusy ? 'Executando consulta...' : '▶ Executar consulta'}</button>
-              <span className="text-xs text-app-muted">Ctrl + Enter para executar · até 200 linhas · campos de credenciais mascarados</span>
+              <span className="text-xs text-app-muted">Ctrl + Enter · SELECT/SHOW para leitura · UPDATE exige prévia e confirmação</span>
             </div>
           </form>
           {sqlHistory.length > 0 ? (
@@ -754,6 +771,42 @@ export function MaintenanceScreen({
               </div>
             </details>
           ) : null}
+          {sqlPreview ? (
+            <div className="mt-5 grid gap-3 rounded-xl border border-amber-300 bg-amber-50/70 p-4 text-sm dark:border-amber-900 dark:bg-amber-950/20">
+              <div>
+                <h3 className="text-base font-bold">Revisar atualização antes de executar</h3>
+                <p className="text-xs text-app-muted">Prévia válida por 2 minutos. Um único registro identificado pela chave primária.</p>
+              </div>
+              <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+                <div><span className="block text-xs text-app-muted">Tabela</span><strong>{sqlPreview.table}</strong></div>
+                <div><span className="block text-xs text-app-muted">Registro</span><strong>{sqlPreview.key} = {sqlPreview.id}</strong></div>
+                <div><span className="block text-xs text-app-muted">Coluna</span><strong>{sqlPreview.column}</strong></div>
+                <div><span className="block text-xs text-app-muted">Registros afetados</span><strong>{sqlPreview.rowsAffected}</strong></div>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="rounded-lg border border-app-border bg-app-surface p-3"><span className="text-xs text-app-muted">Valor atual</span><p className="mt-1 break-all font-mono">{String(sqlPreview.before ?? 'NULL')}</p></div>
+                <div className="rounded-lg border border-app-border bg-app-surface p-3"><span className="text-xs text-app-muted">Novo valor</span><p className="mt-1 break-all font-mono">{String(sqlPreview.after ?? 'NULL')}</p></div>
+              </div>
+              <label className={LABEL_CLASS} htmlFor="maintenance-update-confirm">Para autorizar, digite ATUALIZAR 1 REGISTRO</label>
+              <input id="maintenance-update-confirm" className={CONTROL_CLASS} value={sqlConfirmation} onChange={(event) => setSqlConfirmation(event.target.value)} autoComplete="off" placeholder="ATUALIZAR 1 REGISTRO" />
+              <div className="flex flex-wrap gap-2">
+                <button type="button" className={DANGER_BUTTON_CLASS} disabled={sqlBusy || sqlConfirmation !== 'ATUALIZAR 1 REGISTRO'} onClick={async () => {
+                  if (!sqlPreview) return;
+                  setSqlBusy(true);
+                  setSqlError(null);
+                  try {
+                    const outcome = await applyMaintenanceSqlUpdate(sqlPreview.token, sqlConfirmation);
+                    setSqlSuccess(`Atualização concluída: ${outcome.affectedRows} registro(s) em ${outcome.table}.`);
+                    setSqlPreview(null);
+                    setSqlConfirmation('');
+                  } catch (error) {setSqlError(errorMessage(error));setSqlPreview(null);}
+                  finally {setSqlBusy(false);}
+                }}>Confirmar UPDATE</button>
+                <button type="button" className={BUTTON_CLASS} onClick={() => {setSqlPreview(null);setSqlConfirmation('');}}>Cancelar</button>
+              </div>
+            </div>
+          ) : null}
+          {sqlSuccess ? <p role="status" className="mt-4 rounded-lg border border-emerald-300 bg-emerald-50 p-3 text-sm text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200">{sqlSuccess}</p> : null}
           {sqlError ? <p role="alert" className="mt-4 rounded-lg border border-app-danger-border bg-app-danger-soft p-3 text-sm text-app-danger">{sqlError}</p> : null}
           {sqlResult ? (() => {
             const filtered = sqlResult.rows.filter((row) => !sqlFilter || sqlResult.columns.some((column) => String(row[column] ?? '').toLowerCase().includes(sqlFilter.toLowerCase())));
