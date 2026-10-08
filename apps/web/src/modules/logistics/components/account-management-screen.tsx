@@ -16,7 +16,7 @@ import { AppPageHeader } from '../../../shared/navigation/app-page-header';
 import { NavigationIcon } from '../../../shared/navigation/navigation-icon';
 import { appButtonClass } from '../../../shared/ui/button-styles';
 import { getExpenseAdminDashboard } from '../api/expense-admin-dashboard-api';
-import { fetchFinanceView } from '../api/finance-api';
+import { fetchFinanceView, fetchFinancePortfolioOverview, type FinancePortfolioOverview } from '../api/finance-api';
 
 const BUTTON = appButtonClass('secondary');
 const PRIMARY = appButtonClass('primary');
@@ -290,6 +290,34 @@ function MaturityInsight({title,rows,referenceDate}:{title:string;rows:FinanceRo
     <div className="mt-4 h-2.5 overflow-hidden rounded-full bg-app-surface-muted"><div className="h-full rounded-full bg-rose-500" style={{width:pct+'%'}}/></div>
     <p className="mt-2 text-xs text-app-muted">{pct.toFixed(1).replace('.',',')}% do saldo listado está vencido · {value.count} conta(s) em aberto</p>
   </article>;
+}
+
+function MonthlyFinanceChart({rows,onSelect,selected}:{rows:Array<{month:string;received:number;spent:number;receivable:number;payable:number}>;onSelect:(month:string)=>void;selected:string|null}) {
+  const [mode,setMode] = useState<'cash'|'due'>('cash');
+  const series = rows.map(row=>({month:row.month,a:mode==='cash'?row.received:row.receivable,b:mode==='cash'?row.spent:row.payable}));
+  const maximum = Math.max(1,...series.flatMap(row=>[row.a,row.b]));
+  return <div className="grid gap-4">
+    <div className="flex flex-wrap items-center justify-between gap-2">
+      <p className="text-xs text-app-muted">Selecione uma coluna para conferir o mês. Valores realizados e saldos de vencimento são apresentados separadamente.</p>
+      <div className="flex gap-2">
+        <button type="button" className={mode==='cash'?PRIMARY:BUTTON} onClick={()=>setMode('cash')}>Realizado</button>
+        <button type="button" className={mode==='due'?PRIMARY:BUTTON} onClick={()=>setMode('due')}>Vencimentos</button>
+      </div>
+    </div>
+    <div className="flex flex-wrap gap-4 text-xs text-app-muted">
+      <span>{mode==='cash'?'🟢 Entradas':'🔵 A receber'}</span>
+      <span>{mode==='cash'?'🔴 Saídas':'🟠 A pagar'}</span>
+    </div>
+    <div className="flex min-h-52 items-end gap-2 overflow-x-auto border-b border-app-border pb-1">
+      {series.length?series.map(row=><button key={row.month} type="button" onClick={()=>onSelect(row.month)} aria-pressed={selected===row.month} title={row.month+' · '+money(row.a)+' / '+money(row.b)} className={'grid min-w-16 flex-1 gap-1 rounded-lg p-2 hover:bg-app-surface-hover '+(selected===row.month?'bg-app-surface-muted ring-2 ring-app-brand':'')}>
+        <span className="flex h-40 items-end justify-center gap-1">
+          <span className={'w-5 rounded-t '+(mode==='cash'?'bg-emerald-500':'bg-sky-500')} style={{height:(row.a>0?Math.max(3,row.a/maximum*100):0)+'%'}} />
+          <span className={'w-5 rounded-t '+(mode==='cash'?'bg-rose-500':'bg-amber-500')} style={{height:(row.b>0?Math.max(3,row.b/maximum*100):0)+'%'}} />
+        </span>
+        <span className="text-center text-xs text-app-muted">{row.month.slice(5,7)+'/'+row.month.slice(2,4)}</span>
+      </button>):<p className="self-center text-sm text-app-muted">Sem dados para os períodos selecionados.</p>}
+    </div>
+  </div>;
 }
 
 function FinancialBreakdownChart({
@@ -704,6 +732,9 @@ export function AccountManagementScreen({
     endDate: isoToday(),
   }));
   const [data, setData] = useState<DashboardData | null>(null);
+  const [portfolioOverview, setPortfolioOverview] = useState<FinancePortfolioOverview | null>(null);
+  const [portfolioError, setPortfolioError] = useState('');
+  const [monthSelected, setMonthSelected] = useState<string | null>(null);
   const [cashStartDate, setCashStartDate] = useState(firstDayOfMonth);
   const [cashEndDate, setCashEndDate] = useState(isoToday);
   const [cashPeriod, setCashPeriod] = useState(() => ({startDate:firstDayOfMonth(),endDate:isoToday()}));
@@ -742,6 +773,17 @@ export function AccountManagementScreen({
     void load(controller.signal);
     return () => controller.abort();
   }, [load]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    setPortfolioError('');
+    fetchFinancePortfolioOverview(controller.signal)
+      .then(setPortfolioOverview)
+      .catch((error: unknown) => {
+        if (!(error instanceof Error && error.name === 'AbortError')) setPortfolioError(errorMessage(error));
+      });
+    return () => controller.abort();
+  }, []);
 
   const loadRd = useCallback(async (signal?: AbortSignal) => {
     setRdLoading(true);
@@ -917,11 +959,40 @@ export function AccountManagementScreen({
           </article>
         </section>
 
+        <section className="grid gap-3">
+          <div>
+            <h2 className="text-lg font-extrabold">Carteira consolidada · todos os vencimentos</h2>
+            <p className="text-sm text-app-muted">Consulta agregada no banco, sem limitar ao período dos gráficos ou aos primeiros 2.000 lançamentos.</p>
+          </div>
+          {portfolioError ? <p role="alert" className="text-sm text-app-danger">{portfolioError}</p> : null}
+          <div className="grid gap-3 md:grid-cols-2">
+            {([{key:'receivable',label:'Contas a receber',color:'text-sky-600'},{key:'payable',label:'Contas a pagar',color:'text-amber-600'}] as const).map(item=>{
+              const row=portfolioOverview?.[item.key];
+              return <article key={item.key} className="rounded-xl border border-app-border bg-app-surface p-5 shadow-sm">
+                <h3 className="text-sm font-extrabold">{item.label}</h3>
+                <strong className={'mt-2 block text-2xl '+item.color}>{row?money(row.open):'—'}</strong>
+                <p className="mt-1 text-xs text-app-muted">{row?.count ?? '—'} conta(s) em aberto · posição atual</p>
+                <div className="mt-4 grid grid-cols-2 gap-3 border-t border-app-border-soft pt-3">
+                  <div><span className="text-xs text-app-muted">Vencido ({row?.overdueCount ?? '—'})</span><strong className="mt-1 block text-base text-rose-600">{row?money(row.overdue):'—'}</strong></div>
+                  <div><span className="text-xs text-app-muted">Próximos 30 dias</span><strong className="mt-1 block text-base">{row?money(row.dueNext30):'—'}</strong></div>
+                </div>
+                <div className="mt-3 h-2 overflow-hidden rounded-full bg-app-surface-muted"><div className="h-full rounded-full bg-rose-500" style={{width:row?.open?Math.min(100,row.overdue/row.open*100)+'%':'0%'}}/></div>
+                <p className="mt-2 text-xs text-app-muted">Percentual vencido: {row?.open ? (row.overdue/row.open*100).toFixed(1).replace('.',',')+'%':'—'}</p>
+              </article>;
+            })}
+          </div>
+          <p className="text-xs text-app-muted">Posição apurada na data atual do banco. A carteira a pagar considera o valor integral das contas não marcadas como pagas; pagamentos parciais não são deduzidos nesta fonte.</p>
+        </section>
+
         <section className="rounded-xl border border-app-border bg-app-surface p-5 shadow-sm">
           <div className="mb-4">
             <h2 className="text-base font-extrabold">Evolução mensal · comparativo financeiro</h2>
             <p className="mt-1 text-xs text-app-muted">Separação por mês de movimentação (realizado) e mês de vencimento (carteira). Os períodos podem ser diferentes.</p>
           </div>
+          <MonthlyFinanceChart rows={monthlySummary} selected={monthSelected} onSelect={setMonthSelected} />
+          {monthSelected ? <div className="mb-4 rounded-lg bg-app-surface-muted p-3 text-sm">
+            {(() => {const m=monthlySummary.find(row=>row.month===monthSelected);return m?<span><strong>{monthSelected.slice(5,7)+'/'+monthSelected.slice(0,4)}</strong> · Realizado: {money(m.received-m.spent)} · Saldo a vencer: {money(m.receivable-m.payable)}</span>:null;})()}
+          </div>:null}
           <div className="overflow-x-auto">
             <table className="w-full min-w-[680px] text-left text-sm">
               <thead className="border-b border-app-border bg-app-surface-muted text-xs text-app-muted">
