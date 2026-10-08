@@ -855,7 +855,7 @@ export class MaintenanceService implements OnApplicationBootstrap {
   private parseSafeUpdate(input: string) {
     // Constrained SQL subset: one column, one row identified by a numeric PK.
     // Neither arbitrary expressions nor multi-row writes are accepted.
-    const pattern = /^UPDATE\s+`?([a-zA-Z_][a-zA-Z_0-9]*)`?\s+SET\s+`?([a-zA-Z_][a-zA-Z_0-9]*)`?\s*=\s*(NULL|-?\d+(?:\.\d+)?|'(?:[^'\\\\]|\\\\.)*')\s+WHERE\s+`?([a-zA-Z_][a-zA-Z_0-9]*)`?\s*=\s*(\d+)\s*$/i;
+    const pattern = /^UPDATE\s+`?([a-zA-Z_][a-zA-Z_0-9]*)`?\s+SET\s+`?([a-zA-Z_][a-zA-Z_0-9]*)`?\s*=\s*(NULL|-?\d+(?:\.\d+)?|'[^']*')\s+WHERE\s+`?([a-zA-Z_][a-zA-Z_0-9]*)`?\s*=\s*(\d+)\s*$/i;
     const match = input.match(pattern);
     if (!match) throw new BadRequestException('UPDATE seguro exige: UPDATE tabela SET coluna = valor WHERE chave_primaria = ID (um registro, um campo).');
     const [, table, column, raw, key, id] = match;
@@ -864,8 +864,7 @@ export class MaintenanceService implements OnApplicationBootstrap {
       throw new BadRequestException('Tabela ou campo protegido para atualização via terminal.');
     }
     const value = raw.toUpperCase() === 'NULL' ? null : raw.startsWith("'")
-      ? raw.slice(1,-1).replace(/\\\\'/g, "'").replace(/\\\\\\\\/g, '\\\\')
-      : Number(raw);
+      ? raw.slice(1, -1) : Number(raw);
     if (typeof value === 'number' && !Number.isFinite(value)) throw new BadRequestException('Valor numérico inválido.');
     return { table, column, key, id, value };
   }
