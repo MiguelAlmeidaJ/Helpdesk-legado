@@ -14,7 +14,7 @@ import type {
   MaintenanceTableDropResponse,
   MaintenanceTableOptimizeResponse,
 } from '@helpdesk/contracts';
-import { apiDownload, apiRequest } from '../../../shared/api/api-client';
+import { apiDownload, apiRequest, apiUrl, ApiError } from '../../../shared/api/api-client';
 
 const JSON_HEADERS = { 'Content-Type': 'application/json' } as const;
 
@@ -87,13 +87,43 @@ export function deleteMaintenanceBackupJob(id: number) {
 export function stageMaintenanceDump(
   target: MaintenanceDatabaseKey,
   file: File,
-) {
-  const body = new FormData();
-  body.set('target', target);
-  body.set('file', file);
-  return apiRequest<MaintenanceDumpStageResponse>('maintenance/dumps/stage', {
-    method: 'POST',
-    body,
+  options: { onProgress?: (percent: number) => void; signal?: AbortSignal } = {},
+): Promise<MaintenanceDumpStageResponse> {
+  return new Promise((resolve, reject) => {
+    const request = new XMLHttpRequest();
+    const body = new FormData();
+    body.set('target', target);
+    body.set('file', file);
+    const onAbort = () => request.abort();
+    const cleanup = () => options.signal?.removeEventListener('abort', onAbort);
+    request.open('POST', apiUrl('maintenance/dumps/stage'));
+    request.withCredentials = true;
+    request.timeout = 30 * 60 * 1000;
+    request.setRequestHeader('X-Helpdesk-Request', 'browser');
+    request.setRequestHeader('Accept', 'application/json');
+    request.upload.onprogress = (event) => {
+      if (event.lengthComputable && event.total > 0) {
+        options.onProgress?.(Math.min(99, Math.round(event.loaded / event.total * 100)));
+      }
+    };
+    request.onload = () => {
+      cleanup();
+      let result: unknown;
+      try { result = JSON.parse(request.responseText); }
+      catch { result = request.responseText; }
+      if (request.status >= 200 && request.status < 300) {
+        options.onProgress?.(100);
+        resolve(result as MaintenanceDumpStageResponse);
+      } else {
+        reject(new ApiError(request.status, result));
+      }
+    };
+    request.onerror = () => { cleanup(); reject(new Error('Falha de rede durante o envio do dump. Verifique a conexão e tente novamente.')); };
+    request.ontimeout = () => { cleanup(); reject(new Error('O envio excedeu o tempo limite de 30 minutos.')); };
+    request.onabort = () => { cleanup(); reject(new Error('Upload cancelado. Nenhum dump foi importado.')); };
+    if (options.signal?.aborted) { reject(new Error('Upload cancelado.')); return; }
+    options.signal?.addEventListener('abort', onAbort, { once: true });
+    request.send(body);
   });
 }
 
