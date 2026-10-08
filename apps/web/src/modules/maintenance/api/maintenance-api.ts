@@ -163,3 +163,9 @@ export function dropMaintenanceTables(
     },
   );
 }
+
+export function runMaintenanceSql(sql: string) {
+  return apiRequest<{columns: string[]; rows: Record<string, unknown>[]; affectedRows: number | null; truncated: boolean}>('maintenance/sql-console', {
+    method: 'POST', headers: JSON_HEADERS, body: JSON.stringify({ sql }),
+  });
+}
