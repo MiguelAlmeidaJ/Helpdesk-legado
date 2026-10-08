@@ -48,11 +48,16 @@ function ticketNotifications(
   const items: AppNotificationItem[] = [];
   const href = ticketHref(ticket.id);
   const label = ticketLabel(ticket);
+  const isResponsibleTechnician = ticket.technician.id === user.id;
 
   const qualityBreached = ticket.sla.quality.breached;
   const clerioBreached = ticket.sla.clerio.breached;
 
-  if (ticket.status !== TicketStatus.OnHold && (qualityBreached || clerioBreached)) {
+  if (
+    isResponsibleTechnician &&
+    ticket.status !== TicketStatus.OnHold &&
+    (qualityBreached || clerioBreached)
+  ) {
     const names = [
       qualityBreached ? 'Qualidade' : '',
       clerioBreached ? 'Clerio' : '',
@@ -72,7 +77,7 @@ function ticketNotifications(
       occurredAt: occurred(ticket.sla.lastActivityAt ?? ticket.openedAt),
       read: false,
     });
-  } else if (ticket.status !== TicketStatus.OnHold) {
+  } else if (isResponsibleTechnician && ticket.status !== TicketStatus.OnHold) {
     const qualityRemaining = ticket.sla.quality.remainingSeconds;
     const clerioRemaining = ticket.sla.clerio.remainingSeconds;
     const remaining = Math.min(
@@ -119,7 +124,7 @@ function ticketNotifications(
 
   if (
     ticket.status === TicketStatus.WaitingExecution &&
-    ticket.technician.id === user.id
+    isResponsibleTechnician
   ) {
     items.push({
       key: `ticket:${ticket.id}:assigned:waiting`,
@@ -169,7 +174,7 @@ export class NotificationCenterService {
             TicketStatus.OnHold,
           ],
           typeIds: [],
-          technicianIds: [],
+          technicianIds: [user.id],
           sort: 'sla',
           direction: 'asc',
         },
