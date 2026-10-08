@@ -834,37 +834,110 @@ export class MaintenanceService implements OnApplicationBootstrap {
   }
 
 
+  private readonly sqlUpdatePreviews = new Map<string, {
+    sql: string; userId: number; expires: number; table: string;
+    column: string; key: string; id: string | number; value: string | number | null;
+    before: string | number | null; count: number;
+  }>();
+
+  private sanitizeSqlRows(result: Array<Record<string, unknown>>) {
+    return result.map((row) => Object.fromEntries(Object.entries(row).map(([key, value]) => [
+      key,
+      /(^|_)(pass(word)?|pwd|secret|token|api_key|private_key|hash|salt|credencial|senha)(_|$)/i.test(key)
+        ? '[PROTEGIDO]'
+        : typeof value === 'bigint' ? value.toString()
+        : value instanceof Date ? value.toISOString()
+        : typeof value === 'object' && value !== null ? JSON.stringify(value)
+        : value,
+    ])));
+  }
+
+  private parseSafeUpdate(input: string) {
+    // Constrained SQL subset: one column, one row identified by a numeric PK.
+    // Neither arbitrary expressions nor multi-row writes are accepted.
+    const pattern = /^UPDATE\s+`?([a-zA-Z_][a-zA-Z_0-9]*)`?\s+SET\s+`?([a-zA-Z_][a-zA-Z_0-9]*)`?\s*=\s*(NULL|-?\d+(?:\.\d+)?|'(?:[^'\\\\]|\\\\.)*')\s+WHERE\s+`?([a-zA-Z_][a-zA-Z_0-9]*)`?\s*=\s*(\d+)\s*$/i;
+    const match = input.match(pattern);
+    if (!match) throw new BadRequestException('UPDATE seguro exige: UPDATE tabela SET coluna = valor WHERE chave_primaria = ID (um registro, um campo).');
+    const [, table, column, raw, key, id] = match;
+    if (/^(maintenance_|api_|access_|user_permissions|user_roles|roles|permissions)/i.test(table) ||
+        /pass|pwd|secret|token|hash|salt|senha|credential/i.test(column)) {
+      throw new BadRequestException('Tabela ou campo protegido para atualização via terminal.');
+    }
+    const value = raw.toUpperCase() === 'NULL' ? null : raw.startsWith("'")
+      ? raw.slice(1,-1).replace(/\\\\'/g, "'").replace(/\\\\\\\\/g, '\\\\')
+      : Number(raw);
+    if (typeof value === 'number' && !Number.isFinite(value)) throw new BadRequestException('Valor numérico inválido.');
+    return { table, column, key, id, value };
+  }
+
+  async previewSqlUpdate(sql: string, userId: number) {
+    const input = sql.trim();
+    if (input.length > 12000 || /;|--|#|\/\*|\*\//.test(input)) throw new BadRequestException('SQL inválido.');
+    const update = this.parseSafeUpdate(input);
+    const quote = (v: string) => '`' + v + '`';
+    const pk = await this.nivel3.$queryRawUnsafe<Array<{ COLUMN_NAME: string }>>(
+      "SELECT COLUMN_NAME FROM information_schema.KEY_COLUMN_USAGE WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND CONSTRAINT_NAME = 'PRIMARY' ORDER BY ORDINAL_POSITION",
+      update.table,
+    );
+    if (pk.length !== 1 || pk[0].COLUMN_NAME.toLowerCase() !== update.key.toLowerCase())
+      throw new BadRequestException('WHERE deve utilizar a chave primária simples da tabela.');
+    const cols = await this.nivel3.$queryRawUnsafe<Array<{ COLUMN_NAME: string; DATA_TYPE: string }>>(
+      'SELECT COLUMN_NAME, DATA_TYPE FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?',
+      update.table, update.column,
+    );
+    if (!cols.length || update.column.toLowerCase() === update.key.toLowerCase())
+      throw new BadRequestException('Coluna não encontrada ou coluna de chave primária protegida.');
+    const rows = await this.nivel3.$queryRawUnsafe<Array<Record<string, unknown>>>(
+      `SELECT ${quote(update.key)}, ${quote(update.column)} FROM ${quote(update.table)} WHERE ${quote(update.key)} = ? LIMIT 2`,
+      update.id,
+    );
+    if (rows.length !== 1) throw new BadRequestException('UPDATE deve encontrar exatamente um registro.');
+    const before = rows[0][cols[0].COLUMN_NAME] as string | number | null;
+    const token = randomUUID();
+    for (const [id, item] of this.sqlUpdatePreviews) if (item.expires < Date.now()) this.sqlUpdatePreviews.delete(id);
+    this.sqlUpdatePreviews.set(token, { sql: input, userId, expires: Date.now() + 120000, ...update, before, count: 1 });
+    return { token, expiresAt: new Date(Date.now() + 120000).toISOString(), table: update.table, column: update.column,
+      key: update.key, id: update.id, before: this.sanitizeSqlRows([{[update.column]:before}])[0][update.column],
+      after: this.sanitizeSqlRows([{[update.column]:update.value}])[0][update.column], rowsAffected: 1 };
+  }
+
+  async applySqlUpdate(token: string, confirmation: string, userId: number) {
+    const preview = this.sqlUpdatePreviews.get(token);
+    if (!preview || preview.userId !== userId || preview.expires < Date.now()) throw new BadRequestException('Prévia expirada. Revise novamente o UPDATE.');
+    if (confirmation !== 'ATUALIZAR 1 REGISTRO') throw new BadRequestException('Digite ATUALIZAR 1 REGISTRO para confirmar.');
+    this.sqlUpdatePreviews.delete(token); // one use, even if the execution fails
+    const quote = (value: string) => '`' + value + '`';
+    const old = preview.before;
+    const query = `UPDATE ${quote(preview.table)} SET ${quote(preview.column)} = ? WHERE ${quote(preview.key)} = ? AND ${quote(preview.column)} <=> ? LIMIT 1`;
+    const count = await this.nivel3.$executeRawUnsafe(query, preview.value, preview.id, old);
+    this.logger.warn(`SQL UPDATE admin=${userId} table=${preview.table} column=${preview.column} pk=${preview.id} changed=${count}`);
+    if (count !== 1) throw new ConflictException('O registro mudou desde a prévia, ou o valor já era igual. Revise antes de tentar novamente.');
+    return { affectedRows: count, table: preview.table, column: preview.column };
+  }
+
   async runSqlConsole(sql: string, actorUserId: number): Promise<{
     columns: string[]; rows: Array<Record<string, unknown>>; affectedRows: number | null; truncated: boolean;
   }> {
-    const input = sql.trim();
-    if (!input || input.length > 12000) throw new BadRequestException('SQL vazio ou muito longo.');
-    // No stacked queries, comments or optimizer hints. Conservative by design.
-    if (/;|--|#|\/\*|\*\//.test(input)) {
-      throw new BadRequestException('Comentários e múltiplas instruções não são permitidos.');
-    }
-    const forbidden = /\b(INTO|OUTFILE|DUMPFILE|LOAD_FILE|SLEEP|BENCHMARK|GET_LOCK|RELEASE_LOCK|FOR\s+UPDATE|LOCK\s+IN\s+SHARE\s+MODE|PROCEDURE|INFORMATION_SCHEMA|PERFORMANCE_SCHEMA|MYSQL|SYS|UNION|WITH|HANDLER|CALL|EXECUTE|PREPARE|SET|INSERT|DELETE|DROP|ALTER|CREATE|TRUNCATE|REPLACE|GRANT|REVOKE|KILL|SHUTDOWN)\b/i;
+    const input = sql.trim().replace(/;$/, '');
+    if (!input || input.length > 12000 || /;|--|#|\/\*|\*\//.test(input))
+      throw new BadRequestException('SQL vazio, longo ou com múltiplos comandos/comentários.');
+    const blocked = /\b(INTO|OUTFILE|DUMPFILE|LOAD_FILE|SLEEP|BENCHMARK|GET_LOCK|RELEASE_LOCK|FOR\s+UPDATE|LOCK\s+IN\s+SHARE\s+MODE|PROCEDURE|INFORMATION_SCHEMA|PERFORMANCE_SCHEMA|MYSQL|SYS|UNION|WITH|HANDLER|CALL|EXECUTE|PREPARE|SET|INSERT|DELETE|DROP|ALTER|CREATE|TRUNCATE|REPLACE|GRANT|REVOKE|KILL|SHUTDOWN)\b/i;
+    let query: string;
     if (/^SELECT\s/i.test(input)) {
-      if (forbidden.test(input) || /@|\\/.test(input)) {
-        throw new BadRequestException('A consulta utiliza um recurso não autorizado pelo terminal.');
-      }
-      const begin = Date.now();
-      const result = await this.nivel3.$queryRawUnsafe<Array<Record<string, unknown>>>(
-        `SELECT * FROM (${input}) AS maintenance_sql_result LIMIT 201`,
-      );
-      const rows = result.slice(0, 200).map((row) =>
-        Object.fromEntries(Object.entries(row).map(([key, value]) => [
-          key, /(^|_)(pass(word)?|pwd|secret|token|api_key|private_key|hash|salt|credencial|senha)(_|$)/i.test(key)
-            ? '[PROTEGIDO]'
-            : typeof value === 'bigint' ? value.toString() :
-          value instanceof Date ? value.toISOString() :
-          typeof value === 'object' && value !== null ? JSON.stringify(value) : value,
-        ])),
-      );
-      this.logger.log(`SQL SELECT admin=${actorUserId} durationMs=${Date.now() - begin} rows=${rows.length}`);
-      return { columns: Object.keys(rows[0] ?? {}), rows, affectedRows: null, truncated: result.length > 200 };
+      if (blocked.test(input) || /@|\\\\/.test(input)) throw new BadRequestException('Recurso SQL não autorizado.');
+      query = `SELECT * FROM (${input}) AS maintenance_sql_result LIMIT 201`;
+    } else if (/^SHOW\s/i.test(input)) {
+      const show = /^(SHOW\s+(?:TABLES|FULL\s+TABLES|DATABASES|COLUMNS\s+FROM\s+`?[a-zA-Z_][a-zA-Z_0-9]*`?|FULL\s+COLUMNS\s+FROM\s+`?[a-zA-Z_][a-zA-Z_0-9]*`?|INDEX(?:ES)?\s+FROM\s+`?[a-zA-Z_][a-zA-Z_0-9]*`?|CREATE\s+TABLE\s+`?[a-zA-Z_][a-zA-Z_0-9]*`?|TABLE\s+STATUS))$/i;
+      if (!show.test(input)) throw new BadRequestException('SHOW permitido: TABLES, FULL TABLES, COLUMNS FROM tabela, INDEX FROM tabela, CREATE TABLE tabela ou TABLE STATUS.');
+      query = input;
+    } else {
+      throw new BadRequestException('Use SELECT ou SHOW. UPDATE deve passar por prévia e confirmação.');
     }
-    throw new BadRequestException('Somente SELECT é permitido no terminal SQL. Alterações devem utilizar rotinas administrativas específicas.');
+    const start = Date.now();
+    const result = await this.nivel3.$queryRawUnsafe<Array<Record<string, unknown>>>(query);
+    const rows = this.sanitizeSqlRows(result.slice(0, 200));
+    this.logger.log(`SQL READ admin=${actorUserId} durationMs=${Date.now()-start} rows=${rows.length}`);
+    return { columns: Object.keys(rows[0] ?? {}), rows, affectedRows: null, truncated: result.length > 200 };
   }
 
   async databaseTables(
