@@ -844,14 +844,14 @@ export function AccountManagementScreen({
     <div className="mx-auto grid w-full max-w-[1500px] gap-5 p-6 max-sm:px-3.5">
       <form className="flex flex-wrap items-end gap-3 rounded-xl border border-app-border bg-app-surface p-4 shadow-sm shadow-slate-950/5 dark:shadow-black/10" onSubmit={submit}>
         <label className="grid gap-1.5 text-xs font-bold text-app-muted">
-          <span>De</span>
+          <span>RDs · de</span>
           <input className={INPUT} onChange={(event) => setStartDate(event.target.value)} required type="date" value={startDate} />
         </label>
         <label className="grid gap-1.5 text-xs font-bold text-app-muted">
-          <span>Até</span>
+          <span>RDs · até</span>
           <input className={INPUT} onChange={(event) => setEndDate(event.target.value)} required type="date" value={endDate} />
         </label>
-        <button className={PRIMARY} disabled={loading} type="submit">{loading ? 'Atualizando…' : 'Atualizar dashboard'}</button>
+        <button className={PRIMARY} disabled={loading} type="submit">{loading ? 'Atualizando…' : 'Atualizar RDs'}</button>
       </form>
 
       <form className="grid gap-4 rounded-xl border border-app-border bg-app-surface p-4 shadow-sm lg:grid-cols-2" onSubmit={submitFinancialPeriods}>
