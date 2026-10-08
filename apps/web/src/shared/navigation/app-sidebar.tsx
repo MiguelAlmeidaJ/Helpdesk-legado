@@ -8,7 +8,6 @@ import { fetchAppNavigation } from './navigation-api';
 import { NavigationIcon } from './navigation-icon';
 import {
   APP_NAVIGATION_SECTIONS,
-  APP_NAVIGATION_STANDALONE,
   DASHBOARD_NAVIGATION_ITEM,
   type NavigationItem,
   type NavigationSection,
@@ -23,13 +22,6 @@ const FALLBACK_SECTIONS: NavigationSection[] = [
     items: [DASHBOARD_NAVIGATION_ITEM],
   },
   ...APP_NAVIGATION_SECTIONS,
-  {
-    id: 'standalone',
-    label: 'Outros',
-    shortLabel: 'OU',
-    icon: 'menu',
-    items: APP_NAVIGATION_STANDALONE,
-  },
 ];
 
 function navigationPath(item: NavigationItem): string | null {
@@ -127,18 +119,14 @@ export function AppSidebar() {
     return () => controller.abort();
   }, []);
 
-  const { primaryItems, regularSections, standaloneItems } = useMemo(() => {
+  const { primaryItems, regularSections } = useMemo(() => {
     const primary = navigationSections.find((section) => section.id === 'primary');
-    const standalone = navigationSections.find(
-      (section) => section.id === 'standalone',
-    );
 
     return {
       primaryItems: primary?.items ?? [],
       regularSections: navigationSections.filter(
-        (section) => section.id !== 'primary' && section.id !== 'standalone',
+        (section) => section.id !== 'primary',
       ),
-      standaloneItems: standalone?.items ?? [],
     };
   }, [navigationSections]);
 
@@ -146,7 +134,6 @@ export function AppSidebar() {
     const items = [
       ...primaryItems,
       ...regularSections.flatMap((section) => section.items),
-      ...standaloneItems,
     ];
     let selected: NavigationItem | null = null;
     let selectedScore = -1;
@@ -160,7 +147,7 @@ export function AppSidebar() {
     }
 
     return selected?.id ?? null;
-  }, [pathname, primaryItems, regularSections, standaloneItems]);
+  }, [pathname, primaryItems, regularSections]);
 
   const activeSectionId = useMemo(
     () =>
@@ -318,18 +305,6 @@ export function AppSidebar() {
             </details>
           ))}
 
-          {standaloneItems.length > 0 ? (
-            <div className="mt-2.5 grid gap-[3px] border-t border-app-border-soft pt-2.5">
-              {standaloneItems.map((item) => (
-                <NavigationLink
-                  item={item}
-                  key={item.id}
-                  activeItemId={activeItemId}
-                  onNavigate={() => setOpen(false)}
-                />
-              ))}
-            </div>
-          ) : null}
         </nav>
       </aside>
     </>

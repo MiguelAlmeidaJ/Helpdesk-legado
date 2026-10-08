@@ -19,11 +19,17 @@ export interface NavigationSection {
 }
 
 function items(sectionSlug: string): NavigationItem[] {
-  return DEFAULT_NAVIGATION.find((section) => section.slug === sectionSlug)!.items.map(
+  const section = DEFAULT_NAVIGATION.find(({ slug }) => slug === sectionSlug);
+
+  if (!section) {
+    throw new Error(`Unknown default navigation section: ${sectionSlug}`);
+  }
+
+  return section.items.map(
     ({ slug, label, icon, href, status }) => ({
       id: slug,
       label,
-      icon: icon ?? DEFAULT_NAVIGATION.find((section) => section.slug === sectionSlug)?.icon ?? null,
+      icon: icon ?? section.icon ?? null,
       href,
       status,
     }),
@@ -33,7 +39,7 @@ function items(sectionSlug: string): NavigationItem[] {
 export const DASHBOARD_NAVIGATION_ITEM: NavigationItem = items('primary')[0]!;
 
 export const APP_NAVIGATION_SECTIONS: NavigationSection[] = DEFAULT_NAVIGATION
-  .filter((section) => !['primary', 'standalone', 'administration'].includes(section.slug))
+  .filter((section) => !['primary', 'administration'].includes(section.slug))
   .map((section) => ({
     id: section.slug,
     label: section.label,
@@ -42,13 +48,10 @@ export const APP_NAVIGATION_SECTIONS: NavigationSection[] = DEFAULT_NAVIGATION
     items: items(section.slug),
   }));
 
-export const APP_NAVIGATION_STANDALONE: NavigationItem[] = items('standalone');
-
 export function navigationTotals() {
   const items = [
     DASHBOARD_NAVIGATION_ITEM,
     ...APP_NAVIGATION_SECTIONS.flatMap((section) => section.items),
-    ...APP_NAVIGATION_STANDALONE,
   ];
 
   return {
