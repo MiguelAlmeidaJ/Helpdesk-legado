@@ -246,6 +246,11 @@ export class PrismaTicketAnalyticsRepository extends TicketAnalyticsRepository {
       values.length
         ? Math.round(values.reduce((total, value) => total + value, 0) / values.length)
         : null;
+    const percentile = (values: number[], rank: number): number | null => {
+      if (!values.length) return null;
+      const sorted = [...values].sort((a, b) => a - b);
+      return sorted[Math.max(0, Math.ceil(sorted.length * rank) - 1)];
+    };
     const maximum = (values: number[]): number | null =>
       values.length ? Math.max(...values) : null;
 
@@ -261,6 +266,11 @@ export class PrismaTicketAnalyticsRepository extends TicketAnalyticsRepository {
         averageHandlingSeconds: average(aggregate.handling),
         maxAcceptanceSeconds: maximum(aggregate.acceptance),
         maxResolutionSeconds: maximum(aggregate.resolution),
+        medianAcceptanceSeconds: percentile(aggregate.acceptance, 0.5),
+        medianHandlingSeconds: percentile(aggregate.handling, 0.5),
+        medianResolutionSeconds: percentile(aggregate.resolution, 0.5),
+        p90AcceptanceSeconds: percentile(aggregate.acceptance, 0.9),
+        p90ResolutionSeconds: percentile(aggregate.resolution, 0.9),
       }))
       .sort(
         (left, right) =>
