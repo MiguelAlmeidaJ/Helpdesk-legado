@@ -30,7 +30,7 @@ import {
   dropMaintenanceTables,
   repairMaintenanceDatabase,
   runMaintenanceBackup,
-  stageMaintenanceDump,
+  stageMaintenanceDumpChunked,
   updateMaintenanceBackupJob,
   runMaintenanceSql,
   previewMaintenanceSqlUpdate,
@@ -457,11 +457,11 @@ export function MaintenanceScreen({
     setDumpPhase('sending');
     setBusy('dump-stage');
     setFeedback(null);
-    stageMaintenanceDump(dumpTarget, dumpFile, {
+    stageMaintenanceDumpChunked(dumpTarget, dumpFile, {
       signal: controller.signal,
       onProgress: (value) => {
         setDumpProgress(value);
-        if (value >= 99) setDumpPhase('validating');
+        if (value >= 96) setDumpPhase('validating');
       },
     }).then((result) => {
       setStagedDump(result);
