@@ -130,6 +130,12 @@ export class FinanceController {
     await this.finance.deleteMasterData(authenticated(user), resource, positiveId(id));
   }
 
+  @Get('portfolio/overview')
+  @ApiOperation({ summary: 'Totais de toda a carteira financeira, inclusive vencidos fora do período' })
+  portfolioOverview(@CurrentUser() user: AuthenticatedUser | undefined) {
+    return this.finance.portfolioOverview(authenticated(user));
+  }
+
   @Get(':view')
   @ApiOperation({ summary: 'Lista uma visão financeira' })
   list(
