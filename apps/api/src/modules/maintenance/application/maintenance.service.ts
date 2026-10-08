@@ -31,6 +31,7 @@ import type { Nivel3DatabaseClient } from '@helpdesk/database';
 import { createHash, randomUUID } from 'node:crypto';
 import { spawn } from 'node:child_process';
 import { Transform } from 'node:stream';
+import { StringDecoder } from 'node:string_decoder';
 import { pipeline } from 'node:stream/promises';
 import {
   createReadStream,
@@ -2201,9 +2202,10 @@ export class MaintenanceService implements OnApplicationBootstrap {
     const overlap = 1024;
     let carry = '';
     let replaced = 0;
+    const decoder = new StringDecoder('utf8');
     const converter = new Transform({
       transform(chunk: Buffer, _encoding, callback) {
-        const combined = carry + chunk.toString('utf8');
+        const combined = carry + decoder.write(chunk);
         // Keep complete last line if small, otherwise retain a safe overlap to
         // preserve possible split declarations while streaming large INSERT rows.
         let cut = combined.lastIndexOf('\n');
@@ -2215,7 +2217,7 @@ export class MaintenanceService implements OnApplicationBootstrap {
         callback(null, Buffer.from(converted, 'utf8'));
       },
       flush(callback) {
-        callback(null, Buffer.from(carry.replace(definer, () => { replaced++; return 'DEFINER=CURRENT_USER'; }), 'utf8'));
+        callback(null, Buffer.from((carry + decoder.end()).replace(definer, () => { replaced++; return 'DEFINER=CURRENT_USER'; }), 'utf8'));
       },
     });
     await pipeline(createReadStream(input), converter, createWriteStream(output, { flags: 'wx' }));
