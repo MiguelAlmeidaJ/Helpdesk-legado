@@ -67,6 +67,9 @@ export function TicketTechnicianTimingReportScreen({
   const [clientIds, setClientIds] = useState<string[]>([]);
   const [technicianIds, setTechnicianIds] = useState<string[]>([]);
   const [level, setLevel] = useState('0');
+  const [sortMode, setSortMode] = useState<'name' | 'acceptance' | 'handling' | 'resolution' | 'volume'>('acceptance');
+  const [technicianSearch, setTechnicianSearch] = useState('');
+  const [expandedTechnician, setExpandedTechnician] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const canGeneratePdf = currentUser.grants.some(
@@ -149,6 +152,16 @@ export function TicketTechnicianTimingReportScreen({
     [data],
   );
 
+  const sortedRows = useMemo(() => {
+    const rows = (data?.rows ?? []).filter((row) => row.technicianName.toLowerCase().includes(technicianSearch.toLowerCase()));
+    return [...rows].sort((a, b) => {
+      if (sortMode === 'name') return a.technicianName.localeCompare(b.technicianName, 'pt-BR');
+      if (sortMode === 'volume') return b.ticketCount - a.ticketCount;
+      const key = sortMode === 'acceptance' ? 'averageAcceptanceSeconds' : sortMode === 'handling' ? 'averageHandlingSeconds' : 'averageResolutionSeconds';
+      return (a[key] ?? Infinity) - (b[key] ?? Infinity);
+    });
+  }, [data, sortMode, technicianSearch]);
+
   function exportCsv() {
     if (!data) return;
     downloadCsv(
@@ -164,6 +177,11 @@ export function TicketTechnicianTimingReportScreen({
           'Tempo médio abertura → conclusão',
           'Maior tempo para aceitar',
           'Maior tempo para concluir',
+          'Mediana de aceite',
+          'Mediana aceite → conclusão',
+          'Mediana abertura → conclusão',
+          'P90 de aceite',
+          'P90 de conclusão',
         ],
         ...data.rows.map((row) => [
           row.technicianName,
@@ -175,6 +193,11 @@ export function TicketTechnicianTimingReportScreen({
           duration(row.averageResolutionSeconds),
           duration(row.maxAcceptanceSeconds),
           duration(row.maxResolutionSeconds),
+          duration(row.medianAcceptanceSeconds),
+          duration(row.medianHandlingSeconds),
+          duration(row.medianResolutionSeconds),
+          duration(row.p90AcceptanceSeconds),
+          duration(row.p90ResolutionSeconds),
         ]),
       ],
     );
@@ -304,13 +327,26 @@ export function TicketTechnicianTimingReportScreen({
             </div>
           </header>
 
+          <div className="flex flex-wrap items-center gap-3 border-b border-app-border-soft px-5 py-3 print:hidden">
+            <input aria-label="Buscar técnico" className="min-h-10 min-w-44 flex-1 rounded-lg border border-app-border-strong bg-app-surface px-3 text-sm" placeholder="Buscar técnico..." value={technicianSearch} onChange={(event) => setTechnicianSearch(event.target.value)} />
+            <label className="flex items-center gap-2 text-xs font-bold text-app-muted">
+              Ordenar
+              <select className="min-h-10 rounded-lg border border-app-border-strong bg-app-surface px-3 text-sm text-app-text" value={sortMode} onChange={(event) => setSortMode(event.target.value as typeof sortMode)}>
+                <option value="acceptance">Menor média de aceite</option>
+                <option value="handling">Menor média aceite → conclusão</option>
+                <option value="resolution">Menor média total</option>
+                <option value="volume">Maior volume</option>
+                <option value="name">Nome</option>
+              </select>
+            </label>
+          </div>
           <div className="grid gap-3 p-4">
             {!loading && !(data?.rows.length) ? (
               <div className="grid min-h-[220px] place-items-center text-sm text-app-muted">
                 Nenhum chamado encontrado para os filtros selecionados.
               </div>
             ) : (
-              data?.rows.map((row) => (
+              sortedRows.map((row) => (
                 <article className="rounded-xl border border-app-border p-3.5" key={row.technicianId}>
                   <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                     <div>
@@ -343,6 +379,28 @@ export function TicketTechnicianTimingReportScreen({
                       </div>
                     ))}
                   </div>
+                  <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-app-border-soft pt-3">
+                    <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-app-muted">
+                      <span>Aceite: {row.acceptedCount}/{row.ticketCount} ({row.ticketCount ? Math.round(row.acceptedCount / row.ticketCount * 100) : 0}%)</span>
+                      <span>Concluídos: {row.completedCount}/{row.ticketCount} ({row.ticketCount ? Math.round(row.completedCount / row.ticketCount * 100) : 0}%)</span>
+                    </div>
+                    <button className={SECONDARY + ' text-xs'} type="button" onClick={() => setExpandedTechnician(expandedTechnician === row.technicianId ? null : row.technicianId)}>{expandedTechnician === row.technicianId ? 'Ocultar análise' : 'Ver análise detalhada'}</button>
+                  </div>
+                  {expandedTechnician === row.technicianId ? (
+                    <div className="mt-3 grid grid-cols-2 gap-3 rounded-xl bg-app-surface-muted p-4 text-xs sm:grid-cols-3">
+                      {[
+                        ['Mediana de aceite', row.medianAcceptanceSeconds],
+                        ['90% dos aceites até', row.p90AcceptanceSeconds],
+                        ['Maior espera para aceite', row.maxAcceptanceSeconds],
+                        ['Mediana após aceite', row.medianHandlingSeconds],
+                        ['Mediana de conclusão total', row.medianResolutionSeconds],
+                        ['90% das conclusões até', row.p90ResolutionSeconds],
+                      ].map(([label, value]) => (
+                        <div key={String(label)}><span className="block text-app-muted">{label}</span><strong className="mt-1 block text-sm">{duration(value as number | null)}</strong></div>
+                      ))}
+                      <p className="col-span-2 text-app-muted sm:col-span-3">Mediana: metade dos chamados medidos levou até esse tempo. P90: 90% dos chamados medidos levou até esse tempo. Esses indicadores consideram apenas registros com os horários necessários.</p>
+                    </div>
+                  ) : null}
                 </article>
               ))
             )}
@@ -400,7 +458,7 @@ export function TicketTechnicianTimingReportScreen({
         </section>
 
         <p className="mt-3 text-xs text-app-muted print:hidden">
-          O tempo para aceitar é calculado da abertura até o primeiro registro de Aceite do técnico atualmente responsável pelo chamado. O tempo para concluir usa o fechamento do chamado.
+          Médias, medianas e P90 são calculados apenas com registros que possuem os horários necessários; não representam horas úteis nem descontam períodos de espera. O tempo para aceitar é calculado da abertura até o primeiro registro de Aceite do técnico atualmente responsável pelo chamado. O tempo para concluir usa o fechamento do chamado.
         </p>
       </div>
     </main>
