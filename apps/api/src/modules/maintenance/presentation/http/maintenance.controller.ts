@@ -122,6 +122,22 @@ export class MaintenanceController {
   }
 
 
+  @Post('sql-console/update/preview')
+  @HttpCode(HttpStatus.OK)
+  previewSqlUpdate(@CurrentUser() user: AuthenticatedUser | undefined, @Body() body: unknown) {
+    const input = recordBody(body);
+    if (typeof input.sql !== 'string') throw new BadRequestException('SQL obrigatório.');
+    return this.maintenance.previewSqlUpdate(input.sql, actor(user).id);
+  }
+
+  @Post('sql-console/update/apply')
+  @HttpCode(HttpStatus.OK)
+  applySqlUpdate(@CurrentUser() user: AuthenticatedUser | undefined, @Body() body: unknown) {
+    const input = recordBody(body);
+    if (typeof input.token !== 'string' || typeof input.confirmation !== 'string') throw new BadRequestException('Confirmação inválida.');
+    return this.maintenance.applySqlUpdate(input.token, input.confirmation, actor(user).id);
+  }
+
   @Post('sql-console')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Executar consulta SELECT limitada no banco Nivel3' })
