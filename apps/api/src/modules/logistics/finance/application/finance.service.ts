@@ -120,6 +120,38 @@ export class FinanceService {
     private readonly database: Nivel3DatabaseClient,
   ) {}
 
+  async portfolioOverview(user: AuthenticatedUser): Promise<{
+    asOf: string;
+    receivable: { open: number; overdue: number; dueNext30: number; count: number; overdueCount: number };
+    payable: { open: number; overdue: number; dueNext30: number; count: number; overdueCount: number };
+  }> {
+    this.assertRead(user, 'receivables-accrual');
+    type TotalRow = { openAmount: bigint | number | string; overdueAmount: bigint | number | string;
+      nextAmount: bigint | number | string; openCount: bigint | number | string; overdueCount: bigint | number | string };
+    const [receivable, payable] = await Promise.all([
+      this.database.$queryRawUnsafe<TotalRow[]>(`
+        SELECT COALESCE(SUM(GREATEST(COALESCE(saldo,0),0)),0) AS openAmount,
+          COALESCE(SUM(CASE WHEN data_vencimento < CURRENT_DATE() THEN GREATEST(COALESCE(saldo,0),0) ELSE 0 END),0) AS overdueAmount,
+          COALESCE(SUM(CASE WHEN data_vencimento >= CURRENT_DATE() AND data_vencimento < DATE_ADD(CURRENT_DATE(), INTERVAL 30 DAY) THEN GREATEST(COALESCE(saldo,0),0) ELSE 0 END),0) AS nextAmount,
+          COUNT(*) AS openCount,
+          COALESCE(SUM(CASE WHEN data_vencimento < CURRENT_DATE() THEN 1 ELSE 0 END),0) AS overdueCount
+        FROM contas_receber WHERE saldo > 0`),
+      this.database.$queryRawUnsafe<TotalRow[]>(`
+        SELECT COALESCE(SUM(GREATEST(COALESCE(valor,0),0)),0) AS openAmount,
+          COALESCE(SUM(CASE WHEN data_vencimento < CURRENT_DATE() THEN GREATEST(COALESCE(valor,0),0) ELSE 0 END),0) AS overdueAmount,
+          COALESCE(SUM(CASE WHEN data_vencimento >= CURRENT_DATE() AND data_vencimento < DATE_ADD(CURRENT_DATE(), INTERVAL 30 DAY) THEN GREATEST(COALESCE(valor,0),0) ELSE 0 END),0) AS nextAmount,
+          COUNT(*) AS openCount,
+          COALESCE(SUM(CASE WHEN data_vencimento < CURRENT_DATE() THEN 1 ELSE 0 END),0) AS overdueCount
+        FROM contas_pagar WHERE status_id <> 6 OR status_id IS NULL`),
+    ]);
+    const convert = (row: TotalRow | undefined) => ({
+      open: number(row?.openAmount), overdue: number(row?.overdueAmount),
+      dueNext30: number(row?.nextAmount), count: number(row?.openCount),
+      overdueCount: number(row?.overdueCount),
+    });
+    return { asOf: new Date().toISOString(), receivable: convert(receivable[0]), payable: convert(payable[0]) };
+  }
+
   async list(
     user: AuthenticatedUser,
     viewValue: string,
