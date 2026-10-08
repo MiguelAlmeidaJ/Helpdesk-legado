@@ -1603,7 +1603,15 @@ export class MaintenanceService implements OnApplicationBootstrap {
           const part=path.join(directory,String(i).padStart(5,'0')+'.part');
           if (!existsSync(part)) throw new BadRequestException('Bloco '+(i+1)+' de '+manifest.total+' ausente.');
           const input=createReadStream(part);
-          for await (const chunk of input) await writer.write(chunk as Buffer);
+          for await (const chunk of input) {
+            const buffer = chunk as Buffer;
+            let offset = 0;
+            while (offset < buffer.length) {
+              const { bytesWritten } = await writer.write(buffer, offset, buffer.length - offset);
+              if (bytesWritten === 0) throw new Error('Não foi possível gravar o bloco no disco.');
+              offset += bytesWritten;
+            }
+          }
           state.progress=Math.round((i+1)/manifest.total*70);
         }
         await writer.sync();
