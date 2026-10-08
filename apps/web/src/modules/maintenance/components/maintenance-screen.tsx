@@ -13,7 +13,7 @@ import type {
   MaintenanceSystemStatusResponse,
 } from '@helpdesk/contracts';
 import type { ChangeEvent, FormEvent, KeyboardEvent } from 'react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ApiError } from '../../../shared/api/api-client';
 import { AppPageHeader } from '../../../shared/navigation/app-page-header';
 import {
@@ -202,6 +202,9 @@ export function MaintenanceScreen({
   const [jobDraft, setJobDraft] = useState<JobDraft>(INITIAL_JOB);
   const dumpTarget: MaintenanceDatabaseKey = 'nivel3';
   const [dumpFile, setDumpFile] = useState<File | null>(null);
+  const [dumpProgress, setDumpProgress] = useState<number | null>(null);
+  const [dumpPhase, setDumpPhase] = useState<'sending' | 'validating' | null>(null);
+  const dumpUploadController = useRef<AbortController | null>(null);
   const [stagedDump, setStagedDump] = useState<MaintenanceDumpStageResponse | null>(null);
   const [confirmation, setConfirmation] = useState('');
   const [busy, setBusy] = useState<string | null>(null);
@@ -431,23 +434,45 @@ export function MaintenanceScreen({
 
   function chooseDump(event: ChangeEvent<HTMLInputElement>) {
     setDumpFile(event.target.files?.[0] ?? null);
+    setDumpProgress(null);
     setStagedDump(null);
     setConfirmation('');
   }
 
   function validateDump(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!dumpFile) return;
+    if (!dumpFile || busy) return;
+    if (!dumpFile.name.toLowerCase().endsWith('.sql')) {
+      setFeedback({ text: 'Selecione um arquivo .sql.', error: true });
+      return;
+    }
+    const maxMb = 1024;
+    if (dumpFile.size > maxMb * 1024 * 1024) {
+      setFeedback({ text: 'O arquivo excede o limite padrão de 1 GB. Solicite ajuste ao administrador antes de enviar.', error: true });
+      return;
+    }
+    const controller = new AbortController();
+    dumpUploadController.current = controller;
+    setDumpProgress(0);
+    setDumpPhase('sending');
     setBusy('dump-stage');
     setFeedback(null);
-    stageMaintenanceDump(dumpTarget, dumpFile)
-      .then((result) => {
-        setStagedDump(result);
-        setConfirmation('');
-        setFeedback({ text: 'Dump validado. Revise o resumo antes de importar.', error: false });
-      })
-      .catch((reason) => setFeedback({ text: errorMessage(reason), error: true }))
-      .finally(() => setBusy(null));
+    stageMaintenanceDump(dumpTarget, dumpFile, {
+      signal: controller.signal,
+      onProgress: (value) => {
+        setDumpProgress(value);
+        if (value >= 99) setDumpPhase('validating');
+      },
+    }).then((result) => {
+      setStagedDump(result);
+      setConfirmation('');
+      setFeedback({ text: 'Dump validado. Revise o resumo antes de importar.', error: false });
+    }).catch((reason) => setFeedback({ text: errorMessage(reason), error: true }))
+      .finally(() => {
+        dumpUploadController.current = null;
+        setDumpPhase(null);
+        setBusy(null);
+      });
   }
 
   function applyDump() {
@@ -1465,6 +1490,24 @@ export function MaintenanceScreen({
             </div>
           </form>
 
+          {dumpPhase ? (
+            <div className="mt-4 rounded-xl border border-app-border bg-app-surface-muted p-4" role="status">
+              <div className="mb-2 flex flex-wrap items-center justify-between gap-2 text-sm">
+                <strong>{dumpPhase === 'sending' ? 'Enviando dump…' : 'Upload concluído · validando arquivo no servidor…'}</strong>
+                <span>{dumpProgress ?? 0}%</span>
+              </div>
+              <div className="h-3 overflow-hidden rounded-full bg-app-border">
+                <div className="h-full rounded-full bg-app-brand transition-all" style={{ width: (dumpProgress ?? 0) + '%' }} />
+              </div>
+              <div className="mt-3 flex items-center justify-between gap-2">
+                <span className="text-xs text-app-muted">A validação não altera o banco. Não feche esta tela durante o envio.</span>
+                <button className={DANGER_BUTTON_CLASS} type="button" onClick={() => dumpUploadController.current?.abort()}>Cancelar envio</button>
+              </div>
+            </div>
+          ) : null}
+          {dumpFile && !dumpPhase && !stagedDump ? (
+            <p className="mt-2 text-xs text-app-muted">Arquivo selecionado: {dumpFile.name} · {bytes(dumpFile.size)}</p>
+          ) : null}
           {stagedDump ? (
             <div className="mt-5 rounded-xl border border-app-border bg-app-surface-muted p-4">
               <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
