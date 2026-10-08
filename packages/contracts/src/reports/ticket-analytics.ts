@@ -86,6 +86,11 @@ export interface TicketTechnicianTimingRow {
   averageHandlingSeconds: number | null;
   maxAcceptanceSeconds: number | null;
   maxResolutionSeconds: number | null;
+  medianAcceptanceSeconds: number | null;
+  medianHandlingSeconds: number | null;
+  medianResolutionSeconds: number | null;
+  p90AcceptanceSeconds: number | null;
+  p90ResolutionSeconds: number | null;
 }
 
 export interface TicketTechnicianTimingDetail {
