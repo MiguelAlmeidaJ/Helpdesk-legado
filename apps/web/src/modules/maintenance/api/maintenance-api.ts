@@ -169,9 +169,20 @@ export async function stageMaintenanceDumpChunked(
     });
   }
   options.onProgress?.(96);
-  const result = await apiRequest<MaintenanceDumpStageResponse>('maintenance/dumps/chunks/' + uploadId + '/assemble', {
-    method:'POST',
-  });
+  await apiRequest('maintenance/dumps/chunks/' + uploadId + '/assemble', {method:'POST'});
+  let result: MaintenanceDumpStageResponse | null = null;
+  for (let attempt = 0; attempt < 1200; attempt++) {
+    if (options.signal?.aborted) throw new Error('Consulta do processamento cancelada. A API pode continuar validando em segundo plano.');
+    const state = await apiRequest<{status:'processing'|'done'|'error';phase:string;progress:number;result?:MaintenanceDumpStageResponse;error?:string}>(
+      'maintenance/dumps/chunks/' + uploadId + '/assembly-status',
+      {signal:options.signal},
+    );
+    if (state.status === 'error') throw new Error(state.error ?? 'Falha ao montar o arquivo.');
+    if (state.status === 'done') {if (!state.result) throw new Error('Validação concluída sem resultado.');result=state.result;break;}
+    options.onProgress?.(Math.min(99,96+Math.round(state.progress*0.03)));
+    await new Promise(resolve=>setTimeout(resolve,1500));
+  }
+  if (!result) throw new Error('A validação demorou demais. Verifique os logs do servidor antes de repetir o envio.');
   sessionStorage.removeItem(key);
   options.onProgress?.(100);
   return result;
