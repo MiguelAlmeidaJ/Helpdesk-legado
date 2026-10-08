@@ -121,6 +121,19 @@ export class MaintenanceController {
     return this.maintenance.status();
   }
 
+
+  @Post('sql-console')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Executar consulta SELECT limitada no banco Nivel3' })
+  async sqlConsole(
+    @CurrentUser() user: AuthenticatedUser | undefined,
+    @Body() body: unknown,
+  ) {
+    const input = recordBody(body);
+    if (typeof input.sql !== 'string') throw new BadRequestException('SQL obrigatório.');
+    return this.maintenance.runSqlConsole(input.sql, actor(user).id);
+  }
+
   @Get('databases/:database/tables')
   @ApiOperation({ summary: 'Listar tabelas e tamanhos do banco' })
   tables(
