@@ -1513,6 +1513,70 @@ export class MaintenanceService implements OnApplicationBootstrap {
     return completed;
   }
 
+  async receiveDumpChunk(uploadId: string, index: number, total: number, filename: string, size: number, uploaded: UploadedDump) {
+    await this.ensureSchema();
+    if (!/^[a-f0-9-]{36}$/.test(uploadId) || !Number.isSafeInteger(index) || index < 0 ||
+        !Number.isSafeInteger(total) || total < 1 || total > 1024 || index >= total ||
+        !filename.toLowerCase().endsWith('.sql') || filename.length > 255 ||
+        !Number.isSafeInteger(size) || size < 1 || size > 1024 * 1024 * 1024 ||
+        uploaded.size < 1 || uploaded.size > 6 * 1024 * 1024) {
+      await this.safeUnlink(uploaded.path);
+      throw new BadRequestException('Parte ou metadados de upload inválidos.');
+    }
+    const directory = path.join(importRoot(), 'chunk-' + uploadId);
+    await mkdir(directory, { recursive: true });
+    const manifestPath = path.join(directory, 'manifest.json');
+    const manifest = { filename, total, size };
+    if (existsSync(manifestPath)) {
+      const previous = JSON.parse(await readFile(manifestPath, 'utf8')) as typeof manifest;
+      if (JSON.stringify(previous) !== JSON.stringify(manifest)) {
+        await this.safeUnlink(uploaded.path);
+        throw new ConflictException('Os metadados do envio não correspondem aos blocos anteriores.');
+      }
+    } else await writeFile(manifestPath, JSON.stringify(manifest), { flag: 'wx' });
+    const chunk = path.join(directory, String(index).padStart(5, '0') + '.part');
+    // Chunks already acknowledged are reusable after a connection interruption.
+    if (existsSync(chunk)) await this.safeUnlink(uploaded.path);
+    else await this.moveFile(uploaded.path, chunk);
+    return { uploaded: index + 1, total };
+  }
+
+  async dumpChunkStatus(uploadId: string) {
+    if (!/^[a-f0-9-]{36}$/.test(uploadId)) throw new BadRequestException('Identificador inválido.');
+    const directory = path.join(importRoot(), 'chunk-' + uploadId);
+    if (!existsSync(path.join(directory, 'manifest.json'))) return { received: [] as number[] };
+    const names = await readdir(directory);
+    return { received: names.filter(name => /^\\d{5}\\.part$/.test(name)).map(name => Number(name.slice(0,5))) };
+  }
+
+  async assembleDumpChunks(uploadId: string): Promise<MaintenanceDumpStageResponse> {
+    if (!/^[a-f0-9-]{36}$/.test(uploadId)) throw new BadRequestException('Identificador inválido.');
+    const directory = path.join(importRoot(), 'chunk-' + uploadId);
+    const manifest = JSON.parse(await readFile(path.join(directory, 'manifest.json'), 'utf8')) as {filename:string;total:number;size:number};
+    const assembled = path.join(importRoot(), uploadId + '-assembled.sql');
+    const output = createWriteStream(assembled, { flags:'wx' });
+    try {
+      for (let i = 0; i < manifest.total; i++) {
+        const part = path.join(directory, String(i).padStart(5,'0') + '.part');
+        if (!existsSync(part)) throw new BadRequestException('Bloco ' + i + ' ainda não recebido.');
+        for await (const chunk of createReadStream(part)) {
+          if (!output.write(chunk)) await new Promise<void>(resolve => output.once('drain', resolve));
+        }
+      }
+      await new Promise<void>((resolve,reject) => { output.once('finish',resolve); output.once('error',reject); output.end(); });
+      const { size } = await lstat(assembled);
+      if (size !== manifest.size) throw new BadRequestException('Tamanho do dump reconstruído divergente.');
+      const staged = await this.stageDump('nivel3', {path:assembled,originalname:manifest.filename,size});
+      const { rm } = await import('node:fs/promises');
+      await rm(directory, {recursive:true,force:true});
+      return staged;
+    } catch(error) {
+      output.destroy();
+      await this.safeUnlink(assembled);
+      throw error;
+    }
+  }
+
   async stageDump(
     target: MaintenanceDatabaseKey,
     uploaded: UploadedDump,
