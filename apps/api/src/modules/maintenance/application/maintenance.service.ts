@@ -1709,6 +1709,15 @@ export class MaintenanceService implements OnApplicationBootstrap {
       );
     }
 
+    // Fail closed: streaming SQL into the active schema is not atomic. A single
+    // failed CREATE VIEW/INSERT can leave users and access rules partially replaced.
+    // Do not allow this path until a verified isolated-restore/promote workflow exists.
+    throw new ConflictException(
+      'Importação direta temporariamente bloqueada para proteger os dados e permissões. ' +
+      'O dump continua validado; utilize restauração isolada em banco temporário. ' +
+      'A troca segura de ambiente ainda precisa ser implementada.',
+    );
+
     this.dumpImportInProgress = true;
     try {
       return await this.applyDumpExclusively(metadata, token, actorUserId);
