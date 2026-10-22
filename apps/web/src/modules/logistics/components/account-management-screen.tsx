@@ -883,7 +883,16 @@ export function AccountManagementScreen({
       user={currentUser}
     />
 
-    <div className="mx-auto grid w-full max-w-[1500px] gap-5 p-6 max-sm:px-3.5">
+    <div className="mx-auto grid w-full max-w-[1500px] gap-4 p-5 max-sm:px-3.5">
+      <nav aria-label="Visões financeiras" className="sticky top-0 z-20 flex flex-wrap gap-2 rounded-xl border border-app-border bg-app-surface p-2 shadow-sm">
+        {[
+          ['/logistica/financeiro/gestao-de-contas', 'Resumo'],
+          ['/logistica/financeiro/contas-a-receber-competencia', 'A receber'],
+          ['/logistica/financeiro/contas-a-receber-fluxo', 'Recebimentos'],
+          ['/logistica/financeiro/contas-a-pagar', 'A pagar'],
+        ].map(([href, label]) => <Link key={href} href={href} aria-current={label === 'Resumo' ? 'page' : undefined}
+          className={`rounded-lg px-4 py-2 text-sm font-bold transition ${label === 'Resumo' ? 'bg-app-brand text-white' : 'text-app-text-soft hover:bg-app-surface-muted'}`}>{label}</Link>)}
+      </nav>
       <form className="flex flex-wrap items-end gap-3 rounded-xl border border-app-border bg-app-surface p-4 shadow-sm shadow-slate-950/5 dark:shadow-black/10" onSubmit={submit}>
         <label className="grid gap-1.5 text-xs font-bold text-app-muted">
           <span>RDs · de</span>
@@ -1108,43 +1117,7 @@ export function AccountManagementScreen({
           </div> : rdLoading ? <div className="grid min-h-[220px] place-items-center p-5 text-sm text-app-muted">Carregando análise de RDs…</div> : null}
         </section>
 
-        <section>
-          <div className="mb-3 flex items-end justify-between gap-3">
-            <div>
-              <h2 className="m-0 text-lg font-extrabold">Visões de contas</h2>
-              <p className="m-0 mt-1 text-sm text-app-muted">As telas originais continuam disponíveis para consulta e operação detalhada.</p>
-            </div>
-          </div>
-          <div className="grid grid-cols-3 gap-3 max-[1050px]:grid-cols-1">
-            <ViewCard
-              count={data.accrual.summary.count}
-              href="/logistica/financeiro/contas-a-receber-competencia"
-              icon="chart"
-              primary={money(data.accrual.summary.openReceivables)}
-              secondary={money(data.accrual.summary.inflow)}
-              subtitle="Faturamento, vencimentos, saldos e recebimentos pela competência."
-              title="Contas a Receber · Competência"
-            />
-            <ViewCard
-              count={data.cashflow.summary.count}
-              href="/logistica/financeiro/contas-a-receber-fluxo"
-              icon="wallet"
-              primary={money(data.cashflow.summary.inflow)}
-              secondary={money(data.cashflow.summary.balance)}
-              subtitle="Recebimentos efetivamente realizados no intervalo selecionado."
-              title="Contas a Receber · Fluxo"
-            />
-            <ViewCard
-              count={data.payables.summary.count}
-              href="/logistica/financeiro/contas-a-pagar"
-              icon="file"
-              primary={money(data.payables.summary.openPayables)}
-              secondary={money(data.payables.summary.outflow)}
-              subtitle="Compromissos, vencimentos e baixas das contas a pagar."
-              title="Contas a Pagar"
-            />
-          </div>
-        </section>
+
 
         <section className="rounded-xl border border-app-border bg-app-surface shadow-sm shadow-slate-950/5 dark:shadow-black/10">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-app-border px-4 py-3">
