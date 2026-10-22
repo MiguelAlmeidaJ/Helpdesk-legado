@@ -1,24 +1,6 @@
-import {
-  BadRequestException,
-  Body,
-  Controller,
-  Delete,
-  Get,
-  HttpCode,
-  HttpStatus,
-  Param,
-  ParseIntPipe,
-  Patch,
-  Post,
-  UseGuards,
-} from '@nestjs/common';
+import { BadRequestException, Controller, Get, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
-import {
-  AppPermission,
-  type AccessManagementSnapshot,
-  type AccessRoleInput,
-  type AccessRoleMutationResponse,
-} from '@helpdesk/contracts';
+import { AppPermission, type AccessManagementSnapshot } from '@helpdesk/contracts';
 import { LEGACY_SESSION_SECURITY } from '../../../../core/openapi/openapi.constants';
 import type { AuthenticatedUser } from '../../domain/authenticated-user';
 import { CurrentUser } from './current-user.decorator';
@@ -26,50 +8,6 @@ import { AccessManagement } from '../../application/access-management';
 import { LegacySessionGuard } from './legacy-session.guard';
 import { PermissionsGuard } from './permissions.guard';
 import { RequirePermissions } from './require-permissions.decorator';
-
-function objectBody(body: unknown): Record<string, unknown> {
-  if (!body || typeof body !== 'object' || Array.isArray(body)) {
-    throw new BadRequestException('Corpo da requisição inválido.');
-  }
-  return body as Record<string, unknown>;
-}
-
-function requiredString(value: unknown, field: string, max: number): string {
-  if (typeof value !== 'string') throw new BadRequestException(`${field} é obrigatório.`);
-  const normalized = value.trim();
-  if (!normalized || normalized.length > max) throw new BadRequestException(`${field} possui tamanho inválido.`);
-  return normalized;
-}
-
-function optionalString(value: unknown, field: string, max: number): string | null {
-  if (value === undefined || value === null || value === '') return null;
-  if (typeof value !== 'string' || value.trim().length > max) {
-    throw new BadRequestException(`${field} possui tamanho inválido.`);
-  }
-  return value.trim() || null;
-}
-
-function idList(value: unknown, field: string): number[] {
-  if (!Array.isArray(value) || value.length > 500) {
-    throw new BadRequestException(`${field} deve ser uma lista válida.`);
-  }
-  const ids = value.map((id) => {
-    if (typeof id !== 'number' || !Number.isSafeInteger(id) || id < 1) {
-      throw new BadRequestException(`${field} contém um identificador inválido.`);
-    }
-    return id;
-  });
-  return [...new Set(ids)];
-}
-
-function input(body: unknown): AccessRoleInput {
-  const value = objectBody(body);
-  return {
-    name: requiredString(value.name, 'name', 100),
-    description: optionalString(value.description, 'description', 255),
-    permissionIds: idList(value.permissionIds, 'permissionIds'),
-  };
-}
 
 @ApiTags('access-management')
 @Controller('access-management')
@@ -80,59 +18,11 @@ export class AccessManagementController {
 
   @Get()
   @RequirePermissions(AppPermission.SystemAdmin)
-  @ApiOperation({ summary: 'Listar tipos de usuário e permissões do sistema' })
+  @ApiOperation({ summary: 'Consultar catálogo de permissões do sistema' })
   snapshot(
     @CurrentUser() actor: AuthenticatedUser | undefined,
   ): Promise<AccessManagementSnapshot> {
     if (!actor) throw new BadRequestException('Usuário não autenticado.');
-    const isSystemAdmin = actor.grants.some(
-      (grant) => grant.permission === AppPermission.SystemAdmin,
-    );
-    return this.access.snapshot(isSystemAdmin);
+    return this.access.snapshot(true);
   }
-
-  @Post('roles')
-  @RequirePermissions(AppPermission.SystemAdmin)
-  @ApiOperation({ summary: 'Criar um tipo de usuário' })
-  create(@Body() body: unknown): Promise<AccessRoleMutationResponse> {
-    return this.access.create(input(body));
-  }
-
-  @Patch('roles/order')
-  @RequirePermissions(AppPermission.SystemAdmin)
-  @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiOperation({ summary: 'Reordenar tipos de usuário' })
-  async reorder(
-    @Body() body: unknown,
-    @CurrentUser() actor: AuthenticatedUser | undefined,
-  ): Promise<void> {
-    if (!actor) throw new BadRequestException('Usuário não autenticado.');
-    const value = objectBody(body);
-    const isSystemAdmin = actor.grants.some(
-      (grant) => grant.permission === AppPermission.SystemAdmin,
-    );
-    await this.access.reorder(
-      idList(value.roleIds, 'roleIds'),
-      isSystemAdmin,
-    );
-  }
-
-  @Patch('roles/:id')
-  @RequirePermissions(AppPermission.SystemAdmin)
-  @ApiOperation({ summary: 'Atualizar permissões de um tipo de usuário' })
-  update(@Param('id', ParseIntPipe) id: number, @Body() body: unknown): Promise<AccessRoleMutationResponse> {
-    if (id < 1) throw new BadRequestException('id inválido.');
-    return this.access.update(id, input(body));
-  }
-
-  @Delete('roles/:id')
-  @RequirePermissions(AppPermission.SystemAdmin)
-  @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiOperation({ summary: 'Excluir um tipo de usuário' })
-  async remove(@Param('id', ParseIntPipe) id: number): Promise<void> {
-    if (id < 1) throw new BadRequestException('id inválido.');
-    await this.access.remove(id);
-  }
-
-
 }
