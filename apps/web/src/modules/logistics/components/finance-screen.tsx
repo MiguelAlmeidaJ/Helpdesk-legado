@@ -470,6 +470,36 @@ export function FinanceScreen({
           </div>
           {draft.startDate>draft.endDate?<p role="alert" className="text-xs text-app-danger">Data inicial maior que a final.</p>:null}
         </form>
+        {cashflowMode ? <section aria-label="Lista de recebimentos" className="grid gap-3">
+          <div className="flex items-center justify-between gap-3"><h2 className="text-base font-extrabold">Recebimentos</h2><span className="text-xs text-app-muted">{visibleCashflowRows.length} registros exibidos</span></div>
+          {visibleCashflowRows.map(row => {
+            const total = Number(row.metadata?.accountTotal ?? row.amount);
+            const balance = Math.max(0,Number(row.metadata?.accountBalance ?? 0));
+            const received = Math.max(0,total-balance);
+            const status = balance<=0?'Recebido':received>0?'Parcial':row.dueDate && row.dueDate.slice(0,10)<today()?'Vencido':'Pendente';
+            const expanded = expandedReceipt === row.id;
+            return <article key={row.id} className="rounded-xl border border-app-border bg-app-surface p-4 shadow-sm">
+              <header className="flex flex-wrap justify-between gap-3 border-b border-app-border-soft pb-3">
+                <div className="min-w-0 flex-1"><h3 className="truncate text-base font-extrabold">{row.party||'Cliente não informado'}</h3><p className="mt-1 text-sm text-app-muted">{row.description||'Sem descrição'}</p></div>
+                <span className={`h-fit rounded-full px-3 py-1 text-xs font-bold ${status==='Recebido'?'bg-app-success-soft text-app-success':status==='Vencido'?'bg-app-danger-soft text-app-danger':'bg-app-surface-muted text-app-text-soft'}`}>{status}</span>
+              </header>
+              <dl className="grid grid-cols-2 gap-3 py-4 sm:grid-cols-3 xl:grid-cols-5">
+                {([['Vencimento',formatDate(row.dueDate)],['Recebimento',formatDate(row.date)],['Total',money(total)],['Recebido',money(received)],['A receber',money(balance)]] as const).map(([label,value])=><div key={label} className="min-w-0"><dt className="text-[11px] font-bold uppercase text-app-muted">{label}</dt><dd className="mt-1 text-sm font-extrabold tabular-nums">{value}</dd></div>)}
+              </dl>
+              <div className="flex flex-wrap items-center justify-between gap-3 border-t border-app-border-soft pt-3">
+                <span className="text-xs text-app-muted">Movimentação: {money(row.amount)} em {formatDate(row.date)}</span>
+                <button type="button" className={BUTTON} aria-expanded={expanded} onClick={()=>setExpandedReceipt(expanded?null:row.id)}>{expanded?<ChevronUp className="mr-2 size-4"/>:<Eye className="mr-2 size-4"/>}{expanded?'Ocultar detalhes':'Ver detalhes'}</button>
+              </div>
+              {expanded?<div className="mt-3 grid gap-2 rounded-lg bg-app-surface-muted p-3 text-sm sm:grid-cols-2">
+                <p><strong>Valor desta movimentação:</strong> {money(row.amount)}</p>
+                <p><strong>Agência:</strong> {row.agency||'Não informada'}</p>
+                <p><strong>Observação:</strong> {row.observation||'—'}</p>
+                <p><strong>Conta de origem:</strong> {row.metadata?.accountId??'—'}</p>
+              </div>:null}
+            </article>;
+          })}
+          {!loading&&!error&&visibleCashflowRows.length===0?<div className="rounded-xl border border-app-border bg-app-surface p-8 text-center text-sm text-app-muted">Nenhum recebimento para os filtros selecionados.</div>:null}
+        </section> : <>
         <section className="overflow-hidden rounded-2xl border border-app-border bg-app-surface shadow-sm">
           <div className="overflow-x-auto">
             <table className="w-full min-w-[1050px] border-collapse">
@@ -526,6 +556,7 @@ export function FinanceScreen({
             <div className="p-8 text-center text-sm text-app-muted">Nenhum registro encontrado.</div>
           ) : null}
         </section>
+        </>}
       </div>
     </main>
   );
