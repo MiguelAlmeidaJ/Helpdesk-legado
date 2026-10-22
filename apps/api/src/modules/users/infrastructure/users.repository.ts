@@ -398,7 +398,7 @@ export class UsersRepository {
     functionId: number,
   ): Promise<void> {
     await transaction.$executeRawUnsafe(
-      'DELETE FROM user_permissions WHERE user_id = ?',
+      "DELETE FROM user_permissions WHERE user_id = ? AND effect = 'allow'",
       userId,
     );
     for (const permissionId of [...new Set(permissionIds)]) {
