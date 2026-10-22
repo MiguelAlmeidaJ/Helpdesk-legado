@@ -1,4 +1,5 @@
 import type {
+  AccessPermissionItem,
   UserFunctionInput,
   UserFunctionMutationResponse,
   UserFunctionSummary,
@@ -7,6 +8,10 @@ import { apiRequest } from '../../../shared/api/api-client';
 
 export function fetchUserFunctions(signal?: AbortSignal) {
   return apiRequest<UserFunctionSummary[]>('user-functions', { signal });
+}
+
+export function fetchUserFunctionPermissions(signal?: AbortSignal) {
+  return apiRequest<AccessPermissionItem[]>('user-functions/permissions', { signal });
 }
 
 export function createUserFunction(input: UserFunctionInput) {

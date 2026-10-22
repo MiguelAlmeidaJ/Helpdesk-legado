@@ -73,9 +73,9 @@ function baseInput(body: unknown) {
   const type = value.type;
   if (type !== 1 && type !== 2) throw new BadRequestException('type deve ser 1 ou 2.');
   const companyIds = idList(value.companyIds, 'companyIds');
-  const roleIds = value.roleIds === undefined
+  const extraPermissionIds = value.extraPermissionIds === undefined
     ? undefined
-    : idList(value.roleIds, 'roleIds');
+    : idList(value.extraPermissionIds, 'extraPermissionIds');
   if (type === 2 && companyIds.length === 0) throw new BadRequestException('Usuários clientes precisam de ao menos uma empresa.');
   const pixKeyType = value.pixKeyType === null || value.pixKeyType === undefined
     ? null
@@ -96,7 +96,7 @@ function baseInput(body: unknown) {
       pixKey,
       observation: optionalString(value.observation, 'observation', 2000),
       companyIds,
-      roleIds,
+      extraPermissionIds,
     },
   };
 }
@@ -120,12 +120,12 @@ export class UsersController {
     @Query('limit') limitValue?: string,
     @Query('search') searchValue?: string,
     @Query('status') statusValue?: string,
-    @Query('roleId') roleIdValue?: string,
+    @Query('functionId') functionIdValue?: string,
   ): Promise<ManagedUserListResponse> {
     const page = pageValue ? Number(pageValue) : 1;
     const limit = limitValue ? Number(limitValue) : 50;
     const statusFilter = statusValue ? Number(statusValue) : undefined;
-    const roleId = roleIdValue ? Number(roleIdValue) : undefined;
+    const functionId = functionIdValue ? Number(functionIdValue) : undefined;
 
     if (!Number.isSafeInteger(page) || page < 1 || !Number.isSafeInteger(limit) || limit < 1 || limit > 100) {
       throw new BadRequestException('Paginação inválida.');
@@ -133,8 +133,8 @@ export class UsersController {
     if (statusFilter !== undefined && statusFilter !== 1 && statusFilter !== 2) {
       throw new BadRequestException('status deve ser 1 ou 2.');
     }
-    if (roleId !== undefined && (!Number.isSafeInteger(roleId) || roleId < 1)) {
-      throw new BadRequestException('roleId inválido.');
+    if (functionId !== undefined && (!Number.isSafeInteger(functionId) || functionId < 1)) {
+      throw new BadRequestException('functionId inválido.');
     }
 
     return this.management.list(
@@ -142,7 +142,7 @@ export class UsersController {
       limit,
       searchValue?.trim().slice(0, 100) ?? '',
       statusFilter,
-      roleId,
+      functionId,
     );
   }
 
@@ -154,7 +154,7 @@ export class UsersController {
   ): Promise<UserManagementCatalogs> {
     if (!actor) throw new UnauthorizedException('Usuário não autenticado.');
     return this.management.catalogs(
-      hasPermission(actor, AppPermission.SystemAdmin),
+      hasPermission(actor, AppPermission.UsersManageOverrides),
     );
   }
 
@@ -175,16 +175,11 @@ export class UsersController {
     const { value, input } = baseInput(body);
     const password = requiredString(value.password, 'password', 100);
     if (!isStrongPassword(password)) throw new BadRequestException(PASSWORD_POLICY_MESSAGE);
-    const canAssignRole = hasPermission(actor, AppPermission.UsersAssignRole);
-    const actorIsSystemAdmin = hasPermission(
-      actor,
-      AppPermission.SystemAdmin,
-    );
+    const canSetExtras = hasPermission(actor, AppPermission.UsersManageOverrides);
     return this.management.create(
       { ...input, password } as CreateManagedUserRequest,
       actor.id,
-      canAssignRole,
-      actorIsSystemAdmin,
+      canSetExtras,
     );
   }
 
@@ -199,20 +194,12 @@ export class UsersController {
     if (!actor) throw new UnauthorizedException('Usuário não autenticado.');
     const { value, input } = baseInput(body);
     if (value.status !== 1 && value.status !== 2) throw new BadRequestException('status deve ser 1 ou 2.');
-    const canAssignRole = hasPermission(actor, AppPermission.UsersAssignRole);
-    const actorIsSystemAdmin = hasPermission(
-      actor,
-      AppPermission.SystemAdmin,
-    );
-    if (input.roleIds !== undefined && !canAssignRole && input.type !== 2) {
-      throw new BadRequestException('Sem permissão para atribuir tipo de usuário.');
-    }
+    const canSetExtras = hasPermission(actor, AppPermission.UsersManageOverrides);
     return this.management.update(
       id,
       actor.id,
       { ...input, status: value.status } as UpdateManagedUserRequest,
-      canAssignRole,
-      actorIsSystemAdmin,
+      canSetExtras,
     );
   }
 

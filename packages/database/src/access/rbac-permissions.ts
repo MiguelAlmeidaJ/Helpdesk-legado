@@ -3,6 +3,7 @@ import type { Nivel3DatabaseClient } from '../index';
 type DatabaseClient = Pick<Nivel3DatabaseClient, '$executeRawUnsafe' | '$queryRawUnsafe'>;
 
 type CountRow = { total: number | bigint | string };
+type IdRow = { id: number | bigint };
 
 type PermissionDefinition = readonly [
   name: string,
@@ -16,58 +17,44 @@ const RBAC_PERMISSIONS: readonly PermissionDefinition[] = [
   ['Criar Atendimento', 'atendimentos.criar', 'Atendimento', 'Abrir novos atendimentos.'],
   ['Editar Atendimento', 'atendimentos.editar', 'Atendimento', 'Editar e classificar atendimentos.'],
   ['Colocar em espera', 'atendimentos.colocar_espera', 'Atendimento', 'Colocar atendimentos em espera e retomá-los.'],
-  ['Finalizar Atendimento', 'atendimentos.finalizar', 'Atendimento', 'Finalizar atendimentos.'],
+  ['Ver Disponibilidade Técnica', 'atendimentos.disponibilidade.visualizar', 'Atendimento', 'Visualizar a disponibilidade da equipe técnica.'],
+  ['Ver Recorrência', 'atendimentos.recorrencia.visualizar', 'Atendimento', 'Visualizar recorrências de atendimento.'],
   ['Criar Recorrência', 'atendimentos.recorrencia.criar', 'Atendimento', 'Criar e administrar recorrências de atendimento.'],
   ['Ver Linha do Tempo', 'atendimentos.timeline.visualizar', 'Atendimento', 'Visualizar a linha do tempo dos atendimentos.'],
 
   ['Ver Projetos', 'devops.projetos.visualizar', 'DevOps', 'Visualizar projetos DevOps.'],
   ['Criar Projetos', 'devops.projetos.criar', 'DevOps', 'Criar projetos DevOps.'],
-  ['Editar Projetos', 'devops.projetos.editar', 'DevOps', 'Editar projetos DevOps.'],
   ['Ver Tarefas', 'devops.tarefas.visualizar', 'DevOps', 'Visualizar tarefas DevOps.'],
   ['Criar Tarefas', 'devops.tarefas.criar', 'DevOps', 'Criar tarefas DevOps.'],
-  ['Editar Tarefas', 'devops.tarefas.editar', 'DevOps', 'Editar tarefas DevOps.'],
 
   ['Ver Tarefa', 'marketing.tarefas.visualizar', 'Marketing', 'Visualizar tarefas de Marketing.'],
   ['Criar Tarefa', 'marketing.tarefas.criar', 'Marketing', 'Criar tarefas de Marketing.'],
-  ['Editar Tarefa', 'marketing.tarefas.editar', 'Marketing', 'Editar tarefas de Marketing.'],
-  ['Colocar Tarefa em espera', 'marketing.tarefas.colocar_espera', 'Marketing', 'Colocar tarefas de Marketing em espera.'],
   ['Finalizar Tarefa', 'marketing.tarefas.finalizar', 'Marketing', 'Finalizar tarefas de Marketing.'],
 
   ['Agendar Veículo', 'logistica.agenda.agendar', 'Logística', 'Visualizar e gerenciar a agenda de veículos.'],
-  ['Ver RD', 'logistica.rd.visualizar', 'Logística', 'Visualizar RDs permitidas ao usuário.'],
-  ['Criar RD', 'logistica.rd.criar', 'Logística', 'Criar e editar as próprias RDs.'],
+  ['Gerenciar Veículos', 'logistica.veiculos.gerenciar', 'Logística', 'Gerenciar veículos e a agenda completa.'],
+  ['RD', 'logistica.rd.acessar', 'Logística', 'Visualizar, criar e editar as próprias RDs.'],
   ['Gestão de RDs', 'logistica.rd.gestao', 'Logística', 'Acessar a gestão administrativa de RDs.'],
 
-  ['Ver Financeiro', 'financeiro.visualizar', 'Financeiro', 'Visualizar páginas, cadastros e extratos financeiros.'],
-  ['Editar Financeiro', 'financeiro.editar', 'Financeiro', 'Criar e editar dados financeiros.'],
+  ['Acesso ao módulo de Financeiro', 'financeiro.acessar', 'Financeiro', 'Acessar e gerenciar o módulo financeiro.'],
 
-  ['Visualizar Plantão', 'qualidade.plantao.visualizar', 'Qualidade', 'Visualizar a escala semanal e a situação atual do plantão.'],
-  ['Gerenciar Plantão', 'qualidade.plantao.gerenciar', 'Qualidade', 'Alterar plantonistas e o horário operacional do plantão.'],
-  ['Visualizar Datas comemorativas', 'qualidade.datas.visualizar', 'Qualidade', 'Visualizar feriados nacionais e datas especiais do calendário corporativo.'],
-  ['Gerenciar Datas comemorativas', 'qualidade.datas.gerenciar', 'Qualidade', 'Cadastrar e remover datas especiais do calendário corporativo.'],
+  ['Acesso ao módulo de Qualidade', 'qualidade.acessar', 'Qualidade', 'Acessar e gerenciar o módulo de qualidade.'],
 
-  ['Ver relatórios', 'relatorios.visualizar', 'Relatórios', 'Visualizar relatórios e seus dados.'],
-  ['Gerar PDF', 'relatorios.gerar_pdf', 'Relatórios', 'Gerar e baixar relatórios em PDF.'],
+  ['Acesso ao módulo de Relatórios', 'relatorios.acessar', 'Relatórios', 'Visualizar relatórios e gerar arquivos PDF.'],
 
   ['Ver Usuários', 'usuarios.visualizar', 'Cadastro', 'Visualizar usuários e seus dados básicos.'],
   ['Criar Usuários', 'usuarios.criar', 'Cadastro', 'Cadastrar novos usuários.'],
-  ['Editar Usuários', 'usuarios.editar', 'Cadastro', 'Editar usuários existentes.'],
-  ['Atribuir tipo de usuário', 'usuarios.atribuir_tipo', 'Cadastro', 'Atribuir ou alterar o tipo de usuário no cadastro.'],
+  ['Setar Permissões Extras', 'usuarios.permissoes_extras', 'Cadastro', 'Conceder permissões adicionais a um usuário específico.'],
 
   ['Ver Clientes', 'cadastros.clientes.visualizar', 'Cadastro', 'Visualizar clientes, contatos e locais.'],
   ['Criar Clientes', 'cadastros.clientes.criar', 'Cadastro', 'Cadastrar clientes, contatos e locais.'],
-  ['Editar Clientes', 'cadastros.clientes.editar', 'Cadastro', 'Editar clientes, contatos e locais.'],
 
   ['Ver Categorias', 'cadastros.categorias.visualizar', 'Cadastro', 'Visualizar categorias, subcategorias e itens.'],
   ['Criar Categorias', 'cadastros.categorias.criar', 'Cadastro', 'Cadastrar categorias, subcategorias e itens.'],
-  ['Editar Categorias', 'cadastros.categorias.editar', 'Cadastro', 'Editar categorias, subcategorias e itens.'],
 
-  ['Ver Catálogos de TI', 'catalogos.ti.visualizar', 'Cadastro', 'Visualizar catálogos do setor de TI.'],
+  ['Ver Catálogos', 'catalogos.visualizar', 'Cadastro', 'Visualizar catálogos de TI e DevOps.'],
   ['Criar Catálogos de TI', 'catalogos.ti.criar', 'Cadastro', 'Criar catálogos do setor de TI.'],
-  ['Editar Catálogos de TI', 'catalogos.ti.editar', 'Cadastro', 'Editar e arquivar catálogos do setor de TI.'],
-  ['Ver Catálogos de DevOps', 'catalogos.devops.visualizar', 'Cadastro', 'Visualizar catálogos do setor de DevOps.'],
   ['Criar Catálogos de DevOps', 'catalogos.devops.criar', 'Cadastro', 'Criar catálogos do setor de DevOps.'],
-  ['Editar Catálogos de DevOps', 'catalogos.devops.editar', 'Cadastro', 'Editar e arquivar catálogos do setor de DevOps.'],
 
 ];
 export const RBAC_PERMISSION_SLUGS = RBAC_PERMISSIONS.map(
@@ -153,20 +140,21 @@ export async function bootstrapRbacPermissions(
   );
 
   for (const [name, slug, module, description] of RBAC_PERMISSIONS) {
-    await db.$executeRawUnsafe(
-      `INSERT INTO permissions
-         (name, slug, module, description, created_at, updated_at)
-       VALUES (?, ?, ?, ?, NOW(), NOW())
-       ON DUPLICATE KEY UPDATE
-         name = VALUES(name),
-         module = VALUES(module),
-         description = VALUES(description),
-         updated_at = NOW()`,
-      name,
-      slug,
-      module,
-      description,
+    const existing = await db.$queryRawUnsafe<IdRow[]>(
+      'SELECT id FROM permissions WHERE slug = ? LIMIT 1', slug,
     );
+    if (existing[0]) {
+      await db.$executeRawUnsafe(
+        'UPDATE permissions SET name = ?, module = ?, description = ?, updated_at = NOW() WHERE id = ?',
+        name, module, description, Number(existing[0].id),
+      );
+    } else {
+      await db.$executeRawUnsafe(
+        `INSERT INTO permissions (name, slug, module, description, created_at, updated_at)
+         VALUES (?, ?, ?, ?, NOW(), NOW())`,
+        name, slug, module, description,
+      );
+    }
   }
 
   const migrationKey = 'rbac-only-permissions-v1';
@@ -183,12 +171,11 @@ export async function bootstrapRbacPermissions(
 
   for (const rule of LEGACY_RULES) {
     migratedGrants += await db.$executeRawUnsafe(
-      `INSERT IGNORE INTO user_permissions
-         (user_id, permission_id, effect, assigned_at, assigned_by)
-       SELECT u.user_id, p.id, 'allow', NOW(), NULL
-       FROM usuarios u
+      `INSERT INTO user_permissions (user_id, permission_id, effect, assigned_at, assigned_by)
+       SELECT u.user_id, p.id, 'allow', NOW(), NULL FROM usuarios u
        INNER JOIN permissions p ON p.slug = ?
-       WHERE ${legacyCondition(rule)}`,
+       WHERE ${legacyCondition(rule)}
+         AND NOT EXISTS (SELECT 1 FROM user_permissions up WHERE up.user_id = u.user_id AND up.permission_id = p.id)`,
       rule.slug,
     );
   }

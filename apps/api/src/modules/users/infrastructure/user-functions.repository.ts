@@ -1,10 +1,11 @@
 import { ConflictException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import type {
+  AccessPermissionItem,
   UserFunctionInput,
   UserFunctionMutationResponse,
   UserFunctionSummary,
 } from '@helpdesk/contracts';
-import type { Nivel3DatabaseClient } from '@helpdesk/database';
+import { RBAC_PERMISSION_SLUGS, type Nivel3DatabaseClient } from '@helpdesk/database';
 import { NIVEL3_DATABASE } from '../../../core/database/database.constants';
 
 type FunctionRow = {
@@ -16,6 +17,8 @@ type FunctionRow = {
 };
 type IdRow = { id: number | bigint };
 type CountRow = { total: number | bigint };
+type PermissionRow = { id: number | bigint; name: string; slug: string; module: string; description: string | null };
+type PermissionLinkRow = { function_id: number; permission_id: number | bigint };
 
 @Injectable()
 export class UserFunctionsRepository {
@@ -37,35 +40,60 @@ export class UserFunctionsRepository {
        ORDER BY c.cargo_sts DESC, c.cargo_nome ASC, c.cargo_id ASC`,
     );
 
+    const links = await this.database.$queryRawUnsafe<PermissionLinkRow[]>(
+      `SELECT c.cargo_id AS function_id, rp.permission_id
+       FROM cargos_n3 c
+       INNER JOIN roles r ON r.slug = CONCAT('function-', c.cargo_id)
+       INNER JOIN role_permissions rp ON rp.role_id = r.id`,
+    );
+    const permissionIds = new Map<number, number[]>();
+    for (const link of links) {
+      const entries = permissionIds.get(Number(link.function_id)) ?? [];
+      entries.push(Number(link.permission_id));
+      permissionIds.set(Number(link.function_id), entries);
+    }
     return rows.map((row) => ({
       id: Number(row.id),
       name: row.name?.trim() || `Função #${Number(row.id)}`,
       status: row.status === 1 ? 1 : 2,
       activeUserCount: Number(row.active_user_count ?? 0),
       linkedUserCount: Number(row.linked_user_count ?? 0),
+      permissionIds: permissionIds.get(Number(row.id)) ?? [],
     }));
+  }
+
+  async permissions(): Promise<AccessPermissionItem[]> {
+    const placeholders = RBAC_PERMISSION_SLUGS.map(() => '?').join(',');
+    const rows = await this.database.$queryRawUnsafe<PermissionRow[]>(
+      `SELECT id, name, slug, module, description FROM permissions
+       WHERE slug IN (${placeholders}) ORDER BY module, id`,
+      ...RBAC_PERMISSION_SLUGS,
+    );
+    return rows.map((row) => ({ ...row, id: Number(row.id) }));
   }
 
   async create(input: UserFunctionInput): Promise<UserFunctionMutationResponse> {
     await this.assertNameAvailable(input.name);
-    await this.database.$executeRawUnsafe(
-      'INSERT INTO cargos_n3 (cargo_nome, cargo_sts) VALUES (?, ?)',
-      input.name,
-      input.status,
-    );
-    const ids = await this.database.$queryRawUnsafe<IdRow[]>('SELECT LAST_INSERT_ID() AS id');
-    return { id: Number(ids[0]?.id ?? 0) };
+    return this.database.$transaction(async (transaction) => {
+      await transaction.$executeRawUnsafe(
+        'INSERT INTO cargos_n3 (cargo_nome, cargo_sts) VALUES (?, ?)', input.name, input.status,
+      );
+      const ids = await transaction.$queryRawUnsafe<IdRow[]>('SELECT LAST_INSERT_ID() AS id');
+      const id = Number(ids[0]?.id ?? 0);
+      await this.replacePermissions(transaction, id, input.name, input.permissionIds);
+      return { id };
+    });
   }
 
   async update(id: number, input: UserFunctionInput): Promise<UserFunctionMutationResponse> {
     await this.assertExists(id);
     await this.assertNameAvailable(input.name, id);
-    await this.database.$executeRawUnsafe(
-      'UPDATE cargos_n3 SET cargo_nome = ?, cargo_sts = ? WHERE cargo_id = ?',
-      input.name,
-      input.status,
-      id,
-    );
+    await this.database.$transaction(async (transaction) => {
+      await transaction.$executeRawUnsafe(
+        'UPDATE cargos_n3 SET cargo_nome = ?, cargo_sts = ? WHERE cargo_id = ?', input.name, input.status, id,
+      );
+      await this.replacePermissions(transaction, id, input.name, input.permissionIds);
+    });
     return { id };
   }
 
@@ -81,10 +109,10 @@ export class UserFunctionsRepository {
         `Esta função possui ${linked} usuário(s) vinculado(s). Remova os vínculos ou deixe a função inativa antes de excluí-la.`,
       );
     }
-    await this.database.$executeRawUnsafe(
-      'DELETE FROM cargos_n3 WHERE cargo_id = ?',
-      id,
-    );
+    await this.database.$transaction(async (transaction) => {
+      await transaction.$executeRawUnsafe('DELETE FROM cargos_n3 WHERE cargo_id = ?', id);
+      await transaction.$executeRawUnsafe('DELETE FROM roles WHERE slug = ?', `function-${id}`);
+    });
   }
 
   private async assertExists(id: number): Promise<void> {
@@ -107,5 +135,37 @@ export class UserFunctionsRepository {
       ignoredId ?? null,
     );
     if (rows[0]) throw new ConflictException('Já existe uma função com este nome.');
+  }
+
+  private async replacePermissions(
+    transaction: Pick<Nivel3DatabaseClient, '$executeRawUnsafe' | '$queryRawUnsafe'>,
+    functionId: number,
+    functionName: string,
+    permissionIds: number[],
+  ): Promise<void> {
+    const slug = `function-${functionId}`;
+    const roles = await transaction.$queryRawUnsafe<IdRow[]>('SELECT id FROM roles WHERE slug = ? LIMIT 1', slug);
+    let roleId = Number(roles[0]?.id ?? 0);
+    if (!roleId) {
+      await transaction.$executeRawUnsafe(
+        `INSERT INTO roles (name, slug, description, is_system, sort_order, created_at, updated_at)
+         VALUES (?, ?, ?, 1, 0, NOW(), NOW())`,
+        functionName, slug, `Permissões herdadas pela função ${functionName}.`,
+      );
+      const ids = await transaction.$queryRawUnsafe<IdRow[]>('SELECT LAST_INSERT_ID() AS id');
+      roleId = Number(ids[0]?.id ?? 0);
+    } else {
+      await transaction.$executeRawUnsafe(
+        'UPDATE roles SET name = ?, description = ?, updated_at = NOW() WHERE id = ?',
+        functionName, `Permissões herdadas pela função ${functionName}.`, roleId,
+      );
+    }
+    await transaction.$executeRawUnsafe('DELETE FROM role_permissions WHERE role_id = ?', roleId);
+    for (const permissionId of [...new Set(permissionIds)]) {
+      await transaction.$executeRawUnsafe(
+        'INSERT INTO role_permissions (role_id, permission_id, granted_at) VALUES (?, ?, NOW())',
+        roleId, permissionId,
+      );
+    }
   }
 }

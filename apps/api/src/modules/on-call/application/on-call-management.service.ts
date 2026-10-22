@@ -110,13 +110,19 @@ export class OnCallManagementService {
         ['devops', input.devopsUserId],
       ] as const) {
         await tx.$executeRawUnsafe(
-          `INSERT INTO on_call_schedules
-             (week_start, area, user_id, assigned_by, created_at, updated_at)
-           VALUES (?, ?, ?, ?, NOW(), NOW())
-           ON DUPLICATE KEY UPDATE
-             user_id = VALUES(user_id),
-             assigned_by = VALUES(assigned_by),
-             updated_at = NOW()`,
+          `MERGE on_call_schedules WITH (HOLDLOCK) AS target
+           USING (SELECT @P1 AS week_start, @P2 AS area,
+                         @P3 AS user_id, @P4 AS assigned_by) AS source
+             ON target.week_start = source.week_start
+            AND target.area = source.area
+           WHEN MATCHED THEN
+             UPDATE SET user_id = source.user_id,
+                        assigned_by = source.assigned_by,
+                        updated_at = SYSDATETIME()
+           WHEN NOT MATCHED THEN
+             INSERT (week_start, area, user_id, assigned_by, created_at, updated_at)
+             VALUES (source.week_start, source.area, source.user_id,
+                     source.assigned_by, SYSDATETIME(), SYSDATETIME());`,
           weekStart,
           area,
           userId,

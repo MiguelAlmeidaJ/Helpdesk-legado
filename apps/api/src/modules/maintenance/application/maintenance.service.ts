@@ -1436,9 +1436,14 @@ export class MaintenanceService implements OnApplicationBootstrap {
     await this.ensureSchema();
     await this.nivel3.$executeRawUnsafe(
       [
-        'INSERT INTO maintenance_worker_state (worker_key, last_heartbeat_at, detail)',
-        "VALUES ('backup-worker', NOW(), 'running')",
-        'ON DUPLICATE KEY UPDATE last_heartbeat_at = NOW(), detail = VALUES(detail)',
+        'MERGE maintenance_worker_state WITH (HOLDLOCK) AS target',
+        "USING (SELECT 'backup-worker' AS worker_key, 'running' AS detail) AS source",
+        'ON target.worker_key = source.worker_key',
+        'WHEN MATCHED THEN',
+        '  UPDATE SET last_heartbeat_at = SYSDATETIME(), detail = source.detail',
+        'WHEN NOT MATCHED THEN',
+        '  INSERT (worker_key, last_heartbeat_at, detail)',
+        '  VALUES (source.worker_key, SYSDATETIME(), source.detail);',
       ].join('\n'),
     );
   }

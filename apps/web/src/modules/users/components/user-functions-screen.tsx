@@ -1,6 +1,6 @@
 "use client";
 
-import type { CurrentUserResponse, UserFunctionSummary } from '@helpdesk/contracts';
+import type { AccessPermissionItem, CurrentUserResponse, UserFunctionSummary } from '@helpdesk/contracts';
 import type { FormEvent } from 'react';
 import { useEffect, useState } from 'react';
 import { ApiError } from '../../../shared/api/api-client';
@@ -10,6 +10,7 @@ import {
   createUserFunction,
   deleteUserFunction,
   fetchUserFunctions,
+  fetchUserFunctionPermissions,
   updateUserFunction,
 } from '../api/user-functions-api';
 
@@ -28,13 +29,23 @@ const styles = {
   badge: 'rounded-full bg-app-surface-muted px-2 py-1 text-[10px] font-extrabold uppercase tracking-wide text-app-muted',
   form: 'grid gap-4 [&_label]:grid [&_label]:gap-1.5 [&_label]:text-xs [&_label]:font-extrabold [&_label]:text-app-muted [&_input]:min-h-10 [&_input]:rounded-lg [&_input]:border [&_input]:border-app-border-strong [&_input]:bg-app-surface [&_input]:px-3 [&_input]:text-app-text [&_select]:min-h-10 [&_select]:rounded-lg [&_select]:border [&_select]:border-app-border-strong [&_select]:bg-app-surface [&_select]:px-3 [&_select]:text-app-text',
   stats: 'grid grid-cols-2 gap-3 rounded-lg bg-app-surface-muted p-3 [&_div]:grid [&_strong]:text-xl [&_span]:text-xs [&_span]:text-app-muted',
+  module: 'overflow-hidden rounded-lg border border-app-border',
+  moduleHeader: 'flex items-center justify-between gap-3 border-b border-app-border bg-app-surface-muted px-3 py-2.5',
+  permissionGrid: 'grid gap-px bg-app-border md:grid-cols-2',
+  permission: 'flex cursor-pointer items-start gap-2.5 bg-app-surface px-3 py-3 text-sm hover:bg-app-surface-hover [&_input]:mt-0.5 [&_span]:grid [&_small]:text-xs [&_small]:font-normal [&_small]:text-app-muted',
   actions: 'flex flex-wrap justify-end gap-2',
   error: 'mb-3 rounded-lg border border-app-danger-border bg-app-danger-soft px-3 py-3 text-sm text-app-danger',
   success: 'mb-3 rounded-lg border border-emerald-300/70 bg-emerald-50 px-3 py-3 text-sm text-emerald-800 dark:border-emerald-900/70 dark:bg-emerald-950/40 dark:text-emerald-200',
 } as const;
 
-type FormState = { name: string; status: 1 | 2 };
-const EMPTY: FormState = { name: '', status: 1 };
+type FormState = { name: string; status: 1 | 2; permissionIds: number[] };
+const EMPTY: FormState = { name: '', status: 1, permissionIds: [] };
+
+function permissionGroups(permissions: AccessPermissionItem[]) {
+  const groups = new Map<string, AccessPermissionItem[]>();
+  for (const permission of permissions) groups.set(permission.module, [...(groups.get(permission.module) ?? []), permission]);
+  return [...groups.entries()];
+}
 
 function apiMessage(error: unknown): string {
   if (error instanceof ApiError && error.body && typeof error.body === 'object') {
@@ -47,6 +58,7 @@ function apiMessage(error: unknown): string {
 
 export function UserFunctionsScreen({ currentUser }: { currentUser: CurrentUserResponse }) {
   const [functions, setFunctions] = useState<UserFunctionSummary[]>([]);
+  const [permissions, setPermissions] = useState<AccessPermissionItem[]>([]);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [form, setForm] = useState<FormState>(EMPTY);
   const [loading, setLoading] = useState(true);
@@ -60,14 +72,17 @@ export function UserFunctionsScreen({ currentUser }: { currentUser: CurrentUserR
     setLoading(true);
     setError('');
     try {
-      const rows = await fetchUserFunctions(signal);
+      const [rows, availablePermissions] = await Promise.all([
+        fetchUserFunctions(signal), fetchUserFunctionPermissions(signal),
+      ]);
       setFunctions(rows);
+      setPermissions(availablePermissions);
       const id = preferredId ?? selectedId;
       if (id) {
         const item = rows.find((row) => row.id === id);
         if (item) {
           setSelectedId(item.id);
-          setForm({ name: item.name, status: item.status });
+          setForm({ name: item.name, status: item.status, permissionIds: item.permissionIds });
         } else {
           setSelectedId(null);
           setForm(EMPTY);
@@ -89,7 +104,7 @@ export function UserFunctionsScreen({ currentUser }: { currentUser: CurrentUserR
 
   function select(item: UserFunctionSummary) {
     setSelectedId(item.id);
-    setForm({ name: item.name, status: item.status });
+    setForm({ name: item.name, status: item.status, permissionIds: item.permissionIds });
     setError('');
     setSuccess('');
   }
@@ -108,7 +123,7 @@ export function UserFunctionsScreen({ currentUser }: { currentUser: CurrentUserR
     setError('');
     setSuccess('');
     try {
-      const input = { name: form.name.trim(), status: form.status };
+      const input = { name: form.name.trim(), status: form.status, permissionIds: form.permissionIds };
       const result = selectedId
         ? await updateUserFunction(selectedId, input)
         : await createUserFunction(input);
@@ -162,7 +177,7 @@ export function UserFunctionsScreen({ currentUser }: { currentUser: CurrentUserR
           <div className={styles.list}>
             {functions.map((item) => <button className={styles.item} data-active={selectedId === item.id} key={item.id} onClick={() => select(item)} type="button">
               <span className={styles.itemTop}><strong>{item.name}</strong><span className={styles.badge}>{item.status === 1 ? 'Ativa' : 'Inativa'}</span></span>
-              <span className={styles.meta}>{item.activeUserCount} {item.activeUserCount === 1 ? 'usuário ativo' : 'usuários ativos'} · {item.linkedUserCount} vínculo(s)</span>
+              <span className={styles.meta}>{item.activeUserCount} {item.activeUserCount === 1 ? 'usuário ativo' : 'usuários ativos'} · {item.permissionIds.length} permissões</span>
             </button>)}
           </div>
         </section>
@@ -173,6 +188,13 @@ export function UserFunctionsScreen({ currentUser }: { currentUser: CurrentUserR
           <form className={styles.form} onSubmit={save}>
             <label><span>Nome</span><input disabled={saving} maxLength={50} onChange={(event) => setForm({ ...form, name: event.target.value })} required value={form.name} /></label>
             <label><span>Situação</span><select disabled={saving} onChange={(event) => setForm({ ...form, status: Number(event.target.value) as 1 | 2 })} value={form.status}><option value={1}>Ativa</option><option value={2}>Inativa</option></select></label>
+            {permissionGroups(permissions).map(([module, entries]) => {
+              const selectedCount = entries.filter((permission) => form.permissionIds.includes(permission.id)).length;
+              return <section className={styles.module} key={module}>
+                <div className={styles.moduleHeader}><strong>{module} <span className="text-xs text-app-muted">{selectedCount}/{entries.length}</span></strong><button className={BUTTON} disabled={saving} onClick={() => setForm((current) => { const next = new Set(current.permissionIds); const all = entries.every((permission) => next.has(permission.id)); entries.forEach((permission) => all ? next.delete(permission.id) : next.add(permission.id)); return { ...current, permissionIds: [...next] }; })} type="button">{selectedCount === entries.length ? 'Desmarcar módulo' : 'Selecionar módulo'}</button></div>
+                <div className={styles.permissionGrid}>{entries.map((permission) => <label className={styles.permission} key={permission.id}><input checked={form.permissionIds.includes(permission.id)} disabled={saving} onChange={() => setForm((current) => ({ ...current, permissionIds: current.permissionIds.includes(permission.id) ? current.permissionIds.filter((id) => id !== permission.id) : [...current.permissionIds, permission.id] }))} type="checkbox" /><span><strong>{permission.name}</strong><small>{permission.description ?? permission.slug}</small></span></label>)}</div>
+              </section>;
+            })}
             {selected ? <div className={styles.stats}><div><strong>{selected.activeUserCount}</strong><span>Usuários ativos</span></div><div><strong>{selected.linkedUserCount}</strong><span>Usuários vinculados</span></div></div> : null}
             <div className={styles.actions}>
               {selected ? <button className={BUTTON} disabled={saving || selected.linkedUserCount > 0} onClick={() => void remove()} title={selected.linkedUserCount > 0 ? 'Remova os vínculos antes de excluir.' : undefined} type="button">Excluir função</button> : null}

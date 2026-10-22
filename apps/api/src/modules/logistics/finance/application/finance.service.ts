@@ -342,13 +342,20 @@ export class FinanceService {
       );
       if (!changed) throw new NotFoundException('Conta a receber não encontrada.');
       await tx.$executeRawUnsafe(
-        `INSERT INTO contas_receber_divisao
-          (id_conta_receber, percentual_ti, percentual_devops, percentual_marketing)
-         VALUES (?, ?, ?, ?)
-         ON DUPLICATE KEY UPDATE
-           percentual_ti=VALUES(percentual_ti),
-           percentual_devops=VALUES(percentual_devops),
-           percentual_marketing=VALUES(percentual_marketing)`,
+        `MERGE contas_receber_divisao WITH (HOLDLOCK) AS target
+         USING (SELECT @P1 AS id_conta_receber,
+                       @P2 AS percentual_ti,
+                       @P3 AS percentual_devops,
+                       @P4 AS percentual_marketing) AS source
+           ON target.id_conta_receber = source.id_conta_receber
+         WHEN MATCHED THEN
+           UPDATE SET percentual_ti = source.percentual_ti,
+                      percentual_devops = source.percentual_devops,
+                      percentual_marketing = source.percentual_marketing
+         WHEN NOT MATCHED THEN
+           INSERT (id_conta_receber, percentual_ti, percentual_devops, percentual_marketing)
+           VALUES (source.id_conta_receber, source.percentual_ti,
+                   source.percentual_devops, source.percentual_marketing);`,
         id,
         data.percentTi,
         data.percentDevops,

@@ -1,5 +1,5 @@
 import type { PaginationMeta } from '../common/pagination';
-import type { AccessRoleOption } from '../auth/access-management';
+import type { AccessPermissionItem } from '../auth/access-management';
 
 export interface UserOption {
   id: number;
@@ -16,7 +16,7 @@ export interface ManagedUserSummary {
   type: 0 | 1 | 2;
   function: UserOption | null;
   companies: UserOption[];
-  roles: AccessRoleOption[];
+  extraPermissionIds: number[];
 }
 
 export interface ManagedUserDetail extends ManagedUserSummary {
@@ -28,15 +28,16 @@ export interface ManagedUserDetail extends ManagedUserSummary {
 
 export interface UserManagementCatalogs {
   functions: UserOption[];
+  functionPermissionIds: Record<number, number[]>;
   companies: UserOption[];
   pixKeyTypes: UserOption[];
-  roles: AccessRoleOption[];
+  permissions: AccessPermissionItem[];
 }
 
 export interface ManagedUserListFilters {
   search?: string;
   status?: 1 | 2 | null;
-  roleId?: number | null;
+  functionId?: number | null;
 }
 
 export interface ManagedUserListResponse {
@@ -57,7 +58,7 @@ export interface CreateManagedUserRequest {
   pixKey?: string;
   observation?: string;
   companyIds?: number[];
-  roleIds?: number[];
+  extraPermissionIds?: number[];
 }
 
 export interface UpdateManagedUserRequest {
@@ -73,7 +74,7 @@ export interface UpdateManagedUserRequest {
   pixKey?: string;
   observation?: string;
   companyIds?: number[];
-  roleIds?: number[];
+  extraPermissionIds?: number[];
 }
 
 export interface UserFunctionSummary {
@@ -82,11 +83,13 @@ export interface UserFunctionSummary {
   status: 1 | 2;
   activeUserCount: number;
   linkedUserCount: number;
+  permissionIds: number[];
 }
 
 export interface UserFunctionInput {
   name: string;
   status: 1 | 2;
+  permissionIds: number[];
 }
 
 export interface UserFunctionMutationResponse {

@@ -110,14 +110,14 @@ interface BuiltWhere {
   params: unknown[];
 }
 
-const SORT_SQL: Partial<Record<TicketListSort, string>> = {
-  id: 'a.id',
-  client: 'c.clt_nomef',
-  openedAt: 'a.abertura',
-  level: 'a.nivel',
-  priority: 'a.prioridade',
-  technician: 'u.user_nome',
-  status: 'a.status',
+const PAGE_SORT_SQL: Partial<Record<TicketListSort, string>> = {
+  id: 'id',
+  client: 'cliente_nome',
+  openedAt: 'abertura',
+  level: 'nivel',
+  priority: 'prioridade',
+  technician: 'tecnico_nome',
+  status: 'status',
 };
 
 const ALL_STATUSES = [
@@ -254,14 +254,20 @@ export class PrismaTicketsReadRepository extends TicketsReadRepository {
     const clerioBreached = clerioBreachedSql();
     const slaOrder = slaOrderSql();
 
-    const sortColumn = SORT_SQL[filters.sort] ?? 'a.abertura';
-    const orderBy =
+    const paginationSortColumn = PAGE_SORT_SQL[filters.sort] ?? 'abertura';
+    const paginationOrderBy =
       filters.sort === 'sla'
-        ? 'sla_order ASC, quality_remaining_seconds ASC, clerio_remaining_seconds ASC, a.id ASC'
-        : `${sortColumn} ${direction}, a.id ASC`;
+        ? 'sla_order ASC, quality_remaining_seconds ASC, clerio_remaining_seconds ASC, id ASC'
+        : `${paginationSortColumn} ${direction}, id ASC`;
 
     const rows = await this.database.$queryRawUnsafe<TicketRow[]>(
       `
+      SELECT *
+      FROM (
+      SELECT
+        base_rows.*,
+        ROW_NUMBER() OVER (ORDER BY ${paginationOrderBy}) AS page_row_number
+      FROM (
       SELECT
         a.id,
         a.status,
@@ -346,12 +352,13 @@ export class PrismaTicketsReadRepository extends TicketsReadRepository {
         LIMIT 1
       ) cfg ON 1 = 1
       ${listWhere.sql}
-      ORDER BY ${orderBy}
-      LIMIT ? OFFSET ?
+      ) base_rows
+      ) paged
+      WHERE page_row_number > ${offset}
+        AND page_row_number <= ${offset + query.limit}
+      ORDER BY page_row_number ASC
       `,
       ...listWhere.params,
-      query.limit,
-      offset,
     );
 
     return {

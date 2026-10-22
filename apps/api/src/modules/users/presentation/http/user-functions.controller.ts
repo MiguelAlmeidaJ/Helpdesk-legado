@@ -15,6 +15,7 @@ import {
 import { ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import {
   AppPermission,
+  type AccessPermissionItem,
   type UserFunctionInput,
   type UserFunctionMutationResponse,
   type UserFunctionSummary,
@@ -40,7 +41,10 @@ function input(body: unknown): UserFunctionInput {
   if (value.status !== 1 && value.status !== 2) {
     throw new BadRequestException('status deve ser 1 ou 2.');
   }
-  return { name, status: value.status };
+  if (!Array.isArray(value.permissionIds) || value.permissionIds.some((id) => !Number.isSafeInteger(id) || Number(id) < 1)) {
+    throw new BadRequestException('permissionIds deve ser uma lista de IDs válidos.');
+  }
+  return { name, status: value.status, permissionIds: [...new Set(value.permissionIds.map(Number))] };
 }
 
 @ApiTags('user-functions')
@@ -55,6 +59,12 @@ export class UserFunctionsController {
   @ApiOperation({ summary: 'Listar funções de usuários' })
   list(): Promise<UserFunctionSummary[]> {
     return this.management.list();
+  }
+
+  @Get('permissions')
+  @ApiOperation({ summary: 'Listar permissões disponíveis para funções' })
+  permissions(): Promise<AccessPermissionItem[]> {
+    return this.management.permissions();
   }
 
   @Post()

@@ -54,7 +54,7 @@ export class TicketRecurrencesController {
   constructor(private readonly manager: ManageTicketRecurrences) {}
 
   @Get()
-  @RequirePermissions(AppPermission.TicketsRecurrenceCreate)
+  @RequirePermissions(AppPermission.TicketsRecurrenceRead)
   @ApiOperation({ summary: 'Listar recorrências de atendimentos' })
   list(
     @CurrentUser() user: AuthenticatedUser | undefined,

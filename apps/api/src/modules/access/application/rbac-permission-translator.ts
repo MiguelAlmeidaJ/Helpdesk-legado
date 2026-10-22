@@ -10,61 +10,44 @@ import type { RbacAccessSnapshot } from '../domain/rbac-access-snapshot';
 const P = {
   usersRead: 'usuarios.visualizar',
   usersCreate: 'usuarios.criar',
-  usersEdit: 'usuarios.editar',
-  usersManageAccess: 'usuarios.editar_acesso',
-  usersAssignRole: 'usuarios.atribuir_tipo',
-  usersManageOverrides: 'usuarios.permissoes_usuario',
+  usersManageOverrides: 'usuarios.permissoes_extras',
 
   ticketsRead: 'atendimentos.visualizar',
   ticketsCreate: 'atendimentos.criar',
   ticketsEdit: 'atendimentos.editar',
   ticketsHold: 'atendimentos.colocar_espera',
-  ticketsClose: 'atendimentos.finalizar',
-  ticketsRecurrence: 'atendimentos.recorrencia.criar',
+  ticketsAvailability: 'atendimentos.disponibilidade.visualizar',
+  ticketsRecurrenceRead: 'atendimentos.recorrencia.visualizar',
+  ticketsRecurrenceCreate: 'atendimentos.recorrencia.criar',
   ticketsTimeline: 'atendimentos.timeline.visualizar',
 
   devOpsProjectsRead: 'devops.projetos.visualizar',
   devOpsProjectsCreate: 'devops.projetos.criar',
-  devOpsProjectsEdit: 'devops.projetos.editar',
   devOpsTasksRead: 'devops.tarefas.visualizar',
   devOpsTasksCreate: 'devops.tarefas.criar',
-  devOpsTasksEdit: 'devops.tarefas.editar',
 
   marketingRead: 'marketing.tarefas.visualizar',
   marketingCreate: 'marketing.tarefas.criar',
-  marketingEdit: 'marketing.tarefas.editar',
-  marketingHold: 'marketing.tarefas.colocar_espera',
   marketingClose: 'marketing.tarefas.finalizar',
 
   vehicleSchedule: 'logistica.agenda.agendar',
-  rdRead: 'logistica.rd.visualizar',
-  rdCreate: 'logistica.rd.criar',
+  vehicleManage: 'logistica.veiculos.gerenciar',
+  rdAccess: 'logistica.rd.acessar',
   rdManage: 'logistica.rd.gestao',
 
-  financeRead: 'financeiro.visualizar',
-  financeEdit: 'financeiro.editar',
+  financeAccess: 'financeiro.acessar',
 
-  reportsRead: 'relatorios.visualizar',
-  reportsPdf: 'relatorios.gerar_pdf',
+  reportsAccess: 'relatorios.acessar',
 
   clientsRead: 'cadastros.clientes.visualizar',
   clientsCreate: 'cadastros.clientes.criar',
-  clientsEdit: 'cadastros.clientes.editar',
   categoriesRead: 'cadastros.categorias.visualizar',
   categoriesCreate: 'cadastros.categorias.criar',
-  categoriesEdit: 'cadastros.categorias.editar',
 
-  catalogTiRead: 'catalogos.ti.visualizar',
+  catalogRead: 'catalogos.visualizar',
   catalogTiCreate: 'catalogos.ti.criar',
-  catalogTiEdit: 'catalogos.ti.editar',
-  catalogDevOpsRead: 'catalogos.devops.visualizar',
   catalogDevOpsCreate: 'catalogos.devops.criar',
-  catalogDevOpsEdit: 'catalogos.devops.editar',
-
-  qualityOnCallRead: 'qualidade.plantao.visualizar',
-  qualityOnCallManage: 'qualidade.plantao.gerenciar',
-  qualityDatesRead: 'qualidade.datas.visualizar',
-  qualityDatesManage: 'qualidade.datas.gerenciar',
+  qualityAccess: 'qualidade.acessar',
 } as const;
 
 const SYSTEM_ADMIN_ROLE = 'system-admin';
@@ -109,9 +92,7 @@ export function translateRbacAccess(
 
   addGrant(grants, AppPermission.UsersRead, has(P.usersRead));
   addGrant(grants, AppPermission.UsersCreate, has(P.usersCreate));
-  addGrant(grants, AppPermission.UsersEdit, has(P.usersEdit));
-  addGrant(grants, AppPermission.UsersManageAccess, has(P.usersManageAccess));
-  addGrant(grants, AppPermission.UsersAssignRole, has(P.usersAssignRole));
+  addGrant(grants, AppPermission.UsersEdit, has(P.usersCreate));
   addGrant(
     grants,
     AppPermission.UsersManageOverrides,
@@ -121,22 +102,22 @@ export function translateRbacAccess(
   addGrant(
     grants,
     AppPermission.QualityOnCallRead,
-    has(P.qualityOnCallRead) || has(P.qualityOnCallManage),
+    has(P.qualityAccess),
   );
   addGrant(
     grants,
     AppPermission.QualityOnCallManage,
-    has(P.qualityOnCallManage),
+    has(P.qualityAccess),
   );
   addGrant(
     grants,
     AppPermission.QualityDatesRead,
-    has(P.qualityDatesRead) || has(P.qualityDatesManage),
+    has(P.qualityAccess),
   );
   addGrant(
     grants,
     AppPermission.QualityDatesManage,
-    has(P.qualityDatesManage),
+    has(P.qualityAccess),
   );
 
   addGrant(grants, AppPermission.RegistrationsClientsRead, has(P.clientsRead));
@@ -145,7 +126,7 @@ export function translateRbacAccess(
     AppPermission.RegistrationsClientsCreate,
     has(P.clientsCreate),
   );
-  addGrant(grants, AppPermission.RegistrationsClientsEdit, has(P.clientsEdit));
+  addGrant(grants, AppPermission.RegistrationsClientsEdit, has(P.clientsCreate));
   addGrant(
     grants,
     AppPermission.RegistrationsClientContactsCreate,
@@ -154,7 +135,7 @@ export function translateRbacAccess(
   addGrant(
     grants,
     AppPermission.RegistrationsClientContactsEdit,
-    has(P.clientsEdit),
+    has(P.clientsCreate),
   );
   addGrant(
     grants,
@@ -164,7 +145,7 @@ export function translateRbacAccess(
   addGrant(
     grants,
     AppPermission.RegistrationsClientLocationsEdit,
-    has(P.clientsEdit),
+    has(P.clientsCreate),
   );
 
   addGrant(
@@ -180,7 +161,7 @@ export function translateRbacAccess(
   addGrant(
     grants,
     AppPermission.RegistrationsCategoriesEdit,
-    has(P.categoriesEdit),
+    has(P.categoriesCreate),
   );
   addGrant(
     grants,
@@ -190,7 +171,7 @@ export function translateRbacAccess(
   addGrant(
     grants,
     AppPermission.RegistrationsSubcategoriesEdit,
-    has(P.categoriesEdit),
+    has(P.categoriesCreate),
   );
   addGrant(
     grants,
@@ -200,31 +181,38 @@ export function translateRbacAccess(
   addGrant(
     grants,
     AppPermission.RegistrationsItemsEdit,
-    has(P.categoriesEdit),
+    has(P.categoriesCreate),
   );
 
-  addGrant(grants, AppPermission.CatalogTiRead, has(P.catalogTiRead));
+  addGrant(grants, AppPermission.CatalogTiRead, has(P.catalogRead));
   addGrant(grants, AppPermission.CatalogTiCreate, has(P.catalogTiCreate));
-  addGrant(grants, AppPermission.CatalogTiEdit, has(P.catalogTiEdit));
-  addGrant(grants, AppPermission.CatalogDevOpsRead, has(P.catalogDevOpsRead));
+  addGrant(grants, AppPermission.CatalogTiEdit, has(P.catalogTiCreate));
+  addGrant(grants, AppPermission.CatalogDevOpsRead, has(P.catalogRead));
   addGrant(
     grants,
     AppPermission.CatalogDevOpsCreate,
     has(P.catalogDevOpsCreate),
   );
-  addGrant(grants, AppPermission.CatalogDevOpsEdit, has(P.catalogDevOpsEdit));
+  addGrant(grants, AppPermission.CatalogDevOpsEdit, has(P.catalogDevOpsCreate));
 
   addGrant(grants, AppPermission.TicketsRead, has(P.ticketsRead));
   addGrant(grants, AppPermission.TicketsCreate, has(P.ticketsCreate));
   addGrant(grants, AppPermission.TicketsEdit, has(P.ticketsEdit));
   addGrant(grants, AppPermission.TicketsClassify, has(P.ticketsEdit));
+  addGrant(grants, AppPermission.TicketsExecute, has(P.ticketsEdit));
+  addGrant(grants, AppPermission.TicketsReject, has(P.ticketsEdit));
+  addGrant(grants, AppPermission.TicketsClose, has(P.ticketsEdit));
   addGrant(grants, AppPermission.TicketsHold, has(P.ticketsHold));
-  addGrant(grants, AppPermission.TicketsExecute, has(P.ticketsClose));
-  addGrant(grants, AppPermission.TicketsClose, has(P.ticketsClose));
+  addGrant(grants, AppPermission.TicketsRadio, has(P.ticketsAvailability));
+  addGrant(
+    grants,
+    AppPermission.TicketsRecurrenceRead,
+    has(P.ticketsRecurrenceRead) || has(P.ticketsRecurrenceCreate),
+  );
   addGrant(
     grants,
     AppPermission.TicketsRecurrenceCreate,
-    has(P.ticketsRecurrence),
+    has(P.ticketsRecurrenceCreate),
   );
   addGrant(
     grants,
@@ -245,21 +233,20 @@ export function translateRbacAccess(
   addGrant(
     grants,
     AppPermission.DevOpsProjectsEdit,
-    has(P.devOpsProjectsEdit),
+    has(P.devOpsProjectsCreate),
   );
   addGrant(grants, AppPermission.DevOpsTasksRead, has(P.devOpsTasksRead));
   addGrant(grants, AppPermission.DevOpsTasksCreate, has(P.devOpsTasksCreate));
-  addGrant(grants, AppPermission.DevOpsTasksEdit, has(P.devOpsTasksEdit));
+  addGrant(grants, AppPermission.DevOpsTasksEdit, has(P.devOpsTasksCreate));
 
   addGrant(
     grants,
     AppPermission.TicketsDevOpsRead,
     has(P.devOpsProjectsRead) ||
       has(P.devOpsProjectsCreate) ||
-      has(P.devOpsProjectsEdit) ||
       has(P.devOpsTasksRead) ||
       has(P.devOpsTasksCreate) ||
-      has(P.devOpsTasksEdit),
+      has(P.devOpsProjectsCreate),
   );
   addGrant(
     grants,
@@ -269,16 +256,13 @@ export function translateRbacAccess(
 
   addGrant(grants, AppPermission.MarketingTasksRead, has(P.marketingRead));
   addGrant(grants, AppPermission.MarketingTasksCreate, has(P.marketingCreate));
-  addGrant(grants, AppPermission.MarketingTasksEdit, has(P.marketingEdit));
-  addGrant(grants, AppPermission.MarketingTasksHold, has(P.marketingHold));
+  addGrant(grants, AppPermission.MarketingTasksEdit, has(P.marketingCreate));
   addGrant(grants, AppPermission.MarketingTasksClose, has(P.marketingClose));
   addGrant(
     grants,
     AppPermission.TicketsMarketingRead,
     has(P.marketingRead) ||
       has(P.marketingCreate) ||
-      has(P.marketingEdit) ||
-      has(P.marketingHold) ||
       has(P.marketingClose),
   );
   addGrant(
@@ -287,22 +271,22 @@ export function translateRbacAccess(
     has(P.marketingCreate),
   );
 
-  addGrant(grants, AppPermission.LogisticsVehicleAgendaRead, has(P.vehicleSchedule));
+  addGrant(grants, AppPermission.LogisticsVehicleAgendaRead, has(P.vehicleSchedule) || has(P.vehicleManage));
   addGrant(
     grants,
     AppPermission.LogisticsVehicleAgendaManage,
-    has(P.vehicleSchedule),
+    has(P.vehicleManage),
   );
   addGrant(
     grants,
     AppPermission.LogisticsExpensesRead,
-    has(P.rdRead) || has(P.rdCreate) || has(P.rdManage),
+    has(P.rdAccess) || has(P.rdManage),
     has(P.rdManage) ? PermissionScope.All : PermissionScope.Own,
   );
   addGrant(
     grants,
     AppPermission.LogisticsExpensesManage,
-    has(P.rdCreate) || has(P.rdManage),
+    has(P.rdAccess) || has(P.rdManage),
     has(P.rdManage) ? PermissionScope.All : PermissionScope.Own,
   );
   addGrant(
@@ -318,34 +302,34 @@ export function translateRbacAccess(
   addGrant(grants, AppPermission.LogisticsExpensesApprove, has(P.rdManage));
   addGrant(grants, AppPermission.LogisticsExpensesPay, has(P.rdManage));
 
-  addGrant(grants, AppPermission.FinanceRead, has(P.financeRead) || has(P.financeEdit));
-  addGrant(grants, AppPermission.FinanceManage, has(P.financeEdit));
+  addGrant(grants, AppPermission.FinanceRead, has(P.financeAccess));
+  addGrant(grants, AppPermission.FinanceManage, has(P.financeAccess));
   addGrant(
     grants,
     AppPermission.RegistrationsFinanceRead,
-    has(P.financeRead) || has(P.financeEdit),
+    has(P.financeAccess),
   );
   addGrant(
     grants,
     AppPermission.RegistrationsFinanceManage,
-    has(P.financeEdit),
+    has(P.financeAccess),
   );
   addGrant(
     grants,
     AppPermission.LogisticsStatementsRead,
-    has(P.financeRead) || has(P.financeEdit),
+    has(P.financeAccess),
   );
 
   addGrant(
     grants,
     AppPermission.ReportsRead,
-    has(P.reportsRead) || has(P.reportsPdf),
+    has(P.reportsAccess),
   );
-  addGrant(grants, AppPermission.ReportsPdf, has(P.reportsPdf));
+  addGrant(grants, AppPermission.ReportsPdf, has(P.reportsAccess));
   addGrant(
     grants,
     AppPermission.TicketsAudit,
-    has(P.reportsRead) || has(P.reportsPdf),
+    has(P.reportsAccess),
   );
 
   return {

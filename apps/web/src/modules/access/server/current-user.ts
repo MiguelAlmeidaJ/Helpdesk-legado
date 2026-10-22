@@ -20,7 +20,7 @@ const ROUTE_POLICIES: readonly RoutePolicy[] = [
   // Atendimento.
   {
     prefix: '/atendimentos/recorrencias',
-    anyPermissions: [AppPermission.TicketsRecurrenceCreate],
+    anyPermissions: [AppPermission.TicketsRecurrenceRead],
   },
   {
     prefix: '/atendimentos/linha-do-tempo',
@@ -28,7 +28,7 @@ const ROUTE_POLICIES: readonly RoutePolicy[] = [
   },
   {
     prefix: '/atendimentos/disponibilidade',
-    anyPermissions: [AppPermission.TicketsRead],
+    anyPermissions: [AppPermission.TicketsRadio],
   },
   {
     prefix: '/atendimentos/devops/projetos/novo',

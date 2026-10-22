@@ -27,9 +27,9 @@ export class UserManagement {
     limit: number,
     search: string,
     statusFilter?: 1 | 2,
-    roleId?: number,
+    functionId?: number,
   ): Promise<ManagedUserListResponse> {
-    return this.users.list(page, limit, search, statusFilter, roleId);
+    return this.users.list(page, limit, search, statusFilter, functionId);
   }
 
   async detail(id: number): Promise<ManagedUserDetail> {
@@ -38,29 +38,28 @@ export class UserManagement {
     return user;
   }
 
-  catalogs(includeSystemAdmin: boolean): Promise<UserManagementCatalogs> {
-    return this.users.catalogs(includeSystemAdmin);
+  catalogs(includePermissions: boolean): Promise<UserManagementCatalogs> {
+    return this.users.catalogs(includePermissions);
   }
 
   async create(
     input: CreateManagedUserRequest,
     actorId: number,
-    canAssignRole: boolean,
-    actorIsSystemAdmin: boolean,
+    canSetExtras: boolean,
   ): Promise<ManagedUserDetail> {
-    if (!canAssignRole && input.roleIds !== undefined && input.type !== 2) {
-      throw new ForbiddenException('Sem permissão para definir acessos do usuário.');
+    if (!canSetExtras && input.extraPermissionIds !== undefined) {
+      throw new ForbiddenException('Sem permissão para definir permissões extras.');
     }
     await this.ensureUnique(input.login, input.email);
-    const roleIds = await this.roleIdsForType(input.type, input.roleIds, canAssignRole, actorIsSystemAdmin);
-    if (roleIds) await this.ensureRolesExist(roleIds);
-    const normalizedInput = { ...input, roleIds };
+    if (input.extraPermissionIds && !(await this.users.permissionsExist(input.extraPermissionIds))) {
+      throw new NotFoundException('Uma ou mais permissões extras não existem.');
+    }
     const passwordHash = await bcrypt.hash(input.password, 12);
     const id = await this.users.create(
-      normalizedInput,
+      input,
       passwordHash,
       actorId,
-      canAssignRole || input.type === 2,
+      canSetExtras,
     );
     return this.detail(id);
   }
@@ -69,32 +68,22 @@ export class UserManagement {
     id: number,
     actorId: number,
     input: UpdateManagedUserRequest,
-    canAssignRole: boolean,
-    actorIsSystemAdmin: boolean,
+    canSetExtras: boolean,
   ): Promise<ManagedUserDetail> {
     if (input.status === 2 && (id === 1 || id === actorId)) {
       throw new ForbiddenException('O usuário administrador principal e a própria conta não podem ser desativados.');
     }
-    if (!canAssignRole && input.roleIds !== undefined && input.type !== 2) {
-      throw new ForbiddenException('Sem permissão para alterar acessos do usuário.');
+    if (!canSetExtras && input.extraPermissionIds !== undefined) {
+      throw new ForbiddenException('Sem permissão para alterar permissões extras.');
     }
     await this.ensureUnique(input.login, input.email, id);
-    const protectedGlobalAdmin =
-      !actorIsSystemAdmin && (await this.users.userHasSystemAdminRole(id));
-    const roleIds = protectedGlobalAdmin
-      ? undefined
-      : await this.roleIdsForType(
-          input.type,
-          input.roleIds,
-          canAssignRole,
-          actorIsSystemAdmin,
-        );
-    if (roleIds) await this.ensureRolesExist(roleIds);
-    const normalizedInput = { ...input, roleIds };
+    if (input.extraPermissionIds && !(await this.users.permissionsExist(input.extraPermissionIds))) {
+      throw new NotFoundException('Uma ou mais permissões extras não existem.');
+    }
     if (!(await this.users.update(
       id,
-      normalizedInput,
-      !protectedGlobalAdmin && (canAssignRole || input.type === 2),
+      input,
+      canSetExtras,
       actorId,
     ))) {
       throw new NotFoundException('Usuário não encontrado.');
@@ -113,40 +102,6 @@ export class UserManagement {
       throw new NotFoundException('Usuário não encontrado ou já desativado.');
     }
     await this.sessions.revokeAllForUser(id, 'user_deactivated');
-  }
-
-  private async roleIdsForType(
-    type: 1 | 2,
-    requestedRoleIds: number[] | undefined,
-    canAssignRole: boolean,
-    actorIsSystemAdmin: boolean,
-  ): Promise<number[] | undefined> {
-    const clientRoleId = await this.users.clientRoleId();
-
-    if (type === 2) {
-      if (!clientRoleId) {
-        throw new NotFoundException('O tipo de usuário Cliente não está cadastrado em Permissões.');
-      }
-      return [clientRoleId];
-    }
-
-    if (!canAssignRole) return undefined;
-    const roleIds = (requestedRoleIds ?? []).filter((id) => id !== clientRoleId);
-    if (
-      !actorIsSystemAdmin &&
-      (await this.users.containsSystemAdminRole(roleIds))
-    ) {
-      throw new ForbiddenException(
-        'Somente um Administrador global pode atribuir o tipo Administrador global.',
-      );
-    }
-    return roleIds;
-  }
-
-  private async ensureRolesExist(roleIds: number[]): Promise<void> {
-    if (!(await this.users.rolesExist(roleIds))) {
-      throw new NotFoundException('Um ou mais tipos de usuário não existem.');
-    }
   }
 
   private async ensureUnique(login: string, email: string, exceptId?: number): Promise<void> {

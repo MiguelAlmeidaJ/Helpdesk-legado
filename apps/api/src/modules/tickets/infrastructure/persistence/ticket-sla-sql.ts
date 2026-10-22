@@ -9,9 +9,9 @@ function ruleThresholdSql(column: 'quality_minutes' | 'clerio_minutes', fallback
         AND (r.priority IS NULL OR r.priority = a.prioridade)
       ORDER BY
         (
-          (r.client_id IS NOT NULL) +
-          (r.category_id IS NOT NULL) +
-          (r.priority IS NOT NULL)
+          CASE WHEN r.client_id IS NOT NULL THEN 1 ELSE 0 END +
+          CASE WHEN r.category_id IS NOT NULL THEN 1 ELSE 0 END +
+          CASE WHEN r.priority IS NOT NULL THEN 1 ELSE 0 END
         ) DESC,
         r.sort_order ASC,
         r.id ASC
@@ -40,20 +40,22 @@ export function waitSecondsSql(): string {
 
 export function waitSecondsSinceSql(startExpression: string): string {
   return `COALESCE((
-    SELECT SUM(
-      GREATEST(
-        0,
-        TIMESTAMPDIFF(
-          SECOND,
-          GREATEST(e.espera_start, ${startExpression}),
-          LEAST(COALESCE(e.espera_end, NOW()), NOW())
-        )
-      )
-    )
-    FROM espera e
-    WHERE e.espera_atd = a.id
-      AND e.espera_start < NOW()
-      AND COALESCE(e.espera_end, NOW()) > ${startExpression}
+    SELECT SUM(wait_slice.seconds_value)
+    FROM (
+      SELECT
+        GREATEST(
+          0,
+          TIMESTAMPDIFF(
+            SECOND,
+            GREATEST(e.espera_start, ${startExpression}),
+            LEAST(COALESCE(e.espera_end, NOW()), NOW())
+          )
+        ) AS seconds_value
+      FROM espera e
+      WHERE e.espera_atd = a.id
+        AND e.espera_start < NOW()
+        AND COALESCE(e.espera_end, NOW()) > ${startExpression}
+    ) wait_slice
   ), 0)`;
 }
 

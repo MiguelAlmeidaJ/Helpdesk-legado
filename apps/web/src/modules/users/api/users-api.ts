@@ -16,7 +16,7 @@ export function fetchUsers(
   const query = new URLSearchParams({ page: String(page), limit: '50' });
   if (filters.search) query.set('search', filters.search);
   if (filters.status) query.set('status', String(filters.status));
-  if (filters.roleId) query.set('roleId', String(filters.roleId));
+  if (filters.functionId) query.set('functionId', String(filters.functionId));
   return apiRequest<ManagedUserListResponse>(`users?${query}`, { signal });
 }
 

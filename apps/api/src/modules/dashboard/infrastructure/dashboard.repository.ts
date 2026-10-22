@@ -304,7 +304,11 @@ export class PrismaDashboardRepository extends DashboardRepository {
          JOIN usuarios u ON u.user_id = interactions.inter_user
          WHERE u.user_sts = 1
            AND interactions.inter_data BETWEEN ? AND ?
-         GROUP BY u.user_id, u.user_nome
+         GROUP BY
+           CASE
+             WHEN u.user_funcao = 7 THEN u.user_nome
+             ELSE 'Outros Colaboradores'
+           END
          ORDER BY total DESC
          LIMIT 3`,
         start,

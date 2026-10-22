@@ -24,11 +24,12 @@
   },
   "dependencies": {
     "@helpdesk/contracts": "workspace:*",
-    "@prisma/adapter-mariadb": "7.10.0",
+    "@prisma/adapter-mssql": "7.10.0",
     "@prisma/client": "7.10.0",
     "dotenv": "^17.0.0"
   },
   "devDependencies": {
+    "@types/mssql": "^12.3.0",
     "@types/node": "^22.0.0",
     "prisma": "7.10.0",
     "typescript": "^5.9.0"

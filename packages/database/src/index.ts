@@ -1,5 +1,6 @@
-import { PrismaMariaDb } from '@prisma/adapter-mariadb';
+import { PrismaMssql } from '@prisma/adapter-mssql';
 import { PrismaClient as Nivel3PrismaClient } from './generated/nivel3/client';
+import { enableMysqlCompatibility } from './sqlserver/mysql-compat';
 
 export const DATABASE_ENV = {
   nivel3: 'NIVEL3_DATABASE_URL',
@@ -27,34 +28,55 @@ function connectionLimit(): number {
   return value;
 }
 
-function createMariaDbAdapter(databaseUrl: string): PrismaMariaDb {
-  const url = new URL(databaseUrl);
-
-  if (url.protocol !== 'mysql:' && url.protocol !== 'mariadb:') {
-    throw new Error(`Unsupported database protocol: ${url.protocol}`);
+function createSqlServerAdapter(databaseUrl: string): PrismaMssql {
+  if (!databaseUrl.toLowerCase().startsWith('sqlserver://')) {
+    throw new Error('NIVEL3_DATABASE_URL must use the sqlserver:// protocol');
   }
 
-  const database = decodeURIComponent(url.pathname.replace(/^\/+/, ''));
+  const database = databaseUrl.match(/(?:^|;)database=([^;]+)/i)?.[1]?.trim();
+  const password =
+    process.env.NIVEL3_SQLSERVER_PASSWORD?.trim() ||
+    process.env.DB_ROOT_PASSWORD?.trim();
 
   if (!database) {
-    throw new Error('Database URL must include a database name');
+    throw new Error('NIVEL3_DATABASE_URL must include database=...');
+  }
+  if (!password) {
+    throw new Error(
+      'Missing NIVEL3_SQLSERVER_PASSWORD (DB_ROOT_PASSWORD is accepted as a temporary fallback)',
+    );
   }
 
-  return new PrismaMariaDb({
-    host: url.hostname,
-    port: url.port ? Number(url.port) : 3306,
-    user: decodeURIComponent(url.username),
-    password: decodeURIComponent(url.password),
-    database,
-    connectionLimit: connectionLimit(),
-  });
+  return enableMysqlCompatibility(
+    new PrismaMssql(
+      {
+        server: process.env.NIVEL3_SQLSERVER_HOST?.trim() || '127.0.0.1',
+        port: Number(process.env.NIVEL3_SQLSERVER_PORT ?? 55523),
+        database,
+        user: process.env.NIVEL3_SQLSERVER_USER?.trim() || 'nivel3_app',
+        password,
+        connectionTimeout: 15_000,
+        requestTimeout: Number(process.env.DB_REQUEST_TIMEOUT_MS ?? 60_000),
+        pool: {
+          max: connectionLimit(),
+          min: 0,
+          idleTimeoutMillis: 300_000,
+        },
+        options: {
+          encrypt: true,
+          trustServerCertificate: true,
+        },
+      },
+      { schema: 'dbo' },
+    ),
+  );
 }
 
 export function createNivel3Client(
   databaseUrl = requiredDatabaseUrl(DATABASE_ENV.nivel3),
 ) {
   return new Nivel3PrismaClient({
-    adapter: createMariaDbAdapter(databaseUrl),
+    adapter: createSqlServerAdapter(databaseUrl),
   });
 }
 

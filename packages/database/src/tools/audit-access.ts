@@ -47,10 +47,10 @@ async function main() {
   try {
     const tables = await query(
       db,
-      `SELECT TABLE_NAME AS table_name, TABLE_ROWS AS estimated_rows
-       FROM information_schema.TABLES
-       WHERE TABLE_SCHEMA = DATABASE()
-         AND TABLE_NAME IN (
+      `SELECT t.name AS table_name, SUM(p.rows) AS estimated_rows
+       FROM sys.tables t
+       LEFT JOIN sys.partitions p ON p.object_id = t.object_id AND p.index_id IN (0, 1)
+       WHERE t.name IN (
            'usuarios',
            'roles',
            'permissions',
@@ -59,7 +59,8 @@ async function main() {
            'user_permissions',
            'api_sessions'
          )
-       ORDER BY TABLE_NAME`,
+       GROUP BY t.name
+       ORDER BY t.name`,
     );
 
     printSection('Tabelas de acesso existentes', tables);
@@ -150,7 +151,7 @@ async function main() {
       db,
       `SELECT id, name, slug, module
        FROM permissions
-       WHERE module = 'Atendimentos'
+       WHERE module = 'Atendimento'
        ORDER BY id`,
     );
     printSection('Catálogo de permissões de Atendimentos', ticketPermissionCatalog);
@@ -170,7 +171,7 @@ async function main() {
          'atendimento-operador',
          'atendimento-gestor'
        )
-         AND p.module = 'Atendimentos'
+         AND p.module = 'Atendimento'
        ORDER BY r.slug, p.id`,
     );
     printSection('Matriz atual de Atendimentos por role', ticketRoleMatrix);
@@ -193,29 +194,10 @@ async function main() {
       `SELECT
          COALESCE(u.user_sts, -1) AS user_status,
          COUNT(*) AS users_total,
-         SUM(
-           CASE
-             WHEN EXISTS (
-               SELECT 1
-               FROM user_roles ur
-               WHERE ur.user_id = u.user_id
-             )
-             THEN 1
-             ELSE 0
-           END
-         ) AS users_with_role,
-         SUM(
-           CASE
-             WHEN NOT EXISTS (
-               SELECT 1
-               FROM user_roles ur
-               WHERE ur.user_id = u.user_id
-             )
-             THEN 1
-             ELSE 0
-           END
-         ) AS users_without_role
+         SUM(CASE WHEN ur.user_id IS NOT NULL THEN 1 ELSE 0 END) AS users_with_role,
+         SUM(CASE WHEN ur.user_id IS NULL THEN 1 ELSE 0 END) AS users_without_role
        FROM usuarios u
+       LEFT JOIN (SELECT DISTINCT user_id FROM user_roles) ur ON ur.user_id = u.user_id
        GROUP BY COALESCE(u.user_sts, -1)
        ORDER BY user_status`,
     );
@@ -242,14 +224,15 @@ async function main() {
 
     const apiSessionState = await query(
       db,
-      `SELECT
-         CASE
+      `SELECT session_state, COUNT(*) AS session_count
+       FROM (
+         SELECT CASE
            WHEN revoked_at IS NOT NULL THEN 'revoked'
            WHEN expires_at <= NOW(6) THEN 'expired'
            ELSE 'active'
-         END AS session_state,
-         COUNT(*) AS session_count
-       FROM api_sessions
+         END AS session_state
+         FROM api_sessions
+       ) states
        GROUP BY session_state
        ORDER BY session_state`,
     );

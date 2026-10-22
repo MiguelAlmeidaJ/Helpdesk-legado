@@ -218,10 +218,15 @@ export class NotificationCenterService {
     await this.ensureNotificationStateTable();
     for (const key of keys) {
       await this.database.$executeRawUnsafe(
-        `INSERT INTO notification_states
-           (user_id, notification_key, read_at, updated_at)
-         VALUES (?, ?, NOW(), NOW())
-         ON DUPLICATE KEY UPDATE read_at = NOW(), updated_at = NOW()`,
+        `MERGE notification_states WITH (HOLDLOCK) AS target
+         USING (SELECT @P1 AS user_id, @P2 AS notification_key) AS source
+           ON target.user_id = source.user_id
+          AND target.notification_key = source.notification_key
+         WHEN MATCHED THEN
+           UPDATE SET read_at = SYSDATETIME(), updated_at = SYSDATETIME()
+         WHEN NOT MATCHED THEN
+           INSERT (user_id, notification_key, read_at, updated_at)
+           VALUES (source.user_id, source.notification_key, SYSDATETIME(), SYSDATETIME());`,
         userId,
         key,
       );

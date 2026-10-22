@@ -1,147 +1,152 @@
 generator client {
-  provider = "prisma-client"
-  output   = "../../src/generated/nivel3"
-  moduleFormat = "cjs"
+  provider        = "prisma-client"
+  output          = "../../src/generated/nivel3"
+  previewFeatures = ["partialIndexes"]
+  moduleFormat    = "cjs"
 }
 
 datasource db {
-  provider = "mysql"
+  provider = "sqlserver"
+}
+
+model access_migrations {
+  migration_key String   @id(map: "PK_access_migrations_migration_key") @db.NVarChar(120)
+  applied_at    DateTime @default(now(), map: "DF__access_mi__appli__66EA454A")
 }
 
 model agenciasbancarias {
-  id      Int    @id
-  ag_nome String @db.VarChar(100)
-  status  Int?   @default(1)
+  id      Int    @id(map: "PK_agenciasbancarias_id")
+  ag_nome String @db.NVarChar(100)
+  status  Int?   @default(1, map: "DF__agenciasb__statu__67DE6983")
 }
 
 model agenda_veiculos {
-  id                  Int       @id @default(autoincrement())
+  id                  Int       @id(map: "PK_agenda_veiculos_id") @default(autoincrement())
   veiculo_id          Int
   data                DateTime  @db.Date
-  empresa             String    @db.VarChar(100)
-  cidade              String?   @db.VarChar(100)
-  horario             String    @db.VarChar(20)
+  empresa             String    @db.NVarChar(100)
+  cidade              String?   @db.NVarChar(100)
+  horario             String    @db.NVarChar(20)
   motorista           Int
-  observacoes         String?   @db.Text
-  color               Int?      @default(1)
+  observacoes         String?   @db.NVarChar(Max)
+  color               Int?      @default(1, map: "DF__agenda_ve__color__6ABAD62E")
   kmInicial           Int?
   kmFinal             Int?
-  visibilidade        Int       @default(0)
+  visibilidade        Int       @default(0, map: "DF__agenda_ve__visib__6D9742D9")
   usuario_id          Int
-  criado_em           DateTime? @default(now()) @db.DateTime(0)
-  arquivado           Boolean?  @default(false)
+  criado_em           DateTime? @default(now(), map: "DF__agenda_ve__criad__6E8B6712")
+  arquivado           Int?      @default(0, map: "DF__agenda_ve__arqui__6F7F8B4B") @db.SmallInt
   data_anterior       DateTime? @db.Date
-  horario_anterior    DateTime? @db.Time(0)
+  horario_anterior    DateTime? @db.Time
   veiculo_id_anterior Int?
-  ultima_alteracao    DateTime? @db.Timestamp(0)
+  ultima_alteracao    DateTime? @db.DateTime
   modificado_por_id   Int?
-  veiculos            veiculos  @relation(fields: [veiculo_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "agenda_veiculos_ibfk_1")
+  veiculos            veiculos  @relation(fields: [veiculo_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "agenda_veiculos$agenda_veiculos_ibfk_1")
 
   @@index([veiculo_id], map: "veiculo_id")
 }
 
 model api_idempotency_keys {
-  id              BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
+  id              BigInt    @id(map: "PK_api_idempotency_keys") @default(autoincrement())
   user_id         Int
   idempotency_key String    @db.VarChar(128)
   request_method  String    @db.VarChar(10)
   request_path    String    @db.VarChar(500)
   request_hash    String    @db.Char(64)
-  response_status Int?      @db.UnsignedSmallInt
-  response_body   String?   @db.LongText
-  locked_until    DateTime? @db.DateTime(6)
-  created_at      DateTime  @default(now()) @db.DateTime(6)
-  expires_at      DateTime  @db.DateTime(6)
-  usuarios        usuarios  @relation(fields: [user_id], references: [user_id], onUpdate: Restrict, map: "fk_api_idempotency_user")
+  response_status Int?
+  response_body   String?   @db.VarChar(Max)
+  locked_until    DateTime?
+  created_at      DateTime  @default(dbgenerated("sysdatetime()"), map: "DF_api_idempotency_keys_created_at")
+  expires_at      DateTime
+  usuarios        usuarios  @relation(fields: [user_id], references: [user_id], onUpdate: NoAction, map: "FK_api_idempotency_keys_user")
 
-  @@unique([user_id, idempotency_key], map: "uq_api_idempotency_user_key")
-  @@index([expires_at], map: "ix_api_idempotency_expiry")
+  @@unique([user_id, idempotency_key], map: "UQ_api_idempotency_keys_user_key")
+  @@index([expires_at], map: "IX_api_idempotency_keys_expires_at")
 }
 
 model api_outbox_events {
-  id              String    @id @db.Char(36)
-  idempotency_key String    @unique(map: "uq_api_outbox_idempotency") @db.VarChar(190)
+  id              String    @id(map: "PK_api_outbox_events") @db.Char(36)
+  idempotency_key String    @unique(map: "UQ_api_outbox_events_idempotency_key") @db.VarChar(190)
   aggregate_type  String    @db.VarChar(80)
   aggregate_id    String    @db.VarChar(80)
   event_type      String    @db.VarChar(120)
-  payload         String    @db.LongText
-  attempts        Int       @default(0) @db.UnsignedSmallInt
-  available_at    DateTime  @default(now()) @db.DateTime(6)
-  claimed_at      DateTime? @db.DateTime(6)
-  processed_at    DateTime? @db.DateTime(6)
+  payload         String    @db.VarChar(Max)
+  attempts        Int       @default(0, map: "DF_api_outbox_events_attempts")
+  available_at    DateTime  @default(dbgenerated("sysdatetime()"), map: "DF_api_outbox_events_available_at")
+  claimed_at      DateTime?
+  processed_at    DateTime?
   last_error      String?   @db.VarChar(1000)
-  created_at      DateTime  @default(now()) @db.DateTime(6)
+  created_at      DateTime  @default(dbgenerated("sysdatetime()"), map: "DF_api_outbox_events_created_at")
 
-  @@index([processed_at, available_at], map: "ix_api_outbox_pending")
+  @@index([processed_at, available_at], map: "IX_api_outbox_events_processed_available")
 }
 
 model api_sessions {
-  id                 String    @id @db.Char(36)
+  id                 String    @id(map: "PK_api_sessions") @db.Char(36)
   family_id          String    @db.Char(36)
   user_id            Int
-  refresh_token_hash String    @unique(map: "uq_api_sessions_token_hash") @db.Char(64)
+  refresh_token_hash String    @unique(map: "UQ_api_sessions_refresh_token_hash") @db.Char(64)
   replaced_by_id     String?   @db.Char(36)
   device_name        String?   @db.VarChar(160)
   user_agent         String?   @db.VarChar(500)
   ip_address         String?   @db.VarChar(45)
-  created_at         DateTime  @default(now()) @db.DateTime(6)
-  last_used_at       DateTime? @db.DateTime(6)
-  expires_at         DateTime  @db.DateTime(6)
-  revoked_at         DateTime? @db.DateTime(6)
+  created_at         DateTime  @default(dbgenerated("sysdatetime()"), map: "DF_api_sessions_created_at")
+  last_used_at       DateTime?
+  expires_at         DateTime
+  revoked_at         DateTime?
   revoke_reason      String?   @db.VarChar(120)
-  usuarios           usuarios  @relation(fields: [user_id], references: [user_id], onUpdate: Restrict, map: "fk_api_sessions_user")
+  usuarios           usuarios  @relation(fields: [user_id], references: [user_id], onUpdate: NoAction, map: "FK_api_sessions_user")
 
-  @@index([family_id], map: "ix_api_sessions_family")
-  @@index([user_id, revoked_at, expires_at], map: "ix_api_sessions_user_active")
+  @@index([family_id], map: "IX_api_sessions_family_id")
+  @@index([user_id, revoked_at, expires_at], map: "IX_api_sessions_user_revoked_expires")
 }
 
 model atendimento_recorrencias {
-  id                    Int                                      @id @default(autoincrement()) @db.UnsignedInt
-  atendimento_modelo_id Int                                      @unique(map: "uq_atendimento_recorrencias_modelo")
-  nome                  String                                   @db.VarChar(180)
+  id                    BigInt   @id(map: "PK_atendimento_recorrencias_id") @default(autoincrement())
+  atendimento_modelo_id Int      @unique(map: "atendimento_recorrencias$uq_atendimento_recorrencias_modelo")
+  nome                  String   @db.NVarChar(180)
   cliente_id            Int
-  periodo               Int                                      @db.UnsignedTinyInt
-  proxima_reabertura    DateTime                                 @db.DateTime(0)
-  quantidade_modo       atendimento_recorrencias_quantidade_modo @default(fixa)
-  quantidade_total      Int?                                     @db.UnsignedSmallInt
-  quantidade_restante   Int                                      @default(1) @db.UnsignedSmallInt
-  ativo                 Boolean                                  @default(true)
+  periodo               Int      @db.TinyInt
+  proxima_reabertura    DateTime
+  quantidade_modo       String   @default("N'fixa'", map: "DF__atendimen__quant__753864A1") @db.NVarChar(8)
+  quantidade_total      Int?
+  quantidade_restante   Int      @default(1, map: "DF__atendimen__quant__7720AD13")
+  ativo                 Int      @default(1, map: "DF__atendimen__ativo__7814D14C") @db.SmallInt
   criado_por            Int?
   atualizado_por        Int?
-  criado_em             DateTime                                 @default(now()) @db.DateTime(0)
-  atualizado_em         DateTime                                 @default(now()) @db.DateTime(0)
+  criado_em             DateTime @default(now(), map: "DF__atendimen__criad__7AF13DF7")
+  atualizado_em         DateTime @default(now(), map: "DF__atendimen__atual__7BE56230")
 
   @@index([ativo, proxima_reabertura], map: "idx_atendimento_recorrencias_execucao")
   @@index([cliente_id, periodo, ativo], map: "idx_atendimento_recorrencias_filtros")
 }
 
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 model atendimentos {
-  id               Int       @id @default(autoincrement())
-  area             Int?      @default(1)
-  cliente          Int?      @default(1)
+  id               Int       @id(map: "PK_atendimentos_id") @default(autoincrement())
+  area             Int?      @default(1, map: "DF__atendiment__area__7CD98669")
+  cliente          Int?      @default(1, map: "DF__atendimen__clien__7DCDAAA2")
   pessoa           Int?
   local            Int?
   tipo             Int?
   categoria        Int?
   subcategoria     Int?
   item             Int?
-  nivel            Int?      @default(1)
-  forma            Int?      @default(1)
-  desc_abertura    String?   @db.Text
-  desc_fechamento  String?   @db.Text
-  nome_maquina     String?   @db.VarChar(255)
-  abertura         DateTime? @db.DateTime(0)
-  fechamento       DateTime? @db.DateTime(0)
+  nivel            Int?      @default(1, map: "DF__atendimen__nivel__047AA831")
+  forma            Int?      @default(1, map: "DF__atendimen__forma__056ECC6A")
+  desc_abertura    String?   @db.NVarChar(Max)
+  desc_fechamento  String?   @db.NVarChar(Max)
+  abertura         DateTime?
+  fechamento       DateTime?
   tecnico          Int?
-  reincidente      Int?      @default(0)
-  status           Int?      @default(1)
-  recorrente       Int?      @default(1)
-  data_recorrencia DateTime? @db.DateTime(0)
-  vezes_reabrir    Int?      @default(1)
-  vezes            Int?      @default(1)
+  reincidente      Int?      @default(0, map: "DF__atendimen__reinc__0B27A5C0")
+  status           Int?      @default(1, map: "DF__atendimen__statu__0C1BC9F9")
+  recorrente       Int?      @default(1, map: "DF__atendimen__recor__0D0FEE32")
+  data_recorrencia DateTime?
+  vezes_reabrir    Int?      @default(1, map: "DF__atendimen__vezes__0EF836A4")
+  vezes            Int?      @default(1, map: "DF__atendimen__vezes__0FEC5ADD")
   semana           Int?
   prioridade       Int?
+  nome_maquina     String?   @db.NVarChar(30)
   imagens          imagens[]
 
   @@index([abertura], map: "idx_abertura")
@@ -154,165 +159,166 @@ model atendimentos {
   @@index([tecnico], map: "idx_tecnico")
 }
 
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model business_calendar_settings {
+  id             Int      @id(map: "PK_business_calendar_settings_id") @db.TinyInt
+  business_start DateTime @default(dbgenerated("07:00:00"), map: "DF__business___busin__13BCEBC1") @db.Time
+  business_end   DateTime @default(dbgenerated("19:00:00"), map: "DF__business___busin__14B10FFA") @db.Time
+  updated_at     DateTime @default(now(), map: "DF__business___updat__15A53433")
+}
+
+model business_holidays {
+  id           BigInt   @id(map: "PK_business_holidays_id") @default(autoincrement())
+  holiday_date DateTime @unique(map: "business_holidays$uq_on_call_holiday_date") @db.Date
+  name         String   @db.NVarChar(120)
+  is_national  Int      @default(0, map: "DF__business___is_na__1699586C") @db.SmallInt
+  created_at   DateTime @default(now(), map: "DF__business___creat__178D7CA5")
+}
+
 model cads_bancos {
-  id     Int     @id @default(autoincrement())
-  bancos String? @db.VarChar(50)
-  dados  String? @db.VarChar(50)
+  id     Int     @id(map: "PK_cads_bancos_id") @default(autoincrement())
+  bancos String? @db.NVarChar(50)
+  dados  String? @db.NVarChar(50)
   status Int?
 }
 
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 model cads_centro_custo {
-  id           Int     @id @default(autoincrement())
-  centro_custo String? @db.VarChar(50)
+  id           Int     @id(map: "PK_cads_centro_custo_id") @default(autoincrement())
+  centro_custo String? @db.NVarChar(50)
   status       Int?
 }
 
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 model cads_class_contab {
-  id        Int     @id @default(autoincrement())
-  categoria String? @db.VarChar(50)
+  id        Int     @id(map: "PK_cads_class_contab_id") @default(autoincrement())
+  categoria String? @db.NVarChar(50)
   status    Int?
 }
 
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 model cads_forma_pag {
-  id             Int              @id @default(autoincrement())
-  forma          String?          @db.VarChar(50)
+  id             Int              @id(map: "PK_cads_forma_pag_id") @default(autoincrement())
+  forma          String?          @db.NVarChar(50)
   status         Int?
   contas_pagar   contas_pagar[]
   contas_receber contas_receber[]
   recebimentos   recebimentos[]
 }
 
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 model cads_fotos {
-  id        Int     @id @default(autoincrement())
+  id        Int     @id(map: "PK_cads_fotos_id") @default(autoincrement())
   contrato  Int?
-  descricao String? @db.VarChar(50)
-  endereco  String? @db.VarChar(50)
+  descricao String? @db.NVarChar(50)
+  endereco  String? @db.NVarChar(50)
   status    Int?
 }
 
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 model cads_ind_reaju {
-  id     Int     @id @default(autoincrement())
-  indice String? @db.VarChar(50)
+  id     Int     @id(map: "PK_cads_ind_reaju_id") @default(autoincrement())
+  indice String? @db.NVarChar(50)
   status Int?
 }
 
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 model cads_tipo_despe {
-  id           Int     @id @default(autoincrement())
-  despesa      String? @db.VarChar(50)
+  id           Int     @id(map: "PK_cads_tipo_despe_id") @default(autoincrement())
+  despesa      String? @db.NVarChar(50)
   class_contab Int?
   status       Int?
 }
 
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 model cads_tipo_servi {
-  id           Int     @id @default(autoincrement())
-  servico      String? @db.VarChar(50)
+  id           Int     @id(map: "PK_cads_tipo_servi_id") @default(autoincrement())
+  servico      String? @db.NVarChar(50)
   class_contab Int?
   status       Int?
 }
 
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 model cads_tipo_taxa {
-  id           Int     @id @default(autoincrement())
-  taxa         String? @db.VarChar(50)
+  id           Int     @id(map: "PK_cads_tipo_taxa_id") @default(autoincrement())
+  taxa         String? @db.NVarChar(50)
   class_contab Int?
   status       Int?
 }
 
 model cargos_n3 {
-  cargo_id   Int     @id @default(autoincrement())
-  cargo_nome String? @db.VarChar(50)
+  cargo_id   Int     @id(map: "PK_cargos_n3_cargo_id") @default(autoincrement())
+  cargo_nome String? @db.NVarChar(50)
   cargo_sts  Int?
 }
 
-model catalogos {
-  id                 Int              @id @default(autoincrement())
-  setor              Int
-  catalogo_categoria Int
-  cliente_id         Int
-  titulo             String           @db.VarChar(255)
-  conteudo           String           @db.LongText
-  data_criacao       DateTime?        @default(now()) @db.DateTime(0)
-  data_edicao        DateTime?        @default(now()) @db.DateTime(0)
-  arquivado_em       DateTime?        @db.DateTime(0)
-  usuario_id         Int
-  catalog_images     catalog_images[]
-}
-
 model catalog_images {
-  id            Int       @id @default(autoincrement()) @db.UnsignedInt
+  id            BigInt     @id(map: "PK_catalog_images_id") @default(autoincrement())
   catalog_id    Int?
-  original_name String    @db.VarChar(255)
-  stored_name   String    @db.VarChar(255)
-  storage_path  String    @db.VarChar(500)
-  mime_type     String    @db.VarChar(100)
-  size_bytes    Int       @db.UnsignedInt
-  width         Int?      @db.UnsignedInt
-  height        Int?      @db.UnsignedInt
-  sha256        String    @db.Char(64)
+  original_name String     @db.NVarChar(255)
+  stored_name   String     @db.NVarChar(255)
+  storage_path  String     @db.NVarChar(500)
+  mime_type     String     @db.NVarChar(100)
+  size_bytes    BigInt
+  width         BigInt?
+  height        BigInt?
+  sha256        String     @db.NChar(64)
   created_by    Int
-  created_at    DateTime  @default(now()) @db.DateTime(0)
-  catalogos     catalogos? @relation(fields: [catalog_id], references: [id], onDelete: SetNull, onUpdate: Restrict, map: "fk_catalog_images_catalog")
+  created_at    DateTime   @default(now(), map: "DF__catalog_i__creat__3429BB53")
+  catalogos     catalogos? @relation(fields: [catalog_id], references: [id], onUpdate: NoAction, map: "catalog_images$fk_catalog_images_catalog")
 
   @@index([catalog_id], map: "idx_catalog_images_catalog")
   @@index([created_by, created_at], map: "idx_catalog_images_creator")
 }
 
+model catalogos {
+  id                 Int              @id(map: "PK_catalogos_id") @default(autoincrement())
+  setor              Int
+  catalogo_categoria Int
+  cliente_id         Int
+  titulo             String           @db.VarChar(255)
+  conteudo           String           @db.VarChar(Max)
+  data_criacao       DateTime?        @default(now(), map: "DF__catalogos__data___351DDF8C")
+  data_edicao        DateTime?        @default(now(), map: "DF__catalogos__data___361203C5")
+  arquivado_em       DateTime?
+  usuario_id         Int
+  catalog_images     catalog_images[]
+}
+
 model catalogos_categoria {
-  categoria_id   Int    @id @default(autoincrement())
-  categoria_nome String @db.VarChar(50)
+  categoria_id   Int    @id(map: "PK_catalogos_categoria_categoria_id") @default(autoincrement())
+  categoria_nome String @db.NVarChar(50)
 }
 
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 model categorias {
-  cat_id    Int     @id @default(autoincrement())
-  cat_nome  String? @db.VarChar(50)
+  cat_id    Int     @id(map: "PK_categorias_cat_id") @default(autoincrement())
+  cat_nome  String? @db.NVarChar(50)
   cat_setor Int?
-  cat_sts   Int     @default(1)
+  cat_sts   Int     @default(1, map: "DF__categoria__cat_s__39E294A9")
 }
 
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 model categorias_classificacao {
-  id             Int              @id @default(autoincrement())
-  nome           String           @unique(map: "nome") @db.VarChar(50)
-  status         Int              @default(1)
+  id             Int              @id(map: "PK_categorias_classificacao_id") @default(autoincrement())
+  nome           String           @unique(map: "categorias_classificacao$nome") @db.NVarChar(50)
+  status         Int              @default(1, map: "DF__categoria__statu__3AD6B8E2")
   contas_pagar   contas_pagar[]
   contas_receber contas_receber[]
   recorrencias   recorrencias[]
 }
 
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 model categorias_empresa_centro_custo {
-  id     Int    @id @default(autoincrement())
-  nome   String @unique(map: "nome") @db.VarChar(50)
-  status Int    @default(1)
+  id     Int    @id(map: "PK_categorias_empresa_centro_custo_id") @default(autoincrement())
+  nome   String @unique(map: "categorias_empresa_centro_custo$nome") @db.NVarChar(50)
+  status Int    @default(1, map: "DF__categoria__statu__3BCADD1B")
 }
 
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 model categorias_grupo {
-  id                  Int                   @id @default(autoincrement())
-  nome                String                @unique(map: "nome") @db.VarChar(50)
-  status              Int                   @default(1)
+  id                  Int                   @id(map: "PK_categorias_grupo_id") @default(autoincrement())
+  nome                String                @unique(map: "categorias_grupo$nome") @db.NVarChar(50)
+  status              Int                   @default(1, map: "DF__categoria__statu__3CBF0154")
   categorias_subgrupo categorias_subgrupo[]
   contas_receber      contas_receber[]
   recorrencias        recorrencias[]
 }
 
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 model categorias_subgrupo {
-  id               Int              @id @default(autoincrement())
+  id               Int              @id(map: "PK_categorias_subgrupo_id") @default(autoincrement())
   id_grupo         Int
-  nome             String           @db.VarChar(50)
-  status           Int              @default(1)
-  aplicavel        String?          @db.VarChar(50)
-  categorias_grupo categorias_grupo @relation(fields: [id_grupo], references: [id], onUpdate: Restrict, map: "categorias_subgrupo_ibfk_1")
+  nome             String           @db.NVarChar(50)
+  status           Int              @default(1, map: "DF__categoria__statu__3DB3258D")
+  aplicavel        String?          @db.NVarChar(50)
+  categorias_grupo categorias_grupo @relation(fields: [id_grupo], references: [id], onUpdate: NoAction, map: "categorias_subgrupo$categorias_subgrupo_ibfk_1")
   contas_pagar     contas_pagar[]
   contas_receber   contas_receber[]
   recorrencias     recorrencias[]
@@ -321,138 +327,133 @@ model categorias_subgrupo {
 }
 
 model categorias_terc_andar {
-  id    Int     @id @default(autoincrement())
-  nome  String  @db.VarChar(120)
-  ativo Boolean @default(true)
-  ordem Int     @default(0)
+  id    Int    @id(map: "PK_categorias_terc_andar_id") @default(autoincrement())
+  nome  String @db.NVarChar(120)
+  ativo Int    @default(1, map: "DF__categoria__ativo__3F9B6DFF") @db.SmallInt
+  ordem Int    @default(0, map: "DF__categoria__ordem__408F9238")
 }
 
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 model categorias_tipo_documento {
-  id             Int              @id @default(autoincrement())
-  nome           String           @unique(map: "nome") @db.VarChar(50)
-  status         Int              @default(1)
+  id             Int              @id(map: "PK_categorias_tipo_documento_id") @default(autoincrement())
+  nome           String           @unique(map: "categorias_tipo_documento$nome") @db.NVarChar(50)
+  status         Int              @default(1, map: "DF__categoria__statu__4183B671")
   contas_pagar   contas_pagar[]
   contas_receber contas_receber[]
   recorrencias   recorrencias[]
 }
 
 model category {
-  id           Int       @id @default(autoincrement())
-  categories   String    @db.VarChar(250)
-  description  String?   @db.Text
-  status       Boolean   @default(true)
-  date_created DateTime  @default(now()) @db.DateTime(0)
-  date_updated DateTime? @db.DateTime(0)
+  id           Int       @id(map: "PK_category_id") @default(autoincrement())
+  categories   String    @db.NVarChar(250)
+  description  String?   @db.NVarChar(Max)
+  status       Int       @default(1, map: "DF__category__status__436BFEE3") @db.SmallInt
+  date_created DateTime  @default(now(), map: "DF__category__date_c__4460231C")
+  date_updated DateTime?
 }
 
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 model clientes {
-  clt_id            Int                 @id @default(autoincrement())
-  clt_nomer         String?             @db.VarChar(80)
-  clt_nomef         String?             @db.VarChar(80)
-  clt_cnpj          String?             @db.VarChar(22)
-  clt_end           String?             @db.VarChar(100)
-  clt_city          String?             @db.VarChar(50)
-  clt_uf            String?             @db.VarChar(2)
-  clt_mail          String?             @db.VarChar(60)
-  clt_tel           String?             @db.VarChar(50)
-  clt_sts           Int                 @default(1)
-  clt_ti            Int                 @default(0)
-  clt_adm           Int                 @default(0)
-  clt_mkt           Int                 @default(0)
+  clt_id            Int                 @id(map: "PK_clientes_clt_id") @default(autoincrement())
+  clt_nomer         String?             @db.NVarChar(80)
+  clt_nomef         String?             @db.NVarChar(80)
+  clt_cnpj          String?             @db.NVarChar(22)
+  clt_end           String?             @db.NVarChar(100)
+  clt_city          String?             @db.NVarChar(50)
+  clt_uf            String?             @db.NVarChar(2)
+  clt_mail          String?             @db.NVarChar(60)
+  clt_tel           String?             @db.NVarChar(50)
+  clt_sts           Int                 @default(1, map: "DF__clientes__clt_st__4DE98D56")
+  clt_ti            Int                 @default(0, map: "DF__clientes__clt_ti__4EDDB18F")
+  clt_adm           Int                 @default(0, map: "DF__clientes__clt_ad__4FD1D5C8")
+  clt_mkt           Int                 @default(0, map: "DF__clientes__clt_mk__50C5FA01")
   clientes_usuarios clientes_usuarios[]
   contas_receber    contas_receber[]
   recorrencias      recorrencias[]
 }
 
 model clientes_usuarios {
-  id         Int       @id @default(autoincrement())
+  id         Int       @id(map: "PK_clientes_usuarios_id") @default(autoincrement())
   cliente_id Int?
   usuario_id Int?
-  clientes   clientes? @relation(fields: [cliente_id], references: [clt_id], onDelete: NoAction, onUpdate: NoAction, map: "FK__clientes")
-  usuarios   usuarios? @relation(fields: [usuario_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "FK__usuarios")
+  clientes   clientes? @relation(fields: [cliente_id], references: [clt_id], onDelete: NoAction, onUpdate: NoAction, map: "clientes_usuarios$FK__clientes")
+  usuarios   usuarios? @relation(fields: [usuario_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "clientes_usuarios$FK__usuarios")
 
   @@index([cliente_id], map: "FK__clientes")
   @@index([usuario_id], map: "FK__usuarios")
 }
 
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 model concluido {
-  concluido_id    Int       @id @default(autoincrement())
+  concluido_id    Int       @id(map: "PK_concluido_concluido_id") @default(autoincrement())
   concluido_atd   Int?
-  concluido_start DateTime? @db.DateTime(0)
-  concluido_prev  DateTime? @db.DateTime(0)
-  concluido_desc  String?   @db.Text
-  concluido_end   DateTime? @db.DateTime(0)
+  concluido_start DateTime?
+  concluido_prev  DateTime?
+  concluido_desc  String?   @db.NVarChar(Max)
+  concluido_end   DateTime?
   concluido_user  Int?
 }
 
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 model config_mkt {
-  id           Int @id @default(autoincrement())
-  tempo_alerta Int @default(40)
-  sla_n1       Int @default(30)
-  sla_n2       Int @default(10)
-  sla_n3       Int @default(20)
-  sla_n4       Int @default(30)
-  sla_n5       Int @default(210)
-  sla_n6       Int @default(180)
-  sla_n7       Int @default(210)
-  sla_n8       Int @default(420)
-  sla_n9       Int @default(840)
-  sla_n10      Int @default(120)
-  sla_n11      Int @default(60)
-  sla_n12      Int @default(120)
-  sla_n13      Int @default(60)
-  sla_n14      Int @default(60)
+  id           Int @id(map: "PK_config_mkt_id") @default(autoincrement())
+  tempo_alerta Int @default(40, map: "DF__config_mk__tempo__595B4002")
+  sla_n1       Int @default(30, map: "DF__config_mk__sla_n__5A4F643B")
+  sla_n2       Int @default(10, map: "DF__config_mk__sla_n__5B438874")
+  sla_n3       Int @default(20, map: "DF__config_mk__sla_n__5C37ACAD")
+  sla_n4       Int @default(30, map: "DF__config_mk__sla_n__5D2BD0E6")
+  sla_n5       Int @default(210, map: "DF__config_mk__sla_n__5E1FF51F")
+  sla_n6       Int @default(180, map: "DF__config_mk__sla_n__5F141958")
+  sla_n7       Int @default(210, map: "DF__config_mk__sla_n__60083D91")
+  sla_n8       Int @default(420, map: "DF__config_mk__sla_n__60FC61CA")
+  sla_n9       Int @default(840, map: "DF__config_mk__sla_n__61F08603")
+  sla_n10      Int @default(120, map: "DF__config_mk__sla_n__62E4AA3C")
+  sla_n11      Int @default(60, map: "DF__config_mk__sla_n__63D8CE75")
+  sla_n12      Int @default(120, map: "DF__config_mk__sla_n__64CCF2AE")
+  sla_n13      Int @default(60, map: "DF__config_mk__sla_n__65C116E7")
+  sla_n14      Int @default(60, map: "DF__config_mk__sla_n__66B53B20")
 }
 
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 model configuracao {
-  id           Int @id @default(autoincrement())
-  tempo_alerta Int @default(40)
-  sla_n1       Int @default(60)
-  sla_n2       Int @default(120)
-  sla_n3       Int @default(180)
-  sla_n4       Int @default(60)
-  sla_n5       Int @default(60)
-  sla_n6       Int @default(2880)
-  sla_n7       Int @default(7200)
-  sla_n8       Int @default(21600)
-  sla_n9       Int @default(43200)
-  sla_n10      Int @default(86400)
-  sla_n11      Int @default(129600)
-  sla_n12      Int @default(360)
+  id           Int @id(map: "PK_configuracao_id") @default(autoincrement())
+  tempo_alerta Int @default(40, map: "DF__configura__tempo__67A95F59")
+  sla_n1       Int @default(60, map: "DF__configura__sla_n__689D8392")
+  sla_n2       Int @default(120, map: "DF__configura__sla_n__6991A7CB")
+  sla_n3       Int @default(180, map: "DF__configura__sla_n__6A85CC04")
+  sla_n4       Int @default(60, map: "DF__configura__sla_n__6B79F03D")
+  sla_n5       Int @default(60, map: "DF__configura__sla_n__6C6E1476")
+  sla_n6       Int @default(2880, map: "DF__configura__sla_n__6D6238AF")
+  sla_n7       Int @default(7200, map: "DF__configura__sla_n__6E565CE8")
+  sla_n8       Int @default(21600, map: "DF__configura__sla_n__6F4A8121")
+  sla_n9       Int @default(43200, map: "DF__configura__sla_n__703EA55A")
+  sla_n10      Int @default(86400, map: "DF__configura__sla_n__7132C993")
+  sla_n11      Int @default(129600, map: "DF__configura__sla_n__7226EDCC")
+  sla_n12      Int @default(360, map: "DF__configura__sla_n__731B1205")
 }
 
 model contas_pagar {
-  id                        Int                        @id @default(autoincrement())
-  descricao                 String                     @db.VarChar(255)
+  id                        Int                        @id(map: "PK_contas_pagar_id") @default(autoincrement())
+  descricao                 String                     @db.NVarChar(255)
   id_usuario                Int?
-  fornecedor                String?                    @db.VarChar(100)
+  fornecedor                String?                    @db.NVarChar(100)
   valor                     Decimal                    @db.Decimal(10, 2)
   data_vencimento           DateTime                   @db.Date
   data_pagamento            DateTime?                  @db.Date
-  status                    contas_pagar_status        @default(Pendente)
-  status_id                 Int?                       @default(1)
+  status                    String                     @default("N'Pendente'", map: "DF__contas_pa__statu__76EBA2E9") @db.NVarChar(8)
+  status_id                 Int?                       @default(1, map: "DF__contas_pa__statu__77DFC722")
   unidade_negocio           Int
   id_grupo                  Int
   id_subgrupo               Int
   id_classificacao          Int
   id_tipo_documento         Int?
   id_forma_pagamento        Int?
-  observacao                String?                    @db.Text
-  data_criacao              DateTime                   @default(now()) @db.Timestamp(0)
-  last_update               DateTime?                  @default(now()) @db.Timestamp(0)
+  observacao                String?                    @db.NVarChar(Max)
+  data_criacao              DateTime                   @default(now(), map: "DF__contas_pa__data___7BB05806") @db.DateTime
+  last_update               DateTime?                  @default(now(), map: "DF__contas_pa__last___7CA47C3F") @db.DateTime
   id_agBancaria             Int?
-  anexos                    String?                    @db.Text
-  usuarios                  usuarios?                  @relation(fields: [id_usuario], references: [user_id], onDelete: Restrict, onUpdate: Restrict, map: "contas_pagar_ibfk_1")
-  categorias_subgrupo       categorias_subgrupo        @relation(fields: [id_subgrupo], references: [id], onUpdate: Restrict, map: "contas_pagar_ibfk_2")
-  categorias_classificacao  categorias_classificacao   @relation(fields: [id_classificacao], references: [id], onUpdate: Restrict, map: "contas_pagar_ibfk_3")
-  categorias_tipo_documento categorias_tipo_documento? @relation(fields: [id_tipo_documento], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "contas_pagar_ibfk_4")
-  cads_forma_pag            cads_forma_pag?            @relation(fields: [id_forma_pagamento], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "contas_pagar_ibfk_5")
-  status_contas             status_contas?             @relation(fields: [status_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_contas_pagar_status")
+  anexos                    String?                    @db.NVarChar(Max)
+  usuarios                  usuarios?                  @relation(fields: [id_usuario], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "contas_pagar$contas_pagar_ibfk_1")
+  categorias_subgrupo       categorias_subgrupo        @relation(fields: [id_subgrupo], references: [id], onUpdate: NoAction, map: "contas_pagar$contas_pagar_ibfk_2")
+  categorias_classificacao  categorias_classificacao   @relation(fields: [id_classificacao], references: [id], onUpdate: NoAction, map: "contas_pagar$contas_pagar_ibfk_3")
+  categorias_tipo_documento categorias_tipo_documento? @relation(fields: [id_tipo_documento], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "contas_pagar$contas_pagar_ibfk_4")
+  cads_forma_pag            cads_forma_pag?            @relation(fields: [id_forma_pagamento], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "contas_pagar$contas_pagar_ibfk_5")
+  status_contas             status_contas?             @relation(fields: [status_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "contas_pagar$fk_contas_pagar_status")
 
   @@index([status_id], map: "fk_contas_pagar_status")
   @@index([id_classificacao], map: "id_classificacao")
@@ -463,9 +464,9 @@ model contas_pagar {
 }
 
 model contas_receber {
-  id                        Int                        @id @default(autoincrement())
+  id                        Int                        @id(map: "PK_contas_receber_id") @default(autoincrement())
   id_cliente                Int
-  descricao                 String                     @db.VarChar(255)
+  descricao                 String                     @db.NVarChar(255)
   valor_total               Decimal                    @db.Decimal(10, 2)
   saldo                     Decimal?                   @db.Decimal(10, 2)
   unidade_negocio           Int
@@ -475,20 +476,20 @@ model contas_receber {
   id_tipo_documento         Int?
   id_forma_pagamento        Int?
   data_vencimento           DateTime                   @db.Date
-  status                    contas_receber_status      @default(A_vencer)
-  observacao                String?                    @db.Text
-  data_criacao              DateTime                   @default(now()) @db.Timestamp(0)
+  status                    String                     @default("N'A vencer'", map: "DF__contas_re__statu__025D5595") @db.NVarChar(21)
+  observacao                String?                    @db.NVarChar(Max)
+  data_criacao              DateTime                   @default(now(), map: "DF__contas_re__data___04459E07") @db.DateTime
   id_usuario                Int
-  data_update               DateTime                   @default(now()) @db.Timestamp(0)
-  anexos                    String?                    @db.Text
-  status_id                 Int?                       @default(1)
-  clientes                  clientes                   @relation(fields: [id_cliente], references: [clt_id], onUpdate: Restrict, map: "contas_receber_ibfk_1")
-  categorias_tipo_documento categorias_tipo_documento? @relation(fields: [id_tipo_documento], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "contas_receber_ibfk_2")
-  cads_forma_pag            cads_forma_pag?            @relation(fields: [id_forma_pagamento], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "contas_receber_ibfk_3")
-  categorias_grupo          categorias_grupo           @relation(fields: [id_grupo], references: [id], onUpdate: Restrict, map: "contas_receber_ibfk_4")
-  categorias_subgrupo       categorias_subgrupo        @relation(fields: [id_subgrupo], references: [id], onUpdate: Restrict, map: "contas_receber_ibfk_5")
-  categorias_classificacao  categorias_classificacao   @relation(fields: [id_classificacao], references: [id], onUpdate: Restrict, map: "contas_receber_ibfk_6")
-  status_contas             status_contas?             @relation(fields: [status_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_status_conta")
+  data_update               DateTime                   @default(now(), map: "DF__contas_re__data___0539C240") @db.DateTime
+  anexos                    String?                    @db.NVarChar(Max)
+  status_id                 Int?                       @default(1, map: "DF__contas_re__statu__07220AB2")
+  clientes                  clientes                   @relation(fields: [id_cliente], references: [clt_id], onUpdate: NoAction, map: "contas_receber$contas_receber_ibfk_1")
+  categorias_tipo_documento categorias_tipo_documento? @relation(fields: [id_tipo_documento], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "contas_receber$contas_receber_ibfk_2")
+  cads_forma_pag            cads_forma_pag?            @relation(fields: [id_forma_pagamento], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "contas_receber$contas_receber_ibfk_3")
+  categorias_grupo          categorias_grupo           @relation(fields: [id_grupo], references: [id], onUpdate: NoAction, map: "contas_receber$contas_receber_ibfk_4")
+  categorias_subgrupo       categorias_subgrupo        @relation(fields: [id_subgrupo], references: [id], onUpdate: NoAction, map: "contas_receber$contas_receber_ibfk_5")
+  categorias_classificacao  categorias_classificacao   @relation(fields: [id_classificacao], references: [id], onUpdate: NoAction, map: "contas_receber$contas_receber_ibfk_6")
+  status_contas             status_contas?             @relation(fields: [status_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "contas_receber$fk_status_conta")
   contas_receber_divisao    contas_receber_divisao?
   recebimentos              recebimentos[]
 
@@ -502,459 +503,571 @@ model contas_receber {
 }
 
 model contas_receber_divisao {
-  id                   Int            @id @default(autoincrement())
-  id_conta_receber     Int            @unique(map: "idx_conta_unica")
-  percentual_ti        Int?           @default(0) @db.UnsignedTinyInt
-  percentual_devops    Int?           @default(0) @db.UnsignedTinyInt
-  percentual_marketing Int?           @default(0) @db.UnsignedTinyInt
-  contas_receber       contas_receber @relation(fields: [id_conta_receber], references: [id], onUpdate: Restrict, map: "contas_receber_divisao_ibfk_1")
+  id                   Int            @id(map: "PK_contas_receber_divisao_id") @default(autoincrement())
+  id_conta_receber     Int            @unique(map: "contas_receber_divisao$idx_conta_unica")
+  percentual_ti        Int?           @default(0, map: "DF__contas_re__perce__08162EEB") @db.TinyInt
+  percentual_devops    Int?           @default(0, map: "DF__contas_re__perce__090A5324") @db.TinyInt
+  percentual_marketing Int?           @default(0, map: "DF__contas_re__perce__09FE775D") @db.TinyInt
+  contas_receber       contas_receber @relation(fields: [id_conta_receber], references: [id], onUpdate: NoAction, map: "contas_receber_divisao$contas_receber_divisao_ibfk_1")
 }
 
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 model contratos {
-  id              Int       @id @default(autoincrement())
+  id              Int       @id(map: "PK_contratos_id") @default(autoincrement())
   cliente         Int?
   data_inicio     DateTime? @db.Date
   data_termino    DateTime? @db.Date
   dia_pagamento   Int?
-  valor_inicial   Float?    @db.Float
-  valor_atual     Float?    @db.Float
-  forma_pag       String?   @db.Text
-  bancos          String?   @db.Text
-  agencia         String?   @db.Text
-  conta           String?   @db.Text
+  valor_inicial   Decimal?  @db.Decimal(9, 2)
+  valor_atual     Decimal?  @db.Decimal(9, 2)
+  forma_pag       String?   @db.NVarChar(Max)
+  bancos          String?   @db.NVarChar(Max)
+  agencia         String?   @db.NVarChar(Max)
+  conta           String?   @db.NVarChar(Max)
   indice_reajuste Int?
   centro_custo    Int?
   class_contabil  Int?
-  status          Int?      @default(1)
-  observacoes     String?   @db.Text
+  status          Int?      @default(1, map: "DF__contratos__statu__1758727B")
+  observacoes     String?   @db.NVarChar(Max)
 }
 
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 model custos {
-  id               Int      @id @default(autoincrement())
+  id               Int      @id(map: "PK_custos_id") @default(autoincrement())
   contrato         Int
   tipo             Int
   custo            Int
   centro_custo     Int
   data_competencia DateTime @db.Date
   data_vencimento  DateTime @db.Date
-  valor            Float    @db.Float
-  info_consumo     String   @db.VarChar(50)
-  nf               String   @db.VarChar(50)
-  descricao        String   @db.Text
-  status           Int      @default(1)
+  valor            Decimal  @db.Decimal(10, 2)
+  info_consumo     String   @db.NVarChar(50)
+  nf               String   @db.NVarChar(50)
+  descricao        String   @db.NVarChar(Max)
+  status           Int      @default(1, map: "DF__custos__status__1940BAED")
+}
+
+model devops_flow_template_applications {
+  id                    BigInt                @id(map: "PK_devops_flow_template_applications_id") @default(autoincrement())
+  project_id            Int
+  template_id           BigInt
+  applied_by            Int
+  applied_at            DateTime              @default(now(), map: "DF__devops_fl__appli__1A34DF26")
+  devops_flow_templates devops_flow_templates @relation(fields: [template_id], references: [id], onUpdate: NoAction, map: "devops_flow_template_applications$fk_devops_flow_template_applications_template")
+
+  @@unique([project_id, template_id], map: "devops_flow_template_applications$uq_devops_flow_template_application")
+  @@index([template_id, applied_at], map: "idx_devops_flow_template_applications")
+}
+
+model devops_flow_template_steps {
+  id                    BigInt                @id(map: "PK_devops_flow_template_steps_id") @default(autoincrement())
+  template_id           BigInt
+  step_key              String                @db.NVarChar(64)
+  name                  String                @db.NVarChar(160)
+  description           String                @db.NVarChar(Max)
+  duration_days         Int                   @default(1, map: "DF__devops_fl__durat__1B29035F")
+  depends_on_key        String?               @db.NVarChar(64)
+  sort_order            Int                   @default(0, map: "DF__devops_fl__sort___1D114BD1")
+  devops_flow_templates devops_flow_templates @relation(fields: [template_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "devops_flow_template_steps$fk_devops_flow_template_steps_template")
+
+  @@unique([template_id, step_key], map: "devops_flow_template_steps$uq_devops_flow_template_step_key")
+  @@index([template_id, sort_order, id], map: "idx_devops_flow_template_steps_order")
+}
+
+model devops_flow_templates {
+  id                                BigInt                              @id(map: "PK_devops_flow_templates_id") @default(autoincrement())
+  name                              String                              @db.NVarChar(160)
+  description                       String                              @db.NVarChar(Max)
+  is_active                         Int                                 @default(1, map: "DF__devops_fl__is_ac__1E05700A") @db.SmallInt
+  created_by                        Int
+  created_at                        DateTime                            @default(now(), map: "DF__devops_fl__creat__1EF99443")
+  updated_at                        DateTime                            @default(now(), map: "DF__devops_fl__updat__1FEDB87C")
+  devops_flow_template_applications devops_flow_template_applications[]
+  devops_flow_template_steps        devops_flow_template_steps[]
+
+  @@index([is_active, name], map: "idx_devops_flow_templates_active_name")
 }
 
 model documentos {
-  id              Int      @id @default(autoincrement())
+  id              Int      @id(map: "PK_documentos_id") @default(autoincrement())
   atd_id          Int?
   user_id         Int?
   caminho_arquivo String   @db.VarChar(255)
   nome_arquivo    String   @db.VarChar(255)
   tipo_arquivo    String?  @db.VarChar(100)
-  data_upload     DateTime @default(now()) @db.Timestamp(0)
+  data_upload     DateTime @default(now(), map: "DF__documento__data___23BE4960") @db.DateTime
 }
 
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 model espera {
-  espera_id       Int       @id @default(autoincrement())
+  espera_id       Int       @id(map: "PK_espera_espera_id") @default(autoincrement())
   espera_atd      Int?
   id_melhorias    Int?
-  espera_start    DateTime? @db.DateTime(0)
-  espera_prev     DateTime? @db.DateTime(0)
-  espera_desc     String?   @db.Text
-  espera_end      DateTime? @db.DateTime(0)
+  espera_start    DateTime?
+  espera_prev     DateTime?
+  espera_desc     String?   @db.NVarChar(Max)
+  espera_end      DateTime?
   espera_user     Int?
-  espera_causa    String?   @db.VarChar(50)
-  ultimo_registro DateTime  @default(now()) @db.Timestamp(0)
+  espera_causa    String?   @db.NVarChar(50)
+  ultimo_registro DateTime? @default(now(), map: "DF__espera__ultimo_r__2C538F61") @db.DateTime
 
   @@index([espera_atd], map: "idx_espera_atd")
 }
 
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 model espera_mkt_proj {
-  espera_id      Int       @id @default(autoincrement())
+  espera_id      Int       @id(map: "PK_espera_mkt_proj_espera_id") @default(autoincrement())
   espera_projeto Int?
-  espera_start   DateTime? @db.DateTime(0)
-  espera_prev    DateTime? @db.DateTime(0)
-  espera_desc    String?   @db.Text
-  espera_end     DateTime? @db.DateTime(0)
+  espera_start   DateTime?
+  espera_prev    DateTime?
+  espera_desc    String?   @db.NVarChar(Max)
+  espera_end     DateTime?
   espera_user    Int?
 }
 
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 model espera_mkt_tarefa {
-  espera_id     Int       @id @default(autoincrement())
+  espera_id     Int       @id(map: "PK_espera_mkt_tarefa_espera_id") @default(autoincrement())
   espera_tarefa Int?
-  espera_start  DateTime? @db.DateTime(0)
-  espera_prev   DateTime? @db.DateTime(0)
-  espera_desc   String?   @db.Text
-  espera_end    DateTime? @db.DateTime(0)
+  espera_start  DateTime?
+  espera_prev   DateTime?
+  espera_desc   String?   @db.NVarChar(Max)
+  espera_end    DateTime?
   espera_user   Int?
 }
 
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 model espera_projeto {
-  espera_id      Int       @id @default(autoincrement())
+  espera_id      Int       @id(map: "PK_espera_projeto_espera_id") @default(autoincrement())
   espera_projeto Int?
-  espera_start   DateTime? @db.DateTime(0)
-  espera_prev    DateTime? @db.DateTime(0)
-  espera_desc    String?   @db.Text
-  espera_end     DateTime? @db.DateTime(0)
+  espera_start   DateTime?
+  espera_prev    DateTime?
+  espera_desc    String?   @db.NVarChar(Max)
+  espera_end     DateTime?
   espera_user    Int?
 }
 
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 model espera_tarefas {
-  espera_id     Int       @id @default(autoincrement())
+  espera_id     Int       @id(map: "PK_espera_tarefas_espera_id") @default(autoincrement())
   espera_tarefa Int?
-  espera_start  DateTime? @db.DateTime(0)
-  espera_prev   DateTime? @db.DateTime(0)
-  espera_desc   String?   @db.Text
-  espera_end    DateTime? @db.DateTime(0)
+  espera_start  DateTime?
+  espera_prev   DateTime?
+  espera_desc   String?   @db.NVarChar(Max)
+  espera_end    DateTime?
   espera_user   Int?
 }
 
 model espera_terc_andar {
-  espera_id          Int                @id @default(autoincrement())
+  espera_id          Int                @id(map: "PK_espera_terc_andar_espera_id") @default(autoincrement())
   espera_tarefa      Int
-  espera_start       DateTime?          @default(now()) @db.DateTime(0)
-  espera_prev        DateTime?          @db.DateTime(0)
-  espera_desc        String?            @db.Text
-  espera_end         DateTime?          @db.DateTime(0)
-  espera_user        String?            @db.VarChar(150)
-  tarefas_terc_andar tarefas_terc_andar @relation(fields: [espera_tarefa], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "espera_terc_andar_ibfk_1")
+  espera_start       DateTime?          @default(now(), map: "DF__espera_te__esper__442B18F2")
+  espera_prev        DateTime?
+  espera_desc        String?            @db.NVarChar(Max)
+  espera_end         DateTime?
+  espera_user        String?            @db.NVarChar(150)
+  tarefas_terc_andar tarefas_terc_andar @relation(fields: [espera_tarefa], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "espera_terc_andar$espera_terc_andar_ibfk_1")
 
   @@index([espera_tarefa], map: "espera_tarefa")
 }
 
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 model facility {
-  id              Int       @id @default(autoincrement())
-  area            Int?      @default(1)
-  cliente         Int?      @default(1)
+  id              Int       @id(map: "PK_facility_id") @default(autoincrement())
+  area            Int?      @default(1, map: "DF__facility__area__48EFCE0F")
+  cliente         Int?      @default(1, map: "DF__facility__client__49E3F248")
   pessoa          Int?
   local           Int?
   tipo            Int?
   categoria       Int?
   subcategoria    Int?
   item            Int?
-  nivel           Int?      @default(1)
-  forma           Int?      @default(1)
-  desc_abertura   String?   @db.Text
-  desc_fechamento String?   @db.Text
-  abertura        DateTime? @db.DateTime(0)
-  fechamento      DateTime? @db.DateTime(0)
+  nivel           Int?      @default(1, map: "DF__facility__nivel__5090EFD7")
+  forma           Int?      @default(1, map: "DF__facility__forma__51851410")
+  desc_abertura   String?   @db.NVarChar(Max)
+  desc_fechamento String?   @db.NVarChar(Max)
+  abertura        DateTime?
+  fechamento      DateTime?
   tecnico         Int?
-  reincidente     Int?      @default(0)
-  status          Int?      @default(1)
+  reincidente     Int?      @default(0, map: "DF__facility__reinci__573DED66")
+  status          Int?      @default(1, map: "DF__facility__status__5832119F")
 }
 
 model gantt {
-  id                 Int       @id @default(autoincrement())
-  id_projeto         Int       @default(0)
-  id_tarefa          Int       @default(0)
-  inicio_tarefa      DateTime? @db.DateTime(0)
-  espera_tarefa      DateTime? @db.DateTime(0)
-  retomou_tarefa     DateTime? @db.DateTime(0)
-  retomou_anterior   DateTime? @db.DateTime(0)
-  finalizou_tarefa   DateTime? @db.DateTime(0)
-  hora_espera        Int       @default(0)
-  minutos_espera     Int       @default(0)
-  segundos_espera    Int       @default(0)
-  tipo_tarefa        Int?      @default(0)
-  horas_total        Int       @default(0)
-  minutos_total      Int       @default(0)
-  segundos_total     Int       @default(0)
-  nome_tarefa        String?   @db.VarChar(50)
+  id                 Int       @id(map: "PK_gantt_id") @default(autoincrement())
+  id_projeto         Int       @default(0, map: "DF__gantt__id_projet__592635D8")
+  id_tarefa          Int       @default(0, map: "DF__gantt__id_tarefa__5A1A5A11")
+  inicio_tarefa      DateTime?
+  espera_tarefa      DateTime?
+  retomou_tarefa     DateTime?
+  retomou_anterior   DateTime?
+  finalizou_tarefa   DateTime?
+  hora_espera        Int       @default(0, map: "DF__gantt__hora_espe__5FD33367")
+  minutos_espera     Int       @default(0, map: "DF__gantt__minutos_e__60C757A0")
+  segundos_espera    Int       @default(0, map: "DF__gantt__segundos___61BB7BD9")
+  tipo_tarefa        Int?      @default(0, map: "DF__gantt__tipo_tare__62AFA012")
+  horas_total        Int       @default(0, map: "DF__gantt__horas_tot__63A3C44B")
+  minutos_total      Int       @default(0, map: "DF__gantt__minutos_t__6497E884")
+  segundos_total     Int       @default(0, map: "DF__gantt__segundos___658C0CBD")
+  nome_tarefa        String?   @db.NVarChar(50)
   porcentagem_tarefa Int?
   dependencia_tarefa Int?
   status_tarefa      Int?
 }
 
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 model ged_file {
-  ged_fl_id     Int       @id @default(autoincrement())
+  ged_fl_id     Int       @id(map: "PK_ged_file_ged_fl_id") @default(autoincrement())
   ged_fl_folder Int?
   ged_fl_cont   Int?
-  ged_fl_name   String?   @db.VarChar(50)
-  ged_fl_ext    String?   @db.VarChar(5)
-  ged_fl_url    String?   @db.VarChar(50)
-  ged_fl_sts    Int       @default(2)
-  ged_fl_dt     DateTime? @db.DateTime(0)
+  ged_fl_name   String?   @db.NVarChar(50)
+  ged_fl_ext    String?   @db.NVarChar(5)
+  ged_fl_url    String?   @db.NVarChar(50)
+  ged_fl_sts    Int       @default(2, map: "DF__ged_file__ged_fl__6F1576F7")
+  ged_fl_dt     DateTime?
   ged_fl_user   Int?
 }
 
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 model ged_file_mkt {
-  ged_fl_id     Int       @id @default(autoincrement())
+  ged_fl_id     Int       @id(map: "PK_ged_file_mkt_ged_fl_id") @default(autoincrement())
   ged_fl_folder Int?
   ged_fl_cont   Int?
-  ged_fl_name   String?   @db.VarChar(50)
-  ged_fl_ext    String?   @db.VarChar(5)
-  ged_fl_url    String?   @db.VarChar(50)
-  ged_fl_sts    Int       @default(2)
-  ged_fl_dt     DateTime? @db.DateTime(0)
+  ged_fl_name   String?   @db.NVarChar(50)
+  ged_fl_ext    String?   @db.NVarChar(5)
+  ged_fl_url    String?   @db.NVarChar(50)
+  ged_fl_sts    Int       @default(2, map: "DF__ged_file___ged_f__76B698BF")
+  ged_fl_dt     DateTime?
   ged_fl_user   Int?
 }
 
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 model ged_folder {
-  ged_fd_id     Int       @id @default(autoincrement())
+  ged_fd_id     Int       @id(map: "PK_ged_folder_ged_fd_id") @default(autoincrement())
   ged_fd_cont   Int?
-  ged_fd_folder String?   @db.VarChar(50)
-  ged_fd_sts    Int       @default(2)
-  ged_fd_dt     DateTime? @db.DateTime(0)
+  ged_fd_folder String?   @db.NVarChar(50)
+  ged_fd_sts    Int       @default(2, map: "DF__ged_folde__ged_f__7B7B4DDC")
+  ged_fd_dt     DateTime?
   ged_fd_user   Int?
 }
 
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 model ged_folder_mkt {
-  ged_fd_id     Int       @id @default(autoincrement())
+  ged_fd_id     Int       @id(map: "PK_ged_folder_mkt_ged_fd_id") @default(autoincrement())
   ged_fd_cont   Int?
-  ged_fd_folder String?   @db.VarChar(50)
-  ged_fd_sts    Int       @default(2)
-  ged_fd_dt     DateTime? @db.DateTime(0)
+  ged_fd_folder String?   @db.NVarChar(50)
+  ged_fd_sts    Int       @default(2, map: "DF__ged_folde__ged_f__004002F9")
+  ged_fd_dt     DateTime?
   ged_fd_user   Int?
 }
 
 model imagens {
-  id               Int           @id @default(autoincrement())
+  id               Int           @id(map: "PK_imagens_id") @default(autoincrement())
   atd_id           Int?
   user_id          Int?
   img_atd          Bytes?
-  data_atualizacao DateTime      @default(now()) @db.Timestamp(0)
-  atendimentos     atendimentos? @relation(fields: [atd_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "imagens_ibfk_1")
+  data_atualizacao DateTime      @default(now(), map: "DF__imagens__data_at__05F8DC4F") @db.DateTime
+  atendimentos     atendimentos? @relation(fields: [atd_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "imagens$imagens_ibfk_1")
 
   @@index([atd_id], map: "atd_id")
 }
 
 model imagens_tarefa {
-  id               Int      @id @default(autoincrement())
+  id               Int      @id(map: "PK_imagens_tarefa_id") @default(autoincrement())
   tarefa_id        Int?
   user_id          Int?
   img_tarefa       Bytes?
-  data_atualizacao DateTime @default(now()) @db.Timestamp(0)
-  tarefas          tarefas? @relation(fields: [tarefa_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "imagens_ibfk_2")
+  data_atualizacao DateTime @default(now(), map: "DF__imagens_t__data___09C96D33") @db.DateTime
+  tarefas          tarefas? @relation(fields: [tarefa_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "imagens_tarefa$imagens_ibfk_2")
 
   @@index([tarefa_id], map: "tarefa_id")
 }
 
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 model inter_contrato {
-  inter_id       Int       @id @default(autoincrement())
+  inter_id       Int       @id(map: "PK_inter_contrato_inter_id") @default(autoincrement())
   inter_tipo     Int?
   inter_contrato Int?
   inter_user     Int?
-  inter_data     DateTime? @db.DateTime(0)
-  inter_desc     String?   @db.Text
+  inter_data     DateTime?
+  inter_desc     String?   @db.NVarChar(Max)
 }
 
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 model inter_facility {
-  inter_id   Int       @id @default(autoincrement())
+  inter_id   Int       @id(map: "PK_inter_facility_inter_id") @default(autoincrement())
   inter_tipo Int?
   inter_atd  Int?
   inter_user Int?
-  inter_data DateTime? @db.DateTime(0)
-  inter_desc String?   @db.Text
+  inter_data DateTime?
+  inter_desc String?   @db.NVarChar(Max)
 }
 
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 model inter_proj_mkt {
-  inter_id      Int       @id @default(autoincrement())
+  inter_id      Int       @id(map: "PK_inter_proj_mkt_inter_id") @default(autoincrement())
   inter_tipo    Int?
   inter_projeto Int?
   inter_user    Int?
-  inter_data    DateTime? @db.DateTime(0)
-  inter_desc    String?   @db.Text
+  inter_data    DateTime?
+  inter_desc    String?   @db.NVarChar(Max)
 }
 
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 model inter_projeto {
-  inter_id      Int       @id @default(autoincrement())
+  inter_id      Int       @id(map: "PK_inter_projeto_inter_id") @default(autoincrement())
   inter_tipo    Int?
   inter_projeto Int?
   inter_user    Int?
-  inter_data    DateTime? @db.DateTime(0)
-  inter_desc    String?   @db.Text
+  inter_data    DateTime?
+  inter_desc    String?   @db.NVarChar(Max)
 }
 
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 model inter_tarefa {
-  inter_id     Int       @id @default(autoincrement())
+  inter_id     Int       @id(map: "PK_inter_tarefa_inter_id") @default(autoincrement())
   inter_tipo   Int?
   inter_tarefa Int?
   inter_user   Int?
-  inter_data   DateTime? @db.DateTime(0)
-  inter_desc   String?   @db.Text
+  inter_data   DateTime?
+  inter_desc   String?   @db.NVarChar(Max)
 }
 
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 model inter_tarefa_mkt {
-  inter_id     Int       @id @default(autoincrement())
+  inter_id     Int       @id(map: "PK_inter_tarefa_mkt_inter_id") @default(autoincrement())
   inter_tipo   Int?
   inter_tarefa Int?
   inter_user   Int?
-  inter_data   DateTime? @db.DateTime(0)
-  inter_desc   String?   @db.Text
+  inter_data   DateTime?
+  inter_desc   String?   @db.NVarChar(Max)
 }
 
 model inter_terc_andar {
-  inter_id           Int                @id @default(autoincrement())
-  inter_tipo         String?            @db.VarChar(100)
+  inter_id           Int                @id(map: "PK_inter_terc_andar_inter_id") @default(autoincrement())
+  inter_tipo         String?            @db.NVarChar(100)
   inter_tarefa       Int
-  inter_user         String?            @db.VarChar(150)
-  inter_data         DateTime?          @default(now()) @db.DateTime(0)
-  inter_desc         String?            @db.Text
-  tarefas_terc_andar tarefas_terc_andar @relation(fields: [inter_tarefa], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "inter_terc_andar_ibfk_1")
+  inter_user         String?            @db.NVarChar(150)
+  inter_data         DateTime?          @default(now(), map: "DF__inter_ter__inter__2942188C")
+  inter_desc         String?            @db.NVarChar(Max)
+  tarefas_terc_andar tarefas_terc_andar @relation(fields: [inter_tarefa], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "inter_terc_andar$inter_terc_andar_ibfk_1")
 
   @@index([inter_tarefa], map: "inter_tarefa")
 }
 
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 model interatividade {
-  inter_id   Int       @id @default(autoincrement())
+  inter_id   Int       @id(map: "PK_interatividade_inter_id") @default(autoincrement())
   inter_tipo Int?
   inter_atd  Int?
   inter_user Int?
-  inter_data DateTime? @db.DateTime(0)
-  inter_desc String?   @db.Text
+  inter_data DateTime?
+  inter_desc String?   @db.NVarChar(Max)
 
   @@index([inter_atd], map: "idx_inter_atd")
   @@index([inter_data], map: "idx_inter_data")
 }
 
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 model interatividade_melhorias {
-  inter_id   Int       @id @default(autoincrement())
+  inter_id   Int       @id(map: "PK_interatividade_melhorias_inter_id") @default(autoincrement())
   inter_tipo Int?
   inter_atd  Int?
   inter_user Int?
-  inter_data DateTime? @db.DateTime(0)
-  inter_desc String?   @db.Text
+  inter_data DateTime?
+  inter_desc String?   @db.NVarChar(Max)
 }
 
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 model itens {
-  itens_id   Int     @id @default(autoincrement())
+  itens_id   Int     @id(map: "PK_itens_itens_id") @default(autoincrement())
   itens_scat Int?
-  itens_nome String? @db.VarChar(50)
-  itens_sts  Int     @default(1)
+  itens_nome String? @db.NVarChar(50)
+  itens_sts  Int     @default(1, map: "DF__itens__itens_sts__369C13AA")
 }
 
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 model locais {
-  local_id   Int     @id @default(autoincrement())
+  local_id   Int     @id(map: "PK_locais_local_id") @default(autoincrement())
   local_clt  Int?
-  local_nom  String? @db.VarChar(60)
-  local_end  String? @db.VarChar(100)
-  local_city String? @db.VarChar(50)
-  local_uf   String? @db.VarChar(2)
-  local_sts  Int     @default(1)
+  local_nom  String? @db.NVarChar(60)
+  local_end  String? @db.NVarChar(100)
+  local_city String? @db.NVarChar(50)
+  local_uf   String? @db.NVarChar(2)
+  local_sts  Int     @default(1, map: "DF__locais__local_st__3C54ED00")
 }
 
 model log_uso {
-  log_id      Int       @id @default(autoincrement())
+  log_id      Int       @id(map: "PK_log_uso_log_id") @default(autoincrement())
   log_area    Int?
   log_user    Int?
-  log_time    DateTime? @db.DateTime(0)
-  log_action  String?   @db.Text
+  log_time    DateTime?
+  log_action  String?   @db.NVarChar(Max)
   log_cliente Int?
   log_chamado Int?
 }
 
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model maintenance_backup_jobs {
+  id             Decimal   @id(map: "PK_maintenance_backup_jobs_id") @db.Decimal(20, 0)
+  target         String    @db.NVarChar(20)
+  frequency      String    @db.NVarChar(20)
+  run_time       String    @db.NChar(5)
+  weekday        Int?      @db.TinyInt
+  retention_days BigInt    @default(30, map: "DF__maintenan__reten__43F60EC8")
+  is_active      Int       @default(1, map: "DF__maintenan__is_ac__44EA3301") @db.SmallInt
+  last_status    String    @default("N'idle'", map: "DF__maintenan__last___45DE573A") @db.NVarChar(20)
+  last_error     String?   @db.NVarChar(Max)
+  last_run_at    DateTime?
+  next_run_at    DateTime?
+  created_by     Int?
+  created_at     DateTime  @default(now(), map: "DF__maintenan__creat__4AA30C57")
+  updated_at     DateTime  @default(now(), map: "DF__maintenan__updat__4B973090")
+
+  @@index([is_active, next_run_at], map: "idx_maintenance_backup_jobs_due")
+}
+
+model maintenance_operations {
+  id            Decimal   @id(map: "PK_maintenance_operations_id") @db.Decimal(20, 0)
+  action        String    @db.NVarChar(80)
+  target        String?   @db.NVarChar(40)
+  actor_user_id Int?
+  status        String    @default("N'running'", map: "DF__maintenan__statu__4E739D3B") @db.NVarChar(20)
+  detail        String?   @db.NVarChar(Max)
+  created_at    DateTime  @default(now(), map: "DF__maintenan__creat__505BE5AD")
+  finished_at   DateTime?
+
+  @@index([created_at], map: "idx_maintenance_operations_created")
+}
+
+model maintenance_worker_state {
+  worker_key        String   @id(map: "PK_maintenance_worker_state_worker_key") @db.NVarChar(80)
+  last_heartbeat_at DateTime
+  detail            String?  @db.NVarChar(255)
+}
+
 model melhorias {
-  id               Int       @id @default(autoincrement())
-  area             Int?      @default(1)
-  cliente          Int?      @default(1)
+  id               Int       @id(map: "PK_melhorias_id") @default(autoincrement())
+  area             Int?      @default(1, map: "DF__melhorias__area__53385258")
+  cliente          Int?      @default(1, map: "DF__melhorias__clien__542C7691")
   pessoa           Int?
   local            Int?
   tipo             Int?
   categoria        Int?
   subcategoria     Int?
   item             Int?
-  nivel            Int?      @default(1)
-  forma            Int?      @default(1)
-  desc_abertura    String?   @db.Text
-  desc_fechamento  String?   @db.Text
-  abertura         DateTime? @db.DateTime(0)
-  fechamento       DateTime? @db.DateTime(0)
+  nivel            Int?      @default(1, map: "DF__melhorias__nivel__5AD97420")
+  forma            Int?      @default(1, map: "DF__melhorias__forma__5BCD9859")
+  desc_abertura    String?   @db.NVarChar(Max)
+  desc_fechamento  String?   @db.NVarChar(Max)
+  abertura         DateTime?
+  fechamento       DateTime?
   tecnico          Int?
-  reincidente      Int?      @default(0)
-  status           Int?      @default(1)
-  recorrente       Int?      @default(1)
-  data_recorrencia DateTime? @db.DateTime(0)
-  vezes_reabrir    Int?      @default(1)
-  vezes            Int?      @default(1)
+  reincidente      Int?      @default(0, map: "DF__melhorias__reinc__618671AF")
+  status           Int?      @default(1, map: "DF__melhorias__statu__627A95E8")
+  recorrente       Int?      @default(1, map: "DF__melhorias__recor__636EBA21")
+  data_recorrencia DateTime?
+  vezes_reabrir    Int?      @default(1, map: "DF__melhorias__vezes__65570293")
+  vezes            Int?      @default(1, map: "DF__melhorias__vezes__664B26CC")
   semana           Int?
 }
 
+model navigation_items {
+  id                   BigInt              @id(map: "PK_navigation_items_id") @default(autoincrement())
+  section_id           BigInt
+  slug                 String              @unique(map: "navigation_items$uq_navigation_items_slug") @db.NVarChar(120)
+  label                String              @db.NVarChar(160)
+  icon                 String?             @db.NVarChar(50)
+  href                 String?             @db.NVarChar(500)
+  status               String              @default("N'planned'", map: "DF__navigatio__statu__6A1BB7B0") @db.NVarChar(30)
+  visibility_condition String?             @db.NVarChar(Max)
+  sort_order           Int                 @default(0, map: "DF__navigatio__sort___6C040022")
+  is_active            Int                 @default(1, map: "DF__navigatio__is_ac__6CF8245B") @db.SmallInt
+  created_at           DateTime            @default(now(), map: "DF__navigatio__creat__6DEC4894")
+  updated_at           DateTime            @default(now(), map: "DF__navigatio__updat__6EE06CCD")
+  navigation_sections  navigation_sections @relation(fields: [section_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "navigation_items$fk_navigation_items_section")
+
+  @@index([section_id, is_active, sort_order, id], map: "idx_navigation_items_section_order")
+}
+
+model navigation_sections {
+  id               BigInt             @id(map: "PK_navigation_sections_id") @default(autoincrement())
+  slug             String             @unique(map: "navigation_sections$uq_navigation_sections_slug") @db.NVarChar(100)
+  label            String             @db.NVarChar(150)
+  short_label      String?            @db.NVarChar(20)
+  icon             String?            @db.NVarChar(50)
+  sort_order       Int                @default(0, map: "DF__navigatio__sort___71BCD978")
+  is_active        Int                @default(1, map: "DF__navigatio__is_ac__72B0FDB1") @db.SmallInt
+  created_at       DateTime           @default(now(), map: "DF__navigatio__creat__73A521EA")
+  updated_at       DateTime           @default(now(), map: "DF__navigatio__updat__74994623")
+  navigation_items navigation_items[]
+
+  @@index([is_active, sort_order, id], map: "idx_navigation_sections_order")
+}
+
 model niveis_terc_andar {
-  id    Int     @id @default(autoincrement())
-  nome  String  @db.VarChar(120)
-  ativo Boolean @default(true)
-  ordem Int     @default(0)
+  id    Int    @id(map: "PK_niveis_terc_andar_id") @default(autoincrement())
+  nome  String @db.NVarChar(120)
+  ativo Int    @default(1, map: "DF__niveis_te__ativo__758D6A5C") @db.SmallInt
+  ordem Int    @default(0, map: "DF__niveis_te__ordem__76818E95")
+}
+
+model notification_states {
+  user_id          Int
+  notification_key String    @db.NVarChar(190)
+  read_at          DateTime?
+  updated_at       DateTime  @default(now(), map: "DF__notificat__updat__7869D707")
+
+  @@id([user_id, notification_key], map: "PK_notification_states_user_id")
+  @@index([user_id, read_at], map: "idx_notification_states_user_read")
+}
+
+model on_call_schedules {
+  id                                               BigInt    @id(map: "PK_on_call_schedules_id") @default(autoincrement())
+  week_start                                       DateTime  @db.Date
+  area                                             String    @db.NVarChar(20)
+  user_id                                          Int
+  assigned_by                                      Int?
+  created_at                                       DateTime  @default(now(), map: "DF__on_call_s__creat__7A521F79")
+  updated_at                                       DateTime  @default(now(), map: "DF__on_call_s__updat__7B4643B2")
+  usuarios_on_call_schedules_assigned_byTousuarios usuarios? @relation("on_call_schedules_assigned_byTousuarios", fields: [assigned_by], references: [user_id], onUpdate: NoAction, map: "on_call_schedules$fk_on_call_assigned_by")
+  usuarios_on_call_schedules_user_idTousuarios     usuarios  @relation("on_call_schedules_user_idTousuarios", fields: [user_id], references: [user_id], onUpdate: NoAction, map: "on_call_schedules$fk_on_call_user")
+
+  @@unique([week_start, area], map: "on_call_schedules$uq_on_call_week_area")
+  @@index([assigned_by], map: "fk_on_call_assigned_by")
+  @@index([user_id, week_start], map: "idx_on_call_user_week")
 }
 
 model permissions {
-  id               Int                @id @default(autoincrement()) @db.UnsignedInt
-  name             String             @db.VarChar(140)
-  slug             String             @unique(map: "uq_permissions_slug") @db.VarChar(160)
-  module           String             @db.VarChar(60)
-  description      String?            @db.VarChar(255)
-  created_at       DateTime           @default(now()) @db.DateTime(0)
-  updated_at       DateTime           @default(now()) @db.DateTime(0)
+  id               BigInt             @id(map: "PK_permissions_id") @default(autoincrement())
+  name             String             @db.NVarChar(140)
+  slug             String             @unique(map: "permissions$uq_permissions_slug") @db.NVarChar(160)
+  module           String             @db.NVarChar(60)
+  description      String?            @db.NVarChar(255)
+  created_at       DateTime           @default(now(), map: "DF__permissio__creat__7D2E8C24")
+  updated_at       DateTime           @default(now(), map: "DF__permissio__updat__7E22B05D")
   role_permissions role_permissions[]
   user_permissions user_permissions[]
 
   @@index([module], map: "idx_permissions_module")
 }
 
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 model pessoas {
-  pessoa_id    Int     @id @default(autoincrement())
+  pessoa_id    Int     @id(map: "PK_pessoas_pessoa_id") @default(autoincrement())
   pessoa_clt   Int?
-  pessoa_nom   String? @db.VarChar(60)
-  pessoa_cargo String? @db.VarChar(60)
-  pessoa_tel   String? @db.VarChar(50)
-  pessoa_mail  String? @db.VarChar(60)
-  pessoa_sts   Int     @default(1)
+  pessoa_nom   String? @db.NVarChar(60)
+  pessoa_cargo String? @db.NVarChar(60)
+  pessoa_tel   String? @db.NVarChar(50)
+  pessoa_mail  String? @db.NVarChar(60)
+  pessoa_sts   Int     @default(1, map: "DF__pessoas__pessoa___03DB89B3")
 
   @@index([pessoa_clt], map: "idx_pessoas_cliente")
 }
 
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 model proj_mkt {
-  id              Int       @id @default(autoincrement())
-  nome_proj       String?   @db.VarChar(50)
-  area            Int?      @default(1)
-  cliente         Int?      @default(1)
+  id              Int       @id(map: "PK_proj_mkt_id") @default(autoincrement())
+  nome_proj       String?   @db.NVarChar(50)
+  area            Int?      @default(1, map: "DF__proj_mkt__area__05C3D225")
+  cliente         Int?      @default(1, map: "DF__proj_mkt__client__06B7F65E")
   pessoa          Int?
   local           Int?
   tipo            Int?
   categoria       Int?
   subcategoria    Int?
   item            Int?
-  dias            Int?      @default(1)
-  forma           Int?      @default(1)
-  desc_abertura   String?   @db.Text
-  desc_fechamento String?   @db.Text
-  abertura        DateTime? @db.DateTime(0)
-  fechamento      DateTime? @db.DateTime(0)
+  dias            Int?      @default(1, map: "DF__proj_mkt__dias__0D64F3ED")
+  forma           Int?      @default(1, map: "DF__proj_mkt__forma__0E591826")
+  desc_abertura   String?   @db.NVarChar(Max)
+  desc_fechamento String?   @db.NVarChar(Max)
+  abertura        DateTime?
+  fechamento      DateTime?
   tecnico         Int?
-  reincidente     Int?      @default(0)
-  status          Int?      @default(1)
+  reincidente     Int?      @default(0, map: "DF__proj_mkt__reinci__1411F17C")
+  status          Int?      @default(1, map: "DF__proj_mkt__status__150615B5")
 }
 
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 model projetos {
-  id              Int       @id @default(autoincrement())
-  nome_proj       String?   @db.VarChar(50)
-  area            Int?      @default(1)
-  cliente         Int?      @default(1)
+  id              Int       @id(map: "PK_projetos_id") @default(autoincrement())
+  nome_proj       String?   @db.NVarChar(50)
+  area            Int?      @default(1, map: "DF__projetos__area__16EE5E27")
+  cliente         Int?      @default(1, map: "DF__projetos__client__17E28260")
   pessoa          Int?
   local           Int?
   tipo            Int?
@@ -962,102 +1075,63 @@ model projetos {
   subcategoria    Int?
   item            Int?
   nivel           Int?
-  dias            Int?      @default(1)
-  forma           Int?      @default(1)
-  desc_abertura   String?   @db.Text
-  desc_fechamento String?   @db.Text
-  abertura        DateTime? @db.DateTime(0)
-  fechamento      DateTime? @db.DateTime(0)
+  dias            Int?      @default(1, map: "DF__projetos__dias__1F83A428")
+  forma           Int?      @default(1, map: "DF__projetos__forma__2077C861")
+  desc_abertura   String?   @db.NVarChar(Max)
+  desc_fechamento String?   @db.NVarChar(Max)
+  abertura        DateTime?
+  fechamento      DateTime?
   tecnico         Int?
-  reincidente     Int?      @default(0)
-  status          Int?      @default(1)
+  reincidente     Int?      @default(0, map: "DF__projetos__reinci__2630A1B7")
+  status          Int?      @default(1, map: "DF__projetos__status__2724C5F0")
 }
 
-model devops_flow_templates {
-  id          Int      @id @default(autoincrement()) @db.UnsignedInt
-  name        String   @db.VarChar(160)
-  description String   @default("") @db.Text
-  is_active   Boolean  @default(true)
-  created_by  Int
-  created_at  DateTime @default(now()) @db.DateTime(0)
-  updated_at  DateTime @default(now()) @db.DateTime(0)
-
-  @@index([is_active, name], map: "idx_devops_flow_templates_active_name")
-}
-
-model devops_flow_template_steps {
-  id             Int     @id @default(autoincrement()) @db.UnsignedInt
-  template_id    Int     @db.UnsignedInt
-  step_key       String  @db.VarChar(64)
-  name           String  @db.VarChar(160)
-  description    String  @default("") @db.Text
-  duration_days  Int     @default(1) @db.UnsignedSmallInt
-  depends_on_key String? @db.VarChar(64)
-  sort_order     Int     @default(0)
-
-  @@unique([template_id, step_key], map: "uq_devops_flow_template_step_key")
-  @@index([template_id, sort_order, id], map: "idx_devops_flow_template_steps_order")
-}
-
-model devops_flow_template_applications {
-  id          Int      @id @default(autoincrement()) @db.UnsignedInt
-  project_id  Int
-  template_id Int      @db.UnsignedInt
-  applied_by  Int
-  applied_at  DateTime @default(now()) @db.DateTime(0)
-
-  @@unique([project_id, template_id], map: "uq_devops_flow_template_application")
-  @@index([template_id, applied_at], map: "idx_devops_flow_template_applications")
-}
-
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 model recebimentos {
-  id                 Int             @id @default(autoincrement())
+  id                 Int             @id(map: "PK_recebimentos_id") @default(autoincrement())
   id_conta_receber   Int
   valor_recebido     Decimal         @db.Decimal(10, 2)
-  data_recebimento   DateTime        @db.DateTime(0)
+  data_recebimento   DateTime
   id_forma_pagamento Int?
-  observacao         String?         @db.Text
+  observacao         String?         @db.NVarChar(Max)
   id_usuario         Int
-  data_registro      DateTime        @default(now()) @db.Timestamp(0)
+  data_registro      DateTime        @default(now(), map: "DF__recebimen__data___2A01329B") @db.DateTime
   id_agBancaria      Int
-  contas_receber     contas_receber  @relation(fields: [id_conta_receber], references: [id], onUpdate: Restrict, map: "recebimentos_ibfk_1")
-  cads_forma_pag     cads_forma_pag? @relation(fields: [id_forma_pagamento], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "recebimentos_ibfk_2")
-  usuarios           usuarios        @relation(fields: [id_usuario], references: [user_id], onUpdate: Restrict, map: "recebimentos_ibfk_3")
+  contas_receber     contas_receber  @relation(fields: [id_conta_receber], references: [id], onUpdate: NoAction, map: "recebimentos$recebimentos_ibfk_1")
+  cads_forma_pag     cads_forma_pag? @relation(fields: [id_forma_pagamento], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "recebimentos$recebimentos_ibfk_2")
+  usuarios           usuarios        @relation(fields: [id_usuario], references: [user_id], onUpdate: NoAction, map: "recebimentos$recebimentos_ibfk_3")
 
   @@index([id_conta_receber], map: "id_conta_receber")
   @@index([id_forma_pagamento], map: "id_forma_pagamento")
   @@index([id_usuario], map: "id_usuario")
 }
 
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 model recorrencias {
-  id                          Int                        @id @default(autoincrement())
+  id                          Int                        @id(map: "PK_recorrencias_id") @default(autoincrement())
   id_conta_origem             Int?
-  tipo                        recorrencias_tipo
-  descricao_padrao            String                     @db.VarChar(255)
+  tipo                        String                     @db.NVarChar(7)
+  descricao_padrao            String                     @db.NVarChar(255)
   valor_padrao                Decimal                    @db.Decimal(10, 2)
-  ativo                       Boolean                    @default(true)
+  ativo                       Int                        @default(1, map: "DF__recorrenc__ativo__2BE97B0D") @db.SmallInt
   id_cliente                  Int?
   id_usuario                  Int?
-  fornecedor_padrao           String?                    @db.VarChar(100)
+  fornecedor_padrao           String?                    @db.NVarChar(100)
   unidade_negocio_padrao      Int?
   id_grupo_padrao             Int?
   dia_vencimento              Int
   id_subgrupo_padrao          Int?
   id_classificacao_padrao     Int?
   id_tipo_documento           Int?
-  percentual_ti_padrao        Int?                       @default(0)
-  percentual_devops_padrao    Int?                       @default(0)
-  percentual_marketing_padrao Int?                       @default(0)
-  clientes                    clientes?                  @relation(fields: [id_cliente], references: [clt_id], onDelete: Restrict, onUpdate: Restrict, map: "recorrencias_ibfk_1")
-  usuarios                    usuarios?                  @relation(fields: [id_usuario], references: [user_id], onDelete: Restrict, onUpdate: Restrict, map: "recorrencias_ibfk_2")
-  categorias_subgrupo         categorias_subgrupo?       @relation(fields: [id_subgrupo_padrao], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "recorrencias_ibfk_3")
-  categorias_classificacao    categorias_classificacao?  @relation(fields: [id_classificacao_padrao], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "recorrencias_ibfk_4")
-  categorias_grupo            categorias_grupo?          @relation(fields: [id_grupo_padrao], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "recorrencias_ibfk_5")
-  categorias_tipo_documento   categorias_tipo_documento? @relation(fields: [id_tipo_documento], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "recorrencias_ibfk_6")
+  percentual_ti_padrao        Int?                       @default(0, map: "DF__recorrenc__perce__347EC10E")
+  percentual_devops_padrao    Int?                       @default(0, map: "DF__recorrenc__perce__3572E547")
+  percentual_marketing_padrao Int?                       @default(0, map: "DF__recorrenc__perce__36670980")
+  clientes                    clientes?                  @relation(fields: [id_cliente], references: [clt_id], onDelete: NoAction, onUpdate: NoAction, map: "recorrencias$recorrencias_ibfk_1")
+  usuarios                    usuarios?                  @relation(fields: [id_usuario], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "recorrencias$recorrencias_ibfk_2")
+  categorias_subgrupo         categorias_subgrupo?       @relation(fields: [id_subgrupo_padrao], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "recorrencias$recorrencias_ibfk_3")
+  categorias_classificacao    categorias_classificacao?  @relation(fields: [id_classificacao_padrao], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "recorrencias$recorrencias_ibfk_4")
+  categorias_grupo            categorias_grupo?          @relation(fields: [id_grupo_padrao], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "recorrencias$recorrencias_ibfk_5")
+  categorias_tipo_documento   categorias_tipo_documento? @relation(fields: [id_tipo_documento], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "recorrencias$recorrencias_ibfk_6")
 
-  @@unique([descricao_padrao, fornecedor_padrao, id_subgrupo_padrao], map: "idx_recorrencia_unica")
+  @@unique([descricao_padrao, fornecedor_padrao, id_subgrupo_padrao], map: "recorrencias", where: raw("([fornecedor_padrao] IS NOT NULL AND [id_subgrupo_padrao] IS NOT NULL)"))
   @@index([id_classificacao_padrao], map: "id_classificacao_padrao")
   @@index([id_cliente], map: "id_cliente")
   @@index([id_grupo_padrao], map: "id_grupo_padrao")
@@ -1068,266 +1142,282 @@ model recorrencias {
 }
 
 model role_permissions {
-  role_id       Int         @db.UnsignedInt
-  permission_id Int         @db.UnsignedInt
-  granted_at    DateTime    @default(now()) @db.DateTime(0)
-  permissions   permissions @relation(fields: [permission_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "fk_role_permissions_permission")
-  roles         roles       @relation(fields: [role_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "fk_role_permissions_role")
+  role_id       BigInt
+  permission_id BigInt
+  granted_at    DateTime    @default(now(), map: "DF__role_perm__grant__375B2DB9")
+  permissions   permissions @relation(fields: [permission_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "role_permissions$fk_role_permissions_permission")
+  roles         roles       @relation(fields: [role_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "role_permissions$fk_role_permissions_role")
 
-  @@id([role_id, permission_id])
+  @@id([role_id, permission_id], map: "PK_role_permissions_role_id")
   @@index([permission_id], map: "idx_role_permissions_permission")
 }
 
 model roles {
-  id               Int                @id @default(autoincrement()) @db.UnsignedInt
-  name             String             @db.VarChar(100)
-  slug             String             @unique(map: "uq_roles_slug") @db.VarChar(120)
-  description      String?            @db.VarChar(255)
-  is_system        Boolean            @default(false)
-  sort_order       Int                @default(0)
-  created_at       DateTime           @default(now()) @db.DateTime(0)
-  updated_at       DateTime           @default(now()) @db.DateTime(0)
+  id               BigInt             @id(map: "PK_roles_id") @default(autoincrement())
+  name             String             @db.NVarChar(100)
+  slug             String             @unique(map: "roles$uq_roles_slug") @db.NVarChar(120)
+  description      String?            @db.NVarChar(255)
+  is_system        Int                @default(0, map: "DF__roles__is_system__3943762B") @db.SmallInt
+  sort_order       Int                @default(0, map: "DF__roles__sort_orde__3A379A64")
+  created_at       DateTime           @default(now(), map: "DF__roles__created_a__3B2BBE9D")
+  updated_at       DateTime           @default(now(), map: "DF__roles__updated_a__3C1FE2D6")
   role_permissions role_permissions[]
   user_roles       user_roles[]
 }
 
 model running_balance {
-  id             Int       @id @default(autoincrement()) @db.UnsignedInt
-  remarks        String    @db.Text
+  id             BigInt    @id(map: "PK_running_balance_id") @default(autoincrement())
+  remarks        String    @db.NVarChar(Max)
   clt_id         Int?
-  cliente        String    @db.VarChar(255)
+  cliente        String    @db.NVarChar(255)
   amount         Decimal   @db.Decimal(10, 2)
   user_id        Int
   category_id    Int
-  date_created   DateTime  @default(now()) @db.DateTime(0)
-  date_updated   DateTime? @db.DateTime(0)
-  pix            String?   @db.VarChar(255)
+  date_created   DateTime  @default(now(), map: "DF__running_b__date___3E082B48")
+  date_updated   DateTime?
+  pix            String?   @db.NVarChar(255)
   pix_type       Int?
-  input_flag     Boolean   @default(true)
-  aj             Boolean   @default(true)
+  input_flag     Int       @default(1, map: "DF__running_b__input__41D8BC2C") @db.SmallInt
+  aj             Int       @default(1, map: "DF__running_bala__aj__42CCE065") @db.SmallInt
   aprovador_id   Int?
-  remark_aprov   String?   @db.VarChar(255)
+  remark_aprov   String?   @db.NVarChar(255)
   pagador_id     Int?
-  remark_pagador String?   @db.VarChar(255)
+  remark_pagador String?   @db.NVarChar(255)
   status         Int?
-  id_agBancaria  Int?      @default(1)
-  anexos         String?   @db.Text
+  id_agBancaria  Int?      @default(1, map: "DF__running_b__id_ag__4885B9BB")
+  anexos         String?   @db.NVarChar(Max)
 }
 
 model status_contas {
-  id             Int              @id @default(autoincrement())
-  nome           String           @unique(map: "nome") @db.VarChar(50)
-  descricao      String?          @db.Text
-  ativo          Boolean?         @default(true)
+  id             Int              @id(map: "PK_status_contas_id") @default(autoincrement())
+  nome           String           @unique(map: "status_contas$nome") @db.VarChar(50)
+  descricao      String?          @db.VarChar(Max)
+  ativo          Int?             @default(1, map: "DF__status_co__ativo__4B622666") @db.SmallInt
   contas_pagar   contas_pagar[]
   contas_receber contas_receber[]
 }
 
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 model subcategorias {
-  scat_id   Int     @id @default(autoincrement())
+  scat_id   Int     @id(map: "PK_subcategorias_scat_id") @default(autoincrement())
   scat_cat  Int?
-  scat_nome String? @db.VarChar(50)
-  scat_sts  Int     @default(1)
+  scat_nome String? @db.NVarChar(50)
+  scat_sts  Int     @default(1, map: "DF__subcatego__scat___4E3E9311")
 }
 
 model subcategorias_terc_andar {
-  id           Int     @id @default(autoincrement())
+  id           Int    @id(map: "PK_subcategorias_terc_andar_id") @default(autoincrement())
   categoria_id Int
-  nome         String  @db.VarChar(120)
-  ativo        Boolean @default(true)
-  ordem        Int     @default(0)
+  nome         String @db.NVarChar(120)
+  ativo        Int    @default(1, map: "DF__subcatego__ativo__4F32B74A") @db.SmallInt
+  ordem        Int    @default(0, map: "DF__subcatego__ordem__5026DB83")
 
   @@index([categoria_id], map: "categoria_id")
 }
 
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 model tarefas {
-  id                   Int              @id @default(autoincrement())
+  id                   Int              @id(map: "PK_tarefas_id") @default(autoincrement())
   id_projeto           Int?
   tarefas_relacionadas Int?
-  nome_tarefa          String?          @db.Text
-  area                 Int?             @default(1)
-  cliente              Int?             @default(1)
+  nome_tarefa          String?          @db.NVarChar(Max)
+  area                 Int?             @default(1, map: "DF__tarefas__area__53F76C67")
+  cliente              Int?             @default(1, map: "DF__tarefas__cliente__54EB90A0")
   pessoa               Int?
   local                Int?
   tipo                 Int?
   categoria            Int?
   subcategoria         Int?
   item                 Int?
-  nivel                Int?             @default(1)
-  forma                Int?             @default(1)
-  desc_abertura        String?          @db.Text
-  desc_fechamento      String?          @db.Text
-  abertura             DateTime?        @db.DateTime(0)
-  fechamento           DateTime?        @db.DateTime(0)
+  nivel                Int?             @default(1, map: "DF__tarefas__nivel__5B988E2F")
+  forma                Int?             @default(1, map: "DF__tarefas__forma__5C8CB268")
+  desc_abertura        String?          @db.NVarChar(Max)
+  desc_fechamento      String?          @db.NVarChar(Max)
+  abertura             DateTime?
+  fechamento           DateTime?
   tecnico              Int?
-  reincidente          Int?             @default(0)
-  dias                 Int?             @default(1)
-  status               Int?             @default(1)
-  porcentagem          Int?             @default(0)
+  reincidente          Int?             @default(0, map: "DF__tarefas__reincid__62458BBE")
+  dias                 Int?             @default(1, map: "DF__tarefas__dias__6339AFF7")
+  status               Int?             @default(1, map: "DF__tarefas__status__642DD430")
+  porcentagem          Int?             @default(0, map: "DF__tarefas__porcent__6521F869")
   imagens_tarefa       imagens_tarefa[]
 }
 
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 model tarefas_mkt {
-  id              Int       @id @default(autoincrement())
+  id              Int       @id(map: "PK_tarefas_mkt_id") @default(autoincrement())
   id_projeto      Int
-  nome_tarefa     String?   @db.VarChar(50)
-  area            Int?      @default(1)
-  cliente         Int?      @default(1)
+  nome_tarefa     String?   @db.NVarChar(50)
+  area            Int?      @default(1, map: "DF__tarefas_mk__area__670A40DB")
+  cliente         Int?      @default(1, map: "DF__tarefas_m__clien__67FE6514")
   pessoa          Int?
   local           Int?
   tipo            Int?
   categoria       Int?
   subcategoria    Int?
   item            Int?
-  nivel           Int?      @default(1)
-  forma           Int?      @default(1)
-  desc_abertura   String?   @db.Text
-  desc_fechamento String?   @db.Text
-  abertura        DateTime? @db.DateTime(0)
-  fechamento      DateTime? @db.DateTime(0)
+  nivel           Int?      @default(1, map: "DF__tarefas_m__nivel__6EAB62A3")
+  forma           Int?      @default(1, map: "DF__tarefas_m__forma__6F9F86DC")
+  desc_abertura   String?   @db.NVarChar(Max)
+  desc_fechamento String?   @db.NVarChar(Max)
+  abertura        DateTime?
+  fechamento      DateTime?
   tecnico         Int?
-  reincidente     Int?      @default(0)
-  dias            Int?      @default(1)
-  status          Int?      @default(1)
+  reincidente     Int?      @default(0, map: "DF__tarefas_m__reinc__75586032")
+  dias            Int?      @default(1, map: "DF__tarefas_mk__dias__764C846B")
+  status          Int?      @default(1, map: "DF__tarefas_m__statu__7740A8A4")
 }
 
 model tarefas_terc_andar {
-  id                Int                 @id @default(autoincrement())
-  nome_tarefa       String              @db.VarChar(255)
-  quantidade        Int                 @default(1) @db.UnsignedInt
-  urgencia          Boolean             @default(false)
-  area              String?             @db.VarChar(150)
-  cliente           String?             @db.VarChar(150)
-  pessoa            String?             @db.VarChar(150)
-  local             String?             @db.VarChar(150)
-  tipo              String?             @db.VarChar(100)
-  categoria         String?             @db.VarChar(100)
-  subcategoria      String?             @db.VarChar(100)
-  item              String?             @db.VarChar(100)
-  nivel             String?             @db.VarChar(100)
-  forma             String?             @db.VarChar(100)
-  desc_abertura     String?             @db.Text
-  desc_fechamento   String?             @db.Text
-  abertura          DateTime?           @db.DateTime(0)
-  fechamento        DateTime?           @db.DateTime(0)
-  concluido_em      DateTime?           @db.DateTime(0)
+  id                Int                 @id(map: "PK_tarefas_terc_andar_id") @default(autoincrement())
+  nome_tarefa       String              @db.NVarChar(255)
+  quantidade        BigInt              @default(1, map: "DF__tarefas_t__quant__7834CCDD")
+  urgencia          Int                 @default(0, map: "DF__tarefas_t__urgen__7928F116") @db.SmallInt
+  area              String?             @db.NVarChar(150)
+  cliente           String?             @db.NVarChar(150)
+  pessoa            String?             @db.NVarChar(150)
+  local             String?             @db.NVarChar(150)
+  tipo              String?             @db.NVarChar(100)
+  categoria         String?             @db.NVarChar(100)
+  subcategoria      String?             @db.NVarChar(100)
+  item              String?             @db.NVarChar(100)
+  nivel             String?             @db.NVarChar(100)
+  forma             String?             @db.NVarChar(100)
+  desc_abertura     String?             @db.NVarChar(Max)
+  desc_fechamento   String?             @db.NVarChar(Max)
+  abertura          DateTime?
+  fechamento        DateTime?
+  concluido_em      DateTime?
   concluido_por     Int?
-  tecnico           String?             @db.VarChar(150)
-  reincidente       Boolean?            @default(false)
-  status            String?             @default("Aberta") @db.VarChar(50)
-  created_at        DateTime            @default(now()) @db.Timestamp(0)
-  updated_at        DateTime            @default(now()) @db.Timestamp(0)
+  tecnico           String?             @db.NVarChar(150)
+  reincidente       Int?                @default(0, map: "DF__tarefas_t__reinc__0A537D18") @db.SmallInt
+  status            String?             @default("N'Aberta'", map: "DF__tarefas_t__statu__0B47A151") @db.NVarChar(50)
+  created_at        DateTime            @default(now(), map: "DF__tarefas_t__creat__0C3BC58A") @db.DateTime
+  updated_at        DateTime            @default(now(), map: "DF__tarefas_t__updat__0D2FE9C3") @db.DateTime
   espera_terc_andar espera_terc_andar[]
   inter_terc_andar  inter_terc_andar[]
 
   @@index([urgencia, status, tecnico], map: "idx_tarefas_marketing_urgencia")
 }
 
+model ticket_sla_rules {
+  id              Int      @id(map: "PK_ticket_sla_rules_id") @default(autoincrement())
+  name            String   @db.NVarChar(120)
+  client_id       Int?
+  category_id     Int?
+  priority        Int?
+  quality_minutes Int
+  clerio_minutes  Int
+  active          Int      @default(1, map: "DF__ticket_sl__activ__11007AA7") @db.SmallInt
+  sort_order      Int      @default(100, map: "DF__ticket_sl__sort___11F49EE0")
+  created_at      DateTime @default(now(), map: "DF__ticket_sl__creat__12E8C319")
+  updated_at      DateTime @default(now(), map: "DF__ticket_sl__updat__13DCE752")
+
+  @@index([active, sort_order], map: "idx_ticket_sla_rules_active_order")
+  @@index([category_id], map: "idx_ticket_sla_rules_category")
+  @@index([client_id], map: "idx_ticket_sla_rules_client")
+  @@index([priority], map: "idx_ticket_sla_rules_priority")
+}
+
 model tipo {
-  tipo_id   Int     @id @default(autoincrement())
-  tipo_nome String? @db.VarChar(50)
-  tipo_desc String? @db.VarChar(400)
+  tipo_id   Int     @id(map: "PK_tipo_tipo_id") @default(autoincrement())
+  tipo_nome String? @db.NVarChar(50)
+  tipo_desc String? @db.NVarChar(400)
   tipo_sts  Int?
 }
 
 model tipos_terc_andar {
-  id    Int     @id @default(autoincrement())
-  nome  String  @db.VarChar(120)
-  ativo Boolean @default(true)
-  ordem Int     @default(0)
+  id    Int    @id(map: "PK_tipos_terc_andar_id") @default(autoincrement())
+  nome  String @db.NVarChar(120)
+  ativo Int    @default(1, map: "DF__tipos_ter__ativo__17AD7836") @db.SmallInt
+  ordem Int    @default(0, map: "DF__tipos_ter__ordem__18A19C6F")
 }
 
 /// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
 model token {
   token      String?  @db.VarChar(50)
-  valor      Int?     @default(0)
-  created_at DateTime @default(now()) @db.Timestamp(0)
+  valor      Int?     @default(0, map: "DF__token__valor__1A89E4E1")
+  created_at DateTime @default(now(), map: "DF__token__created_a__1B7E091A") @db.DateTime
 
   @@ignore
 }
 
 model token_senha {
-  id     Int     @id @default(autoincrement())
+  id     Int     @id(map: "PK_token_senha_id") @default(autoincrement())
   token  String? @db.VarChar(200)
   expire String? @db.VarChar(200)
   email  String? @db.VarChar(100)
 }
 
 model troca_devolucao_anexos {
-  id                           Int                          @id @default(autoincrement())
+  id                           Int                          @id(map: "PK_troca_devolucao_anexos_id") @default(autoincrement())
   solicitacao_id               Int
-  tipo                         troca_devolucao_anexos_tipo
-  nome_arquivo                 String?                      @db.VarChar(255)
-  mime_type                    String?                      @db.VarChar(100)
+  tipo                         String                       @db.NVarChar(12)
+  nome_arquivo                 String?                      @db.NVarChar(255)
+  mime_type                    String?                      @db.NVarChar(100)
   tamanho_bytes                Int?
-  drive_file_id                String?                      @db.VarChar(255)
-  drive_url                    String?                      @db.Text
-  caminho_local                String?                      @db.Text
-  criado_em                    DateTime                     @default(now()) @db.DateTime(0)
-  troca_devolucao_solicitacoes troca_devolucao_solicitacoes @relation(fields: [solicitacao_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "fk_tda_solicitacao")
+  drive_file_id                String?                      @db.NVarChar(255)
+  drive_url                    String?                      @db.NVarChar(Max)
+  caminho_local                String?                      @db.NVarChar(Max)
+  criado_em                    DateTime                     @default(now(), map: "DF__troca_dev__criad__25077354")
+  troca_devolucao_solicitacoes troca_devolucao_solicitacoes @relation(fields: [solicitacao_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "troca_devolucao_anexos$fk_tda_solicitacao")
 
   @@index([solicitacao_id], map: "idx_tda_solicitacao")
 }
 
 model troca_devolucao_auditoria_publica {
-  id             Int      @id @default(autoincrement())
-  ip             String?  @db.VarChar(45)
-  user_agent     String?  @db.VarChar(255)
-  evento         String   @db.VarChar(50)
-  sucesso        Boolean  @default(false)
+  id             Int      @id(map: "PK_troca_devolucao_auditoria_publica_id") @default(autoincrement())
+  ip             String?  @db.NVarChar(45)
+  user_agent     String?  @db.NVarChar(255)
+  evento         String   @db.NVarChar(50)
+  sucesso        Int      @default(0, map: "DF__troca_dev__suces__27E3DFFF") @db.SmallInt
   solicitacao_id Int?
-  detalhe        String?  @db.VarChar(255)
-  criado_em      DateTime @default(now()) @db.DateTime(0)
+  detalhe        String?  @db.NVarChar(255)
+  criado_em      DateTime @default(now(), map: "DF__troca_dev__criad__2AC04CAA")
 
   @@index([evento], map: "idx_tdap_evento")
   @@index([ip, criado_em], map: "idx_tdap_ip_data")
 }
 
 model troca_devolucao_solicitacoes {
-  id                     Int                                      @id @default(autoincrement())
-  origem                 String                                   @default("manual") @db.VarChar(50)
-  origem_form_id         String?                                  @db.VarChar(255)
-  payload_json           String?                                  @db.LongText
-  email_resposta         String?                                  @db.VarChar(255)
-  cnpj                   String                                   @db.VarChar(30)
-  razao_social           String                                   @db.VarChar(255)
-  codigo_cliente         String                                   @db.VarChar(50)
-  codrota                String?                                  @db.VarChar(50)
-  descrota               String?                                  @db.VarChar(255)
-  telefone_whatsapp      String?                                  @db.VarChar(50)
-  codigo_produto         String                                   @db.VarChar(50)
-  descricao_produto      String                                   @db.VarChar(255)
-  quantidade_devolvida   Decimal                                  @db.Decimal(15, 3)
-  natureza_problema      String                                   @db.VarChar(255)
-  descricao_problema     String                                   @db.Text
-  numero_nota_fiscal     String                                   @db.VarChar(50)
-  nome_vendedor          String                                   @db.VarChar(255)
-  codigo_vendedor        String?                                  @db.VarChar(50)
-  solicitante            troca_devolucao_solicitacoes_solicitante
+  id                     Int                      @id(map: "PK_troca_devolucao_solicitacoes_id") @default(autoincrement())
+  origem                 String                   @default("N'manual'", map: "DF__troca_dev__orige__2BB470E3") @db.NVarChar(50)
+  origem_form_id         String?                  @db.NVarChar(255)
+  payload_json           String?                  @db.NVarChar(Max)
+  email_resposta         String?                  @db.NVarChar(255)
+  cnpj                   String                   @db.NVarChar(30)
+  razao_social           String                   @db.NVarChar(255)
+  codigo_cliente         String                   @db.NVarChar(50)
+  codrota                String?                  @db.NVarChar(50)
+  descrota               String?                  @db.NVarChar(255)
+  telefone_whatsapp      String?                  @db.NVarChar(50)
+  codigo_produto         String                   @db.NVarChar(50)
+  descricao_produto      String                   @db.NVarChar(255)
+  quantidade_devolvida   Decimal                  @db.Decimal(15, 3)
+  natureza_problema      String                   @db.NVarChar(255)
+  descricao_problema     String                   @db.NVarChar(Max)
+  numero_nota_fiscal     String                   @db.NVarChar(50)
+  nome_vendedor          String                   @db.NVarChar(255)
+  codigo_vendedor        String?                  @db.NVarChar(50)
+  solicitante            String                   @db.NVarChar(8)
   categoria_id           Int?
   subcategoria_id        Int?
   responsavel_id         Int?
   forma_id               Int?
-  quantidade_nf          Decimal?                                 @db.Decimal(15, 3)
-  valor_unitario         Decimal?                                 @db.Decimal(15, 2)
-  valor_total            Decimal?                                 @db.Decimal(15, 2)
-  itens_nota_json        String?                                  @db.LongText
-  cnpj_consultado        Boolean                                  @default(false)
-  cnpj_nota_consultada   String?                                  @db.VarChar(30)
-  status                 troca_devolucao_solicitacoes_status      @default(pendente)
-  motivo_rejeicao        String?                                  @db.Text
-  erro_processamento     String?                                  @db.Text
+  quantidade_nf          Decimal?                 @db.Decimal(15, 3)
+  valor_unitario         Decimal?                 @db.Decimal(15, 2)
+  valor_total            Decimal?                 @db.Decimal(15, 2)
+  itens_nota_json        String?                  @db.NVarChar(Max)
+  cnpj_consultado        Int                      @default(0, map: "DF__troca_dev__cnpj___3AF6B473") @db.SmallInt
+  cnpj_nota_consultada   String?                  @db.NVarChar(30)
+  status                 String                   @default("N'pendente'", map: "DF__troca_dev__statu__3CDEFCE5") @db.NVarChar(18)
+  motivo_rejeicao        String?                  @db.NVarChar(Max)
+  erro_processamento     String?                  @db.NVarChar(Max)
   atendimento_id         Int?
   criado_por             Int?
-  criado_em              DateTime                                 @default(now()) @db.DateTime(0)
-  atualizado_em          DateTime?                                @db.DateTime(0)
+  criado_em              DateTime                 @default(now(), map: "DF__troca_dev__criad__41A3B202")
+  atualizado_em          DateTime?
   aprovado_por           Int?
-  aprovado_em            DateTime?                                @db.DateTime(0)
+  aprovado_em            DateTime?
   rejeitado_por          Int?
-  rejeitado_em           DateTime?                                @db.DateTime(0)
+  rejeitado_em           DateTime?
   troca_devolucao_anexos troca_devolucao_anexos[]
 
   @@index([atendimento_id], map: "idx_tds_atendimento")
@@ -1336,133 +1426,103 @@ model troca_devolucao_solicitacoes {
 }
 
 model type_keys {
-  id        Int    @id
-  name_type String @db.VarChar(45)
+  id        Int    @id(map: "PK_type_keys_id")
+  name_type String @db.NVarChar(45)
   pix_type  Int
 }
 
 model unidade_negocio {
-  id        Int    @id @default(autoincrement()) @db.UnsignedInt
-  nome_unid String @db.VarChar(100)
+  id        BigInt @id(map: "PK_unidade_negocio_id") @default(autoincrement())
+  nome_unid String @db.NVarChar(100)
   sts_unid  Int
 }
 
 model user_permissions {
   user_id                                         Int
-  permission_id                                   Int                     @db.UnsignedInt
-  effect                                          user_permissions_effect @default(allow)
-  assigned_at                                     DateTime                @default(now()) @db.DateTime(0)
+  permission_id                                   BigInt
+  effect                                          String      @default("N'allow'", map: "DF__user_perm__effec__475C8B58") @db.NVarChar(5)
+  assigned_at                                     DateTime    @default(now(), map: "DF__user_perm__assig__4850AF91")
   assigned_by                                     Int?
-  usuarios_user_permissions_assigned_byTousuarios usuarios?               @relation("user_permissions_assigned_byTousuarios", fields: [assigned_by], references: [user_id], onUpdate: Restrict, map: "fk_user_permissions_assigned_by")
-  permissions                                     permissions             @relation(fields: [permission_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "fk_user_permissions_permission")
-  usuarios_user_permissions_user_idTousuarios     usuarios                @relation("user_permissions_user_idTousuarios", fields: [user_id], references: [user_id], onDelete: Cascade, onUpdate: Restrict, map: "fk_user_permissions_user")
+  usuarios_user_permissions_assigned_byTousuarios usuarios?   @relation("user_permissions_assigned_byTousuarios", fields: [assigned_by], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "user_permissions$fk_user_permissions_assigned_by")
+  permissions                                     permissions @relation(fields: [permission_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "user_permissions$fk_user_permissions_permission")
+  usuarios_user_permissions_user_idTousuarios     usuarios    @relation("user_permissions_user_idTousuarios", fields: [user_id], references: [user_id], onDelete: Cascade, onUpdate: NoAction, map: "user_permissions$fk_user_permissions_user")
 
-  @@id([user_id, permission_id])
+  @@id([user_id, permission_id], map: "PK_user_permissions_user_id")
   @@index([assigned_by], map: "fk_user_permissions_assigned_by")
   @@index([permission_id], map: "idx_user_permissions_permission")
 }
 
 model user_roles {
   user_id                                   Int
-  role_id                                   Int       @db.UnsignedInt
-  assigned_at                               DateTime  @default(now()) @db.DateTime(0)
+  role_id                                   BigInt
+  assigned_at                               DateTime  @default(now(), map: "DF__user_role__assig__4A38F803")
   assigned_by                               Int?
-  usuarios_user_roles_assigned_byTousuarios usuarios? @relation("user_roles_assigned_byTousuarios", fields: [assigned_by], references: [user_id], onUpdate: Restrict, map: "fk_user_roles_assigned_by")
-  roles                                     roles     @relation(fields: [role_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "fk_user_roles_role")
-  usuarios_user_roles_user_idTousuarios     usuarios  @relation("user_roles_user_idTousuarios", fields: [user_id], references: [user_id], onDelete: Cascade, onUpdate: Restrict, map: "fk_user_roles_user")
+  usuarios_user_roles_assigned_byTousuarios usuarios? @relation("user_roles_assigned_byTousuarios", fields: [assigned_by], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "user_roles$fk_user_roles_assigned_by")
+  roles                                     roles     @relation(fields: [role_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "user_roles$fk_user_roles_role")
+  usuarios_user_roles_user_idTousuarios     usuarios  @relation("user_roles_user_idTousuarios", fields: [user_id], references: [user_id], onDelete: Cascade, onUpdate: NoAction, map: "user_roles$fk_user_roles_user")
 
-  @@id([user_id, role_id])
+  @@id([user_id, role_id], map: "PK_user_roles_user_id")
   @@index([assigned_by], map: "fk_user_roles_assigned_by")
   @@index([role_id], map: "idx_user_roles_role")
 }
 
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 model usuarios {
-  user_id                                                 Int                    @id @default(autoincrement())
-  user_sts                                                Int?
-  user_nome                                               String?                @db.VarChar(60)
-  user_mail                                               String?                @db.VarChar(60)
-  user_cel                                                String?                @db.VarChar(20)
-  user_funcao                                             Int?
-  user_login                                              String?                @db.VarChar(15)
-  user_pass                                               String?                @db.VarChar(300)
-  user_modulo_01                                          String                 @default("0000000000") @db.Char(10)
-  user_modulo_02                                          String                 @default("0000000000") @db.Char(10)
-  user_modulo_03                                          String                 @default("0000000000") @db.Char(10)
-  user_modulo_04                                          String                 @default("0000000000") @db.Char(10)
-  user_modulo_05                                          String                 @default("0000000000") @db.Char(10)
-  user_modulo_06                                          String                 @default("0000000000") @db.Char(10)
-  user_modulo_07                                          String                 @default("0000000000") @db.Char(10)
-  user_modulo_08                                          String                 @default("0000000000") @db.Char(10)
-  user_modulo_09                                          String                 @default("0000000000") @db.Char(10)
-  tipo_usuario                                            Int                    @default(1)
-  link                                                    String?                @db.VarChar(50)
-  chavepix                                                String?                @db.VarChar(255)
-  user_observacao                                         String?                @db.Text
-  pix_type                                                Int?
-  api_idempotency_keys                                    api_idempotency_keys[]
-  api_sessions                                            api_sessions[]
-  clientes_usuarios                                       clientes_usuarios[]
-  contas_pagar                                            contas_pagar[]
-  recebimentos                                            recebimentos[]
-  recorrencias                                            recorrencias[]
-  user_permissions_user_permissions_assigned_byTousuarios user_permissions[]     @relation("user_permissions_assigned_byTousuarios")
-  user_permissions_user_permissions_user_idTousuarios     user_permissions[]     @relation("user_permissions_user_idTousuarios")
-  user_roles_user_roles_assigned_byTousuarios             user_roles[]           @relation("user_roles_assigned_byTousuarios")
-  user_roles_user_roles_user_idTousuarios                 user_roles[]           @relation("user_roles_user_idTousuarios")
+  user_id                                                   Int                    @id(map: "PK_usuarios_user_id") @default(autoincrement())
+  user_sts                                                  Int?
+  user_nome                                                 String?                @db.NVarChar(60)
+  user_mail                                                 String?                @db.NVarChar(60)
+  user_cel                                                  String?                @db.NVarChar(20)
+  user_funcao                                               Int?
+  user_login                                                String?                @db.NVarChar(15)
+  user_pass                                                 String?                @db.NVarChar(300)
+  user_modulo_01                                            String                 @default("N'0000000000'", map: "DF__usuarios__user_m__52CE3E04") @db.NChar(10)
+  user_modulo_02                                            String                 @default("N'0000000000'", map: "DF__usuarios__user_m__53C2623D") @db.NChar(10)
+  user_modulo_03                                            String                 @default("N'0000000000'", map: "DF__usuarios__user_m__54B68676") @db.NChar(10)
+  user_modulo_04                                            String                 @default("N'0000000000'", map: "DF__usuarios__user_m__55AAAAAF") @db.NChar(10)
+  user_modulo_05                                            String                 @default("N'0000000000'", map: "DF__usuarios__user_m__569ECEE8") @db.NChar(10)
+  user_modulo_06                                            String                 @default("N'0000000000'", map: "DF__usuarios__user_m__5792F321") @db.NChar(10)
+  user_modulo_07                                            String                 @default("N'0000000000'", map: "DF__usuarios__user_m__5887175A") @db.NChar(10)
+  user_modulo_08                                            String                 @default("N'0000000000'", map: "DF__usuarios__user_m__597B3B93") @db.NChar(10)
+  user_modulo_09                                            String                 @default("N'0000000000'", map: "DF__usuarios__user_m__5A6F5FCC") @db.NChar(10)
+  tipo_usuario                                              Int                    @default(1, map: "DF__usuarios__tipo_u__5B638405")
+  link                                                      String?                @db.NVarChar(50)
+  chavepix                                                  String?                @db.NVarChar(255)
+  user_observacao                                           String?                @db.NVarChar(Max)
+  pix_type                                                  Int?
+  api_idempotency_keys                                      api_idempotency_keys[]
+  api_sessions                                              api_sessions[]
+  clientes_usuarios                                         clientes_usuarios[]
+  contas_pagar                                              contas_pagar[]
+  on_call_schedules_on_call_schedules_assigned_byTousuarios on_call_schedules[]    @relation("on_call_schedules_assigned_byTousuarios")
+  on_call_schedules_on_call_schedules_user_idTousuarios     on_call_schedules[]    @relation("on_call_schedules_user_idTousuarios")
+  recebimentos                                              recebimentos[]
+  recorrencias                                              recorrencias[]
+  user_permissions_user_permissions_assigned_byTousuarios   user_permissions[]     @relation("user_permissions_assigned_byTousuarios")
+  user_permissions_user_permissions_user_idTousuarios       user_permissions[]     @relation("user_permissions_user_idTousuarios")
+  user_roles_user_roles_assigned_byTousuarios               user_roles[]           @relation("user_roles_assigned_byTousuarios")
+  user_roles_user_roles_user_idTousuarios                   user_roles[]           @relation("user_roles_user_idTousuarios")
+}
+
+model usuarios_teste {
+  user_id      Int     @id(map: "PK_usuarios_teste_user_id") @default(autoincrement())
+  user_sts     Int?
+  user_nome    String? @db.NVarChar(60)
+  user_mail    String? @db.NVarChar(60)
+  user_cel     String? @db.NVarChar(20)
+  user_funcao  Int?
+  user_login   String? @db.NVarChar(15)
+  user_pass    String? @db.NVarChar(300)
+  tipo_usuario Int     @default(1, map: "DF__usuarios___tipo___66D536B1")
+  link         String? @db.NVarChar(50)
+  chavepix     String? @db.NVarChar(255)
+  pix_type     Int?
 }
 
 model veiculos {
-  id              Int               @id @default(autoincrement())
-  veiculo         String            @db.VarChar(100)
-  placa           String            @db.VarChar(10)
-  ativo           Boolean?          @default(true)
-  criado_em       DateTime?         @default(now()) @db.DateTime(0)
+  id              Int               @id(map: "PK_veiculos_id") @default(autoincrement())
+  veiculo         String            @db.NVarChar(100)
+  placa           String            @db.NVarChar(10)
+  ativo           Int?              @default(1, map: "DF__veiculos__ativo__6AA5C795") @db.SmallInt
+  criado_em       DateTime?         @default(now(), map: "DF__veiculos__criado__6B99EBCE")
   agenda_veiculos agenda_veiculos[]
-}
-
-enum user_permissions_effect {
-  allow
-  deny
-}
-
-enum recorrencias_tipo {
-  Pagar
-  Receber
-}
-
-enum troca_devolucao_anexos_tipo {
-  foto_produto
-  nota_fiscal
-}
-
-enum atendimento_recorrencias_quantidade_modo {
-  fixa
-  continua
-}
-
-enum contas_pagar_status {
-  Pendente
-  Pago
-}
-
-enum contas_receber_status {
-  Pendente
-  Parcialmente_Recebido @map("Parcialmente Recebido")
-  Recebido
-  Inadimplente
-  A_vencer              @map("A vencer")
-}
-
-enum troca_devolucao_solicitacoes_solicitante {
-  Vendedor
-  Cliente
-}
-
-enum troca_devolucao_solicitacoes_status {
-  pendente
-  em_analise
-  rejeitado
-  erro
-  atendimento_aberto
 }

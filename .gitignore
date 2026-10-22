@@ -46,3 +46,4 @@ pnpm-debug.log*
 
 *.patch
 Dump_Helpdesk_RD.sql
+.tmp/

@@ -45,8 +45,8 @@ export const DEFAULT_NAVIGATION: SeedSection[] = [
     icon: 'headset',
     items: [
       { slug: 'tickets-list', label: 'Lista de Atendimentos', href: '/atendimentos', status: 'available', visibilityCondition: { anyPermissions: ['tickets.read'] } },
-      { slug: 'tickets-recurrences', label: 'Recorrências', href: '/atendimentos/recorrencias', status: 'available', visibilityCondition: { anyPermissions: ['tickets.recurrence.create'] } },
-      { slug: 'tickets-availability', label: 'Disponibilidade Técnica', href: '/atendimentos/disponibilidade', status: 'available', visibilityCondition: { anyPermissions: ['tickets.read'] } },
+      { slug: 'tickets-recurrences', label: 'Recorrências', href: '/atendimentos/recorrencias', status: 'available', visibilityCondition: { anyPermissions: ['tickets.recurrence.read'] } },
+      { slug: 'tickets-availability', label: 'Disponibilidade Técnica', href: '/atendimentos/disponibilidade', status: 'available', visibilityCondition: { anyPermissions: ['tickets.radio'] } },
       { slug: 'tickets-timeline', label: 'Linha do tempo', href: '/atendimentos/linha-do-tempo', status: 'available', visibilityCondition: { anyPermissions: ['tickets.timeline.read'] } },
       { slug: 'tickets-new', label: 'Novo Atendimento', href: '/atendimentos/novo', status: 'available', visibilityCondition: { anyPermissions: ['tickets.create'] } },
     ],
@@ -181,7 +181,7 @@ export const DEFAULT_NAVIGATION: SeedSection[] = [
     items: [
       {
         slug: 'access-management',
-        label: 'Permissões',
+        label: 'Catálogo de permissões',
         href: '/administracao/permissoes',
         status: 'available',
         visibilityCondition: { anyPermissions: ['system.admin'] },
@@ -192,15 +192,6 @@ export const DEFAULT_NAVIGATION: SeedSection[] = [
         href: '/administracao/funcoes-usuarios',
         status: 'available',
         visibilityCondition: { anyPermissions: ['system.admin'] },
-      },
-      {
-        slug: 'user-permissions',
-        label: 'Permissões por usuário',
-        href: '/administracao/permissoes-usuario',
-        status: 'available',
-        visibilityCondition: {
-          anyPermissions: ['system.admin'],
-        },
       },
       {
         slug: 'ticket-sla-settings',

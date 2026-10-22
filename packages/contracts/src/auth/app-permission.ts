@@ -19,6 +19,7 @@ export enum AppPermission {
   TicketsClose = 'tickets.close',
   TicketsAudit = 'tickets.audit',
   TicketsRadio = 'tickets.radio',
+  TicketsRecurrenceRead = 'tickets.recurrence.read',
   TicketsRecurrenceCreate = 'tickets.recurrence.create',
   TicketsTimelineRead = 'tickets.timeline.read',
 

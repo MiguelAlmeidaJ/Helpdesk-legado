@@ -91,13 +91,13 @@ interface FormState {
   pixKey: string;
   observation: string;
   companyIds: number[];
-  roleIds: number[];
+  extraPermissionIds: number[];
 }
 
-const EMPTY_FORM: FormState = { status: 1, name: '', email: '', phone: '', functionId: '', login: '', password: '', type: 1, link: '', pixKeyType: '', pixKey: '', observation: '', companyIds: [], roleIds: [] };
+const EMPTY_FORM: FormState = { status: 1, name: '', email: '', phone: '', functionId: '', login: '', password: '', type: 1, link: '', pixKeyType: '', pixKey: '', observation: '', companyIds: [], extraPermissionIds: [] };
 
 function fromUser(user: ManagedUserDetail): FormState {
-  return { status: user.status, name: user.name, email: user.email, phone: user.phone, functionId: user.function?.id.toString() ?? '', login: user.login, password: '', type: user.type === 2 ? 2 : 1, link: user.link, pixKeyType: user.pixKeyType?.toString() ?? '', pixKey: user.pixKey, observation: user.observation, companyIds: user.companies.map((company) => company.id), roleIds: user.roles.map((role) => role.id) };
+  return { status: user.status, name: user.name, email: user.email, phone: user.phone, functionId: user.function?.id.toString() ?? '', login: user.login, password: '', type: user.type === 2 ? 2 : 1, link: user.link, pixKeyType: user.pixKeyType?.toString() ?? '', pixKey: user.pixKey, observation: user.observation, companyIds: user.companies.map((company) => company.id), extraPermissionIds: user.extraPermissionIds };
 }
 
 function message(error: unknown): string {
@@ -121,7 +121,7 @@ export function UsersScreen({ currentUser }: { currentUser: CurrentUserResponse 
   const [search, setSearch] = useState('');
   const [appliedSearch, setAppliedSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | '1' | '2'>('all');
-  const [roleFilter, setRoleFilter] = useState('');
+  const [functionFilter, setFunctionFilter] = useState('');
   const [result, setResult] = useState<ManagedUserListResponse | null>(null);
   const [catalogs, setCatalogs] = useState<UserManagementCatalogs | null>(null);
   const [selectedId, setSelectedId] = useState<number | null>(null);
@@ -133,7 +133,7 @@ export function UsersScreen({ currentUser }: { currentUser: CurrentUserResponse 
   const [companyQuery, setCompanyQuery] = useState('');
   const canCreate = can(currentUser, AppPermission.UsersCreate);
   const canEdit = can(currentUser, AppPermission.UsersEdit);
-  const canAssignRole = can(currentUser, AppPermission.UsersAssignRole);
+  const canSetExtras = can(currentUser, AppPermission.UsersManageOverrides);
 
   async function load(signal?: AbortSignal) {
     setLoading(true);
@@ -145,7 +145,7 @@ export function UsersScreen({ currentUser }: { currentUser: CurrentUserResponse 
           {
             search: appliedSearch,
             status: statusFilter === 'all' ? null : Number(statusFilter) as 1 | 2,
-            roleId: roleFilter ? Number(roleFilter) : null,
+            functionId: functionFilter ? Number(functionFilter) : null,
           },
           signal,
         ),
@@ -165,7 +165,7 @@ export function UsersScreen({ currentUser }: { currentUser: CurrentUserResponse 
     const controller = new AbortController();
     void load(controller.signal);
     return () => controller.abort();
-  }, [page, appliedSearch, statusFilter, roleFilter]);
+  }, [page, appliedSearch, statusFilter, functionFilter]);
 
   const title = selectedId ? `Editar usuário #${selectedId}` : 'Novo usuário';
   const visibleCompanies = useMemo(() => {
@@ -176,28 +176,14 @@ export function UsersScreen({ currentUser }: { currentUser: CurrentUserResponse 
       : companies;
   }, [catalogs?.companies, companyQuery]);
 
-  const clientRole = useMemo(
-    () => catalogs?.roles.find((role) => {
-      const slug = role.slug.toLocaleLowerCase('pt-BR');
-      const name = role.name.trim().toLocaleLowerCase('pt-BR');
-      return slug === 'cliente' || slug === 'client' || name === 'cliente';
-    }) ?? null,
-    [catalogs?.roles],
-  );
-
-  const visibleRoles = useMemo(
-    () => form.type === 2
-      ? (clientRole ? [clientRole] : [])
-      : (catalogs?.roles ?? []).filter((role) => role.id !== clientRole?.id),
-    [catalogs?.roles, clientRole, form.type],
-  );
+  const inheritedPermissionIds = catalogs?.functionPermissionIds[Number(form.functionId)] ?? [];
+  const extraPermissions = (catalogs?.permissions ?? []).filter((permission) => !inheritedPermissionIds.includes(permission.id));
 
   async function selectUser(id: number) {
     setError(null); setSuccess(null); setLoading(true);
     try {
       const user = await fetchUser(id);
       const next = fromUser(user);
-      if (next.type === 2 && clientRole) next.roleIds = [clientRole.id];
       setSelectedId(id);
       setForm(next);
       setCompanyQuery('');
@@ -206,16 +192,13 @@ export function UsersScreen({ currentUser }: { currentUser: CurrentUserResponse 
     finally { setLoading(false); }
   }
 
-  function newUser() { setSelectedId(null); setForm({ ...EMPTY_FORM, companyIds: [], roleIds: [] }); setCompanyQuery(''); setError(null); setSuccess(null); }
+  function newUser() { setSelectedId(null); setForm({ ...EMPTY_FORM, companyIds: [], extraPermissionIds: [] }); setCompanyQuery(''); setError(null); setSuccess(null); }
 
   function changeUserType(type: 1 | 2) {
     setForm((current) => ({
       ...current,
       type,
       companyIds: type === 2 ? current.companyIds : [],
-      roleIds: type === 2
-        ? (clientRole ? [clientRole.id] : [])
-        : current.roleIds.filter((id) => id !== clientRole?.id),
     }));
     if (type === 1) setCompanyQuery('');
   }
@@ -238,10 +221,7 @@ export function UsersScreen({ currentUser }: { currentUser: CurrentUserResponse 
 
   async function save(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); setSaving(true); setError(null); setSuccess(null);
-    const normalizedRoleIds = form.type === 2
-      ? (clientRole ? [clientRole.id] : [])
-      : form.roleIds.filter((id) => id !== clientRole?.id);
-    const base = { status: form.status, name: form.name, email: form.email, phone: form.phone, functionId: Number(form.functionId), login: form.login, type: form.type, link: form.link, pixKeyType: form.pixKeyType ? Number(form.pixKeyType) : null, pixKey: form.pixKey, observation: form.observation, companyIds: form.type === 2 ? form.companyIds : [], ...((canAssignRole || form.type === 2) ? { roleIds: normalizedRoleIds } : {}) };
+    const base = { status: form.status, name: form.name, email: form.email, phone: form.phone, functionId: Number(form.functionId), login: form.login, type: form.type, link: form.link, pixKeyType: form.pixKeyType ? Number(form.pixKeyType) : null, pixKey: form.pixKey, observation: form.observation, companyIds: form.type === 2 ? form.companyIds : [], ...(canSetExtras ? { extraPermissionIds: form.extraPermissionIds.filter((id) => !inheritedPermissionIds.includes(id)) } : {}) };
     try {
       const saved = selectedId
         ? await updateUser(selectedId, base)
@@ -283,10 +263,10 @@ export function UsersScreen({ currentUser }: { currentUser: CurrentUserResponse 
                 </select>
               </label>
               <label>
-                <span>Tipo de usuário</span>
-                <select onChange={(event) => { setPage(1); setRoleFilter(event.target.value); }} value={roleFilter}>
-                  <option value="">Todos os tipos</option>
-                  {catalogs?.roles.map((role) => <option key={role.id} value={role.id}>{role.name}</option>)}
+                <span>Função</span>
+                <select onChange={(event) => { setPage(1); setFunctionFilter(event.target.value); }} value={functionFilter}>
+                  <option value="">Todas as funções</option>
+                  {catalogs?.functions.map((option) => <option key={option.id} value={option.id}>{option.name}</option>)}
                 </select>
               </label>
             </div>
@@ -329,7 +309,7 @@ export function UsersScreen({ currentUser }: { currentUser: CurrentUserResponse 
                       </div>
                     </div>
                   </fieldset> : null}
-                {canAssignRole ? <fieldset className={styles.permissions}><legend>Tipos de usuário</legend><p>{form.type === 2 ? 'Usuários do tipo Cliente recebem exclusivamente o perfil Cliente.' : 'Selecione os perfis que este usuário receberá. Cada perfil aplica automaticamente o conjunto de permissões configurado em Administração → Permissões.'}</p><div className={styles.roleGrid}>{visibleRoles.map((role) => { const checked = form.type === 2 ? true : form.roleIds.includes(role.id); return <label className={styles.roleOption} key={role.id}><input checked={checked} disabled={form.type === 2 || saving || (!!selectedId && !canEdit)} onChange={() => setForm((current) => ({ ...current, roleIds: checked ? current.roleIds.filter((id) => id !== role.id) : [...current.roleIds, role.id] }))} type="checkbox" /><span><strong>{role.name}</strong><small>{form.type === 2 ? 'Perfil obrigatório para usuário cliente' : role.system ? 'Perfil interno do sistema' : role.slug}</small></span></label>; })}</div></fieldset> : null}
+                {canSetExtras ? <fieldset className={styles.permissions}><legend>Permissões extras</legend><p>Estas permissões valem somente para este usuário e complementam as permissões herdadas da função selecionada.</p><div className={styles.roleGrid}>{extraPermissions.map((permission) => { const checked = form.extraPermissionIds.includes(permission.id); return <label className={styles.roleOption} key={permission.id}><input checked={checked} disabled={saving || (!!selectedId && !canEdit)} onChange={() => setForm((current) => ({ ...current, extraPermissionIds: checked ? current.extraPermissionIds.filter((id) => id !== permission.id) : [...current.extraPermissionIds, permission.id] }))} type="checkbox" /><span><strong>{permission.name}</strong><small>{permission.module}</small></span></label>; })}</div></fieldset> : null}
                 {(selectedId ? canEdit : canCreate) ? <div className={styles.actions}>{selectedId && form.status === 1 ? <button className={styles.button} disabled={saving || selectedId === currentUser.id || selectedId === 1} onClick={() => void deactivate()} type="button">Desativar</button> : null}<button className={styles.buttonPrimary} disabled={saving} type="submit">{saving ? 'Salvando…' : 'Salvar usuário'}</button></div> : null}
               </form>
             )}

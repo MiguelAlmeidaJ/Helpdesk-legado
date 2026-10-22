@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import type {
+  AccessPermissionItem,
   UserFunctionInput,
   UserFunctionMutationResponse,
   UserFunctionSummary,
@@ -12,6 +13,10 @@ export class UserFunctionManagement {
 
   list(): Promise<UserFunctionSummary[]> {
     return this.functions.list();
+  }
+
+  permissions(): Promise<AccessPermissionItem[]> {
+    return this.functions.permissions();
   }
 
   create(input: UserFunctionInput): Promise<UserFunctionMutationResponse> {

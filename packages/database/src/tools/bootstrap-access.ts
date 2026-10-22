@@ -11,6 +11,29 @@ config({ path: path.resolve(process.cwd(), '../../.env') });
 type CountRow = { total: number | bigint };
 
 const PERMISSION_MIGRATIONS = [
+  ['atendimentos.finalizar', 'atendimentos.editar'],
+  ['atendimentos.recorrencia.criar', 'atendimentos.recorrencia.visualizar'],
+  ['devops.projetos.editar', 'devops.projetos.criar'],
+  ['devops.tarefas.editar', 'devops.tarefas.criar'],
+  ['marketing.tarefas.editar', 'marketing.tarefas.criar'],
+  ['logistica.rd.visualizar', 'logistica.rd.acessar'],
+  ['logistica.rd.criar', 'logistica.rd.acessar'],
+  ['financeiro.visualizar', 'financeiro.acessar'],
+  ['financeiro.editar', 'financeiro.acessar'],
+  ['qualidade.plantao.visualizar', 'qualidade.acessar'],
+  ['qualidade.plantao.gerenciar', 'qualidade.acessar'],
+  ['qualidade.datas.visualizar', 'qualidade.acessar'],
+  ['qualidade.datas.gerenciar', 'qualidade.acessar'],
+  ['relatorios.visualizar', 'relatorios.acessar'],
+  ['relatorios.gerar_pdf', 'relatorios.acessar'],
+  ['usuarios.editar', 'usuarios.criar'],
+  ['usuarios.permissoes_usuario', 'usuarios.permissoes_extras'],
+  ['cadastros.clientes.editar', 'cadastros.clientes.criar'],
+  ['cadastros.categorias.editar', 'cadastros.categorias.criar'],
+  ['catalogos.ti.visualizar', 'catalogos.visualizar'],
+  ['catalogos.devops.visualizar', 'catalogos.visualizar'],
+  ['catalogos.ti.editar', 'catalogos.ti.criar'],
+  ['catalogos.devops.editar', 'catalogos.devops.criar'],
   ['users.read', 'usuarios.visualizar'],
   ['users.create', 'usuarios.criar'],
   ['users.edit', 'usuarios.editar'],
@@ -156,8 +179,7 @@ async function columnExists(
   const rows = await db.$queryRawUnsafe<CountRow[]>(
     `SELECT COUNT(*) AS total
      FROM information_schema.COLUMNS
-     WHERE TABLE_SCHEMA = DATABASE()
-       AND TABLE_NAME = ?
+     WHERE TABLE_NAME = ?
        AND COLUMN_NAME = ?`,
     table,
     column,
@@ -173,27 +195,79 @@ async function copyPermission(
   if (sourceSlug === targetSlug) return;
 
   await db.$executeRawUnsafe(
-    `INSERT IGNORE INTO role_permissions (role_id, permission_id, granted_at)
+    `INSERT INTO role_permissions (role_id, permission_id, granted_at)
      SELECT rp.role_id, target.id, rp.granted_at
      FROM role_permissions rp
      INNER JOIN permissions source ON source.id = rp.permission_id
      INNER JOIN permissions target ON target.slug = ?
-     WHERE source.slug = ?`,
+     WHERE source.slug = ?
+       AND NOT EXISTS (SELECT 1 FROM role_permissions existing WHERE existing.role_id = rp.role_id AND existing.permission_id = target.id)`,
     targetSlug,
     sourceSlug,
   );
 
   await db.$executeRawUnsafe(
-    `INSERT IGNORE INTO user_permissions
+    `INSERT INTO user_permissions
        (user_id, permission_id, effect, assigned_at, assigned_by)
      SELECT up.user_id, target.id, up.effect, up.assigned_at, up.assigned_by
      FROM user_permissions up
      INNER JOIN permissions source ON source.id = up.permission_id
      INNER JOIN permissions target ON target.slug = ?
-     WHERE source.slug = ?`,
+     WHERE source.slug = ?
+       AND NOT EXISTS (SELECT 1 FROM user_permissions existing WHERE existing.user_id = up.user_id AND existing.permission_id = target.id)`,
     targetSlug,
     sourceSlug,
   );
+}
+
+type FunctionRow = { id: number | bigint; name: string | null };
+type IdRow = { id: number | bigint };
+type PermissionIdRow = { permission_id: number | bigint };
+
+async function migratePermissionsToFunctions(db: ReturnType<typeof createNivel3Client>) {
+  const functions = await db.$queryRawUnsafe<FunctionRow[]>(
+    'SELECT cargo_id AS id, cargo_nome AS name FROM cargos_n3',
+  );
+  for (const entry of functions) {
+    const functionId = Number(entry.id);
+    const slug = `function-${functionId}`;
+    let roles = await db.$queryRawUnsafe<IdRow[]>('SELECT id FROM roles WHERE slug = ? LIMIT 1', slug);
+    if (!roles[0]) {
+      await db.$executeRawUnsafe(
+        `INSERT INTO roles (name, slug, description, is_system, sort_order, created_at, updated_at)
+         VALUES (?, ?, ?, 1, 0, NOW(), NOW())`,
+        entry.name ?? `Função #${functionId}`, slug, 'Permissões herdadas pela função de usuário.',
+      );
+      roles = await db.$queryRawUnsafe<IdRow[]>('SELECT id FROM roles WHERE slug = ? LIMIT 1', slug);
+    }
+    const roleId = Number(roles[0]?.id);
+    const permissions = await db.$queryRawUnsafe<PermissionIdRow[]>(
+      `SELECT DISTINCT source.permission_id FROM (
+         SELECT up.permission_id FROM usuarios u
+         INNER JOIN user_permissions up ON up.user_id = u.user_id AND up.effect = 'allow'
+         WHERE u.user_funcao = ?
+         UNION
+         SELECT rp.permission_id FROM usuarios u
+         INNER JOIN user_roles ur ON ur.user_id = u.user_id
+         INNER JOIN role_permissions rp ON rp.role_id = ur.role_id
+         WHERE u.user_funcao = ?
+       ) source`,
+      functionId, functionId,
+    );
+    for (const permission of permissions) {
+      const permissionId = Number(permission.permission_id);
+      const exists = await db.$queryRawUnsafe<CountRow[]>(
+        'SELECT COUNT(*) AS total FROM role_permissions WHERE role_id = ? AND permission_id = ?',
+        roleId, permissionId,
+      );
+      if (Number(exists[0]?.total ?? 0) === 0) {
+        await db.$executeRawUnsafe(
+          'INSERT INTO role_permissions (role_id, permission_id, granted_at) VALUES (?, ?, NOW())',
+          roleId, permissionId,
+        );
+      }
+    }
+  }
 }
 
 async function main() {
@@ -202,14 +276,14 @@ async function main() {
   try {
     if (!(await columnExists(db, 'roles', 'sort_order'))) {
       await db.$executeRawUnsafe(
-        'ALTER TABLE roles ADD COLUMN sort_order INT NOT NULL DEFAULT 0 AFTER is_system',
+        'ALTER TABLE roles ADD sort_order INT NOT NULL DEFAULT 0',
       );
       await db.$executeRawUnsafe('UPDATE roles SET sort_order = id * 10');
     }
 
     if (!(await columnExists(db, 'catalogos', 'arquivado_em'))) {
       await db.$executeRawUnsafe(
-        'ALTER TABLE catalogos ADD COLUMN arquivado_em DATETIME NULL AFTER data_edicao',
+        'ALTER TABLE catalogos ADD arquivado_em DATETIME NULL',
       );
     }
 
@@ -230,6 +304,8 @@ async function main() {
     for (const [source, target] of PERMISSION_MIGRATIONS) {
       await copyPermission(db, source, target);
     }
+
+    await migratePermissionsToFunctions(db);
 
     if (!RBAC_PERMISSION_SLUGS.length) {
       throw new Error('Catálogo canônico de permissões está vazio; limpeza abortada.');

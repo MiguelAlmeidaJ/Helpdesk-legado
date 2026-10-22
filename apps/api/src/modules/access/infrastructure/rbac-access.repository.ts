@@ -5,6 +5,7 @@ import type { RbacAccessSnapshot } from '../domain/rbac-access-snapshot';
 
 interface UserStatusRow {
   user_sts: number | null;
+  user_funcao: number | null;
 }
 
 interface RoleRow {
@@ -37,7 +38,7 @@ export class RbacAccessRepository {
 
   async findByUserId(userId: number): Promise<RbacAccessSnapshot | null> {
     const users = await this.database.$queryRaw<UserStatusRow[]>`
-      SELECT user_sts
+      SELECT user_sts, user_funcao
       FROM usuarios
       WHERE user_id = ${userId}
       LIMIT 1
@@ -55,20 +56,23 @@ export class RbacAccessRepository {
         FROM user_roles ur
         INNER JOIN roles r ON r.id = ur.role_id
         WHERE ur.user_id = ${userId}
+          AND r.slug = 'system-admin'
         ORDER BY r.id
       `,
       this.database.$queryRaw<PermissionRow[]>`
         SELECT DISTINCT p.slug
-        FROM user_roles ur
-        INNER JOIN role_permissions rp ON rp.role_id = ur.role_id
+        FROM usuarios u
+        INNER JOIN roles r ON r.slug = CONCAT('function-', u.user_funcao)
+        INNER JOIN role_permissions rp ON rp.role_id = r.id
         INNER JOIN permissions p ON p.id = rp.permission_id
-        WHERE ur.user_id = ${userId}
+        WHERE u.user_id = ${userId}
       `,
       this.database.$queryRaw<UserPermissionRow[]>`
         SELECT p.slug, up.effect
         FROM user_permissions up
         INNER JOIN permissions p ON p.id = up.permission_id
         WHERE up.user_id = ${userId}
+          AND up.effect = 'allow'
       `,
     ]);
 
@@ -79,15 +83,12 @@ export class RbacAccessRepository {
     ]);
 
     for (const permission of userPermissions) {
-      if (permission.effect === 'deny') {
-        permissionSlugs.delete(permission.slug);
-      } else {
-        permissionSlugs.add(permission.slug);
-      }
+      permissionSlugs.add(permission.slug);
     }
 
     const roleSlugs = [
       ...roles.map((role) => role.slug),
+      ...(user.user_funcao ? [`function-${user.user_funcao}`] : []),
       ...(onCall.active ? ['plantonista'] : []),
     ];
 
