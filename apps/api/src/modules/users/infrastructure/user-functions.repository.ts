@@ -75,10 +75,10 @@ export class UserFunctionsRepository {
   async create(input: UserFunctionInput): Promise<UserFunctionMutationResponse> {
     await this.assertNameAvailable(input.name);
     return this.database.$transaction(async (transaction) => {
-      await transaction.$executeRawUnsafe(
-        'INSERT INTO cargos_n3 (cargo_nome, cargo_sts) VALUES (?, ?)', input.name, input.status,
+      const ids = await transaction.$queryRawUnsafe<IdRow[]>(
+        'INSERT INTO cargos_n3 (cargo_nome, cargo_sts) OUTPUT INSERTED.cargo_id AS id VALUES (?, ?)',
+        input.name, input.status,
       );
-      const ids = await transaction.$queryRawUnsafe<IdRow[]>('SELECT LAST_INSERT_ID() AS id');
       const id = Number(ids[0]?.id ?? 0);
       await this.replacePermissions(transaction, id, input.name, input.permissionIds);
       return { id };
@@ -147,12 +147,12 @@ export class UserFunctionsRepository {
     const roles = await transaction.$queryRawUnsafe<IdRow[]>('SELECT id FROM roles WHERE slug = ? LIMIT 1', slug);
     let roleId = Number(roles[0]?.id ?? 0);
     if (!roleId) {
-      await transaction.$executeRawUnsafe(
+      const ids = await transaction.$queryRawUnsafe<IdRow[]>(
         `INSERT INTO roles (name, slug, description, is_system, sort_order, created_at, updated_at)
+         OUTPUT INSERTED.id AS id
          VALUES (?, ?, ?, 1, 0, NOW(), NOW())`,
         functionName, slug, `Permissões herdadas pela função ${functionName}.`,
       );
-      const ids = await transaction.$queryRawUnsafe<IdRow[]>('SELECT LAST_INSERT_ID() AS id');
       roleId = Number(ids[0]?.id ?? 0);
     } else {
       await transaction.$executeRawUnsafe(
