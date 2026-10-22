@@ -15,7 +15,7 @@ import type {
 } from '@helpdesk/contracts';
 import type { FormEvent, ReactNode } from 'react';
 import Link from 'next/link';
-import { Eye, ChevronUp, RotateCcw } from 'lucide-react';
+import { NavigationIcon } from '../../../shared/navigation/navigation-icon';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ApiError } from '../../../shared/api/api-client';
 import { AppPageHeader } from '../../../shared/navigation/app-page-header';
@@ -466,7 +466,7 @@ export function FinanceScreen({
             <label className="grid gap-1 text-xs font-bold text-app-muted">Ordenação<select className={INPUT} value={sortOrder} onChange={e=>setSortOrder(e.target.value)}><option value="received-desc">Recebimento recente</option><option value="due-asc">Vencimento próximo</option><option value="due-desc">Vencimento distante</option><option value="amount-desc">Maior valor</option><option value="amount-asc">Menor valor</option></select></label>
           </> : null}
           <div className="flex flex-wrap items-end gap-2"><button className={PRIMARY} disabled={loading || draft.startDate>draft.endDate} type="submit">{loading?'Atualizando…':'Aplicar'}</button>
-            {cashflowMode ? <button className={BUTTON} type="button" onClick={()=>{const initial={startDate:firstDayOfMonth(),endDate:today(),search:''};setDraft(initial);setFilters(initial);setClientFilter('');setStatusFilter('all');setSortOrder('received-desc')}}><RotateCcw className="mr-1 size-4" />Limpar</button>:null}
+            {cashflowMode ? <button className={BUTTON} type="button" onClick={()=>{const initial={startDate:firstDayOfMonth(),endDate:today(),search:''};setDraft(initial);setFilters(initial);setClientFilter('');setStatusFilter('all');setSortOrder('received-desc')}}><NavigationIcon name="wrench" className="mr-1 size-4" />Limpar</button>:null}
           </div>
           {draft.startDate>draft.endDate?<p role="alert" className="text-xs text-app-danger">Data inicial maior que a final.</p>:null}
         </form>
@@ -488,7 +488,7 @@ export function FinanceScreen({
               </dl>
               <div className="flex flex-wrap items-center justify-between gap-3 border-t border-app-border-soft pt-3">
                 <span className="text-xs text-app-muted">Movimentação: {money(row.amount)} em {formatDate(row.date)}</span>
-                <button type="button" className={BUTTON} aria-expanded={expanded} onClick={()=>setExpandedReceipt(expanded?null:row.id)}>{expanded?<ChevronUp className="mr-2 size-4"/>:<Eye className="mr-2 size-4"/>}{expanded?'Ocultar detalhes':'Ver detalhes'}</button>
+                <button type="button" className={BUTTON} aria-expanded={expanded} onClick={()=>setExpandedReceipt(expanded?null:row.id)}>{expanded?<NavigationIcon name="clock" className="mr-2 size-4"/>:<NavigationIcon name="file" className="mr-2 size-4"/>}{expanded?'Ocultar detalhes':'Ver detalhes'}</button>
               </div>
               {expanded?<div className="mt-3 grid gap-2 rounded-lg bg-app-surface-muted p-3 text-sm sm:grid-cols-2">
                 <p><strong>Valor desta movimentação:</strong> {money(row.amount)}</p>
