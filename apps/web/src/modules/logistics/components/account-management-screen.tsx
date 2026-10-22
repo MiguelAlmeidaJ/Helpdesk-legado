@@ -993,6 +993,12 @@ export function AccountManagementScreen({
           <p className="text-xs text-app-muted">Posição apurada na data atual do banco. A carteira a pagar considera o valor integral das contas não marcadas como pagas; pagamentos parciais não são deduzidos nesta fonte.</p>
         </section>
 
+        <details className="group rounded-xl border border-app-border bg-app-surface p-3 shadow-sm">
+          <summary className="cursor-pointer list-none rounded-lg px-2 py-2 text-sm font-extrabold text-app-text hover:bg-app-surface-muted">
+            Análises detalhadas · evolução, inadimplência, composição e RDs
+            <span className="ml-2 text-xs font-normal text-app-muted">Clique para expandir</span>
+          </summary>
+          <div className="mt-4 grid gap-4">
         <section className="rounded-xl border border-app-border bg-app-surface p-5 shadow-sm">
           <div className="mb-4">
             <h2 className="text-base font-extrabold">Evolução mensal · comparativo financeiro</h2>
@@ -1116,6 +1122,8 @@ export function AccountManagementScreen({
             </div>
           </div> : rdLoading ? <div className="grid min-h-[220px] place-items-center p-5 text-sm text-app-muted">Carregando análise de RDs…</div> : null}
         </section>
+          </div>
+        </details>
 
 
 
