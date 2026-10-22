@@ -374,17 +374,15 @@ export class AccessManagement {
       );
       const nextOrder = Number(orders[0]?.next_order ?? 0);
 
-      await transaction.$executeRawUnsafe(
+      const ids = await transaction.$queryRawUnsafe<IdRow[]>(
         `INSERT INTO roles
           (name, slug, description, is_system, sort_order, created_at, updated_at)
+         OUTPUT INSERTED.id AS id
          VALUES (?, ?, ?, 0, ?, NOW(), NOW())`,
         input.name,
         slug,
         input.description ?? null,
         nextOrder,
-      );
-      const ids = await transaction.$queryRawUnsafe<IdRow[]>(
-        'SELECT LAST_INSERT_ID() AS id',
       );
       const createdId = Number(ids[0]?.id ?? 0);
       await this.replacePermissions(transaction, createdId, input.permissionIds);
