@@ -277,16 +277,16 @@ export class UsersRepository {
     canManageAccess: boolean,
   ): Promise<number> {
     return this.database.$transaction(async (transaction) => {
-      await transaction.$executeRawUnsafe(
+      const ids = await transaction.$queryRawUnsafe<InsertIdRow[]>(
         `INSERT INTO usuarios
           (user_sts, user_nome, user_mail, user_cel, user_funcao, user_login,
            user_pass, tipo_usuario, link, pix_type, chavepix, user_observacao)
+         OUTPUT INSERTED.user_id AS id
          VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         input.name, input.email, input.phone, input.functionId, input.login,
         passwordHash, input.type, input.link ?? '', input.pixKeyType ?? null,
         input.pixKey ?? '', input.observation ?? '',
       );
-      const ids = await transaction.$queryRawUnsafe<InsertIdRow[]>('SELECT LAST_INSERT_ID() AS id');
       const id = Number(ids[0]?.id);
       await this.replaceCompanies(transaction, id, input.companyIds ?? []);
       if (canManageAccess) {
