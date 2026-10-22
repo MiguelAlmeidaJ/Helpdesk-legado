@@ -14,6 +14,8 @@ import type {
   FinanceViewKey,
 } from '@helpdesk/contracts';
 import type { FormEvent, ReactNode } from 'react';
+import Link from 'next/link';
+import { Eye, ChevronUp, RotateCcw } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ApiError } from '../../../shared/api/api-client';
 import { AppPageHeader } from '../../../shared/navigation/app-page-header';
@@ -42,7 +44,7 @@ const CONFIG: Record<FinanceViewKey, { title: string; subtitle: string }> = {
     subtitle: 'Acompanhe faturamento, vencimentos, saldos e recebimentos pela competência.',
   },
   'receivables-cashflow': {
-    title: 'Contas a Receber · Fluxo',
+    title: 'Recebimentos',
     subtitle: 'Consulte os recebimentos efetivamente realizados no período.',
   },
   payables: {
@@ -184,6 +186,36 @@ export function FinanceScreen({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const cashflowMode = view === 'receivables-cashflow';
+  const [clientFilter, setClientFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [sortOrder, setSortOrder] = useState('received-desc');
+  const [expandedReceipt, setExpandedReceipt] = useState<string | null>(null);
+  const cashflowClients = useMemo(() => [...new Set((result?.rows ?? []).map(row => row.party).filter(Boolean))].sort((a,b) => a.localeCompare(b,'pt-BR')), [result]);
+  const visibleCashflowRows = useMemo(() => (result?.rows ?? []).filter(row => {
+    if (clientFilter && row.party !== clientFilter) return false;
+    const total = Number(row.metadata?.accountTotal ?? row.amount);
+    const balance = Number(row.metadata?.accountBalance ?? 0);
+    const received = Math.max(0,total - balance);
+    const status = balance <= 0 ? 'received' : received > 0 ? 'partial' : row.dueDate && row.dueDate.slice(0,10) < today() ? 'overdue' : 'pending';
+    return statusFilter === 'all' || statusFilter === status;
+  }).sort((a,b) => {
+    if (sortOrder === 'amount-desc') return b.amount - a.amount;
+    if (sortOrder === 'amount-asc') return a.amount - b.amount;
+    if (sortOrder === 'due-asc') return (a.dueDate ?? '').localeCompare(b.dueDate ?? '');
+    if (sortOrder === 'due-desc') return (b.dueDate ?? '').localeCompare(a.dueDate ?? '');
+    return (b.date ?? '').localeCompare(a.date ?? '');
+  }), [result,clientFilter,statusFilter,sortOrder]);
+  function periodPreset(days:number|'month') {
+    const endDate = today();
+    const startDate = days === 'month' ? firstDayOfMonth() : (() => {
+      const d = new Date(); d.setDate(d.getDate()-(days-1));
+      return [d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-');
+    })();
+    setDraft(v=>({...v,startDate,endDate}));
+    setFilters(v=>({...v,startDate,endDate}));
+  }
+
 
   const load = useCallback(async (signal?: AbortSignal) => {
     setLoading(true);
@@ -415,29 +447,29 @@ export function FinanceScreen({
           ))}
         </section>
 
-        <form
-          className="mb-4 grid gap-3 rounded-2xl border border-app-border bg-app-surface p-4 shadow-sm md:grid-cols-[1fr_1fr_minmax(220px,2fr)_auto]"
-          onSubmit={applyFilters}
-        >
-          <label className="grid gap-1.5 text-xs font-bold text-app-muted">
-            Data inicial
-            <input className={INPUT} onChange={(event) => setDraft((current) => ({ ...current, startDate: event.target.value }))} type="date" value={draft.startDate} />
-          </label>
-          <label className="grid gap-1.5 text-xs font-bold text-app-muted">
-            Data final
-            <input className={INPUT} onChange={(event) => setDraft((current) => ({ ...current, endDate: event.target.value }))} type="date" value={draft.endDate} />
-          </label>
-          <label className="grid gap-1.5 text-xs font-bold text-app-muted">
-            Busca
-            <input className={INPUT} onChange={(event) => setDraft((current) => ({ ...current, search: event.target.value }))} placeholder="Cliente, fornecedor, descrição ou classificação" type="search" value={draft.search} />
-          </label>
-          <div className="flex items-end">
-            <button className={PRIMARY} disabled={loading} type="submit">
-              {loading ? 'Atualizando…' : 'Aplicar'}
-            </button>
+        <nav aria-label="Visões financeiras" className="mb-4 flex flex-wrap gap-2 rounded-xl border border-app-border bg-app-surface p-2">
+          {([['/logistica/financeiro/gestao-de-contas','Resumo'],['/logistica/financeiro/contas-a-receber-competencia','A receber'],['/logistica/financeiro/contas-a-receber-fluxo','Recebimentos'],['/logistica/financeiro/contas-a-pagar','A pagar']] as const).map(([href,label]) => {
+            const active = (view === 'receivables-cashflow' && label === 'Recebimentos') || (view === 'receivables-accrual' && label === 'A receber') || (view === 'payables' && label === 'A pagar');
+            return <Link key={href} href={href} aria-current={active ? 'page' : undefined} className={`rounded-lg px-4 py-2 text-sm font-bold ${active ? 'bg-app-brand text-white' : 'text-app-text-soft hover:bg-app-surface-muted'}`}>{label}</Link>;
+          })}
+        </nav>
+        <form className="mb-4 grid gap-3 rounded-xl border border-app-border bg-app-surface p-4 shadow-sm md:grid-cols-2 xl:grid-cols-4" onSubmit={applyFilters}>
+          {cashflowMode ? <div className="flex flex-wrap gap-2 md:col-span-2 xl:col-span-4">
+            {([['Hoje',1],['7 dias',7],['15 dias',15],['30 dias',30],['Mês atual','month']] as const).map(([name,days]) => <button className={BUTTON} type="button" key={name} onClick={() => periodPreset(days)}>{name}</button>)}
+          </div> : null}
+          <label className="grid gap-1 text-xs font-bold text-app-muted">Data inicial<input className={INPUT} type="date" value={draft.startDate} onChange={e=>setDraft(v=>({...v,startDate:e.target.value}))} required /></label>
+          <label className="grid gap-1 text-xs font-bold text-app-muted">Data final<input className={INPUT} type="date" value={draft.endDate} onChange={e=>setDraft(v=>({...v,endDate:e.target.value}))} required /></label>
+          <label className="grid gap-1 text-xs font-bold text-app-muted">Busca<input className={INPUT} type="search" value={draft.search} placeholder="Cliente ou descrição" onChange={e=>setDraft(v=>({...v,search:e.target.value}))} /></label>
+          {cashflowMode ? <>
+            <label className="grid gap-1 text-xs font-bold text-app-muted">Cliente<select className={INPUT} value={clientFilter} onChange={e=>setClientFilter(e.target.value)}><option value="">Todos</option>{cashflowClients.map(c=><option key={c} value={c}>{c}</option>)}</select></label>
+            <label className="grid gap-1 text-xs font-bold text-app-muted">Status<select className={INPUT} value={statusFilter} onChange={e=>setStatusFilter(e.target.value)}><option value="all">Todos</option><option value="received">Recebido</option><option value="partial">Parcial</option><option value="pending">Pendente</option><option value="overdue">Vencido</option></select></label>
+            <label className="grid gap-1 text-xs font-bold text-app-muted">Ordenação<select className={INPUT} value={sortOrder} onChange={e=>setSortOrder(e.target.value)}><option value="received-desc">Recebimento recente</option><option value="due-asc">Vencimento próximo</option><option value="due-desc">Vencimento distante</option><option value="amount-desc">Maior valor</option><option value="amount-asc">Menor valor</option></select></label>
+          </> : null}
+          <div className="flex flex-wrap items-end gap-2"><button className={PRIMARY} disabled={loading || draft.startDate>draft.endDate} type="submit">{loading?'Atualizando…':'Aplicar'}</button>
+            {cashflowMode ? <button className={BUTTON} type="button" onClick={()=>{const initial={startDate:firstDayOfMonth(),endDate:today(),search:''};setDraft(initial);setFilters(initial);setClientFilter('');setStatusFilter('all');setSortOrder('received-desc')}}><RotateCcw className="mr-1 size-4" />Limpar</button>:null}
           </div>
+          {draft.startDate>draft.endDate?<p role="alert" className="text-xs text-app-danger">Data inicial maior que a final.</p>:null}
         </form>
-
         <section className="overflow-hidden rounded-2xl border border-app-border bg-app-surface shadow-sm">
           <div className="overflow-x-auto">
             <table className="w-full min-w-[1050px] border-collapse">
