@@ -830,7 +830,7 @@ export class FinanceService {
   private async cashflow(startDate: string, endDate: string): Promise<FinanceRow[]> {
     const rows = await this.database.$queryRawUnsafe<Row[]>(
       `SELECT r.id, r.id_conta_receber, r.valor_recebido, r.data_recebimento,
-              r.observacao, cr.descricao,
+              r.observacao, cr.descricao, cr.data_vencimento, cr.valor_total, cr.saldo,
               COALESCE(NULLIF(c.clt_nomef, ''), c.clt_nomer) AS party,
               ab.ag_nome AS agency_name,
               COALESCE(d.percentual_ti, 0) AS percent_ti,
@@ -852,7 +852,7 @@ export class FinanceService {
       sourceId: number(row.id),
       kind: 'receipt',
       date: isoDate(row.data_recebimento),
-      dueDate: null,
+      dueDate: isoDate(row.data_vencimento),
       party: String(row.party ?? 'Cliente não informado'),
       description: String(row.descricao ?? ''),
       amount: number(row.valor_recebido),
@@ -869,6 +869,8 @@ export class FinanceService {
       active: null,
       metadata: {
         accountId: number(row.id_conta_receber),
+        accountTotal: number(row.valor_total),
+        accountBalance: number(row.saldo),
         percentTi: number(row.percent_ti),
         percentDevops: number(row.percent_devops),
         percentMarketing: number(row.percent_marketing),
