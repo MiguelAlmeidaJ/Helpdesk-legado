@@ -2,9 +2,6 @@ import type {
   AccessManagementSnapshot,
   AccessRoleInput,
   AccessRoleMutationResponse,
-  AccessUserPermissionSnapshot,
-  AccessUserPermissionTarget,
-  AccessUserPermissionUpdateInput,
 } from '@helpdesk/contracts';
 import { apiRequest } from '../../../shared/api/api-client';
 
@@ -34,30 +31,3 @@ export async function deleteAccessRole(id: number): Promise<void> {
   await apiRequest<null>(`access-management/roles/${id}`, { method: 'DELETE' });
 }
 
-
-export function fetchAccessUserTargets(signal?: AbortSignal) {
-  return apiRequest<AccessUserPermissionTarget[]>('access-management/users', {
-    signal,
-  });
-}
-
-export function fetchAccessUserPermissions(
-  userId: number,
-  signal?: AbortSignal,
-) {
-  return apiRequest<AccessUserPermissionSnapshot>(
-    `access-management/users/${userId}`,
-    { signal },
-  );
-}
-
-export async function updateAccessUserPermissions(
-  userId: number,
-  input: AccessUserPermissionUpdateInput,
-): Promise<void> {
-  await apiRequest<null>(`access-management/users/${userId}`, {
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(input),
-  });
-}
