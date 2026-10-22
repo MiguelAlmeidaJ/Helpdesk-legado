@@ -72,7 +72,6 @@ export class RbacAccessRepository {
         FROM user_permissions up
         INNER JOIN permissions p ON p.id = up.permission_id
         WHERE up.user_id = ${userId}
-          AND up.effect = 'allow'
       `,
     ]);
 
@@ -82,8 +81,12 @@ export class RbacAccessRepository {
       ...onCall.permissionSlugs,
     ]);
 
+    // Explicit user denials take precedence over inherited and individual grants.
     for (const permission of userPermissions) {
-      permissionSlugs.add(permission.slug);
+      if (permission.effect === 'allow') permissionSlugs.add(permission.slug);
+    }
+    for (const permission of userPermissions) {
+      if (permission.effect === 'deny') permissionSlugs.delete(permission.slug);
     }
 
     const roleSlugs = [
