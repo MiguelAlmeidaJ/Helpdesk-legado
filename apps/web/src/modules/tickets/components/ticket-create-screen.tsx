@@ -37,6 +37,18 @@ function localDateTime(): string {
   return now.toISOString().slice(0, 16);
 }
 
+function nextBusinessDayAtEight(): string {
+  const date = new Date();
+  date.setDate(date.getDate() + 1);
+  while (date.getDay() === 0 || date.getDay() === 6) date.setDate(date.getDate() + 1);
+  date.setHours(8, 0, 0, 0);
+  const local = new Date(date.getTime() - date.getTimezoneOffset() * 60_000);
+  return local.toISOString().slice(0, 16);
+}
+
+type CreationMode = 'now' | 'scheduled' | 'recurring';
+type CreationStep = 'choose' | 'configure' | 'form';
+
 function errorMessage(reason: unknown): string {
   if (reason instanceof ApiError && reason.body && typeof reason.body === 'object') {
     const message = (reason.body as Record<string, unknown>).message;
@@ -86,7 +98,9 @@ export function TicketCreateScreen({
   const [openingAt, setOpeningAt] = useState(localDateTime);
   const [machineName, setMachineName] = useState('');
   const [description, setDescription] = useState('');
-  const [recurring, setRecurring] = useState(false);
+  const [mode, setMode] = useState<CreationMode | null>(null);
+  const [step, setStep] = useState<CreationStep>('choose');
+  const recurring = mode === 'recurring';
   const [recurrenceAt, setRecurrenceAt] = useState('');
   const [recurrenceRule, setRecurrenceRule] = useState('2');
   const [remaining, setRemaining] = useState('1');
@@ -98,9 +112,9 @@ export function TicketCreateScreen({
       requesterId &&
       locationId &&
       categoryId &&
-      openingAt &&
+      (mode === 'now' || Boolean(openingAt)) &&
       description.trim() &&
-      (!recurring || recurrenceAt),
+      (!recurring || (Boolean(recurrenceAt) && Number(remaining) >= 1 && Number(remaining) <= 12)),
   );
 
   useEffect(() => {
@@ -174,7 +188,8 @@ export function TicketCreateScreen({
     setOpeningAt(localDateTime());
     setMachineName('');
     setDescription('');
-    setRecurring(false);
+    setMode(null);
+    setStep('choose');
     setRecurrenceAt('');
     setRecurrenceRule('2');
     setRemaining('1');
@@ -183,6 +198,11 @@ export function TicketCreateScreen({
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (!mode || step !== 'form') return;
+    if (mode === 'scheduled' && new Date(openingAt).getTime() <= Date.now()) {
+      setError('Selecione uma data e hora futuras para agendar o chamado.');
+      return;
+    }
     setSaving(true);
     setError(null);
     try {
@@ -199,7 +219,7 @@ export function TicketCreateScreen({
         formId: Number(formId),
         openingDescription: description,
         machineName: machineName.trim() || null,
-        openingAt,
+        openingAt: mode === 'now' ? localDateTime() : openingAt,
         technicianId: Number(technicianId),
         recurrence: recurring
           ? {
@@ -250,6 +270,146 @@ export function TicketCreateScreen({
           </div>
         ) : null}
 
+        {step === 'choose' ? (
+          <section className="rounded-2xl border border-app-border bg-app-surface p-6 shadow-sm">
+            <h2 className="m-0 text-xl font-bold">Como deseja abrir o chamado?</h2>
+            <p className="mt-1 text-sm text-app-muted">Escolha uma das opções para continuar.</p>
+            <div className="mt-5 grid gap-3 md:grid-cols-3">
+              {([
+                ['now', 'Abrir Chamado Agora', 'Cadastre e abra o chamado imediatamente.'],
+                ['scheduled', 'Agendar Chamado', 'Escolha a data e a hora de abertura.'],
+                ['recurring', 'Criar Chamado Recorrente', 'Configure a repetição antes de preencher o chamado.'],
+              ] as const).map(([value, label, description]) => (
+                <button
+                  key={value}
+                  type="button"
+                  className="rounded-xl border border-app-border-strong bg-app-surface p-5 text-left transition hover:border-app-brand hover:bg-app-brand-soft focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-[var(--app-brand-ring)]"
+                  onClick={() => {
+                    setMode(value);
+                    setError(null);
+                    if (value === 'now') {
+                      setOpeningAt(localDateTime());
+                      setStep('form');
+                    } else {
+                      if (value === 'scheduled') setOpeningAt(nextBusinessDayAtEight());
+                      if (value === 'recurring') {
+                        setOpeningAt(localDateTime());
+                        setRecurrenceAt(nextBusinessDayAtEight());
+                      }
+                      setStep('configure');
+                    }
+                  }}
+                >
+                  <strong className="block text-base text-app-text">{label}</strong>
+                  <span className="mt-2 block text-sm leading-relaxed text-app-muted">{description}</span>
+                </button>
+              ))}
+            </div>
+          </section>
+        ) : null}
+
+        {step === 'configure' && mode ? (
+          <section className="rounded-2xl border border-app-border bg-app-surface p-5 shadow-sm">
+            <h2 className="m-0 text-lg font-bold">
+              {mode === 'scheduled' ? 'Quando o chamado deve ser aberto?' : 'Configure a recorrência'}
+            </h2>
+            {mode === 'scheduled' ? (
+              <div className="mt-4 grid max-w-xl gap-3">
+                <label className={FIELD_LABEL_CLASS}>
+                  Data e hora da abertura
+                  <input
+                    className={FIELD_CONTROL_CLASS}
+                    type="datetime-local"
+                    min={localDateTime()}
+                    required
+                    value={openingAt}
+                    onChange={(event) => setOpeningAt(event.target.value)}
+                  />
+                </label>
+                <button className={BUTTON_CLASS} type="button" onClick={() => setOpeningAt(nextBusinessDayAtEight())}>
+                  Próximo dia útil às 8h
+                </button>
+                <p className="m-0 text-xs text-app-muted">Dias úteis: segunda a sexta-feira, sem considerar feriados.</p>
+              </div>
+            ) : (
+              <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                <label className={FIELD_LABEL_CLASS}>
+                  Primeira reabertura
+                  <input
+                    className={FIELD_CONTROL_CLASS}
+                    type="datetime-local"
+                    min={localDateTime()}
+                    required
+                    value={recurrenceAt}
+                    onChange={(event) => setRecurrenceAt(event.target.value)}
+                  />
+                </label>
+                <div className={FIELD_LABEL_CLASS}>
+                  <span>Periodicidade</span>
+                  <SearchSelect
+                    allowClear={false}
+                    compact
+                    options={selectOptions(createCatalogs?.recurrenceRules ?? [])}
+                    value={[recurrenceRule]}
+                    onChange={(values) => setRecurrenceRule(values[0] ?? recurrenceRule)}
+                    searchable={false}
+                  />
+                </div>
+                <label className={FIELD_LABEL_CLASS}>
+                  Quantidade de ocorrências (máx. 12)
+                  <input
+                    className={FIELD_CONTROL_CLASS}
+                    type="number"
+                    min={1}
+                    max={12}
+                    required
+                    value={remaining}
+                    onChange={(event) => setRemaining(event.target.value)}
+                  />
+                </label>
+              </div>
+            )}
+            <div className="mt-5 flex flex-wrap gap-2">
+              <button type="button" className={BUTTON_CLASS} onClick={() => { setStep('choose'); setError(null); }}>
+                Voltar
+              </button>
+              <button
+                type="button"
+                className={PRIMARY_BUTTON_CLASS}
+                disabled={
+                  mode === 'scheduled'
+                    ? !openingAt || new Date(openingAt).getTime() <= Date.now()
+                    : !recurrenceAt || new Date(recurrenceAt).getTime() <= Date.now() ||
+                      !recurrenceRule || !Number.isInteger(Number(remaining)) ||
+                      Number(remaining) < 1 || Number(remaining) > 12
+                }
+                onClick={() => { setError(null); setStep('form'); }}
+              >
+                Continuar para o formulário
+              </button>
+            </div>
+          </section>
+        ) : null}
+
+        {step === 'form' ? (
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-app-border bg-app-surface px-4 py-3">
+            <div>
+              <strong className="text-sm">
+                {mode === 'now' ? 'Abertura imediata' : mode === 'scheduled' ? 'Chamado agendado' : 'Chamado recorrente'}
+              </strong>
+              <p className="m-0 mt-1 text-xs text-app-muted">
+                {mode === 'now' ? 'A data de abertura será registrada ao cadastrar.' :
+                  mode === 'scheduled' ? `Abertura programada: ${new Date(openingAt).toLocaleString('pt-BR')}` :
+                  `Primeira reabertura: ${new Date(recurrenceAt).toLocaleString('pt-BR')}`}
+              </p>
+            </div>
+            <button className={BUTTON_CLASS} type="button" disabled={saving} onClick={() => setStep(mode === 'now' ? 'choose' : 'configure')}>
+              Alterar opção
+            </button>
+          </div>
+        ) : null}
+
+        {step === 'form' ? (
         <form
           className="rounded-2xl border border-app-border bg-app-surface p-4 shadow-sm shadow-slate-950/5 dark:shadow-black/10 max-sm:p-3.5"
           onSubmit={submit}
@@ -426,17 +586,6 @@ export function TicketCreateScreen({
               />
             </div>
             <label className={FIELD_LABEL_CLASS}>
-              Abertura
-              <input
-                className={FIELD_CONTROL_CLASS}
-                disabled={saving}
-                onChange={(event) => setOpeningAt(event.target.value)}
-                required
-                type="datetime-local"
-                value={openingAt}
-              />
-            </label>
-            <label className={FIELD_LABEL_CLASS}>
               <span>Nome da máquina <span className="font-medium text-app-subtle">(opcional)</span></span>
               <input
                 className={FIELD_CONTROL_CLASS}
@@ -465,122 +614,6 @@ export function TicketCreateScreen({
             </label>
           </div>
 
-          <section
-            className={[
-              'mt-3 overflow-visible rounded-xl border transition-colors',
-              recurring
-                ? 'border-app-brand bg-app-brand-soft'
-                : 'border-app-border bg-app-surface-muted/65',
-            ].join(' ')}
-          >
-            <button
-              aria-expanded={recurring}
-              className="flex w-full items-center justify-between gap-4 rounded-xl px-3.5 py-3 text-left transition hover:bg-app-surface-hover"
-              disabled={saving}
-              onClick={() => setRecurring((current) => !current)}
-              type="button"
-            >
-              <span className="flex min-w-0 items-center gap-3">
-                <span
-                  className={[
-                    'grid size-9 shrink-0 place-items-center rounded-lg border',
-                    recurring
-                      ? 'border-app-brand bg-app-brand text-app-brand-contrast'
-                      : 'border-app-border bg-app-surface text-app-muted',
-                  ].join(' ')}
-                >
-                  <svg aria-hidden="true" className="size-[18px]" fill="none" viewBox="0 0 24 24">
-                    <path d="M7 3v3M17 3v3M4 9h16" stroke="currentColor" strokeLinecap="round" strokeWidth="1.8" />
-                    <rect height="17" rx="3" stroke="currentColor" strokeWidth="1.8" width="18" x="3" y="4" />
-                    <path d="M8 14h3l-1.5-1.5M16 16h-3l1.5 1.5" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.6" />
-                  </svg>
-                </span>
-                <span className="min-w-0">
-                  <strong className="block text-sm text-app-text">Atendimento recorrente</strong>
-                  <small className="mt-0.5 block text-[11px] leading-relaxed text-app-muted">
-                    Reabra este atendimento automaticamente seguindo uma periodicidade.
-                  </small>
-                </span>
-              </span>
-
-              <span
-                aria-hidden="true"
-                className={[
-                  'relative h-6 w-11 shrink-0 rounded-full border transition-colors',
-                  recurring
-                    ? 'border-app-brand bg-app-brand'
-                    : 'border-app-border-strong bg-app-surface',
-                ].join(' ')}
-              >
-                <span
-                  className={[
-                    'absolute top-0.5 size-5 rounded-full bg-white shadow-sm transition-transform',
-                    recurring ? 'translate-x-[20px]' : 'translate-x-0.5',
-                  ].join(' ')}
-                />
-              </span>
-            </button>
-
-            {recurring ? (
-              <div className="border-t border-app-border-soft px-3.5 pb-3.5 pt-3">
-                <div className="mb-2.5 flex items-center gap-2 text-[10px] font-extrabold uppercase tracking-[0.05em] text-app-muted">
-                  <span className="h-px flex-1 bg-app-border-soft" />
-                  Configuração da recorrência
-                  <span className="h-px flex-1 bg-app-border-soft" />
-                </div>
-                <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 xl:grid-cols-3">
-                  <label className={FIELD_LABEL_CLASS}>
-                    Primeira reabertura
-                    <input
-                      className={FIELD_CONTROL_CLASS}
-                      disabled={saving}
-                      onChange={(event) => setRecurrenceAt(event.target.value)}
-                      required
-                      type="datetime-local"
-                      value={recurrenceAt}
-                    />
-                  </label>
-
-                  <div className={FIELD_LABEL_CLASS}>
-                    <span>Periodicidade</span>
-                    <SearchSelect
-                      allowClear={false}
-                      compact
-                      disabled={saving}
-                      onChange={(values) => setRecurrenceRule(values[0] ?? recurrenceRule)}
-                      options={selectOptions(createCatalogs?.recurrenceRules ?? [])}
-                      placeholder="Selecione a periodicidade"
-                      searchable={false}
-                      value={recurrenceRule ? [recurrenceRule] : []}
-                    />
-                  </div>
-
-                  <label className={FIELD_LABEL_CLASS}>
-                    <span className="flex items-center justify-between gap-2">
-                      <span>Quantidade</span>
-                      <small className="font-medium text-app-subtle">máx. 12</small>
-                    </span>
-                    <div className="relative">
-                      <input
-                        className={`${FIELD_CONTROL_CLASS} pr-20`}
-                        disabled={saving}
-                        max={12}
-                        min={1}
-                        onChange={(event) => setRemaining(event.target.value)}
-                        required
-                        type="number"
-                        value={remaining}
-                      />
-                      <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[11px] font-semibold text-app-subtle">
-                        ocorrências
-                      </span>
-                    </div>
-                  </label>
-                </div>
-              </div>
-            ) : null}
-          </section>
-
           <div className="mt-3 flex flex-wrap items-center justify-between gap-3 border-t border-app-border-soft pt-3">
             <p className="m-0 text-xs text-app-muted">
               Revise os dados antes de salvar. Após o cadastro, o atendimento será aberto no detalhe.
@@ -607,6 +640,7 @@ export function TicketCreateScreen({
             </div>
           </div>
         </form>
+        ) : null}
       </div>
     </main>
   );
