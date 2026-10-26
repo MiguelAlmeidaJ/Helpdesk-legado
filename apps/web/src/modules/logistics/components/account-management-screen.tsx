@@ -885,12 +885,12 @@ export function AccountManagementScreen({
 
     <div className="mx-auto grid w-full max-w-[1500px] gap-4 p-5 max-sm:px-3.5">
       <nav aria-label="Visões financeiras" className="sticky top-0 z-20 flex flex-wrap gap-2 rounded-xl border border-app-border bg-app-surface p-2 shadow-sm">
-        {[
+        {([
           ['/logistica/financeiro/gestao-de-contas', 'Resumo'],
           ['/logistica/financeiro/contas-a-receber-competencia', 'A receber'],
           ['/logistica/financeiro/contas-a-receber-fluxo', 'Recebimentos'],
           ['/logistica/financeiro/contas-a-pagar', 'A pagar'],
-        ].map(([href, label]) => <Link key={href} href={href} aria-current={label === 'Resumo' ? 'page' : undefined}
+        ] as const).map(([href, label]) => <Link key={href} href={href} aria-current={label === 'Resumo' ? 'page' : undefined}
           className={`rounded-lg px-4 py-2 text-sm font-bold transition ${label === 'Resumo' ? 'bg-app-brand text-white' : 'text-app-text-soft hover:bg-app-surface-muted'}`}>{label}</Link>)}
       </nav>
       <form className="flex flex-wrap items-end gap-3 rounded-xl border border-app-border bg-app-surface p-4 shadow-sm shadow-slate-950/5 dark:shadow-black/10" onSubmit={submit}>
