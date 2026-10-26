@@ -224,7 +224,7 @@ export class ExpensePaidReportRepository {
        LEFT JOIN categorias_subgrupo current_category ON current_category.id = r.category_id
        LEFT JOIN type_keys tk ON tk.id = r.pix_type
        WHERE r.id = ?
-       LIMIT 1`,
+       `,
       expenseId,
     );
     const row = rows[0];
@@ -304,7 +304,6 @@ export class ExpensePaidReportRepository {
            pix_type
          FROM running_balance
          WHERE id = ?
-         LIMIT 1
          `,
         expenseId,
       );
