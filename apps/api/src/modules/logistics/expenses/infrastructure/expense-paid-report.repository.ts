@@ -122,8 +122,8 @@ export class ExpensePaidReportRepository {
       this.database.$queryRawUnsafe<PaidReportRow[]>(
         `SELECT
            r.id,
-           DATE_FORMAT(r.date_created, '%Y-%m-%dT%H:%i:%s') AS created_at,
-           DATE_FORMAT(COALESCE(r.date_updated, r.date_created), '%Y-%m-%dT%H:%i:%s') AS paid_at,
+           CONVERT(VARCHAR(19), r.date_created, 126) AS created_at,
+           CONVERT(VARCHAR(19), COALESCE(r.date_updated, r.date_created), 126) AS paid_at,
            r.user_id,
            COALESCE(u.user_nome, CONCAT('Usuário #', r.user_id)) AS user_name,
            r.category_id,
@@ -194,9 +194,9 @@ export class ExpensePaidReportRepository {
     expenseId: number,
   ): Promise<LogisticsExpensePaidAdminEditResponse | 'not-found' | 'locked'> {
     const rows = await this.database.$queryRawUnsafe<PaidAdminEditRow[]>(
-      `SELECT
+      `SELECT TOP (1)
          r.id,
-         DATE_FORMAT(COALESCE(r.date_updated, r.date_created), '%Y-%m-%dT%H:%i:%s') AS paid_at,
+         CONVERT(VARCHAR(19), COALESCE(r.date_updated, r.date_created), 126) AS paid_at,
          r.user_id,
          COALESCE(u.user_nome, CONCAT('Usuário #', r.user_id)) AS user_name,
          r.amount,
@@ -224,7 +224,7 @@ export class ExpensePaidReportRepository {
        LEFT JOIN categorias_subgrupo current_category ON current_category.id = r.category_id
        LEFT JOIN type_keys tk ON tk.id = r.pix_type
        WHERE r.id = ?
-       LIMIT 1`,
+       `,
       expenseId,
     );
     const row = rows[0];
@@ -292,7 +292,7 @@ export class ExpensePaidReportRepository {
   > {
     return this.database.$transaction(async (transaction) => {
       const rows = await transaction.$queryRawUnsafe<MutablePaidExpenseRow[]>(
-        `SELECT
+        `SELECT TOP (1)
            id,
            status,
            aj,
@@ -304,8 +304,7 @@ export class ExpensePaidReportRepository {
            pix_type
          FROM running_balance
          WHERE id = ?
-         LIMIT 1
-         FOR UPDATE`,
+         `,
         expenseId,
       );
       const row = rows[0];
@@ -317,19 +316,19 @@ export class ExpensePaidReportRepository {
         const categoryRows =
           numberValue(row.legacy_catalog) === 1
             ? await transaction.$queryRawUnsafe<NameRow[]>(
-                `SELECT categories AS name
+                `SELECT TOP (1) categories AS name
                  FROM category
                  WHERE id = ? AND status = 1
-                 LIMIT 1`,
+                 `,
                 request.categoryId,
               )
             : await transaction.$queryRawUnsafe<NameRow[]>(
-                `SELECT nome AS name
+                `SELECT TOP (1) nome AS name
                  FROM categorias_subgrupo
                  WHERE id = ?
                    AND status = 1
                    AND aplicavel IN ('Ambos', 'RD')
-                 LIMIT 1`,
+                 `,
                 request.categoryId,
               );
         if (!categoryRows[0]) return 'invalid-category' as const;
@@ -339,10 +338,10 @@ export class ExpensePaidReportRepository {
       let clientName = row.client_name ?? '';
       if (request.clientId !== null) {
         const clients = await transaction.$queryRawUnsafe<NameRow[]>(
-          `SELECT clt_nomef AS name
+          `SELECT TOP (1) clt_nomef AS name
            FROM clientes
            WHERE clt_id = ?
-           LIMIT 1`,
+           `,
           request.clientId,
         );
         const client = clients[0];
@@ -354,10 +353,10 @@ export class ExpensePaidReportRepository {
       let pixTypeId = integerOrNull(row.pix_type);
       if (request.pixTypeId !== null) {
         const pixTypes = await transaction.$queryRawUnsafe<NameRow[]>(
-          `SELECT name_type AS name
+          `SELECT TOP (1) name_type AS name
            FROM type_keys
            WHERE id = ?
-           LIMIT 1`,
+           `,
           request.pixTypeId,
         );
         if (!pixTypes[0]) return 'invalid-pix-type' as const;
@@ -396,8 +395,8 @@ export class ExpensePaidReportRepository {
   ): Promise<{ startDate: string; endDate: string }> {
     const rows = await this.database.$queryRawUnsafe<ClockRow[]>(
       `SELECT
-         DATE_FORMAT(CURDATE(), '%Y-%m-01') AS period_start,
-         DATE_FORMAT(LAST_DAY(CURDATE()), '%Y-%m-%d') AS period_end`,
+         CONVERT(VARCHAR(10), DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1), 23) AS period_start,
+         CONVERT(VARCHAR(10), EOMONTH(GETDATE()), 23) AS period_end`,
     );
     const clock = rows[0];
     const fallbackStart =
@@ -442,7 +441,7 @@ export class ExpensePaidReportRepository {
     const actor = this.optionScope(scope, actorUserId);
     return this.database.$queryRawUnsafe<OptionRow[]>(
       `SELECT
-         CAST(r.user_id AS CHAR) AS value,
+         CAST(r.user_id AS VARCHAR(30)) AS value,
          COALESCE(u.user_nome, CONCAT('Usuário #', r.user_id)) AS label
        FROM running_balance r
        LEFT JOIN usuarios u ON u.user_id = r.user_id
@@ -493,7 +492,7 @@ export class ExpensePaidReportRepository {
     const actor = this.optionScope(scope, actorUserId);
     return this.database.$queryRawUnsafe<OptionRow[]>(
       `SELECT
-         CAST(r.category_id AS CHAR) AS value,
+         CAST(r.category_id AS VARCHAR(30)) AS value,
          MAX(
            COALESCE(
              CASE
@@ -522,14 +521,14 @@ export class ExpensePaidReportRepository {
   private adminCategoryOptions(legacy: boolean): Promise<OptionRow[]> {
     if (legacy) {
       return this.database.$queryRawUnsafe<OptionRow[]>(
-        `SELECT CAST(id AS CHAR) AS value, categories AS label
+        `SELECT CAST(id AS VARCHAR(30)) AS value, categories AS label
          FROM category
          WHERE status = 1
          ORDER BY categories ASC`,
       );
     }
     return this.database.$queryRawUnsafe<OptionRow[]>(
-      `SELECT CAST(id AS CHAR) AS value, nome AS label
+      `SELECT CAST(id AS VARCHAR(30)) AS value, nome AS label
        FROM categorias_subgrupo
        WHERE status = 1
          AND aplicavel IN ('Ambos', 'RD')
@@ -539,7 +538,7 @@ export class ExpensePaidReportRepository {
 
   private adminClientOptions(): Promise<OptionRow[]> {
     return this.database.$queryRawUnsafe<OptionRow[]>(
-      `SELECT CAST(clt_id AS CHAR) AS value, clt_nomef AS label
+      `SELECT CAST(clt_id AS VARCHAR(30)) AS value, clt_nomef AS label
        FROM clientes
        ORDER BY clt_nomef ASC`,
     );
@@ -547,7 +546,7 @@ export class ExpensePaidReportRepository {
 
   private adminPixTypeOptions(): Promise<OptionRow[]> {
     return this.database.$queryRawUnsafe<OptionRow[]>(
-      `SELECT CAST(id AS CHAR) AS value, name_type AS label
+      `SELECT CAST(id AS VARCHAR(30)) AS value, name_type AS label
        FROM type_keys
        ORDER BY id ASC`,
     );

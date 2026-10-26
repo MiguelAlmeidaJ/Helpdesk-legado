@@ -51,7 +51,7 @@ const styles = {
   empty:
     'mb-4 rounded-[10px] border border-dashed border-app-border-strong bg-app-surface px-4 py-3.5 text-center text-app-muted',
   summary:
-    'mb-[18px] grid grid-cols-[repeat(3,minmax(0,1fr))_auto] gap-3.5 max-[900px]:grid-cols-2 max-[620px]:grid-cols-1 [&>article]:flex [&>article]:flex-col [&>article]:gap-[5px] [&>article]:rounded-xl [&>article]:border [&>article]:border-app-border [&>article]:bg-app-surface [&>article]:px-[17px] [&>article]:py-[15px] [&_span]:text-[0.78rem] [&_span]:uppercase [&_span]:tracking-[0.06em] [&_span]:text-app-muted [&_strong]:text-[1.45rem] [&_small]:text-app-muted [&>button]:min-h-full [&>button]:cursor-pointer [&>button]:rounded-[9px] [&>button]:border [&>button]:border-emerald-700 [&>button]:bg-emerald-700 [&>button]:px-3.5 [&>button]:font-extrabold [&>button]:text-white max-[900px]:[&>button]:min-h-[54px] dark:[&>button]:border-emerald-600 dark:[&>button]:bg-emerald-700',
+    'mb-[18px] grid grid-cols-[repeat(3,minmax(0,1fr))_minmax(190px,auto)] gap-3.5 max-[900px]:grid-cols-2 max-[620px]:grid-cols-1 [&>article]:flex [&>article]:flex-col [&>article]:gap-[5px] [&>article]:rounded-xl [&>article]:border [&>article]:border-app-border [&>article]:bg-app-surface [&>article]:px-[17px] [&>article]:py-[15px] [&_span]:text-[0.78rem] [&_span]:uppercase [&_span]:tracking-[0.06em] [&_span]:text-app-muted [&_strong]:text-[1.45rem] [&_small]:text-app-muted [&>button]:min-h-full [&>button]:cursor-pointer [&>button]:rounded-[9px] [&>button]:border [&>button]:border-emerald-700 [&>button]:bg-emerald-700 [&>button]:px-3.5 [&>button]:font-extrabold [&>button]:text-white max-[900px]:[&>button]:min-h-[54px] dark:[&>button]:border-emerald-600 dark:[&>button]:bg-emerald-700',
   panel:
     'overflow-hidden rounded-[14px] border border-app-border bg-app-surface shadow-sm [&>header]:flex [&>header]:items-center [&>header]:justify-between [&>header]:gap-4 [&>header]:border-b [&>header]:border-app-border-soft [&>header]:px-[18px] [&>header]:py-4 max-[900px]:[&>header]:flex-col max-[900px]:[&>header]:items-start [&>header_h2]:mt-[3px] [&>header_h2]:mb-0 [&>header_h2]:text-[1.1rem]',
   panelActions:
@@ -448,6 +448,7 @@ export function ExpensePaymentScreen({
           </article>
           <button
             disabled={busy || loading || selected.size === 0}
+            title={selected.size === 0 ? 'Selecione ao menos uma RD para continuar' : undefined}
             onClick={paySelected}
             type="button"
           >
@@ -460,6 +461,7 @@ export function ExpensePaymentScreen({
             <div>
               <span className={styles.eyebrow}>Fila administrativa</span>
               <h2>RDs aprovadas aguardando pagamento</h2>
+              <p className="mt-1 text-xs text-app-muted">Confira o favorecido e a chave PIX antes de registrar a compensação.</p>
             </div>
             <div className={styles.panelActions}>
               <button disabled={busy || loading} onClick={selectFirstBatch} type="button">

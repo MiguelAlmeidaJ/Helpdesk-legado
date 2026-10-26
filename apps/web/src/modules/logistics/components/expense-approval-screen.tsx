@@ -38,7 +38,7 @@ const styles = {
   empty:
     'mb-4 rounded-[10px] border border-dashed border-app-border-strong bg-app-surface px-4 py-3.5 text-center text-app-muted',
   summary:
-    'mb-[18px] grid grid-cols-[repeat(3,minmax(0,1fr))_auto] gap-3.5 max-[900px]:grid-cols-2 max-[560px]:grid-cols-1 [&>article]:flex [&>article]:flex-col [&>article]:gap-[5px] [&>article]:rounded-xl [&>article]:border [&>article]:border-app-border [&>article]:bg-app-surface [&>article]:px-[17px] [&>article]:py-[15px] [&_span]:text-[0.78rem] [&_span]:uppercase [&_span]:tracking-[0.06em] [&_span]:text-app-muted [&_strong]:text-[1.45rem] [&_small]:text-app-muted [&>button]:cursor-pointer [&>button]:rounded-[10px] [&>button]:border [&>button]:border-emerald-700 [&>button]:bg-emerald-700 [&>button]:px-[18px] [&>button]:font-extrabold [&>button]:text-white max-[900px]:[&>button]:min-h-[54px] [&>button:disabled]:cursor-wait [&>button:disabled]:opacity-[0.55] dark:[&>button]:border-emerald-600 dark:[&>button]:bg-emerald-700',
+    'mb-[18px] grid grid-cols-[repeat(3,minmax(0,1fr))_minmax(190px,auto)] gap-3.5 max-[900px]:grid-cols-2 max-[560px]:grid-cols-1 [&>article]:flex [&>article]:flex-col [&>article]:gap-[5px] [&>article]:rounded-xl [&>article]:border [&>article]:border-app-border [&>article]:bg-app-surface [&>article]:px-[17px] [&>article]:py-[15px] [&_span]:text-[0.78rem] [&_span]:uppercase [&_span]:tracking-[0.06em] [&_span]:text-app-muted [&_strong]:text-[1.45rem] [&_small]:text-app-muted [&>button]:cursor-pointer [&>button]:rounded-[10px] [&>button]:border [&>button]:border-emerald-700 [&>button]:bg-emerald-700 [&>button]:px-[18px] [&>button]:font-extrabold [&>button]:text-white max-[900px]:[&>button]:min-h-[54px] [&>button:disabled]:cursor-wait [&>button:disabled]:opacity-[0.55] dark:[&>button]:border-emerald-600 dark:[&>button]:bg-emerald-700',
   panel:
     'overflow-hidden rounded-[14px] border border-app-border bg-app-surface shadow-sm [&>header]:flex [&>header]:items-center [&>header]:justify-between [&>header]:gap-4 [&>header]:border-b [&>header]:border-app-border-soft [&>header]:px-[18px] [&>header]:py-4 [&>header_h2]:mt-[3px] [&>header_h2]:mb-0 [&>header_h2]:text-[1.1rem] [&>header_button]:min-h-[38px] [&>header_button]:cursor-pointer [&>header_button]:rounded-[10px] [&>header_button]:border [&>header_button]:border-app-border-strong [&>header_button]:bg-app-surface [&>header_button]:px-[18px] [&>header_button]:font-extrabold [&>header_button]:text-app-text-soft [&>header_button]:transition [&>header_button:hover]:bg-app-surface-hover [&_button:disabled]:cursor-wait [&_button:disabled]:opacity-[0.55]',
   tableWrap:
@@ -227,6 +227,7 @@ export function ExpenseApprovalScreen({
           </article>
           <button
             disabled={busy || loading || selected.size === 0}
+            title={selected.size === 0 ? 'Selecione ao menos uma RD para continuar' : undefined}
             onClick={approveSelected}
             type="button"
           >
@@ -239,6 +240,7 @@ export function ExpenseApprovalScreen({
             <div>
               <span className={styles.eyebrow}>Fila administrativa</span>
               <h2>RDs aguardando aprovação</h2>
+              <p className="mt-1 text-xs text-app-muted">Selecione as RDs para aprovação em lote ou analise cada solicitação individualmente.</p>
             </div>
             <button disabled={busy || loading} onClick={() => void load()} type="button">
               Atualizar
@@ -262,7 +264,7 @@ export function ExpenseApprovalScreen({
                         type="checkbox"
                       />
                     </th>
-                    <th>ID / Data</th>
+                    <th>RD / Data</th>
                     <th>Categoria / Cliente</th>
                     <th>Colaborador</th>
                     <th>Valor</th>
