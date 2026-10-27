@@ -525,14 +525,13 @@ export function ExpensePaidReportScreen({
               <table>
                 <thead>
                   <tr>
-                    <th>#</th>
                     <th>ID</th>
-                    <th>Pago em</th>
                     <th>Colaborador</th>
                     <th>Categoria</th>
                     <th>Cliente</th>
-                    <th>Observações</th>
+                    <th>Observação</th>
                     <th className={styles.amountCell}>Valor</th>
+                    <th>Pago em</th>
                     {canManage ? (
                       <th className={styles.actionsColumn}>Ações</th>
                     ) : null}
@@ -543,7 +542,7 @@ export function ExpensePaidReportScreen({
                     <tr>
                       <td
                         className={styles.emptyCell}
-                        colSpan={canManage ? 9 : 8}
+                        colSpan={canManage ? 8 : 7}
                       >
                         Nenhum pagamento encontrado no período.
                       </td>
@@ -560,22 +559,23 @@ export function ExpensePaidReportScreen({
                           }
                           key={item.id}
                         >
-                          <td>{index + 1}</td>
-                          <td>{item.id}</td>
-                          <td>{formatDate(item.paidAt)}</td>
-                          <td>{item.userName}</td>
+                          <td className="whitespace-nowrap font-semibold text-app-text">#{item.id}</td>
+                          <td className="font-semibold">{item.userName}</td>
                           <td>{item.categoryName}</td>
                           <td>{item.clientName}</td>
-                          <td>{item.remarks || '—'}</td>
-                          <td className={styles.amountCell}>{currency.format(item.amount)}</td>
+                          <td className="max-w-[460px] whitespace-pre-wrap break-words text-app-text-soft">{item.remarks || '—'}</td>
+                          <td className={`${styles.amountCell} whitespace-nowrap font-bold`}>{currency.format(item.amount)}</td>
+                          <td className="whitespace-nowrap text-app-muted">{formatDate(item.paidAt)}</td>
                           {canManage ? (
                             <td className={styles.actionsColumn}>
                               <button
-                                className={styles.editButton}
+                                className={`${styles.editButton} inline-flex size-9 items-center justify-center p-0 print:hidden`}
+                                aria-label={`Editar RD #${item.id}`}
+                                title={`Editar RD #${item.id}`}
                                 onClick={() => void openEdit(item.id)}
                                 type="button"
                               >
-                                Editar
+                                <svg aria-hidden="true" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L9 17l-4 1 1-4Z"/></svg>
                               </button>
                             </td>
                           ) : null}
@@ -586,8 +586,9 @@ export function ExpensePaidReportScreen({
                 </tbody>
                 <tfoot>
                   <tr>
-                    <th colSpan={7}>Total geral</th>
+                    <th colSpan={5}>Total geral</th>
                     <th className={styles.amountCell}>{currency.format(report.totalAmount)}</th>
+                    <th aria-hidden="true" />
                     {canManage ? (
                       <th className={styles.actionsColumn} aria-hidden="true" />
                     ) : null}
