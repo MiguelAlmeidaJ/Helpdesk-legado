@@ -261,7 +261,7 @@ export function VehicleAgendaScreen({
             />
             <button onClick={() => window.print()} type="button">Imprimir</button>
             {agenda?.canManage && agenda.vehicles.length > 0 ? (
-              <button className="!border-app-brand !bg-app-brand !text-white font-bold" onClick={() => setCreating(emptySchedule(days[0] ?? `${year}-${String(month).padStart(2, '0')}-01`, agenda.vehicles[0].id))} type="button">+ Novo agendamento</button>
+              <button className="!border-app-brand !bg-app-brand !text-white font-bold" onClick={() => setCreating(emptySchedule(days[0] ?? `${year}-${String(month).padStart(2, '0')}-01`, agenda.vehicles[0]?.id ?? 0))} type="button">+ Novo agendamento</button>
             ) : null}
             {agenda?.canManage ? (
               <>
