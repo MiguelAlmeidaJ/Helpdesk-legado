@@ -38,10 +38,9 @@ export class RbacAccessRepository {
 
   async findByUserId(userId: number): Promise<RbacAccessSnapshot | null> {
     const users = await this.database.$queryRaw<UserStatusRow[]>`
-      SELECT user_sts, user_funcao
+      SELECT TOP (1) user_sts, user_funcao
       FROM usuarios
       WHERE user_id = ${userId}
-      LIMIT 1
     `;
 
     const user = users[0];
