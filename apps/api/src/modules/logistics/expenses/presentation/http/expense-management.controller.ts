@@ -227,7 +227,7 @@ export class ExpenseManagementController {
     }),
   )
   @ApiConsumes('multipart/form-data')
-  @ApiOperation({ summary: 'Adicionar comprovante PDF à despesa' })
+  @ApiOperation({ summary: 'Adicionar comprovante PDF, JPG ou PNG à despesa' })
   upload(
     @CurrentUser() user: AuthenticatedUser | undefined,
     @Param('id', ParseIntPipe) expenseId: number,
@@ -237,11 +237,11 @@ export class ExpenseManagementController {
     if (!file?.buffer || file.size < 5) {
       throw new BadRequestException('Arquivo não informado ou vazio.');
     }
-    if (
-      file.mimetype !== 'application/pdf' ||
-      file.buffer.subarray(0, 5).toString('ascii') !== '%PDF-'
-    ) {
-      throw new BadRequestException('Apenas arquivos PDF válidos são aceitos.');
+    const isPdf = file.mimetype === 'application/pdf' && file.buffer.subarray(0, 5).toString('ascii') === '%PDF-';
+    const isJpeg = file.mimetype === 'image/jpeg' && file.buffer.subarray(0, 3).equals(Buffer.from([0xff, 0xd8, 0xff]));
+    const isPng = file.mimetype === 'image/png' && file.buffer.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]));
+    if (!isPdf && !isJpeg && !isPng) {
+      throw new BadRequestException('Apenas arquivos PDF, JPG e PNG válidos são aceitos.');
     }
 
     return this.expenses.uploadAttachment({
@@ -249,7 +249,7 @@ export class ExpenseManagementController {
       userName: user.name,
       expenseId,
       originalName: file.originalname,
-      mimeType: 'application/pdf',
+      mimeType: file.mimetype,
       data: file.buffer,
     });
   }
@@ -273,7 +273,7 @@ export class ExpenseManagementController {
 
   @Get(':id/attachments/:key/content')
   @RequirePermissions(AppPermission.LogisticsExpensesRead)
-  @ApiOperation({ summary: 'Abrir comprovante PDF de RD' })
+  @ApiOperation({ summary: 'Abrir comprovante de RD' })
   async attachmentContent(
     @CurrentUser() user: AuthenticatedUser | undefined,
     @Param('id', ParseIntPipe) expenseId: number,

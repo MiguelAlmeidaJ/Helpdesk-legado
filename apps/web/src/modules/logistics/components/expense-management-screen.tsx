@@ -72,9 +72,9 @@ const styles = {
   modalBackdrop:
     'fixed inset-0 z-[100] grid place-items-center bg-slate-950/50 p-[18px]',
   modal:
-    'max-h-[calc(100vh-36px)] w-[min(820px,100%)] overflow-auto rounded-xl border border-app-border bg-app-surface shadow-2xl [&>header]:flex [&>header]:items-center [&>header]:justify-between [&>header]:gap-3 [&>header]:border-b [&>header]:border-app-border-soft [&>header]:px-3.5 [&>header]:py-3 [&>footer]:flex [&>footer]:items-center [&>footer]:justify-end [&>footer]:gap-3 [&>footer]:border-t [&>footer]:border-app-border-soft [&>footer]:px-3.5 [&>footer]:py-3 [&_h2]:mt-0.5 [&_h2]:mb-0 [&_h2]:text-base [&_button]:min-h-8 [&_button]:cursor-pointer [&_button]:rounded-[7px] [&_button]:border [&_button]:border-app-border-strong [&_button]:bg-app-surface [&_button]:px-2.5 [&_button]:text-inherit [&_button]:transition [&_button:hover]:bg-app-surface-hover [&_button:disabled]:cursor-not-allowed [&_button:disabled]:opacity-60',
+    'max-h-[calc(100vh-32px)] w-[min(820px,100%)] overflow-auto rounded-2xl border border-app-border bg-app-surface shadow-2xl [&>header]:flex [&>header]:items-center [&>header]:justify-between [&>header]:gap-3 [&>header]:border-b [&>header]:border-app-border-soft [&>header]:px-6 [&>header]:py-5 [&>footer]:flex [&>footer]:items-center [&>footer]:justify-end [&>footer]:gap-3 [&>footer]:border-t [&>footer]:border-app-border-soft [&>footer]:px-6 [&>footer]:py-4 [&_h2]:mt-0.5 [&_h2]:mb-0 [&_h2]:text-base [&_button]:min-h-8 [&_button]:cursor-pointer [&_button]:rounded-[7px] [&_button]:border [&_button]:border-app-border-strong [&_button]:bg-app-surface [&_button]:px-2.5 [&_button]:text-inherit [&_button]:transition [&_button:hover]:bg-app-surface-hover [&_button:disabled]:cursor-not-allowed [&_button:disabled]:opacity-60',
   formGrid:
-    'grid grid-cols-2 gap-[11px] p-3.5 max-[720px]:grid-cols-1 [&_label]:grid [&_label]:gap-1 [&_label]:text-[9px] [&_label]:font-extrabold [&_label]:text-app-muted [&_input]:min-h-[34px] [&_input]:w-full [&_input]:rounded-[7px] [&_input]:border [&_input]:border-app-border-strong [&_input]:bg-app-surface [&_input]:px-2 [&_input]:py-1.5 [&_input]:text-app-text [&_input]:outline-none [&_select]:min-h-[34px] [&_select]:w-full [&_select]:rounded-[7px] [&_select]:border [&_select]:border-app-border-strong [&_select]:bg-app-surface [&_select]:px-2 [&_select]:py-1.5 [&_select]:text-app-text [&_select]:outline-none [&_textarea]:min-h-[34px] [&_textarea]:w-full [&_textarea]:rounded-[7px] [&_textarea]:border [&_textarea]:border-app-border-strong [&_textarea]:bg-app-surface [&_textarea]:px-2 [&_textarea]:py-1.5 [&_textarea]:text-app-text [&_textarea]:outline-none [&_input:focus]:border-app-brand [&_select:focus]:border-app-brand [&_textarea:focus]:border-app-brand [&_input:focus]:ring-[3px] [&_select:focus]:ring-[3px] [&_textarea:focus]:ring-[3px] [&_input:focus]:ring-[var(--app-brand-ring)] [&_select:focus]:ring-[var(--app-brand-ring)] [&_textarea:focus]:ring-[var(--app-brand-ring)] [&_input[type=file]]:p-[5px] [&_small]:text-[8px] [&_small]:text-app-subtle',
+    'grid grid-cols-2 gap-4 p-6 max-[720px]:grid-cols-1 max-[720px]:p-4 [&_label]:grid [&_label]:gap-1 [&_label]:text-xs [&_label]:font-semibold [&_label]:text-app-muted [&_input]:min-h-10 [&_input]:w-full [&_input]:rounded-[7px] [&_input]:border [&_input]:border-app-border-strong [&_input]:bg-app-surface [&_input]:px-2 [&_input]:py-1.5 [&_input]:text-app-text [&_input]:outline-none [&_select]:min-h-10 [&_select]:w-full [&_select]:rounded-[7px] [&_select]:border [&_select]:border-app-border-strong [&_select]:bg-app-surface [&_select]:px-2 [&_select]:py-1.5 [&_select]:text-app-text [&_select]:outline-none [&_textarea]:min-h-10 [&_textarea]:w-full [&_textarea]:rounded-[7px] [&_textarea]:border [&_textarea]:border-app-border-strong [&_textarea]:bg-app-surface [&_textarea]:px-2 [&_textarea]:py-1.5 [&_textarea]:text-app-text [&_textarea]:outline-none [&_input:focus]:border-app-brand [&_select:focus]:border-app-brand [&_textarea:focus]:border-app-brand [&_input:focus]:ring-[3px] [&_select:focus]:ring-[3px] [&_textarea:focus]:ring-[3px] [&_input:focus]:ring-[var(--app-brand-ring)] [&_select:focus]:ring-[var(--app-brand-ring)] [&_textarea:focus]:ring-[var(--app-brand-ring)] [&_input[type=file]]:p-[5px] [&_small]:text-[8px] [&_small]:text-app-subtle',
   wide:
     'col-span-full max-[720px]:col-auto',
   existingAttachments:
@@ -123,7 +123,7 @@ function emptyRequest(
   return {
     amount: 0,
     categoryId: data.categories[0]?.id ?? 0,
-    clientId: data.clients[0]?.id ?? 0,
+    clientId: data.clients.find((client) => /^n[ií]vel 3(?:\b|\s|$)/i.test(client.name.trim()))?.id ?? data.clients[0]?.id ?? 0,
     pixTypeId: data.profile.pixTypeId ?? data.pixTypes[0]?.id ?? 0,
     pix: data.profile.pix,
     remarks: '',
@@ -415,6 +415,7 @@ function ExpenseDialog({
 
   const [value, setValue] = useState<CreateLogisticsExpenseRequest>(seed);
   const [files, setFiles] = useState<File[]>([]);
+  const [amountText, setAmountText] = useState(seed.amount ? currency.format(seed.amount) : '');
   const [busy, setBusy] = useState(false);
   const [feedback, setFeedback] = useState('');
 
@@ -428,6 +429,11 @@ function ExpenseDialog({
       value.pixTypeId < 1
     ) {
       setFeedback('Preencha valor, categoria, cliente e tipo de PIX.');
+      return;
+    }
+
+    if (files.some((file) => file.size > 25 * 1024 * 1024 || !['application/pdf', 'image/jpeg', 'image/png'].includes(file.type))) {
+      setFeedback('Selecione apenas PDF, JPG ou PNG de até 25 MB por arquivo.');
       return;
     }
 
@@ -478,11 +484,11 @@ function ExpenseDialog({
   }
 
   return (
-    <div className={styles.modalBackdrop}>
-      <form className={styles.modal} onSubmit={submit}>
+    <div className={styles.modalBackdrop} role="presentation">
+      <form aria-label="Formulário de despesa" className={`${styles.modal} !w-[min(760px,100%)] rounded-2xl shadow-2xl`} onSubmit={submit}>
         <header>
           <div>
-            <span className={styles.eyebrow}>RD</span>
+            <span className="text-xs font-bold uppercase tracking-wider text-app-brand">Requisição de despesa</span>
             <h2>
               {mode === 'edit'
                 ? `Editar #${expense?.id}`
@@ -491,26 +497,26 @@ function ExpenseDialog({
                   : 'Nova despesa'}
             </h2>
           </div>
-          <button disabled={busy} onClick={onClose} type="button">
+          <button aria-label="Fechar formulário" disabled={busy} onClick={onClose} type="button">
             ×
           </button>
         </header>
 
         <div className={styles.formGrid}>
           <label>
-            Valor
+            Valor (R$)
             <input
-              min="0.01"
+              inputMode="numeric"
+              placeholder="R$ 0,00"
               required
-              step="0.01"
-              type="number"
-              value={value.amount || ''}
-              onChange={(event) =>
-                setValue({
-                  ...value,
-                  amount: Number(event.target.value),
-                })
-              }
+              type="text"
+              value={amountText}
+              onChange={(event) => {
+                const digits = event.target.value.replace(/\D/g, '').slice(0, 11);
+                const amount = Number(digits) / 100;
+                setAmountText(digits ? currency.format(amount) : '');
+                setValue((current) => ({ ...current, amount }));
+              }}
             />
           </label>
 
@@ -625,20 +631,37 @@ function ExpenseDialog({
             </div>
           ) : null}
 
-          <label className={styles.wide}>
-            Novos comprovantes PDF
-            <input
-              accept="application/pdf,.pdf"
-              multiple
-              type="file"
-              onChange={(event) =>
-                setFiles(Array.from(event.target.files ?? []))
-              }
-            />
-            <small>
-              Até 25 MB por arquivo. Somente PDFs válidos.
-            </small>
-          </label>
+          <div className={styles.wide}>
+            <label className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-app-border-strong bg-app-surface-muted px-5 py-6 text-center transition hover:border-app-brand hover:bg-app-brand-soft">
+              <span className="text-sm font-semibold text-app-text">Adicionar comprovantes</span>
+              <span className="text-xs font-normal text-app-muted">Clique para selecionar PDF, JPG ou PNG · até 25 MB por arquivo</span>
+              <input
+                accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
+                className="sr-only!"
+                multiple
+                type="file"
+                onChange={(event) => {
+                  const selected = Array.from(event.target.files ?? []);
+                  setFiles(selected);
+                  if (selected.some((file) => file.size > 25 * 1024 * 1024 || !['application/pdf', 'image/jpeg', 'image/png'].includes(file.type))) {
+                    setFeedback('Apenas PDF, JPG e PNG com até 25 MB são permitidos.');
+                  } else {
+                    setFeedback('');
+                  }
+                }}
+              />
+            </label>
+            {files.length ? (
+              <ul className="mt-3 grid gap-2 text-xs text-app-text-soft">
+                {files.map((file, index) => (
+                  <li className="flex items-center justify-between gap-2 rounded-lg border border-app-border p-2" key={`${file.name}-${index}`}>
+                    <span className="min-w-0 truncate">{file.name} · {(file.size / 1024 / 1024).toFixed(2)} MB</span>
+                    <button className="text-app-danger" type="button" onClick={() => setFiles((current) => current.filter((_, i) => i !== index))}>Remover</button>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+          </div>
         </div>
 
         {feedback ? <div className={styles.modalFeedback}>{feedback}</div> : null}
@@ -647,7 +670,7 @@ function ExpenseDialog({
           <button disabled={busy} onClick={onClose} type="button">
             Cancelar
           </button>
-          <button className={styles.primary} disabled={busy} type="submit">
+          <button className={`${styles.primary} !min-h-10 !px-5 !text-sm !font-bold`} disabled={busy} type="submit">
             {busy ? 'Salvando…' : 'Salvar'}
           </button>
         </footer>
