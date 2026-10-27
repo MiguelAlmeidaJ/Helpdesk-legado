@@ -165,6 +165,16 @@ export function ExpenseManagementScreen({
     void load();
   }, [load]);
 
+  useEffect(() => {
+    if (!data || typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('novo') !== '1') return;
+    setDialog({ mode: 'create' });
+    params.delete('novo');
+    const query = params.toString();
+    window.history.replaceState(window.history.state, '', window.location.pathname + (query ? `?${query}` : '') + window.location.hash);
+  }, [data]);
+
   async function run(operation: () => Promise<void>, success: string) {
     try {
       setFeedback('');

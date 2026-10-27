@@ -7,6 +7,7 @@ import type {
 import Link from 'next/link';
 import { FormEvent, useCallback, useEffect, useState } from 'react';
 import { AppPageHeader } from '../../../shared/navigation/app-page-header';
+import { DateRangePicker } from '../../../shared/ui/date-range-picker';
 import { getExpenseDashboard } from '../api/expense-dashboard-api';
 const styles = {
   page: 'min-h-screen bg-app-bg text-app-text',
@@ -27,12 +28,12 @@ const styles = {
   feedback:
     'mt-2.5 rounded-lg border border-app-border bg-app-surface px-3 py-2.5 text-[10px] text-app-text-soft',
   metrics:
-    'mt-3.5 grid grid-cols-3 gap-2.5 max-[720px]:grid-cols-1 [&_article]:grid [&_article]:min-h-24 [&_article]:gap-[5px] [&_article]:rounded-[10px] [&_article]:border [&_article]:border-app-border [&_article]:bg-app-surface [&_article]:px-4 [&_article]:py-[15px] [&_span]:text-[9px] [&_span]:font-extrabold [&_span]:uppercase [&_span]:text-app-muted [&_strong]:self-end [&_strong]:text-[22px]',
+    'mt-3.5 grid grid-cols-3 gap-4 max-[720px]:grid-cols-1 [&_article]:grid [&_article]:min-h-[145px] [&_article]:gap-[5px] [&_article]:rounded-xl [&_article]:border [&_article]:border-app-border [&_article]:border-t-4 [&_article:nth-child(1)]:border-t-amber-500 [&_article:nth-child(2)]:border-t-sky-500 [&_article:nth-child(3)]:border-t-emerald-600 [&_article]:bg-app-surface [&_article]:px-4 [&_article]:py-[18px] [&_article]:shadow-sm [&_span]:text-xs [&_span]:font-extrabold [&_span]:uppercase [&_span]:text-app-muted [&_strong]:self-end [&_strong]:text-[clamp(1.45rem,2.5vw,1.95rem)]',
   panel:
-    'mt-3.5 overflow-hidden rounded-[11px] border border-app-border bg-app-surface [&>header]:flex [&>header]:items-end [&>header]:justify-between [&>header]:gap-3.5 [&>header]:border-b [&>header]:border-app-border-soft [&>header]:bg-app-surface-muted [&>header]:px-3.5 [&>header]:py-3 max-[720px]:[&>header]:flex-col max-[720px]:[&>header]:items-stretch [&_h2]:mt-0.5 [&_h2]:mb-0 [&_h2]:text-[15px] [&_header_small]:text-[9px] [&_header_small]:text-app-subtle',
+    'mt-4 overflow-hidden rounded-xl border border-app-border bg-app-surface shadow-sm [&>header]:flex [&>header]:items-end [&>header]:justify-between [&>header]:gap-3.5 [&>header]:border-b [&>header]:border-app-border-soft [&>header]:bg-app-surface-muted [&>header]:px-3.5 [&>header]:py-3 max-[720px]:[&>header]:flex-col max-[720px]:[&>header]:items-stretch [&_h2]:mt-0.5 [&_h2]:mb-0 [&_h2]:text-[15px] [&_header_small]:text-[9px] [&_header_small]:text-app-subtle',
   tableWrap:
-    'overflow-x-auto [&_table]:w-full [&_table]:border-collapse [&_table]:text-[10px] [&_th]:border-b [&_th]:border-app-border-soft [&_th]:px-3 [&_th]:py-2.5 [&_th]:text-left [&_td]:border-b [&_td]:border-app-border-soft [&_td]:px-3 [&_td]:py-2.5 [&_td]:text-left [&_th]:text-[8px] [&_th]:uppercase [&_th]:tracking-[0.04em] [&_th]:text-app-muted [&_th:last-child]:text-right [&_td:last-child]:text-right',
-  empty: 'text-center! text-app-subtle',
+    'overflow-x-auto [&_table]:w-full [&_table]:border-collapse [&_table]:text-sm [&_th]:border-b [&_th]:border-app-border-soft [&_th]:px-3 [&_th]:py-2.5 [&_th]:text-left [&_td]:border-b [&_td]:border-app-border-soft [&_td]:px-3 [&_td]:py-2.5 [&_td]:text-left [&_th]:text-xs [&_th]:uppercase [&_th]:tracking-[0.04em] [&_th]:text-app-muted [&_th:last-child]:text-right [&_td:last-child]:text-right',
+  empty: 'py-8! text-center! text-app-muted',
 } as const;
 
 const currency = new Intl.NumberFormat('pt-BR', {
@@ -73,6 +74,7 @@ export function ExpenseDashboardScreen({
   );
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  const [filterOpen, setFilterOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [feedback, setFeedback] = useState('');
 
@@ -98,43 +100,66 @@ export function ExpenseDashboardScreen({
 
   function apply(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    void load(startDate, endDate);
+    if (startDate && endDate && startDate > endDate) {
+      setFeedback('A data inicial não pode ser posterior à data final.');
+      return;
+    }
+    setFilterOpen(false);
+    void load(startDate || undefined, endDate || undefined);
   }
 
   return (
     <main className={styles.page}>
       <AppPageHeader
-        actions={<Link className={styles.readOnlyBadge} href="/logistica/despesas/gerenciar">Gerenciar despesas</Link>}
+        actions={
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="relative">
+              <button
+                aria-expanded={filterOpen}
+                aria-haspopup="dialog"
+                className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-app-border-strong bg-app-surface px-3.5 text-sm font-semibold text-app-text transition hover:bg-app-surface-hover"
+                onClick={() => setFilterOpen((current) => !current)}
+                type="button"
+              >
+                <svg aria-hidden="true" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/></svg>
+                Filtrar período
+              </button>
+              {filterOpen ? (
+                <div role="dialog" aria-label="Filtrar período" className="absolute right-0 top-[calc(100%+8px)] z-50 w-[min(370px,calc(100vw-32px))] rounded-xl border border-app-border bg-app-surface p-4 shadow-2xl">
+                  <form className="grid gap-3" onSubmit={apply}>
+                    <strong className="text-sm">Selecionar intervalo</strong>
+                    <DateRangePicker
+                      disabled={loading}
+                      startDate={startDate}
+                      endDate={endDate}
+                      onChange={(range) => { setStartDate(range.startDate); setEndDate(range.endDate); }}
+                    />
+                    {startDate && endDate && startDate > endDate ? (
+                      <p className="m-0 text-xs text-app-danger">A data inicial deve ser anterior à final.</p>
+                    ) : null}
+                    <div className="flex justify-end gap-2">
+                      <button className="min-h-9 rounded-lg border border-app-border-strong px-3 text-sm font-medium" type="button" onClick={() => { setStartDate(''); setEndDate(''); }}>Limpar</button>
+                      <button className="min-h-9 rounded-lg bg-app-brand px-4 text-sm font-bold text-white" type="submit" disabled={loading || (Boolean(startDate && endDate) && startDate > endDate)}>Aplicar</button>
+                    </div>
+                  </form>
+                </div>
+              ) : null}
+            </div>
+            <Link className="inline-flex min-h-10 items-center rounded-lg border border-app-border-strong bg-app-surface px-3.5 text-sm font-semibold text-app-text no-underline hover:bg-app-surface-hover" href="/logistica/despesas/gerenciar">Gerenciar despesas</Link>
+            <Link className="inline-flex min-h-10 items-center gap-2 rounded-lg bg-app-brand px-3.5 text-sm font-bold !text-white no-underline hover:opacity-90" href="/logistica/despesas/gerenciar?novo=1"><span aria-hidden="true">+</span> Nova despesa</Link>
+          </div>
+        }
         subtitle={data?.userName ?? 'Usuário autenticado'}
         title="Minhas Despesas"
         user={currentUser}
       />
 
       <div className={styles.content}>
-
-        <section className={styles.filters}>
-          <form onSubmit={apply}>
-            <label>
-              De
-              <input
-                type="date"
-                value={startDate}
-                onChange={(event) => setStartDate(event.target.value)}
-              />
-            </label>
-            <label>
-              Até
-              <input
-                type="date"
-                value={endDate}
-                onChange={(event) => setEndDate(event.target.value)}
-              />
-            </label>
-            <button disabled={loading} type="submit">
-              {loading ? 'Atualizando…' : 'Filtrar'}
-            </button>
-          </form>
-        </section>
+        {data ? (
+          <p className="mb-4 text-sm text-app-muted">
+            Exibindo despesas de <strong className="text-app-text">{formatDate(data.period.startDate)}</strong> até <strong className="text-app-text">{formatDate(data.period.endDate)}</strong>.
+          </p>
+        ) : null}
 
         {feedback ? <div className={styles.feedback}>{feedback}</div> : null}
         {loading && !data ? (
