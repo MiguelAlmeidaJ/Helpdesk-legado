@@ -299,7 +299,7 @@ export class VehicleAgendaRepository {
            motorista = ?, observacoes = ?, kmInicial = ?, kmFinal = ?,
            visibilidade = ?, color = ?, arquivado = ?,
            data_anterior = ?, horario_anterior = ?, veiculo_id_anterior = ?,
-           ultima_alteracao = NOW(), modificado_por_id = ?
+           ultima_alteracao = GETDATE(), modificado_por_id = ?
        WHERE id = ?`,
       input.vehicleId,
       input.date,
@@ -339,7 +339,7 @@ export class VehicleAgendaRepository {
       `UPDATE agenda_veiculos
        SET data = ?, veiculo_id = ?,
            data_anterior = ?, horario_anterior = ?, veiculo_id_anterior = ?,
-           ultima_alteracao = NOW(), modificado_por_id = ?
+           ultima_alteracao = GETDATE(), modificado_por_id = ?
        WHERE id = ?`,
       input.date,
       input.vehicleId,
