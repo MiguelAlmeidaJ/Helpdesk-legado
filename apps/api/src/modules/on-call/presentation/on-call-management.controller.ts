@@ -42,6 +42,23 @@ function positiveId(value: unknown, field: string): number {
 export class OnCallManagementController {
   constructor(private readonly service: OnCallManagementService) {}
 
+  @Get('plantonista-permissions')
+  @RequirePermissions(AppPermission.SystemAdmin)
+  plantonistaPermissions(): Promise<number[]> {
+    return this.service.plantonistaPermissions();
+  }
+
+  @Put('plantonista-permissions')
+  @RequirePermissions(AppPermission.SystemAdmin)
+  savePlantonistaPermissions(@Body() body: unknown): Promise<void> {
+    const value = objectBody(body);
+    if (!Array.isArray(value.permissionIds) ||
+        value.permissionIds.some((id) => typeof id !== 'number' || !Number.isSafeInteger(id) || id < 1)) {
+      throw new BadRequestException('Lista de permissões inválida.');
+    }
+    return this.service.updatePlantonistaPermissions(value.permissionIds as number[]);
+  }
+
   @Get()
   @RequirePermissions(AppPermission.QualityOnCallRead)
   snapshot(@Query('week') week?: string): Promise<OnCallSnapshot> {
