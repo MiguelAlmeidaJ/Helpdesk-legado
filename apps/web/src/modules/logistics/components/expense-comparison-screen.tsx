@@ -33,8 +33,6 @@ const styles = {
     'text-[0.76rem] font-extrabold uppercase tracking-[0.05em] text-app-muted',
   heroActions:
     'flex flex-wrap justify-end gap-2 max-[760px]:justify-start [&_a]:inline-flex [&_a]:min-h-10 [&_a]:items-center [&_a]:rounded-lg [&_a]:border [&_a]:border-app-border-strong [&_a]:bg-app-surface [&_a]:px-3.5 [&_a]:font-extrabold [&_a]:text-app-brand [&_a]:no-underline [&_a]:transition [&_a:hover]:bg-app-surface-hover',
-  notice:
-    'mb-[18px] flex flex-col gap-1 rounded-[10px] border border-sky-200 bg-sky-50 px-[15px] py-[13px] text-slate-700 dark:border-sky-900/70 dark:bg-sky-950/35 dark:text-sky-100 [&_span]:text-[0.88rem] [&_span]:text-slate-600 dark:[&_span]:text-sky-200',
   filters:
     'mb-[18px] flex flex-wrap items-end gap-3.5 rounded-xl border border-app-border bg-app-surface p-5 shadow-sm max-[760px]:w-full max-[760px]:flex-col max-[760px]:items-stretch [&_fieldset]:flex [&_fieldset]:min-w-[280px] [&_fieldset]:gap-2.5 [&_fieldset]:rounded-[9px] [&_fieldset]:border [&_fieldset]:border-app-border [&_fieldset]:px-3 [&_fieldset]:pt-2.5 [&_fieldset]:pb-3 max-[760px]:[&_fieldset]:w-full max-[760px]:[&_fieldset]:min-w-0 max-[760px]:[&_fieldset]:flex-col max-[760px]:[&_fieldset]:items-stretch [&_legend]:px-[5px] [&_legend]:text-[0.78rem] [&_legend]:font-extrabold [&_legend]:text-app-muted [&_label]:flex [&_label]:flex-col [&_label]:gap-[5px] [&_label]:text-[0.78rem] [&_label]:font-extrabold [&_input]:min-h-10 [&_input]:rounded-[7px] [&_input]:border [&_input]:border-app-border-strong [&_input]:bg-app-surface [&_input]:px-[9px] [&_input]:py-[7px] [&_input]:text-app-text [&_input]:outline-none [&_input:focus]:border-app-brand [&_input:focus]:ring-[3px] [&_input:focus]:ring-[var(--app-brand-ring)] [&_select]:min-h-10 [&_select]:rounded-[7px] [&_select]:border [&_select]:border-app-border-strong [&_select]:bg-app-surface [&_select]:px-[9px] [&_select]:py-[7px] [&_select]:text-app-text [&_select]:outline-none [&_select:focus]:border-app-brand [&_select:focus]:ring-[3px] [&_select:focus]:ring-[var(--app-brand-ring)] [&_button]:min-h-10 [&_button]:cursor-pointer [&_button]:rounded-[7px] [&_button]:border [&_button]:border-app-brand [&_button]:bg-app-brand [&_button]:px-[18px] [&_button]:py-[7px] [&_button]:font-extrabold [&_button]:text-white max-[760px]:[&_button]:w-full [&_button:disabled]:cursor-not-allowed [&_button:disabled]:opacity-[0.65]',
   alertField: 'min-w-[190px] max-[760px]:min-w-0',
@@ -226,15 +224,6 @@ export function ExpenseComparisonScreen({
       />
 
       <div className={styles.content}>
-
-        <section className={styles.notice}>
-          <strong>Comparação nativa sobre RDs pagas e ativas.</strong>
-          <span>
-            Os períodos são ordenados cronologicamente e categorias respeitam o
-            corte de catálogo de 01/10/2025. Despesas sem cliente aparecem como
-            “Sem cliente”, mantendo os totais conciliados.
-          </span>
-        </section>
 
         <form className={styles.filters} onSubmit={submit}>
           <fieldset>
