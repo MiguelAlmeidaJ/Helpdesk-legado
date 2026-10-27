@@ -116,13 +116,13 @@ export class ExpenseComparisonRepository {
              OR r.date_created BETWEEN ? AND ?
            )
            ${scope.sql}
-         GROUP BY label
+         GROUP BY COALESCE(CASE WHEN r.date_created < '2025-10-01 00:00:00' THEN legacy_category.categories ELSE current_category.nome END, CONCAT('Categoria #', r.category_id))
          ORDER BY period2_amount DESC, label ASC`,
         ...params,
       ),
       this.database.$queryRawUnsafe<ComparisonGroupRow[]>(
         `SELECT
-           COALESCE(NULLIF(TRIM(r.cliente), ''), 'Sem cliente') AS label,
+           COALESCE(NULLIF(LTRIM(RTRIM(r.cliente)), ''), 'Sem cliente') AS label,
            COALESCE(SUM(
              CASE WHEN r.date_created BETWEEN ? AND ? THEN r.amount ELSE 0 END
            ), 0) AS period1_amount,
@@ -137,7 +137,7 @@ export class ExpenseComparisonRepository {
              OR r.date_created BETWEEN ? AND ?
            )
            ${scope.sql}
-         GROUP BY label
+         GROUP BY COALESCE(NULLIF(LTRIM(RTRIM(r.cliente)), ''), 'Sem cliente')
          ORDER BY period2_amount DESC, label ASC`,
         ...params,
       ),
@@ -169,12 +169,12 @@ export class ExpenseComparisonRepository {
   }> {
     const rows = await this.database.$queryRawUnsafe<ComparisonClockRow[]>(
       `SELECT
-         DATE_FORMAT(DATE_SUB(CURDATE(), INTERVAL 1 MONTH), '%Y-%m-01')
+         CONVERT(VARCHAR(10), DATEFROMPARTS(YEAR(DATEADD(MONTH, -1, GETDATE())), MONTH(DATEADD(MONTH, -1, GETDATE())), 1), 23)
            AS period1_start,
-         DATE_FORMAT(LAST_DAY(DATE_SUB(CURDATE(), INTERVAL 1 MONTH)), '%Y-%m-%d')
+         CONVERT(VARCHAR(10), EOMONTH(GETDATE(), -1), 23)
            AS period1_end,
-         DATE_FORMAT(CURDATE(), '%Y-%m-01') AS period2_start,
-         DATE_FORMAT(LAST_DAY(CURDATE()), '%Y-%m-%d') AS period2_end`,
+         CONVERT(VARCHAR(10), DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1), 23) AS period2_start,
+         CONVERT(VARCHAR(10), EOMONTH(GETDATE()), 23 AS period2_end`,
     );
     const clock = rows[0];
     const previousFallback = fallbackPeriod(-1);

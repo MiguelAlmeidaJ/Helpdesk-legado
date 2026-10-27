@@ -126,7 +126,7 @@ export class ExpenseManagementRepository {
              chavepix AS pix
            FROM usuarios
            WHERE user_id = ?
-           LIMIT 1`,
+           `,
           userId,
         ),
         this.database.$queryRaw<OptionRow[]>`
@@ -154,7 +154,7 @@ export class ExpenseManagementRepository {
              r.amount,
              r.category_id,
              c.nome AS category_name,
-             DATE_FORMAT(r.date_created, '%Y-%m-%dT%H:%i:%s') AS date_created,
+             CONVERT(VARCHAR(19), r.date_created, 126) AS date_created,
              r.status,
              r.pix,
              r.pix_type,
@@ -205,7 +205,7 @@ export class ExpenseManagementRepository {
     if (!catalog) return null;
 
     return this.database.$transaction(async (transaction) => {
-      await transaction.$executeRawUnsafe(
+      const ids = await transaction.$queryRawUnsafe<InsertIdRow[]>(
         `INSERT INTO running_balance (
            remarks,
            clt_id,
@@ -217,7 +217,7 @@ export class ExpenseManagementRepository {
            pix,
            anexos,
            status
-         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NULL, 1)`,
+         ) OUTPUT INSERTED.id AS id VALUES (?, ?, ?, ?, ?, ?, ?, ?, NULL, 1)`,
         cleanRemarks(request.remarks),
         request.clientId,
         catalog.clientName,
@@ -228,9 +228,6 @@ export class ExpenseManagementRepository {
         request.pix?.trim() || catalog.defaultPix,
       );
 
-      const ids = await transaction.$queryRawUnsafe<InsertIdRow[]>(
-        'SELECT LAST_INSERT_ID() AS id',
-      );
       const id = Number(ids[0]?.id);
       return Number.isSafeInteger(id) && id > 0 ? id : null;
     });
@@ -251,11 +248,11 @@ export class ExpenseManagementRepository {
 
     return this.database.$transaction(async (transaction) => {
       const rows = await transaction.$queryRawUnsafe<MutableExpenseRow[]>(
-        `SELECT id, user_id, status, anexos
+        `SELECT TOP (1) id, user_id, status, anexos
          FROM running_balance
          WHERE id = ? AND user_id = ?
-         LIMIT 1
-         FOR UPDATE`,
+         
+         `,
         id,
         userId,
       );
@@ -272,7 +269,7 @@ export class ExpenseManagementRepository {
              clt_id = ?,
              cliente = ?,
              remarks = ?,
-             date_updated = NOW()
+             date_updated = GETDATE()
          WHERE id = ? AND user_id = ? AND status = 1`,
         request.amount,
         request.categoryId,
@@ -296,11 +293,11 @@ export class ExpenseManagementRepository {
 
     const result = await this.database.$transaction(async (transaction) => {
       const rows = await transaction.$queryRawUnsafe<MutableExpenseRow[]>(
-        `SELECT id, user_id, status, anexos
+        `SELECT TOP (1) id, user_id, status, anexos
          FROM running_balance
          WHERE id = ? AND user_id = ?
-         LIMIT 1
-         FOR UPDATE`,
+         
+         `,
         id,
         userId,
       );
@@ -355,11 +352,11 @@ export class ExpenseManagementRepository {
     try {
       const result = await this.database.$transaction(async (transaction) => {
         const rows = await transaction.$queryRawUnsafe<MutableExpenseRow[]>(
-          `SELECT id, user_id, status, anexos
+          `SELECT TOP (1) id, user_id, status, anexos
            FROM running_balance
            WHERE id = ? AND user_id = ?
-           LIMIT 1
-           FOR UPDATE`,
+           
+           `,
           input.expenseId,
           input.userId,
         );
@@ -372,7 +369,7 @@ export class ExpenseManagementRepository {
 
         await transaction.$executeRawUnsafe(
           `UPDATE running_balance
-           SET anexos = ?, date_updated = NOW()
+           SET anexos = ?, date_updated = GETDATE()
            WHERE id = ? AND user_id = ? AND status = 1`,
           JSON.stringify(attachments),
           input.expenseId,
@@ -408,11 +405,11 @@ export class ExpenseManagementRepository {
 
     const result = await this.database.$transaction(async (transaction) => {
       const rows = await transaction.$queryRawUnsafe<MutableExpenseRow[]>(
-        `SELECT id, user_id, status, anexos
+        `SELECT TOP (1) id, user_id, status, anexos
          FROM running_balance
          WHERE id = ? AND user_id = ?
-         LIMIT 1
-         FOR UPDATE`,
+         
+         `,
         expenseId,
         userId,
       );
@@ -429,7 +426,7 @@ export class ExpenseManagementRepository {
 
       await transaction.$executeRawUnsafe(
         `UPDATE running_balance
-         SET anexos = ?, date_updated = NOW()
+         SET anexos = ?, date_updated = GETDATE()
          WHERE id = ? AND user_id = ? AND status = 1`,
         attachments.length > 0 ? JSON.stringify(attachments) : null,
         expenseId,
@@ -450,10 +447,10 @@ export class ExpenseManagementRepository {
     attachmentKey: string,
   ): Promise<AttachmentContent | null> {
     const rows = await this.database.$queryRawUnsafe<{ anexos: string | null }[]>(
-      `SELECT anexos
+      `SELECT TOP (1) anexos
        FROM running_balance
        WHERE id = ? AND user_id = ? AND aj = 1
-       LIMIT 1`,
+       `,
       expenseId,
       userId,
     );
@@ -526,22 +523,22 @@ export class ExpenseManagementRepository {
   ): Promise<{ clientName: string; defaultPix: string } | null> {
     const [categories, clients, pixTypes, users] = await Promise.all([
       this.database.$queryRawUnsafe<{ id: number }[]>(
-        `SELECT id
+        `SELECT TOP (1) id
          FROM categorias_subgrupo
          WHERE id = ? AND aplicavel IN ('Ambos', 'RD')
-         LIMIT 1`,
+         `,
         categoryId,
       ),
       this.database.$queryRawUnsafe<{ name: string | null }[]>(
-        'SELECT clt_nomef AS name FROM clientes WHERE clt_id = ? LIMIT 1',
+        'SELECT TOP (1) clt_nomef AS name FROM clientes WHERE clt_id = ? ',
         clientId,
       ),
       this.database.$queryRawUnsafe<{ id: number }[]>(
-        'SELECT id FROM type_keys WHERE id = ? LIMIT 1',
+        'SELECT TOP (1) id FROM type_keys WHERE id = ? ',
         pixTypeId,
       ),
       this.database.$queryRawUnsafe<{ pix: string | null }[]>(
-        'SELECT chavepix AS pix FROM usuarios WHERE user_id = ? LIMIT 1',
+        'SELECT TOP (1) chavepix AS pix FROM usuarios WHERE user_id = ? ',
         userId,
       ),
     ]);
