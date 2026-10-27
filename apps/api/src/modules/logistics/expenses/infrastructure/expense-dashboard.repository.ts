@@ -57,9 +57,9 @@ export class ExpenseDashboardRepository {
   }): Promise<LogisticsExpenseDashboardResponse> {
     const clockRows = await this.database.$queryRawUnsafe<ClockRow[]>(
       `SELECT
-         DATE_FORMAT(CURDATE(), '%Y-%m-01') AS period_start,
-         DATE_FORMAT(LAST_DAY(CURDATE()), '%Y-%m-%d') AS period_end,
-         DATE_FORMAT(NOW(), '%Y-%m-%dT%H:%i:%s') AS generated_at`,
+         CONVERT(VARCHAR(10), DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1), 23) AS period_start,
+         CONVERT(VARCHAR(10), EOMONTH(GETDATE()), 23) AS period_end,
+         CONVERT(VARCHAR(19), GETDATE(), 126) AS generated_at`,
     );
     const clock = clockRows[0];
 
@@ -95,20 +95,21 @@ export class ExpenseDashboardRepository {
         input.userId,
       ),
       this.database.$queryRawUnsafe<ExpenseRow[]>(
-        `SELECT
+        `SELECT TOP (10)
            r.id,
            r.cliente AS client_name,
-           DATE_FORMAT(r.date_created, '%Y-%m-%d') AS expense_date,
-           c.categories AS category_name,
+           CONVERT(VARCHAR(10), r.date_created, 23) AS expense_date,
+           COALESCE(c.categories, nc.nome) AS category_name,
            r.amount
          FROM running_balance r
-         JOIN category c ON c.id = r.category_id
+         LEFT JOIN category c ON c.id = r.category_id AND r.date_created < '2025-10-01'
+         LEFT JOIN categorias_subgrupo nc ON nc.id = r.category_id AND r.date_created >= '2025-10-01'
          WHERE r.status = 4
            AND r.aj = 1
            AND r.user_id = ?
            AND r.date_created BETWEEN ? AND ?
          ORDER BY r.date_created DESC
-         LIMIT 10`,
+         `,
         input.userId,
         startDateTime,
         endDateTime,
