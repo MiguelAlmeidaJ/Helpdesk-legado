@@ -42,13 +42,13 @@ const styles = {
   actions:
     'flex flex-wrap gap-1.5 [&_a]:inline-flex [&_a]:min-h-8 [&_a]:items-center [&_a]:rounded-[7px] [&_a]:border [&_a]:border-app-border-strong [&_a]:bg-app-surface [&_a]:px-2.5 [&_a]:text-inherit [&_a]:no-underline [&_a]:transition [&_a:hover]:bg-app-surface-hover [&_button]:min-h-8 [&_button]:cursor-pointer [&_button]:rounded-[7px] [&_button]:border [&_button]:border-app-border-strong [&_button]:bg-app-surface [&_button]:px-2.5 [&_button]:text-inherit [&_button]:transition [&_button:hover]:bg-app-surface-hover [&_button:disabled]:cursor-not-allowed [&_button:disabled]:opacity-60',
   filters:
-    'mt-2.5 flex items-end gap-[9px] rounded-[11px] border border-app-border bg-app-surface px-3 py-2.5 max-[720px]:flex-col max-[720px]:items-stretch [&_label]:grid [&_label]:gap-[3px] [&_label]:text-[8px] [&_label]:font-extrabold [&_label]:uppercase [&_label]:text-app-muted [&_input]:min-h-[34px] [&_input]:rounded-[7px] [&_input]:border [&_input]:border-app-border-strong [&_input]:bg-app-surface [&_input]:px-2 [&_input]:text-app-text [&_input]:outline-none [&_input:focus]:border-app-brand [&_input:focus]:ring-[3px] [&_input:focus]:ring-[var(--app-brand-ring)] [&_button]:min-h-8 [&_button]:cursor-pointer [&_button]:rounded-[7px] [&_button]:border [&_button]:border-app-border-strong [&_button]:bg-app-surface [&_button]:px-2.5 [&_button]:text-inherit [&_button]:transition [&_button:hover]:bg-app-surface-hover [&_button:disabled]:cursor-not-allowed [&_button:disabled]:opacity-60 [&_span]:ml-auto [&_span]:text-[9px] [&_span]:text-app-subtle max-[720px]:[&_span]:ml-0',
+    'mt-2.5 flex items-end gap-[9px] rounded-[11px] border border-app-border bg-app-surface px-4 py-3 shadow-sm max-[720px]:flex-col max-[720px]:items-stretch [&_label]:grid [&_label]:gap-[3px] [&_label]:text-[11px] [&_label]:font-extrabold [&_label]:uppercase [&_label]:text-app-muted [&_input]:min-h-[34px] [&_input]:rounded-[7px] [&_input]:border [&_input]:border-app-border-strong [&_input]:bg-app-surface [&_input]:px-2 [&_input]:text-app-text [&_input]:outline-none [&_input:focus]:border-app-brand [&_input:focus]:ring-[3px] [&_input:focus]:ring-[var(--app-brand-ring)] [&_button]:min-h-8 [&_button]:cursor-pointer [&_button]:rounded-[7px] [&_button]:border [&_button]:border-app-border-strong [&_button]:bg-app-surface [&_button]:px-2.5 [&_button]:text-inherit [&_button]:transition [&_button:hover]:bg-app-surface-hover [&_button:disabled]:cursor-not-allowed [&_button:disabled]:opacity-60 [&_span]:ml-auto [&_span]:text-[11px] [&_span]:text-app-subtle max-[720px]:[&_span]:ml-0',
   feedback:
-    'mt-2.5 rounded-lg border border-app-border bg-app-surface px-3 py-2.5 text-[10px] text-app-text-soft',
+    'mt-2.5 rounded-lg border border-app-border bg-app-surface px-3 py-2.5 text-sm text-app-text-soft',
   tablePanel:
-    'mt-2.5 overflow-hidden rounded-[11px] border border-app-border bg-app-surface',
+    'mt-3 overflow-hidden rounded-xl border border-app-border bg-app-surface shadow-sm',
   tableWrap:
-    'overflow-x-auto [&_table]:w-full [&_table]:min-w-[1150px] [&_table]:border-collapse [&_table]:text-[9px] [&_th]:border-b [&_th]:border-app-border-soft [&_th]:px-2.5 [&_th]:py-[9px] [&_th]:text-left [&_th]:align-top [&_td]:border-b [&_td]:border-app-border-soft [&_td]:px-2.5 [&_td]:py-[9px] [&_td]:text-left [&_td]:align-top [&_th]:bg-app-surface-muted [&_th]:text-[8px] [&_th]:uppercase [&_th]:tracking-[0.04em] [&_th]:text-app-muted [&_td:nth-child(5)]:text-right [&_th:nth-child(5)]:text-right',
+    'overflow-x-auto [&_table]:w-full [&_table]:min-w-[1150px] [&_table]:border-collapse [&_table]:text-[13px] [&_th]:border-b [&_th]:border-app-border-soft [&_th]:px-2.5 [&_th]:py-[9px] [&_th]:text-left [&_th]:align-top [&_td]:border-b [&_td]:border-app-border-soft [&_td]:px-2.5 [&_td]:py-[9px] [&_td]:text-left [&_td]:align-top [&_th]:bg-app-surface-muted [&_th]:text-[11px] [&_th]:uppercase [&_th]:tracking-[0.04em] [&_th]:text-app-muted [&_td:nth-child(5)]:text-right [&_th:nth-child(5)]:text-right',
   empty:
     'text-center! text-app-subtle',
   status:
@@ -66,7 +66,7 @@ const styles = {
   pending:
     'text-[8px] font-extrabold uppercase text-app-danger',
   rowActions:
-    'flex flex-wrap gap-1.5 [&_button]:min-h-[26px] [&_button]:cursor-pointer [&_button]:rounded-[7px] [&_button]:border [&_button]:border-app-border-strong [&_button]:bg-app-surface [&_button]:px-1.5 [&_button]:text-[8px] [&_button]:text-inherit [&_button]:transition [&_button:hover]:bg-app-surface-hover [&_button:disabled]:cursor-not-allowed [&_button:disabled]:opacity-60',
+    'flex flex-wrap gap-1.5 [&_button]:min-h-8 [&_button]:cursor-pointer [&_button]:rounded-[7px] [&_button]:border [&_button]:border-app-border-strong [&_button]:bg-app-surface [&_button]:px-1.5 [&_button]:text-xs [&_button]:text-inherit [&_button]:transition [&_button:hover]:bg-app-surface-hover [&_button:disabled]:cursor-not-allowed [&_button:disabled]:opacity-60',
   danger:
     'border-red-300! text-red-700! dark:border-red-900! dark:text-red-300!',
   modalBackdrop:
