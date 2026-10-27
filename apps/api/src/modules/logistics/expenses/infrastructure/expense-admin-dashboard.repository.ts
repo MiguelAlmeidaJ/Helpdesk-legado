@@ -167,7 +167,7 @@ export class ExpenseAdminDashboardRepository {
     const rows = await this.database.$queryRawUnsafe<DetailRow[]>(
       `SELECT
          r.id,
-         DATE_FORMAT(r.date_created, '%Y-%m-%dT%H:%i:%s') AS created_at,
+         CONVERT(VARCHAR(19), r.date_created, 126) AS created_at,
          COALESCE(u.user_nome, CONCAT('Usuário #', r.user_id)) AS user_name,
          r.remarks AS description,
          r.amount
@@ -209,8 +209,8 @@ export class ExpenseAdminDashboardRepository {
   ): Promise<{ startDate: string; endDate: string }> {
     const rows = await this.database.$queryRawUnsafe<ClockRow[]>(
       `SELECT
-         DATE_FORMAT(CURDATE(), '%Y-%m-01') AS period_start,
-         DATE_FORMAT(LAST_DAY(CURDATE()), '%Y-%m-%d') AS period_end`,
+         CONVERT(VARCHAR(10), DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1), 23) AS period_start,
+         CONVERT(VARCHAR(10), EOMONTH(GETDATE()), 23) AS period_end`,
     );
     const clock = rows[0];
     const fallbackStart =
@@ -419,7 +419,7 @@ export class ExpenseAdminDashboardRepository {
   ): Promise<TimelineRow[]> {
     return this.database.$queryRawUnsafe<TimelineRow[]>(
       `SELECT
-         DATE_FORMAT(r.date_created, '%Y-%m-%d') AS day,
+         CONVERT(VARCHAR(10), r.date_created, 23) AS day,
          SUM(r.amount) AS amount,
          COUNT(*) AS count
        FROM running_balance r
