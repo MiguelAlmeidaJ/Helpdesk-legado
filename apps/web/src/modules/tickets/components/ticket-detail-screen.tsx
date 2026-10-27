@@ -20,6 +20,7 @@ import {
   TicketAttachmentsPanel,
 } from './ticket-attachments-panel';
 import { TicketCatalogPanel } from './ticket-catalog-panel';
+import { MediaPanel } from '../../media/components/media-panel';
 import { TicketClassificationEditor } from './ticket-classification-editor';
 import { TicketHoldActions } from './ticket-hold-actions';
 import { TicketCloseActions } from './ticket-close-actions';
@@ -613,6 +614,7 @@ export function TicketDetailScreen({
                   refreshToken={attachmentRefreshToken}
                   ticket={ticket}
                 />
+                <MediaPanel contextType="ticket" contextId={String(ticket.id)} />
               </div>
 
               <div

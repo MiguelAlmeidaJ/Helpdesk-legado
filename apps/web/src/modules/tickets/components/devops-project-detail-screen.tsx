@@ -28,6 +28,7 @@ import {
 } from '../api/modular-ticket-workflow-api';
 import { DevOpsTicketClassificationEditor } from './devops-ticket-classification-editor';
 import { DevOpsProjectFlowchart } from './devops-project-flowchart';
+import { MediaPanel } from '../../media/components/media-panel';
 import { SpecializedTicketWorkflowPanel } from './specialized-ticket-workflow-panel';
 
 const BUTTON_CLASS =
@@ -465,6 +466,7 @@ export function DevOpsProjectDetailScreen({
             </div>
           </>
         ) : null}
+        {project ? <MediaPanel contextType="project" contextId={String(projectId)} /> : null}
       </div>
     </main>
   );

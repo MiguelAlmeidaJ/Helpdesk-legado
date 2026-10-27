@@ -1,5 +1,13 @@
 -- Executar como DBA em instância SQL Server, antes de configurar a API.
 -- Banco separado: metadados apenas; binários permanecem no provedor configurado.
+SET QUOTED_IDENTIFIER ON;
+SET ANSI_NULLS ON;
+SET ANSI_PADDING ON;
+SET ANSI_WARNINGS ON;
+SET CONCAT_NULL_YIELDS_NULL ON;
+SET ARITHABORT ON;
+SET NUMERIC_ROUNDABORT OFF;
+GO
 IF DB_ID(N'helpdesk_media') IS NULL CREATE DATABASE helpdesk_media;
 GO
 USE helpdesk_media;
@@ -8,7 +16,7 @@ IF OBJECT_ID(N'dbo.media_objects', N'U') IS NULL
 CREATE TABLE dbo.media_objects (
  id UNIQUEIDENTIFIER NOT NULL CONSTRAINT PK_media_objects PRIMARY KEY DEFAULT NEWID(),
  provider VARCHAR(20) NOT NULL,
- provider_key NVARCHAR(900) NOT NULL,
+ provider_key NVARCHAR(600) NOT NULL,
  original_name NVARCHAR(255) NOT NULL,
  mime_type VARCHAR(120) NOT NULL,
  size_bytes BIGINT NOT NULL,
@@ -42,15 +50,17 @@ CREATE TABLE dbo.media_links (
  CONSTRAINT UQ_media_link UNIQUE(media_id,context_type,context_id,purpose)
 );
 GO
-CREATE INDEX IX_media_links_context ON dbo.media_links(context_type,context_id,purpose,sort_order);
-CREATE INDEX IX_media_objects_sha ON dbo.media_objects(sha256) WHERE sha256 IS NOT NULL;
+IF NOT EXISTS(SELECT 1 FROM sys.indexes WHERE name='IX_media_links_context' AND object_id=OBJECT_ID('dbo.media_links'))
+ CREATE INDEX IX_media_links_context ON dbo.media_links(context_type,context_id,purpose,sort_order);
+IF NOT EXISTS(SELECT 1 FROM sys.indexes WHERE name='IX_media_objects_sha' AND object_id=OBJECT_ID('dbo.media_objects'))
+ CREATE INDEX IX_media_objects_sha ON dbo.media_objects(sha256) WHERE sha256 IS NOT NULL;
 GO
 IF OBJECT_ID(N'dbo.media_legacy_references',N'U') IS NULL
 CREATE TABLE dbo.media_legacy_references (
  id BIGINT IDENTITY(1,1) PRIMARY KEY,
  source_type VARCHAR(50) NOT NULL,
  source_id NVARCHAR(100) NOT NULL,
- original_reference NVARCHAR(2048) NOT NULL,
+ original_reference NVARCHAR(MAX) NOT NULL,
  media_id UNIQUEIDENTIFIER NULL,
  verification_status VARCHAR(20) NOT NULL DEFAULT 'pending',
  checked_at DATETIME2(3) NULL,
@@ -58,4 +68,33 @@ CREATE TABLE dbo.media_legacy_references (
  CONSTRAINT CK_media_verification CHECK(verification_status IN ('pending','located','missing','external','duplicate'))
 );
 GO
-CREATE INDEX IX_media_legacy_source ON dbo.media_legacy_references(source_type,source_id);
+IF NOT EXISTS(SELECT 1 FROM sys.indexes WHERE name='IX_media_legacy_source' AND object_id=OBJECT_ID('dbo.media_legacy_references'))
+ CREATE INDEX IX_media_legacy_source ON dbo.media_legacy_references(source_type,source_id);
+GO
+IF OBJECT_ID(N'dbo.media_settings',N'U') IS NULL
+CREATE TABLE dbo.media_settings (
+ id INT NOT NULL PRIMARY KEY CHECK(id=1), default_provider VARCHAR(20) NOT NULL,
+ updated_by INT NULL, updated_at DATETIME2(3) NOT NULL DEFAULT SYSUTCDATETIME(),
+ CONSTRAINT CK_media_default_provider CHECK(default_provider IN ('local','nextcloud','cloudinary'))
+);
+GO
+IF OBJECT_ID(N'dbo.media_audit',N'U') IS NULL
+CREATE TABLE dbo.media_audit (
+ id BIGINT IDENTITY(1,1) PRIMARY KEY, media_id UNIQUEIDENTIFIER NULL,
+ actor_id INT NULL, action VARCHAR(60) NOT NULL, result VARCHAR(30) NOT NULL,
+ detail NVARCHAR(2000) NULL, created_at DATETIME2(3) NOT NULL DEFAULT SYSUTCDATETIME()
+);
+GO
+-- The runtime principal cannot create schemas, delete original files, or remove metadata rows.
+IF DATABASE_PRINCIPAL_ID(N'helpdesk_media_runtime') IS NULL CREATE ROLE helpdesk_media_runtime;
+GRANT SELECT,INSERT,UPDATE ON dbo.media_objects TO helpdesk_media_runtime;
+GRANT SELECT,INSERT,UPDATE,DELETE ON dbo.media_links TO helpdesk_media_runtime;
+GRANT SELECT,INSERT,UPDATE ON dbo.media_legacy_references TO helpdesk_media_runtime;
+GRANT SELECT,INSERT,UPDATE ON dbo.media_settings TO helpdesk_media_runtime;
+GRANT SELECT,INSERT ON dbo.media_audit TO helpdesk_media_runtime;
+GO
+IF COL_LENGTH('dbo.media_legacy_references','source_fingerprint') IS NULL
+ ALTER TABLE dbo.media_legacy_references ADD source_fingerprint CHAR(64) NULL;
+GO
+IF NOT EXISTS(SELECT 1 FROM sys.indexes WHERE name='UX_media_legacy_fingerprint' AND object_id=OBJECT_ID('dbo.media_legacy_references'))
+ CREATE UNIQUE INDEX UX_media_legacy_fingerprint ON dbo.media_legacy_references(source_type,source_id,source_fingerprint) WHERE source_fingerprint IS NOT NULL;

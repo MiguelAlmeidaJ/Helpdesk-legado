@@ -28,6 +28,7 @@ import {
 import { DevOpsTicketClassificationEditor } from './devops-ticket-classification-editor';
 import { DevOpsTaskDependencyEditor } from './devops-task-dependency-editor';
 import { DevOpsTicketImagesPanel } from './devops-ticket-images-panel';
+import { MediaPanel } from '../../media/components/media-panel';
 import { SpecializedTicketWorkflowPanel } from './specialized-ticket-workflow-panel';
 
 const BUTTON_CLASS =
@@ -326,6 +327,7 @@ export function DevOpsTicketDetailScreen({
             />
 
             <DevOpsTicketImagesPanel ticketId={ticketId} />
+            <MediaPanel contextType="task" contextId={String(ticketId)} />
           </>
         ) : null}
       </div>
