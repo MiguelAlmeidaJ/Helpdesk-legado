@@ -12,6 +12,7 @@ import {
 import Link from 'next/link';
 import { FormEvent, useCallback, useEffect, useState } from 'react';
 import { AppPageHeader } from '../../../shared/navigation/app-page-header';
+import { DateRangePicker } from '../../../shared/ui/date-range-picker';
 import {
   getExpenseAdminDashboard,
   getExpenseAdminDetails,
@@ -42,14 +43,14 @@ const styles = {
   detailError:
     'rounded-[10px] border border-app-danger-border bg-app-danger-soft p-[18px] text-center text-app-danger',
   metrics:
-    'mb-6 grid grid-cols-3 gap-3.5 max-[780px]:grid-cols-1 [&_article]:flex [&_article]:min-h-[150px] [&_article]:flex-col [&_article]:gap-[9px] [&_article]:rounded-[14px] [&_article]:border [&_article]:border-app-border [&_article]:border-t-4 [&_article]:bg-app-surface [&_article]:p-[18px] [&_article]:shadow-sm [&_article:nth-child(1)]:border-t-amber-500 [&_article:nth-child(2)]:border-t-sky-600 [&_article:nth-child(3)]:border-t-emerald-600 [&_article[data-active=true]]:outline-2 [&_article[data-active=true]]:outline-offset-2 [&_article[data-active=true]]:outline-app-text-soft [&_article>span]:text-[0.78rem] [&_article>span]:font-extrabold [&_article>span]:uppercase [&_article>span]:tracking-[0.05em] [&_article>span]:text-app-muted [&_article>strong]:text-[clamp(1.5rem,3vw,2.1rem)] [&_article>small]:min-h-[34px] [&_article>small]:leading-[1.4] [&_article>small]:text-app-subtle [&_article_button]:min-h-10 [&_article_button]:w-fit [&_article_button]:cursor-pointer [&_article_button]:rounded-lg [&_article_button]:border [&_article_button]:border-app-border-strong [&_article_button]:bg-app-surface [&_article_button]:px-4 [&_article_button]:font-bold [&_article_button]:text-app-text-soft [&_article_button]:transition [&_article_button:hover]:bg-app-surface-hover [&_article_button:disabled]:cursor-wait [&_article_button:disabled]:opacity-[0.6]',
-  metricActions: 'mt-auto flex flex-wrap gap-2',
+    'mb-6 grid grid-cols-3 gap-3.5 max-[780px]:grid-cols-1 [&_article]:flex [&_article]:min-h-[180px] [&_article]:flex-col [&_article]:gap-[9px] [&_article]:rounded-[14px] [&_article]:border [&_article]:border-app-border [&_article]:border-t-4 [&_article]:bg-app-surface [&_article]:p-[18px] [&_article]:shadow-sm [&_article:nth-child(1)]:border-t-amber-500 [&_article:nth-child(2)]:border-t-sky-600 [&_article:nth-child(3)]:border-t-emerald-600 [&_article[data-active=true]]:outline-2 [&_article[data-active=true]]:outline-offset-2 [&_article[data-active=true]]:outline-app-text-soft [&_article>span]:text-[0.78rem] [&_article>span]:font-extrabold [&_article>span]:uppercase [&_article>span]:tracking-[0.05em] [&_article>span]:text-app-muted [&_article>strong]:text-[clamp(1.5rem,3vw,2.1rem)] [&_article>small]:min-h-[34px] [&_article>small]:leading-[1.4] [&_article>small]:text-app-subtle [&_article_button]:min-h-10 [&_article_button]:w-fit [&_article_button]:cursor-pointer [&_article_button]:rounded-lg [&_article_button]:border [&_article_button]:border-app-border-strong [&_article_button]:bg-app-surface [&_article_button]:px-4 [&_article_button]:font-bold [&_article_button]:text-app-text-soft [&_article_button]:transition [&_article_button:hover]:bg-app-surface-hover [&_article_button:disabled]:cursor-wait [&_article_button:disabled]:opacity-[0.6]',
+  metricActions: 'mt-auto flex flex-wrap items-center gap-2 pt-3 [&_a]:justify-center [&_button]:justify-center',
   approvalLink:
-    'inline-flex min-h-10 items-center rounded-lg border border-emerald-700 bg-emerald-700 px-3.5 font-extrabold text-white no-underline transition hover:bg-emerald-800 dark:border-emerald-600 dark:bg-emerald-700 dark:hover:bg-emerald-600',
+    'inline-flex min-h-10 items-center rounded-lg border border-emerald-700 bg-emerald-700 px-3.5 font-extrabold !text-white no-underline transition hover:bg-emerald-800 dark:border-emerald-600 dark:bg-emerald-700 dark:hover:bg-emerald-600 [&_*]:text-white',
   paymentLink:
-    'inline-flex min-h-10 items-center rounded-lg border border-emerald-700 bg-emerald-700 px-3.5 font-extrabold text-white no-underline transition hover:bg-emerald-800 dark:border-emerald-600 dark:bg-emerald-700 dark:hover:bg-emerald-600',
+    'inline-flex min-h-10 items-center rounded-lg border border-emerald-700 bg-emerald-700 px-3.5 font-extrabold !text-white no-underline transition hover:bg-emerald-800 dark:border-emerald-600 dark:bg-emerald-700 dark:hover:bg-emerald-600 [&_*]:text-white',
   reportLink:
-    'inline-flex min-h-10 items-center rounded-lg border border-emerald-700 bg-emerald-700 px-3.5 font-extrabold text-white no-underline transition hover:bg-emerald-800 dark:border-emerald-600 dark:bg-emerald-700 dark:hover:bg-emerald-600',
+    'inline-flex min-h-10 items-center rounded-lg border border-emerald-700 bg-emerald-700 px-3.5 font-extrabold !text-white no-underline transition hover:bg-emerald-800 dark:border-emerald-600 dark:bg-emerald-700 dark:hover:bg-emerald-600 [&_*]:text-white',
   summaryHeader:
     'mb-3.5 text-center [&_h2]:mt-[5px] [&_h2]:mb-0 [&_h2]:text-[1.35rem]',
   breakdownGrid:
@@ -247,6 +248,7 @@ export function ExpenseAdminDashboardScreen({
   const [status, setStatus] = useState<LogisticsExpenseAdminStatus>(
     initialFilters?.status ?? 4,
   );
+  const [filterOpen, setFilterOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [feedback, setFeedback] = useState('');
   const [openDetail, setOpenDetail] = useState<string | null>(null);
@@ -313,7 +315,12 @@ export function ExpenseAdminDashboardScreen({
 
   function apply(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    void loadSummary(startDate, endDate, status);
+    if (startDate && endDate && startDate > endDate) {
+      setFeedback('A data inicial não pode ser posterior à data final.');
+      return;
+    }
+    setFilterOpen(false);
+    void loadSummary(startDate || undefined, endDate || undefined, status);
   }
 
   function selectStatus(nextStatus: LogisticsExpenseAdminStatus) {
@@ -370,44 +377,51 @@ export function ExpenseAdminDashboardScreen({
   return (
     <main className={styles.page}>
       <AppPageHeader
-        actions={<Link className={styles.secondaryLink} href="/logistica/despesas">Minhas despesas</Link>}
+        actions={
+          <div className="flex flex-wrap items-center gap-2">
+            <details className="relative" open={filterOpen} onToggle={undefined}>
+              <summary
+                className="flex min-h-10 cursor-pointer list-none items-center gap-2 rounded-lg border border-app-border-strong bg-app-surface px-3.5 font-semibold text-app-text transition hover:bg-app-surface-hover"
+                onClick={(event) => { event.preventDefault(); setFilterOpen((current) => !current); }}
+              >
+                <svg aria-hidden="true" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/></svg>
+                Filtrar período
+              </summary>
+              <div className="absolute right-0 top-[calc(100%+8px)] z-50 w-[min(370px,calc(100vw-32px))] rounded-xl border border-app-border bg-app-surface p-4 shadow-2xl">
+                <form className="grid gap-3" onSubmit={apply}>
+                  <strong className="text-sm">Selecionar intervalo</strong>
+                  <DateRangePicker
+                    disabled={loading}
+                    startDate={startDate}
+                    endDate={endDate}
+                    onChange={(range) => { setStartDate(range.startDate); setEndDate(range.endDate); }}
+                  />
+                  {startDate && endDate && startDate > endDate ? (
+                    <p className="m-0 text-xs text-app-danger">A data inicial deve ser anterior à final.</p>
+                  ) : null}
+                  <div className="flex justify-end gap-2">
+                    <button className="min-h-9 rounded-lg border border-app-border-strong px-3 text-sm font-medium" type="button" onClick={() => { setStartDate(''); setEndDate(''); }}>Limpar</button>
+                    <button className="min-h-9 rounded-lg bg-app-brand px-4 text-sm font-bold text-white" type="submit" disabled={loading || (Boolean(startDate && endDate) && startDate > endDate)}>Aplicar</button>
+                  </div>
+                </form>
+              </div>
+            </details>
+            <Link className={styles.secondaryLink} href="/logistica/despesas">Minhas despesas</Link>
+          </div>
+        }
         subtitle="Resumo administrativo por categoria, cliente e colaborador."
         title="Painel Financeiro de RDs"
         user={currentUser}
       />
 
       <div className={styles.content}>
-
-        <section className={styles.filters}>
-          <form onSubmit={apply}>
-            <label>
-              De
-              <input
-                type="date"
-                value={startDate}
-                onChange={(event) => setStartDate(event.target.value)}
-              />
-            </label>
-            <label>
-              Até
-              <input
-                type="date"
-                value={endDate}
-                onChange={(event) => setEndDate(event.target.value)}
-              />
-            </label>
-            <button disabled={loading} type="submit">
-              {loading ? 'Atualizando…' : 'Filtrar'}
-            </button>
-          </form>
-          {summary ? (
-            <small>
-              Exibindo {STATUS_LABELS[summary.period.status].toLowerCase()} de{' '}
-              {formatDate(summary.period.startDate)} até{' '}
-              {formatDate(summary.period.endDate)}.
-            </small>
-          ) : null}
-        </section>
+        {summary ? (
+          <p className="mb-4 text-sm text-app-muted">
+            Exibindo {STATUS_LABELS[summary.period.status].toLowerCase()} de{' '}
+            <strong className="text-app-text">{formatDate(summary.period.startDate)}</strong> até{' '}
+            <strong className="text-app-text">{formatDate(summary.period.endDate)}</strong>.
+          </p>
+        ) : null}
 
         {feedback ? <div className={styles.feedback}>{feedback}</div> : null}
         {loading && !summary ? (
