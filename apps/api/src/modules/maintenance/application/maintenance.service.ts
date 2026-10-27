@@ -1022,6 +1022,8 @@ export class MaintenanceService implements OnApplicationBootstrap {
     tableNames: string[],
     actorUserId: number,
   ): Promise<MaintenanceTableOptimizeResponse> {
+    throw new ConflictException(UNSUPPORTED_MARIADB_MAINTENANCE);
+
     const database = validateDatabase(target);
     const tables = await this.validMaintenanceTables(database, tableNames, false);
     const operationId = await this.beginOperation(
@@ -1072,6 +1074,8 @@ export class MaintenanceService implements OnApplicationBootstrap {
     confirmation: string,
     actorUserId: number,
   ): Promise<MaintenanceTableDropResponse> {
+    throw new ConflictException(UNSUPPORTED_MARIADB_MAINTENANCE);
+
     const database = validateDatabase(target);
     const tables = await this.validMaintenanceTables(database, tableNames, true);
     const expected = `EXCLUIR ${tables.length} TABELA${tables.length === 1 ? '' : 'S'}`;
@@ -1356,6 +1360,8 @@ export class MaintenanceService implements OnApplicationBootstrap {
     input: MaintenanceBackupJobInput,
     actorUserId: number,
   ): Promise<MaintenanceBackupJob> {
+    throw new ConflictException(UNSUPPORTED_MARIADB_MAINTENANCE);
+
     validateJob(input);
     await this.ensureSchema();
     const next = input.enabled
@@ -1387,6 +1393,8 @@ export class MaintenanceService implements OnApplicationBootstrap {
     id: number,
     input: MaintenanceBackupJobInput,
   ): Promise<MaintenanceBackupJob> {
+    throw new ConflictException(UNSUPPORTED_MARIADB_MAINTENANCE);
+
     validateJob(input);
     await this.getJob(id);
     const next = input.enabled
@@ -1415,6 +1423,8 @@ export class MaintenanceService implements OnApplicationBootstrap {
   }
 
   async removeJob(id: number): Promise<void> {
+    throw new ConflictException(UNSUPPORTED_MARIADB_MAINTENANCE);
+
     const affected = await this.nivel3.$executeRawUnsafe(
       'DELETE FROM maintenance_backup_jobs WHERE id = ?',
       id,
@@ -1439,6 +1449,8 @@ export class MaintenanceService implements OnApplicationBootstrap {
   }
 
   async runDueBackupJobs(limit = 5): Promise<number> {
+    throw new ConflictException(UNSUPPORTED_MARIADB_MAINTENANCE);
+
     await this.ensureSchema();
     const rows = await this.nivel3.$queryRawUnsafe<JobRow[]>(
       [
@@ -1633,6 +1645,8 @@ export class MaintenanceService implements OnApplicationBootstrap {
     target: MaintenanceDatabaseKey,
     uploaded: UploadedDump,
   ): Promise<MaintenanceDumpStageResponse> {
+    throw new ConflictException(UNSUPPORTED_MARIADB_MAINTENANCE);
+
     await this.ensureSchema();
     const database = validateDatabase(target);
 
@@ -1686,6 +1700,8 @@ export class MaintenanceService implements OnApplicationBootstrap {
     confirmation: string,
     actorUserId: number,
   ): Promise<MaintenanceDumpApplyResponse> {
+    throw new ConflictException(UNSUPPORTED_MARIADB_MAINTENANCE);
+
     await this.ensureSchema();
     const metadata = await this.dumpMetadata(token);
     if (new Date(metadata.expiresAt).getTime() < Date.now()) {
@@ -2032,6 +2048,8 @@ export class MaintenanceService implements OnApplicationBootstrap {
   async repair(
     target: MaintenanceDatabaseKey,
   ): Promise<MaintenanceRepairResponse> {
+    throw new ConflictException(UNSUPPORTED_MARIADB_MAINTENANCE);
+
     const database = validateDatabase(target);
     const navigationPrepared = true;
     let maintenancePrepared = false;
