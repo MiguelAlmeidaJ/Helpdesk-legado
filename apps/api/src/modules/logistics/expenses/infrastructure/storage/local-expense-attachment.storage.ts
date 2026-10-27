@@ -22,7 +22,8 @@ export class LocalExpenseAttachmentStorage extends ExpenseAttachmentStorage {
       'native',
       `${date.getFullYear()}_${String(date.getMonth() + 1).padStart(2, '0')}`,
     );
-    const relativePath = path.posix.join(directory, `${input.key}.pdf`);
+    const extension = input.mimeType === 'image/jpeg' ? '.jpg' : input.mimeType === 'image/png' ? '.png' : '.pdf';
+    const relativePath = path.posix.join(directory, `${input.key}${extension}`);
     const physical = this.safeStoragePath(relativePath);
     if (!physical) {
       throw new Error('Caminho de armazenamento de RD inválido.');
