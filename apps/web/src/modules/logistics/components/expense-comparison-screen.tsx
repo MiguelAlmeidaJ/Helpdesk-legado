@@ -153,6 +153,12 @@ function ComparisonTable({
   );
 }
 
+function monthRange(month: string): { start: string; end: string } {
+  const [year, number] = month.split('-').map(Number);
+  const lastDay = new Date(Date.UTC(year, number, 0)).getUTCDate();
+  return { start: `${month}-01`, end: `${month}-${String(lastDay).padStart(2, '0')}` };
+}
+
 export function ExpenseComparisonScreen({
   currentUser,
   initialFilters,
@@ -173,6 +179,7 @@ export function ExpenseComparisonScreen({
   const [percentAlert, setPercentAlert] = useState(
     initialFilters.percentAlert ?? 50,
   );
+  const [advanced, setAdvanced] = useState(false);
   const [loading, setLoading] = useState(true);
   const [feedback, setFeedback] = useState('');
 
@@ -199,7 +206,23 @@ export function ExpenseComparisonScreen({
 
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    void load({ period1Start, period1End, period2Start, period2End });
+    const month1 = period1Start.slice(0, 7);
+    const month2 = period2Start.slice(0, 7);
+    if (!month1 || !month2 || month2 < month1) {
+      setFeedback('O período 2 deve ser igual ou posterior ao período 1.');
+      return;
+    }
+    const first = advanced ? { start: period1Start, end: period1End } : monthRange(month1);
+    const second = advanced ? { start: period2Start, end: period2End } : monthRange(month2);
+    if (!first.start || !first.end || !second.start || !second.end ||
+        first.start > first.end || second.start > second.end || second.start < first.start) {
+      setFeedback('Confira as datas: o período 2 não pode começar antes do período 1.');
+      return;
+    }
+    void load({
+      period1Start: first.start, period1End: first.end,
+      period2Start: second.start, period2End: second.end,
+    });
   }
 
   const period1Label = report
@@ -226,70 +249,99 @@ export function ExpenseComparisonScreen({
       <div className={styles.content}>
 
         <form className={styles.filters} onSubmit={submit}>
-          <fieldset>
-            <legend>Período 1</legend>
-            <label>
-              De
-              <input
-                type="date"
-                value={period1Start}
-                onChange={(event: ChangeEvent<HTMLInputElement>) =>
-                  setPeriod1Start(event.target.value)
+          <label className="min-w-[190px] flex-1">
+            Período 1 · mês e ano
+            <input type="month" required value={period1Start.slice(0, 7)}
+              onChange={(event) => {
+                const value = event.target.value;
+                if (!value) return;
+                const dates = monthRange(value);
+                setPeriod1Start(dates.start);
+                setPeriod1End(dates.end);
+                if (period2Start.slice(0, 7) < value) {
+                  setPeriod2Start(dates.start);
+                  setPeriod2End(dates.end);
                 }
-              />
-            </label>
-            <label>
-              Até
-              <input
-                type="date"
-                value={period1End}
-                onChange={(event: ChangeEvent<HTMLInputElement>) =>
-                  setPeriod1End(event.target.value)
-                }
-              />
-            </label>
-          </fieldset>
-          <fieldset>
-            <legend>Período 2</legend>
-            <label>
-              De
-              <input
-                type="date"
-                value={period2Start}
-                onChange={(event: ChangeEvent<HTMLInputElement>) =>
-                  setPeriod2Start(event.target.value)
-                }
-              />
-            </label>
-            <label>
-              Até
-              <input
-                type="date"
-                value={period2End}
-                onChange={(event: ChangeEvent<HTMLInputElement>) =>
-                  setPeriod2End(event.target.value)
-                }
-              />
-            </label>
-          </fieldset>
+              }} />
+          </label>
+          <label className="min-w-[190px] flex-1">
+            Período 2 · mês e ano
+            <input type="month" required min={period1Start.slice(0, 7)}
+              value={period2Start.slice(0, 7)}
+              onChange={(event) => {
+                const value = event.target.value;
+                if (!value) return;
+                const dates = monthRange(value);
+                setPeriod2Start(dates.start);
+                setPeriod2End(dates.end);
+              }} />
+          </label>
           <label className={styles.alertField}>
             Destacar aumento maior que
-            <select
-              value={percentAlert}
-              onChange={(event: ChangeEvent<HTMLSelectElement>) =>
-                setPercentAlert(Number(event.target.value))
-              }
-            >
-              {ALERT_OPTIONS.map((value) => (
-                <option key={value} value={value}>
-                  {value}%
-                </option>
-              ))}
+            <select value={percentAlert}
+              onChange={(event: ChangeEvent<HTMLSelectElement>) => setPercentAlert(Number(event.target.value))}>
+              {ALERT_OPTIONS.map((value) => <option key={value} value={value}>{value}%</option>)}
             </select>
           </label>
-          <button disabled={loading} type="submit">
-            {loading ? 'Analisando…' : 'Analisar'}
+          <button disabled={loading} type="submit">{loading ? 'Analisando…' : 'Analisar'}</button>
+          <button type="button" className="!border-app-border-strong !bg-app-surface !text-app-text"
+            aria-expanded={advanced} onClick={() => setAdvanced((current) => !current)}>
+            {advanced ? 'Ocultar filtro avançado' : 'Filtro avançado'}
           </button>
+          {advanced ? (
+            <div className="w-full rounded-xl border border-app-border bg-app-surface-muted p-3">
+              <p className="mb-3 text-xs text-app-muted">Personalize as datas de início e fim de cada período.</p>
+              <div className="flex flex-wrap gap-3">
+                <fieldset>
+                  <legend>Período 1</legend>
+                  <label>
+                    De
+                    <input
+                      type="date"
+                      value={period1Start}
+                      onChange={(event: ChangeEvent<HTMLInputElement>) =>
+                        setPeriod1Start(event.target.value)
+                      }
+                    />
+                  </label>
+                  <label>
+                    Até
+                    <input
+                      type="date"
+                      value={period1End}
+                      onChange={(event: ChangeEvent<HTMLInputElement>) =>
+                        setPeriod1End(event.target.value)
+                      }
+                    />
+                  </label>
+                </fieldset>
+                <fieldset>
+                  <legend>Período 2</legend>
+                  <label>
+                    De
+                    <input
+                      type="date"
+                      value={period2Start}
+                      onChange={(event: ChangeEvent<HTMLInputElement>) =>
+                        setPeriod2Start(event.target.value)
+                      }
+                    />
+                  </label>
+                  <label>
+                    Até
+                    <input
+                      type="date"
+                      value={period2End}
+                      onChange={(event: ChangeEvent<HTMLInputElement>) =>
+                        setPeriod2End(event.target.value)
+                      }
+                    />
+                  </label>
+                </fieldset>
+
+              </div>
+            </div>
+          ) : null}
         </form>
 
         {feedback ? <div className={styles.error}>{feedback}</div> : null}
