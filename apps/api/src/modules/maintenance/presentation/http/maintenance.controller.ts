@@ -236,7 +236,7 @@ export class MaintenanceController {
   async downloadBackup(@Param('name') name: string): Promise<StreamableFile> {
     const file = await this.maintenance.backupFile(name);
     return new StreamableFile(createReadStream(file), {
-      type: 'application/sql; charset=utf-8',
+      type: name.endsWith('.bak') ? 'application/octet-stream' : 'application/sql; charset=utf-8',
       disposition: 'attachment; filename="' + name.replace(/"/g, '') + '"',
     });
   }

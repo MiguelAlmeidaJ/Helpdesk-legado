@@ -46,6 +46,7 @@ export interface MaintenanceBackupFile {
   kind: 'manual' | 'automatic' | 'pre-import' | 'unknown';
   sizeBytes: number;
   createdAt: string;
+  verifiedAt?: string;
 }
 
 export interface MaintenanceBackupJob {
@@ -85,6 +86,12 @@ export interface MaintenanceOperation {
 }
 
 export interface MaintenanceSystemStatusResponse {
+  nativeBackup: {
+    configured: boolean;
+    directory: string | null;
+    lastVerifiedAt: string | null;
+    error: string | null;
+  };
   generatedAt: string;
   api: {
     status: 'up';

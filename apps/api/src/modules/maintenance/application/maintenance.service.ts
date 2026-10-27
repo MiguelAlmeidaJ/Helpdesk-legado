@@ -52,6 +52,7 @@ import {
 import path from 'node:path';
 import { NIVEL3_DATABASE } from '../../../core/database/database.constants';
 import { CatalogImageStorageService } from '../../catalog/application/catalog-image-storage.service';
+import { nativeBackupRoot, SqlServerBackups } from './sqlserver-backups';
 
 type QueryClient = {
   $queryRawUnsafe<T = unknown>(
@@ -596,26 +597,6 @@ function backupKeys(
   return ['nivel3'];
 }
 
-function backupPrefix(kind: BackupKind): string {
-  if (kind === 'automatic') return 'auto';
-  if (kind === 'pre-import') return 'preimport';
-  return 'manual';
-}
-
-function timestamp(): string {
-  const now = new Date();
-  const pad = (value: number) => String(value).padStart(2, '0');
-  return (
-    String(now.getFullYear()) +
-    pad(now.getMonth() + 1) +
-    pad(now.getDate()) +
-    '_' +
-    pad(now.getHours()) +
-    pad(now.getMinutes()) +
-    pad(now.getSeconds())
-  );
-}
-
 function backupKind(name: string): MaintenanceBackupFile['kind'] {
   if (name.startsWith('manual_')) return 'manual';
   if (name.startsWith('auto_')) return 'automatic';
@@ -740,12 +721,15 @@ export class MaintenanceService implements OnApplicationBootstrap {
   private ensurePromise: Promise<void> | null = null;
   private toolCache = new Map<'dump' | 'restore', string | null>();
   private dumpImportInProgress = false;
+  private readonly nativeBackups: SqlServerBackups;
 
   constructor(
     @Inject(NIVEL3_DATABASE)
     private readonly nivel3: Nivel3DatabaseClient,
     private readonly catalogImages: CatalogImageStorageService,
-  ) {}
+  ) {
+    this.nativeBackups = new SqlServerBackups(this.nivel3);
+  }
 
   onApplicationBootstrap(): void {
     void this.ensureSchema().catch((error: unknown) => {
@@ -796,7 +780,7 @@ export class MaintenanceService implements OnApplicationBootstrap {
       this.databaseStatus('nivel3'),
       this.listBackups(),
       Promise.resolve([] as MaintenanceBackupJob[]),
-      Promise.resolve([] as MaintenanceOperation[]),
+      this.listOperations(),
       this.workerStatus().catch(() => ({ status: 'unknown' as const, lastHeartbeatAt: null })),
       this.storageStatus(),
       Promise.resolve(null),
@@ -806,6 +790,7 @@ export class MaintenanceService implements OnApplicationBootstrap {
     const memory = process.memoryUsage();
 
     return {
+      nativeBackup: await this.nativeBackups.status(),
       generatedAt: new Date().toISOString(),
       api: {
         status: 'up',
@@ -1284,7 +1269,7 @@ export class MaintenanceService implements OnApplicationBootstrap {
 
   async listBackups(): Promise<MaintenanceBackupFile[]> {
     await mkdir(backupRoot(), { recursive: true });
-    const result: MaintenanceBackupFile[] = [];
+    const result: MaintenanceBackupFile[] = await this.nativeBackups.list().catch(() => []);
     for (const name of await readdir(backupRoot())) {
       if (!name.toLowerCase().endsWith('.sql')) continue;
       const database = backupDatabase(name);
@@ -1307,6 +1292,7 @@ export class MaintenanceService implements OnApplicationBootstrap {
   }
 
   async backupFile(name: string): Promise<string> {
+    if (name.endsWith('.bak')) return this.nativeBackups.file(name);
     if (
       name !== path.basename(name) ||
       !name.toLowerCase().endsWith('.sql') ||
@@ -1327,6 +1313,7 @@ export class MaintenanceService implements OnApplicationBootstrap {
   async removeBackup(name: string, actorUserId: number): Promise<void> {
     const file = await this.backupFile(name);
     await unlink(file);
+    if (name.endsWith('.bak')) await this.safeUnlink(file + '.verified.json');
     const operationId = await this.beginOperation(
       'backup-delete',
       backupDatabase(name),
@@ -2162,50 +2149,8 @@ export class MaintenanceService implements OnApplicationBootstrap {
     target: MaintenanceBackupTarget,
     kind: BackupKind,
   ): Promise<MaintenanceBackupFile[]> {
-    throw new ConflictException(UNSUPPORTED_MARIADB_MAINTENANCE);
-    await mkdir(backupRoot(), { recursive: true });
-    const executable = await this.resolveTool('dump', true);
-    const files: MaintenanceBackupFile[] = [];
-
-    for (const key of backupKeys(target)) {
-      const config = connectionInfo(key);
-      const name =
-        backupPrefix(kind) + '_' + key + '_' + timestamp() + '.sql';
-      const file = path.join(backupRoot(), name);
-      const args = [
-        '--host=' + config.host,
-        '--port=' + config.port,
-        '--user=' + config.user,
-        '--single-transaction',
-        '--routines',
-        '--triggers',
-        '--events',
-        '--hex-blob',
-        '--default-character-set=utf8mb4',
-        '--skip-lock-tables',
-        config.database,
-      ];
-
-      try {
-        await this.runProcess(executable as string, args, {
-          stdoutFile: file,
-          env: { MYSQL_PWD: config.password },
-        });
-        const info = await lstat(file);
-        files.push({
-          name,
-          database: key,
-          kind,
-          sizeBytes: info.size,
-          createdAt: info.mtime.toISOString(),
-        });
-      } catch (error) {
-        await this.safeUnlink(file);
-        throw error;
-      }
-    }
-
-    return files;
+    validateTarget(target);
+    return this.nativeBackups.create(kind);
   }
 
   private async preparePortableDump(input: string, output: string): Promise<number> {
@@ -2447,18 +2392,19 @@ export class MaintenanceService implements OnApplicationBootstrap {
   private async storageStatus(): Promise<
     MaintenanceSystemStatusResponse['storage']
   > {
-    await mkdir(backupRoot(), { recursive: true });
+    let directory = backupRoot();
     try {
-      const stats = await statfs(backupRoot());
+      directory = nativeBackupRoot() ?? directory;
+      const stats = await statfs(directory);
       const blockSize = numberValue(stats.bsize);
       return {
-        backupDirectory: backupRoot(),
+        backupDirectory: directory,
         totalBytes: numberValue(stats.blocks) * blockSize,
         freeBytes: numberValue(stats.bavail) * blockSize,
       };
     } catch {
       return {
-        backupDirectory: backupRoot(),
+        backupDirectory: directory,
         totalBytes: null,
         freeBytes: null,
       };
@@ -2510,10 +2456,9 @@ export class MaintenanceService implements OnApplicationBootstrap {
   private async listOperations(): Promise<MaintenanceOperation[]> {
     const rows = await this.nivel3.$queryRawUnsafe<OperationRow[]>(
       [
-        'SELECT id, action, target, actor_user_id, status, detail, created_at, finished_at',
+        'SELECT TOP (30) id, action, target, actor_user_id, status, detail, created_at, finished_at',
         'FROM maintenance_operations',
         'ORDER BY id DESC',
-        'LIMIT 30',
       ].join('\n'),
     );
     return rows.map(operation);
@@ -2525,19 +2470,16 @@ export class MaintenanceService implements OnApplicationBootstrap {
     actorUserId: number | null,
   ): Promise<number> {
     await this.ensureSchema();
-    await this.nivel3.$executeRawUnsafe(
+    const rows = await this.nivel3.$queryRawUnsafe<Array<{ id: number | bigint }>>(
       [
         'INSERT INTO maintenance_operations (',
         '  action, target, actor_user_id, status, created_at',
-        ") VALUES (?, ?, ?, 'running', NOW())",
+        ") OUTPUT INSERTED.id VALUES (@P1, @P2, @P3, 'running', SYSDATETIME())",
       ].join('\n'),
       action,
       target,
       actorUserId,
     );
-    const rows = await this.nivel3.$queryRawUnsafe<
-      Array<{ id: number | bigint }>
-    >('SELECT LAST_INSERT_ID() AS id');
     return Number(rows[0]?.id ?? 0);
   }
 
@@ -2550,8 +2492,8 @@ export class MaintenanceService implements OnApplicationBootstrap {
     await this.nivel3.$executeRawUnsafe(
       [
         'UPDATE maintenance_operations',
-        'SET status = ?, detail = ?, finished_at = NOW()',
-        'WHERE id = ?',
+        'SET status = @P1, detail = @P2, finished_at = SYSDATETIME()',
+        'WHERE id = @P3',
       ].join('\n'),
       status,
       detail.slice(0, 20000),

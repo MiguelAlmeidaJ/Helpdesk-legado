@@ -28,7 +28,6 @@ import {
   migrateCatalogImages,
   optimizeMaintenanceTables,
   dropMaintenanceTables,
-  repairMaintenanceDatabase,
   runMaintenanceBackup,
   stageMaintenanceDumpChunked,
   updateMaintenanceBackupJob,
@@ -90,9 +89,7 @@ const MAINTENANCE_SECTIONS: ReadonlyArray<{
 }> = [
   { id: 'database', label: 'Banco de dados' },
   { id: 'sql', label: 'Terminal SQL' },
-
-
-
+  { id: 'backups', label: 'Backups' },
   { id: 'audit', label: 'Auditoria' },
 ];
 
@@ -171,9 +168,12 @@ function backupTargetLabel(_target: MaintenanceBackupTarget): string {
   return 'Nivel3';
 }
 
-function toolName(value: string | null | undefined): string {
-  if (!value) return 'Não encontrada';
-  return value.split(/[\\/]/).pop() || value;
+function sqlServerVersion(value: string | null): string {
+  if (!value) return '—';
+  const release = value.match(/Microsoft SQL Server\s+\d{4}(?:\s*\([^)]*\))?/i)?.[0];
+  const build = value.match(/\b\d+\.\d+\.\d+\.\d+\b/)?.[0];
+  const edition = value.match(/(?:Standard |Enterprise |Express )?Developer Edition|Enterprise(?: Core-based)? Edition|Standard Edition|Express Edition|Web Edition/i)?.[0];
+  return [release, build, edition].filter(Boolean).join(' · ') || value.split(/[\r\n]/)[0]!;
 }
 
 export function MaintenanceScreen({
@@ -519,7 +519,7 @@ export function MaintenanceScreen({
     }
   }
 
-  const backupToolsReady = Boolean(status?.tools.dumpClient);
+  const backupToolsReady = Boolean(status?.nativeBackup?.configured);
   const restoreToolsReady = Boolean(status?.tools.restoreClient);
   const storagePercent = useMemo(() => {
     if (!status?.storage.totalBytes || status.storage.freeBytes === null) return null;
@@ -532,8 +532,6 @@ export function MaintenanceScreen({
 
     const issues: string[] = [];
     if (status.worker.status !== 'up') issues.push('Worker sem heartbeat recente');
-    if (!status.tools.dumpClient) issues.push('Ferramenta de backup indisponível');
-    if (!status.tools.restoreClient) issues.push('Ferramenta de restore indisponível');
     for (const database of status.databases) {
       if (database.status !== 'up') {
         issues.push(`${database.label} está ${database.status}`);
@@ -595,12 +593,12 @@ export function MaintenanceScreen({
             <div>
               <strong className="text-sm text-app-text">
                 {systemIssues.length === 0
-                  ? 'Ambiente operacional'
+                  ? (status ? 'Ambiente operacional' : 'Aguardando status do ambiente')
                   : `${systemIssues.length} ponto(s) precisam de atenção`}
               </strong>
               <p className="mb-0 mt-1 text-xs leading-5 text-app-muted">
                 {systemIssues.length === 0
-                  ? 'API, worker, banco e ferramentas de backup estão disponíveis.'
+                  ? (status ? 'API, worker e banco estão disponíveis.' : 'Os serviços serão avaliados após o carregamento do status.')
                   : systemIssues.join(' · ')}
               </p>
             </div>
@@ -685,21 +683,24 @@ export function MaintenanceScreen({
 
           <div className={CARD_CLASS}>
             <span className="text-xs font-extrabold uppercase tracking-[0.1em] text-app-muted">
-              Ferramentas SQL Server
+              Backup nativo SQL Server
             </span>
             <div className="mt-3 grid gap-2 text-sm">
               <div className="flex justify-between gap-3">
-                <span>Backup</span>
-                <strong title={status?.tools.dumpClient ?? undefined}>
-                  SQL Server (backup .bak não configurado)
-                </strong>
+                <span>Formato</span>
+                <strong>.bak</strong>
               </div>
               <div className="flex justify-between gap-3">
-                <span>Restore</span>
-                <strong title={status?.tools.restoreClient ?? undefined}>
-                  {toolName(status?.tools.restoreClient)}
-                </strong>
+                <span>Configuração</span>
+                <strong>{backupToolsReady ? 'Configurado' : 'Pendente'}</strong>
               </div>
+              <p className="m-0 text-xs leading-5 text-app-muted">
+                {status?.nativeBackup?.lastVerifiedAt
+                  ? 'Último backup verificado: ' + date(status.nativeBackup.lastVerifiedAt) + '.'
+                  : 'Configure um diretório acessível à API e ao SQL Server e execute o primeiro backup para validar as permissões.'}
+                {' '}Restauração, adequações e agendamento permanecem bloqueados nesta etapa.
+              </p>
+              {status?.nativeBackup?.error ? <p className="m-0 text-xs text-app-danger">{status.nativeBackup.error}</p> : null}
             </div>
           </div>
         </section>
@@ -907,7 +908,7 @@ export function MaintenanceScreen({
                 <dl className="mt-4 grid grid-cols-2 gap-3 text-sm">
                   <div>
                     <dt className="text-xs font-bold text-app-muted">Versão</dt>
-                    <dd className="m-0 mt-1">{database.version ?? '—'}</dd>
+                    <dd className="m-0 mt-1">{sqlServerVersion(database.version)}</dd>
                   </div>
                   <div>
                     <dt className="text-xs font-bold text-app-muted">Latência</dt>
@@ -922,6 +923,12 @@ export function MaintenanceScreen({
                     <dd className="m-0 mt-1">{database.tableCount.toLocaleString('pt-BR')}</dd>
                   </div>
                 </dl>
+
+                {/Developer Edition/i.test(database.version ?? '') ? (
+                  <p className="mt-4 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2.5 text-xs text-amber-800 dark:border-amber-900/70 dark:bg-amber-950/20 dark:text-amber-200">
+                    Developer Edition identificada. Verifique a adequação da edição e do licenciamento antes do uso em produção.
+                  </p>
+                ) : null}
 
                 {database.missingRequiredTables.length > 0 ? (
                   <div className="mt-4 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2.5 text-xs text-amber-800 dark:border-amber-900/70 dark:bg-amber-950/20 dark:text-amber-200">
@@ -946,20 +953,18 @@ export function MaintenanceScreen({
                   {database.key === 'nivel3' ? (
                     <button
                       className={BUTTON_CLASS}
-                      disabled={Boolean(busy)}
-                      onClick={() =>
-                        void run(
-                          'repair-' + database.key,
-                          'Adequações concluídas para ' + database.label + '.',
-                          () => repairMaintenanceDatabase(database.key),
-                        )
-                      }
+                      aria-describedby={'maintenance-repair-note-' + database.key}
+                      disabled
                       type="button"
                     >
                       Executar adequações
                     </button>
                   ) : null}
                 </div>
+
+                <p className="mb-0 mt-2 text-xs text-app-muted" id={'maintenance-repair-note-' + database.key}>
+                  Adequações bloqueadas até existirem rotinas compatíveis e verificadas para SQL Server e backup nativo configurado e validado.
+                </p>
 
                 {openDatabase === database.key ? (
                   <div className="mt-4">
@@ -1199,7 +1204,7 @@ export function MaintenanceScreen({
               </span>
               <h2 className="mb-0 mt-1 text-lg font-bold">Backup manual e arquivos</h2>
               <p className="mb-0 mt-1 text-sm text-app-muted">
-                Os dumps MariaDB antigos são somente históricos. Para SQL Server, use uma rotina nativa de backup .bak validada.
+                Backup completo nativo .bak com COPY_ONLY e CHECKSUM, seguido de RESTORE VERIFYONLY. Os dumps MariaDB antigos são somente históricos.
               </p>
             </div>
             <button
@@ -1208,7 +1213,7 @@ export function MaintenanceScreen({
               onClick={() =>
                 void run(
                   'backup-nivel3',
-                  'Backup de Nivel3 concluído.',
+                  'Backup nativo de Nivel3 criado e verificado com sucesso.',
                   () => runMaintenanceBackup('nivel3'),
                 )
               }
@@ -1222,7 +1227,7 @@ export function MaintenanceScreen({
             <div className="rounded-xl bg-app-surface-muted p-3">
               <span className="text-[11px] font-bold uppercase text-app-muted">Ferramenta</span>
               <strong className="mt-1 block text-sm">
-                {backupToolsReady ? toolName(status?.tools.dumpClient) : 'Indisponível'}
+                SQL Server · backup nativo .bak
               </strong>
             </div>
             <div className="rounded-xl bg-app-surface-muted p-3">
@@ -1241,7 +1246,7 @@ export function MaintenanceScreen({
 
           {!backupToolsReady ? (
             <p className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2.5 text-sm text-amber-800 dark:border-amber-900/70 dark:bg-amber-950/20 dark:text-amber-200">
-              Backups MariaDB foram desabilitados. O SQL Server utiliza backups nativos .bak e requer um diretório acessível ao serviço SQL Server.
+              {status?.nativeBackup?.error ?? 'Configure MAINTENANCE_SQLSERVER_BACKUP_DIR com um diretório absoluto acessível à API e ao serviço SQL Server.'}
             </p>
           ) : null}
 
@@ -1260,7 +1265,12 @@ export function MaintenanceScreen({
               <tbody>
                 {(status?.backups ?? []).map((backup) => (
                   <tr key={backup.name}>
-                    <td className={TABLE_CELL}><strong>{backup.name}</strong></td>
+                    <td className={TABLE_CELL}>
+                      <strong>{backup.name}</strong>
+                      <div className="mt-1 text-xs text-app-muted">
+                        {backup.verifiedAt ? 'Verificado em ' + date(backup.verifiedAt) : 'Histórico legado · sem verificação nativa'}
+                      </div>
+                    </td>
                     <td className={TABLE_CELL}>{backup.database}</td>
                     <td className={TABLE_CELL}>{backup.kind}</td>
                     <td className={TABLE_CELL}>{bytes(backup.sizeBytes)}</td>

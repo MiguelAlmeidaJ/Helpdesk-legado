@@ -30,6 +30,8 @@
     "test:notifications": "node --test scripts/notifications.test.cjs",
     "test:access": "node --test scripts/access-rbac.test.cjs",
     "test:security": "node --test scripts/security.test.cjs",
+    "test:backups": "node --test scripts/backup-native.test.cjs",
+    "backup:native:verify": "node scripts/backup-native-smoke.cjs",
     "test:reports:db": "node scripts/reports-db-smoke.cjs",
     "test:logistics": "node --test scripts/logistics.test.cjs scripts/logistics-status.test.cjs",
     "storage:migrate": "node scripts/migrate-runtime-uploads.mjs",
