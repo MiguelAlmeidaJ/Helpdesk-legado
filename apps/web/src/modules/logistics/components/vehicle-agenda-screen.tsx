@@ -211,8 +211,10 @@ export function VehicleAgendaScreen({
       await operation();
       setFeedback(success);
       await load();
+      return true;
     } catch (reason) {
       setFeedback(errorMessage(reason));
+      return false;
     }
   }
 
@@ -258,6 +260,9 @@ export function VehicleAgendaScreen({
               onChange={(event) => setYear(Number(event.target.value))}
             />
             <button onClick={() => window.print()} type="button">Imprimir</button>
+            {agenda?.canManage && agenda.vehicles.length > 0 ? (
+              <button className="!border-app-brand !bg-app-brand !text-white font-bold" onClick={() => setCreating(emptySchedule(days[0] ?? `${year}-${String(month).padStart(2, '0')}-01`, agenda.vehicles[0].id))} type="button">+ Novo agendamento</button>
+            ) : null}
             {agenda?.canManage ? (
               <>
                 <button
@@ -277,7 +282,10 @@ export function VehicleAgendaScreen({
           </div>
         </section>
 
-        {feedback ? <div className={styles.feedback}>{feedback}</div> : null}
+        {agenda && !agenda.canManage ? <div className={styles.feedback} role="status">Você possui acesso de consulta. Para criar ou alterar agendamentos, solicite a permissão de gerenciamento da agenda de veículos ao administrador.</div> : null}
+        {agenda?.canManage && agenda.vehicles.length === 0 ? <div className={styles.feedback}>Cadastre e ative um veículo para começar a agendar.</div> : null}
+        {agenda?.canManage ? <p className="mb-3 text-sm text-app-muted print:hidden">Clique em <strong>+ Novo agendamento</strong> ou no botão <strong>+ Novo</strong> do dia e veículo desejados.</p> : null}
+        {feedback ? <div className={styles.feedback} role="status">{feedback}</div> : null}
         {loading && !agenda ? <div className={styles.feedback}>Carregando…</div> : null}
 
         {agenda ? (
@@ -396,7 +404,7 @@ export function VehicleAgendaScreen({
             run(
               () => createVehicleAgendaSchedule(request),
               'Agendamento criado.',
-            ).then(() => setCreating(null))
+            ).then((ok) => { if (ok) setCreating(null); })
           }
         />
       ) : null}
@@ -424,7 +432,7 @@ export function VehicleAgendaScreen({
             run(
               () => deleteVehicleAgendaSchedule(editing.id),
               'Agendamento excluído.',
-            ).then(() => setEditing(null))
+            ).then((ok) => { if (ok) setEditing(null); })
           }
           onSubmit={(request) =>
             run(
