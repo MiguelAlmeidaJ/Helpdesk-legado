@@ -198,6 +198,10 @@ CREATE TABLE dbo.maintenance_operations (
 )`;
 const UNSUPPORTED_MARIADB_MAINTENANCE =
  'Esta operação de backup MariaDB está desabilitada no SQL Server. Use a rotina de backup nativa do SQL Server.';
+function maintenanceErrorMessage(reason: unknown): string {
+  return reason instanceof Error ? reason.message : String(reason);
+}
+
 const CREATE_ROLES = [
   'CREATE TABLE IF NOT EXISTS roles (',
   '  id INT UNSIGNED NOT NULL AUTO_INCREMENT,',
@@ -1051,7 +1055,7 @@ export class MaintenanceService implements OnApplicationBootstrap {
       await this.finishOperation(
         operationId,
         'error',
-        error instanceof Error ? error.message : String(error),
+        maintenanceErrorMessage(error),
       );
       throw error;
     }
@@ -1111,7 +1115,7 @@ export class MaintenanceService implements OnApplicationBootstrap {
       await this.finishOperation(
         operationId,
         'error',
-        error instanceof Error ? error.message : String(error),
+        maintenanceErrorMessage(error),
       );
       throw error;
     }
@@ -1272,7 +1276,7 @@ export class MaintenanceService implements OnApplicationBootstrap {
       await this.finishOperation(
         operationId,
         'error',
-        error instanceof Error ? error.message : String(error),
+        maintenanceErrorMessage(error),
       );
       throw error;
     }
@@ -1493,7 +1497,7 @@ export class MaintenanceService implements OnApplicationBootstrap {
         completed++;
       } catch (error) {
         const message =
-          error instanceof Error ? error.message : String(error);
+          maintenanceErrorMessage(error);
         await this.nivel3.$executeRawUnsafe(
           [
             'UPDATE maintenance_backup_jobs',
@@ -1794,7 +1798,7 @@ export class MaintenanceService implements OnApplicationBootstrap {
       await this.finishOperation(
         operationId,
         'error',
-        error instanceof Error ? error.message : String(error),
+        maintenanceErrorMessage(error),
       );
       throw error;
     }
@@ -2028,7 +2032,7 @@ export class MaintenanceService implements OnApplicationBootstrap {
       await this.finishOperation(
         operationId,
         'error',
-        error instanceof Error ? error.message : String(error),
+        maintenanceErrorMessage(error),
       );
       throw error;
     }
@@ -2086,7 +2090,7 @@ export class MaintenanceService implements OnApplicationBootstrap {
         sizeBytes: 0,
         tableCount: 0,
         missingRequiredTables: [],
-        error: error instanceof Error ? error.message : String(error),
+        error: maintenanceErrorMessage(error),
       };
     }
 
@@ -2149,7 +2153,7 @@ export class MaintenanceService implements OnApplicationBootstrap {
         sizeBytes: 0,
         tableCount: 0,
         missingRequiredTables: [],
-        error: error instanceof Error ? error.message : String(error),
+        error: maintenanceErrorMessage(error),
       };
     }
   }
