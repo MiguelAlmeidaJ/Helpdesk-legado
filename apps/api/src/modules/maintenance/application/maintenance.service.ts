@@ -170,53 +170,34 @@ function migratedImageName(catalogId: number, index: number, mime: string): stri
   return `catalogo-${catalogId}-imagem-${index + 1}.${extension}`;
 }
 
-const CREATE_BACKUP_JOBS = [
-  'CREATE TABLE IF NOT EXISTS maintenance_backup_jobs (',
-  '  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,',
-  '  target VARCHAR(20) NOT NULL,',
-  '  frequency VARCHAR(20) NOT NULL,',
-  '  run_time CHAR(5) NOT NULL,',
-  '  weekday TINYINT UNSIGNED NULL,',
-  '  retention_days INT UNSIGNED NOT NULL DEFAULT 30,',
-  '  is_active TINYINT(1) NOT NULL DEFAULT 1,',
-  "  last_status VARCHAR(20) NOT NULL DEFAULT 'idle',",
-  '  last_error TEXT NULL,',
-  '  last_run_at DATETIME NULL,',
-  '  next_run_at DATETIME NULL,',
-  '  created_by INT NULL,',
-  '  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,',
-  '  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,',
-  '  PRIMARY KEY (id),',
-  '  KEY idx_maintenance_backup_jobs_due (is_active, next_run_at)',
-  ') ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci',
-].join('\n');
-
-const CREATE_WORKER_STATE = [
-  'CREATE TABLE IF NOT EXISTS maintenance_worker_state (',
-  '  worker_key VARCHAR(80) NOT NULL,',
-  '  last_heartbeat_at DATETIME NOT NULL,',
-  '  detail VARCHAR(255) NULL,',
-  '  PRIMARY KEY (worker_key)',
-  ') ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci',
-].join('\n');
-
-const CREATE_OPERATIONS = [
-  'CREATE TABLE IF NOT EXISTS maintenance_operations (',
-  '  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,',
-  '  action VARCHAR(80) NOT NULL,',
-  '  target VARCHAR(40) NULL,',
-  '  actor_user_id INT NULL,',
-  "  status VARCHAR(20) NOT NULL DEFAULT 'running',",
-  '  detail TEXT NULL,',
-  '  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,',
-  '  finished_at DATETIME NULL,',
-  '  PRIMARY KEY (id),',
-  '  KEY idx_maintenance_operations_created (created_at)',
-  ') ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci',
-].join('\n');
-
-
-
+const CREATE_BACKUP_JOBS = `
+IF OBJECT_ID(N'dbo.maintenance_backup_jobs', N'U') IS NULL
+CREATE TABLE dbo.maintenance_backup_jobs (
+ id BIGINT IDENTITY(1,1) PRIMARY KEY, target VARCHAR(20) NOT NULL,
+ frequency VARCHAR(20) NOT NULL, run_time CHAR(5) NOT NULL,
+ weekday TINYINT NULL, retention_days INT NOT NULL DEFAULT 30,
+ is_active BIT NOT NULL DEFAULT 0, last_status VARCHAR(20) NOT NULL DEFAULT 'idle',
+ last_error NVARCHAR(MAX) NULL, last_run_at DATETIME2 NULL,
+ next_run_at DATETIME2 NULL, created_by INT NULL,
+ created_at DATETIME2 NOT NULL DEFAULT GETDATE(),
+ updated_at DATETIME2 NOT NULL DEFAULT GETDATE()
+)`;
+const CREATE_WORKER_STATE = `
+IF OBJECT_ID(N'dbo.maintenance_worker_state', N'U') IS NULL
+CREATE TABLE dbo.maintenance_worker_state (
+ worker_key VARCHAR(80) PRIMARY KEY,
+ last_heartbeat_at DATETIME2 NOT NULL, detail VARCHAR(255) NULL
+)`;
+const CREATE_OPERATIONS = `
+IF OBJECT_ID(N'dbo.maintenance_operations', N'U') IS NULL
+CREATE TABLE dbo.maintenance_operations (
+ id BIGINT IDENTITY(1,1) PRIMARY KEY, action VARCHAR(80) NOT NULL,
+ target VARCHAR(40) NULL, actor_user_id INT NULL,
+ status VARCHAR(20) NOT NULL DEFAULT 'running', detail NVARCHAR(MAX) NULL,
+ created_at DATETIME2 NOT NULL DEFAULT GETDATE(), finished_at DATETIME2 NULL
+)`;
+const UNSUPPORTED_MARIADB_MAINTENANCE =
+ 'Esta operação de backup MariaDB está desabilitada no SQL Server. Use a rotina de backup nativa do SQL Server.';
 const CREATE_ROLES = [
   'CREATE TABLE IF NOT EXISTS roles (',
   '  id INT UNSIGNED NOT NULL AUTO_INCREMENT,',
@@ -585,14 +566,22 @@ function databaseUrl(_key: MaintenanceDatabaseKey): string {
 }
 
 function connectionInfo(key: MaintenanceDatabaseKey) {
-  const url = new URL(databaseUrl(key));
-  const database = decodeURIComponent(url.pathname.replace(/^\/+/, ''));
-  if (!database) throw new Error('URL de ' + key + ' não informa o banco.');
+  const url = databaseUrl(key);
+  // Prisma SQL Server usa parâmetros separados por ponto e vírgula.
+  const parsed = url.match(/^sqlserver:\/\/([^:;/?]+)(?::(\d+))?(.*)$/i);
+  if (!parsed) throw new Error('NIVEL3_DATABASE_URL deve usar o formato sqlserver://host:porta;database=nome.');
+  const options = new Map<string, string>();
+  for (const segment of (parsed[3] ?? '').split(';')) {
+    const pos = segment.indexOf('=');
+    if (pos > 0) options.set(segment.slice(0, pos).trim().toLowerCase(), segment.slice(pos + 1).trim());
+  }
+  const database = options.get('database');
+  if (!database) throw new Error('NIVEL3_DATABASE_URL não informa database.');
   return {
-    host: url.hostname,
-    port: url.port ? Number(url.port) : 3306,
-    user: decodeURIComponent(url.username),
-    password: decodeURIComponent(url.password),
+    host: parsed[1] ?? 'localhost',
+    port: Number(parsed[2] ?? 1433),
+    user: options.get('user') ?? '',
+    password: options.get('password') ?? '',
     database,
   };
 }
@@ -775,6 +764,7 @@ export class MaintenanceService implements OnApplicationBootstrap {
         await this.nivel3.$executeRawUnsafe(
           "DELETE FROM maintenance_backup_jobs WHERE target = 'n3rd'",
         );
+        await this.nivel3.$executeRawUnsafe('UPDATE maintenance_backup_jobs SET is_active = 0 WHERE is_active = 1');
         await mkdir(backupRoot(), { recursive: true });
         await mkdir(importRoot(), { recursive: true });
       })().catch((error) => {
@@ -801,12 +791,12 @@ export class MaintenanceService implements OnApplicationBootstrap {
     ] = await Promise.all([
       this.databaseStatus('nivel3'),
       this.listBackups(),
-      this.listJobs(),
-      this.listOperations(),
-      this.workerStatus(),
+      Promise.resolve([] as MaintenanceBackupJob[]),
+      Promise.resolve([] as MaintenanceOperation[]),
+      this.workerStatus().catch(() => ({ status: 'unknown' as const, lastHeartbeatAt: null })),
       this.storageStatus(),
-      this.resolveTool('dump', false),
-      this.resolveTool('restore', false),
+      Promise.resolve(null),
+      Promise.resolve(null),
     ]);
 
     const memory = process.memoryUsage();
@@ -876,21 +866,21 @@ export class MaintenanceService implements OnApplicationBootstrap {
     const input = sql.trim();
     if (input.length > 12000 || /;|--|#|\/\*|\*\//.test(input)) throw new BadRequestException('SQL inválido.');
     const update = this.parseSafeUpdate(input);
-    const quote = (v: string) => '`' + v + '`';
+    const quote = (v: string) => '[' + v + ']';
     const pk = await this.nivel3.$queryRawUnsafe<Array<{ COLUMN_NAME: string }>>(
-      "SELECT COLUMN_NAME FROM information_schema.KEY_COLUMN_USAGE WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND CONSTRAINT_NAME = 'PRIMARY' ORDER BY ORDINAL_POSITION",
+      "SELECT k.COLUMN_NAME FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS c JOIN INFORMATION_SCHEMA.KEY_COLUMN_USAGE k ON k.CONSTRAINT_NAME=c.CONSTRAINT_NAME AND k.TABLE_NAME=c.TABLE_NAME WHERE c.CONSTRAINT_TYPE='PRIMARY KEY' AND k.TABLE_NAME=? ORDER BY k.ORDINAL_POSITION",
       update.table,
     );
     if (pk.length !== 1 || pk[0].COLUMN_NAME.toLowerCase() !== update.key.toLowerCase())
       throw new BadRequestException('WHERE deve utilizar a chave primária simples da tabela.');
     const cols = await this.nivel3.$queryRawUnsafe<Array<{ COLUMN_NAME: string; DATA_TYPE: string }>>(
-      'SELECT COLUMN_NAME, DATA_TYPE FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?',
+      'SELECT COLUMN_NAME, DATA_TYPE FROM information_schema.COLUMNS WHERE TABLE_CATALOG = DB_NAME() AND TABLE_NAME = ? AND COLUMN_NAME = ?',
       update.table, update.column,
     );
     if (!cols.length || update.column.toLowerCase() === update.key.toLowerCase())
       throw new BadRequestException('Coluna não encontrada ou coluna de chave primária protegida.');
     const rows = await this.nivel3.$queryRawUnsafe<Array<Record<string, unknown>>>(
-      `SELECT ${quote(update.key)}, ${quote(update.column)} FROM ${quote(update.table)} WHERE ${quote(update.key)} = ? LIMIT 2`,
+      `SELECT TOP (2) ${quote(update.key)}, ${quote(update.column)} FROM ${quote(update.table)} WHERE ${quote(update.key)} = ?`,
       update.id,
     );
     if (rows.length !== 1) throw new BadRequestException('UPDATE deve encontrar exatamente um registro.');
@@ -908,10 +898,10 @@ export class MaintenanceService implements OnApplicationBootstrap {
     if (!preview || preview.userId !== userId || preview.expires < Date.now()) throw new BadRequestException('Prévia expirada. Revise novamente o UPDATE.');
     if (confirmation !== 'ATUALIZAR 1 REGISTRO') throw new BadRequestException('Digite ATUALIZAR 1 REGISTRO para confirmar.');
     this.sqlUpdatePreviews.delete(token); // one use, even if the execution fails
-    const quote = (value: string) => '`' + value + '`';
+    const quote = (value: string) => '[' + value + ']';
     const old = preview.before;
-    const query = `UPDATE ${quote(preview.table)} SET ${quote(preview.column)} = ? WHERE ${quote(preview.key)} = ? AND ${quote(preview.column)} <=> ? LIMIT 1`;
-    const count = await this.nivel3.$executeRawUnsafe(query, preview.value, preview.id, old);
+    const query = `UPDATE ${quote(preview.table)} SET ${quote(preview.column)} = ? WHERE ${quote(preview.key)} = ? AND ((${quote(preview.column)} = ?) OR (${quote(preview.column)} IS NULL AND ? IS NULL))`;
+    const count = await this.nivel3.$executeRawUnsafe(query, preview.value, preview.id, old, old);
     this.logger.warn(`SQL UPDATE admin=${userId} table=${preview.table} column=${preview.column} pk=${preview.id} changed=${count}`);
     try {
       await this.ensureSchema();
@@ -933,11 +923,11 @@ export class MaintenanceService implements OnApplicationBootstrap {
     const input = sql.trim().replace(/;$/, '');
     if (!input || input.length > 12000 || /;|--|#|\/\*|\*\//.test(input))
       throw new BadRequestException('SQL vazio, longo ou com múltiplos comandos/comentários.');
-    const blocked = /\b(INTO|OUTFILE|DUMPFILE|LOAD_FILE|SLEEP|BENCHMARK|GET_LOCK|RELEASE_LOCK|FOR\s+UPDATE|LOCK\s+IN\s+SHARE\s+MODE|PROCEDURE|INFORMATION_SCHEMA|PERFORMANCE_SCHEMA|MYSQL|SYS|UNION|WITH|HANDLER|CALL|EXECUTE|PREPARE|SET|INSERT|DELETE|DROP|ALTER|CREATE|TRUNCATE|REPLACE|GRANT|REVOKE|KILL|SHUTDOWN)\b/i;
+    const blocked = /\b(INTO|OUTFILE|DUMPFILE|LOAD_FILE|SLEEP|BENCHMARK|GET_LOCK|RELEASE_LOCK|FOR\s+UPDATE|LOCK\s+IN\s+SHARE\s+MODE|PROCEDURE|INFORMATION_SCHEMA|PERFORMANCE_SCHEMA|MYSQL|UNION|WITH|HANDLER|CALL|EXECUTE|PREPARE|SET|INSERT|DELETE|DROP|ALTER|CREATE|TRUNCATE|REPLACE|GRANT|REVOKE|KILL|SHUTDOWN)\b/i;
     let query: string;
     if (/^SELECT\s/i.test(input)) {
       if (blocked.test(input) || /@|\\\\/.test(input)) throw new BadRequestException('Recurso SQL não autorizado.');
-      query = `SELECT * FROM (${input}) AS maintenance_sql_result LIMIT 201`;
+      query = `SELECT TOP (201) * FROM (${input}) AS maintenance_sql_result`;
     } else if (/^SHOW\s/i.test(input)) {
       const show = /^(SHOW\s+(?:TABLES|FULL\s+TABLES|DATABASES|COLUMNS\s+FROM\s+`?[a-zA-Z_][a-zA-Z_0-9]*`?|FULL\s+COLUMNS\s+FROM\s+`?[a-zA-Z_][a-zA-Z_0-9]*`?|INDEX(?:ES)?\s+FROM\s+`?[a-zA-Z_][a-zA-Z_0-9]*`?|CREATE\s+TABLE\s+`?[a-zA-Z_][a-zA-Z_0-9]*`?|TABLE\s+STATUS))$/i;
       if (!show.test(input)) throw new BadRequestException('SHOW permitido: TABLES, FULL TABLES, COLUMNS FROM tabela, INDEX FROM tabela, CREATE TABLE tabela ou TABLE STATUS.');
@@ -957,31 +947,20 @@ export class MaintenanceService implements OnApplicationBootstrap {
   ): Promise<MaintenanceDatabaseTable[]> {
     const database = validateDatabase(key);
     const client = this.client(database);
-    const rows = await client.$queryRawUnsafe<TableRow[]>(
-      [
-        'SELECT',
-        '  t.TABLE_NAME AS table_name,',
-        '  t.ENGINE AS engine,',
-        '  t.TABLE_ROWS AS table_rows,',
-        '  t.DATA_LENGTH AS data_length,',
-        '  t.INDEX_LENGTH AS index_length,',
-        '  t.DATA_FREE AS data_free,',
-        '  t.CREATE_TIME AS create_time,',
-        '  t.UPDATE_TIME AS update_time,',
-        '  (SELECT COUNT(*)',
-        '     FROM information_schema.KEY_COLUMN_USAGE k',
-        '    WHERE k.TABLE_SCHEMA = t.TABLE_SCHEMA',
-        '      AND k.TABLE_NAME = t.TABLE_NAME',
-        '      AND k.REFERENCED_TABLE_NAME IS NOT NULL) AS outgoing_fk_count,',
-        '  (SELECT COUNT(*)',
-        '     FROM information_schema.KEY_COLUMN_USAGE k',
-        '    WHERE k.REFERENCED_TABLE_SCHEMA = t.TABLE_SCHEMA',
-        '      AND k.REFERENCED_TABLE_NAME = t.TABLE_NAME) AS incoming_fk_count',
-        'FROM information_schema.TABLES t',
-        "WHERE t.TABLE_SCHEMA = DATABASE() AND t.TABLE_TYPE = 'BASE TABLE'",
-        'ORDER BY t.TABLE_NAME ASC',
-      ].join('\n'),
-    );
+    const rows = await client.$queryRawUnsafe<TableRow[]>(`
+      SELECT t.name AS table_name, CAST('SQL Server' AS VARCHAR(30)) AS engine,
+        COALESCE(SUM(CAST(p.row_count AS BIGINT)), 0) AS table_rows,
+        COALESCE(SUM(CAST(p.used_page_count AS BIGINT) * 8192), 0) AS data_length,
+        CAST(0 AS BIGINT) AS index_length, CAST(0 AS BIGINT) AS data_free,
+        CAST(NULL AS DATETIME2) AS create_time,
+        CAST(NULL AS DATETIME2) AS update_time,
+        (SELECT COUNT(*) FROM sys.foreign_keys fk WHERE fk.parent_object_id = t.object_id) AS outgoing_fk_count,
+        (SELECT COUNT(*) FROM sys.foreign_keys fk WHERE fk.referenced_object_id = t.object_id) AS incoming_fk_count
+      FROM sys.tables t
+      LEFT JOIN sys.dm_db_partition_stats p ON p.object_id = t.object_id AND p.index_id IN (0,1)
+      GROUP BY t.object_id, t.name
+      ORDER BY t.name
+    `);
     return rows.map((row) => {
       const dataBytes = numberValue(row.data_length);
       const indexBytes = numberValue(row.index_length);
@@ -1032,6 +1011,8 @@ export class MaintenanceService implements OnApplicationBootstrap {
     tableNames: string[],
     actorUserId: number,
   ): Promise<MaintenanceTableOptimizeResponse> {
+    throw new ConflictException(UNSUPPORTED_MARIADB_MAINTENANCE);
+
     const database = validateDatabase(target);
     const tables = await this.validMaintenanceTables(database, tableNames, false);
     const operationId = await this.beginOperation(
@@ -1082,6 +1063,8 @@ export class MaintenanceService implements OnApplicationBootstrap {
     confirmation: string,
     actorUserId: number,
   ): Promise<MaintenanceTableDropResponse> {
+    throw new ConflictException(UNSUPPORTED_MARIADB_MAINTENANCE);
+
     const database = validateDatabase(target);
     const tables = await this.validMaintenanceTables(database, tableNames, true);
     const expected = `EXCLUIR ${tables.length} TABELA${tables.length === 1 ? '' : 'S'}`;
@@ -1366,6 +1349,8 @@ export class MaintenanceService implements OnApplicationBootstrap {
     input: MaintenanceBackupJobInput,
     actorUserId: number,
   ): Promise<MaintenanceBackupJob> {
+    throw new ConflictException(UNSUPPORTED_MARIADB_MAINTENANCE);
+
     validateJob(input);
     await this.ensureSchema();
     const next = input.enabled
@@ -1397,6 +1382,8 @@ export class MaintenanceService implements OnApplicationBootstrap {
     id: number,
     input: MaintenanceBackupJobInput,
   ): Promise<MaintenanceBackupJob> {
+    throw new ConflictException(UNSUPPORTED_MARIADB_MAINTENANCE);
+
     validateJob(input);
     await this.getJob(id);
     const next = input.enabled
@@ -1425,6 +1412,8 @@ export class MaintenanceService implements OnApplicationBootstrap {
   }
 
   async removeJob(id: number): Promise<void> {
+    throw new ConflictException(UNSUPPORTED_MARIADB_MAINTENANCE);
+
     const affected = await this.nivel3.$executeRawUnsafe(
       'DELETE FROM maintenance_backup_jobs WHERE id = ?',
       id,
@@ -1449,6 +1438,8 @@ export class MaintenanceService implements OnApplicationBootstrap {
   }
 
   async runDueBackupJobs(limit = 5): Promise<number> {
+    return 0; // Agendamentos MariaDB desativados até implantação do backup nativo SQL Server.
+
     await this.ensureSchema();
     const rows = await this.nivel3.$queryRawUnsafe<JobRow[]>(
       [
@@ -1643,6 +1634,8 @@ export class MaintenanceService implements OnApplicationBootstrap {
     target: MaintenanceDatabaseKey,
     uploaded: UploadedDump,
   ): Promise<MaintenanceDumpStageResponse> {
+    throw new ConflictException(UNSUPPORTED_MARIADB_MAINTENANCE);
+
     await this.ensureSchema();
     const database = validateDatabase(target);
 
@@ -1696,6 +1689,8 @@ export class MaintenanceService implements OnApplicationBootstrap {
     confirmation: string,
     actorUserId: number,
   ): Promise<MaintenanceDumpApplyResponse> {
+    throw new ConflictException(UNSUPPORTED_MARIADB_MAINTENANCE);
+
     await this.ensureSchema();
     const metadata = await this.dumpMetadata(token);
     if (new Date(metadata.expiresAt).getTime() < Date.now()) {
@@ -2042,6 +2037,8 @@ export class MaintenanceService implements OnApplicationBootstrap {
   async repair(
     target: MaintenanceDatabaseKey,
   ): Promise<MaintenanceRepairResponse> {
+    throw new ConflictException(UNSUPPORTED_MARIADB_MAINTENANCE);
+
     const database = validateDatabase(target);
     const navigationPrepared = true;
     let maintenancePrepared = false;
@@ -2098,7 +2095,7 @@ export class MaintenanceService implements OnApplicationBootstrap {
       const [versionRows, aggregateRows, tableRows] = await Promise.all([
         client.$queryRawUnsafe<
           Array<{ version: string; database_name: string }>
-        >('SELECT VERSION() AS version, DATABASE() AS database_name'),
+        >('SELECT CAST(@@VERSION AS NVARCHAR(4000)) AS version, DB_NAME() AS database_name'),
         client.$queryRawUnsafe<
           Array<{
             table_count: number | bigint | string;
@@ -2106,17 +2103,14 @@ export class MaintenanceService implements OnApplicationBootstrap {
           }>
         >(
           [
-            'SELECT COUNT(*) AS table_count,',
-            '       COALESCE(SUM(DATA_LENGTH + INDEX_LENGTH), 0) AS size_bytes',
-            'FROM information_schema.TABLES',
-            'WHERE TABLE_SCHEMA = DATABASE()',
+            'SELECT COUNT(DISTINCT t.object_id) AS table_count,',
+            'COALESCE(SUM(CAST(p.reserved_page_count AS BIGINT)*8192), 0) AS size_bytes',
+            'FROM sys.tables t LEFT JOIN sys.dm_db_partition_stats p ON p.object_id = t.object_id',
           ].join('\n'),
         ),
         client.$queryRawUnsafe<Array<{ table_name: string }>>(
           [
-            'SELECT TABLE_NAME AS table_name',
-            'FROM information_schema.TABLES',
-            'WHERE TABLE_SCHEMA = DATABASE()',
+            'SELECT name AS table_name FROM sys.tables',
           ].join('\n'),
         ),
       ]);
@@ -2164,6 +2158,7 @@ export class MaintenanceService implements OnApplicationBootstrap {
     target: MaintenanceBackupTarget,
     kind: BackupKind,
   ): Promise<MaintenanceBackupFile[]> {
+    throw new ConflictException(UNSUPPORTED_MARIADB_MAINTENANCE);
     await mkdir(backupRoot(), { recursive: true });
     const executable = await this.resolveTool('dump', true);
     const files: MaintenanceBackupFile[] = [];
@@ -2476,11 +2471,10 @@ export class MaintenanceService implements OnApplicationBootstrap {
       }>
     >(
       [
-        'SELECT last_heartbeat_at,',
-        '       TIMESTAMPDIFF(SECOND, last_heartbeat_at, NOW()) AS heartbeat_age_seconds',
+        'SELECT TOP (1) last_heartbeat_at,',
+        '       DATEDIFF(SECOND, last_heartbeat_at, GETDATE()) AS heartbeat_age_seconds',
         'FROM maintenance_worker_state',
         "WHERE worker_key = 'backup-worker'",
-        'LIMIT 1',
       ].join('\n'),
     );
     const last = rows[0]?.last_heartbeat_at;

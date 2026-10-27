@@ -90,9 +90,9 @@ const MAINTENANCE_SECTIONS: ReadonlyArray<{
 }> = [
   { id: 'database', label: 'Banco de dados' },
   { id: 'sql', label: 'Terminal SQL' },
-  { id: 'backups', label: 'Backups' },
-  { id: 'automation', label: 'Automação' },
-  { id: 'migration', label: 'Migração e restore' },
+
+
+
   { id: 'audit', label: 'Auditoria' },
 ];
 
@@ -181,7 +181,7 @@ export function MaintenanceScreen({
 }: {
   currentUser: CurrentUserResponse;
 }) {
-  const [sqlText, setSqlText] = useState('SHOW TABLES');
+  const [sqlText, setSqlText] = useState('SELECT TOP (20) name FROM sys.tables ORDER BY name');
   const [sqlResult, setSqlResult] = useState<{columns: string[]; rows: Record<string, unknown>[]; truncated: boolean} | null>(null);
   const [sqlError, setSqlError] = useState<string | null>(null);
   const [sqlBusy, setSqlBusy] = useState(false);
@@ -211,7 +211,7 @@ export function MaintenanceScreen({
   const [loading, setLoading] = useState(true);
   const [feedback, setFeedback] = useState<{ text: string; error: boolean } | null>(null);
   const [activeSection, setActiveSection] =
-    useState<MaintenanceSection>('backups');
+    useState<MaintenanceSection>('database');
 
   async function load(signal?: AbortSignal) {
     setLoading(true);
@@ -685,13 +685,13 @@ export function MaintenanceScreen({
 
           <div className={CARD_CLASS}>
             <span className="text-xs font-extrabold uppercase tracking-[0.1em] text-app-muted">
-              Ferramentas SQL
+              Ferramentas SQL Server
             </span>
             <div className="mt-3 grid gap-2 text-sm">
               <div className="flex justify-between gap-3">
                 <span>Backup</span>
                 <strong title={status?.tools.dumpClient ?? undefined}>
-                  {toolName(status?.tools.dumpClient)}
+                  SQL Server (backup .bak não configurado)
                 </strong>
               </div>
               <div className="flex justify-between gap-3">
@@ -1199,7 +1199,7 @@ export function MaintenanceScreen({
               </span>
               <h2 className="mb-0 mt-1 text-lg font-bold">Backup manual e arquivos</h2>
               <p className="mb-0 mt-1 text-sm text-app-muted">
-                O dump nativo inclui tabelas, triggers, procedures e eventos.
+                Os dumps MariaDB antigos são somente históricos. Para SQL Server, use uma rotina nativa de backup .bak validada.
               </p>
             </div>
             <button
@@ -1241,7 +1241,7 @@ export function MaintenanceScreen({
 
           {!backupToolsReady ? (
             <p className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2.5 text-sm text-amber-800 dark:border-amber-900/70 dark:bg-amber-950/20 dark:text-amber-200">
-              Configure MARIADB_DUMP_BIN ou instale mariadb-dump/mysqldump no PATH do servidor.
+              Backups MariaDB foram desabilitados. O SQL Server utiliza backups nativos .bak e requer um diretório acessível ao serviço SQL Server.
             </p>
           ) : null}
 
