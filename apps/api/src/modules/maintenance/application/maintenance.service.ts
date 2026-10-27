@@ -947,31 +947,20 @@ export class MaintenanceService implements OnApplicationBootstrap {
   ): Promise<MaintenanceDatabaseTable[]> {
     const database = validateDatabase(key);
     const client = this.client(database);
-    const rows = await client.$queryRawUnsafe<TableRow[]>(
-      [
-        'SELECT',
-        '  t.TABLE_NAME AS table_name,',
-        '  t.ENGINE AS engine,',
-        '  t.TABLE_ROWS AS table_rows,',
-        '  t.DATA_LENGTH AS data_length,',
-        '  t.INDEX_LENGTH AS index_length,',
-        '  t.DATA_FREE AS data_free,',
-        '  t.CREATE_TIME AS create_time,',
-        '  t.UPDATE_TIME AS update_time,',
-        '  (SELECT COUNT(*)',
-        '     FROM information_schema.KEY_COLUMN_USAGE k',
-        '    WHERE k.TABLE_SCHEMA = t.TABLE_SCHEMA',
-        '      AND k.TABLE_NAME = t.TABLE_NAME',
-        '      AND k.REFERENCED_TABLE_NAME IS NOT NULL) AS outgoing_fk_count,',
-        '  (SELECT COUNT(*)',
-        '     FROM information_schema.KEY_COLUMN_USAGE k',
-        '    WHERE k.REFERENCED_TABLE_SCHEMA = t.TABLE_SCHEMA',
-        '      AND k.REFERENCED_TABLE_NAME = t.TABLE_NAME) AS incoming_fk_count',
-        'FROM information_schema.TABLES t',
-        "WHERE t.TABLE_SCHEMA = DATABASE() AND t.TABLE_TYPE = 'BASE TABLE'",
-        'ORDER BY t.TABLE_NAME ASC',
-      ].join('\n'),
-    );
+    const rows = await client.$queryRawUnsafe<TableRow[]>(`
+      SELECT t.name AS table_name, CAST('SQL Server' AS VARCHAR(30)) AS engine,
+        COALESCE(SUM(CAST(p.row_count AS BIGINT)), 0) AS table_rows,
+        COALESCE(SUM(CAST(p.used_page_count AS BIGINT) * 8192), 0) AS data_length,
+        CAST(0 AS BIGINT) AS index_length, CAST(0 AS BIGINT) AS data_free,
+        CAST(NULL AS DATETIME2) AS create_time,
+        CAST(NULL AS DATETIME2) AS update_time,
+        (SELECT COUNT(*) FROM sys.foreign_keys fk WHERE fk.parent_object_id = t.object_id) AS outgoing_fk_count,
+        (SELECT COUNT(*) FROM sys.foreign_keys fk WHERE fk.referenced_object_id = t.object_id) AS incoming_fk_count
+      FROM sys.tables t
+      LEFT JOIN sys.dm_db_partition_stats p ON p.object_id = t.object_id AND p.index_id IN (0,1)
+      GROUP BY t.object_id, t.name
+      ORDER BY t.name
+    `);
     return rows.map((row) => {
       const dataBytes = numberValue(row.data_length);
       const indexBytes = numberValue(row.index_length);
@@ -1449,7 +1438,7 @@ export class MaintenanceService implements OnApplicationBootstrap {
   }
 
   async runDueBackupJobs(limit = 5): Promise<number> {
-    throw new ConflictException(UNSUPPORTED_MARIADB_MAINTENANCE);
+    return 0; // Agendamentos MariaDB desativados até implantação do backup nativo SQL Server.
 
     await this.ensureSchema();
     const rows = await this.nivel3.$queryRawUnsafe<JobRow[]>(
