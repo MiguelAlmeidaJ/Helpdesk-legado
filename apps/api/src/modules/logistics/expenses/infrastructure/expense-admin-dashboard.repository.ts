@@ -395,7 +395,7 @@ export class ExpenseAdminDashboardRepository {
   ): Promise<BreakdownRow[]> {
     return this.database.$queryRawUnsafe<BreakdownRow[]>(
       `SELECT
-         CAST(r.user_id AS CHAR) AS group_key,
+         CAST(r.user_id AS VARCHAR(30)) AS group_key,
          COALESCE(u.user_nome, CONCAT('Usuário #', r.user_id)) AS label,
          SUM(r.amount) AS amount,
          COUNT(*) AS count
@@ -426,8 +426,8 @@ export class ExpenseAdminDashboardRepository {
        WHERE r.status = ?
          AND r.aj = 1
          AND r.date_created BETWEEN ? AND ?
-       GROUP BY DATE(r.date_created)
-       ORDER BY DATE(r.date_created) ASC`,
+       GROUP BY CONVERT(DATE, r.date_created)
+       ORDER BY CONVERT(DATE, r.date_created) ASC`,
       status,
       start,
       end,
