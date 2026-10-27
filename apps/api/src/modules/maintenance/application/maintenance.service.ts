@@ -566,14 +566,22 @@ function databaseUrl(_key: MaintenanceDatabaseKey): string {
 }
 
 function connectionInfo(key: MaintenanceDatabaseKey) {
-  const url = new URL(databaseUrl(key));
-  const database = url.searchParams.get('database') ?? decodeURIComponent(url.pathname.replace(/^\/+/, ''));
-  if (!database) throw new Error('URL de ' + key + ' não informa o banco.');
+  const url = databaseUrl(key);
+  // Prisma SQL Server usa parâmetros separados por ponto e vírgula.
+  const parsed = url.match(/^sqlserver:\/\/([^:;/?]+)(?::(\d+))?(.*)$/i);
+  if (!parsed) throw new Error('NIVEL3_DATABASE_URL deve usar o formato sqlserver://host:porta;database=nome.');
+  const options = new Map<string, string>();
+  for (const segment of (parsed[3] ?? '').split(';')) {
+    const pos = segment.indexOf('=');
+    if (pos > 0) options.set(segment.slice(0, pos).trim().toLowerCase(), segment.slice(pos + 1).trim());
+  }
+  const database = options.get('database');
+  if (!database) throw new Error('NIVEL3_DATABASE_URL não informa database.');
   return {
-    host: url.hostname,
-    port: url.port ? Number(url.port) : 1433,
-    user: decodeURIComponent(url.username),
-    password: decodeURIComponent(url.password),
+    host: parsed[1] ?? 'localhost',
+    port: Number(parsed[2] ?? 1433),
+    user: options.get('user') ?? '',
+    password: options.get('password') ?? '',
     database,
   };
 }
@@ -915,7 +923,7 @@ export class MaintenanceService implements OnApplicationBootstrap {
     const input = sql.trim().replace(/;$/, '');
     if (!input || input.length > 12000 || /;|--|#|\/\*|\*\//.test(input))
       throw new BadRequestException('SQL vazio, longo ou com múltiplos comandos/comentários.');
-    const blocked = /\b(INTO|OUTFILE|DUMPFILE|LOAD_FILE|SLEEP|BENCHMARK|GET_LOCK|RELEASE_LOCK|FOR\s+UPDATE|LOCK\s+IN\s+SHARE\s+MODE|PROCEDURE|INFORMATION_SCHEMA|PERFORMANCE_SCHEMA|MYSQL|SYS|UNION|WITH|HANDLER|CALL|EXECUTE|PREPARE|SET|INSERT|DELETE|DROP|ALTER|CREATE|TRUNCATE|REPLACE|GRANT|REVOKE|KILL|SHUTDOWN)\b/i;
+    const blocked = /\b(INTO|OUTFILE|DUMPFILE|LOAD_FILE|SLEEP|BENCHMARK|GET_LOCK|RELEASE_LOCK|FOR\s+UPDATE|LOCK\s+IN\s+SHARE\s+MODE|PROCEDURE|INFORMATION_SCHEMA|PERFORMANCE_SCHEMA|MYSQL|UNION|WITH|HANDLER|CALL|EXECUTE|PREPARE|SET|INSERT|DELETE|DROP|ALTER|CREATE|TRUNCATE|REPLACE|GRANT|REVOKE|KILL|SHUTDOWN)\b/i;
     let query: string;
     if (/^SELECT\s/i.test(input)) {
       if (blocked.test(input) || /@|\\\\/.test(input)) throw new BadRequestException('Recurso SQL não autorizado.');
