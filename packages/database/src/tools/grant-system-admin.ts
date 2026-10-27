@@ -41,10 +41,9 @@ async function main() {
 
   try {
     const users = await db.$queryRaw<UserRow[]>`
-      SELECT user_id, user_nome, user_sts
+      SELECT TOP (1) user_id, user_nome, user_sts
       FROM usuarios
       WHERE user_id = ${userId}
-      LIMIT 1
     `;
     const user = users[0];
 
@@ -52,47 +51,56 @@ async function main() {
       throw new Error(`Usuário ${userId} não encontrado em usuarios.`);
     }
 
-    await db.$executeRaw`
-      INSERT INTO roles (
-        name,
-        slug,
-        description,
-        is_system,
-        created_at,
-        updated_at
-      )
-      VALUES (
-        ${SYSTEM_ADMIN_ROLE.name},
-        ${SYSTEM_ADMIN_ROLE.slug},
-        ${SYSTEM_ADMIN_ROLE.description},
-        1,
-        NOW(),
-        NOW()
-      )
-      ON DUPLICATE KEY UPDATE
-        name = VALUES(name),
-        description = VALUES(description),
-        is_system = 1,
-        updated_at = NOW()
-    `;
+    // A concessão é idempotente e usa SQL Server, sem sintaxe MySQL.
+    await db.$transaction(async (tx) => {
+      const roles = await tx.$queryRaw<RoleRow[]>`
+        SELECT TOP (1) id
+        FROM roles WITH (UPDLOCK, HOLDLOCK)
+        WHERE slug = ${SYSTEM_ADMIN_ROLE.slug}
+      `;
+      let roleId = Number(roles[0]?.id ?? 0);
 
-    const roles = await db.$queryRaw<RoleRow[]>`
-      SELECT id
-      FROM roles
-      WHERE slug = ${SYSTEM_ADMIN_ROLE.slug}
-      LIMIT 1
-    `;
-    const role = roles[0];
+      if (roleId > 0) {
+        await tx.$executeRaw`
+          UPDATE roles
+          SET name = ${SYSTEM_ADMIN_ROLE.name},
+              description = ${SYSTEM_ADMIN_ROLE.description},
+              is_system = 1,
+              updated_at = GETDATE()
+          WHERE id = ${roleId}
+        `;
+      } else {
+        const inserted = await tx.$queryRaw<RoleRow[]>`
+          INSERT INTO roles (name, slug, description, is_system, created_at, updated_at)
+          OUTPUT INSERTED.id AS id
+          VALUES (
+            ${SYSTEM_ADMIN_ROLE.name},
+            ${SYSTEM_ADMIN_ROLE.slug},
+            ${SYSTEM_ADMIN_ROLE.description},
+            1,
+            GETDATE(),
+            GETDATE()
+          )
+        `;
+        roleId = Number(inserted[0]?.id ?? 0);
+      }
 
-    if (!role) {
-      throw new Error('Não foi possível localizar a role system-admin após o upsert.');
-    }
+      if (!Number.isSafeInteger(roleId) || roleId <= 0) {
+        throw new Error('Não foi possível localizar a role system-admin.');
+      }
 
-    await db.$executeRaw`
-      INSERT INTO user_roles (user_id, role_id, assigned_by)
-      VALUES (${userId}, ${role.id}, NULL)
-      ON DUPLICATE KEY UPDATE role_id = VALUES(role_id)
-    `;
+      const existingAssignment = await tx.$queryRaw<{ total: bigint | number }[]>`
+        SELECT COUNT(*) AS total
+        FROM user_roles WITH (UPDLOCK, HOLDLOCK)
+        WHERE user_id = ${userId} AND role_id = ${roleId}
+      `;
+      if (Number(existingAssignment[0]?.total ?? 0) === 0) {
+        await tx.$executeRaw`
+          INSERT INTO user_roles (user_id, role_id, assigned_by)
+          VALUES (${userId}, ${roleId}, NULL)
+        `;
+      }
+    });
 
     console.log('Administrador global configurado com sucesso.');
     console.log(`  user_id: ${user.user_id}`);
