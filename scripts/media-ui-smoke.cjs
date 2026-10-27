@@ -4,12 +4,21 @@ const root=path.resolve(__dirname,'..');
 const edge=process.env.MEDIA_TEST_BROWSER || 'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe';
 const user={id:0,name:'Teste da Central de Mídias',login:'media-fixture',functionId:null,accessSource:'rbac',roleAssignments:[],grants:[{permission:'system.admin',scope:'all'}]};
 const state={items:[],provider:'local',calls:[],errors:[]};
+const syncRun={id:'00000000-0000-4000-8000-000000000021',origin:'ui-fixture',dump:'dump-ui',status:'compared',createdAt:new Date().toISOString(),manifestHash:'a'.repeat(64),approvedBy:null,checkpoint:0,total:1};
+let compared=false;
+function syncReport(){return{run:{...syncRun},summary:[{action:'new',state:'pending',count:1,bytes:68,saved:0}],items:[{sequence:1,key:'catalog_images:1',sourceType:'catalog_images',sourceId:'1',context:{type:'catalog',id:'1'},action:'new',state:'pending',error:null,mediaId:null}],hasMore:false};}
 function fixture(url,method){
   const pathname=new URL(url,'http://fixture').pathname;
   state.calls.push({path:pathname,method});
   if(pathname.endsWith('/auth/me'))return user;
   if(pathname.endsWith('/notifications'))return{items:[],unreadCount:0,total:0};
   if(pathname.endsWith('/navigation'))return{sections:[]};
+  if(pathname.endsWith('/media/sync/compare')){compared=true;return syncReport();}
+  if(pathname.endsWith('/media/sync'))return compared?[{...syncRun}]:[];
+  if(pathname.endsWith('/approve')){syncRun.status='approved';syncRun.approvedBy=0;return syncReport();}
+  if(pathname.endsWith('/retry'))return null;
+  if(pathname.endsWith('/cancel')){syncRun.status='cancelled';return null;}
+  if(pathname.includes('/media/sync/'))return syncReport();
   if(pathname.endsWith('/media/status'))return{enabled:true,available:true,defaultProvider:state.provider,maxUploadBytes:26214400,providers:['local','nextcloud','cloudinary'].map(name=>({name,configured:true})),usage:state.items.length?[{provider:'local',status:'active',count:1,bytes:68}]:[],recentAudit:[]};
   if(pathname.endsWith('/media/settings')){state.provider='nextcloud';return{defaultProvider:state.provider};}
   if(pathname.endsWith('/verify'))return{valid:true,checkedAt:new Date().toISOString()};
@@ -52,20 +61,30 @@ async function main(){
     await cdp.send('Page.enable');await cdp.send('Runtime.enable');await cdp.send('Fetch.enable',{patterns:[{urlPattern:'*'}]});
     await cdp.send('Emulation.setDeviceMetricsOverride',{width:1440,height:1100,deviceScaleFactor:1,mobile:false});
     await cdp.send('Page.navigate',{url:'http://localhost:'+webPort+'/admin/media'});
-    await until(()=>cdp.evaluate("document.body.innerText.includes('Configuração de armazenamento') && document.querySelectorAll('input[type=file]').length===1"));
+    await until(()=>cdp.evaluate("document.body.innerText.includes('Migração e Sincronização') && document.querySelectorAll('input[type=file]').length===2"));
+    const manifest=path.join(temp,'manifest.json');await fs.writeFile(manifest,JSON.stringify({schema:1,origin:'ui-fixture',dump:'dump-ui',entries:[]}));
+    const manifestDocument=await cdp.send('DOM.getDocument');const manifestInput=await cdp.send('DOM.querySelector',{nodeId:manifestDocument.root.nodeId,selector:'input[name=manifest]'});await cdp.send('DOM.setFileInputFiles',{nodeId:manifestInput.nodeId,files:[manifest]});
+    await cdp.evaluate("[...document.querySelectorAll('button')].find(b=>b.textContent==='Comparar sem transferir arquivos').click()");
+    await until(()=>cdp.evaluate("document.body.innerText.includes('Relatório · dump-ui')"));
+    assert.equal(await cdp.evaluate("[...document.querySelectorAll('button')].find(b=>b.textContent==='Aprovar aplicação pelo operador').disabled"),true);
+    await cdp.evaluate(`(()=>{const inputs=document.querySelectorAll('section[aria-labelledby=media-sync-title] input:not([type=file])');const setter=Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set;[${JSON.stringify(syncRun.id)},${JSON.stringify('APROVAR '+syncRun.id)}].forEach((value,i)=>{setter.call(inputs[i],value);inputs[i].dispatchEvent(new Event('input',{bubbles:true}));});})()`);
+    await until(()=>cdp.evaluate("![...document.querySelectorAll('button')].find(b=>b.textContent==='Aprovar aplicação pelo operador').disabled"));
+    await cdp.evaluate("[...document.querySelectorAll('button')].find(b=>b.textContent==='Aprovar aplicação pelo operador').click()");
+    await until(()=>cdp.evaluate("document.body.innerText.includes('Relatório · dump-ui · Aprovada')"));
     const image=path.join(temp,'media-ui-fixture.png');await fs.writeFile(image,Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII=','base64'));
-    const document=await cdp.send('DOM.getDocument');const input=await cdp.send('DOM.querySelector',{nodeId:document.root.nodeId,selector:'input[type=file]'});await cdp.send('DOM.setFileInputFiles',{nodeId:input.nodeId,files:[image]});
+    const document=await cdp.send('DOM.getDocument');const input=await cdp.send('DOM.querySelector',{nodeId:document.root.nodeId,selector:'input[type=file]:not([name=manifest])'});await cdp.send('DOM.setFileInputFiles',{nodeId:input.nodeId,files:[image]});
     await until(()=>cdp.evaluate("[...document.querySelectorAll('button')].some(button=>button.textContent==='Enviar mídia'&&!button.disabled)"));
     await cdp.evaluate("[...document.querySelectorAll('button')].find(button=>button.textContent==='Enviar mídia').click()");
     await until(()=>cdp.evaluate("document.body.innerText.includes('media-ui-fixture.png')"));
     await until(()=>cdp.evaluate("[...document.querySelectorAll('li strong')].filter(item=>item.textContent==='media-ui-fixture.png').length===2"));
     await cdp.evaluate("[...document.querySelectorAll('button')].find(button=>button.textContent==='Verificar integridade').click()");
     await until(()=>cdp.evaluate("document.body.innerText.includes('Integridade SHA-256 confirmada.')"));
-    await fs.mkdir(path.join(root,'docs/reports'),{recursive:true});const screenshot=await cdp.send('Page.captureScreenshot',{format:'png',captureBeyondViewport:true});await fs.writeFile(path.join(root,'docs/reports/media-admin-ui.png'),Buffer.from(screenshot.data,'base64'));
+    await fs.mkdir(path.join(root,'docs/reports'),{recursive:true});const screenshot=await cdp.send('Page.captureScreenshot',{format:'png',captureBeyondViewport:true});await fs.writeFile(path.join(root,'docs/reports/media-sync-ui.png'),Buffer.from(screenshot.data,'base64'));
     await cdp.evaluate("[...document.querySelectorAll('button')].find(button=>button.textContent==='Excluir logicamente').click()");
     await until(()=>cdp.evaluate("!document.body.innerText.includes('media-ui-fixture.png')"));
     assert.ok(state.calls.some(call=>call.method==='POST'&&call.path.endsWith('/media')));assert.ok(state.calls.some(call=>call.method==='DELETE'));assert.deepEqual(state.errors,[]);
-    console.log(JSON.stringify({ui:true,upload:true,integrity:true,softDelete:true,consoleExceptions:state.errors.length,apiMode:'isolated fixtures; no real media changes',screenshot:'docs/reports/media-admin-ui.png'}));
+    assert.ok(state.calls.some(call=>call.path.endsWith('/compare')));assert.ok(state.calls.some(call=>call.path.endsWith('/approve')));
+    console.log(JSON.stringify({ui:true,comparison:true,approvalConfirmation:true,upload:true,integrity:true,softDelete:true,consoleExceptions:state.errors.length,apiMode:'isolated fixtures; no real media changes',screenshot:'docs/reports/media-sync-ui.png'}));
   }finally{
     cdp?.ws.close();
     for(const child of [browser,next])if(child?.pid)spawnSync('taskkill',['/PID',String(child.pid),'/T','/F'],{windowsHide:true,stdio:'ignore'});

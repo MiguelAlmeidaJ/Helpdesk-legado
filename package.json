@@ -49,7 +49,11 @@
     "pm2:status": "pm2 status",
     "pm2:logs": "pm2 logs",
     "prod:bootstrap": "pnpm access:bootstrap && pnpm navigation:bootstrap && pnpm users:bootstrap && pnpm tickets:bootstrap && pnpm notifications:bootstrap && pnpm sla:bootstrap && pnpm oncall:bootstrap",
-    "prod:verify": "pnpm legacy:audit && pnpm legacy:assets:audit && pnpm legacy:catalog:audit && pnpm typecheck && pnpm build && pnpm test:access && pnpm test:navigation && pnpm test:notifications && pnpm test:security && pnpm test:reports && pnpm test:logistics"
+    "prod:verify": "pnpm legacy:audit && pnpm legacy:assets:audit && pnpm legacy:catalog:audit && pnpm typecheck && pnpm build && pnpm test:access && pnpm test:navigation && pnpm test:notifications && pnpm test:security && pnpm test:reports && pnpm test:logistics",
+    "media:sync": "node scripts/media-sync.cjs",
+    "media:sync:verify-backups": "node scripts/media-sync-verify-backups.cjs",
+    "test:media:sync": "node --test scripts/media-sync.test.cjs",
+    "test:media:sync:sql": "node --test scripts/media-sync-sqlserver.test.cjs"
   },
   "devDependencies": {
     "turbo": "2.10.12",

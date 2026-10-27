@@ -64,21 +64,9 @@ Falhas transitórias de download/verificação não alteram o checksum ou declar
 
 Nextcloud usa autenticação Basic com senha de aplicativo, HTTPS, MKCOL e PUT com If-None-Match: *. Redirecionamentos são recusados para não encaminhar credenciais a outro destino. Cloudinary usa upload assinado SHA-256 com `type=authenticated` e `overwrite=false`, e recupera o original pela API assinada asset/download com expiração curta. A assinatura e a URL do provedor nunca são fornecidas ao navegador. Falhas de configuração e respostas dos provedores não são retransmitidas com segredos.
 
-## Migração explícita, sem alterar originais
+## Migração incremental
 
-Simulação completa, sem DML ou uploads:
-
-```powershell
-node scripts/media-migrate.cjs --dry-run --source-root 'C:\Users\Administrator\Desktop\helpdesk' --batch-size 25
-```
-
-`--source-root` deve apontar à instalação que contém as mídias. No checkout isolado de desenvolvimento, o acervo original continua na pasta helpdesk. Configurações explícitas de diretórios de upload têm precedência. `--limit` restringe o número de referências examinadas; `--report` define um novo arquivo JSONL, sem sobrescrever relatórios anteriores.
-
-Após **autorização expressa para migrar o acervo real**, um operador pode definir MEDIA_MIGRATION_ALLOW_APPLY=true **somente na sessão daquele comando** e usar `--apply`. O comando exige ambas as condições; não há worker, agenda ou chamada automática. Execute uma migração por instalação/provedor de cada vez. A associação ocorre depois da leitura de confirmação; referências ao mesmo SHA-256/tamanho/provedor reutilizam um objeto ativo após verificar sua integridade. Reexecuções reconhecem referências já migradas e verificam novamente o conteúdo. Objetos e vínculos são preservados quando uma referência muda; não há remoção de versões anteriores.
-
-O processo lê binários de imagens/imagens_tarefa, arquivos catalog_images, referências de imagem em documentos, imagens Base64 em catálogo e RD, e referências externas/locais do HTML de catálogo. RD é associado a system/global porque não há contexto expense nesta versão. URLs externas são registradas para revisão e **não são baixadas automaticamente**. Campos HTML, BLOBs e arquivos originais permanecem intactos. Arquivos que mudarem durante a leitura são recusados. Uma referência previamente migrada cujo objeto foi excluído logicamente recebe skipped-deleted na reexecução; não é recriada. Falhas por item não interrompem o restante do lote; falhas de conexão/geração de fontes encerram o comando com um registro de interrupção.
-
-O JSONL contém IDs de origem, hash da referência, resultado, SHA-256 e bytes quando disponíveis. Não contém Base64 nem URLs privadas/tokens. O banco preserva o locator histórico em media_legacy_references. Ausências e referências externas também são auditadas ao aplicar. Conteúdos não aceitos ficam pendentes e aparecem no relatório; não se enfraquece a validação para copiá-los. O código de saída 2 indica falhas por item, 1 indica interrupção/configuração, 0 indica término sem erros operacionais; ausências/formatos não aceitos são resultados de inventário, não exclusões.
+O importador usa agora manifestos, aprovação e checkpoints persistentes. Consulte [o procedimento completo](media-incremental-sync.md). O comando antigo `media-migrate.cjs` encaminha para esse fluxo e recusa a aplicação direta sem execução aprovada.
 
 ## Testes
 

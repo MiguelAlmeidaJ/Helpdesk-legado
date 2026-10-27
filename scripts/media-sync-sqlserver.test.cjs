@@ -1,0 +1,115 @@
+const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs/promises'),os=require('node:os'),path=require('node:path');
+const {randomUUID,randomBytes}=require('node:crypto');
+process.loadEnvFile(path.resolve(__dirname,'../.env'));
+// This test never uses the real metadata database, even when .env points at it.
+process.env.MEDIA_SQLSERVER_DATABASE='helpdesk_media_test_sync';
+const {MediaDatabase}=require('../apps/api/dist/modules/media/infrastructure/media-database.service');
+const {MediaService}=require('../apps/api/dist/modules/media/application/media.service');
+const {MediaAccess}=require('../apps/api/dist/modules/media/application/media-access.service');
+const {MediaSyncService}=require('../apps/api/dist/modules/media/application/media-sync.service');
+const {syncHash}=require('../apps/api/dist/modules/media/application/media-sync-model');
+const {evidenceSignature,verifiedSyncBackup}=require('../apps/api/dist/modules/media/application/media-sync-backups');
+const {mediaHash}=require('../apps/api/dist/modules/media/infrastructure/media-providers');
+const {RbacAccessRepository}=require('../apps/api/dist/modules/access/infrastructure/rbac-access.repository');
+const {AppPermission,PermissionScope}=require('../packages/contracts/dist');
+const admin={id:987654,grants:[{permission:AppPermission.SystemAdmin,scope:PermissionScope.All}],roleAssignments:[]};
+const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII=','base64');
+// A per-invocation payload prevents reuse of fixtures whose temporary files were removed.
+randomBytes(8).copy(png,40);
+test('isolated SQL Server: idempotence, versions, absent preservation, failure checkpoints, concurrency, stale plans and backup gates',{timeout:240000},async()=>{
+ const root=await fs.mkdtemp(path.join(os.tmpdir(),'helpdesk-sync-fixture-'));
+ const metadata=new MediaDatabase(),db=metadata.client;
+ process.env.MEDIA_LOCAL_ROOT=path.join(root,'objects');await fs.mkdir(process.env.MEDIA_LOCAL_ROOT);
+ process.env.MEDIA_SYNC_APPROVAL_KEY=randomUUID()+randomUUID();process.env.MEDIA_SYNC_BACKUP_EVIDENCE_DIR=root;process.env.MEDIA_MIGRATION_ALLOW_APPLY='true';
+ const oldResolver=RbacAccessRepository.prototype.findByUserId;
+ RbacAccessRepository.prototype.findByUserId=async()=>({active:true,roleSlugs:['system-admin'],permissionSlugs:new Set(),onCallAreas:[]});
+ const business={$queryRawUnsafe:async sql=>sql.includes(' AS matches')?[{matches:1n}]:sql.includes(' AS title')?[{title:'Stable entity',opened:new Date('2020-01-01Z'),client_key:'fixture-client'}]:[{id:1,client_id:1,owner_id:admin.id,sector_id:1}]};
+ const access=new MediaAccess(business,{}),media=new MediaService(metadata,access),sync=new MediaSyncService(metadata,media,access,business);
+ const origin='fixture-'+randomUUID(),identity=await sync.identity({type:'catalog',id:'1'});
+ const entry=(key,data=png)=>({key,sourceType:'catalog_images',sourceId:key,name:'fixture.png',context:{type:'catalog',id:'1'},identitySha256:identity,sha256:mediaHash(data),size:data.length,availability:'file'});
+ let dump=0;
+ const compare=entries=>sync.compare(admin,{schema:1,origin,dump:'dump-'+(++dump),complete:true,provider:'local',entries});
+ const evidence={id:randomUUID(),verifiedAt:new Date().toISOString(),businessDatabase:process.env.NIVEL3_DATABASE_URL.match(/database=([^;]+)/i)[1],metadataDatabase:process.env.MEDIA_SQLSERVER_DATABASE,files:[]};
+ for(const database of [evidence.businessDatabase,evidence.metadataDatabase]){const file=path.join(root,database+'.bak');await fs.writeFile(file,'SYNTHETIC SIGNED EVIDENCE, NOT A REAL BACKUP');const stat=await fs.stat(file);evidence.files.push({database,path:file,size:stat.size,mtimeMs:stat.mtimeMs,sha256:mediaHash(await fs.readFile(file))});}
+ await fs.writeFile(path.join(root,evidence.id+'.json'),JSON.stringify({evidence,signature:evidenceSignature(evidence)}));
+ const approve=report=>sync.approve(admin,report.run.id,'APROVAR '+report.run.id,evidence.id);
+ const count=async table=>Number((await db.$queryRawUnsafe(`SELECT COUNT_BIG(*) AS n FROM dbo.${table}`))[0].n);
+ try{
+  const a=entry('a'),b=entry('b');let plan=await compare([a,b]);
+  assert.deepEqual(plan.summary.map(s=>s.action).sort(),['duplicate','new']);
+  await assert.rejects(sync.applyBatch(plan.run.id,plan.run.id,async()=>png));
+  await assert.rejects(sync.approve(admin,plan.run.id,'wrong',evidence.id));
+  await approve(plan);const before=await count('media_objects');
+  let result=await sync.applyBatch(plan.run.id,plan.run.id,async()=>png,1);assert.equal(result.run.status,'partial');assert.equal(result.run.checkpoint,1);
+  result=await sync.applyBatch(plan.run.id,plan.run.id,async()=>png,1);assert.equal(result.run.status,'completed');assert.equal(result.run.checkpoint,2);
+  assert.equal(result.batches.length,2);assert.notEqual(result.batches[0].id,result.batches[1].id);assert.ok(result.batches.every(batch=>batch.status==='completed'));
+  const after=await count('media_objects');assert.ok(after-before<=1);assert.equal(result.summary.reduce((n,s)=>n+s.saved,0)>=png.length,true);
+  const versions=await count('media_sync_versions');plan=await compare([a,b]);assert.ok(plan.summary.every(s=>s.action==='unchanged'));await approve(plan);
+  await sync.applyBatch(plan.run.id,plan.run.id,async()=>png);assert.equal(await count('media_objects'),after);assert.equal(await count('media_sync_versions'),versions);
+  const changed=Buffer.from(png);changed[45]^=1;const a2=entry('a',changed);
+  plan=await compare([a2]);assert.ok(plan.summary.some(s=>s.action==='changed'));assert.ok(plan.summary.some(s=>s.action==='absent'));await approve(plan);
+  result=await sync.applyBatch(plan.run.id,plan.run.id,async()=>changed);
+  assert.equal(result.run.status,'completed');assert.equal(Number((await db.$queryRawUnsafe('SELECT COUNT(*) AS n FROM dbo.media_sync_references WHERE origin=@P1',origin))[0].n),2);
+  assert.equal(await count('media_sync_versions'),versions+1);
+  const remap={...a2,context:{type:'catalog',id:'99'}};plan=await compare([remap]);assert.ok(plan.summary.some(s=>s.action==='changed'));await approve(plan);await sync.applyBatch(plan.run.id,plan.run.id,async()=>changed);
+  const [reference]=await db.$queryRawUnsafe('SELECT media_id FROM dbo.media_sync_references WHERE origin=@P1 AND reference_key=@P2',origin,syncHash('a'));
+  const originalQuery=business.$queryRawUnsafe;
+  business.$queryRawUnsafe=async(sql,...args)=>sql.includes(' AS title')?[{title:Number(args[0])===1?'Unrelated new owner of reused ID':'Stable entity',opened:new Date('2020-01-01Z'),client_key:'fixture-client'}]:originalQuery(sql,...args);
+  const visible=await media.get({id:5,grants:[{permission:AppPermission.CatalogTiRead,scope:PermissionScope.All}],roleAssignments:[]},reference.media_id);
+  assert.deepEqual(visible.links,[{type:'catalog',id:'99'}]);business.$queryRawUnsafe=originalQuery;
+  const wrong={...remap,identitySha256:syncHash('unrelated')};plan=await compare([wrong]);assert.ok(plan.summary.some(s=>s.action==='invalid-link'));await assert.rejects(approve(plan));
+  const c=entry('c');plan=await compare([remap,c]);await approve(plan);
+  result=await sync.applyBatch(plan.run.id,plan.run.id,async e=>{if(e.key==='c')throw Error('synthetic partial failure');return changed;});assert.ok(result.summary.some(s=>s.state==='failed'));assert.equal(result.run.status,'partial');
+  await sync.retry(admin,plan.run.id);result=await sync.applyBatch(plan.run.id,plan.run.id,async()=>png);assert.equal(result.run.status,'completed');
+  const d=entry('d');plan=await compare([remap,c,d]);const stale=await compare([remap,c]);await approve(plan);
+  let release;const barrier=new Promise(resolve=>release=resolve);let entered;const enteredPromise=new Promise(resolve=>entered=resolve);
+  const first=sync.applyBatch(plan.run.id,plan.run.id,async e=>{entered();await barrier;return e.key==='a'?changed:png;},1);
+  await enteredPromise;await assert.rejects(sync.applyBatch(plan.run.id,plan.run.id,async()=>png,1));release();await first;
+  result=await sync.applyBatch(plan.run.id,plan.run.id,async()=>png);assert.equal(result.run.status,'completed');await assert.rejects(approve(stale));
+  const unique=Buffer.from(png);unique[49]^=2;const f=entry('failure-after-upload',unique);plan=await compare([remap,c,d,f]);await approve(plan);
+  const originalTransaction=db.$transaction.bind(db);let inject=true;
+  db.$transaction=(work,options)=>originalTransaction(tx=>work({...tx,$queryRawUnsafe:tx.$queryRawUnsafe.bind(tx),$executeRawUnsafe:async(query,...args)=>{if(inject&&query.startsWith('INSERT INTO dbo.media_sync_versions')){inject=false;throw Error('Synthetic interruption after provider success');}return tx.$executeRawUnsafe(query,...args);}}),options);
+  result=await sync.applyBatch(plan.run.id,plan.run.id,async e=>e.key==='a'?changed:e.key==='failure-after-upload'?unique:png);
+  db.$transaction=originalTransaction;assert.ok(result.summary.some(s=>s.state==='failed'));const recoveredCount=await count('media_objects');
+  await sync.retry(admin,plan.run.id);result=await sync.applyBatch(plan.run.id,plan.run.id,async()=>unique);assert.equal(result.run.status,'completed');assert.equal(await count('media_objects'),recoveredCount);
+  const interruptedData=Buffer.from(png);interruptedData[50]^=8;const interrupted=entry('interrupted-transaction',interruptedData);
+  plan=await compare([interrupted]);await approve(plan);let abortOuter=true;
+  db.$transaction=(work,options)=>originalTransaction(async tx=>{let acquired=false;const value=await work({...tx,$executeRawUnsafe:tx.$executeRawUnsafe.bind(tx),$queryRawUnsafe:async(query,...args)=>{if(query.includes('sp_getapplock'))acquired=true;return tx.$queryRawUnsafe(query,...args);}});if(acquired&&abortOuter){abortOuter=false;throw Error('Synthetic process loss before checkpoint commit');}return value;},options);
+  await assert.rejects(sync.applyBatch(plan.run.id,plan.run.id,async()=>interruptedData));db.$transaction=originalTransaction;
+  assert.ok((await sync.batches(admin,plan.run.id)).some(batch=>batch.status==='started'));const countBeforeResume=await count('media_objects');
+  result=await sync.applyBatch(plan.run.id,plan.run.id,async()=>interruptedData);assert.equal(result.run.status,'completed');assert.ok(result.batches.some(batch=>batch.status==='interrupted'));assert.equal(await count('media_objects'),countBeforeResume);
+  const changedAfterCompare=entry('changed-after-compare',unique);plan=await compare([remap,c,d,f,changedAfterCompare]);await approve(plan);
+  result=await sync.applyBatch(plan.run.id,plan.run.id,async e=>e.key==='a'?changed:e.key==='failure-after-upload'?unique:png);
+  assert.ok(result.items.some(i=>i.key==='changed-after-compare'&&i.state==='failed'));await sync.cancel(admin,plan.run.id);
+  process.env.MEDIA_SYNC_LEGACY_ORIGIN=origin;
+  const legacyKey='catalog_images:l'+randomUUID();
+  await db.$executeRawUnsafe("INSERT INTO dbo.media_legacy_references(source_type,source_id,original_reference,media_id,verification_status,checked_at) VALUES('catalog_images',@P1,'synthetic',@P2,'located',SYSUTCDATETIME())",legacyKey.slice('catalog_images:'.length),reference.media_id);
+  const adopted={...entry(legacyKey),sourceId:legacyKey.slice('catalog_images:'.length)};
+  plan=await compare([adopted]);assert.ok(plan.summary.some(s=>s.action==='changed'));await approve(plan);await sync.applyBatch(plan.run.id,plan.run.id,async()=>png);
+  const adoptedVersions=await db.$queryRawUnsafe('SELECT version,media_id FROM dbo.media_sync_versions WHERE origin=@P1 AND reference_key=@P2 ORDER BY version',origin,syncHash(legacyKey));assert.equal(adoptedVersions.length,2);assert.equal(adoptedVersions[0].media_id,reference.media_id);
+  const pending={...entry('quarantine'),sha256:mediaHash(Buffer.from(png).fill(7,49,50))};const pendingData=Buffer.from(png).fill(7,49,50);
+  plan=await compare([pending]);await approve(plan);const realRoot=process.env.MEDIA_LOCAL_ROOT;const blocker=path.join(root,'not-a-folder');await fs.writeFile(blocker,'fixture');process.env.MEDIA_LOCAL_ROOT=blocker;
+  result=await sync.applyBatch(plan.run.id,plan.run.id,async()=>pendingData);process.env.MEDIA_LOCAL_ROOT=realRoot;assert.ok(result.summary.some(s=>s.state==='failed'));const quarantineCount=await count('media_objects');
+  await sync.retry(admin,plan.run.id);result=await sync.applyBatch(plan.run.id,plan.run.id,async()=>pendingData);assert.ok(result.items.some(i=>i.error==='incomplete-reservation-needs-review'));assert.equal(await count('media_objects'),quarantineCount);await sync.cancel(admin,plan.run.id);
+  const common=require('../apps/api/node_modules/@nestjs/common'),{NestFactory}=require('../apps/api/node_modules/@nestjs/core');
+  const {MediaSyncController}=require('../apps/api/dist/modules/media/presentation/media-sync.controller');
+  class FixtureGuard{canActivate(context){const request=context.switchToHttp().getRequest();if(!request.headers['x-sync-fixture'])throw new common.UnauthorizedException();request.user=request.headers['x-sync-fixture']==='admin'?admin:{id:123,grants:[]};return true;}}
+  class FixtureModule{}
+  const previousGuards=Reflect.getMetadata('__guards__',MediaSyncController);
+  Reflect.defineMetadata('__guards__',[FixtureGuard],MediaSyncController);
+  common.Module({controllers:[MediaSyncController],providers:[FixtureGuard,{provide:MediaSyncService,useValue:sync}]})(FixtureModule);
+  const app=await NestFactory.create(FixtureModule,{logger:false,abortOnError:false});
+  try{
+    app.setGlobalPrefix('api');await app.listen(0,'127.0.0.1');const base='http://127.0.0.1:'+app.getHttpServer().address().port+'/api/media/sync';
+    assert.equal((await fetch(base)).status,401);assert.equal((await fetch(base,{headers:{'x-sync-fixture':'reader'}})).status,403);
+    const headers={'x-sync-fixture':'admin'};
+    assert.equal((await fetch(base,{headers})).status,200);
+    const form=new FormData();form.set('manifest',new Blob([JSON.stringify({schema:1,origin:origin+'-http',dump:'http-fixture',provider:'local',complete:false,entries:[entry('http-fixture')]})],{type:'application/json'}),'manifest.json');
+    const comparison=await fetch(base+'/compare',{method:'POST',headers,body:form});assert.equal(comparison.status,201);const httpReport=await comparison.json();assert.equal(httpReport.run.total,1);
+    assert.equal((await fetch(base+'/'+httpReport.run.id,{headers})).status,200);
+    assert.equal((await fetch(base+'/'+httpReport.run.id+'/approve',{method:'POST',headers:{...headers,'Content-Type':'application/json'},body:JSON.stringify({confirmation:'APROVAR '+httpReport.run.id,receipt:evidence.id})})).status,409);
+  }finally{await app.close();Reflect.defineMetadata('__guards__',previousGuards,MediaSyncController);}
+  const hashBefore=evidence.files[0].sha256;await fs.writeFile(evidence.files[0].path,'CHANGED');assert.ok(hashBefore);await assert.rejects(verifiedSyncBackup(evidence.id));
+  console.log('Fixture database only: '+process.env.MEDIA_SQLSERVER_DATABASE+'. Real business/metadata rows untouched.');
+ }finally{RbacAccessRepository.prototype.findByUserId=oldResolver;await metadata.onModuleDestroy();assert.ok(path.resolve(root).startsWith(path.resolve(os.tmpdir())+path.sep));await fs.rm(root,{recursive:true,force:true});}
+});
