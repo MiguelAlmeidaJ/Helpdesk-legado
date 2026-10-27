@@ -123,7 +123,7 @@ function emptyRequest(
   return {
     amount: 0,
     categoryId: data.categories[0]?.id ?? 0,
-    clientId: data.clients[0]?.id ?? 0,
+    clientId: data.clients.find((client) => client.name.trim().toLocaleLowerCase('pt-BR') === 'nivel 3')?.id ?? data.clients[0]?.id ?? 0,
     pixTypeId: data.profile.pixTypeId ?? data.pixTypes[0]?.id ?? 0,
     pix: data.profile.pix,
     remarks: '',
@@ -415,6 +415,7 @@ function ExpenseDialog({
 
   const [value, setValue] = useState<CreateLogisticsExpenseRequest>(seed);
   const [files, setFiles] = useState<File[]>([]);
+  const [amountText, setAmountText] = useState(seed.amount ? currency.format(seed.amount) : '');
   const [busy, setBusy] = useState(false);
   const [feedback, setFeedback] = useState('');
 
@@ -428,6 +429,11 @@ function ExpenseDialog({
       value.pixTypeId < 1
     ) {
       setFeedback('Preencha valor, categoria, cliente e tipo de PIX.');
+      return;
+    }
+
+    if (files.some((file) => file.size > 25 * 1024 * 1024 || !['application/pdf', 'image/jpeg', 'image/png'].includes(file.type))) {
+      setFeedback('Selecione apenas PDF, JPG ou PNG de até 25 MB por arquivo.');
       return;
     }
 
@@ -478,11 +484,11 @@ function ExpenseDialog({
   }
 
   return (
-    <div className={styles.modalBackdrop}>
-      <form className={styles.modal} onSubmit={submit}>
+    <div className={styles.modalBackdrop} role="presentation">
+      <form aria-label="Formulário de despesa" className={`${styles.modal} !w-[min(760px,100%)] rounded-2xl shadow-2xl`} onSubmit={submit}>
         <header>
           <div>
-            <span className={styles.eyebrow}>RD</span>
+            <span className="text-xs font-bold uppercase tracking-wider text-app-brand">Requisição de despesa</span>
             <h2>
               {mode === 'edit'
                 ? `Editar #${expense?.id}`
@@ -491,26 +497,26 @@ function ExpenseDialog({
                   : 'Nova despesa'}
             </h2>
           </div>
-          <button disabled={busy} onClick={onClose} type="button">
+          <button aria-label="Fechar formulário" disabled={busy} onClick={onClose} type="button">
             ×
           </button>
         </header>
 
         <div className={styles.formGrid}>
           <label>
-            Valor
+            Valor (R$)
             <input
-              min="0.01"
+              inputMode="numeric"
+              placeholder="R$ 0,00"
               required
-              step="0.01"
-              type="number"
-              value={value.amount || ''}
-              onChange={(event) =>
-                setValue({
-                  ...value,
-                  amount: Number(event.target.value),
-                })
-              }
+              type="text"
+              value={amountText}
+              onChange={(event) => {
+                const digits = event.target.value.replace(/\D/g, '').slice(0, 11);
+                const amount = Number(digits) / 100;
+                setAmountText(digits ? currency.format(amount) : '');
+                setValue((current) => ({ ...current, amount }));
+              }}
             />
           </label>
 
@@ -625,20 +631,37 @@ function ExpenseDialog({
             </div>
           ) : null}
 
-          <label className={styles.wide}>
-            Novos comprovantes PDF
-            <input
-              accept="application/pdf,.pdf"
-              multiple
-              type="file"
-              onChange={(event) =>
-                setFiles(Array.from(event.target.files ?? []))
-              }
-            />
-            <small>
-              Até 25 MB por arquivo. Somente PDFs válidos.
-            </small>
-          </label>
+          <div className={styles.wide}>
+            <label className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-app-border-strong bg-app-surface-muted px-5 py-6 text-center transition hover:border-app-brand hover:bg-app-brand-soft">
+              <span className="text-sm font-semibold text-app-text">Adicionar comprovantes</span>
+              <span className="text-xs font-normal text-app-muted">Clique para selecionar PDF, JPG ou PNG · até 25 MB por arquivo</span>
+              <input
+                accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
+                className="sr-only!"
+                multiple
+                type="file"
+                onChange={(event) => {
+                  const selected = Array.from(event.target.files ?? []);
+                  setFiles(selected);
+                  if (selected.some((file) => file.size > 25 * 1024 * 1024 || !['application/pdf', 'image/jpeg', 'image/png'].includes(file.type))) {
+                    setFeedback('Apenas PDF, JPG e PNG com até 25 MB são permitidos.');
+                  } else {
+                    setFeedback('');
+                  }
+                }}
+              />
+            </label>
+            {files.length ? (
+              <ul className="mt-3 grid gap-2 text-xs text-app-text-soft">
+                {files.map((file, index) => (
+                  <li className="flex items-center justify-between gap-2 rounded-lg border border-app-border p-2" key={`${file.name}-${index}`}>
+                    <span className="min-w-0 truncate">{file.name} · {(file.size / 1024 / 1024).toFixed(2)} MB</span>
+                    <button className="text-app-danger" type="button" onClick={() => setFiles((current) => current.filter((_, i) => i !== index))}>Remover</button>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+          </div>
         </div>
 
         {feedback ? <div className={styles.modalFeedback}>{feedback}</div> : null}
@@ -647,7 +670,7 @@ function ExpenseDialog({
           <button disabled={busy} onClick={onClose} type="button">
             Cancelar
           </button>
-          <button className={styles.primary} disabled={busy} type="submit">
+          <button className={`${styles.primary} !min-h-10 !px-5 !text-sm !font-bold`} disabled={busy} type="submit">
             {busy ? 'Salvando…' : 'Salvar'}
           </button>
         </footer>
