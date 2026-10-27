@@ -5,6 +5,7 @@ import { NIVEL3_DATABASE } from '../../../core/database/database.constants';
 import type { AuthenticatedUser } from '../../access/domain/authenticated-user';
 import { TicketTypeAccessRepository } from '../../tickets/application/ports/ticket-type-access.repository';
 import { mediaContext } from './media-validation';
+import { mediaRecordIdentity } from './media-sync-identity';
 
 export function mediaAdmin(user: AuthenticatedUser): boolean {
   return user.grants.some(grant => grant.permission === AppPermission.SystemAdmin);
@@ -15,6 +16,10 @@ export function requireMediaAdmin(user: AuthenticatedUser): void {
 @Injectable()
 export class MediaAccess {
   constructor(@Inject(NIVEL3_DATABASE) private readonly database: Nivel3DatabaseClient, private readonly typeAccess: TicketTypeAccessRepository) {}
+
+  async assertStoredIdentity(context:MediaContext,expected:string) {
+    if(await mediaRecordIdentity(this.database,context)!==expected)throw new NotFoundException('Vínculo aguardando revisão após importação do banco.');
+  }
 
   async assert(user: AuthenticatedUser, input: MediaContext, write = false): Promise<void> {
     const context = mediaContext(input.type,input.id);

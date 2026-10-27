@@ -4,6 +4,7 @@ import { useEffect,useState } from 'react';
 import { apiRequest } from '../../../shared/api/api-client';
 import { AppPageHeader } from '../../../shared/navigation/app-page-header';
 import { MEDIA_BUTTON,MediaPanel,mediaBytes,mediaError } from './media-panel';
+import { MediaSyncPanel } from './media-sync-panel';
 
 export function MediaAdminScreen({currentUser}:{currentUser:CurrentUserResponse}) {
   const [status,setStatus]=useState<MediaStatus | null>(null);
@@ -32,6 +33,7 @@ export function MediaAdminScreen({currentUser}:{currentUser:CurrentUserResponse}
         <p className="m-0 text-xs text-app-muted">Limite por arquivo: {mediaBytes(status?.maxUploadBytes ?? 0)}. Cada mídia mantém seu provedor original. Exclusões lógicas preservam os arquivos e continuam ocupando armazenamento.</p>
         {feedback?<p role="status" className="m-0 text-sm text-app-muted">{feedback}</p>:null}
       </section>
+      {status?.available?<MediaSyncPanel/>:null}
       <section aria-label="Armazenamento utilizado" className="grid gap-3 md:grid-cols-3">{(status?.providers ?? []).map(item=>{
         const usage=(status?.usage ?? []).filter(row=>row.provider===item.name);
         return <div key={item.name} className="rounded-xl border border-app-border bg-app-surface p-4"><h2 className="m-0 text-base font-bold">{item.name}</h2><strong className="mt-2 block text-xl">{mediaBytes(usage.reduce((sum,row)=>sum+row.bytes,0))}</strong><p className="mb-0 text-sm text-app-muted">{usage.reduce((sum,row)=>sum+row.count,0)} objeto(s) · {item.configured?'configurado':'configuração pendente'}</p>{usage.map(row=><p key={row.status} className="mb-0 text-xs text-app-muted">{row.status}: {row.count} · {mediaBytes(row.bytes)}</p>)}</div>;

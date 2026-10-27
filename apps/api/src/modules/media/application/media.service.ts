@@ -37,7 +37,13 @@ export class MediaService {
     if (!links.length) throw new NotFoundException('Mídia não encontrada.');
     const visible: MediaContext[] = [];
     for (const link of links) {
-      try { await this.access.assert(user,link,write); visible.push(link); }
+      try {
+        await this.access.assert(user,link,write);
+        const stored=await this.database.client.$queryRawUnsafe<Array<{metadata_json:string|null}>>("SELECT metadata_json FROM dbo.media_links WHERE media_id=@P1 AND context_type=@P2 AND context_id=@P3 AND purpose='attachment'",id,link.type,link.id);
+        const identity=stored[0]?.metadata_json ? (JSON.parse(stored[0].metadata_json) as {syncIdentity?:string}).syncIdentity : undefined;
+        if(identity)await this.access.assertStoredIdentity(link,identity);
+        visible.push(link);
+      }
       catch (error) { if (!(error instanceof HttpException) || ![403,404].includes(error.getStatus())) throw error; }
     }
     // Reading requires any authorized association; changing shared media requires all of them.
@@ -69,13 +75,13 @@ export class MediaService {
     const [setting] = await this.database.client.$queryRawUnsafe<Array<{ default_provider: MediaProvider }>>('SELECT default_provider FROM dbo.media_settings WHERE id=1');
     return validMediaProvider(setting?.default_provider ?? process.env.MEDIA_DEFAULT_PROVIDER ?? 'local');
   }
-  async upload(user: AuthenticatedUser, context: MediaContext, input: { data: Buffer; originalName: string; mimeType?: string; provider?: MediaProvider }): Promise<MediaItem> {
+  async upload(user: AuthenticatedUser, context: MediaContext, input: { data: Buffer; originalName: string; mimeType?: string; provider?: MediaProvider }, reservationId?: string): Promise<MediaItem> {
     await this.access.assert(user,context);
     await this.access.assert(user,context,true);
     const format = validateMedia(input.data,input.mimeType);
     if (input.provider) requireMediaAdmin(user);
     const providerName = input.provider ? validMediaProvider(input.provider) : await this.defaultProvider();
-    const provider = mediaProvider(providerName), id = randomUUID(), hash = mediaHash(input.data);
+    const provider = mediaProvider(providerName), id = reservationId ? mediaId(reservationId) : randomUUID(), hash = mediaHash(input.data);
     await this.database.client.$transaction(async tx => {
       await tx.$executeRawUnsafe(`INSERT INTO dbo.media_objects(id,provider,provider_key,original_name,mime_type,size_bytes,sha256,status,created_by,metadata_json)
         VALUES(@P1,@P2,@P3,@P4,@P5,@P6,@P7,'quarantined',@P8,N'{"phase":"uploading"}')`,id,providerName,'pending:'+id,mediaFilename(input.originalName),format.mimeType,input.data.length,hash,user.id);
