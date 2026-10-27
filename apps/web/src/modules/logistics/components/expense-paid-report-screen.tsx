@@ -45,7 +45,7 @@ const styles = {
   feedback:
     'mb-4 rounded-[10px] border border-app-border bg-app-surface px-3.5 py-3 text-app-text-soft',
   filters:
-    'mb-4 grid grid-cols-4 gap-3 rounded-xl border border-app-border bg-app-surface p-4 max-[1050px]:grid-cols-2 max-[620px]:grid-cols-1 print:hidden [&_label]:flex [&_label]:flex-col [&_label]:gap-1.5 [&_label]:text-[0.82rem] [&_label]:font-bold [&_select]:min-h-10 [&_select]:appearance-none [&_select]:rounded-lg [&_select]:border [&_select]:border-app-border-strong [&_select]:bg-app-surface [&_select]:px-3 [&_select]:py-2 [&_select]:text-app-text [&_select]:outline-none [&_select:focus]:border-app-brand [&_select:focus]:ring-[3px] [&_select:focus]:ring-[var(--app-brand-ring)] [&_button]:min-h-10 [&_button]:cursor-pointer [&_button]:rounded-lg [&_button]:border [&_button]:border-app-border-strong [&_button]:bg-app-surface [&_button]:px-3 [&_button]:py-2 [&_button]:text-app-text [&_button:disabled]:cursor-not-allowed [&_button:disabled]:opacity-[0.55]',
+    'mb-4 grid grid-cols-1 gap-3 rounded-xl lg:grid-cols-[minmax(0,30fr)_minmax(0,25fr)_minmax(0,25fr)_minmax(0,20fr)] lg:items-end border border-app-border bg-app-surface p-4 print:hidden [&_label]:flex [&_label]:flex-col [&_label]:gap-1.5 [&_label]:text-[0.82rem] [&_label]:font-bold [&_select]:min-h-10 [&_select]:appearance-none [&_select]:rounded-lg [&_select]:border [&_select]:border-app-border-strong [&_select]:bg-app-surface [&_select]:px-3 [&_select]:py-2 [&_select]:text-app-text [&_select]:outline-none [&_select:focus]:border-app-brand [&_select:focus]:ring-[3px] [&_select:focus]:ring-[var(--app-brand-ring)] [&_button]:min-h-10 [&_button]:cursor-pointer [&_button]:rounded-lg [&_button]:border [&_button]:border-app-border-strong [&_button]:bg-app-surface [&_button]:px-3 [&_button]:py-2 [&_button]:text-app-text [&_button:disabled]:cursor-not-allowed [&_button:disabled]:opacity-[0.55]',
   categoryField:
     'relative flex flex-col gap-1.5 text-[0.82rem] font-bold',
   filterActions:
@@ -398,7 +398,7 @@ export function ExpensePaidReportScreen({
 
       <div className={styles.content}>
         <form className={styles.filters} onSubmit={submit}>
-          <div className="col-span-2 max-[1050px]:col-span-2 max-[620px]:col-span-1">
+          <div className="min-w-0">
             <span className="mb-1.5 block text-[0.82rem] font-bold">Período</span>
             <DateRangePicker
               disabled={loading}
@@ -446,7 +446,21 @@ export function ExpensePaidReportScreen({
               </select>
             </label>
           ) : null}
-          <div className={styles.categoryField}>
+          <div className="flex min-w-0 flex-col gap-1.5">
+            <span className="text-[0.82rem] font-bold text-app-muted">Ações</span>
+            <div className="flex gap-2 [&>button]:min-w-0 [&>button]:flex-1">
+            <button disabled={loading} type="submit">
+              {loading ? 'Atualizando…' : 'Filtrar'}
+            </button>
+            <button disabled={loading} onClick={clearFilters} type="button">
+              Limpar
+            </button>
+            </div>
+          </div>
+        </form>
+        <details className="group mb-4 rounded-lg border border-app-border bg-app-surface px-4 py-2 print:hidden">
+          <summary className="cursor-pointer text-xs font-semibold text-app-muted">Filtros avançados · Categorias {categoryIds.length ? `(${categoryIds.length} selecionadas)` : ""}</summary>
+          <div className="mt-3 max-w-sm">          <div className={styles.categoryField}>
             <span>Categorias</span>
             <details className="group relative">
               <summary className="flex min-h-10 cursor-pointer list-none items-center justify-between rounded-lg border border-app-border-strong bg-app-surface px-3 py-2 font-medium text-app-text outline-none transition hover:bg-app-surface-hover">
@@ -489,15 +503,8 @@ export function ExpensePaidReportScreen({
               </div>
             </details>
           </div>
-          <div className={styles.filterActions}>
-            <button disabled={loading} type="submit">
-              {loading ? 'Atualizando…' : 'Filtrar'}
-            </button>
-            <button disabled={loading} onClick={clearFilters} type="button">
-              Limpar
-            </button>
-          </div>
-        </form>
+</div>
+        </details>
 
         {feedback ? <div className={styles.feedback}>{feedback}</div> : null}
 
