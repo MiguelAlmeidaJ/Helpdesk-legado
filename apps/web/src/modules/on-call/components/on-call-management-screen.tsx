@@ -195,7 +195,7 @@ export function OnCallManagementScreen({
             <span>
               O perfil <strong>Plantonista</strong> ainda está sem permissões. A escala funcionará, mas não concederá acessos adicionais.
             </span>
-            <Link className={BUTTON} href="/administracao/permissoes">
+            <Link className={BUTTON} href="/administracao/permissoes-plantao">
               Configurar permissões
             </Link>
           </div>
