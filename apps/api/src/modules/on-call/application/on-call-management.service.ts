@@ -72,6 +72,40 @@ export class OnCallManagementService {
     private readonly database: Nivel3DatabaseClient,
   ) {}
 
+  async plantonistaPermissions(): Promise<number[]> {
+    const rows = await this.database.$queryRawUnsafe<{ permission_id: number }[]>(
+      "SELECT rp.permission_id FROM role_permissions rp JOIN roles r ON r.id = rp.role_id WHERE r.slug = 'plantonista'",
+    );
+    return rows.map((row) => Number(row.permission_id));
+  }
+
+  async updatePlantonistaPermissions(permissionIds: number[]): Promise<void> {
+    const unique = [...new Set(permissionIds)];
+    if (unique.some((id) => !Number.isSafeInteger(id) || id < 1)) {
+      throw new BadRequestException('Permissões inválidas.');
+    }
+    await this.database.$transaction(async (tx) => {
+      const roles = await tx.$queryRawUnsafe<{ id: number }[]>(
+        "SELECT TOP (1) id FROM roles WITH (UPDLOCK, HOLDLOCK) WHERE slug = 'plantonista'",
+      );
+      const roleId = Number(roles[0]?.id);
+      if (!Number.isSafeInteger(roleId) || roleId < 1) {
+        throw new BadRequestException('Perfil plantonista não encontrado.');
+      }
+      if (unique.length) {
+        const valid = await tx.$queryRawUnsafe<{ id: number }[]>(
+          `SELECT id FROM permissions WHERE id IN (${unique.map(() => '?').join(',')})`,
+          ...unique,
+        );
+        if (valid.length !== unique.length) throw new BadRequestException('Permissão inexistente.');
+      }
+      await tx.$executeRawUnsafe('DELETE FROM role_permissions WHERE role_id = ?', roleId);
+      for (const permissionId of unique) {
+        await tx.$executeRawUnsafe('INSERT INTO role_permissions (role_id, permission_id, granted_at) VALUES (?, ?, GETDATE())', roleId, permissionId);
+      }
+    });
+  }
+
   async snapshot(weekDate?: string): Promise<OnCallSnapshot> {
     const [settings, current, users, permissionRows] = await Promise.all([
       this.settings(),
