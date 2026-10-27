@@ -176,7 +176,7 @@ function vehicleBody(body: unknown): UpsertVehicleAgendaVehicleRequest {
 }
 
 function hasPermission(user: AuthenticatedUser, permission: AppPermission): boolean {
-  return user.grants.some((grant) => grant.permission === permission);
+  return user.grants.some((grant) => grant.permission === AppPermission.SystemAdmin || grant.permission === permission);
 }
 
 @ApiTags('logistics')
