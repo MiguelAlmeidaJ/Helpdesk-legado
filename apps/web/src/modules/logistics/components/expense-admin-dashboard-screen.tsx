@@ -44,7 +44,7 @@ const styles = {
     'rounded-[10px] border border-app-danger-border bg-app-danger-soft p-[18px] text-center text-app-danger',
   metrics:
     'mb-6 grid grid-cols-3 gap-3.5 max-[780px]:grid-cols-1 [&_article]:flex [&_article]:min-h-[180px] [&_article]:flex-col [&_article]:gap-[9px] [&_article]:rounded-[14px] [&_article]:border [&_article]:border-app-border [&_article]:border-t-4 [&_article]:bg-app-surface [&_article]:p-[18px] [&_article]:shadow-sm [&_article:nth-child(1)]:border-t-amber-500 [&_article:nth-child(2)]:border-t-sky-600 [&_article:nth-child(3)]:border-t-emerald-600 [&_article[data-active=true]]:outline-2 [&_article[data-active=true]]:outline-offset-2 [&_article[data-active=true]]:outline-app-text-soft [&_article>span]:text-[0.78rem] [&_article>span]:font-extrabold [&_article>span]:uppercase [&_article>span]:tracking-[0.05em] [&_article>span]:text-app-muted [&_article>strong]:text-[clamp(1.5rem,3vw,2.1rem)] [&_article>small]:min-h-[34px] [&_article>small]:leading-[1.4] [&_article>small]:text-app-subtle [&_article_button]:min-h-10 [&_article_button]:w-fit [&_article_button]:cursor-pointer [&_article_button]:rounded-lg [&_article_button]:border [&_article_button]:border-app-border-strong [&_article_button]:bg-app-surface [&_article_button]:px-4 [&_article_button]:font-bold [&_article_button]:text-app-text-soft [&_article_button]:transition [&_article_button:hover]:bg-app-surface-hover [&_article_button:disabled]:cursor-wait [&_article_button:disabled]:opacity-[0.6]',
-  metricActions: 'mt-auto flex flex-wrap items-center gap-2 pt-3 [&_a]:justify-center [&_button]:justify-center',
+  metricActions: 'mt-auto flex flex-nowrap items-center gap-2 pt-3 [&_a]:shrink-0 [&_a]:justify-center [&_a]:whitespace-nowrap [&_a]:!px-3 [&_a]:!text-xs [&_button]:shrink-0 [&_button]:justify-center [&_button]:!px-3',
   approvalLink:
     'inline-flex min-h-10 items-center rounded-lg border border-emerald-700 bg-emerald-700 px-3.5 font-extrabold !text-white no-underline transition hover:bg-emerald-800 dark:border-emerald-600 dark:bg-emerald-700 dark:hover:bg-emerald-600 [&_*]:text-white',
   paymentLink:
@@ -441,10 +441,10 @@ export function ExpenseAdminDashboardScreen({
                 <div className={styles.metricActions}>
                   <button
                     disabled={loading}
-                    onClick={() => selectStatus(1)}
+                    aria-label="Ver resumo" title="Ver resumo" onClick={() => selectStatus(1)}
                     type="button"
                   >
-                    Ver resumo
+                    <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>
                   </button>
                   {canApprove ? (
                     <Link
@@ -467,10 +467,10 @@ export function ExpenseAdminDashboardScreen({
                 <div className={styles.metricActions}>
                   <button
                     disabled={loading}
-                    onClick={() => selectStatus(2)}
+                    aria-label="Ver resumo" title="Ver resumo" onClick={() => selectStatus(2)}
                     type="button"
                   >
-                    Ver resumo
+                    <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>
                   </button>
                   {canPay ? (
                     <Link
@@ -490,10 +490,10 @@ export function ExpenseAdminDashboardScreen({
                 <div className={styles.metricActions}>
                   <button
                     disabled={loading}
-                    onClick={() => selectStatus(4)}
+                    aria-label="Ver resumo" title="Ver resumo" onClick={() => selectStatus(4)}
                     type="button"
                   >
-                    Ver resumo
+                    <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>
                   </button>
                   <Link
                     className={styles.reportLink}
