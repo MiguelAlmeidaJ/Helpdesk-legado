@@ -4,6 +4,7 @@ import { CatalogModule } from './catalog/catalog.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { LogisticsModule } from './logistics/logistics.module';
 import { MaintenanceModule } from './maintenance/maintenance.module';
+import { MediaModule } from './media/media.module';
 import { NavigationModule } from './navigation/navigation.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { OnCallModule } from './on-call/on-call.module';
@@ -23,6 +24,7 @@ import { UsersModule } from './users/users.module';
     DashboardModule,
     LogisticsModule,
     MaintenanceModule,
+    MediaModule,
     NavigationModule,
     // Static and specialized ticket routes must be registered before the
     // generic /tickets/:id endpoints from AtendimentoTicketsModule.

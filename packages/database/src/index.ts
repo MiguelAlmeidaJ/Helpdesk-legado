@@ -82,6 +82,26 @@ export function createNivel3Client(
 
 export type Nivel3DatabaseClient = ReturnType<typeof createNivel3Client>;
 
+// Independent pool and credentials. This client is used only for native metadata SQL.
+export function createMediaClient() {
+  const required = (name: string) => {
+    const value = process.env[name]?.trim();
+    if (!value) throw new Error('Configure ' + name + ' no servidor.');
+    return value;
+  };
+  const database = required('MEDIA_SQLSERVER_DATABASE');
+  if (database !== 'helpdesk_media' && !/^helpdesk_media_test_[a-zA-Z0-9_]+$/.test(database)) throw new Error('O banco de mídias deve ser separado do banco da aplicação.');
+  const user = required('MEDIA_SQLSERVER_USER');
+  if (user === process.env.NIVEL3_SQLSERVER_USER?.trim()) throw new Error('Use credenciais próprias para o banco de mídias.');
+  return new Nivel3PrismaClient({ adapter: new PrismaMssql({
+    server: required('MEDIA_SQLSERVER_HOST'), port: Number(process.env.MEDIA_SQLSERVER_PORT || 1433), database,
+    user, password: required('MEDIA_SQLSERVER_PASSWORD'),
+    connectionTimeout: 15000, requestTimeout: 30000,
+    pool: { max: 3, min: 0, idleTimeoutMillis: 60000 },
+    options: { encrypt: true, trustServerCertificate: process.env.MEDIA_SQLSERVER_TRUST_CERTIFICATE === 'true' },
+  }, { schema: 'dbo' }) });
+}
+
 export { synchronizeNavigation } from './navigation/synchronize-navigation';
 
 export { RBAC_PERMISSION_SLUGS } from './access/rbac-permissions';

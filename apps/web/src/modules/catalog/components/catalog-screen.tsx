@@ -15,6 +15,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { ApiError } from '../../../shared/api/api-client';
 import { AppPageHeader } from '../../../shared/navigation/app-page-header';
 import { CatalogHtmlEditor } from './catalog-html-editor';
+import { MediaPanel } from '../../media/components/media-panel';
 import {
   archiveCatalog,
   createCatalog,
@@ -634,6 +635,7 @@ export function CatalogScreen({ currentUser }: { currentUser: CurrentUserRespons
                   <div><dt>Categoria</dt><dd>{detail.categoryName ?? `#${detail.categoryId}`}</dd></div>
                   <div><dt>Atualizado</dt><dd>{formatDate(detail.updatedAt ?? detail.createdAt)}</dd></div>
                 </dl>
+                <MediaPanel contextType="catalog" contextId={String(detail.id)} />
                 {detail.content ? (
                   <iframe
                     className={styles.preview}

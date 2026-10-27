@@ -23,6 +23,7 @@ export async function synchronizeNavigation(
     'devops-task-new',
     'marketing-task-new',
     'maintenance',
+    'media',
     'clients',
     'categories',
     'cost-centers',

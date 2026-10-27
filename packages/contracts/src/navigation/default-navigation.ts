@@ -214,6 +214,10 @@ export const DEFAULT_NAVIGATION: SeedSection[] = [
         status: 'available',
         visibilityCondition: { anyPermissions: ['system.admin'] },
       },
+      {
+        slug: 'media', label: 'Central de Mídias', href: '/administracao/midias',
+        status: 'available', visibilityCondition: { anyPermissions: ['system.admin'] },
+      },
     ],
   },
 ];
