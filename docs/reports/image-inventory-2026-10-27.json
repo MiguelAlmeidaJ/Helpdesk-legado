@@ -1,0 +1,269 @@
+{
+  "startedAt": "2026-10-27T18:28:18.988Z",
+  "database": "nivel3_hml",
+  "binaryColumns": [
+    {
+      "source": "dbo.imagens.img_atd",
+      "rows": 403,
+      "nonempty": 403,
+      "allAttachmentBytes": 56369429,
+      "count": 398,
+      "bytes": 52117103,
+      "formats": {
+        "jpeg": 314,
+        "png": 84
+      },
+      "otherAttachments": {
+        "count": 5,
+        "bytes": 4252326,
+        "formats": {
+          "video/mp4-container": 3,
+          "pdf": 2
+        }
+      }
+    },
+    {
+      "source": "dbo.imagens_tarefa.img_tarefa",
+      "rows": 211,
+      "nonempty": 211,
+      "allAttachmentBytes": 32461939,
+      "count": 208,
+      "bytes": 29358408,
+      "formats": {
+        "jpeg": 98,
+        "png": 110
+      },
+      "otherAttachments": {
+        "count": 3,
+        "bytes": 3103531,
+        "formats": {
+          "html": 1,
+          "pdf": 1,
+          "zip/office-container": 1
+        }
+      }
+    }
+  ],
+  "embeddedImages": [
+    {
+      "source": "dbo.running_balance.remarks",
+      "rows": 39,
+      "count": 39,
+      "decodedBytes": 1892523,
+      "storedDataUriBytes": 5048564,
+      "formats": {
+        "jpeg": 36,
+        "png": 3
+      },
+      "nonBase64": 0
+    },
+    {
+      "source": "dbo.catalogos.conteudo",
+      "rows": 8,
+      "count": 23,
+      "decodedBytes": 1121429,
+      "storedDataUriBytes": 1495763,
+      "formats": {
+        "jpeg": 1,
+        "png": 22
+      },
+      "nonBase64": 0
+    }
+  ],
+  "htmlImageReferences": [
+    {
+      "source": "dbo.catalogos.conteudo",
+      "total": 999,
+      "dataUri": 23,
+      "applicationCatalog": 661,
+      "remoteHttp": 314,
+      "otherLocal": 1,
+      "distinctRemoteTargets": 237,
+      "remoteOrigins": {
+        "https://lh7-rt.googleusercontent.com": 313,
+        "https://centraldeatendimento.totvs.com": 1
+      }
+    }
+  ],
+  "fileAreas": [
+    {
+      "area": "catalog",
+      "directory": "C:\\Users\\Administrator\\Desktop\\helpdesk\\storage\\uploads\\catalog",
+      "business": true,
+      "exists": true,
+      "files": 655,
+      "count": 655,
+      "bytes": 120026749,
+      "formats": {
+        "png": 590,
+        "jpeg": 65
+      },
+      "extensionOnly": 0
+    },
+    {
+      "area": "tickets",
+      "directory": "C:\\Users\\Administrator\\Desktop\\helpdesk\\storage\\uploads\\tickets",
+      "business": true,
+      "exists": true,
+      "files": 0,
+      "count": 0,
+      "bytes": 0,
+      "formats": {},
+      "extensionOnly": 0
+    },
+    {
+      "area": "expenses",
+      "directory": "C:\\Users\\Administrator\\Desktop\\helpdesk\\storage\\uploads\\rd",
+      "business": true,
+      "exists": false,
+      "files": 0,
+      "count": 0,
+      "bytes": 0,
+      "formats": {},
+      "extensionOnly": 0
+    },
+    {
+      "area": "legacy-tickets",
+      "directory": "C:\\Users\\Administrator\\Desktop\\helpdesk\\uploads",
+      "business": true,
+      "exists": false,
+      "files": 0,
+      "count": 0,
+      "bytes": 0,
+      "formats": {},
+      "extensionOnly": 0
+    },
+    {
+      "area": "legacy-expenses",
+      "directory": "C:\\Users\\Administrator\\Desktop\\helpdesk\\uploads_rd",
+      "business": true,
+      "exists": false,
+      "files": 0,
+      "count": 0,
+      "bytes": 0,
+      "formats": {},
+      "extensionOnly": 0
+    },
+    {
+      "area": "interface-assets",
+      "directory": "C:\\Users\\Administrator\\Desktop\\helpdesk\\apps\\web\\public",
+      "business": false,
+      "exists": true,
+      "files": 6,
+      "count": 5,
+      "bytes": 622377,
+      "formats": {
+        "png": 4,
+        "ico": 1
+      },
+      "extensionOnly": 0
+    },
+    {
+      "area": "root-favicon",
+      "business": false,
+      "count": 1,
+      "bytes": 16958,
+      "exists": true
+    }
+  ],
+  "references": [
+    {
+      "source": "catalog_images",
+      "count": 656,
+      "declaredBytes": 120040833,
+      "present": 655,
+      "missing": 1,
+      "sizeMismatch": 0,
+      "hashMismatch": 0,
+      "distinctPhysicalFiles": 655,
+      "filesWithoutCatalogMetadata": 0,
+      "missingIds": [
+        2
+      ]
+    },
+    {
+      "source": "documentos: image MIME/extension",
+      "count": 2165,
+      "present": 0,
+      "missingLocal": 2165,
+      "remote": 0,
+      "distinctReferences": 2165,
+      "observedBytes": 0
+    },
+    {
+      "source": "troca_devolucao_anexos: image MIME",
+      "count": 0,
+      "declaredBytes": 0
+    },
+    {
+      "source": "cads_fotos: addresses (not binary content)",
+      "count": 0
+    },
+    {
+      "source": "dbo.running_balance.anexos: JSON references",
+      "rows": 168,
+      "attachments": 172,
+      "identifiableImages": 0,
+      "otherKnownTypes": 172,
+      "unknownType": 0,
+      "imageFilesFound": 0,
+      "remoteImageReferences": 0,
+      "unresolvedImageReferences": 0,
+      "invalidJsonRows": 0
+    },
+    {
+      "source": "dbo.contas_pagar.anexos: JSON references",
+      "rows": 1,
+      "attachments": 0,
+      "identifiableImages": 0,
+      "otherKnownTypes": 0,
+      "unknownType": 0,
+      "imageFilesFound": 0,
+      "remoteImageReferences": 0,
+      "unresolvedImageReferences": 0,
+      "invalidJsonRows": 0
+    },
+    {
+      "source": "dbo.contas_receber.anexos: JSON references",
+      "rows": 0,
+      "attachments": 0,
+      "identifiableImages": 0,
+      "otherKnownTypes": 0,
+      "unknownType": 0,
+      "imageFilesFound": 0,
+      "remoteImageReferences": 0,
+      "unresolvedImageReferences": 0,
+      "invalidJsonRows": 0
+    }
+  ],
+  "warnings": [],
+  "scannedTextColumns": 281,
+  "totals": {
+    "binaryCount": 606,
+    "binaryBytes": 81475511,
+    "embeddedCount": 62,
+    "embeddedDecodedBytes": 3013952,
+    "embeddedStoredBytes": 6544327,
+    "filesCount": 655,
+    "filesBytes": 120026749,
+    "businessImageOccurrences": 1323,
+    "businessImagePayloadBytes": 204516212,
+    "businessImageStoredBytes": 208046587,
+    "uniqueBusinessImages": 1230,
+    "uniqueBusinessPayloadBytes": 188340623,
+    "repeatedContentCopies": 93,
+    "uniqueContentInBothDatabaseAndFiles": 0,
+    "interfaceCount": 6,
+    "interfaceBytes": 639335,
+    "nonImageBinaryAttachments": 8,
+    "nonImageBinaryAttachmentBytes": 7355857
+  },
+  "completedAt": "2026-10-27T18:29:15.952Z",
+  "scope": "Connected database and configured upload roots plus their legacy fallbacks; interface assets counted separately. Excludes backup archives, dependencies, build copies, remote URLs and other databases. Byte totals are logical payload sizes, not SQL page/index allocation or disk cluster usage. Counts are occurrences; SHA-256 unique content also reported. Text scan covers data:image inline encodings, not arbitrary unmarked Base64.",
+  "catalogMissingFiles": [
+    {
+      "id": 2,
+      "declaredBytes": 14084
+    }
+  ]
+}
