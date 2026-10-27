@@ -19,11 +19,11 @@ const PRIMARY = appButtonClass('primary');
 
 const styles = {
   page: 'min-h-screen bg-app-bg text-app-text',
-  content: 'mx-auto w-full max-w-[1250px] p-6 max-sm:px-3.5',
-  layout: 'grid items-start gap-4 min-[900px]:grid-cols-[minmax(310px,0.8fr)_minmax(480px,1.3fr)]',
+  content: 'mx-auto w-full max-w-[1550px] p-6 max-sm:px-3.5',
+  layout: 'grid items-start gap-4 lg:grid-cols-[minmax(300px,0.8fr)_minmax(600px,1.7fr)]',
   card: 'rounded-xl border border-app-border bg-app-surface p-4 shadow-sm shadow-slate-950/5 dark:shadow-black/10',
-  list: 'grid max-h-[690px] gap-2 overflow-y-auto',
-  item: 'w-full rounded-lg border border-app-border bg-app-surface px-3 py-3 text-left transition hover:border-app-brand hover:bg-app-surface-hover data-[active=true]:border-app-brand data-[active=true]:bg-app-brand-soft',
+  list: 'grid max-h-[calc(100vh-220px)] gap-2 overflow-y-auto pr-1',
+  item: 'w-full rounded-lg border border-app-border bg-app-surface px-4 py-3.5 text-left transition hover:border-app-brand hover:bg-app-surface-hover data-[active=true]:border-app-brand data-[active=true]:bg-app-brand-soft',
   itemTop: 'flex items-start justify-between gap-3',
   meta: 'mt-1 text-xs text-app-muted',
   badge: 'rounded-full bg-app-surface-muted px-2 py-1 text-[10px] font-extrabold uppercase tracking-wide text-app-muted',
@@ -31,8 +31,8 @@ const styles = {
   stats: 'grid grid-cols-2 gap-3 rounded-lg bg-app-surface-muted p-3 [&_div]:grid [&_strong]:text-xl [&_span]:text-xs [&_span]:text-app-muted',
   module: 'overflow-hidden rounded-lg border border-app-border',
   moduleHeader: 'flex items-center justify-between gap-3 border-b border-app-border bg-app-surface-muted px-3 py-2.5',
-  permissionGrid: 'grid gap-px bg-app-border md:grid-cols-2',
-  permission: 'flex cursor-pointer items-start gap-2.5 bg-app-surface px-3 py-3 text-sm hover:bg-app-surface-hover [&_input]:mt-0.5 [&_span]:grid [&_small]:text-xs [&_small]:font-normal [&_small]:text-app-muted',
+  permissionGrid: 'grid gap-px bg-app-border xl:grid-cols-2',
+  permission: 'flex cursor-pointer items-center gap-3 bg-app-surface px-4 py-3.5 text-sm hover:bg-app-surface-hover [&_input]:size-4 [&_input]:shrink-0 [&_span]:grid [&_small]:text-xs [&_small]:font-normal [&_small]:text-app-muted',
   actions: 'flex flex-wrap justify-end gap-2',
   error: 'mb-3 rounded-lg border border-app-danger-border bg-app-danger-soft px-3 py-3 text-sm text-app-danger',
   success: 'mb-3 rounded-lg border border-emerald-300/70 bg-emerald-50 px-3 py-3 text-sm text-emerald-800 dark:border-emerald-900/70 dark:bg-emerald-950/40 dark:text-emerald-200',
@@ -63,6 +63,7 @@ export function UserFunctionsScreen({ currentUser }: { currentUser: CurrentUserR
   const [form, setForm] = useState<FormState>(EMPTY);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [search, setSearch] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
@@ -173,9 +174,10 @@ export function UserFunctionsScreen({ currentUser }: { currentUser: CurrentUserR
         <section className={styles.card}>
           <h2 className="mb-1 text-lg font-extrabold">Funções cadastradas</h2>
           <p className="mb-4 text-sm text-app-muted">Veja quantos usuários ativos utilizam cada função.</p>
+          <input aria-label="Buscar função" className="mb-3 min-h-10 w-full rounded-lg border border-app-border-strong bg-app-surface px-3 text-sm" placeholder="Buscar função..." value={search} onChange={(event) => setSearch(event.target.value)} />
           {loading && functions.length === 0 ? <p className="text-sm text-app-muted">Carregando…</p> : null}
           <div className={styles.list}>
-            {functions.map((item) => <button className={styles.item} data-active={selectedId === item.id} key={item.id} onClick={() => select(item)} type="button">
+            {functions.filter((item) => item.name.toLocaleLowerCase('pt-BR').includes(search.toLocaleLowerCase('pt-BR'))).map((item) => <button className={styles.item} data-active={selectedId === item.id} key={item.id} onClick={() => select(item)} type="button">
               <span className={styles.itemTop}><strong>{item.name}</strong><span className={styles.badge}>{item.status === 1 ? 'Ativa' : 'Inativa'}</span></span>
               <span className={styles.meta}>{item.activeUserCount} {item.activeUserCount === 1 ? 'usuário ativo' : 'usuários ativos'} · {item.permissionIds.length} permissões</span>
             </button>)}
