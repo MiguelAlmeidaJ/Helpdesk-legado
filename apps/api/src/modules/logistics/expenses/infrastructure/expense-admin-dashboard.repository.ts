@@ -426,8 +426,8 @@ export class ExpenseAdminDashboardRepository {
        WHERE r.status = ?
          AND r.aj = 1
          AND r.date_created BETWEEN ? AND ?
-       GROUP BY CONVERT(DATE, r.date_created)
-       ORDER BY CONVERT(DATE, r.date_created) ASC`,
+       GROUP BY CONVERT(VARCHAR(10), r.date_created, 23)
+       ORDER BY CONVERT(VARCHAR(10), r.date_created, 23) ASC`,
       status,
       start,
       end,
