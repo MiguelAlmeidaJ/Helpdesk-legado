@@ -170,53 +170,34 @@ function migratedImageName(catalogId: number, index: number, mime: string): stri
   return `catalogo-${catalogId}-imagem-${index + 1}.${extension}`;
 }
 
-const CREATE_BACKUP_JOBS = [
-  'CREATE TABLE IF NOT EXISTS maintenance_backup_jobs (',
-  '  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,',
-  '  target VARCHAR(20) NOT NULL,',
-  '  frequency VARCHAR(20) NOT NULL,',
-  '  run_time CHAR(5) NOT NULL,',
-  '  weekday TINYINT UNSIGNED NULL,',
-  '  retention_days INT UNSIGNED NOT NULL DEFAULT 30,',
-  '  is_active TINYINT(1) NOT NULL DEFAULT 1,',
-  "  last_status VARCHAR(20) NOT NULL DEFAULT 'idle',",
-  '  last_error TEXT NULL,',
-  '  last_run_at DATETIME NULL,',
-  '  next_run_at DATETIME NULL,',
-  '  created_by INT NULL,',
-  '  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,',
-  '  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,',
-  '  PRIMARY KEY (id),',
-  '  KEY idx_maintenance_backup_jobs_due (is_active, next_run_at)',
-  ') ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci',
-].join('\n');
-
-const CREATE_WORKER_STATE = [
-  'CREATE TABLE IF NOT EXISTS maintenance_worker_state (',
-  '  worker_key VARCHAR(80) NOT NULL,',
-  '  last_heartbeat_at DATETIME NOT NULL,',
-  '  detail VARCHAR(255) NULL,',
-  '  PRIMARY KEY (worker_key)',
-  ') ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci',
-].join('\n');
-
-const CREATE_OPERATIONS = [
-  'CREATE TABLE IF NOT EXISTS maintenance_operations (',
-  '  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,',
-  '  action VARCHAR(80) NOT NULL,',
-  '  target VARCHAR(40) NULL,',
-  '  actor_user_id INT NULL,',
-  "  status VARCHAR(20) NOT NULL DEFAULT 'running',",
-  '  detail TEXT NULL,',
-  '  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,',
-  '  finished_at DATETIME NULL,',
-  '  PRIMARY KEY (id),',
-  '  KEY idx_maintenance_operations_created (created_at)',
-  ') ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci',
-].join('\n');
-
-
-
+const CREATE_BACKUP_JOBS = `
+IF OBJECT_ID(N'dbo.maintenance_backup_jobs', N'U') IS NULL
+CREATE TABLE dbo.maintenance_backup_jobs (
+ id BIGINT IDENTITY(1,1) PRIMARY KEY, target VARCHAR(20) NOT NULL,
+ frequency VARCHAR(20) NOT NULL, run_time CHAR(5) NOT NULL,
+ weekday TINYINT NULL, retention_days INT NOT NULL DEFAULT 30,
+ is_active BIT NOT NULL DEFAULT 0, last_status VARCHAR(20) NOT NULL DEFAULT 'idle',
+ last_error NVARCHAR(MAX) NULL, last_run_at DATETIME2 NULL,
+ next_run_at DATETIME2 NULL, created_by INT NULL,
+ created_at DATETIME2 NOT NULL DEFAULT GETDATE(),
+ updated_at DATETIME2 NOT NULL DEFAULT GETDATE()
+)`;
+const CREATE_WORKER_STATE = `
+IF OBJECT_ID(N'dbo.maintenance_worker_state', N'U') IS NULL
+CREATE TABLE dbo.maintenance_worker_state (
+ worker_key VARCHAR(80) PRIMARY KEY,
+ last_heartbeat_at DATETIME2 NOT NULL, detail VARCHAR(255) NULL
+)`;
+const CREATE_OPERATIONS = `
+IF OBJECT_ID(N'dbo.maintenance_operations', N'U') IS NULL
+CREATE TABLE dbo.maintenance_operations (
+ id BIGINT IDENTITY(1,1) PRIMARY KEY, action VARCHAR(80) NOT NULL,
+ target VARCHAR(40) NULL, actor_user_id INT NULL,
+ status VARCHAR(20) NOT NULL DEFAULT 'running', detail NVARCHAR(MAX) NULL,
+ created_at DATETIME2 NOT NULL DEFAULT GETDATE(), finished_at DATETIME2 NULL
+)`;
+const UNSUPPORTED_MARIADB_MAINTENANCE =
+ 'Esta operação de backup MariaDB está desabilitada no SQL Server. Use a rotina de backup nativa do SQL Server.';
 const CREATE_ROLES = [
   'CREATE TABLE IF NOT EXISTS roles (',
   '  id INT UNSIGNED NOT NULL AUTO_INCREMENT,',
@@ -586,11 +567,11 @@ function databaseUrl(_key: MaintenanceDatabaseKey): string {
 
 function connectionInfo(key: MaintenanceDatabaseKey) {
   const url = new URL(databaseUrl(key));
-  const database = decodeURIComponent(url.pathname.replace(/^\/+/, ''));
+  const database = url.searchParams.get('database') ?? decodeURIComponent(url.pathname.replace(/^\/+/, ''));
   if (!database) throw new Error('URL de ' + key + ' não informa o banco.');
   return {
     host: url.hostname,
-    port: url.port ? Number(url.port) : 3306,
+    port: url.port ? Number(url.port) : 1433,
     user: decodeURIComponent(url.username),
     password: decodeURIComponent(url.password),
     database,
@@ -775,6 +756,7 @@ export class MaintenanceService implements OnApplicationBootstrap {
         await this.nivel3.$executeRawUnsafe(
           "DELETE FROM maintenance_backup_jobs WHERE target = 'n3rd'",
         );
+        await this.nivel3.$executeRawUnsafe('UPDATE maintenance_backup_jobs SET is_active = 0 WHERE is_active = 1');
         await mkdir(backupRoot(), { recursive: true });
         await mkdir(importRoot(), { recursive: true });
       })().catch((error) => {
@@ -805,8 +787,8 @@ export class MaintenanceService implements OnApplicationBootstrap {
       this.listOperations(),
       this.workerStatus(),
       this.storageStatus(),
-      this.resolveTool('dump', false),
-      this.resolveTool('restore', false),
+      Promise.resolve(null),
+      Promise.resolve(null),
     ]);
 
     const memory = process.memoryUsage();
@@ -2098,7 +2080,7 @@ export class MaintenanceService implements OnApplicationBootstrap {
       const [versionRows, aggregateRows, tableRows] = await Promise.all([
         client.$queryRawUnsafe<
           Array<{ version: string; database_name: string }>
-        >('SELECT VERSION() AS version, DATABASE() AS database_name'),
+        >('SELECT CAST(@@VERSION AS NVARCHAR(4000)) AS version, DB_NAME() AS database_name'),
         client.$queryRawUnsafe<
           Array<{
             table_count: number | bigint | string;
