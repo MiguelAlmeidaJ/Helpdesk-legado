@@ -174,7 +174,7 @@ export class ExpenseComparisonRepository {
          CONVERT(VARCHAR(10), EOMONTH(GETDATE(), -1), 23)
            AS period1_end,
          CONVERT(VARCHAR(10), DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1), 23) AS period2_start,
-         CONVERT(VARCHAR(10), EOMONTH(GETDATE()), 23 AS period2_end`,
+         CONVERT(VARCHAR(10), EOMONTH(GETDATE()), 23) AS period2_end`,
     );
     const clock = rows[0];
     const previousFallback = fallbackPeriod(-1);
