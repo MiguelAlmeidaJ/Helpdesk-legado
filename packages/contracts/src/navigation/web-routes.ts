@@ -52,6 +52,7 @@ export const WEB_ROUTE_TRANSLATIONS = [
   ['/dashboard', '/painel'],
   ['/quality/commemorative-dates', '/qualidade/datas-comemorativas'],
   ['/quality/on-call', '/qualidade/plantao'],
+  ['/admin/on-call-permissions', '/administracao/permissoes-plantao'],
   ['/admin/access', '/administracao/permissoes'],
   ['/admin/user-functions', '/administracao/funcoes-usuarios'],
   ['/admin/user-permissions', '/administracao/permissoes-usuario'],
