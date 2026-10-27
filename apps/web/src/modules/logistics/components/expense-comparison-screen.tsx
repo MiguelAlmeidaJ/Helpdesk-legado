@@ -154,7 +154,7 @@ function ComparisonTable({
 }
 
 function monthRange(month: string): { start: string; end: string } {
-  const [year, number] = month.split('-').map(Number);
+  const [year = 0, number = 0] = month.split('-').map(Number);
   const lastDay = new Date(Date.UTC(year, number, 0)).getUTCDate();
   return { start: `${month}-01`, end: `${month}-${String(lastDay).padStart(2, '0')}` };
 }
