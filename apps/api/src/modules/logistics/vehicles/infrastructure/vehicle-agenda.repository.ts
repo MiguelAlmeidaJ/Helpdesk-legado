@@ -82,7 +82,7 @@ export class VehicleAgendaRepository {
 
   async userType(userId: number): Promise<number> {
     const rows = await this.database.$queryRawUnsafe<UserContextRow[]>(
-      'SELECT tipo_usuario FROM usuarios WHERE user_id = ? LIMIT 1',
+      'SELECT TOP (1) tipo_usuario FROM usuarios WHERE user_id = ?',
       userId,
     );
     return Number(rows[0]?.tipo_usuario ?? 0);
@@ -211,11 +211,11 @@ export class VehicleAgendaRepository {
 
   async scheduleById(id: number): Promise<HistoryRow | null> {
     const rows = await this.database.$queryRawUnsafe<HistoryRow[]>(
-      `SELECT id, data, horario, veiculo_id, data_anterior, horario_anterior,
+      `SELECT TOP (1) id, data, horario, veiculo_id, data_anterior, horario_anterior,
               veiculo_id_anterior, arquivado
        FROM agenda_veiculos
        WHERE id = ?
-       LIMIT 1`,
+       `,
       id,
     );
     return rows[0] ?? null;
@@ -374,13 +374,13 @@ export class VehicleAgendaRepository {
   async undoLast(userId: number): Promise<boolean> {
     return this.database.$transaction(async (transaction) => {
       const rows = await transaction.$queryRawUnsafe<HistoryRow[]>(
-        `SELECT id, data, horario, veiculo_id, data_anterior, horario_anterior,
+        `SELECT TOP (1) id, data, horario, veiculo_id, data_anterior, horario_anterior,
                 veiculo_id_anterior, arquivado
          FROM agenda_veiculos
          WHERE modificado_por_id = ?
            AND data_anterior IS NOT NULL
          ORDER BY ultima_alteracao DESC
-         LIMIT 1`,
+         `,
         userId,
       );
       const row = rows[0];
