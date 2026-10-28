@@ -20,7 +20,7 @@ import { downloadCsv, duration, reportError } from '../lib/report-export';
 
 const SOURCE_LABELS: Record<TicketReportSource, string> = {
   tickets: 'Atendimentos',
-  tasks: 'Tarefas',
+  tasks: 'Tarefas', projects: 'Projetos',
   improvements: 'Melhorias',
   unified: 'Unificado',
 };
@@ -74,6 +74,7 @@ function reportTitle(mode: 'analytics' | 'workload' | 'time', source: string, se
   if (mode === 'workload') return 'Tempo médio por técnico';
   if (mode === 'time') return 'Relatório de tempo por técnico';
   if (source === 'tasks') return 'Relatório de tarefas por Cliente';
+  if (source === 'projects') return 'Relatório de projetos por Cliente';
   if (source === 'unified') return 'Relatório unificado de atendimentos';
   if (source === 'improvements') return 'Relatório analítico de Melhorias';
   if (sector === '1') return 'Relatório de atendimentos da TI por Técnico';
@@ -98,6 +99,7 @@ function reportSubtitle(mode: 'analytics' | 'workload' | 'time', source: string)
 
 function reportHeading(report: TicketAnalyticsResponse) {
   if (report.filters.source === 'tasks') return 'Relatório analítico de tarefas por Cliente';
+  if (report.filters.source === 'projects') return 'Relatório analítico de projetos por Cliente';
   if (report.filters.source === 'unified') {
     const area = AREA_LABELS[report.filters.categorySector];
     return `Relatório analítico de Atendimentos Por Cliente${area ? ` - ${area}` : ''}`;
@@ -135,11 +137,13 @@ function chip(text: string) {
 
 export function TicketAnalyticsScreen({
   currentUser,
+  embedded = false,
   mode,
   initialSource = 'tickets',
   initialFilters = {},
 }: {
   currentUser: CurrentUserResponse;
+  embedded?: boolean;
   mode: 'analytics' | 'workload' | 'time';
   initialSource?: TicketReportSource;
   initialFilters?: Record<string, string>;
@@ -351,13 +355,14 @@ export function TicketAnalyticsScreen({
     [report],
   );
 
+  const Container = embedded ? 'section' : 'main';
   return (
-    <main className="min-h-screen bg-app-bg text-app-text print:bg-white">
-      <AppPageHeader
+    <Container className="min-h-screen bg-app-bg text-app-text print:bg-white">
+      {!embedded ? <AppPageHeader
         subtitle={reportSubtitle(mode, filters.source)}
         title={title}
         user={currentUser}
-      />
+      /> : null}
 
       <div className="mx-auto w-full max-w-[1550px] px-5 py-5 max-sm:px-3">
         {report ? <ReportSectorSummary value={report.filters.sector} coverage={report.sectorCoverage} /> : null}
@@ -733,7 +738,7 @@ export function TicketAnalyticsScreen({
                 >
                   <header className="border-b border-app-border-soft bg-app-surface-muted px-4 py-3">
                     <strong className="text-sm">
-                      {row.source === 'tasks' ? 'Tarefa' : row.source === 'improvements' ? 'Melhoria' : 'ATD'} #{row.id}
+                      {row.source === 'tasks' ? 'Tarefa' : row.source === 'projects' ? 'Projeto' : row.source === 'improvements' ? 'Melhoria' : 'ATD'} #{row.id}
                       {' | '}
                       {row.locationName || row.clientName}
                       {' | '}
@@ -784,6 +789,6 @@ export function TicketAnalyticsScreen({
           </section>
         ) : null}
       </div>
-    </main>
+    </Container>
   );
 }

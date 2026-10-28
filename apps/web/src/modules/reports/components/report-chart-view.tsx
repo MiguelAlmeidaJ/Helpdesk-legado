@@ -37,6 +37,7 @@ function pieRows(rows: ReportStackedBarRow[]) {
     level2: others.reduce((sum, row) => sum + row.level2, 0),
     level3: others.reduce((sum, row) => sum + row.level3, 0),
     total: others.reduce((sum, row) => sum + row.total, 0),
+    other: others.reduce((sum, row) => sum + (row.other ?? 0), 0),
   });
   return visible;
 }

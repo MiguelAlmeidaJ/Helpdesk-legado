@@ -36,7 +36,7 @@ export function analyticsFilters(query: Record<string, unknown>): TicketAnalytic
   const view = query.view ?? 'analytics';
   if (view !== 'analytics' && view !== 'time') throw new BadRequestException('view inválido.');
   const source = query.source ?? 'tickets';
-  if (typeof source !== 'string' || !['tickets', 'tasks', 'improvements', 'unified'].includes(source)) throw new BadRequestException('source inválido.');
+  if (typeof source !== 'string' || !['tickets', 'tasks', 'projects', 'improvements', 'unified'].includes(source)) throw new BadRequestException('source inválido.');
   for (const field of ['startDate', 'endDate']) {
     if (query[field] !== undefined && typeof query[field] !== 'string') throw new BadRequestException(`${field} inválido.`);
   }
@@ -46,6 +46,8 @@ export function analyticsFilters(query: Record<string, unknown>): TicketAnalytic
   if (level > 5) throw new BadRequestException('level deve estar entre 0 e 5.');
   const levels = reportIds(query.levels, 'levels');
   if (levels.some(value => value > 5)) throw new BadRequestException('levels deve conter apenas níveis entre 1 e 5.');
+  const projectId = reportId(query.projectId, 'projectId');
+  if (projectId && source !== 'tasks' && source !== 'projects') throw new BadRequestException('Projeto disponível apenas para tarefas ou projetos.');
   return {
     view,
     sector: reportSector(query.sector),
@@ -54,6 +56,7 @@ export function analyticsFilters(query: Record<string, unknown>): TicketAnalytic
     source: source as TicketReportSource,
     level,
     levels,
+    projectId,
     clientId: reportId(query.clientId, 'clientId'),
     clientIds: reportIds(query.clientIds, 'clientIds'),
     locationId: reportId(query.locationId, 'locationId'),
@@ -114,8 +117,10 @@ export class TicketAnalyticsController {
 
   @Get('catalog')
   @ApiOperation({ summary: 'Clientes, locais, técnicos e categorias disponíveis para relatórios' })
-  catalog(@CurrentUser() user: AuthenticatedUser | undefined, @Query('clientId') clientId?: string) {
-    return this.reports.catalog(reportUser(user), reportId(clientId, 'clientId'));
+  catalog(@CurrentUser() user: AuthenticatedUser | undefined, @Query('clientId') clientId?: string, @Query('projects') projects?: string) {
+    const includeProjects = reportId(projects, 'projects');
+    if (includeProjects > 1) throw new BadRequestException('projects inválido.');
+    return this.reports.catalog(reportUser(user), reportId(clientId, 'clientId'), false, includeProjects === 1);
   }
 
   @Get('technician-timing')

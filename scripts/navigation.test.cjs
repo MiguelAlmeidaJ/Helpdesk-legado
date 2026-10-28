@@ -13,6 +13,18 @@ const {
   portugueseWebHref,
 } = require('../packages/contracts/dist');
 
+test('reports navigation has four groups and preserves PDF permission', async () => {
+  const service = new NavigationService();
+  const admin = await service.forUser({ grants: [{ permission: 'system.admin' }], roleAssignments: [] });
+  const reports = admin.sections.find(section => section.id === 'reports');
+  assert.equal(reports.items.length, 4);
+  assert.deepEqual(reports.items.map(item => item.href), ['/relatorios/atendimentos', '/relatorios/tarefas-projetos', '/relatorios/atendimentos/tempo-aceite-conclusao', '/relatorios/arquivos']);
+  const reader = await service.forUser({ grants: [{ permission: 'reports.read' }], roleAssignments: [] });
+  assert.equal(reader.sections.find(section => section.id === 'reports').items.length, 3);
+  const pdf = await service.forUser({ grants: [{ permission: 'reports.pdf' }], roleAssignments: [] });
+  assert.deepEqual(pdf.sections.find(section => section.id === 'reports').items.map(item => item.href), ['/relatorios/arquivos']);
+});
+
 test('code navigation filters sections by RBAC permissions', async () => {
   const service = new NavigationService();
   const user = {

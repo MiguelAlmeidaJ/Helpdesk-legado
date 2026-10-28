@@ -9,6 +9,7 @@ import { appButtonClass } from '../../../shared/ui/button-styles';
 import { reportError } from '../lib/report-export';
 import { ReportSectorFilter } from './report-sector-filter';
 import type { ReportSector } from '@helpdesk/contracts';
+import { ReportSections } from './report-sections';
 import { ReportPdfPreview } from './report-pdf-preview';
 
 interface ArchivedReport { name: string; size: number; modifiedAt: string; expiresAt: string }
@@ -99,6 +100,7 @@ export function ReportArchiveScreen({ currentUser }: { currentUser: CurrentUserR
   return <main className="min-h-screen bg-app-bg text-app-text max-sm:[&>header]:flex-wrap max-sm:[&>header]:gap-2 max-sm:[&>header>div:last-child]:w-full">
     <AppPageHeader title="Relatórios gerados" subtitle="Gere PDFs por cliente e organize os arquivos disponíveis para download." user={currentUser} />
     <div className="mx-auto grid w-full max-w-[1400px] gap-6 px-6 py-7 max-sm:px-3.5">
+      <ReportSections active="pdf" user={currentUser} />
       <dl className="m-0 grid gap-3 sm:grid-cols-3">
         {[
           { label: 'PDFs disponíveis', value: files.length.toLocaleString('pt-BR'), icon: 'file' as const },

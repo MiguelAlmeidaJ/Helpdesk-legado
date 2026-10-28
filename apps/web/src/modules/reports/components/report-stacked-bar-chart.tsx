@@ -9,6 +9,7 @@ export type ReportStackedBarRow = {
   level2: number;
   level3: number;
   total: number;
+  other?: number;
 };
 
 function axisMax(value: number): number {
@@ -48,6 +49,7 @@ export function ReportStackedBarChart({
           <span className="inline-flex items-center gap-2"><i className="size-3 rounded-sm bg-blue-600" />Nível 1</span>
           <span className="inline-flex items-center gap-2"><i className="size-3 rounded-sm bg-amber-500" />Nível 2</span>
           <span className="inline-flex items-center gap-2"><i className="size-3 rounded-sm bg-red-600" />Nível 3</span>
+          {rows.some(row => row.other) ? <span className="inline-flex items-center gap-2"><i className="size-3 rounded-sm bg-slate-500" />Outros níveis</span> : null}
         </div>
 
         <div className="absolute inset-x-0 bottom-[78px] top-10">
@@ -97,6 +99,7 @@ export function ReportStackedBarChart({
                         {level3 >= 16 ? <b className="absolute inset-0 grid place-items-center text-[10px] text-white">{row.level3}</b> : null}
                       </span>
                     ) : null}
+                    {row.other ? <span className="relative block bg-slate-500" style={{ height: `${row.other / row.total * 100}%` }} /> : null}
                     <strong className="absolute -top-5 left-1/2 -translate-x-1/2 text-[11px] text-app-text-soft">
                       {row.total}
                     </strong>

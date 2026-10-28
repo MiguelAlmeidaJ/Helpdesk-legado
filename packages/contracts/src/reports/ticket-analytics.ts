@@ -1,4 +1,4 @@
-export type TicketReportSource = 'tickets' | 'tasks' | 'improvements' | 'unified';
+export type TicketReportSource = 'tickets' | 'tasks' | 'projects' | 'improvements' | 'unified';
 export type ReportSector = 'all' | 'ti' | 'devops';
 
 export interface TicketAnalyticsFilters {
@@ -16,6 +16,7 @@ export interface TicketAnalyticsFilters {
   status: number;
   level: number;
   levels?: number[];
+  projectId?: number;
 }
 
 export interface ReportOption { id: number; name: string }
@@ -24,6 +25,7 @@ export interface TicketReportCatalog {
   locations: ReportOption[];
   technicians: Array<ReportOption & { sector?: Exclude<ReportSector, 'all'> | null }>;
   categories: ReportOption[];
+  projects?: ReportOption[];
 }
 
 export interface TicketAnalyticsRow {
@@ -34,11 +36,16 @@ export interface TicketAnalyticsRow {
   locationName: string;
   locationAddress: string;
   requesterName: string;
+  requesterId?: number;
   technicianName: string;
   technicianId?: number;
   technicianFunction?: string;
   technicianSector?: Exclude<ReportSector, 'all'> | null;
+  title?: string;
+  projectId?: number | null;
+  projectName?: string;
   categoryName: string;
+  categoryId?: number;
   subcategoryName: string;
   itemName: string;
   type: number;

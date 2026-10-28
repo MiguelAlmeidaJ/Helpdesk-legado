@@ -54,8 +54,10 @@ function metricWidth(value: number | null, max: number): string {
 
 export function TicketTechnicianTimingReportScreen({
   currentUser,
+  embedded = false,
 }: {
   currentUser: CurrentUserResponse;
+  embedded?: boolean;
 }) {
   const [catalog, setCatalog] = useState<TicketReportCatalog>({
     clients: [],
@@ -210,13 +212,14 @@ export function TicketTechnicianTimingReportScreen({
     );
   }
 
+  const Container = embedded ? 'section' : 'main';
   return (
-    <main className="min-h-screen bg-app-bg text-app-text print:bg-white print:text-black">
-      <AppPageHeader
+    <Container className="min-h-screen bg-app-bg text-app-text print:bg-white print:text-black">
+      {!embedded ? <AppPageHeader
         subtitle="Compare quanto tempo cada técnico leva para aceitar e concluir os atendimentos."
         title="Tempo de aceite e conclusão"
         user={currentUser}
-      />
+      /> : null}
 
       <div className="mx-auto w-full max-w-[1550px] px-5 py-5 max-sm:px-3 print:max-w-none print:p-0">
         {data ? <ReportSectorSummary value={data.filters.sector} /> : null}
@@ -470,6 +473,6 @@ export function TicketTechnicianTimingReportScreen({
           Médias, medianas e P90 são calculados apenas com registros que possuem os horários necessários; não representam horas úteis nem descontam períodos de espera. O tempo para aceitar é calculado da abertura até o primeiro registro de Aceite do técnico atualmente responsável pelo chamado. O tempo para concluir usa o fechamento do chamado.
         </p>
       </div>
-    </main>
+    </Container>
   );
 }

@@ -3,7 +3,7 @@ import type { TicketAnalyticsFilters, TicketAnalyticsResponse, TicketReportCatal
 
 export abstract class TicketAnalyticsRepository {
   abstract analytics(userId: number, filters: TicketAnalyticsFilters): Promise<TicketAnalyticsResponse>;
-  abstract catalog(userId: number, clientId: number, technicalClientsOnly?: boolean): Promise<TicketReportCatalog>;
+  abstract catalog(userId: number, clientId: number, technicalClientsOnly?: boolean, includeProjects?: boolean): Promise<TicketReportCatalog>;
   abstract workload(userId: number, sector?: ReportSector): Promise<TechnicianWorkloadResponse>;
   abstract technicianTiming(userId: number, filters: TicketTechnicianTimingFilters): Promise<TicketTechnicianTimingResponse>;
 }

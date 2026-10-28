@@ -8,7 +8,7 @@ import { TicketAnalyticsRepository } from '../application/ports/ticket-analytics
 import { appendNumberInFilter, resolveTicketReportVisibility, type TicketReportVisibility } from './ticket-report-visibility';
 
 // Identifiers are fixed here; query values never become SQL identifiers.
-const TABLES = { tickets: 'atendimentos', tasks: 'tarefas', improvements: 'melhorias' } as const;
+const TABLES = { tickets: 'atendimentos', tasks: 'tarefas', projects: 'projetos', improvements: 'melhorias' } as const;
 const MAX_ROWS = 20000;
 
 function scope(where: string[], params: unknown[], visibility: TicketReportVisibility, column: string) {
@@ -30,6 +30,10 @@ export class PrismaTicketAnalyticsRepository extends TicketAnalyticsRepository {
       if (filters.view !== 'time') where.push('a.status > 0');
       const params: unknown[] = [filters.startDate, filters.endDate];
       appendReportSector(where, params, filters.sector);
+      if (filters.projectId && (source === 'tasks' || source === 'projects')) {
+        where.push(source === 'tasks' ? 'a.id_projeto = ?' : 'a.id = ?');
+        params.push(filters.projectId);
+      }
       scope(where, params, visibility, 'a.cliente');
       if (filters.clientIds.length) {
         appendNumberInFilter(where, params, 'a.cliente', filters.clientIds);
@@ -49,13 +53,17 @@ export class PrismaTicketAnalyticsRepository extends TicketAnalyticsRepository {
         }
       }
       // The unified legacy report filters TI levels and includes all tasks.
-      if (source !== 'tasks' && (filters.view !== 'time' || filters.level || filters.levels?.length)) appendNumberInFilter(where, params, 'a.nivel', filters.level ? [filters.level] : filters.levels?.length ? filters.levels : [1, 2, 3, 4, 5]);
+      if (source !== 'tasks' && source !== 'projects' && (filters.view !== 'time' || filters.level || filters.levels?.length)) appendNumberInFilter(where, params, 'a.nivel', filters.level ? [filters.level] : filters.levels?.length ? filters.levels : [1, 2, 3, 4, 5]);
       const result = await this.database.$queryRawUnsafe<TicketAnalyticsRow[]>(
         `SELECT a.id, '${source}' AS source, a.cliente AS clientId,
+          ${source === 'tasks' ? "COALESCE(a.nome_tarefa, '')" : source === 'projects' ? "COALESCE(a.nome_proj, '')" : "''"} AS title,
+          ${source === 'tasks' ? 'a.id_projeto' : source === 'projects' ? 'a.id' : 'NULL'} AS projectId,
+          ${source === 'tasks' ? "COALESCE(pr.nome_proj, '')" : source === 'projects' ? "COALESCE(a.nome_proj, '')" : "''"} AS projectName,
           COALESCE(c.clt_nomer, c.clt_nomef, '') AS clientName,
           COALESCE(l.local_nom, '') AS locationName,
           CONCAT_WS(', ', l.local_end, l.local_city, l.local_uf) AS locationAddress,
           COALESCE(p.pessoa_nom, '') AS requesterName, COALESCE(u.user_nome, 'Sem técnico') AS technicianName,
+          COALESCE(p.pessoa_id, 0) AS requesterId, COALESCE(cat.cat_id, 0) AS categoryId,
           COALESCE(u.user_id, 0) AS technicianId, COALESCE(rs_role.cargo_nome, '') AS technicianFunction,
           CASE WHEN ${NORMALIZED_REPORT_FUNCTION} IN (${sectorFunctionNames('ti').map(() => '?').join(', ')}) THEN 'ti'
             WHEN ${NORMALIZED_REPORT_FUNCTION} IN (${sectorFunctionNames('devops').map(() => '?').join(', ')}) THEN 'devops'
@@ -80,6 +88,7 @@ export class PrismaTicketAnalyticsRepository extends TicketAnalyticsRepository {
         LEFT JOIN pessoas p ON p.pessoa_id = a.pessoa
         LEFT JOIN usuarios u ON u.user_id = a.tecnico
         LEFT JOIN cargos_n3 rs_role ON rs_role.cargo_id = u.user_funcao
+        ${source === 'tasks' ? 'LEFT JOIN projetos pr ON pr.id = a.id_projeto AND pr.cliente = a.cliente' : ''}
         LEFT JOIN categorias cat ON cat.cat_id = a.categoria
         LEFT JOIN subcategorias sub ON sub.scat_id = a.subcategoria
         LEFT JOIN itens i ON i.itens_id = a.item
@@ -99,7 +108,7 @@ export class PrismaTicketAnalyticsRepository extends TicketAnalyticsRepository {
     return { filters, generatedAt: new Date().toISOString(), total: rows.length, rows, sectorCoverage };
   }
 
-  async catalog(userId: number, clientId: number, technicalClientsOnly = false): Promise<TicketReportCatalog> {
+  async catalog(userId: number, clientId: number, technicalClientsOnly = false, includeProjects = false): Promise<TicketReportCatalog> {
     const visibility = await resolveTicketReportVisibility(this.database, userId);
     const where = ['c.clt_sts = 1'];
     if (technicalClientsOnly) where.push('(c.clt_ti = 1 OR c.clt_adm = 1)');
@@ -120,7 +129,13 @@ export class PrismaTicketAnalyticsRepository extends TicketAnalyticsRepository {
            WHERE cat_sts = 1
            ORDER BY cat_nome`,
         );
-    return { clients, locations, technicians, categories };
+    const projectWhere = ['a.status > 0'];
+    const projectParams: unknown[] = [];
+    scope(projectWhere, projectParams, visibility, 'a.cliente');
+    if (clientId) { projectWhere.push('a.cliente = ?'); projectParams.push(clientId); }
+    const projects = includeProjects ? await this.database.$queryRawUnsafe<ReportOption[]>(
+      `SELECT a.id AS id, COALESCE(NULLIF(a.nome_proj, ''), CONCAT('Projeto #', a.id)) AS name FROM projetos a WHERE ${projectWhere.join(' AND ')} ORDER BY a.nome_proj, a.id`, ...projectParams) : undefined;
+    return { clients, locations, technicians, categories, ...(projects ? { projects } : {}) };
   }
 
   async technicianTiming(

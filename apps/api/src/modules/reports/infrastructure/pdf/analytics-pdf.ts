@@ -1,7 +1,7 @@
 import { Buffer } from 'node:buffer';
 import { TICKET_STATUS_LABELS, type TicketAnalyticsResponse, type TicketStatus } from '@helpdesk/contracts';
 
-const SOURCE_LABELS = { tickets: 'Atendimentos', tasks: 'Tarefas', improvements: 'Melhorias', unified: 'Unificado' };
+const SOURCE_LABELS = { tickets: 'Atendimentos', tasks: 'Tarefas', projects: 'Projetos', improvements: 'Melhorias', unified: 'Unificado' };
 const AREA_LABELS: Record<number, string> = { 1: 'Suporte T.I', 2: 'Marketing', 3: 'ADM / DevOps' };
 
 function wrap(text: string, width = 100): string[] {
@@ -33,6 +33,7 @@ export function analyticsPdf(report: TicketAnalyticsResponse): Buffer {
   for (const row of report.rows) {
     for (const line of [
       `${SOURCE_LABELS[row.source]} #${row.id} | ${row.clientName} | Status: ${TICKET_STATUS_LABELS[row.status as TicketStatus] ?? row.status}`,
+      ...(row.title || row.projectName ? [`Título: ${row.title ?? ''} | Projeto: ${row.projectName ?? ''}`] : []),
       `Local: ${row.locationName} | ${row.locationAddress}`,
       `Solicitante: ${row.requesterName} | Técnico: ${row.technicianName}`,
       `Abertura: ${row.openedAt} | Fechamento: ${row.closedAt ?? '-'} | Nível: ${row.level} | Tipo: ${row.type} | Forma: ${row.method}`,

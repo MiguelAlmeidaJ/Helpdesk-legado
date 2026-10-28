@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { requireAuthenticatedUser } from '../../../../modules/access/server/current-user';
-import { TicketTechnicianTimingReportScreen } from '../../../../modules/reports/components/ticket-technician-timing-report-screen';
+import { ReportTimeCenterScreen } from '../../../../modules/reports/components/report-time-center-screen';
 
 export const metadata: Metadata = {
   title: 'Tempo de aceite e conclusão · Relatórios · Helpdesk',
@@ -12,5 +12,5 @@ export default async function TechnicianTimingReportPage() {
     '/relatorios/atendimentos/tempo-aceite-conclusao',
   );
 
-  return <TicketTechnicianTimingReportScreen currentUser={currentUser} />;
+  return <ReportTimeCenterScreen currentUser={currentUser} />;
 }

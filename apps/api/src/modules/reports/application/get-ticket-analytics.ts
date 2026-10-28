@@ -7,7 +7,7 @@ import { TicketAnalyticsRepository } from './ports/ticket-analytics.repository';
 export class GetTicketAnalytics {
   constructor(private readonly repository: TicketAnalyticsRepository) {}
   analytics(userId: number, filters: TicketAnalyticsFilters) { return this.repository.analytics(userId, filters); }
-  catalog(userId: number, clientId: number, technicalClientsOnly = false) { return this.repository.catalog(userId, clientId, technicalClientsOnly); }
+  catalog(userId: number, clientId: number, technicalClientsOnly = false, includeProjects = false) { return this.repository.catalog(userId, clientId, technicalClientsOnly, includeProjects); }
   workload(userId: number, sector?: ReportSector) { return this.repository.workload(userId, sector); }
   technicianTiming(userId: number, filters: TicketTechnicianTimingFilters) {
     return this.repository.technicianTiming(userId, filters);
