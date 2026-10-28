@@ -47,13 +47,14 @@ test('simplified cadastro and logistics slugs translate to native grants', () =>
     snapshot([
       'cadastros.clientes.visualizar',
       'logistica.agenda.agendar',
-      'logistica.rd.criar',
+      'logistica.rd.acessar',
     ]),
   );
 
   const permissions = new Set(user.grants.map((grant) => grant.permission));
   assert.equal(permissions.has(AppPermission.RegistrationsClientsRead), true);
-  assert.equal(permissions.has(AppPermission.LogisticsVehicleAgendaManage), true);
+  assert.equal(permissions.has(AppPermission.LogisticsVehicleAgendaRead), true);
+  assert.equal(permissions.has(AppPermission.LogisticsVehicleAgendaManage), false);
   assert.equal(permissions.has(AppPermission.LogisticsExpensesManage), true);
 });
 
@@ -80,10 +81,8 @@ test('reports and finance use dedicated permissions', () => {
   const user = translateRbacAccess(
     legacySession,
     snapshot([
-      'relatorios.visualizar',
-      'relatorios.gerar_pdf',
-      'financeiro.visualizar',
-      'financeiro.editar',
+      'relatorios.acessar',
+      'financeiro.acessar',
     ]),
   );
 
@@ -96,19 +95,28 @@ test('reports and finance use dedicated permissions', () => {
 });
 
 
-test('user administration permissions translate independently', () => {
+test('delegated user administration permissions cannot grant global user management', () => {
   const user = translateRbacAccess(
     legacySession,
     snapshot([
       'usuarios.editar',
       'usuarios.atribuir_tipo',
       'usuarios.permissoes_usuario',
+      'usuarios.criar',
+      'usuarios.permissoes_extras',
     ]),
   );
 
   const permissions = new Set(user.grants.map((grant) => grant.permission));
-  assert.equal(permissions.has(AppPermission.UsersEdit), true);
-  assert.equal(permissions.has(AppPermission.UsersAssignRole), true);
-  assert.equal(permissions.has(AppPermission.UsersManageOverrides), true);
+  assert.equal(permissions.has(AppPermission.UsersCreate), false);
+  assert.equal(permissions.has(AppPermission.UsersEdit), false);
+  assert.equal(permissions.has(AppPermission.UsersAssignRole), false);
+  assert.equal(permissions.has(AppPermission.UsersManageOverrides), false);
   assert.equal(permissions.has(AppPermission.UsersManageAccess), false);
+});
+
+test('only the system-admin role grants user management', () => {
+  const access = snapshot(); access.roleSlugs = ['system-admin'];
+  const permissions = new Set(translateRbacAccess(legacySession, access).grants.map(grant => grant.permission));
+  for (const permission of [AppPermission.SystemAdmin, AppPermission.UsersCreate, AppPermission.UsersEdit, AppPermission.UsersManageOverrides]) assert.equal(permissions.has(permission), true);
 });

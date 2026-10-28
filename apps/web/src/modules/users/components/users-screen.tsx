@@ -131,9 +131,9 @@ export function UsersScreen({ currentUser }: { currentUser: CurrentUserResponse 
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [companyQuery, setCompanyQuery] = useState('');
-  const canCreate = can(currentUser, AppPermission.UsersCreate);
-  const canEdit = can(currentUser, AppPermission.UsersEdit);
-  const canSetExtras = can(currentUser, AppPermission.UsersManageOverrides);
+  const canCreate = can(currentUser, AppPermission.SystemAdmin);
+  const canEdit = canCreate;
+  const canSetExtras = canCreate;
 
   async function load(signal?: AbortSignal) {
     setLoading(true);
@@ -167,7 +167,7 @@ export function UsersScreen({ currentUser }: { currentUser: CurrentUserResponse 
     return () => controller.abort();
   }, [page, appliedSearch, statusFilter, functionFilter]);
 
-  const title = selectedId ? `Editar usuário #${selectedId}` : 'Novo usuário';
+  const title = selectedId ? `${canEdit ? 'Editar' : 'Consultar'} usuário #${selectedId}` : canCreate ? 'Novo usuário' : 'Consulta de usuários';
   const visibleCompanies = useMemo(() => {
     const query = companyQuery.trim().toLocaleLowerCase('pt-BR');
     const companies = catalogs?.companies ?? [];
@@ -277,6 +277,7 @@ export function UsersScreen({ currentUser }: { currentUser: CurrentUserResponse 
 
           <section className={styles.editor}>
             <h2>{title}</h2>
+            <p>Somente administradores globais podem cadastrar, editar ou desativar usuários. Para conceder esse acesso, selecione a função Administrador global.</p>
             {!selectedId && !canCreate ? <p>Selecione um usuário para consultar.</p> : (
               <form onSubmit={save}>
                 <div className={styles.grid}>

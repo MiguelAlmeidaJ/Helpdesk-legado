@@ -14,6 +14,8 @@
     "access:audit": "pnpm --filter @helpdesk/database access:audit",
     "access:bootstrap": "pnpm --filter @helpdesk/database access:bootstrap",
     "access:grant-system-admin": "pnpm --filter @helpdesk/database access:grant-system-admin",
+    "access:provision-global-admin": "node scripts/provision-global-admin.cjs",
+    "test:global-admin": "node --test scripts/global-admin.test.cjs",
     "navigation:bootstrap": "pnpm --filter @helpdesk/database navigation:bootstrap",
     "users:bootstrap": "pnpm --filter @helpdesk/database users:bootstrap",
     "tickets:bootstrap": "pnpm --filter @helpdesk/database tickets:bootstrap",

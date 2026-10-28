@@ -1,4 +1,4 @@
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, ForbiddenException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import type {
   AccessPermissionItem,
   CreateManagedUserRequest,
@@ -278,6 +278,7 @@ export class UsersRepository {
   ): Promise<number> {
     return this.database.$transaction(async (transaction) => {
       await this.assertFunctionExists(transaction, input.functionId);
+      await this.lockGlobalAdministration(transaction, assignedBy);
       const ids = await transaction.$queryRawUnsafe<InsertIdRow[]>(
         `INSERT INTO usuarios
           (user_sts, user_nome, user_mail, user_cel, user_funcao, user_login,
@@ -289,6 +290,7 @@ export class UsersRepository {
         input.pixKey ?? '', input.observation ?? '',
       );
       const id = Number(ids[0]?.id);
+      await this.syncGlobalAdminRole(transaction, id, input.functionId, assignedBy);
       await this.replaceCompanies(transaction, id, input.companyIds ?? []);
       if (canManageAccess) {
         await this.replaceExtraPermissions(transaction, id, input.extraPermissionIds ?? [], assignedBy, input.functionId);
@@ -305,6 +307,9 @@ export class UsersRepository {
   ): Promise<boolean> {
     return this.database.$transaction(async (transaction) => {
       await this.assertFunctionExists(transaction, input.functionId);
+      await this.lockGlobalAdministration(transaction, assignedBy);
+      const globalFunction = await this.isGlobalFunction(transaction, input.functionId);
+      if (input.status !== 1 || !globalFunction) await this.assertAnotherGlobalAdmin(transaction, id);
       const changed = await transaction.$executeRawUnsafe(
         `UPDATE usuarios SET user_sts = ?, user_nome = ?, user_mail = ?,
           user_cel = ?, user_funcao = ?, user_login = ?, tipo_usuario = ?,
@@ -315,6 +320,7 @@ export class UsersRepository {
         input.pixKey ?? '', input.observation ?? '', id,
       );
       if (changed === 0) return false;
+      await this.syncGlobalAdminRole(transaction, id, input.functionId, assignedBy);
       await this.replaceCompanies(transaction, id, input.companyIds ?? []);
       if (canManageAccess && input.extraPermissionIds !== undefined) {
         await this.replaceExtraPermissions(transaction, id, input.extraPermissionIds, assignedBy, input.functionId);
@@ -330,12 +336,65 @@ export class UsersRepository {
     if (!rows.length) throw new NotFoundException('A função selecionada não existe mais. Atualize o cadastro e escolha outra função.');
   }
 
-  async deactivate(id: number): Promise<boolean> {
-    const changed = await this.database.$executeRawUnsafe(
-      'UPDATE usuarios SET user_sts = 2 WHERE user_id = ? AND user_sts <> 2',
-      id,
+  async deactivate(id: number, actorId: number): Promise<boolean> {
+    return this.database.$transaction(async transaction => {
+      await this.lockGlobalAdministration(transaction, actorId);
+      await this.assertAnotherGlobalAdmin(transaction, id);
+      return (await transaction.$executeRawUnsafe(
+        'UPDATE usuarios SET user_sts = 2 WHERE user_id = ? AND user_sts <> 2', id,
+      )) > 0;
+    });
+  }
+
+  // Serializes administrator changes and rechecks the actor against current database state.
+  private async lockGlobalAdministration(tx: Pick<Nivel3DatabaseClient, '$queryRawUnsafe'>, actorId: number) {
+    await tx.$queryRawUnsafe("SELECT id FROM dbo.roles WITH (UPDLOCK, HOLDLOCK) WHERE slug = 'system-admin'");
+    const actors = await tx.$queryRawUnsafe<Array<{ user_id: number }>>(
+      `SELECT u.user_id FROM dbo.usuarios u LEFT JOIN dbo.cargos_n3 c ON c.cargo_id = u.user_funcao
+       WHERE u.user_id = @P1 AND u.user_sts = 1 AND
+       ((c.is_global_admin = 1 AND c.cargo_sts = 1) OR EXISTS
+        (SELECT 1 FROM dbo.user_roles ur JOIN dbo.roles r ON r.id = ur.role_id
+         WHERE ur.user_id = u.user_id AND r.slug = 'system-admin'))`, actorId,
     );
-    return changed > 0;
+    if (!actors.length) throw new ForbiddenException('Somente administradores globais podem gerenciar usuários.');
+  }
+
+  private async isGlobalFunction(tx: Pick<Nivel3DatabaseClient, '$queryRawUnsafe'>, functionId: number) {
+    const rows = await tx.$queryRawUnsafe<Array<{ is_global_admin: boolean }>>(
+      'SELECT is_global_admin FROM dbo.cargos_n3 WHERE cargo_id = @P1 AND cargo_sts = 1', functionId,
+    );
+    return Boolean(rows[0]?.is_global_admin);
+  }
+
+  private async assertAnotherGlobalAdmin(tx: Pick<Nivel3DatabaseClient, '$queryRawUnsafe'>, excludedId: number) {
+    const rows = await tx.$queryRawUnsafe<Array<{ user_id: number }>>(
+      `SELECT TOP (1) u.user_id FROM dbo.usuarios u
+       LEFT JOIN dbo.cargos_n3 c ON c.cargo_id = u.user_funcao
+       WHERE u.user_sts = 1 AND u.user_id <> @P1 AND
+       ((c.is_global_admin = 1 AND c.cargo_sts = 1) OR EXISTS
+        (SELECT 1 FROM dbo.user_roles ur JOIN dbo.roles r ON r.id = ur.role_id
+         WHERE ur.user_id = u.user_id AND r.slug = 'system-admin'))`, excludedId,
+    );
+    if (!rows.length) throw new ConflictException('Mantenha pelo menos um administrador global ativo.');
+  }
+
+  private async syncGlobalAdminRole(
+    tx: Pick<Nivel3DatabaseClient, '$queryRawUnsafe' | '$executeRawUnsafe'>,
+    userId: number, functionId: number, actorId: number,
+  ) {
+    if (await this.isGlobalFunction(tx, functionId)) {
+      await tx.$executeRawUnsafe(
+        `INSERT INTO dbo.user_roles (user_id, role_id, assigned_by)
+         SELECT @P1, r.id, @P2 FROM dbo.roles r WHERE r.slug = 'system-admin'
+         AND NOT EXISTS (SELECT 1 FROM dbo.user_roles ur WHERE ur.user_id = @P1 AND ur.role_id = r.id)`,
+        userId, actorId,
+      );
+    } else {
+      await tx.$executeRawUnsafe(
+        `DELETE ur FROM dbo.user_roles ur JOIN dbo.roles r ON r.id = ur.role_id
+         WHERE ur.user_id = @P1 AND r.slug = 'system-admin'`, userId,
+      );
+    }
   }
 
   private async companiesByUserIds(ids: number[]): Promise<Map<number, UserOption[]>> {

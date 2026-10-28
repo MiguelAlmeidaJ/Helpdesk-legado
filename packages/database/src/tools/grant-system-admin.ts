@@ -100,6 +100,16 @@ async function main() {
           VALUES (${userId}, ${roleId}, NULL)
         `;
       }
+      // Keep the visible function in sync when the new structure is provisioned.
+      const columns = await tx.$queryRawUnsafe<Array<{ present: number }>>(
+        "SELECT CASE WHEN COL_LENGTH('dbo.cargos_n3','is_global_admin') IS NULL THEN 0 ELSE 1 END AS present",
+      );
+      if (columns[0]?.present) {
+        await tx.$executeRawUnsafe(
+          `UPDATE usuarios SET user_funcao = (SELECT cargo_id FROM cargos_n3 WHERE is_global_admin=1 AND cargo_sts=1)
+           WHERE user_id=@P1 AND EXISTS (SELECT 1 FROM cargos_n3 WHERE is_global_admin=1 AND cargo_sts=1)`, userId,
+        );
+      }
     });
 
     console.log('Administrador global configurado com sucesso.');

@@ -56,7 +56,11 @@ export class RbacAccessRepository {
         INNER JOIN roles r ON r.id = ur.role_id
         WHERE ur.user_id = ${userId}
           AND r.slug = 'system-admin'
-        ORDER BY r.id
+        UNION
+        SELECT 'system-admin' AS slug
+        FROM usuarios u
+        INNER JOIN cargos_n3 c ON c.cargo_id = u.user_funcao
+        WHERE u.user_id = ${userId} AND c.is_global_admin = 1 AND c.cargo_sts = 1
       `,
       this.database.$queryRaw<PermissionRow[]>`
         SELECT DISTINCT p.slug

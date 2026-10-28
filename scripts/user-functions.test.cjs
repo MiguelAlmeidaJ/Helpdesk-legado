@@ -57,10 +57,11 @@ test('SQL Server: deletion blocks active users, detaches inactive accounts and r
   await assert.rejects(sql.$transaction(async driver=>{
    // Unique global temporary tables survive prepared RPC scope; rollback removes them.
    const tx={$queryRawUnsafe:(query,...values)=>driver.$queryRawUnsafe(temporary(query),...values),$executeRawUnsafe:(query,...values)=>driver.$executeRawUnsafe(temporary(query),...values)};
-   await tx.$executeRawUnsafe('CREATE TABLE #function_fixture(cargo_id int PRIMARY KEY);');
+   await tx.$executeRawUnsafe('CREATE TABLE #function_fixture(cargo_id int PRIMARY KEY,is_global_admin bit NOT NULL DEFAULT(0));');
    await tx.$executeRawUnsafe('CREATE TABLE #user_fixture(user_id int PRIMARY KEY,user_sts int NULL,user_funcao int NULL,name nvarchar(50));');
    await tx.$executeRawUnsafe('CREATE TABLE #role_fixture(slug nvarchar(120) PRIMARY KEY);');
-   await tx.$executeRawUnsafe('INSERT INTO #function_fixture VALUES(1),(2),(3),(4),(5);');
+   await tx.$executeRawUnsafe('INSERT INTO #function_fixture(cargo_id) VALUES(1),(2),(3),(4),(5);');
+   await tx.$executeRawUnsafe('INSERT INTO #function_fixture VALUES(6,1);');
    await tx.$executeRawUnsafe("INSERT INTO #user_fixture VALUES(10,2,2,N'Preserved'),(11,NULL,2,N'Unknown status'),(12,1,3,N'Active'),(13,2,3,N'Inactive sibling'),(14,1,4,N'Unrelated'),(15,2,5,N'Rollback account');");
    await tx.$executeRawUnsafe("INSERT INTO #role_fixture VALUES('function-1'),('function-2'),('function-3'),('function-4'),('function-5');");
    const map=query=>{
@@ -75,6 +76,7 @@ test('SQL Server: deletion blocks active users, detaches inactive accounts and r
     async $transaction(work){await tx.$executeRawUnsafe('SAVE TRANSACTION function_fixture_savepoint');try{return await work(database);}catch(error){await tx.$executeRawUnsafe('ROLLBACK TRANSACTION function_fixture_savepoint');throw error;}},
    };
    const repository=new UserFunctionsRepository(database);
+   await assert.rejects(repository.remove(6),error=>error.getStatus()===409);
    await assert.rejects(repository.remove(3),error=>error.getStatus()===409);
    assert.equal((await tx.$queryRawUnsafe('SELECT * FROM #user_fixture WHERE user_funcao=3')).length,2);
    await repository.remove(1);assert.equal((await tx.$queryRawUnsafe('SELECT * FROM #function_fixture WHERE cargo_id=1')).length,0);

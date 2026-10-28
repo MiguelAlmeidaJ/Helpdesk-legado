@@ -28,6 +28,7 @@ export function SessionUserMenu({ user }: { user: CurrentUserResponse }) {
   const [error, setError] = useState<string | null>(null);
 
   const roleLabel = useMemo(() => {
+    if (user.grants.some(grant => grant.permission === AppPermission.SystemAdmin)) return 'Administrador global';
     const onCallTi = user.grants.some(
       (grant) => grant.permission === AppPermission.OnCallTi,
     );

@@ -11,6 +11,7 @@ import { NIVEL3_DATABASE } from '../../../core/database/database.constants';
 
 type FunctionRow = {
   id: number | bigint;
+  is_global_admin: boolean;
   name: string | null;
   status: number | null;
   active_user_count: number | bigint;
@@ -47,13 +48,14 @@ export class UserFunctionsRepository {
   async list(): Promise<UserFunctionSummary[]> {
     const rows = await this.database.$queryRawUnsafe<FunctionRow[]>(
       `SELECT c.cargo_id AS id,
+              c.is_global_admin,
               c.cargo_nome AS name,
               c.cargo_sts AS status,
               SUM(CASE WHEN u.user_sts = 1 THEN 1 ELSE 0 END) AS active_user_count,
               COUNT(u.user_id) AS linked_user_count
        FROM cargos_n3 c
        LEFT JOIN usuarios u ON u.user_funcao = c.cargo_id
-       GROUP BY c.cargo_id, c.cargo_nome, c.cargo_sts
+       GROUP BY c.cargo_id, c.cargo_nome, c.cargo_sts, c.is_global_admin
        ORDER BY c.cargo_sts DESC, c.cargo_nome ASC, c.cargo_id ASC`,
     );
 
@@ -71,6 +73,7 @@ export class UserFunctionsRepository {
     }
     return rows.map((row) => ({
       id: Number(row.id),
+      isGlobalAdmin: Boolean(row.is_global_admin),
       name: row.name?.trim() || `Função #${Number(row.id)}`,
       status: row.status === 1 ? 1 : 2,
       activeUserCount: Number(row.active_user_count ?? 0),
@@ -103,9 +106,9 @@ export class UserFunctionsRepository {
   }
 
   async update(id: number, input: UserFunctionInput): Promise<UserFunctionMutationResponse> {
-    await this.assertExists(id);
     await this.assertNameAvailable(input.name, id);
     await this.database.$transaction(async (transaction) => {
+      await this.assertEditable(transaction, id);
       await transaction.$executeRawUnsafe(
         'UPDATE cargos_n3 SET cargo_nome = ?, cargo_sts = ? WHERE cargo_id = ?', input.name, input.status, id,
       );
@@ -116,10 +119,7 @@ export class UserFunctionsRepository {
 
   async remove(id: number): Promise<void> {
     await this.database.$transaction(async (transaction) => {
-      const functions = await transaction.$queryRawUnsafe<IdRow[]>(
-        'SELECT cargo_id AS id FROM dbo.cargos_n3 WITH (XLOCK, HOLDLOCK) WHERE cargo_id = @P1', id,
-      );
-      if (!functions[0]) throw new NotFoundException('Função de usuário não encontrada.');
+      await this.assertEditable(transaction, id);
       const users = await transaction.$queryRawUnsafe<Array<{ user_sts: number | null }>>(
         'SELECT user_sts FROM dbo.usuarios WITH (UPDLOCK, HOLDLOCK) WHERE user_funcao = @P1', id,
       );
@@ -134,12 +134,13 @@ export class UserFunctionsRepository {
     });
   }
 
-  private async assertExists(id: number): Promise<void> {
-    const rows = await this.database.$queryRawUnsafe<IdRow[]>(
-      'SELECT cargo_id AS id FROM cargos_n3 WHERE cargo_id = ? LIMIT 1',
+  private async assertEditable(transaction: Pick<Nivel3DatabaseClient, '$queryRawUnsafe'>, id: number): Promise<void> {
+    const rows = await transaction.$queryRawUnsafe<Array<{ id: number; is_global_admin: boolean }>>(
+      'SELECT cargo_id AS id, is_global_admin FROM dbo.cargos_n3 WITH (XLOCK, HOLDLOCK) WHERE cargo_id = @P1',
       id,
     );
     if (!rows[0]) throw new NotFoundException('Função de usuário não encontrada.');
+    if (rows[0].is_global_admin) throw new ConflictException('A função Administrador global é protegida e não pode ser alterada ou excluída.');
   }
 
   private async assertNameAvailable(name: string, ignoredId?: number): Promise<void> {

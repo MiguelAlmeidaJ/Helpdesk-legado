@@ -79,6 +79,7 @@ export interface UpdateManagedUserRequest {
 
 export interface UserFunctionSummary {
   id: number;
+  isGlobalAdmin: boolean;
   name: string;
   status: 1 | 2;
   activeUserCount: number;

@@ -17,6 +17,7 @@ const state={calls:[],errors:[],confirmations:[],inactiveUsers:[{id:201,function
  {id:3,name:'Projetos',status:2,activeUserCount:1,linkedUserCount:2,permissionIds:[1]},
  {id:4,name:'Financeiro',status:1,activeUserCount:35,linkedUserCount:35,permissionIds:[3]},
  {id:5,name:'Arquivo',status:1,activeUserCount:0,linkedUserCount:2,permissionIds:[]},
+ {id:6,name:'Administrador global',status:1,isGlobalAdmin:true,activeUserCount:0,linkedUserCount:0,permissionIds:[]},
 ],users:[{id:1,name:'Ana Martins',login:'ana.martins',functionId:1},{id:2,name:'João Pereira',login:'joao.pereira',functionId:1},{id:3,name:'Marina Costa',login:'marina.costa',functionId:3},
  ...Array.from({length:35},(_,i)=>({id:10+i,name:'Profissional '+String(i+1).padStart(2,'0'),login:'financeiro.'+(i+1),functionId:4})),
  {id:101,name:'Nina Oliveira',login:'nina',functionId:null},{id:102,name:'Lucas Santos',login:'lucas',functionId:null},{id:103,name:'Pedro Lima',login:'pedro',functionId:null}]};
@@ -26,6 +27,9 @@ function fixture(url,method,body){
  if(pathname.endsWith('/auth/me'))return user;
  if(pathname.endsWith('/notifications'))return {items:[],unreadCount:0,total:0};
  if(pathname.endsWith('/navigation'))return {sections:[]};
+ if(pathname.endsWith('/users/catalogs'))return {functions:[{id:6,name:'Administrador global'}],functionPermissionIds:{},companies:[],pixKeyTypes:[],permissions:[]};
+ if(pathname.endsWith('/users'))return {data:[{id:99,name:'Fixture account',login:'fixture.account',email:'fixture@example.test',status:1}],meta:{page:1,limit:50,total:1,totalPages:1}};
+ if(pathname.endsWith('/users/99'))return {id:99,name:'Fixture account',login:'fixture.account',email:'fixture@example.test',phone:'11999999999',status:1,type:1,function:{id:6,name:'Administrador global'},companies:[],extraPermissionIds:[],link:'',pixKeyType:null,pixKey:'',observation:''};
  if(pathname.endsWith('/user-functions/active-users'))return{users:state.users,activeUserCount:state.users.length,assignedActiveUserCount:state.users.filter(u=>u.functionId!==null).length,unassignedActiveUserCount:state.users.filter(u=>u.functionId===null).length};
  if(pathname.endsWith('/user-functions/permissions'))return[
   {id:1,name:'Visualizar atendimentos',slug:'atendimentos.visualizar',module:'Atendimentos',description:'Consultar os atendimentos disponíveis.'},
@@ -89,6 +93,20 @@ async function main(){
   assert.equal(await cdp.evaluate("[...document.querySelectorAll('section[aria-labelledby=function-details-title] button')].find(b=>b.textContent==='Excluir função').disabled"),false);
   await click('Excluir função');await wait("!document.querySelector('section[aria-labelledby=function-details-title]')");
   assert.equal(state.inactiveUsers.length,2);assert.ok(state.inactiveUsers.every(user=>user.functionId===null));assert.ok(state.confirmations.some(text=>text.includes('2 cadastros vinculados')&&text.includes('preservados')));
+  await cdp.evaluate("[...document.querySelectorAll('button[aria-pressed]')].find(b=>b.innerText.includes('Administrador global')).click()");
+  await wait("document.querySelector('section[aria-labelledby=function-details-title]').innerText.includes('Função protegida')");
+  for(const label of ['Editar função','Excluir função']) assert.equal(await cdp.evaluate(`[...document.querySelectorAll('section[aria-labelledby=function-details-title] button')].find(b=>b.textContent===${JSON.stringify(label)}).disabled`),true);
+  await cdp.send('Page.navigate',{url:'http://localhost:'+webPort+'/users'});
+  await wait("[...document.querySelectorAll('button')].some(b=>b.textContent==='Novo usuário') && [...document.querySelectorAll('option')].some(o=>o.textContent==='Administrador global')");
+  assert.equal(await cdp.evaluate("[...document.querySelectorAll('option')].some(o=>o.textContent==='Administrador global')"),true);
+  user.grants=['users.read','users.create','users.edit','users.manage-overrides'].map(permission=>({permission,scope:'all'}));
+  await cdp.send('Page.navigate',{url:'http://localhost:'+webPort+'/users'});
+  await wait("document.body.innerText.includes('Consulta de usuários') && [...document.querySelectorAll('button')].some(b=>b.textContent.includes('Fixture account'))");
+  assert.equal(await cdp.evaluate("[...document.querySelectorAll('button')].some(b=>b.textContent==='Novo usuário')"),false);
+  await cdp.evaluate("[...document.querySelectorAll('button')].find(b=>b.textContent.includes('Fixture account')).click()");
+  await wait("document.querySelector('h2').textContent==='Consultar usuário #99'");
+  assert.equal(await cdp.evaluate("[...document.querySelector('h2').parentElement.querySelectorAll('input,select,textarea')].every(input=>input.disabled)"),true);
+  assert.equal(await cdp.evaluate("[...document.querySelectorAll('button')].some(b=>['Salvar usuário','Desativar'].includes(b.textContent))"),false);
   assert.ok(state.calls.some(c=>c.method==='POST'&&c.body?.permissionIds?.includes(1)));assert.ok(state.calls.some(c=>c.method==='PATCH'));assert.ok(state.calls.some(c=>c.method==='DELETE'));assert.deepEqual(state.errors,[]);
   console.log(JSON.stringify({ui:true,defaultFormClosed:true,activeMembers:true,unassigned:true,search:true,pagination:true,keyboardEscapeAndFocus:true,mobile:true,createEditDelete:'fixtures only',consoleExceptions:0}));
  }finally{

@@ -9,8 +9,6 @@ import type { RbacAccessSnapshot } from '../domain/rbac-access-snapshot';
 
 const P = {
   usersRead: 'usuarios.visualizar',
-  usersCreate: 'usuarios.criar',
-  usersManageOverrides: 'usuarios.permissoes_extras',
 
   ticketsRead: 'atendimentos.visualizar',
   ticketsCreate: 'atendimentos.criar',
@@ -77,11 +75,12 @@ export function translateRbacAccess(
   const permissions = snapshot.permissionSlugs;
   const grants: PermissionGrant[] = [];
   const has = (slug: string) => permissions.has(slug);
+  const isGlobalAdmin = snapshot.roleSlugs.includes(SYSTEM_ADMIN_ROLE);
 
   addGrant(
     grants,
     AppPermission.SystemAdmin,
-    snapshot.roleSlugs.includes(SYSTEM_ADMIN_ROLE),
+    isGlobalAdmin,
   );
   addGrant(grants, AppPermission.OnCallTi, snapshot.onCallAreas.includes('ti'));
   addGrant(
@@ -91,12 +90,12 @@ export function translateRbacAccess(
   );
 
   addGrant(grants, AppPermission.UsersRead, has(P.usersRead));
-  addGrant(grants, AppPermission.UsersCreate, has(P.usersCreate));
-  addGrant(grants, AppPermission.UsersEdit, has(P.usersCreate));
+  addGrant(grants, AppPermission.UsersCreate, isGlobalAdmin);
+  addGrant(grants, AppPermission.UsersEdit, isGlobalAdmin);
   addGrant(
     grants,
     AppPermission.UsersManageOverrides,
-    has(P.usersManageOverrides),
+    isGlobalAdmin,
   );
 
   addGrant(

@@ -98,7 +98,7 @@ export class UserManagement {
     if (id === 1 || id === actorId) {
       throw new ForbiddenException('O usuário administrador principal e a própria conta não podem ser desativados.');
     }
-    if (!(await this.users.deactivate(id))) {
+    if (!(await this.users.deactivate(id, actorId))) {
       throw new NotFoundException('Usuário não encontrado ou já desativado.');
     }
     await this.sessions.revokeAllForUser(id, 'user_deactivated');
