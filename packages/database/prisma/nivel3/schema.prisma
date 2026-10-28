@@ -360,6 +360,7 @@ model clientes {
   clt_city          String?             @db.NVarChar(50)
   clt_uf            String?             @db.NVarChar(2)
   clt_mail          String?             @db.NVarChar(60)
+  clt_receber_email Boolean             @default(false, map: "DF_clientes_receber_email")
   clt_tel           String?             @db.NVarChar(50)
   clt_sts           Int                 @default(1, map: "DF__clientes__clt_st__4DE98D56")
   clt_ti            Int                 @default(0, map: "DF__clientes__clt_ti__4EDDB18F")

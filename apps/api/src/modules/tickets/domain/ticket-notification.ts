@@ -30,6 +30,7 @@ export interface TicketNotificationContext {
   ticketId: number;
   clientName: string | null;
   clientEmail: string | null;
+  clientReceivesEmails: boolean;
   requesterName: string | null;
   requesterEmail: string | null;
   technicianName: string | null;

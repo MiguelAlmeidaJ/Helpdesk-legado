@@ -20,6 +20,8 @@
     "test:cnpj:ui": "node scripts/cnpj-ui-smoke.cjs",
     "navigation:bootstrap": "pnpm --filter @helpdesk/database navigation:bootstrap",
     "users:bootstrap": "pnpm --filter @helpdesk/database users:bootstrap",
+    "clients:bootstrap": "node scripts/provision-client-email-preferences.cjs",
+    "test:client-emails": "node --test scripts/client-email-preferences.test.cjs",
     "tickets:bootstrap": "pnpm --filter @helpdesk/database tickets:bootstrap",
     "notifications:bootstrap": "pnpm --filter @helpdesk/database notifications:bootstrap",
     "sla:bootstrap": "pnpm --filter @helpdesk/database sla:bootstrap",
@@ -52,7 +54,7 @@
     "pm2:delete": "pm2 delete ecosystem.config.cjs",
     "pm2:status": "pm2 status",
     "pm2:logs": "pm2 logs",
-    "prod:bootstrap": "pnpm access:bootstrap && pnpm navigation:bootstrap && pnpm users:bootstrap && pnpm tickets:bootstrap && pnpm notifications:bootstrap && pnpm sla:bootstrap && pnpm oncall:bootstrap",
+    "prod:bootstrap": "pnpm access:bootstrap && pnpm navigation:bootstrap && pnpm users:bootstrap && pnpm clients:bootstrap && pnpm tickets:bootstrap && pnpm notifications:bootstrap && pnpm sla:bootstrap && pnpm oncall:bootstrap",
     "prod:verify": "pnpm legacy:audit && pnpm legacy:assets:audit && pnpm legacy:catalog:audit && pnpm typecheck && pnpm build && pnpm test:access && pnpm test:navigation && pnpm test:notifications && pnpm test:security && pnpm test:reports && pnpm test:logistics",
     "test:user-functions": "node --test scripts/user-functions.test.cjs",
     "test:user-functions:ui": "node scripts/user-functions-ui-smoke.cjs"

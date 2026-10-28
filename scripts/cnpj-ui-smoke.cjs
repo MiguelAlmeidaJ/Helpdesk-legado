@@ -14,8 +14,8 @@ class Cdp{
 const user={id:0,name:'Fixture',login:'fixture',accessSource:'rbac',roleAssignments:[],grants:[{permission:'system.admin',scope:'all'}]};
 const state={calls:[],errors:[],confirmations:[],lookupFailed:false,holdLookup:false,releaseLookup:null};
 const fields=[
- ['legalName','Razão Social','text'],['tradeName','Nome Comercial','text'],['cnpj','CNPJ','text'],
- ['address','Endereço','text'],['city','Cidade','text'],['state','UF','select'],['email','E-mail','email'],['phone','Telefone','text'],
+ ['cnpj','CNPJ','text'],['legalName','Razão Social','text'],['tradeName','Nome Comercial','text'],
+ ['address','Endereço','text'],['city','Cidade','text'],['state','UF','select'],['email','E-mail','email'],['receiveEmails','Receber e-mails','boolean'],['phone','Telefone','text'],
  ['ti','TI','boolean'],['devops','DevOps','boolean'],['marketing','Marketing','boolean'],
 ].map(([key,label,type])=>({key,label,type,...(key==='state'?{options:[{value:'AC',label:'AC'},{value:'SP',label:'SP'}]}:{})}));
 function fixture(url,method,body){
@@ -61,6 +61,9 @@ async function main(){
   const field=(label)=>`[...document.querySelectorAll('form label')].find(l=>l.textContent.trim().startsWith(${JSON.stringify(label)})).querySelector('input,select')`;
   const read=label=>cdp.evaluate(`${field(label)}.value`);
   const fill=async(label,value)=>cdp.evaluate(`(()=>{const input=${field(label)};Object.getOwnPropertyDescriptor(input.tagName==='SELECT'?HTMLSelectElement.prototype:HTMLInputElement.prototype,'value').set.call(input,${JSON.stringify(value)});input.dispatchEvent(new Event(input.tagName==='SELECT'?'change':'input',{bubbles:true}));})()`);
+  assert.equal(await cdp.evaluate("document.querySelector('form input').id"),'client-cnpj');
+  assert.equal(await cdp.evaluate("document.body.innerText.includes('Letras e números nas 12 primeiras posições')"),false);
+  assert.equal(await cdp.evaluate(`${field('Receber e-mails')}.checked`),false);
   await setInput('#client-cnpj','12abc34501de35');
   await wait("document.querySelector('#client-cnpj').value==='12.ABC.345/01DE-35'");
   await fill('E-mail','manual@example.test');await fill('TI','1');await fill('Situação','0');
@@ -79,9 +82,12 @@ async function main(){
   await click('Buscar CNPJ');await wait("document.body.innerText.includes('Consulta indisponível.')");
   assert.equal(await read('Razão Social'),'Nome ajustado durante consulta');assert.equal(await read('E-mail'),'manual@example.test');
   state.lookupFailed=false;await setInput('#client-cnpj','12ABC34501DE35');
+  assert.equal(await cdp.evaluate(`${field('Receber e-mails')}.checked`),false);
+  await cdp.evaluate(`${field('Receber e-mails')}.click()`);
   await click('Salvar');await wait("document.body.innerText.includes('cliente cadastrado com sucesso.')");
   const saved=state.calls.find(c=>c.method==='POST'&&c.path.endsWith('/registrations/clients'));
   assert.equal(saved.body.values.cnpj,'12.ABC.345/01DE-35');assert.equal(saved.body.values.ti,true);assert.equal(saved.body.status,0);
+  assert.equal(saved.body.values.receiveEmails,true);
   assert.deepEqual(state.errors,[]);console.log(JSON.stringify({mask:true,alphanumeric:true,numeric:true,autoFill:true,preserveManualEmail:true,preserveServices:true,providerFailure:true,save:'fixtures only'}));
  }catch(error){
   console.error(JSON.stringify({page:cdp?await cdp.evaluate('document.body.innerText.slice(0,1600)'):null,errors:state.errors,calls:state.calls.map(c=>c.path)}));

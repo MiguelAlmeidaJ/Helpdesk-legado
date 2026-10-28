@@ -41,13 +41,14 @@ const DEFINITIONS: Record<RegistrationResourceKey, RegistrationResourceDefinitio
     subtitle: 'Gerencie empresas, dados comerciais e serviços contratados.',
     singular: 'cliente',
     fields: [
+      { key: 'cnpj', label: 'CNPJ', type: 'text', maxLength: 18, placeholder: 'AA.AAA.AAA/AAAA-00' },
       { key: 'legalName', label: 'Razão Social', type: 'text', required: true, maxLength: 80 },
       { key: 'tradeName', label: 'Nome Comercial', type: 'text', required: true, maxLength: 80 },
-      { key: 'cnpj', label: 'CNPJ', type: 'text', maxLength: 18, placeholder: 'AA.AAA.AAA/AAAA-00' },
       { key: 'address', label: 'Endereço', type: 'text', maxLength: 100 },
       { key: 'city', label: 'Cidade', type: 'text', required: true, maxLength: 50 },
       { key: 'state', label: 'UF', type: 'select', required: true, options: STATES },
       { key: 'email', label: 'E-mail', type: 'email', maxLength: 60 },
+      { key: 'receiveEmails', label: 'Receber e-mails', type: 'boolean' },
       { key: 'phone', label: 'Telefone', type: 'text', required: true, maxLength: 50 },
       { key: 'ti', label: 'TI', type: 'boolean' },
       { key: 'devops', label: 'DevOps', type: 'boolean' },
@@ -538,7 +539,7 @@ export class RegistrationsService {
     const like = `%${search}%`;
     const rows = await this.db.$queryRawUnsafe<Row[]>(
       `SELECT clt_id, clt_nomer, clt_nomef, clt_cnpj, clt_end, clt_city,
-              clt_uf, clt_mail, clt_tel, clt_sts, clt_ti, clt_adm, clt_mkt
+              clt_uf, clt_mail, clt_tel, clt_sts, clt_ti, clt_adm, clt_mkt, clt_receber_email
        FROM clientes
        WHERE (? = '' OR clt_nomer LIKE ? OR clt_nomef LIKE ? OR clt_cnpj LIKE ?
          OR REPLACE(REPLACE(REPLACE(UPPER(clt_cnpj), '.', ''), '/', ''), '-', '') LIKE ?)
@@ -561,6 +562,7 @@ export class RegistrationsService {
         city: String(row.clt_city ?? ''),
         state: String(row.clt_uf ?? ''),
         email: String(row.clt_mail ?? ''),
+        receiveEmails: row.clt_receber_email === true || row.clt_receber_email === 1,
         phone: String(row.clt_tel ?? ''),
         ti: Number(row.clt_ti) === 1,
         devops: Number(row.clt_adm) === 1,
@@ -662,6 +664,7 @@ export class RegistrationsService {
       city: text(source, 'city', 50, true),
       state: text(source, 'state', 2, true).toUpperCase(),
       email: text(source, 'email', 60),
+      receiveEmails: booleanValue(source, 'receiveEmails'),
       phone: text(source, 'phone', 50, true),
       ti: booleanValue(source, 'ti') ? 1 : 0,
       devops: booleanValue(source, 'devops') ? 1 : 0,
@@ -676,19 +679,19 @@ export class RegistrationsService {
     if (id === null) {
       id = await this.insertWithId(
         `INSERT INTO clientes
-          (clt_nomer, clt_nomef, clt_cnpj, clt_end, clt_city, clt_uf, clt_mail, clt_tel, clt_sts, clt_ti, clt_adm, clt_mkt)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          (clt_nomer, clt_nomef, clt_cnpj, clt_end, clt_city, clt_uf, clt_mail, clt_tel, clt_sts, clt_ti, clt_adm, clt_mkt, clt_receber_email)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         data.legalName, data.tradeName, data.cnpj, data.address, data.city,
-        data.state, data.email, data.phone, nextStatus, data.ti, data.devops, data.marketing,
+        data.state, data.email, data.phone, nextStatus, data.ti, data.devops, data.marketing, data.receiveEmails,
       );
     } else {
       const count = await this.db.$executeRawUnsafe(
         `UPDATE clientes
          SET clt_nomer=?, clt_nomef=?, clt_cnpj=?, clt_end=?, clt_city=?,
-             clt_uf=?, clt_mail=?, clt_tel=?, clt_sts=?, clt_ti=?, clt_adm=?, clt_mkt=?
+             clt_uf=?, clt_mail=?, clt_tel=?, clt_sts=?, clt_ti=?, clt_adm=?, clt_mkt=?, clt_receber_email=?
          WHERE clt_id=?`,
         data.legalName, data.tradeName, data.cnpj, data.address, data.city,
-        data.state, data.email, data.phone, nextStatus, data.ti, data.devops, data.marketing, id,
+        data.state, data.email, data.phone, nextStatus, data.ti, data.devops, data.marketing, data.receiveEmails, id,
       );
       if (!count) throw new NotFoundException('Cliente não encontrado.');
     }

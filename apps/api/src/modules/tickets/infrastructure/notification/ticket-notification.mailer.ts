@@ -16,11 +16,12 @@ function addresses(value: string | null): string[] {
 }
 
 function uniqueRecipients(context: TicketNotificationContext): string[] {
-  return [
-    ...addresses(context.clientEmail),
-    ...addresses(context.requesterEmail),
-    ...addresses(context.technicianEmail),
-  ].filter((value, index, all) => all.indexOf(value) === index);
+  const clientAddresses = [...addresses(context.clientEmail), ...addresses(context.requesterEmail)];
+  const allowed = context.clientReceivesEmails === true;
+  const excluded = new Set(allowed ? [] : clientAddresses.map(value => value.toLowerCase()));
+  const recipients = [...(allowed ? clientAddresses : []), ...addresses(context.technicianEmail)]
+    .filter(value => !excluded.has(value.toLowerCase()));
+  return [...new Map(recipients.map(value => [value.toLowerCase(), value])).values()];
 }
 
 function eventLabel(event: TicketNotificationOutboxEvent): string {
@@ -78,6 +79,10 @@ export class TicketNotificationMailer {
     context: TicketNotificationContext,
     recipients: string[],
   ): Promise<void> {
+    // Reapply the preference even if a caller passes a stale or manually constructed recipient list.
+    const permitted = new Set(uniqueRecipients(context).map(value => value.toLowerCase()));
+    recipients = recipients.filter(value => permitted.has(value.toLowerCase()));
+    if (!recipients.length) return;
     const host = this.config.get<string>('SMTP_HOST')?.trim();
     const from = this.config.get<string>('SMTP_FROM')?.trim();
     if (!host || !from) throw new Error('SMTP_HOST/SMTP_FROM não configurados.');

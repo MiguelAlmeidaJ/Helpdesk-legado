@@ -38,7 +38,7 @@ export function CnpjField({ value, disabled, onChange, onFound }: {
     <label htmlFor="client-cnpj">CNPJ</label>
     <div className="flex items-start gap-2">
       <input id="client-cnpj" className="min-h-10 w-full min-w-0 rounded-lg border border-app-border-strong bg-app-surface px-3 text-sm outline-none focus:border-app-brand focus:ring-3 focus:ring-[var(--app-brand-ring)] disabled:opacity-55"
-        aria-describedby="client-cnpj-hint" autoCapitalize="characters" autoComplete="off" spellCheck={false} inputMode="text" disabled={disabled}
+        autoCapitalize="characters" autoComplete="off" spellCheck={false} inputMode="text" disabled={disabled}
         maxLength={18} placeholder="AA.AAA.AAA/AAAA-00" value={formatCnpj(value)}
         onChange={event => {
           const input = event.currentTarget;
@@ -57,7 +57,6 @@ export function CnpjField({ value, disabled, onChange, onFound }: {
         }} />
       <button type="button" disabled={disabled || loading || !isValidCnpj(value)} onClick={() => void search()} className="min-h-10 shrink-0 rounded-lg border border-app-border-strong px-3 text-sm font-bold text-app-brand disabled:cursor-not-allowed disabled:opacity-50">{loading ? 'Buscando…' : 'Buscar CNPJ'}</button>
     </div>
-    <small id="client-cnpj-hint" className="font-normal text-app-muted">Letras e números nas 12 primeiras posições; os dois últimos são números.</small>
     {notice ? <small role={failed ? 'alert' : 'status'} className={`font-normal ${failed ? 'text-app-danger' : 'text-app-muted'}`}>{notice}</small> : null}
   </div>;
 }

@@ -266,6 +266,13 @@ export function RegistrationScreen({
                     })} />;
                 }
                 if (field.type === 'boolean') {
+                  if (resource === 'clients' && field.key === 'receiveEmails') {
+                    return <label key={field.key} className="flex min-h-10 items-center gap-3 self-end rounded-lg border border-app-border-strong px-3 py-2 text-sm font-semibold">
+                      <input type="checkbox" className="size-4 shrink-0 accent-app-brand" disabled={saving || mainReadOnly} checked={value === true || value === 1}
+                        onChange={event => setValues(current => ({ ...current, receiveEmails: event.target.checked }))} />
+                      <span>{field.label}<small className="mt-0.5 block font-normal text-app-muted">Notificações de abertura e atualizações dos chamados.</small></span>
+                    </label>;
+                  }
                   return (
                     <label className="grid gap-1.5 text-sm font-semibold" key={field.key}>
                       {field.label}

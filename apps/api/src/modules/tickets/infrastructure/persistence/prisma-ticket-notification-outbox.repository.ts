@@ -21,6 +21,7 @@ interface TicketContextRow {
   ticket_id: number;
   client_name: string | null;
   client_email: string | null;
+  client_receives_emails: boolean | number | null;
   requester_name: string | null;
   requester_email: string | null;
   technician_name: string | null;
@@ -104,6 +105,7 @@ export class PrismaTicketNotificationOutboxRepository extends TicketNotification
          a.id AS ticket_id,
          COALESCE(NULLIF(c.clt_nomef, ''), c.clt_nomer) AS client_name,
          c.clt_mail AS client_email,
+         c.clt_receber_email AS client_receives_emails,
          p.pessoa_nom AS requester_name,
          p.pessoa_mail AS requester_email,
          u.user_nome AS technician_name,
@@ -124,6 +126,7 @@ export class PrismaTicketNotificationOutboxRepository extends TicketNotification
       ticketId: row.ticket_id,
       clientName: row.client_name,
       clientEmail: row.client_email,
+      clientReceivesEmails: row.client_receives_emails === true || row.client_receives_emails === 1,
       requesterName: row.requester_name,
       requesterEmail: row.requester_email,
       technicianName: row.technician_name,
