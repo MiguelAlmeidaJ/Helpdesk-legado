@@ -33,6 +33,7 @@
     "legacy:catalog:verify": "pnpm legacy:catalog:audit && pnpm legacy:audit && pnpm typecheck && pnpm build",
     "test:reports": "node --test scripts/reports.test.cjs",
     "test:reports:archive:ui": "node scripts/report-archive-ui-smoke.cjs",
+    "test:reports:charts:ui": "node scripts/report-charts-ui-smoke.cjs",
     "test:reports:clients": "node --test scripts/report-technical-clients.test.cjs",
     "test:navigation": "node --test scripts/navigation.test.cjs",
     "test:notifications": "node --test scripts/notifications.test.cjs",

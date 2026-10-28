@@ -1,5 +1,7 @@
 "use client";
 
+import { ReportChartDetails, useChartInteraction } from './report-chart-interaction';
+
 export type ReportStackedBarRow = {
   key: string;
   label: string;
@@ -25,6 +27,7 @@ export function ReportStackedBarChart({
   rows: ReportStackedBarRow[];
   emptyMessage?: string;
 }) {
+  const interaction = useChartInteraction(rows);
   if (!rows.length) {
     return (
       <div className="grid min-h-[320px] place-items-center rounded-xl border border-dashed border-app-border bg-app-surface-muted/40 px-6 text-center text-sm text-app-muted">
@@ -38,6 +41,7 @@ export function ReportStackedBarChart({
   const minWidth = Math.max(760, rows.length * 78);
 
   return (
+    <div data-report-chart="bar">
     <div className="overflow-x-auto">
       <div className="relative h-[390px]" style={{ minWidth }}>
         <div className="absolute inset-x-0 top-0 flex items-center justify-center gap-6 text-sm text-app-muted">
@@ -69,10 +73,13 @@ export function ReportStackedBarChart({
 
               return (
                 <div className="relative flex h-full min-w-[48px] flex-1 items-end justify-center" key={row.key}>
-                  <div
+                  <button
+                    type="button"
+                    aria-pressed={interaction.selected === row.key}
+                    {...interaction.events(row)}
                     aria-label={`${row.label}: ${row.total} atendimento(s)`}
-                    className="relative flex w-[min(54px,72%)] min-w-8 flex-col-reverse overflow-visible rounded-t-md shadow-sm"
-                    style={{ height: `${height}%` }}
+                    className="relative flex w-[min(54px,72%)] min-w-8 cursor-pointer flex-col-reverse overflow-visible rounded-t-md border-0 p-0 shadow-sm transition-opacity motion-reduce:transition-none focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-app-brand print:opacity-100!"
+                    style={{ height: `${height}%`, opacity: interaction.active && interaction.active.key !== row.key ? 0.35 : 1 }}
                     title={`${row.label} · N1 ${row.level1} · N2 ${row.level2} · N3 ${row.level3}`}
                   >
                     {row.level1 > 0 ? (
@@ -93,7 +100,7 @@ export function ReportStackedBarChart({
                     <strong className="absolute -top-5 left-1/2 -translate-x-1/2 text-[11px] text-app-text-soft">
                       {row.total}
                     </strong>
-                  </div>
+                  </button>
                   <span className="absolute -bottom-[58px] left-1/2 w-[92px] -translate-x-1/2 -rotate-[32deg] truncate text-left text-[10px] text-app-muted" title={row.label}>
                     {row.label}
                   </span>
@@ -103,6 +110,8 @@ export function ReportStackedBarChart({
           </div>
         </div>
       </div>
+    </div>
+    <ReportChartDetails row={interaction.active} total={rows.reduce((sum, row) => sum + row.total, 0)} selected={rows.some(row => row.key === interaction.selected)} onClear={interaction.clear} />
     </div>
   );
 }
