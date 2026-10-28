@@ -35,6 +35,7 @@
     "test:reports:archive:ui": "node scripts/report-archive-ui-smoke.cjs",
     "test:reports:charts:ui": "node scripts/report-charts-ui-smoke.cjs",
     "test:reports:sectors": "node --test scripts/report-sector.test.cjs",
+    "test:reports:daily": "node --test scripts/report-daily.test.cjs",
     "test:reports:sectors:ui": "node scripts/report-sectors-ui-smoke.cjs",
     "test:reports:clients": "node --test scripts/report-technical-clients.test.cjs",
     "test:navigation": "node --test scripts/navigation.test.cjs",

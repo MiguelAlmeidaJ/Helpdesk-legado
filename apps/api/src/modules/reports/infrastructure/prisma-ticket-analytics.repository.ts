@@ -49,13 +49,17 @@ export class PrismaTicketAnalyticsRepository extends TicketAnalyticsRepository {
         }
       }
       // The unified legacy report filters TI levels and includes all tasks.
-      if (source !== 'tasks' && (filters.view !== 'time' || filters.level)) appendNumberInFilter(where, params, 'a.nivel', filters.level ? [filters.level] : [1, 2, 3, 4, 5]);
+      if (source !== 'tasks' && (filters.view !== 'time' || filters.level || filters.levels?.length)) appendNumberInFilter(where, params, 'a.nivel', filters.level ? [filters.level] : filters.levels?.length ? filters.levels : [1, 2, 3, 4, 5]);
       const result = await this.database.$queryRawUnsafe<TicketAnalyticsRow[]>(
         `SELECT a.id, '${source}' AS source, a.cliente AS clientId,
           COALESCE(c.clt_nomer, c.clt_nomef, '') AS clientName,
           COALESCE(l.local_nom, '') AS locationName,
           CONCAT_WS(', ', l.local_end, l.local_city, l.local_uf) AS locationAddress,
           COALESCE(p.pessoa_nom, '') AS requesterName, COALESCE(u.user_nome, 'Sem técnico') AS technicianName,
+          COALESCE(u.user_id, 0) AS technicianId, COALESCE(rs_role.cargo_nome, '') AS technicianFunction,
+          CASE WHEN ${NORMALIZED_REPORT_FUNCTION} IN (${sectorFunctionNames('ti').map(() => '?').join(', ')}) THEN 'ti'
+            WHEN ${NORMALIZED_REPORT_FUNCTION} IN (${sectorFunctionNames('devops').map(() => '?').join(', ')}) THEN 'devops'
+            ELSE NULL END AS technicianSector,
           COALESCE(cat.cat_nome, '') AS categoryName, COALESCE(sub.scat_nome, '') AS subcategoryName,
           COALESCE(i.itens_nome, '') AS itemName,
           COALESCE(a.tipo, 0) AS type, COALESCE(a.nivel, 0) AS level, COALESCE(a.forma, 0) AS method, a.status,
@@ -75,15 +79,24 @@ export class PrismaTicketAnalyticsRepository extends TicketAnalyticsRepository {
         LEFT JOIN locais l ON l.local_id = a.local
         LEFT JOIN pessoas p ON p.pessoa_id = a.pessoa
         LEFT JOIN usuarios u ON u.user_id = a.tecnico
+        LEFT JOIN cargos_n3 rs_role ON rs_role.cargo_id = u.user_funcao
         LEFT JOIN categorias cat ON cat.cat_id = a.categoria
         LEFT JOIN subcategorias sub ON sub.scat_id = a.subcategoria
         LEFT JOIN itens i ON i.itens_id = a.item
-        WHERE ${where.join(' AND ')} ORDER BY a.abertura, a.id LIMIT ${MAX_ROWS + 1}`, ...params);
+        WHERE ${where.join(' AND ')} ORDER BY a.abertura, a.id LIMIT ${MAX_ROWS + 1}`,
+        ...sectorFunctionNames('ti'), ...sectorFunctionNames('devops'), ...params);
       rows.push(...result.map(row => ({ ...row, elapsedSeconds: Number(row.elapsedSeconds) })));
       if (rows.length > MAX_ROWS) throw new BadRequestException('Relatório acima de 20.000 registros. Reduza o período ou selecione um cliente.');
     }
     rows.sort((a, b) => a.openedAt.localeCompare(b.openedAt) || a.source.localeCompare(b.source) || a.id - b.id);
-    return { filters, generatedAt: new Date().toISOString(), total: rows.length, rows };
+    const sectorCoverage = { total: rows.length, ti: 0, devops: 0, other: 0, unassigned: 0 };
+    for (const row of rows) {
+      if (!row.technicianId) sectorCoverage.unassigned++;
+      else if (row.technicianSector === 'ti') sectorCoverage.ti++;
+      else if (row.technicianSector === 'devops') sectorCoverage.devops++;
+      else sectorCoverage.other++;
+    }
+    return { filters, generatedAt: new Date().toISOString(), total: rows.length, rows, sectorCoverage };
   }
 
   async catalog(userId: number, clientId: number, technicalClientsOnly = false): Promise<TicketReportCatalog> {

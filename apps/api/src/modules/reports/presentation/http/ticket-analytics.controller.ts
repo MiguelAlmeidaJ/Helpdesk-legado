@@ -44,6 +44,8 @@ export function analyticsFilters(query: Record<string, unknown>): TicketAnalytic
   if (view === 'time' && !query.startDate) dates.startDate = dates.endDate;
   const level = reportId(query.level, 'level');
   if (level > 5) throw new BadRequestException('level deve estar entre 0 e 5.');
+  const levels = reportIds(query.levels, 'levels');
+  if (levels.some(value => value > 5)) throw new BadRequestException('levels deve conter apenas níveis entre 1 e 5.');
   return {
     view,
     sector: reportSector(query.sector),
@@ -51,6 +53,7 @@ export function analyticsFilters(query: Record<string, unknown>): TicketAnalytic
     endDate: dates.endDate,
     source: source as TicketReportSource,
     level,
+    levels,
     clientId: reportId(query.clientId, 'clientId'),
     clientIds: reportIds(query.clientIds, 'clientIds'),
     locationId: reportId(query.locationId, 'locationId'),

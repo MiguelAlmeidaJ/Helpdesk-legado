@@ -149,6 +149,7 @@ export function fetchTicketReportDetails(filters: {
     startDate: filters.startDate,
     endDate: filters.endDate,
     level: String(filters.level ?? 0),
+    levels: filters.level ? String(filters.level) : '1,2,3',
     clientId: String(filters.clientIds?.length ? 0 : (filters.clientId ?? 0)),
     clientIds: filters.clientIds?.join(',') ?? '',
     locationId: '0',

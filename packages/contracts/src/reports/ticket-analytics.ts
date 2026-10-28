@@ -15,6 +15,7 @@ export interface TicketAnalyticsFilters {
   categorySector: number;
   status: number;
   level: number;
+  levels?: number[];
 }
 
 export interface ReportOption { id: number; name: string }
@@ -34,6 +35,9 @@ export interface TicketAnalyticsRow {
   locationAddress: string;
   requesterName: string;
   technicianName: string;
+  technicianId?: number;
+  technicianFunction?: string;
+  technicianSector?: Exclude<ReportSector, 'all'> | null;
   categoryName: string;
   subcategoryName: string;
   itemName: string;
@@ -53,6 +57,15 @@ export interface TicketAnalyticsResponse {
   generatedAt: string;
   total: number;
   rows: TicketAnalyticsRow[];
+  sectorCoverage?: ReportSectorCoverage;
+}
+
+export interface ReportSectorCoverage {
+  total: number;
+  ti: number;
+  devops: number;
+  other: number;
+  unassigned: number;
 }
 
 export interface TechnicianWorkloadRow {

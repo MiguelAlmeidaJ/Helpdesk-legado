@@ -25,7 +25,8 @@ function fixture(url,method){
  const filters={startDate:'2026-10-01',endDate:'2026-10-28',sector:'all',clientId:0,clientIds:[],technicianIds:[],locationId:0,technicianId:0,categoryId:0,categorySector:0,status:0,level:0,source:'tickets',...Object.fromEntries(u.searchParams)};
  filters.clientIds=String(filters.clientIds).split(',').filter(Boolean).map(Number);filters.technicianIds=String(filters.technicianIds).split(',').filter(Boolean).map(Number);
  if(pathname.endsWith('/technician-timing'))return{filters,generatedAt:new Date().toISOString(),totalTickets:0,acceptedTickets:0,completedTickets:0,averageAcceptanceSeconds:null,averageResolutionSeconds:null,averageHandlingSeconds:null,rows:[],details:[]};
- return{filters,period:{startDate:filters.startDate,endDate:filters.endDate},level:0,total:0,rows:[],generatedAt:new Date().toISOString()};
+ const sectorCoverage=filters.sector==='ti'?{total:84,ti:84,devops:0,other:0,unassigned:0}:filters.sector==='devops'?{total:28,ti:0,devops:28,other:0,unassigned:0}:{total:411,ti:84,devops:28,other:115,unassigned:184};
+ return{filters,period:{startDate:filters.startDate,endDate:filters.endDate},level:0,total:sectorCoverage.total,rows:[],sectorCoverage,generatedAt:new Date().toISOString()};
 }
 async function main(){
  await fs.access(edge);const temp=await fs.mkdtemp(path.join(os.tmpdir(),'report-sector-browser-'));let api,next,browser,cdp;
@@ -85,8 +86,13 @@ async function main(){
   assert.equal(state.calls.filter(c=>c.path.endsWith('/client-totals')).at(-1).query.technicianId,undefined);
   await cdp.send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:true});
   assert.equal(await cdp.evaluate("document.querySelector('select[aria-label=Setor]').getBoundingClientRect().width<=window.innerWidth"),true);
+  await wait("document.querySelector('[data-sector-coverage]')?.textContent.includes('Total: 411')===true");
+  const coverage=await cdp.evaluate("document.querySelector('[data-sector-coverage]').textContent");
+  for(const value of ['TI: 84','DevOps: 28','Outras fun\u00e7\u00f5es: 115','Sem t\u00e9cnico localizado: 184'])assert.ok(coverage.includes(value));
+  await choose('ti');await click('Filtrar');
+  await wait("document.querySelector('[data-sector-coverage]')?.textContent.includes('Total: 84')===true");
   assert.deepEqual(state.errors,[]);
-  console.log(JSON.stringify({reportPages:10,sectors:['all','ti','devops'],technicianOptions:true,resetIncompatibleTechnician:true,mobile:true,consoleExceptions:0}));
+  console.log(JSON.stringify({reportPages:10,sectors:['all','ti','devops'],technicianOptions:true,resetIncompatibleTechnician:true,sectorCoverage:true,mobile:true,consoleExceptions:0}));
 
  }catch(error){
   console.error(JSON.stringify({page:cdp?await cdp.evaluate('document.body.innerText.slice(0,1600)'):null,errors:state.errors,calls:state.calls.map(c=>c.path)}));

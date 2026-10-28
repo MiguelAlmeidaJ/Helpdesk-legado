@@ -404,7 +404,7 @@ export function TicketTotalsReportScreen({
             </div>
           </header>
           <div className="p-4">
-            {data ? <ReportSectorSummary value={appliedSector} /> : null}
+            {data ? <ReportSectorSummary value={appliedSector} coverage={details?.sectorCoverage} /> : null}
             {loading && !data ? (
               <div className="grid min-h-[360px] place-items-center text-sm text-app-muted">Carregando relatório…</div>
             ) : (

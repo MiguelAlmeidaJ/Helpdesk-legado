@@ -431,7 +431,7 @@ export function TicketBreakdownReportScreen({
               <div className="grid min-h-[360px] place-items-center text-sm text-app-muted">Carregando relatório…</div>
             ) : (
               <>
-                <ReportSectorSummary value={applied.sector} />
+                <ReportSectorSummary value={applied.sector} coverage={details?.sectorCoverage} />
                 <ReportChartView
                   emptyMessage="Nenhum atendimento encontrado no período informado."
                   rows={chartRows}

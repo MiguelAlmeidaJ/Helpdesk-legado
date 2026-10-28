@@ -130,7 +130,7 @@ export class TicketBreakdownReportService {
         label: "COALESCE(NULLIF(c.clt_nomef, ''), c.clt_nomer)",
         date: "DATE_FORMAT(a.abertura, '%Y-%m-%d')",
         joins: 'INNER JOIN clientes c ON c.clt_id = a.cliente',
-        groupBy: "c.clt_id, c.clt_nomef, c.clt_nomer, DATE(a.abertura)",
+        groupBy: "c.clt_id, c.clt_nomef, c.clt_nomer, DATE_FORMAT(a.abertura, '%Y-%m-%d')",
         orderBy: 'bucket_date DESC, label ASC',
       };
     }
@@ -141,7 +141,7 @@ export class TicketBreakdownReportService {
         label: "COALESCE(NULLIF(u.user_nome, ''), 'Não atribuído')",
         date: "DATE_FORMAT(a.abertura, '%Y-%m-%d')",
         joins: 'LEFT JOIN usuarios u ON u.user_id = a.tecnico',
-        groupBy: "u.user_id, u.user_nome, DATE(a.abertura)",
+        groupBy: "u.user_id, u.user_nome, DATE_FORMAT(a.abertura, '%Y-%m-%d')",
         orderBy: 'bucket_date DESC, label ASC',
       };
     }

@@ -1,13 +1,19 @@
 'use client';
 
-import type { ReportSector, TicketReportCatalog } from '@helpdesk/contracts';
+import type { ReportSector, ReportSectorCoverage, TicketReportCatalog } from '@helpdesk/contracts';
 
 export function sectorTechnicians(catalog: TicketReportCatalog, sector: ReportSector) {
   return catalog.technicians.filter(technician => sector === 'all' || technician.sector === sector);
 }
 
-export function ReportSectorSummary({ value }: { value?: ReportSector }) {
-  return <p className="mb-3 mt-0 text-xs font-semibold text-app-muted">Setor: {value === 'ti' ? 'TI' : value === 'devops' ? 'DevOps' : 'Todos'}</p>;
+export function ReportSectorSummary({ value, coverage }: { value?: ReportSector; coverage?: ReportSectorCoverage }) {
+  return <div className="mb-3 text-xs text-app-muted">
+    <p className="mb-1 mt-0 font-semibold">Setor: {value === 'ti' ? 'TI' : value === 'devops' ? 'DevOps' : 'Todos'}</p>
+    {coverage && coverage.total > 0 ? <div data-sector-coverage>
+      <p className="m-0 flex flex-wrap gap-x-4 gap-y-1"><span>Total: {coverage.total.toLocaleString('pt-BR')}</span><span>TI: {coverage.ti.toLocaleString('pt-BR')}</span><span>DevOps: {coverage.devops.toLocaleString('pt-BR')}</span><span>Outras funções: {coverage.other.toLocaleString('pt-BR')}</span><span>Sem técnico localizado: {coverage.unassigned.toLocaleString('pt-BR')}</span></p>
+      {value === 'all' && coverage.other + coverage.unassigned > 0 ? <p className="mb-0 mt-2">Todos inclui chamados sem técnico e funções fora da classificação de TI e DevOps.</p> : null}
+    </div> : null}
+  </div>;
 }
 
 export function ReportSectorFilter({ value, onChange, disabled = false }: {

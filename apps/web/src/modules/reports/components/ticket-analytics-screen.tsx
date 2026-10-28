@@ -360,7 +360,7 @@ export function TicketAnalyticsScreen({
       />
 
       <div className="mx-auto w-full max-w-[1550px] px-5 py-5 max-sm:px-3">
-        {report ? <ReportSectorSummary value={report.filters.sector} /> : null}
+        {report ? <ReportSectorSummary value={report.filters.sector} coverage={report.sectorCoverage} /> : null}
         {mode === 'workload' ? <div className="mb-4 max-w-xs print:hidden"><ReportSectorFilter value={filters.sector} disabled={loading} onChange={sector => setFilters(current => ({ ...current, sector }))} /></div> : null}
         {mode !== 'workload' ? (
           <form
