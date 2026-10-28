@@ -1,210 +1,119 @@
 "use client";
 
-import type { AccessPermissionItem, CurrentUserResponse, UserFunctionSummary } from '@helpdesk/contracts';
-import type { FormEvent } from 'react';
-import { useEffect, useState } from 'react';
-import { ApiError } from '../../../shared/api/api-client';
+import type { CurrentUserResponse, UserFunctionInput } from '@helpdesk/contracts';
+import { useEffect, useMemo, useState } from 'react';
 import { AppPageHeader } from '../../../shared/navigation/app-page-header';
+import { NavigationIcon } from '../../../shared/navigation/navigation-icon';
 import { appButtonClass } from '../../../shared/ui/button-styles';
-import {
-  createUserFunction,
-  deleteUserFunction,
-  fetchUserFunctions,
-  fetchUserFunctionPermissions,
-  updateUserFunction,
-} from '../api/user-functions-api';
+import { createUserFunction, deleteUserFunction, fetchUserFunctionActiveUsers, fetchUserFunctionPermissions, fetchUserFunctions, updateUserFunction } from '../api/user-functions-api';
+import { UserFunctionEditor } from './user-function-editor';
+import { UserFunctionMembers } from './user-function-members';
+import { functionApiMessage, userInitials } from './user-function-utils';
 
-const BUTTON = appButtonClass('secondary');
+async function loadData(signal?: AbortSignal) {
+  const [functions, permissions, members] = await Promise.all([
+    fetchUserFunctions(signal), fetchUserFunctionPermissions(signal), fetchUserFunctionActiveUsers(signal),
+  ]);
+  return { functions: functions.sort((a, b) => a.status - b.status || a.name.localeCompare(b.name, 'pt-BR')), permissions, members };
+}
+type Data = Awaited<ReturnType<typeof loadData>>;
+type Selection = number | 'unassigned' | null;
+const CARD = 'rounded-2xl border border-app-border bg-app-surface shadow-sm shadow-slate-950/[0.025]';
+const SECONDARY = appButtonClass('secondary');
 const PRIMARY = appButtonClass('primary');
 
-const styles = {
-  page: 'min-h-screen bg-app-bg text-app-text',
-  content: 'mx-auto w-full max-w-[1550px] p-6 max-sm:px-3.5',
-  layout: 'grid items-start gap-4 lg:grid-cols-[minmax(300px,0.8fr)_minmax(600px,1.7fr)]',
-  card: 'rounded-xl border border-app-border bg-app-surface p-4 shadow-sm shadow-slate-950/5 dark:shadow-black/10',
-  list: 'grid max-h-[calc(100vh-220px)] gap-2 overflow-y-auto pr-1',
-  item: 'w-full rounded-lg border border-app-border bg-app-surface px-4 py-3.5 text-left transition hover:border-app-brand hover:bg-app-surface-hover data-[active=true]:border-app-brand data-[active=true]:bg-app-brand-soft',
-  itemTop: 'flex items-start justify-between gap-3',
-  meta: 'mt-1 text-xs text-app-muted',
-  badge: 'rounded-full bg-app-surface-muted px-2 py-1 text-[10px] font-extrabold uppercase tracking-wide text-app-muted',
-  form: 'grid gap-4 [&_label]:grid [&_label]:gap-1.5 [&_label]:text-xs [&_label]:font-extrabold [&_label]:text-app-muted [&_input]:min-h-10 [&_input]:rounded-lg [&_input]:border [&_input]:border-app-border-strong [&_input]:bg-app-surface [&_input]:px-3 [&_input]:text-app-text [&_select]:min-h-10 [&_select]:rounded-lg [&_select]:border [&_select]:border-app-border-strong [&_select]:bg-app-surface [&_select]:px-3 [&_select]:text-app-text',
-  stats: 'grid grid-cols-2 gap-3 rounded-lg bg-app-surface-muted p-3 [&_div]:grid [&_strong]:text-xl [&_span]:text-xs [&_span]:text-app-muted',
-  module: 'overflow-hidden rounded-lg border border-app-border',
-  moduleHeader: 'flex items-center justify-between gap-3 border-b border-app-border bg-app-surface-muted px-3 py-2.5',
-  permissionGrid: 'grid gap-px bg-app-border xl:grid-cols-2',
-  permission: 'flex cursor-pointer items-center gap-3 bg-app-surface px-4 py-3.5 text-sm hover:bg-app-surface-hover [&_input]:size-4 [&_input]:shrink-0 [&_span]:grid [&_small]:text-xs [&_small]:font-normal [&_small]:text-app-muted',
-  actions: 'flex flex-wrap justify-end gap-2',
-  error: 'mb-3 rounded-lg border border-app-danger-border bg-app-danger-soft px-3 py-3 text-sm text-app-danger',
-  success: 'mb-3 rounded-lg border border-emerald-300/70 bg-emerald-50 px-3 py-3 text-sm text-emerald-800 dark:border-emerald-900/70 dark:bg-emerald-950/40 dark:text-emerald-200',
-} as const;
-
-type FormState = { name: string; status: 1 | 2; permissionIds: number[] };
-const EMPTY: FormState = { name: '', status: 1, permissionIds: [] };
-
-function permissionGroups(permissions: AccessPermissionItem[]) {
-  const groups = new Map<string, AccessPermissionItem[]>();
-  for (const permission of permissions) groups.set(permission.module, [...(groups.get(permission.module) ?? []), permission]);
-  return [...groups.entries()];
-}
-
-function apiMessage(error: unknown): string {
-  if (error instanceof ApiError && error.body && typeof error.body === 'object') {
-    const value = (error.body as Record<string, unknown>).message;
-    if (typeof value === 'string') return value;
-  }
-  if (error instanceof ApiError) return `A API respondeu com erro ${error.status}.`;
-  return error instanceof Error ? error.message : 'Não foi possível concluir a operação.';
-}
-
 export function UserFunctionsScreen({ currentUser }: { currentUser: CurrentUserResponse }) {
-  const [functions, setFunctions] = useState<UserFunctionSummary[]>([]);
-  const [permissions, setPermissions] = useState<AccessPermissionItem[]>([]);
-  const [selectedId, setSelectedId] = useState<number | null>(null);
-  const [form, setForm] = useState<FormState>(EMPTY);
+  const [data, setData] = useState<Data | null>(null);
+  const [selection, setSelection] = useState<Selection>(null);
+  const [editor, setEditor] = useState<number | 'new' | null>(null);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
   const [search, setSearch] = useState('');
+  const [status, setStatus] = useState('all');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  const selected = functions.find((entry) => entry.id === selectedId) ?? null;
-
-  async function load(preferredId?: number, signal?: AbortSignal) {
-    setLoading(true);
-    setError('');
-    try {
-      const [rows, availablePermissions] = await Promise.all([
-        fetchUserFunctions(signal), fetchUserFunctionPermissions(signal),
-      ]);
-      setFunctions(rows);
-      setPermissions(availablePermissions);
-      const id = preferredId ?? selectedId;
-      if (id) {
-        const item = rows.find((row) => row.id === id);
-        if (item) {
-          setSelectedId(item.id);
-          setForm({ name: item.name, status: item.status, permissionIds: item.permissionIds });
-        } else {
-          setSelectedId(null);
-          setForm(EMPTY);
-        }
-      }
-    } catch (reason) {
-      if (reason instanceof Error && reason.name === 'AbortError') return;
-      setError(apiMessage(reason));
-    } finally {
-      if (!signal?.aborted) setLoading(false);
-    }
-  }
-
   useEffect(() => {
     const controller = new AbortController();
-    void load(undefined, controller.signal);
+    loadData(controller.signal).then(value => { if (!controller.signal.aborted) setData(value); }).catch(reason => {
+      if (!controller.signal.aborted) setError(functionApiMessage(reason));
+    }).finally(() => { if (!controller.signal.aborted) setLoading(false); });
     return () => controller.abort();
   }, []);
 
-  function select(item: UserFunctionSummary) {
-    setSelectedId(item.id);
-    setForm({ name: item.name, status: item.status, permissionIds: item.permissionIds });
-    setError('');
-    setSuccess('');
+  async function reload() {
+    setLoading(true); setError('');
+    try { setData(await loadData()); } catch (reason) { setError(functionApiMessage(reason)); } finally { setLoading(false); }
   }
-
-  function createNew() {
-    setSelectedId(null);
-    setForm(EMPTY);
-    setError('');
-    setSuccess('');
-  }
-
-  async function save(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const editing = Boolean(selectedId);
-    setSaving(true);
-    setError('');
-    setSuccess('');
-    try {
-      const input = { name: form.name.trim(), status: form.status, permissionIds: form.permissionIds };
-      const result = selectedId
-        ? await updateUserFunction(selectedId, input)
-        : await createUserFunction(input);
-      await load(result.id);
-      setSuccess(editing ? 'Função atualizada.' : 'Função criada.');
-    } catch (reason) {
-      setError(apiMessage(reason));
-    } finally {
-      setSaving(false);
+  const membersByFunction = useMemo(() => {
+    const groups = new Map<number | null, NonNullable<Data>['members']['users']>();
+    for (const user of data?.members.users ?? []) {
+      const group = groups.get(user.functionId) ?? []; group.push(user); groups.set(user.functionId, group);
     }
-  }
+    return groups;
+  }, [data?.members.users]);
+  const functions = data?.functions ?? [];
+  const selected = typeof selection === 'number' ? functions.find(item => item.id === selection) : undefined;
+  const isUnassigned = selection === 'unassigned';
+  const hasDetails = Boolean(selected) || isUnassigned;
+  const editorInitial = typeof editor === 'number' ? functions.find(item => item.id === editor) ?? null : null;
+  const query = search.trim().toLocaleLowerCase('pt-BR');
+  const filtered = functions.filter(item => (!query || item.name.toLocaleLowerCase('pt-BR').includes(query)) && (status === 'all' || String(item.status) === status));
+  const selectedMembers = membersByFunction.get(isUnassigned ? null : selected?.id ?? -1) ?? [];
+  const selectedPermissions = data?.permissions.filter(permission => selected?.permissionIds.includes(permission.id)) ?? [];
+  const count = (value: number | undefined) => value === undefined ? '—' : value.toLocaleString('pt-BR');
 
+  async function save(input: UserFunctionInput) {
+    const result = typeof editor === 'number' ? await updateUserFunction(editor, input) : await createUserFunction(input);
+    setSuccess(editor === 'new' ? 'Função criada com sucesso.' : 'Função atualizada com sucesso.');
+    setEditor(null); setSelection(result.id); await reload();
+  }
   async function remove() {
-    if (!selected) return;
-    if (selected.linkedUserCount > 0) {
-      setError('Esta função ainda possui usuários vinculados e não pode ser excluída.');
-      return;
-    }
-    if (!window.confirm(`Excluir a função "${selected.name}"?`)) return;
-    setSaving(true);
-    setError('');
-    setSuccess('');
-    try {
-      await deleteUserFunction(selected.id);
-      setSelectedId(null);
-      setForm(EMPTY);
-      await load();
-      setSuccess('Função excluída.');
-    } catch (reason) {
-      setError(apiMessage(reason));
-    } finally {
-      setSaving(false);
-    }
+    if (!editorInitial || editorInitial.linkedUserCount > 0) return;
+    if (!window.confirm(`Excluir a função "${editorInitial.name}"?`)) return;
+    await deleteUserFunction(editorInitial.id);
+    setEditor(null); setSelection(null); setSuccess('Função excluída.'); await reload();
   }
 
-  return <main className={styles.page}>
-    <AppPageHeader
-      actions={<button className={PRIMARY} onClick={createNew} type="button">Nova função</button>}
-      subtitle="Crie, edite e acompanhe as funções usadas no cadastro de usuários."
-      title="Funções de usuários"
-      user={currentUser}
-    />
-    <div className={styles.content}>
-      {error ? <div className={styles.error} role="alert">{error}</div> : null}
-      {success ? <div className={styles.success} role="status">{success}</div> : null}
-      <div className={styles.layout}>
-        <section className={styles.card}>
-          <h2 className="mb-1 text-lg font-extrabold">Funções cadastradas</h2>
-          <p className="mb-4 text-sm text-app-muted">Veja quantos usuários ativos utilizam cada função.</p>
-          <input aria-label="Buscar função" className="mb-3 min-h-10 w-full rounded-lg border border-app-border-strong bg-app-surface px-3 text-sm" placeholder="Buscar função..." value={search} onChange={(event) => setSearch(event.target.value)} />
-          {loading && functions.length === 0 ? <p className="text-sm text-app-muted">Carregando…</p> : null}
-          <div className={styles.list}>
-            {functions.filter((item) => item.name.toLocaleLowerCase('pt-BR').includes(search.toLocaleLowerCase('pt-BR'))).map((item) => <button className={styles.item} data-active={selectedId === item.id} key={item.id} onClick={() => select(item)} type="button">
-              <span className={styles.itemTop}><strong>{item.name}</strong><span className={styles.badge}>{item.status === 1 ? 'Ativa' : 'Inativa'}</span></span>
-              <span className={styles.meta}>{item.activeUserCount} {item.activeUserCount === 1 ? 'usuário ativo' : 'usuários ativos'} · {item.permissionIds.length} permissões</span>
-            </button>)}
-          </div>
+  return <main className="min-h-screen bg-app-bg text-app-text max-sm:[&>header]:flex-wrap max-sm:[&>header]:gap-2 max-sm:[&>header>div:last-child]:w-full">
+    <AppPageHeader title="Funções de usuários" subtitle="Organize permissões e acompanhe os usuários de cada função." user={currentUser} actions={<button type="button" className={`${PRIMARY} max-sm:hidden`} disabled={loading || !data} onClick={() => { setEditor('new'); setSuccess(''); }}>+ Nova função</button>} />
+    <div className="mx-auto grid w-full max-w-[1550px] gap-6 px-6 py-7 max-sm:px-3.5">
+      <div className="flex justify-end sm:hidden"><button type="button" className={PRIMARY} disabled={loading || !data} onClick={() => { setEditor('new'); setSuccess(''); }}>+ Nova função</button></div>
+      {error ? <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-app-danger-border bg-app-danger-soft p-4 text-sm text-app-danger"><span>{error}</span><button type="button" className={SECONDARY} disabled={loading} onClick={() => void reload()}>Tentar novamente</button></div> : null}
+      {success ? <p role="status" className="m-0 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-200">{success}</p> : null}
+      <section aria-label="Resumo de funções e usuários" className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <div className={`${CARD} flex items-start justify-between gap-3 p-5`}><div><p className="m-0 text-xs font-semibold text-app-muted">Funções cadastradas</p><strong className="mt-2 block text-3xl font-extrabold tracking-tight">{count(data ? functions.length : undefined)}</strong><p className="mb-0 mt-2 text-xs text-app-muted">{count(data ? functions.filter(item => item.status === 1).length : undefined)} ativas para novas atribuições</p></div><span className="rounded-xl bg-app-brand-soft p-2.5 text-app-brand"><NavigationIcon name="shield" className="size-5" /></span></div>
+        <div className={`${CARD} flex items-start justify-between gap-3 p-5`}><div><p className="m-0 text-xs font-semibold text-app-muted">Usuários ativos</p><strong className="mt-2 block text-3xl font-extrabold tracking-tight">{count(data?.members.activeUserCount)}</strong><p className="mb-0 mt-2 text-xs text-app-muted">Todos os cadastros em atividade</p></div><span className="rounded-xl bg-app-surface-muted p-2.5 text-app-muted"><NavigationIcon name="users" className="size-5" /></span></div>
+        <div className={`${CARD} flex items-start justify-between gap-3 p-5`}><div><p className="m-0 text-xs font-semibold text-app-muted">Ativos com função</p><strong className="mt-2 block text-3xl font-extrabold tracking-tight">{count(data?.members.assignedActiveUserCount)}</strong><p className="mb-0 mt-2 text-xs text-app-muted">Vinculados a uma função cadastrada</p></div><span className="rounded-xl bg-emerald-50 p-2.5 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300"><NavigationIcon name="list" className="size-5" /></span></div>
+        <button type="button" aria-label="Ver usuários ativos sem função" aria-pressed={isUnassigned} disabled={!data} onClick={() => setSelection(isUnassigned ? null : 'unassigned')} className={`${CARD} flex items-start justify-between gap-3 border-amber-300/80 p-5 text-left transition hover:bg-amber-50/60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-app-brand dark:border-amber-800 dark:hover:bg-amber-950/20 ${isUnassigned ? 'ring-2 ring-amber-400/50' : ''}`}><div><p className="m-0 text-xs font-semibold text-app-muted">Ativos sem função</p><strong className="mt-2 block text-3xl font-extrabold tracking-tight text-amber-700 dark:text-amber-300">{count(data?.members.unassignedActiveUserCount)}</strong><p className="mb-0 mt-2 text-xs font-semibold text-amber-700 dark:text-amber-300">Ver usuários e revisar vínculos →</p></div><span className="rounded-xl bg-amber-50 p-2.5 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300"><NavigationIcon name="users" className="size-5" /></span></button>
+      </section>
+
+      <div className={`grid items-start gap-5 ${hasDetails ? 'xl:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)]' : ''}`}>
+        <section aria-labelledby="functions-list-title" className="min-w-0">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3"><div><h2 id="functions-list-title" className="m-0 text-lg font-extrabold">Funções cadastradas</h2><p className="mb-0 mt-1 text-sm text-app-muted">Selecione uma função para conhecer seus usuários ativos.</p></div><button type="button" className={SECONDARY} disabled={loading} onClick={() => void reload()}>{loading ? 'Atualizando…' : 'Atualizar'}</button></div>
+          <div className="mb-4 flex flex-wrap gap-2"><label className="min-w-[180px] flex-1"><span className="sr-only">Buscar função</span><input type="search" className="min-h-11 w-full rounded-xl border border-app-border-strong bg-app-surface px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-app-brand" placeholder="Buscar função…" value={search} onChange={event => setSearch(event.target.value)} /></label><select aria-label="Filtrar situação das funções" className="min-h-11 rounded-xl border border-app-border-strong bg-app-surface px-3 text-sm" value={status} onChange={event => setStatus(event.target.value)}><option value="all">Todas as situações</option><option value="1">Ativas</option><option value="2">Inativas</option></select></div>
+          {loading && !data ? <p role="status" className="rounded-xl border border-dashed border-app-border p-8 text-center text-sm text-app-muted">Carregando funções e usuários…</p> : null}
+          <div className={`grid gap-3 ${hasDetails ? 'sm:grid-cols-2 xl:grid-cols-1' : 'md:grid-cols-2 xl:grid-cols-3'}`}>{filtered.map(item => {
+            const users = membersByFunction.get(item.id) ?? [], active = selection === item.id;
+            return <button type="button" key={item.id} aria-pressed={active} onClick={() => setSelection(active ? null : item.id)} className={`${CARD} group min-w-0 p-5 text-left transition hover:border-app-brand hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-app-brand ${active ? 'border-app-brand bg-app-brand-soft ring-1 ring-app-brand' : ''}`}>
+              <span className="flex items-start justify-between gap-3"><span className="flex min-w-0 items-center gap-3"><span className="rounded-xl bg-app-surface-muted p-2 text-app-brand"><NavigationIcon name="shield" className="size-5" /></span><strong className="break-words text-sm font-bold">{item.name}</strong></span><span className={`shrink-0 rounded-full px-2 py-1 text-[10px] font-bold ${item.status === 1 ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300' : 'bg-app-surface-muted text-app-muted'}`}>{item.status === 1 ? 'Ativa' : 'Inativa'}</span></span>
+              <span className="mt-4 flex items-baseline gap-2"><strong className="text-3xl font-extrabold tracking-tight">{users.length}</strong><span className="text-xs text-app-muted">{users.length === 1 ? 'usuário ativo' : 'usuários ativos'}</span><span className="ml-auto text-xs text-app-muted">{item.permissionIds.length} {item.permissionIds.length === 1 ? 'permissão' : 'permissões'}</span></span>
+              <span className="mt-4 flex items-center gap-2 border-t border-app-border pt-3"><span className="flex -space-x-1.5" aria-hidden>{users.slice(0, 3).map(user => <span key={user.id} className="flex size-7 items-center justify-center rounded-full border-2 border-app-surface bg-app-brand-soft text-[9px] font-bold text-app-brand">{userInitials(user.name)}</span>)}</span><span className="min-w-0 flex-1 truncate text-xs text-app-muted">{users.length ? users.slice(0, 2).map(user => user.name).join(', ') + (users.length > 2 ? ` +${users.length - 2}` : '') : 'Nenhum usuário ativo vinculado'}</span><span className="text-app-brand" aria-hidden>→</span></span>
+            </button>;
+          })}</div>
+          {data && !filtered.length ? <div className={`${CARD} grid justify-items-center gap-2 p-10 text-center text-app-muted`}><NavigationIcon name="shield" className="size-8" /><p className="m-0 text-sm">{functions.length ? 'Nenhuma função encontrada com estes filtros.' : 'Nenhuma função cadastrada. Use “Nova função” para começar.'}</p></div> : null}
+          {data ? <p className="mb-0 mt-4 text-xs text-app-muted">{filtered.length} de {functions.length} funções · Somente usuários ativos entram nas contagens.</p> : null}
         </section>
 
-        <section className={styles.card}>
-          <h2 className="mb-1 text-xl font-extrabold">{selected ? selected.name : 'Nova função'}</h2>
-          <p className="mb-4 text-sm text-app-muted">Funções inativas deixam de aparecer para novos vínculos, mas continuam identificando usuários já cadastrados.</p>
-          <form className={styles.form} onSubmit={save}>
-            <label><span>Nome</span><input disabled={saving} maxLength={50} onChange={(event) => setForm({ ...form, name: event.target.value })} required value={form.name} /></label>
-            <label><span>Situação</span><select disabled={saving} onChange={(event) => setForm({ ...form, status: Number(event.target.value) as 1 | 2 })} value={form.status}><option value={1}>Ativa</option><option value={2}>Inativa</option></select></label>
-            {permissionGroups(permissions).map(([module, entries]) => {
-              const selectedCount = entries.filter((permission) => form.permissionIds.includes(permission.id)).length;
-              return <section className={styles.module} key={module}>
-                <div className={styles.moduleHeader}><strong>{module} <span className="text-xs text-app-muted">{selectedCount}/{entries.length}</span></strong><button className={BUTTON} disabled={saving} onClick={() => setForm((current) => { const next = new Set(current.permissionIds); const all = entries.every((permission) => next.has(permission.id)); entries.forEach((permission) => all ? next.delete(permission.id) : next.add(permission.id)); return { ...current, permissionIds: [...next] }; })} type="button">{selectedCount === entries.length ? 'Desmarcar módulo' : 'Selecionar módulo'}</button></div>
-                <div className={styles.permissionGrid}>{entries.map((permission) => <label className={styles.permission} key={permission.id}><input checked={form.permissionIds.includes(permission.id)} disabled={saving} onChange={() => setForm((current) => ({ ...current, permissionIds: current.permissionIds.includes(permission.id) ? current.permissionIds.filter((id) => id !== permission.id) : [...current.permissionIds, permission.id] }))} type="checkbox" /><span><strong>{permission.name}</strong><small>{permission.description ?? permission.slug}</small></span></label>)}</div>
-              </section>;
-            })}
-            {selected ? <div className={styles.stats}><div><strong>{selected.activeUserCount}</strong><span>Usuários ativos</span></div><div><strong>{selected.linkedUserCount}</strong><span>Usuários vinculados</span></div></div> : null}
-            <div className={styles.actions}>
-              {selected ? <button className={BUTTON} disabled={saving || selected.linkedUserCount > 0} onClick={() => void remove()} title={selected.linkedUserCount > 0 ? 'Remova os vínculos antes de excluir.' : undefined} type="button">Excluir função</button> : null}
-              <button className={PRIMARY} disabled={saving || !form.name.trim()} type="submit">{saving ? 'Salvando…' : selected ? 'Salvar alterações' : 'Criar função'}</button>
-            </div>
-          </form>
-        </section>
+        {hasDetails ? <section className={`${CARD} min-w-0 overflow-hidden`} aria-labelledby="function-details-title">
+          <header className="border-b border-app-border bg-app-surface-muted/50 p-5"><div className="flex items-start justify-between gap-3"><div><p className="mb-1 mt-0 text-[11px] font-bold uppercase tracking-widest text-app-muted">{isUnassigned ? 'Revisão de cadastros' : 'Detalhes da função'}</p><h2 id="function-details-title" className="m-0 break-words text-xl font-extrabold">{isUnassigned ? 'Usuários sem função' : selected?.name}</h2></div><button type="button" className={SECONDARY} aria-label="Fechar detalhes da função" onClick={() => setSelection(null)}>Fechar</button></div>
+            {selected ? <div className="mt-4 flex flex-wrap items-center justify-between gap-2"><span className="text-xs text-app-muted">{selected.linkedUserCount} vínculos no total, incluindo usuários inativos</span><button type="button" className={SECONDARY} disabled={loading} onClick={() => { setEditor(selected.id); setSuccess(''); }}>Editar função</button></div> : null}
+            {selected?.status === 2 ? <p className="mb-0 mt-3 text-xs text-app-muted">Esta função está inativa, mas mantém os usuários já vinculados.</p> : null}
+          </header>
+          <div className="p-5"><UserFunctionMembers key={String(selection)} users={selectedMembers} unassigned={isUnassigned} /></div>
+          {selected ? <details className="border-t border-app-border"><summary className="cursor-pointer px-5 py-4 text-sm font-semibold">Permissões desta função <span className="text-xs text-app-muted">({selected.permissionIds.length})</span></summary><ul className="m-0 grid list-none gap-2 px-5 pb-5">{selectedPermissions.map(permission => <li key={permission.id} className="rounded-lg bg-app-surface-muted p-3 text-sm"><strong className="font-semibold">{permission.name}</strong><span className="mt-1 block text-xs text-app-muted">{permission.module}</span></li>)}{!selectedPermissions.length ? <li className="text-sm text-app-muted">Nenhuma permissão configurada.</li> : null}</ul></details> : null}
+        </section> : null}
       </div>
     </div>
+    {editor !== null && data ? <UserFunctionEditor key={editor} initial={editorInitial} permissions={data.permissions} onSave={save} onDelete={editorInitial ? remove : undefined} onClose={() => setEditor(null)} /> : null}
   </main>;
 }

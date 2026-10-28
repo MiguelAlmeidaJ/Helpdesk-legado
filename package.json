@@ -49,7 +49,9 @@
     "pm2:status": "pm2 status",
     "pm2:logs": "pm2 logs",
     "prod:bootstrap": "pnpm access:bootstrap && pnpm navigation:bootstrap && pnpm users:bootstrap && pnpm tickets:bootstrap && pnpm notifications:bootstrap && pnpm sla:bootstrap && pnpm oncall:bootstrap",
-    "prod:verify": "pnpm legacy:audit && pnpm legacy:assets:audit && pnpm legacy:catalog:audit && pnpm typecheck && pnpm build && pnpm test:access && pnpm test:navigation && pnpm test:notifications && pnpm test:security && pnpm test:reports && pnpm test:logistics"
+    "prod:verify": "pnpm legacy:audit && pnpm legacy:assets:audit && pnpm legacy:catalog:audit && pnpm typecheck && pnpm build && pnpm test:access && pnpm test:navigation && pnpm test:notifications && pnpm test:security && pnpm test:reports && pnpm test:logistics",
+    "test:user-functions": "node --test scripts/user-functions.test.cjs",
+    "test:user-functions:ui": "node scripts/user-functions-ui-smoke.cjs"
   },
   "devDependencies": {
     "turbo": "2.10.12",

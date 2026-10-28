@@ -4,6 +4,7 @@ import type {
   UserFunctionInput,
   UserFunctionMutationResponse,
   UserFunctionSummary,
+  UserFunctionActiveMembersResponse,
 } from '@helpdesk/contracts';
 import { RBAC_PERMISSION_SLUGS, type Nivel3DatabaseClient } from '@helpdesk/database';
 import { NIVEL3_DATABASE } from '../../../core/database/database.constants';
@@ -26,6 +27,23 @@ export class UserFunctionsRepository {
     @Inject(NIVEL3_DATABASE)
     private readonly database: Nivel3DatabaseClient,
   ) {}
+
+  async activeUsers(): Promise<UserFunctionActiveMembersResponse> {
+    const rows = await this.database.$queryRawUnsafe<Array<{
+      id: number | bigint; name: string | null; login: string | null; function_id: number | bigint | null;
+    }>>(`SELECT u.user_id AS id, u.user_nome AS name, u.user_login AS login,
+                c.cargo_id AS function_id
+         FROM dbo.usuarios u
+         LEFT JOIN dbo.cargos_n3 c ON c.cargo_id = u.user_funcao AND u.user_funcao > 0
+         WHERE u.user_sts = 1
+         ORDER BY u.user_nome, u.user_id`);
+    const users = rows.map(row => ({
+      id: Number(row.id), name: row.name?.trim() || row.login?.trim() || `Usuário #${Number(row.id)}`,
+      login: row.login?.trim() || '', functionId: row.function_id === null ? null : Number(row.function_id),
+    }));
+    const unassignedActiveUserCount = users.filter(user => user.functionId === null).length;
+    return { users, activeUserCount: users.length, assignedActiveUserCount: users.length - unassignedActiveUserCount, unassignedActiveUserCount };
+  }
 
   async list(): Promise<UserFunctionSummary[]> {
     const rows = await this.database.$queryRawUnsafe<FunctionRow[]>(

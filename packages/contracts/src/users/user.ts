@@ -86,6 +86,20 @@ export interface UserFunctionSummary {
   permissionIds: number[];
 }
 
+export interface UserFunctionActiveMember {
+  id: number;
+  name: string;
+  login: string;
+  functionId: number | null;
+}
+
+export interface UserFunctionActiveMembersResponse {
+  users: UserFunctionActiveMember[];
+  activeUserCount: number;
+  assignedActiveUserCount: number;
+  unassignedActiveUserCount: number;
+}
+
 export interface UserFunctionInput {
   name: string;
   status: 1 | 2;
