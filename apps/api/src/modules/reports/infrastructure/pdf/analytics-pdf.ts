@@ -25,6 +25,7 @@ export function analyticsPdf(report: TicketAnalyticsResponse): Buffer {
   const lines = [
     'HELPDESK - RELATÓRIO ANALÍTICO',
     `Período: ${report.filters.startDate} a ${report.filters.endDate} | Total: ${report.total}`,
+    `Setor: ${report.filters.sector === 'ti' ? 'TI' : report.filters.sector === 'devops' ? 'DevOps' : 'Todos'}`,
     `Origem: ${SOURCE_LABELS[report.filters.source]} | Área: ${AREA_LABELS[report.filters.categorySector] ?? 'Todas'} | Nível: ${report.filters.level || 'Todos'}`,
     `Cliente: ${report.filters.clientId || 'Todos'} | Local: ${report.filters.locationId || 'Todos'} | Técnico: ${report.filters.technicianId || 'Todos'} | Categoria: ${report.filters.categoryId || 'Todas'} | Status: ${report.filters.status || 'Todos'}`,
     '',

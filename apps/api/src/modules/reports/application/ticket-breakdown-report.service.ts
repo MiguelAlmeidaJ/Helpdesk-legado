@@ -1,3 +1,5 @@
+import { appendReportSector } from '../infrastructure/report-sector';
+import type { ReportSector } from '@helpdesk/contracts';
 import { Inject, Injectable } from '@nestjs/common';
 import type {
   TicketBreakdownLevel,
@@ -30,6 +32,7 @@ export interface TicketBreakdownInput {
   clientId: number;
   clientIds: number[];
   technicianId: number;
+  sector?: ReportSector;
   categoryId: number;
   status: number;
 }
@@ -52,6 +55,7 @@ export class TicketBreakdownReportService {
       'a.abertura < DATE_ADD(?, INTERVAL 1 DAY)',
     ];
     const params: unknown[] = [input.startDate, input.endDate];
+    appendReportSector(where, params, input.sector);
     appendNumberInFilter(
       where,
       params,

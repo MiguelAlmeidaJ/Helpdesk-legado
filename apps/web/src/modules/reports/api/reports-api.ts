@@ -1,3 +1,4 @@
+import type { ReportSector } from '@helpdesk/contracts';
 import type {
   TicketBreakdownLevel,
   TicketBreakdownMode,
@@ -20,6 +21,7 @@ export interface TicketCategoryTotalsReportFilters {
   clientId?: number;
   clientIds?: number[];
   technicianId?: number;
+  sector?: ReportSector;
   categoryId?: number;
   status?: number;
   level?: TicketCategoryTotalsLevel;
@@ -31,6 +33,7 @@ export interface TicketClientTotalsReportFilters {
   clientId?: number;
   clientIds?: number[];
   technicianId?: number;
+  sector?: ReportSector;
   categoryId?: number;
   status?: number;
   level?: TicketClientTotalsLevel;
@@ -42,6 +45,7 @@ export interface TicketTechnicianTotalsReportFilters {
   clientId?: number;
   clientIds?: number[];
   technicianId?: number;
+  sector?: ReportSector;
   categoryId?: number;
   status?: number;
   level?: TicketTechnicianTotalsLevel;
@@ -54,11 +58,13 @@ function buildReportQuery(filters: {
   clientId?: number;
   clientIds?: number[];
   technicianId?: number;
+  sector?: ReportSector;
   categoryId?: number;
   status?: number;
 }): string {
   const query = new URLSearchParams();
 
+  if (filters.sector) query.set('sector', filters.sector);
   if (filters.startDate) query.set('startDate', filters.startDate);
   if (filters.endDate) query.set('endDate', filters.endDate);
   if (filters.level !== undefined) query.set('level', String(filters.level));
@@ -104,6 +110,7 @@ export interface TicketBreakdownReportFilters {
   clientId?: number;
   clientIds?: number[];
   technicianId?: number;
+  sector?: ReportSector;
   categoryId?: number;
   status?: number;
   level?: TicketBreakdownLevel;
@@ -132,6 +139,7 @@ export function fetchTicketReportDetails(filters: {
   clientId?: number;
   clientIds?: number[];
   technicianId?: number;
+  sector?: ReportSector;
   categoryId?: number;
   status?: number;
 }): Promise<TicketAnalyticsResponse> {
@@ -145,6 +153,7 @@ export function fetchTicketReportDetails(filters: {
     clientIds: filters.clientIds?.join(',') ?? '',
     locationId: '0',
     technicianId: String(filters.technicianId ?? 0),
+    sector: filters.sector ?? 'all',
     categoryId: String(filters.categoryId ?? 0),
     status: String(filters.status ?? 0),
   });
@@ -159,6 +168,7 @@ export interface TicketTechnicianTimingReportFilters {
   endDate?: string;
   clientIds?: number[];
   technicianIds?: number[];
+  sector?: ReportSector;
   level?: number;
 }
 
@@ -166,6 +176,7 @@ export function fetchTicketTechnicianTimingReport(
   filters: TicketTechnicianTimingReportFilters = {},
 ): Promise<TicketTechnicianTimingResponse> {
   const query = new URLSearchParams();
+  if (filters.sector) query.set('sector', filters.sector);
   if (filters.startDate) query.set('startDate', filters.startDate);
   if (filters.endDate) query.set('endDate', filters.endDate);
   if (filters.clientIds?.length) {

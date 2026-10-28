@@ -1,0 +1,98 @@
+// Isolated browser fixtures. Every /api request is intercepted; no production writes.
+const assert=require('node:assert/strict'),fs=require('node:fs/promises'),path=require('node:path'),os=require('node:os'),http=require('node:http');
+const {spawn,spawnSync}=require('node:child_process');
+const root=path.resolve(__dirname,'..');
+const edge=process.env.USER_FUNCTIONS_TEST_BROWSER || 'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe';
+async function port(){const server=http.createServer();await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));const value=server.address().port;await new Promise(resolve=>server.close(resolve));return value;}
+async function until(check,timeout=30000){const end=Date.now()+timeout;while(Date.now()<end){try{const value=await check();if(value)return value;}catch{}await new Promise(resolve=>setTimeout(resolve,100));}throw new Error('Timed out waiting for browser fixture.');}
+class Cdp{
+  constructor(ws){this.ws=ws;this.id=0;this.pending=new Map();this.events=new Map();ws.addEventListener('message',event=>{const message=JSON.parse(String(event.data));if(message.id){const pending=this.pending.get(message.id);this.pending.delete(message.id);message.error?pending?.reject(new Error(message.error.message)):pending?.resolve(message.result);}else this.events.get(message.method)?.(message.params);});}
+  send(method,params={}){const id=++this.id;return new Promise((resolve,reject)=>{this.pending.set(id,{resolve,reject});this.ws.send(JSON.stringify({id,method,params}));});}
+  async evaluate(expression){const result=await this.send('Runtime.evaluate',{expression,awaitPromise:true,returnByValue:true,userGesture:true});if(result.exceptionDetails)throw new Error(result.exceptionDetails.text);return result.result?.value;}
+}
+
+
+const user={id:0,name:'Administração de teste',login:'fixture',accessSource:'rbac',roleAssignments:[],grants:[{permission:'system.admin',scope:'all'}]};
+const state={calls:[],errors:[],confirmations:[]};
+function fixture(url,method){
+ const u=new URL(url,'http://fixture'),pathname=u.pathname;
+ if(method==='OPTIONS')return{};
+ state.calls.push({path:pathname,query:Object.fromEntries(u.searchParams),method});
+ if(pathname.endsWith('/auth/me'))return user;
+ if(pathname.endsWith('/navigation'))return{sections:[]};
+ if(pathname.endsWith('/notifications'))return{items:[],unreadCount:0,total:0};
+ if(pathname.endsWith('/catalog'))return{clients:[],locations:[],technicians:[{id:1,name:'Pessoa TI',sector:'ti'},{id:2,name:'Pessoa DevOps',sector:'devops'}],categories:[]};
+ const filters={startDate:'2026-10-01',endDate:'2026-10-28',sector:'all',clientId:0,clientIds:[],technicianIds:[],locationId:0,technicianId:0,categoryId:0,categorySector:0,status:0,level:0,source:'tickets',...Object.fromEntries(u.searchParams)};
+ filters.clientIds=String(filters.clientIds).split(',').filter(Boolean).map(Number);filters.technicianIds=String(filters.technicianIds).split(',').filter(Boolean).map(Number);
+ if(pathname.endsWith('/technician-timing'))return{filters,generatedAt:new Date().toISOString(),totalTickets:0,acceptedTickets:0,completedTickets:0,averageAcceptanceSeconds:null,averageResolutionSeconds:null,averageHandlingSeconds:null,rows:[],details:[]};
+ return{filters,period:{startDate:filters.startDate,endDate:filters.endDate},level:0,total:0,rows:[],generatedAt:new Date().toISOString()};
+}
+async function main(){
+ await fs.access(edge);const temp=await fs.mkdtemp(path.join(os.tmpdir(),'report-sector-browser-'));let api,next,browser,cdp;
+ try{
+  api=http.createServer((req,res)=>{res.setHeader('Content-Type','application/json');res.end(JSON.stringify(fixture(req.url,req.method)));});await new Promise(resolve=>api.listen(0,'127.0.0.1',resolve));
+  const apiPort=api.address().port,webPort=await port(),bin=require.resolve('next/dist/bin/next',{paths:[path.join(root,'apps/web')]});
+  next=spawn(process.execPath,[bin,'start','-p',String(webPort)],{cwd:path.join(root,'apps/web'),env:{...process.env,API_INTERNAL_URL:'http://127.0.0.1:'+apiPort+'/api'},windowsHide:true,stdio:'ignore'});
+  await until(async()=>{const response=await fetch('http://127.0.0.1:'+webPort+'/reports/tickets/by-client');return response.status===200;},60000);
+  browser=spawn(edge,['--headless=new','--disable-gpu','--no-first-run','--no-default-browser-check','--remote-debugging-port=0','--user-data-dir='+temp,'about:blank'],{windowsHide:true,stdio:'ignore'});
+  const debugPort=await until(async()=>Number((await fs.readFile(path.join(temp,'DevToolsActivePort'),'utf8')).split('\n')[0]));
+  const targets=await(await fetch('http://127.0.0.1:'+debugPort+'/json/list')).json();const socket=new WebSocket(targets.find(t=>t.type==='page').webSocketDebuggerUrl);await new Promise((resolve,reject)=>{socket.addEventListener('open',resolve,{once:true});socket.addEventListener('error',reject,{once:true});});cdp=new Cdp(socket);
+  cdp.events.set('Runtime.exceptionThrown',event=>state.errors.push(event.exceptionDetails.exception?.description || event.exceptionDetails.text));
+  cdp.events.set('Page.javascriptDialogOpening',event=>{state.confirmations.push(event.message);return cdp.send('Page.handleJavaScriptDialog',{accept:true}).catch(()=>undefined);});
+  cdp.events.set('Fetch.requestPaused',async event=>{
+   try{
+    if(!event.request.url.includes('/api/')){await cdp.send('Fetch.continueRequest',{requestId:event.requestId});return;}
+    const value=fixture(event.request.url,event.request.method,event.request.postData?JSON.parse(event.request.postData):undefined);
+    const origin=Object.entries(event.request.headers).find(([key])=>key.toLowerCase()==='origin')?.[1]||'http://localhost:'+webPort;
+    await cdp.send('Fetch.fulfillRequest',{requestId:event.requestId,responseCode:event.request.method==='POST'?201:200,responseHeaders:[{name:'Content-Type',value:'application/json'},{name:'Access-Control-Allow-Origin',value:String(origin)},{name:'Access-Control-Allow-Credentials',value:'true'},{name:'Access-Control-Allow-Headers',value:'Content-Type,X-Helpdesk-Request'},{name:'Access-Control-Allow-Methods',value:'GET,POST,PATCH,DELETE,OPTIONS'}],body:Buffer.from(value===null?'':JSON.stringify(value)).toString('base64')});
+   }catch(error){state.errors.push(`Fixture interception failed: ${error.message}`);await cdp.send('Fetch.fulfillRequest',{requestId:event.requestId,responseCode:500,body:Buffer.from('{}').toString('base64')}).catch(()=>undefined);}
+  });
+  await cdp.send('Page.enable');await cdp.send('Runtime.enable');await cdp.send('Fetch.enable',{patterns:[{urlPattern:'*'}]});await cdp.send('Emulation.setDeviceMetricsOverride',{width:1440,height:1000,deviceScaleFactor:1,mobile:false});await cdp.send('Page.navigate',{url:'http://localhost:'+webPort+'/reports/tickets/by-client'});
+  const wait=async expression=>until(()=>cdp.evaluate(expression));
+  const click=async text=>cdp.evaluate(`(()=>{const scope=document.querySelector('dialog[open]')??document;const button=[...scope.querySelectorAll('button')].find(b=>b.getClientRects().length&&b.textContent.trim()===${JSON.stringify(text)});button.focus();button.click();})()`);
+  const setInput=async(selector,value)=>cdp.evaluate(`(()=>{const input=document.querySelector(${JSON.stringify(selector)});Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(input,${JSON.stringify(value)});input.dispatchEvent(new Event('input',{bubbles:true}));})()`);
+
+
+  await cdp.send('Page.bringToFront');
+  const choose=async value=>{
+   await cdp.evaluate(`(()=>{const select=document.querySelector('select[aria-label=Setor]');Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype,'value').set.call(select,${JSON.stringify(value)});select.dispatchEvent(new Event('change',{bubbles:true}));})()`);
+  };
+  for(const [route,endpoint]of [
+   ['by-client','client-totals'],['by-category','category-totals'],['by-technician','technician-totals'],
+   ['requester','breakdown/requester'],['client-daily','breakdown/client-daily'],['technician-daily','breakdown/technician-daily'],
+   ['analytics','analytics'],['time','analytics'],['technician-timing','technician-timing'],['workload','workload']]){
+   await cdp.send('Page.navigate',{url:'http://localhost:'+webPort+'/reports/tickets/'+route});
+   await wait("document.querySelector('select[aria-label=Setor]')?.disabled===false");
+   for(const sector of ['ti','devops','all']){
+    const before=state.calls.length;await choose(sector);
+    if(route!=='workload')await click('Filtrar');
+    await until(()=>state.calls.slice(before).some(c=>c.path.endsWith('/'+endpoint)&&c.query.sector===sector));
+    await wait("document.querySelector('select[aria-label=Setor]')?.disabled===false");
+   }
+  }
+  // Changing sector clears a previously chosen technician and narrows the available options.
+  await cdp.send('Page.navigate',{url:'http://localhost:'+webPort+'/reports/tickets/by-client'});
+  await wait("document.querySelector('select[aria-label=Setor]')?.disabled===false");
+  await choose('ti');
+  const openTechnicians=async()=>cdp.evaluate("[...document.querySelectorAll('button[aria-haspopup=listbox]')].find(b=>b.textContent.includes('Todos os t\u00e9cnicos')).click()");
+  await openTechnicians();await wait("document.querySelector('button[aria-expanded=true]')?.parentElement?.textContent.includes('Pessoa TI')===true");
+  assert.equal(await cdp.evaluate("document.querySelector('button[aria-expanded=true]')?.parentElement.textContent.includes('Pessoa DevOps')"),false);
+  await click('Pessoa TI');await choose('devops');
+  await openTechnicians();await wait("document.querySelector('button[aria-expanded=true]')?.parentElement?.textContent.includes('Pessoa DevOps')===true");
+  assert.equal(await cdp.evaluate("document.querySelector('button[aria-expanded=true]')?.parentElement.textContent.includes('Pessoa TI')"),false);
+  await click('Pessoa DevOps');await choose('all');await click('Filtrar');
+  await wait("document.querySelector('select[aria-label=Setor]')?.disabled===false");
+  assert.equal(state.calls.filter(c=>c.path.endsWith('/client-totals')).at(-1).query.technicianId,undefined);
+  await cdp.send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:true});
+  assert.equal(await cdp.evaluate("document.querySelector('select[aria-label=Setor]').getBoundingClientRect().width<=window.innerWidth"),true);
+  assert.deepEqual(state.errors,[]);
+  console.log(JSON.stringify({reportPages:10,sectors:['all','ti','devops'],technicianOptions:true,resetIncompatibleTechnician:true,mobile:true,consoleExceptions:0}));
+
+ }catch(error){
+  console.error(JSON.stringify({page:cdp?await cdp.evaluate('document.body.innerText.slice(0,1600)'):null,errors:state.errors,calls:state.calls.map(c=>c.path)}));
+  throw error;
+ }finally{
+  cdp?.ws.close();for(const child of[browser,next])if(child?.pid)spawnSync('taskkill',['/PID',String(child.pid),'/T','/F'],{windowsHide:true,stdio:'ignore'});if(api)await new Promise(resolve=>api.close(resolve));assert.ok(path.resolve(temp).startsWith(path.resolve(os.tmpdir())+path.sep));await fs.rm(temp,{recursive:true,force:true,maxRetries:5,retryDelay:200});
+ }
+}
+main().catch(error=>{console.error(error.stack);process.exitCode=1;});

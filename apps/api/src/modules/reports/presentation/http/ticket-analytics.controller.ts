@@ -1,3 +1,4 @@
+import { reportSector } from '../../infrastructure/report-sector';
 import { BadRequestException, Controller, Get, Query, UnauthorizedException, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { AppPermission, type TicketAnalyticsFilters, type TicketReportSource, type TicketTechnicianTimingFilters } from '@helpdesk/contracts';
@@ -45,6 +46,7 @@ export function analyticsFilters(query: Record<string, unknown>): TicketAnalytic
   if (level > 5) throw new BadRequestException('level deve estar entre 0 e 5.');
   return {
     view,
+    sector: reportSector(query.sector),
     startDate: dates.startDate,
     endDate: dates.endDate,
     source: source as TicketReportSource,
@@ -76,6 +78,7 @@ function technicianTimingFilters(
     throw new BadRequestException('level deve estar entre 0 e 5.');
   }
   return {
+    sector: reportSector(query.sector),
     startDate: dates.startDate,
     endDate: dates.endDate,
     clientIds: reportIds(query.clientIds ?? query.clientId, 'clientIds'),
@@ -126,5 +129,5 @@ export class TicketAnalyticsController {
 
   @Get('workload')
   @ApiOperation({ summary: 'Atendimentos abertos, em espera, vencidos e tempo por técnico' })
-  workload(@CurrentUser() user: AuthenticatedUser | undefined) { return this.reports.workload(reportUser(user)); }
+  workload(@CurrentUser() user: AuthenticatedUser | undefined, @Query('sector') sector?: string) { return this.reports.workload(reportUser(user), reportSector(sector)); }
 }

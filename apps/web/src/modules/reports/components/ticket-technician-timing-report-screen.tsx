@@ -1,4 +1,6 @@
-"use client";
+'use client';
+import type { ReportSector } from '@helpdesk/contracts';
+import { ReportSectorFilter, ReportSectorSummary, sectorTechnicians } from './report-sector-filter';
 
 import {
   AppPermission,
@@ -65,6 +67,7 @@ export function TicketTechnicianTimingReportScreen({
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [clientIds, setClientIds] = useState<string[]>([]);
+  const [sector, setSector] = useState<ReportSector>('all');
   const [technicianIds, setTechnicianIds] = useState<string[]>([]);
   const [level, setLevel] = useState('0');
   const [sortMode, setSortMode] = useState<'name' | 'acceptance' | 'handling' | 'resolution' | 'volume'>('acceptance');
@@ -83,6 +86,7 @@ export function TicketTechnicianTimingReportScreen({
     endDate?: string;
     clientIds?: number[];
     technicianIds?: number[];
+    sector?: ReportSector;
     level?: number;
   }) {
     setLoading(true);
@@ -95,6 +99,7 @@ export function TicketTechnicianTimingReportScreen({
       setClientIds(response.filters.clientIds.map(String));
       setTechnicianIds(response.filters.technicianIds.map(String));
       setLevel(String(response.filters.level || 0));
+      setSector(response.filters.sector ?? 'all');
     } catch (reason) {
       if (reason instanceof ApiError && reason.status === 403) {
         setError('Seu usuário não possui acesso aos relatórios.');
@@ -128,12 +133,14 @@ export function TicketTechnicianTimingReportScreen({
       endDate,
       clientIds: clientIds.map(Number),
       technicianIds: technicianIds.map(Number),
+      sector,
       level: Number(level),
     });
   }
 
   function clear() {
     setClientIds([]);
+    setSector('all');
     setTechnicianIds([]);
     setLevel('0');
     void load();
@@ -212,10 +219,12 @@ export function TicketTechnicianTimingReportScreen({
       />
 
       <div className="mx-auto w-full max-w-[1550px] px-5 py-5 max-sm:px-3 print:max-w-none print:p-0">
+        {data ? <ReportSectorSummary value={data.filters.sector} /> : null}
         <form
           className="mb-4 grid grid-cols-6 items-end gap-3 rounded-2xl border border-app-border bg-app-surface p-4 shadow-sm max-[1200px]:grid-cols-3 max-[720px]:grid-cols-1 print:hidden"
           onSubmit={apply}
         >
+          <ReportSectorFilter value={sector} disabled={loading} onChange={value => { setSector(value); setTechnicianIds([]); }} />
           <div className="col-span-2 max-[1200px]:col-span-3 max-[720px]:col-span-1">
             <span className="mb-1.5 block text-xs font-bold text-app-muted">
               Período de abertura
@@ -255,7 +264,7 @@ export function TicketTechnicianTimingReportScreen({
               multiple
               multipleLabel="técnicos selecionados"
               onChange={setTechnicianIds}
-              options={catalog.technicians.map((row) => ({
+              options={sectorTechnicians(catalog, sector).map((row) => ({
                 value: String(row.id),
                 label: row.name,
               }))}

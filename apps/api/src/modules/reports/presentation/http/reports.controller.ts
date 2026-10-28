@@ -1,3 +1,4 @@
+import { reportSector } from '../../infrastructure/report-sector';
 import {
   BadRequestException,
   Controller,
@@ -83,6 +84,7 @@ export class ReportsController {
     @Query('technicianId') technicianId?: string,
     @Query('categoryId') categoryId?: string,
     @Query('status') status?: string,
+    @Query('sector') sector?: string,
   ): Promise<TicketBreakdownReportResponse> {
     if (!user) {
       throw new UnauthorizedException('Usuário não autenticado.');
@@ -107,6 +109,7 @@ export class ReportsController {
       technicianId: optionalReportId(technicianId, 'technicianId'),
       categoryId: optionalReportId(categoryId, 'categoryId'),
       status: optionalReportId(status, 'status'),
+      sector: reportSector(sector),
     });
   }
 
@@ -134,6 +137,7 @@ export class ReportsController {
     @Query('technicianId') technicianId?: string,
     @Query('categoryId') categoryId?: string,
     @Query('status') status?: string,
+    @Query('sector') sector?: string,
   ): Promise<TicketCategoryTotalsReportResponse> {
     if (!user) {
       throw new UnauthorizedException('Usuário não autenticado.');
@@ -149,6 +153,7 @@ export class ReportsController {
       technicianId: optionalReportId(technicianId, 'technicianId'),
       categoryId: optionalReportId(categoryId, 'categoryId'),
       status: optionalReportId(status, 'status'),
+      sector: reportSector(sector),
     });
   }
 
@@ -176,6 +181,7 @@ export class ReportsController {
     @Query('technicianId') technicianId?: string,
     @Query('categoryId') categoryId?: string,
     @Query('status') status?: string,
+    @Query('sector') sector?: string,
   ): Promise<TicketClientTotalsReportResponse> {
     if (!user) {
       throw new UnauthorizedException('Usuário não autenticado.');
@@ -191,6 +197,7 @@ export class ReportsController {
       technicianId: optionalReportId(technicianId, 'technicianId'),
       categoryId: optionalReportId(categoryId, 'categoryId'),
       status: optionalReportId(status, 'status'),
+      sector: reportSector(sector),
     });
   }
 
@@ -218,6 +225,7 @@ export class ReportsController {
     @Query('technicianId') technicianId?: string,
     @Query('categoryId') categoryId?: string,
     @Query('status') status?: string,
+    @Query('sector') sector?: string,
   ): Promise<TicketTechnicianTotalsReportResponse> {
     if (!user) {
       throw new UnauthorizedException('Usuário não autenticado.');
@@ -233,6 +241,7 @@ export class ReportsController {
       technicianId: optionalReportId(technicianId, 'technicianId'),
       categoryId: optionalReportId(categoryId, 'categoryId'),
       status: optionalReportId(status, 'status'),
+      sector: reportSector(sector),
     });
   }
 }

@@ -1,6 +1,8 @@
 export type TicketReportSource = 'tickets' | 'tasks' | 'improvements' | 'unified';
+export type ReportSector = 'all' | 'ti' | 'devops';
 
 export interface TicketAnalyticsFilters {
+  sector?: ReportSector;
   view?: 'analytics' | 'time';
   startDate: string;
   endDate: string;
@@ -19,7 +21,7 @@ export interface ReportOption { id: number; name: string }
 export interface TicketReportCatalog {
   clients: ReportOption[];
   locations: ReportOption[];
-  technicians: ReportOption[];
+  technicians: Array<ReportOption & { sector?: Exclude<ReportSector, 'all'> | null }>;
   categories: ReportOption[];
 }
 
@@ -68,6 +70,7 @@ export interface TechnicianWorkloadResponse {
 
 
 export interface TicketTechnicianTimingFilters {
+  sector?: ReportSector;
   startDate: string;
   endDate: string;
   clientIds: number[];

@@ -1,4 +1,6 @@
-"use client";
+'use client';
+import type { ReportSector } from '@helpdesk/contracts';
+import { ReportSectorFilter, ReportSectorSummary, sectorTechnicians } from './report-sector-filter';
 
 import {
   TICKET_STATUS_LABELS,
@@ -107,6 +109,7 @@ export function TicketBreakdownReportScreen({
   const [endDate, setEndDate] = useState(today);
   const [level, setLevel] = useState<TicketBreakdownLevel>(0);
   const [clientIds, setClientIds] = useState<string[]>([]);
+  const [sector, setSector] = useState<ReportSector>('all');
   const [technicianId, setTechnicianId] = useState(0);
   const [categoryId, setCategoryId] = useState(0);
   const [status, setStatus] = useState(0);
@@ -123,6 +126,7 @@ export function TicketBreakdownReportScreen({
     clientId: 0,
     clientIds: [] as number[],
     technicianId: 0,
+    sector: 'all' as ReportSector,
     categoryId: 0,
     status: 0,
   });
@@ -240,6 +244,7 @@ export function TicketBreakdownReportScreen({
       clientId: 0,
       clientIds: clientIds.map(Number),
       technicianId,
+      sector,
       categoryId,
       status,
     });
@@ -253,6 +258,7 @@ export function TicketBreakdownReportScreen({
       clientId: 0,
       clientIds: [] as number[],
       technicianId: 0,
+      sector: 'all' as ReportSector,
       categoryId: 0,
       status: 0,
     };
@@ -260,6 +266,7 @@ export function TicketBreakdownReportScreen({
     setEndDate(next.endDate);
     setLevel(0);
     setClientIds([]);
+    setSector('all');
     setTechnicianId(0);
     setCategoryId(0);
     setStatus(0);
@@ -279,6 +286,7 @@ export function TicketBreakdownReportScreen({
           className="mb-4 grid grid-cols-6 items-end gap-3 rounded-2xl border border-app-border bg-app-surface p-4 shadow-sm max-[1200px]:grid-cols-3 max-[720px]:grid-cols-1"
           onSubmit={submit}
         >
+          <ReportSectorFilter value={sector} disabled={loading} onChange={value => { setSector(value); setTechnicianId(0); }} />
           <div className="col-span-2 max-[1200px]:col-span-3 max-[720px]:col-span-1">
             <span className="mb-1.5 block text-xs font-bold text-app-muted">
               Período
@@ -316,7 +324,7 @@ export function TicketBreakdownReportScreen({
             <SearchSelect
               disabled={loading}
               onChange={(values) => setTechnicianId(Number(values[0] ?? 0))}
-              options={catalog.technicians.map((row) => ({
+              options={sectorTechnicians(catalog, sector).map((row) => ({
                 value: String(row.id),
                 label: row.name,
               }))}
@@ -422,11 +430,14 @@ export function TicketBreakdownReportScreen({
             {loading && !result ? (
               <div className="grid min-h-[360px] place-items-center text-sm text-app-muted">Carregando relatório…</div>
             ) : (
-              <ReportChartView
-                emptyMessage="Nenhum atendimento encontrado no período informado."
-                rows={chartRows}
-                type={mode === 'requester' ? chartType : 'bar'}
-              />
+              <>
+                <ReportSectorSummary value={applied.sector} />
+                <ReportChartView
+                  emptyMessage="Nenhum atendimento encontrado no período informado."
+                  rows={chartRows}
+                  type={mode === 'requester' ? chartType : 'bar'}
+                />
+              </>
             )}
           </div>
         </section>

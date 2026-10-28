@@ -1,3 +1,4 @@
+import type { ReportSector } from '@helpdesk/contracts';
 import { Injectable } from '@nestjs/common';
 import type {
   TicketCategoryTotalsLevel,
@@ -12,6 +13,7 @@ export interface GetTicketCategoryTotalsReportInput {
   clientId: number;
   clientIds: number[];
   technicianId: number;
+  sector?: ReportSector;
   categoryId: number;
   status: number;
   level: TicketCategoryTotalsLevel;

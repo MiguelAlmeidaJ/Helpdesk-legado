@@ -96,7 +96,7 @@ export class ReportArchiveController {
     const userId = reportUser(user);
     await this.archive.authorize(userId);
     if (!body || !Array.isArray(body.clientIds) || !body.clientIds.length || body.clientIds.length > 50 || body.clientIds.some(id => typeof id !== 'number' || !Number.isSafeInteger(id) || id < 1)) throw new BadRequestException('Selecione entre 1 e 50 clientes.');
-    const filters = analyticsFilters({ startDate: body.startDate, endDate: body.endDate, source: 'unified' });
+    const filters = analyticsFilters({ startDate: body.startDate, endDate: body.endDate, sector: body.sector, source: 'unified' });
     const allowed = new Map((await this.reports.catalog(userId, 0, true)).clients.map(row => [row.id, row.name]));
     const clientIds = [...new Set(body.clientIds as number[])];
     if (clientIds.some(id => !allowed.has(id))) throw new BadRequestException('Selecione apenas clientes ativos com TI ou DevOps habilitado.');

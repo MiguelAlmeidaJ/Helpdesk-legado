@@ -1,3 +1,5 @@
+import type { ReportSector } from '@helpdesk/contracts';
+import { appendReportSector, NORMALIZED_REPORT_FUNCTION, sectorFunctionNames } from './report-sector';
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import type { Nivel3DatabaseClient } from '@helpdesk/database';
 import type { TicketAnalyticsFilters, TicketAnalyticsResponse, TicketAnalyticsRow, TicketReportCatalog, TicketTechnicianTimingDetail, TicketTechnicianTimingFilters, TicketTechnicianTimingResponse, TechnicianWorkloadResponse, ReportOption } from '@helpdesk/contracts';
@@ -27,6 +29,7 @@ export class PrismaTicketAnalyticsRepository extends TicketAnalyticsRepository {
       const where = ['a.abertura >= ?', 'a.abertura < DATE_ADD(?, INTERVAL 1 DAY)'];
       if (filters.view !== 'time') where.push('a.status > 0');
       const params: unknown[] = [filters.startDate, filters.endDate];
+      appendReportSector(where, params, filters.sector);
       scope(where, params, visibility, 'a.cliente');
       if (filters.clientIds.length) {
         appendNumberInFilter(where, params, 'a.cliente', filters.clientIds);
@@ -93,8 +96,9 @@ export class PrismaTicketAnalyticsRepository extends TicketAnalyticsRepository {
       `SELECT c.clt_id AS id, c.clt_nomef AS name FROM clientes c WHERE ${where.join(' AND ')} ORDER BY c.clt_nomef`, ...params);
     const locations = clientId && (!visibility.restrictClients || visibility.clientIds.includes(clientId))
       ? await this.database.$queryRawUnsafe<ReportOption[]>(`SELECT local_id AS id, local_nom AS name FROM locais WHERE local_clt = ? ORDER BY local_nom`, clientId) : [];
-    const technicians = visibility.restrictClients && !visibility.clientIds.length ? [] : await this.database.$queryRawUnsafe<ReportOption[]>(
-      `SELECT user_id AS id, user_nome AS name FROM usuarios WHERE user_sts = 1 AND user_funcao IN (5, 6) ORDER BY user_nome`);
+    const names = sectorFunctionNames('all');
+    const technicians = visibility.restrictClients && !visibility.clientIds.length ? [] : await this.database.$queryRawUnsafe<TicketReportCatalog['technicians']>(
+      `SELECT u.user_id AS id, u.user_nome AS name, CASE WHEN ${NORMALIZED_REPORT_FUNCTION} IN (?, ?, ?) THEN 'ti' ELSE 'devops' END AS sector FROM usuarios u INNER JOIN cargos_n3 rs_role ON rs_role.cargo_id = u.user_funcao WHERE u.user_sts = 1 AND ${NORMALIZED_REPORT_FUNCTION} IN (${names.map(() => '?').join(', ')}) ORDER BY u.user_nome`, ...sectorFunctionNames('ti'), ...names);
     const categories = visibility.restrictClients && !visibility.clientIds.length
       ? []
       : await this.database.$queryRawUnsafe<ReportOption[]>(
@@ -117,6 +121,7 @@ export class PrismaTicketAnalyticsRepository extends TicketAnalyticsRepository {
       'COALESCE(a.tecnico, 0) > 0',
     ];
     const params: unknown[] = [filters.startDate, filters.endDate];
+    appendReportSector(where, params, filters.sector);
 
     scope(where, params, visibility, 'a.cliente');
     if (filters.clientIds.length) {
@@ -303,23 +308,25 @@ export class PrismaTicketAnalyticsRepository extends TicketAnalyticsRepository {
     };
   }
 
-  async workload(userId: number): Promise<TechnicianWorkloadResponse> {
+  async workload(userId: number, sector?: ReportSector): Promise<TechnicianWorkloadResponse> {
     const visibility = await resolveTicketReportVisibility(this.database, userId);
     if (visibility.restrictClients && !visibility.clientIds.length) return { generatedAt: new Date().toISOString(), rows: [] };
     const where = ['a.status IN (1, 2, 3)'];
     const params: unknown[] = [];
     scope(where, params, visibility, 'a.cliente');
+    const techniciansWhere = ['u.user_sts = 1'];
+    appendReportSector(techniciansWhere, params, sector, 'u.user_id', true);
     const rows = await this.database.$queryRawUnsafe<Array<{ technicianId: number; technicianName: string; open: bigint; waiting: bigint; overdue: bigint; elapsedSeconds: bigint }>>(
       `SELECT u.user_id AS technicianId, u.user_nome AS technicianName,
-        COALESCE(SUM(a.status IN (1, 2)), 0) AS open,
-        COALESCE(SUM(a.status = 3), 0) AS waiting,
-        COALESCE(SUM(a.status IN (1, 2) AND TIMESTAMPDIFF(SECOND, a.abertura, NOW()) >
-          (CASE WHEN a.nivel BETWEEN 1 AND 5 THEN a.nivel ELSE 0 END) * 3600 + COALESCE(w.seconds, 0)), 0) AS overdue,
+        COALESCE(SUM(CASE WHEN a.status IN (1, 2) THEN 1 ELSE 0 END), 0) AS [open],
+        COALESCE(SUM(CASE WHEN a.status = 3 THEN 1 ELSE 0 END), 0) AS waiting,
+        COALESCE(SUM(CASE WHEN a.status IN (1, 2) AND TIMESTAMPDIFF(SECOND, a.abertura, NOW()) >
+          (CASE WHEN a.nivel BETWEEN 1 AND 5 THEN a.nivel ELSE 0 END) * 3600 + COALESCE(w.seconds, 0) THEN 1 ELSE 0 END), 0) AS overdue,
         COALESCE(SUM(CASE WHEN a.status IN (1, 2) THEN GREATEST(0, TIMESTAMPDIFF(SECOND, a.abertura, NOW())) ELSE 0 END), 0) AS elapsedSeconds
       FROM usuarios u
       LEFT JOIN (SELECT a.* FROM atendimentos a WHERE ${where.join(' AND ')}) a ON a.tecnico = u.user_id
       LEFT JOIN (SELECT espera_atd, SUM(TIMESTAMPDIFF(SECOND, espera_start, espera_end)) AS seconds FROM espera GROUP BY espera_atd) w ON w.espera_atd = a.id
-      WHERE u.user_sts = 1 AND u.user_funcao IN (5, 6)
+      WHERE ${techniciansWhere.join(' AND ')}
       GROUP BY u.user_id, u.user_nome ORDER BY u.user_nome`, ...params);
     return { generatedAt: new Date().toISOString(), rows: rows.map(row => ({ ...row, open: Number(row.open), waiting: Number(row.waiting), overdue: Number(row.overdue), elapsedSeconds: Number(row.elapsedSeconds) })) };
   }

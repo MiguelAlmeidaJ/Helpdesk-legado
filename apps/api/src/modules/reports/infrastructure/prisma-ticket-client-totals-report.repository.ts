@@ -1,3 +1,4 @@
+import { appendReportSector } from './report-sector';
 import { Inject, Injectable } from '@nestjs/common';
 import type {
   TicketClientTotalsReportResponse,
@@ -50,6 +51,7 @@ export class PrismaTicketClientTotalsReportRepository extends TicketClientTotals
       'a.abertura < DATE_ADD(?, INTERVAL 1 DAY)',
     ];
     const params: unknown[] = [query.startDate, query.endDate];
+    appendReportSector(where, params, query.sector);
     const levels = query.level === 0 ? [1, 2, 3] : [query.level];
 
     appendNumberInFilter(where, params, 'a.nivel', levels);

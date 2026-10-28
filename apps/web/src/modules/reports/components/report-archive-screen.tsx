@@ -7,6 +7,8 @@ import { AppPageHeader } from '../../../shared/navigation/app-page-header';
 import { NavigationIcon } from '../../../shared/navigation/navigation-icon';
 import { appButtonClass } from '../../../shared/ui/button-styles';
 import { reportError } from '../lib/report-export';
+import { ReportSectorFilter } from './report-sector-filter';
+import type { ReportSector } from '@helpdesk/contracts';
 import { ReportPdfPreview } from './report-pdf-preview';
 
 interface ArchivedReport { name: string; size: number; modifiedAt: string; expiresAt: string }
@@ -32,6 +34,7 @@ export function ReportArchiveScreen({ currentUser }: { currentUser: CurrentUserR
   const [clients, setClients] = useState<TicketReportCatalog['clients']>([]);
   const [clientIds, setClientIds] = useState<number[]>([]);
   const [clientQuery, setClientQuery] = useState('');
+  const [sector, setSector] = useState<ReportSector>('all');
   const [names, setNames] = useState<string[]>([]);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
@@ -86,7 +89,7 @@ export function ReportArchiveScreen({ currentUser }: { currentUser: CurrentUserR
     if (!canGenerate) return;
     await action(async () => {
       const result = await apiRequest<{ files: string[]; errors: Array<{ clientId: number; message: string }> }>('reports/archive/generate', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ clientIds, startDate, endDate }),
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ clientIds, startDate, endDate, sector }),
       });
       await refresh(); setMessage(`${result.files.length} PDF(s) gerado(s).`);
       if (result.errors.length) setError(result.errors.map(row => `Cliente ${row.clientId}: ${row.message}`).join(' '));
@@ -112,6 +115,7 @@ export function ReportArchiveScreen({ currentUser }: { currentUser: CurrentUserR
         <header className="flex flex-wrap items-center justify-between gap-3 border-b border-app-border px-5 py-4"><div><h2 id="generate-reports-title" className="m-0 text-base font-extrabold">Gerar novos relatórios</h2><p className="mb-0 mt-1 text-sm text-app-muted">Defina o período e escolha até 50 clientes por lote.</p></div><span className="rounded-full bg-app-brand-soft px-3 py-1 text-xs font-bold text-app-brand">Um PDF por cliente</span></header>
         <div className="grid items-start gap-6 p-5 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.4fr)]">
           <div className="grid min-w-0 gap-5 max-lg:contents">
+            <ReportSectorFilter value={sector} disabled={busy} onChange={setSector} />
             <fieldset className="m-0 min-w-0 border-0 p-0"><legend className="mb-3 text-sm font-bold">Período do relatório</legend><div className="grid min-w-0 grid-cols-1 gap-3 min-[430px]:grid-cols-2">
               <label className="grid min-w-0 gap-1.5 text-xs font-semibold text-app-muted"><span>De</span><input className={INPUT} type="date" required disabled={busy} max={endDate || undefined} value={startDate} onChange={event => setStartDate(event.target.value)} /></label>
               <label className="grid min-w-0 gap-1.5 text-xs font-semibold text-app-muted"><span>Até</span><input className={INPUT} type="date" required disabled={busy} min={startDate || undefined} value={endDate} onChange={event => setEndDate(event.target.value)} /></label>

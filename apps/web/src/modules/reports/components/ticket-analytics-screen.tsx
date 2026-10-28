@@ -13,6 +13,8 @@ import { apiDownload, apiRequest } from '../../../shared/api/api-client';
 import { AppPageHeader } from '../../../shared/navigation/app-page-header';
 import { DateRangePicker } from '../../../shared/ui/date-range-picker';
 import { appButtonClass } from '../../../shared/ui/button-styles';
+import { ReportSectorFilter, ReportSectorSummary, sectorTechnicians } from './report-sector-filter';
+import type { ReportSector } from '@helpdesk/contracts';
 import { SearchSelect } from '../../../shared/ui/search-select';
 import { downloadCsv, duration, reportError } from '../lib/report-export';
 
@@ -59,6 +61,7 @@ type ScreenFilters = {
   clientIds: string;
   locationId: string;
   technicianId: string;
+  sector: ReportSector;
   categoryId: string;
   categorySector: string;
   status: string;
@@ -148,6 +151,7 @@ export function TicketAnalyticsScreen({
     clientIds: '',
     locationId: '0',
     technicianId: '0',
+    sector: 'all',
     categoryId: '0',
     categorySector: '0',
     status: '0',
@@ -174,7 +178,7 @@ export function TicketAnalyticsScreen({
     try {
       if (mode === 'workload') {
         const response = await apiRequest<TechnicianWorkloadResponse>(
-          'reports/tickets/workload',
+          `reports/tickets/workload?sector=${values.sector}`,
         );
         if (id === requestId.current) setWorkload(response);
       } else {
@@ -222,7 +226,7 @@ export function TicketAnalyticsScreen({
     };
     // Initial request only.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mode]);
+  }, [mode, mode === 'workload' ? filters.sector : null]);
 
   useEffect(() => {
     if (mode === 'workload') return;
@@ -262,6 +266,7 @@ export function TicketAnalyticsScreen({
       clientIds: '',
       locationId: '0',
       technicianId: '0',
+      sector: 'all',
       categoryId: '0',
       categorySector: areaLocked ? filters.categorySector : '0',
       status: '0',
@@ -355,12 +360,15 @@ export function TicketAnalyticsScreen({
       />
 
       <div className="mx-auto w-full max-w-[1550px] px-5 py-5 max-sm:px-3">
+        {report ? <ReportSectorSummary value={report.filters.sector} /> : null}
+        {mode === 'workload' ? <div className="mb-4 max-w-xs print:hidden"><ReportSectorFilter value={filters.sector} disabled={loading} onChange={sector => setFilters(current => ({ ...current, sector }))} /></div> : null}
         {mode !== 'workload' ? (
           <form
             className="mb-4 rounded-2xl border border-app-border bg-app-surface p-4 shadow-sm print:hidden"
             onSubmit={apply}
           >
             <div className="grid grid-cols-6 items-end gap-3 max-[1200px]:grid-cols-3 max-[760px]:grid-cols-1">
+              <ReportSectorFilter value={filters.sector} disabled={loading} onChange={sector => setFilters(current => ({ ...current, sector, technicianId: '0' }))} />
               {mode !== 'time' ? (
                 <label className="grid gap-1.5 text-xs font-bold text-app-muted">
                   Clientes
@@ -468,7 +476,7 @@ export function TicketAnalyticsScreen({
                       technicianId: values[0] ?? '0',
                     })
                   }
-                  options={catalog.technicians.map((row) => ({
+                  options={sectorTechnicians(catalog, filters.sector).map((row) => ({
                     value: String(row.id),
                     label: row.name,
                   }))}

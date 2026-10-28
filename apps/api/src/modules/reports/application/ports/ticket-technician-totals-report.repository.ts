@@ -1,3 +1,4 @@
+import type { ReportSector } from '@helpdesk/contracts';
 import type {
   TicketTechnicianTotalsLevel,
   TicketTechnicianTotalsReportResponse,
@@ -10,6 +11,7 @@ export interface TicketTechnicianTotalsReportQuery {
   clientId: number;
   clientIds: number[];
   technicianId: number;
+  sector?: ReportSector;
   categoryId: number;
   status: number;
   level: TicketTechnicianTotalsLevel;

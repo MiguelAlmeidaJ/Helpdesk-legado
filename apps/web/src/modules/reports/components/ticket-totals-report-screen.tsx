@@ -1,4 +1,6 @@
-"use client";
+'use client';
+import type { ReportSector } from '@helpdesk/contracts';
+import { ReportSectorFilter, ReportSectorSummary, sectorTechnicians } from './report-sector-filter';
 
 import {
   TICKET_STATUS_LABELS,
@@ -32,6 +34,7 @@ export interface TicketTotalsReportFilters {
   clientId?: number;
   clientIds?: number[];
   technicianId?: number;
+  sector?: ReportSector;
   categoryId?: number;
   status?: number;
 }
@@ -101,6 +104,8 @@ export function TicketTotalsReportScreen({
   const [endDate, setEndDate] = useState('');
   const [level, setLevel] = useState<TicketTotalsLevel>(0);
   const [clientIds, setClientIds] = useState<string[]>([]);
+  const [sector, setSector] = useState<ReportSector>('all');
+  const [appliedSector, setAppliedSector] = useState<ReportSector>('all');
   const [technicianId, setTechnicianId] = useState(0);
   const [categoryId, setCategoryId] = useState(0);
   const [status, setStatus] = useState(0);
@@ -134,6 +139,7 @@ export function TicketTotalsReportScreen({
           clientId: 0,
           clientIds: filters.clientIds ?? [],
           technicianId: filters.technicianId ?? 0,
+          sector: filters.sector ?? 'all',
           categoryId: filters.categoryId ?? 0,
           status: filters.status ?? 0,
         };
@@ -146,6 +152,8 @@ export function TicketTotalsReportScreen({
         setLevel(response.level);
         setClientIds(effectiveFilters.clientIds.map(String));
         setTechnicianId(effectiveFilters.technicianId);
+        setSector(effectiveFilters.sector);
+        setAppliedSector(effectiveFilters.sector);
         setCategoryId(effectiveFilters.categoryId);
         setStatus(effectiveFilters.status);
         setDetailPage(1);
@@ -180,6 +188,7 @@ export function TicketTotalsReportScreen({
         .map((value) => Number(value))
         .filter((value) => Number.isSafeInteger(value) && value > 0),
       technicianId: Number(query.get('technicianId') ?? 0),
+      sector: query.get('sector') === 'ti' ? 'ti' : query.get('sector') === 'devops' ? 'devops' : 'all',
       categoryId: Number(query.get('categoryId') ?? 0),
       status: Number(query.get('status') ?? 0),
     });
@@ -218,6 +227,7 @@ export function TicketTotalsReportScreen({
       level,
       clientIds: clientIds.map(Number),
       technicianId,
+      sector,
       categoryId,
       status,
     };
@@ -230,6 +240,7 @@ export function TicketTotalsReportScreen({
 
   function clear() {
     setClientIds([]);
+    setSector('all');
     setTechnicianId(0);
     setCategoryId(0);
     setStatus(0);
@@ -262,6 +273,7 @@ export function TicketTotalsReportScreen({
           className="mb-4 grid grid-cols-6 items-end gap-3 rounded-2xl border border-app-border bg-app-surface p-4 shadow-sm max-[1200px]:grid-cols-3 max-[720px]:grid-cols-1 print:hidden"
           onSubmit={apply}
         >
+          <ReportSectorFilter value={sector} disabled={loading} onChange={value => { setSector(value); setTechnicianId(0); }} />
           <div className="col-span-2 max-[1200px]:col-span-3 max-[720px]:col-span-1">
             <span className="mb-1.5 block text-xs font-bold text-app-muted">
               Período
@@ -317,7 +329,7 @@ export function TicketTotalsReportScreen({
             <SearchSelect
               disabled={loading}
               onChange={(values) => setTechnicianId(Number(values[0] ?? 0))}
-              options={catalog.technicians.map((row) => ({
+              options={sectorTechnicians(catalog, sector).map((row) => ({
                 value: String(row.id),
                 label: row.name,
               }))}
@@ -392,6 +404,7 @@ export function TicketTotalsReportScreen({
             </div>
           </header>
           <div className="p-4">
+            {data ? <ReportSectorSummary value={appliedSector} /> : null}
             {loading && !data ? (
               <div className="grid min-h-[360px] place-items-center text-sm text-app-muted">Carregando relatório…</div>
             ) : (
