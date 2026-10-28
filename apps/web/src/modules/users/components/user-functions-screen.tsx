@@ -1,6 +1,6 @@
 "use client";
 
-import type { CurrentUserResponse, UserFunctionInput } from '@helpdesk/contracts';
+import type { CurrentUserResponse, UserFunctionInput, UserFunctionSummary } from '@helpdesk/contracts';
 import { useEffect, useMemo, useState } from 'react';
 import { AppPageHeader } from '../../../shared/navigation/app-page-header';
 import { NavigationIcon } from '../../../shared/navigation/navigation-icon';
@@ -27,6 +27,7 @@ export function UserFunctionsScreen({ currentUser }: { currentUser: CurrentUserR
   const [selection, setSelection] = useState<Selection>(null);
   const [editor, setEditor] = useState<number | 'new' | null>(null);
   const [loading, setLoading] = useState(true);
+  const [deleting, setDeleting] = useState(false);
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('all');
   const [error, setError] = useState('');
@@ -67,11 +68,15 @@ export function UserFunctionsScreen({ currentUser }: { currentUser: CurrentUserR
     setSuccess(editor === 'new' ? 'Função criada com sucesso.' : 'Função atualizada com sucesso.');
     setEditor(null); setSelection(result.id); await reload();
   }
-  async function remove() {
-    if (!editorInitial || editorInitial.linkedUserCount > 0) return;
-    if (!window.confirm(`Excluir a função "${editorInitial.name}"?`)) return;
-    await deleteUserFunction(editorInitial.id);
-    setEditor(null); setSelection(null); setSuccess('Função excluída.'); await reload();
+  async function remove(target: UserFunctionSummary) {
+    if (target.activeUserCount > 0) return;
+    const note = target.linkedUserCount > 0 ? ` Os ${target.linkedUserCount} cadastros vinculados serão preservados e ficarão sem função.` : '';
+    if (!window.confirm(`Excluir a função "${target.name}"?${note}`)) return;
+    setDeleting(true); setError('');
+    try {
+      await deleteUserFunction(target.id);
+      setEditor(null); setSelection(null); setSuccess('Função excluída. Os cadastros de usuários foram preservados.'); await reload();
+    } finally { setDeleting(false); }
   }
 
   return <main className="min-h-screen bg-app-bg text-app-text max-sm:[&>header]:flex-wrap max-sm:[&>header]:gap-2 max-sm:[&>header>div:last-child]:w-full">
@@ -106,7 +111,7 @@ export function UserFunctionsScreen({ currentUser }: { currentUser: CurrentUserR
 
         {hasDetails ? <section className={`${CARD} min-w-0 overflow-hidden`} aria-labelledby="function-details-title">
           <header className="border-b border-app-border bg-app-surface-muted/50 p-5"><div className="flex items-start justify-between gap-3"><div><p className="mb-1 mt-0 text-[11px] font-bold uppercase tracking-widest text-app-muted">{isUnassigned ? 'Revisão de cadastros' : 'Detalhes da função'}</p><h2 id="function-details-title" className="m-0 break-words text-xl font-extrabold">{isUnassigned ? 'Usuários sem função' : selected?.name}</h2></div><button type="button" className={SECONDARY} aria-label="Fechar detalhes da função" onClick={() => setSelection(null)}>Fechar</button></div>
-            {selected ? <div className="mt-4 flex flex-wrap items-center justify-between gap-2"><span className="text-xs text-app-muted">{selected.linkedUserCount} vínculos no total, incluindo usuários inativos</span><button type="button" className={SECONDARY} disabled={loading} onClick={() => { setEditor(selected.id); setSuccess(''); }}>Editar função</button></div> : null}
+            {selected ? <div className="mt-4 grid gap-3"><span className="text-xs text-app-muted">{selected.linkedUserCount} vínculos no total, incluindo usuários inativos</span><div className="flex flex-wrap gap-2"><button type="button" className={SECONDARY} disabled={loading || deleting} onClick={() => { setEditor(selected.id); setSuccess(''); }}>Editar função</button><button type="button" className={SECONDARY} disabled={loading || deleting || selected.activeUserCount > 0} title={selected.activeUserCount > 0 ? 'Esta função possui usuários ativos.' : 'Excluir a função e preservar os cadastros inativos.'} onClick={() => void remove(selected).catch(reason => setError(functionApiMessage(reason)))}>{deleting ? 'Excluindo…' : 'Excluir função'}</button></div>{selected.activeUserCount === 0 ? <span className="text-xs text-app-muted">Sem usuários ativos: a função pode ser excluída. Os cadastros inativos serão mantidos e ficarão sem função.</span> : null}</div> : null}
             {selected?.status === 2 ? <p className="mb-0 mt-3 text-xs text-app-muted">Esta função está inativa, mas mantém os usuários já vinculados.</p> : null}
           </header>
           <div className="p-5"><UserFunctionMembers key={String(selection)} users={selectedMembers} unassigned={isUnassigned} /></div>
@@ -114,6 +119,6 @@ export function UserFunctionsScreen({ currentUser }: { currentUser: CurrentUserR
         </section> : null}
       </div>
     </div>
-    {editor !== null && data ? <UserFunctionEditor key={editor} initial={editorInitial} permissions={data.permissions} onSave={save} onDelete={editorInitial ? remove : undefined} onClose={() => setEditor(null)} /> : null}
+    {editor !== null && data ? <UserFunctionEditor key={editor} initial={editorInitial} permissions={data.permissions} onSave={save} onDelete={editorInitial ? () => remove(editorInitial) : undefined} onClose={() => setEditor(null)} /> : null}
   </main>;
 }

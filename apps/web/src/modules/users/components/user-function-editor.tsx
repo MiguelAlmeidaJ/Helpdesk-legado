@@ -63,7 +63,7 @@ export function UserFunctionEditor({ initial, permissions, onSave, onDelete, onC
         </fieldset>
       </form>
       <footer className="flex flex-wrap justify-end gap-2 border-t border-app-border bg-app-surface px-6 py-4">
-        {initial && onDelete ? <button type="button" className={`${appButtonClass('secondary')} mr-auto`} disabled={busy || initial.linkedUserCount > 0} title={initial.linkedUserCount > 0 ? 'Esta função possui usuários vinculados, incluindo inativos.' : undefined} onClick={async () => { setBusy(true); setError(''); try { await onDelete(); } catch (reason) { setError(functionApiMessage(reason)); } finally { setBusy(false); } }}>Excluir função</button> : null}
+        {initial && onDelete ? <button type="button" className={`${appButtonClass('secondary')} mr-auto`} disabled={busy || initial.activeUserCount > 0} title={initial.activeUserCount > 0 ? 'Reatribua ou desative os usuários ativos antes de excluir.' : 'Os cadastros inativos serão preservados e ficarão sem função.'} onClick={async () => { setBusy(true); setError(''); try { await onDelete(); } catch (reason) { setError(functionApiMessage(reason)); } finally { setBusy(false); } }}>Excluir função</button> : null}
         <button type="button" className={appButtonClass('secondary')} disabled={busy} onClick={() => dialog.current?.close()}>Cancelar</button>
         <button type="submit" form="user-function-editor-form" className={appButtonClass('primary')} disabled={busy || !form.name.trim()}>{busy ? 'Salvando…' : initial ? 'Salvar alterações' : 'Criar função'}</button>
       </footer>

@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import type {
   AccessPermissionItem,
   CreateManagedUserRequest,
@@ -277,6 +277,7 @@ export class UsersRepository {
     canManageAccess: boolean,
   ): Promise<number> {
     return this.database.$transaction(async (transaction) => {
+      await this.assertFunctionExists(transaction, input.functionId);
       const ids = await transaction.$queryRawUnsafe<InsertIdRow[]>(
         `INSERT INTO usuarios
           (user_sts, user_nome, user_mail, user_cel, user_funcao, user_login,
@@ -303,6 +304,7 @@ export class UsersRepository {
     assignedBy: number,
   ): Promise<boolean> {
     return this.database.$transaction(async (transaction) => {
+      await this.assertFunctionExists(transaction, input.functionId);
       const changed = await transaction.$executeRawUnsafe(
         `UPDATE usuarios SET user_sts = ?, user_nome = ?, user_mail = ?,
           user_cel = ?, user_funcao = ?, user_login = ?, tipo_usuario = ?,
@@ -319,6 +321,13 @@ export class UsersRepository {
       }
       return true;
     });
+  }
+
+  private async assertFunctionExists(transaction: Pick<Nivel3DatabaseClient, '$queryRawUnsafe'>, functionId: number) {
+    const rows = await transaction.$queryRawUnsafe<Array<{ id: number }>>(
+      'SELECT cargo_id AS id FROM dbo.cargos_n3 WITH (HOLDLOCK) WHERE cargo_id = @P1', functionId,
+    );
+    if (!rows.length) throw new NotFoundException('A função selecionada não existe mais. Atualize o cadastro e escolha outra função.');
   }
 
   async deactivate(id: number): Promise<boolean> {

@@ -17,7 +17,6 @@ type FunctionRow = {
   linked_user_count: number | bigint;
 };
 type IdRow = { id: number | bigint };
-type CountRow = { total: number | bigint };
 type PermissionRow = { id: number | bigint; name: string; slug: string; module: string; description: string | null };
 type PermissionLinkRow = { function_id: number; permission_id: number | bigint };
 
@@ -116,20 +115,22 @@ export class UserFunctionsRepository {
   }
 
   async remove(id: number): Promise<void> {
-    await this.assertExists(id);
-    const rows = await this.database.$queryRawUnsafe<CountRow[]>(
-      'SELECT COUNT(*) AS total FROM usuarios WHERE user_funcao = ?',
-      id,
-    );
-    const linked = Number(rows[0]?.total ?? 0);
-    if (linked > 0) {
-      throw new ConflictException(
-        `Esta função possui ${linked} usuário(s) vinculado(s). Remova os vínculos ou deixe a função inativa antes de excluí-la.`,
-      );
-    }
     await this.database.$transaction(async (transaction) => {
-      await transaction.$executeRawUnsafe('DELETE FROM cargos_n3 WHERE cargo_id = ?', id);
-      await transaction.$executeRawUnsafe('DELETE FROM roles WHERE slug = ?', `function-${id}`);
+      const functions = await transaction.$queryRawUnsafe<IdRow[]>(
+        'SELECT cargo_id AS id FROM dbo.cargos_n3 WITH (XLOCK, HOLDLOCK) WHERE cargo_id = @P1', id,
+      );
+      if (!functions[0]) throw new NotFoundException('Função de usuário não encontrada.');
+      const users = await transaction.$queryRawUnsafe<Array<{ user_sts: number | null }>>(
+        'SELECT user_sts FROM dbo.usuarios WITH (UPDLOCK, HOLDLOCK) WHERE user_funcao = @P1', id,
+      );
+      const active = users.filter(user => user.user_sts === 1).length;
+      if (active > 0) throw new ConflictException(
+        `Esta função possui ${active} usuário(s) ativo(s). Reatribua ou desative esses usuários antes de excluí-la.`,
+      );
+      // Preserve inactive accounts, clearing their assignment before removing the function.
+      await transaction.$executeRawUnsafe('UPDATE dbo.usuarios SET user_funcao = NULL WHERE user_funcao = @P1', id);
+      await transaction.$executeRawUnsafe('DELETE FROM dbo.cargos_n3 WHERE cargo_id = @P1', id);
+      await transaction.$executeRawUnsafe('DELETE FROM dbo.roles WHERE slug = @P1', `function-${id}`);
     });
   }
 

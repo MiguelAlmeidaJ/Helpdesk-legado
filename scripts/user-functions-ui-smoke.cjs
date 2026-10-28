@@ -11,11 +11,12 @@ class Cdp{
   async evaluate(expression){const result=await this.send('Runtime.evaluate',{expression,awaitPromise:true,returnByValue:true,userGesture:true});if(result.exceptionDetails)throw new Error(result.exceptionDetails.text);return result.result?.value;}
 }
 const user={id:0,name:'Administração de teste',login:'fixture',functionId:null,accessSource:'rbac',roleAssignments:[],grants:[{permission:'system.admin',scope:'all'}]};
-const state={calls:[],errors:[],roles:[
+const state={calls:[],errors:[],confirmations:[],inactiveUsers:[{id:201,functionId:5},{id:202,functionId:5}],roles:[
  {id:1,name:'Suporte técnico',status:1,activeUserCount:2,linkedUserCount:3,permissionIds:[1,2]},
  {id:2,name:'Operações',status:1,activeUserCount:0,linkedUserCount:0,permissionIds:[]},
  {id:3,name:'Projetos',status:2,activeUserCount:1,linkedUserCount:2,permissionIds:[1]},
  {id:4,name:'Financeiro',status:1,activeUserCount:35,linkedUserCount:35,permissionIds:[3]},
+ {id:5,name:'Arquivo',status:1,activeUserCount:0,linkedUserCount:2,permissionIds:[]},
 ],users:[{id:1,name:'Ana Martins',login:'ana.martins',functionId:1},{id:2,name:'João Pereira',login:'joao.pereira',functionId:1},{id:3,name:'Marina Costa',login:'marina.costa',functionId:3},
  ...Array.from({length:35},(_,i)=>({id:10+i,name:'Profissional '+String(i+1).padStart(2,'0'),login:'financeiro.'+(i+1),functionId:4})),
  {id:101,name:'Nina Oliveira',login:'nina',functionId:null},{id:102,name:'Lucas Santos',login:'lucas',functionId:null},{id:103,name:'Pedro Lima',login:'pedro',functionId:null}]};
@@ -35,7 +36,7 @@ function fixture(url,method,body){
   return state.roles;
  }
  const match=pathname.match(/\/user-functions\/(\d+)$/);
- if(match){const id=Number(match[1]);if(method==='PATCH'){state.roles=state.roles.map(role=>role.id===id?{...role,...body}:role);return{id};}if(method==='DELETE'){state.roles=state.roles.filter(role=>role.id!==id);return null;}}
+ if(match){const id=Number(match[1]);if(method==='PATCH'){state.roles=state.roles.map(role=>role.id===id?{...role,...body}:role);return{id};}if(method==='DELETE'){state.inactiveUsers=state.inactiveUsers.map(user=>user.functionId===id?{...user,functionId:null}:user);state.roles=state.roles.filter(role=>role.id!==id);return null;}}
  return {};
 }
 async function main(){
@@ -49,7 +50,7 @@ async function main(){
   const debugPort=await until(async()=>Number((await fs.readFile(path.join(temp,'DevToolsActivePort'),'utf8')).split('\n')[0]));
   const targets=await(await fetch('http://127.0.0.1:'+debugPort+'/json/list')).json();const socket=new WebSocket(targets.find(t=>t.type==='page').webSocketDebuggerUrl);await new Promise((resolve,reject)=>{socket.addEventListener('open',resolve,{once:true});socket.addEventListener('error',reject,{once:true});});cdp=new Cdp(socket);
   cdp.events.set('Runtime.exceptionThrown',event=>state.errors.push(event.exceptionDetails.text));
-  cdp.events.set('Page.javascriptDialogOpening',()=>cdp.send('Page.handleJavaScriptDialog',{accept:true}).catch(()=>undefined));
+  cdp.events.set('Page.javascriptDialogOpening',event=>{state.confirmations.push(event.message);return cdp.send('Page.handleJavaScriptDialog',{accept:true}).catch(()=>undefined);});
   cdp.events.set('Fetch.requestPaused',async event=>{
    try{
     if(!event.request.url.includes('/api/')){await cdp.send('Fetch.continueRequest',{requestId:event.requestId});return;}
@@ -60,7 +61,7 @@ async function main(){
   });
   await cdp.send('Page.enable');await cdp.send('Runtime.enable');await cdp.send('Fetch.enable',{patterns:[{urlPattern:'*'}]});await cdp.send('Emulation.setDeviceMetricsOverride',{width:1440,height:1000,deviceScaleFactor:1,mobile:false});await cdp.send('Page.navigate',{url:'http://localhost:'+webPort+'/admin/user-functions'});
   const wait=async expression=>until(()=>cdp.evaluate(expression));
-  const click=async text=>cdp.evaluate(`(()=>{const button=[...document.querySelectorAll('button')].find(b=>b.getClientRects().length&&b.textContent.trim()===${JSON.stringify(text)});button.focus();button.click();})()`);
+  const click=async text=>cdp.evaluate(`(()=>{const scope=document.querySelector('dialog[open]')??document;const button=[...scope.querySelectorAll('button')].find(b=>b.getClientRects().length&&b.textContent.trim()===${JSON.stringify(text)});button.focus();button.click();})()`);
   const setInput=async(selector,value)=>cdp.evaluate(`(()=>{const input=document.querySelector(${JSON.stringify(selector)});Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(input,${JSON.stringify(value)});input.dispatchEvent(new Event('input',{bubbles:true}));})()`);
   const shot=async(filename,viewport=false)=>{await fs.mkdir(path.join(root,'docs/reports'),{recursive:true});const capture=await cdp.send('Page.captureScreenshot',{format:'png',captureBeyondViewport:!viewport});await fs.writeFile(path.join(root,'docs/reports',filename),Buffer.from(capture.data,'base64'));};
   await wait("document.querySelector('button[aria-label=\"Ver usuários ativos sem função\"]').innerText.includes('3')");
@@ -84,6 +85,10 @@ async function main(){
   await wait("[...document.querySelectorAll('button')].some(b=>b.textContent==='Editar função'&&!b.disabled)");await click('Editar função');await wait("document.querySelector('dialog')?.open===true");await setInput('dialog input[maxlength="50"]','Auditoria revisada');await click('Salvar alterações');await wait("document.body.innerText.includes('Função atualizada com sucesso.') && !document.querySelector('dialog')");
   await wait("[...document.querySelectorAll('button')].some(b=>b.textContent==='Editar função'&&!b.disabled)");await click('Editar função');await wait("document.querySelector('dialog')?.open===true");await click('Excluir função');await wait("document.body.innerText.includes('Função excluída.') && !document.querySelector('dialog')");
   await cdp.evaluate("[...document.querySelectorAll('button[aria-pressed]')].find(b=>b.innerText.includes('Projetos')).click()");await click('Editar função');await wait("document.querySelector('dialog')?.open===true");assert.equal(await cdp.evaluate("[...document.querySelectorAll('dialog button')].find(b=>b.textContent==='Excluir função').disabled"),true);await click('Cancelar');
+  await cdp.evaluate("[...document.querySelectorAll('button[aria-pressed]')].find(b=>b.innerText.includes('Arquivo')).click()");
+  assert.equal(await cdp.evaluate("[...document.querySelectorAll('section[aria-labelledby=function-details-title] button')].find(b=>b.textContent==='Excluir função').disabled"),false);
+  await click('Excluir função');await wait("!document.querySelector('section[aria-labelledby=function-details-title]')");
+  assert.equal(state.inactiveUsers.length,2);assert.ok(state.inactiveUsers.every(user=>user.functionId===null));assert.ok(state.confirmations.some(text=>text.includes('2 cadastros vinculados')&&text.includes('preservados')));
   assert.ok(state.calls.some(c=>c.method==='POST'&&c.body?.permissionIds?.includes(1)));assert.ok(state.calls.some(c=>c.method==='PATCH'));assert.ok(state.calls.some(c=>c.method==='DELETE'));assert.deepEqual(state.errors,[]);
   console.log(JSON.stringify({ui:true,defaultFormClosed:true,activeMembers:true,unassigned:true,search:true,pagination:true,keyboardEscapeAndFocus:true,mobile:true,createEditDelete:'fixtures only',consoleExceptions:0}));
  }finally{

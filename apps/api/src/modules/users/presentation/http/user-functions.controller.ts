@@ -94,7 +94,7 @@ export class UserFunctionsController {
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiOperation({ summary: 'Excluir função de usuário sem vínculos' })
+  @ApiOperation({ summary: 'Excluir função sem usuários ativos, preservando os cadastros inativos' })
   async remove(@Param('id', ParseIntPipe) id: number): Promise<void> {
     if (id < 1) throw new BadRequestException('id inválido.');
     await this.management.remove(id);
