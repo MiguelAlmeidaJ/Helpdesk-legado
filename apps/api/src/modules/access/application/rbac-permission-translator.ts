@@ -90,12 +90,12 @@ export function translateRbacAccess(
   );
 
   addGrant(grants, AppPermission.UsersRead, has(P.usersRead));
-  addGrant(grants, AppPermission.UsersCreate, isGlobalAdmin);
-  addGrant(grants, AppPermission.UsersEdit, isGlobalAdmin);
+  addGrant(grants, AppPermission.UsersCreate, isGlobalAdmin || has('usuarios.criar'));
+  addGrant(grants, AppPermission.UsersEdit, isGlobalAdmin || has('usuarios.criar'));
   addGrant(
     grants,
     AppPermission.UsersManageOverrides,
-    isGlobalAdmin,
+    isGlobalAdmin || has('usuarios.permissoes_extras'),
   );
 
   addGrant(

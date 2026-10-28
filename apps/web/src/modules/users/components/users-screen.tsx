@@ -131,9 +131,9 @@ export function UsersScreen({ currentUser }: { currentUser: CurrentUserResponse 
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [companyQuery, setCompanyQuery] = useState('');
-  const canCreate = can(currentUser, AppPermission.SystemAdmin);
-  const canEdit = canCreate;
-  const canSetExtras = canCreate;
+  const canCreate = can(currentUser, AppPermission.UsersCreate);
+  const canEdit = can(currentUser, AppPermission.UsersEdit);
+  const canSetExtras = can(currentUser, AppPermission.UsersManageOverrides);
 
   async function load(signal?: AbortSignal) {
     setLoading(true);
@@ -277,7 +277,7 @@ export function UsersScreen({ currentUser }: { currentUser: CurrentUserResponse 
 
           <section className={styles.editor}>
             <h2>{title}</h2>
-            <p>Somente administradores globais podem cadastrar, editar ou desativar usuários. Para conceder esse acesso, selecione a função Administrador global.</p>
+            {(selectedId ? !canEdit : !canCreate) ? <p>{selectedId ? 'Você não tem permissão para editar este usuário.' : 'Você não tem permissão para criar usuários.'}</p> : null}
             {!selectedId && !canCreate ? <p>Selecione um usuário para consultar.</p> : (
               <form onSubmit={save}>
                 <div className={styles.grid}>

@@ -95,7 +95,7 @@ test('reports and finance use dedicated permissions', () => {
 });
 
 
-test('delegated user administration permissions cannot grant global user management', () => {
+test('delegated user permissions allow creation and editing without global administration', () => {
   const user = translateRbacAccess(
     legacySession,
     snapshot([
@@ -108,14 +108,15 @@ test('delegated user administration permissions cannot grant global user managem
   );
 
   const permissions = new Set(user.grants.map((grant) => grant.permission));
-  assert.equal(permissions.has(AppPermission.UsersCreate), false);
-  assert.equal(permissions.has(AppPermission.UsersEdit), false);
+  assert.equal(permissions.has(AppPermission.UsersCreate), true);
+  assert.equal(permissions.has(AppPermission.UsersEdit), true);
+  assert.equal(permissions.has(AppPermission.SystemAdmin), false);
   assert.equal(permissions.has(AppPermission.UsersAssignRole), false);
-  assert.equal(permissions.has(AppPermission.UsersManageOverrides), false);
+  assert.equal(permissions.has(AppPermission.UsersManageOverrides), true);
   assert.equal(permissions.has(AppPermission.UsersManageAccess), false);
 });
 
-test('only the system-admin role grants user management', () => {
+test('system-admin retains user management without individual grants', () => {
   const access = snapshot(); access.roleSlugs = ['system-admin'];
   const permissions = new Set(translateRbacAccess(legacySession, access).grants.map(grant => grant.permission));
   for (const permission of [AppPermission.SystemAdmin, AppPermission.UsersCreate, AppPermission.UsersEdit, AppPermission.UsersManageOverrides]) assert.equal(permissions.has(permission), true);

@@ -278,7 +278,8 @@ export class UsersRepository {
   ): Promise<number> {
     return this.database.$transaction(async (transaction) => {
       await this.assertFunctionExists(transaction, input.functionId);
-      await this.lockGlobalAdministration(transaction, assignedBy);
+      const isGlobalAdmin = await this.lockGlobalAdministration(transaction, assignedBy);
+      await this.assertGlobalUserAccess(transaction, isGlobalAdmin, input.functionId);
       const ids = await transaction.$queryRawUnsafe<InsertIdRow[]>(
         `INSERT INTO usuarios
           (user_sts, user_nome, user_mail, user_cel, user_funcao, user_login,
@@ -307,7 +308,8 @@ export class UsersRepository {
   ): Promise<boolean> {
     return this.database.$transaction(async (transaction) => {
       await this.assertFunctionExists(transaction, input.functionId);
-      await this.lockGlobalAdministration(transaction, assignedBy);
+      const isGlobalAdmin = await this.lockGlobalAdministration(transaction, assignedBy);
+      await this.assertGlobalUserAccess(transaction, isGlobalAdmin, input.functionId, id);
       const globalFunction = await this.isGlobalFunction(transaction, input.functionId);
       if (input.status !== 1 || !globalFunction) await this.assertAnotherGlobalAdmin(transaction, id);
       const changed = await transaction.$executeRawUnsafe(
@@ -338,7 +340,8 @@ export class UsersRepository {
 
   async deactivate(id: number, actorId: number): Promise<boolean> {
     return this.database.$transaction(async transaction => {
-      await this.lockGlobalAdministration(transaction, actorId);
+      const isGlobalAdmin = await this.lockGlobalAdministration(transaction, actorId);
+      await this.assertGlobalUserAccess(transaction, isGlobalAdmin, undefined, id);
       await this.assertAnotherGlobalAdmin(transaction, id);
       return (await transaction.$executeRawUnsafe(
         'UPDATE usuarios SET user_sts = 2 WHERE user_id = ? AND user_sts <> 2', id,
@@ -349,14 +352,45 @@ export class UsersRepository {
   // Serializes administrator changes and rechecks the actor against current database state.
   private async lockGlobalAdministration(tx: Pick<Nivel3DatabaseClient, '$queryRawUnsafe'>, actorId: number) {
     await tx.$queryRawUnsafe("SELECT id FROM dbo.roles WITH (UPDLOCK, HOLDLOCK) WHERE slug = 'system-admin'");
-    const actors = await tx.$queryRawUnsafe<Array<{ user_id: number }>>(
-      `SELECT u.user_id FROM dbo.usuarios u LEFT JOIN dbo.cargos_n3 c ON c.cargo_id = u.user_funcao
-       WHERE u.user_id = @P1 AND u.user_sts = 1 AND
-       ((c.is_global_admin = 1 AND c.cargo_sts = 1) OR EXISTS
+    const actors = await tx.$queryRawUnsafe<Array<{ is_global: number; can_manage: number }>>(
+      `SELECT CASE WHEN (c.is_global_admin = 1 AND c.cargo_sts = 1) OR EXISTS
         (SELECT 1 FROM dbo.user_roles ur JOIN dbo.roles r ON r.id = ur.role_id
-         WHERE ur.user_id = u.user_id AND r.slug = 'system-admin'))`, actorId,
+         WHERE ur.user_id = u.user_id AND r.slug = 'system-admin') THEN 1 ELSE 0 END AS is_global,
+       CASE WHEN NOT EXISTS (
+         SELECT 1 FROM dbo.user_permissions up JOIN dbo.permissions p ON p.id=up.permission_id
+         WHERE up.user_id=u.user_id AND p.slug='usuarios.criar' AND up.effect='deny'
+       ) AND (EXISTS (
+         SELECT 1 FROM dbo.roles r JOIN dbo.role_permissions rp ON rp.role_id=r.id
+         JOIN dbo.permissions p ON p.id=rp.permission_id
+         WHERE r.slug=CONCAT('function-',u.user_funcao) AND p.slug='usuarios.criar'
+       ) OR EXISTS (
+         SELECT 1 FROM dbo.user_permissions up JOIN dbo.permissions p ON p.id=up.permission_id
+         WHERE up.user_id=u.user_id AND p.slug='usuarios.criar' AND up.effect='allow'
+       )) THEN 1 ELSE 0 END AS can_manage
+       FROM dbo.usuarios u LEFT JOIN dbo.cargos_n3 c ON c.cargo_id=u.user_funcao
+       WHERE u.user_id=@P1 AND u.user_sts=1`, actorId,
     );
-    if (!actors.length) throw new ForbiddenException('Somente administradores globais podem gerenciar usuários.');
+    const actor = actors[0];
+    if (!actor || (!actor.is_global && !actor.can_manage)) throw new ForbiddenException('Você não tem permissão para criar ou editar usuários.');
+    return Boolean(actor.is_global);
+  }
+
+  private async assertGlobalUserAccess(
+    tx: Pick<Nivel3DatabaseClient, '$queryRawUnsafe'>, isGlobalAdmin: boolean, functionId?: number, userId?: number,
+  ) {
+    if (isGlobalAdmin) return;
+    if (functionId && await this.isGlobalFunction(tx, functionId)) {
+      throw new ForbiddenException('Somente administradores globais podem atribuir a função Administrador global.');
+    }
+    if (userId) {
+      const targets = await tx.$queryRawUnsafe<Array<{ user_id: number }>>(
+        `SELECT u.user_id FROM dbo.usuarios u LEFT JOIN dbo.cargos_n3 c ON c.cargo_id=u.user_funcao
+         WHERE u.user_id=@P1 AND (c.is_global_admin=1 OR EXISTS (
+           SELECT 1 FROM dbo.user_roles ur JOIN dbo.roles r ON r.id=ur.role_id
+           WHERE ur.user_id=u.user_id AND r.slug='system-admin'))`, userId,
+      );
+      if (targets.length) throw new ForbiddenException('Somente administradores globais podem alterar um administrador global.');
+    }
   }
 
   private async isGlobalFunction(tx: Pick<Nivel3DatabaseClient, '$queryRawUnsafe'>, functionId: number) {

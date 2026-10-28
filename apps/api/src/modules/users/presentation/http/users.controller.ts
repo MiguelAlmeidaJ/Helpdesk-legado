@@ -164,7 +164,7 @@ export class UsersController {
   detail(@Param('id', ParseIntPipe) id: number): Promise<ManagedUserDetail> { return this.management.detail(id); }
 
   @Post()
-  @RequirePermissions(AppPermission.SystemAdmin)
+  @RequirePermissions(AppPermission.UsersCreate)
   @ApiOperation({ summary: 'Cadastrar usuário' })
   @ApiResponse({ status: 201, description: 'Usuário cadastrado.' })
   create(
@@ -184,7 +184,7 @@ export class UsersController {
   }
 
   @Patch(':id')
-  @RequirePermissions(AppPermission.SystemAdmin)
+  @RequirePermissions(AppPermission.UsersEdit)
   @ApiOperation({ summary: 'Atualizar usuário' })
   update(
     @Param('id', ParseIntPipe) id: number,
@@ -204,7 +204,7 @@ export class UsersController {
   }
 
   @Delete(':id')
-  @RequirePermissions(AppPermission.SystemAdmin)
+  @RequirePermissions(AppPermission.UsersEdit)
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Desativar usuário' })
   async deactivate(
