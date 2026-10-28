@@ -33,7 +33,7 @@ test('SQL Server: technical filter preserves company scope and fails closed for 
 });
 test('archive listing and generation use the same eligibility; invalid batches are rejected before creating any PDF',async()=>{
  const saved=[],catalogCalls=[];
- const controller=new ReportArchiveController({authorize:async()=>{},save:async(clientId,_start,_end,pdf)=>{assert.ok(pdf.toString().startsWith('%PDF'));saved.push(clientId);return`fixture-${clientId}.pdf`;}},{
+ const controller=new ReportArchiveController({authorize:async()=>{},save:async(clientId,_start,_end,pdf,clientName)=>{assert.ok(pdf.toString().startsWith('%PDF'));assert.equal(clientName,clientId===1?'TI':'DevOps');saved.push(clientId);return`fixture-${clientId}.pdf`;}},{
   catalog:async(userId,clientId,technicalOnly)=>{catalogCalls.push({userId,clientId,technicalOnly});return{clients:[{id:1,name:'TI'},{id:2,name:'DevOps'}],locations:[],technicians:[],categories:[]};},
   analytics:async(_userId,filters)=>({filters,generatedAt:new Date().toISOString(),total:0,rows:[]}),
  });

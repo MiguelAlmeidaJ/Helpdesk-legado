@@ -52,7 +52,7 @@ export async function apiRequest<T>(
   return body as T;
 }
 
-export async function apiDownload(path: string, filename: string, init?: RequestInit): Promise<void> {
+export async function apiBlob(path: string, init?: RequestInit): Promise<Blob> {
   const method = (init?.method ?? 'GET').toUpperCase();
   const headers = new Headers(init?.headers);
   if (!SAFE_METHODS.has(method)) headers.set('X-Helpdesk-Request', 'browser');
@@ -61,7 +61,11 @@ export async function apiDownload(path: string, filename: string, init?: Request
     const body = await response.json().catch(() => null);
     throw new ApiError(response.status, body);
   }
-  const url = URL.createObjectURL(await response.blob());
+  return response.blob();
+}
+
+export async function apiDownload(path: string, filename: string, init?: RequestInit): Promise<void> {
+  const url = URL.createObjectURL(await apiBlob(path, init));
   const anchor = document.createElement('a');
   anchor.href = url; anchor.download = filename; anchor.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);

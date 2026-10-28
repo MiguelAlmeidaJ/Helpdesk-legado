@@ -12,4 +12,10 @@ Validação em 28/10/2026: build completo e 13 testes de relatórios aprovados. 
 
 Executar: `pnpm build`, `pnpm test:reports` e `pnpm test:reports:archive:ui`.
 
+Novos PDFs seguem `Relatorio_nomecliente_nivel3ti.pdf`, com acentos removidos e caracteres especiais substituídos por sublinhado. Gerações repetidas recebem `_2`, `_3` etc.; a criação exclusiva protege inclusive contra sobrescrita em gerações simultâneas. PDFs antigos mantêm seus nomes e continuam disponíveis.
+
+A coluna Ações contém ícones de visualização e download, com descrição acessível. A visualização abre um diálogo na página, carrega o PDF com a sessão autenticada e libera a URL temporária ao fechar. `GET /api/reports/archive/:name/preview` exige as mesmas permissões e validações de caminho do download, usa disposição `inline` e não permite cache. O catálogo continua restrito a clientes ativos de TI ou DevOps; atualizar os dados também remove seleções que deixaram de ser elegíveis.
+
+Os testes adicionais verificam nomes seguros, gerações concorrentes sem sobrescrita, autorização da visualização e envio do nome do cliente ao armazenamento. O teste de navegador cobre abertura e fechamento da visualização e botões por ícone, com PDF simulado válido.
+
 Capturas com dados simulados: [desktop](report-archive-desktop.png) e [celular](report-archive-mobile.png).

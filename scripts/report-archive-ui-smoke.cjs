@@ -2,6 +2,8 @@
 const assert=require('node:assert/strict'),fs=require('node:fs/promises'),path=require('node:path'),os=require('node:os'),http=require('node:http');
 const {spawn,spawnSync}=require('node:child_process');
 const root=path.resolve(__dirname,'..');
+const {analyticsPdf}=require('../apps/api/dist/modules/reports/infrastructure/pdf/analytics-pdf');
+const previewPdf=analyticsPdf({filters:{startDate:'2026-10-01',endDate:'2026-10-28',source:'unified'},generatedAt:new Date().toISOString(),total:0,rows:[]});
 const edge=process.env.USER_FUNCTIONS_TEST_BROWSER || 'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe';
 async function port(){const server=http.createServer();await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));const value=server.address().port;await new Promise(resolve=>server.close(resolve));return value;}
 async function until(check,timeout=30000){const end=Date.now()+timeout;while(Date.now()<end){try{const value=await check();if(value)return value;}catch{}await new Promise(resolve=>setTimeout(resolve,100));}throw new Error('Timed out waiting for browser fixture.');}
@@ -25,7 +27,7 @@ function fixture(url,method,body){
  if(pathname.endsWith('/reports/archive/catalog'))return{clients,locations:[],technicians:[],categories:[]};
  if(pathname.endsWith('/archive/generate')){
   const ids=state.partial?body.clientIds.slice(0,1):body.clientIds;
-  state.files=ids.map(id=>({name:`cliente-${id}-2026-10-relatorio-de-atendimentos.pdf`,size:20480,modifiedAt:'2026-10-28T14:00:00Z',expiresAt:'2026-11-12T14:00:00Z'}));
+  state.files=ids.map(id=>({name:`Relatorio_Cliente_${id}_nivel3ti.pdf`,size:20480,modifiedAt:'2026-10-28T14:00:00Z',expiresAt:'2026-11-12T14:00:00Z'}));
   return{files:state.files.map(f=>f.name),errors:state.partial?[{clientId:2,message:'Falha simulada na geração.'}]:[]};
  }
  if(pathname.endsWith('/reports/archive')){if(method==='DELETE'){state.files=state.files.filter(f=>!body.names.includes(f.name));return{};}return state.files;}
@@ -48,7 +50,7 @@ async function main(){
     if(!event.request.url.includes('/api/')){await cdp.send('Fetch.continueRequest',{requestId:event.requestId});return;}
     const value=fixture(event.request.url,event.request.method,event.request.postData?JSON.parse(event.request.postData):undefined);
     const origin=Object.entries(event.request.headers).find(([key])=>key.toLowerCase()==='origin')?.[1]||'http://localhost:'+webPort;
-    await cdp.send('Fetch.fulfillRequest',{requestId:event.requestId,responseCode:event.request.method==='POST'?201:200,responseHeaders:[{name:'Content-Type',value:'application/json'},{name:'Access-Control-Allow-Origin',value:String(origin)},{name:'Access-Control-Allow-Credentials',value:'true'},{name:'Access-Control-Allow-Headers',value:'Content-Type,X-Helpdesk-Request'},{name:'Access-Control-Allow-Methods',value:'GET,POST,PATCH,DELETE,OPTIONS'}],body:Buffer.from(value===null?'':JSON.stringify(value)).toString('base64')});
+    await cdp.send('Fetch.fulfillRequest',{requestId:event.requestId,responseCode:event.request.method==='POST'?201:200,responseHeaders:[{name:'Content-Type',value:event.request.url.endsWith('/preview')?'application/pdf':'application/json'},{name:'Access-Control-Allow-Origin',value:String(origin)},{name:'Access-Control-Allow-Credentials',value:'true'},{name:'Access-Control-Allow-Headers',value:'Content-Type,X-Helpdesk-Request'},{name:'Access-Control-Allow-Methods',value:'GET,POST,PATCH,DELETE,OPTIONS'}],body:(event.request.url.endsWith('/preview')?previewPdf:Buffer.from(value===null?'':JSON.stringify(value))).toString('base64')});
    }catch(error){state.errors.push(`Fixture interception failed: ${error.message}`);await cdp.send('Fetch.fulfillRequest',{requestId:event.requestId,responseCode:500,body:Buffer.from('{}').toString('base64')}).catch(()=>undefined);}
   });
   await cdp.send('Page.enable');await cdp.send('Runtime.enable');await cdp.send('Fetch.enable',{patterns:[{urlPattern:'*'}]});await cdp.send('Emulation.setDeviceMetricsOverride',{width:1440,height:1000,deviceScaleFactor:1,mobile:false});await cdp.send('Page.navigate',{url:'http://localhost:'+webPort+'/reports/archive'});
@@ -80,7 +82,12 @@ async function main(){
   assert.equal(await cdp.evaluate("document.querySelector('thead input').indeterminate"),true);
   await click('Baixar selecionados (1)');await wait("[...document.querySelectorAll('button')].find(b=>b.textContent==='Atualizar').disabled===false");
   assert.equal(state.calls.find(c=>c.path.endsWith('/archive/download')).body.names.length,1);
-  await cdp.evaluate("document.querySelector('button[aria-label^=\"Baixar cliente-\"]').click()");
+  await cdp.evaluate("document.querySelector('button[aria-label^=\"Visualizar Relatorio_\"]').click()");
+  await wait("Boolean(document.querySelector('dialog[open] iframe[src^=\"blob:\"]'))");
+  assert.ok(state.calls.some(c=>c.path.endsWith('/preview')));
+  await click('Fechar');await wait("!document.querySelector('dialog[open]')");
+  assert.equal(await cdp.evaluate("document.querySelector('button[aria-label^=\"Baixar Relatorio_\"]').textContent"),'');
+  await cdp.evaluate("document.querySelector('button[aria-label^=\"Baixar Relatorio_\"]').click()");
   await wait("[...document.querySelectorAll('button')].find(b=>b.textContent==='Atualizar').disabled===false");
   assert.ok(state.calls.some(c=>c.path.endsWith('.pdf')));
   await click('Excluir selecionados');await wait("document.querySelectorAll('tbody tr').length===1");assert.equal(state.confirmations.length,1);
@@ -93,7 +100,7 @@ async function main(){
   state.partial=true;await click('Gerar PDFs (2)');await wait("document.querySelector('[role=alert]')?.textContent.includes('Falha simulada')===true");
   assert.equal(await cdp.evaluate("document.querySelectorAll('tbody tr').length"),1);
   assert.deepEqual(state.errors,[]);
-  console.log(JSON.stringify({layout:true,inlineCheckboxes:true,emptyState:true,clientSearch:true,selectionLimit:50,generation:true,zip:true,pdf:true,delete:'fixtures only',partialFailure:true,mobile:true,consoleExceptions:0}));
+  console.log(JSON.stringify({layout:true,inlineCheckboxes:true,emptyState:true,clientSearch:true,selectionLimit:50,generation:true,zip:true,pdf:true,preview:true,iconButtons:true,delete:'fixtures only',partialFailure:true,mobile:true,consoleExceptions:0}));
  }catch(error){
   console.error(JSON.stringify({page:cdp?await cdp.evaluate('document.body.innerText.slice(0,1600)'):null,errors:state.errors,calls:state.calls.map(c=>c.path)}));
   throw error;

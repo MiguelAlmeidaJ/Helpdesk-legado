@@ -48,6 +48,14 @@ export class ReportArchiveController {
     return this.reports.catalog(userId, 0, true);
   }
 
+  @Get('archive/:name/preview')
+  @Header('Cache-Control', 'no-store')
+  @ApiOperation({ summary: 'Visualizar PDF arquivado' })
+  async preview(@CurrentUser() user: AuthenticatedUser | undefined, @Param('name') name: string) {
+    await this.archive.authorize(reportUser(user));
+    return new StreamableFile(await this.archive.read(name), { type: 'application/pdf', disposition: `inline; filename="relatorio.pdf"; filename*=UTF-8''${encodeURIComponent(name)}` });
+  }
+
   @Get('archive/:name')
   @Header('Cache-Control', 'no-store')
   @ApiOperation({ summary: 'Baixar PDF arquivado' })
@@ -89,7 +97,7 @@ export class ReportArchiveController {
     await this.archive.authorize(userId);
     if (!body || !Array.isArray(body.clientIds) || !body.clientIds.length || body.clientIds.length > 50 || body.clientIds.some(id => typeof id !== 'number' || !Number.isSafeInteger(id) || id < 1)) throw new BadRequestException('Selecione entre 1 e 50 clientes.');
     const filters = analyticsFilters({ startDate: body.startDate, endDate: body.endDate, source: 'unified' });
-    const allowed = new Set((await this.reports.catalog(userId, 0, true)).clients.map(row => row.id));
+    const allowed = new Map((await this.reports.catalog(userId, 0, true)).clients.map(row => [row.id, row.name]));
     const clientIds = [...new Set(body.clientIds as number[])];
     if (clientIds.some(id => !allowed.has(id))) throw new BadRequestException('Selecione apenas clientes ativos com TI ou DevOps habilitado.');
     const files = [];
@@ -97,7 +105,7 @@ export class ReportArchiveController {
     for (const clientId of clientIds) {
       try {
         const report = await this.reports.analytics(userId, { ...filters, clientId });
-        files.push(await this.archive.save(clientId, filters.startDate, filters.endDate, analyticsPdf(report)));
+        files.push(await this.archive.save(clientId, filters.startDate, filters.endDate, analyticsPdf(report), allowed.get(clientId)));
       } catch (error) { errors.push({ clientId, message: error instanceof BadRequestException ? error.message : 'Não foi possível gerar o PDF deste cliente.' }); }
     }
     return { files, errors };

@@ -7,6 +7,7 @@ import { AppPageHeader } from '../../../shared/navigation/app-page-header';
 import { NavigationIcon } from '../../../shared/navigation/navigation-icon';
 import { appButtonClass } from '../../../shared/ui/button-styles';
 import { reportError } from '../lib/report-export';
+import { ReportPdfPreview } from './report-pdf-preview';
 
 interface ArchivedReport { name: string; size: number; modifiedAt: string; expiresAt: string }
 const CARD = 'min-w-0 rounded-2xl border border-app-border bg-app-surface shadow-sm';
@@ -38,6 +39,7 @@ export function ReportArchiveScreen({ currentUser }: { currentUser: CurrentUserR
   const [busyLabel, setBusyLabel] = useState('Carregando dados…');
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
+  const [preview, setPreview] = useState<string | null>(null);
 
   async function refresh(signal?: AbortSignal) {
     const [archive, catalog] = await Promise.all([
@@ -46,6 +48,7 @@ export function ReportArchiveScreen({ currentUser }: { currentUser: CurrentUserR
     ]);
     if (signal?.aborted) return;
     setFiles(archive); setClients(catalog.clients); setNames([]);
+    setClientIds(current => current.filter(id => catalog.clients.some(client => client.id === id)));
   }
   useEffect(() => {
     const controller = new AbortController();
@@ -129,7 +132,7 @@ export function ReportArchiveScreen({ currentUser }: { currentUser: CurrentUserR
                 {!visibleClients.length ? <p className="m-0 p-6 text-center text-sm text-app-muted">{busy ? 'Carregando clientes…' : clients.length ? 'Nenhum cliente encontrado para esta busca.' : 'Nenhum cliente disponível.'}</p> : null}
               </div>
             </div>
-            <p className="mb-0 mt-2 text-xs text-app-muted">{clientIds.length === 50 ? 'Limite do lote atingido. Desmarque um cliente para escolher outro.' : `${visibleClients.length} cliente(s) de TI ou DevOps. A busca mantém suas seleções.`}</p>
+            <p className="mb-0 mt-2 text-xs text-app-muted">{clientIds.length === 50 ? 'Limite do lote atingido. Desmarque um cliente para escolher outro.' : `${visibleClients.length} cliente(s) ativo(s) de TI ou DevOps. A busca mantém suas seleções.`}</p>
           </fieldset>
         </div>
       </form>
@@ -144,14 +147,18 @@ export function ReportArchiveScreen({ currentUser }: { currentUser: CurrentUserR
         </div></header>
         {files.length ? <div className="overflow-x-auto"><table className="w-full min-w-[760px] border-collapse text-left text-sm"><caption className="sr-only">PDFs gerados e suas datas de expiração</caption><thead className="bg-app-surface-muted text-xs text-app-muted"><tr>
           <th scope="col" className="w-12 px-5 py-3"><input className={CHECKBOX} type="checkbox" aria-label="Selecionar todos os arquivos" disabled={busy} checked={names.length === files.length} ref={input => { if (input) input.indeterminate = names.length > 0 && names.length < files.length; }} onChange={event => setNames(event.target.checked ? files.map(file => file.name) : [])} /></th>
-          {['Arquivo', 'Gerado em', 'Expira em', 'Tamanho', 'Download'].map(label => <th scope="col" className="whitespace-nowrap px-3 py-3 font-semibold" key={label}>{label}</th>)}
+          {['Arquivo', 'Gerado em', 'Expira em', 'Tamanho', 'Ações'].map(label => <th scope="col" className="whitespace-nowrap px-3 py-3 font-semibold" key={label}>{label}</th>)}
         </tr></thead><tbody>{files.map(file => <tr key={file.name} className={`border-t border-app-border ${names.includes(file.name) ? 'bg-app-brand-soft' : 'hover:bg-app-surface-hover'}`}>
           <td className="px-5 py-4"><input className={CHECKBOX} type="checkbox" aria-label={`Selecionar ${file.name}`} disabled={busy} checked={names.includes(file.name)} onChange={event => setNames(current => event.target.checked ? [...new Set([...current, file.name])] : current.filter(name => name !== file.name))} /></td>
           <td className="max-w-[360px] px-3 py-4"><span className="flex items-center gap-2.5"><span className="shrink-0 rounded-lg bg-app-surface-muted p-2 text-app-brand"><NavigationIcon name="file" className="size-4" /></span><span className="min-w-0 break-words font-medium [overflow-wrap:anywhere]" title={file.name}>{file.name}</span></span></td>
           <td className="whitespace-nowrap px-3 py-4 text-xs text-app-muted">{dateLabel(file.modifiedAt)}</td><td className="whitespace-nowrap px-3 py-4 text-xs text-app-muted">{dateLabel(file.expiresAt)}</td><td className="whitespace-nowrap px-3 py-4">{sizeLabel(file.size)}</td>
-          <td className="px-3 py-4"><button className={appButtonClass('secondary', 'sm')} type="button" aria-label={`Baixar ${file.name}`} disabled={busy} onClick={() => void action(() => apiDownload(`reports/archive/${encodeURIComponent(file.name)}`, file.name), 'Preparando download…')}>Baixar PDF</button></td>
+          <td className="px-3 py-4"><div className="flex gap-2">
+            <button className={appButtonClass('secondary', 'sm')} type="button" title="Visualizar PDF" aria-label={`Visualizar ${file.name}`} disabled={busy} onClick={() => setPreview(file.name)}><svg aria-hidden="true" className="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" /><circle cx="12" cy="12" r="3" /></svg></button>
+            <button className={appButtonClass('secondary', 'sm')} type="button" title="Baixar PDF" aria-label={`Baixar ${file.name}`} disabled={busy} onClick={() => void action(() => apiDownload(`reports/archive/${encodeURIComponent(file.name)}`, file.name), 'Preparando download…')}><svg aria-hidden="true" className="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5" /></svg></button>
+          </div></td>
         </tr>)}</tbody></table></div> : <div className="grid justify-items-center gap-2 px-5 py-12 text-center"><span className="mb-1 rounded-2xl bg-app-surface-muted p-4 text-app-muted"><NavigationIcon name="folder" className="size-8" /></span><h3 className="m-0 text-sm font-bold">{busy ? 'Carregando arquivos…' : 'Nenhum relatório disponível'}</h3><p className="m-0 max-w-md text-sm text-app-muted">{error ? 'Não foi possível atualizar os arquivos. Tente novamente em Atualizar.' : 'Escolha o período e os clientes acima para gerar seu primeiro lote de PDFs.'}</p></div>}
       </section>
     </div>
+    {preview ? <ReportPdfPreview key={preview} name={preview} onClose={() => setPreview(null)} /> : null}
   </main>;
 }

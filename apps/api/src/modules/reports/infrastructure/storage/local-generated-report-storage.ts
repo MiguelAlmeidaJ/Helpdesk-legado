@@ -2,7 +2,6 @@ import { BadRequestException, ForbiddenException, Inject, Injectable, NotFoundEx
 import { existsSync } from 'node:fs';
 import { lstat, mkdir, readFile, readdir, realpath, unlink, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import { randomUUID } from 'node:crypto';
 import type { Nivel3DatabaseClient } from '@helpdesk/database';
 import { NIVEL3_DATABASE } from '../../../../core/database/database.constants';
 import { GeneratedReportStorage } from '../../application/ports/generated-report-storage';
@@ -108,10 +107,20 @@ export class LocalGeneratedReportStorage extends GeneratedReportStorage {
     return removed;
   }
 
-  async save(clientId: number, start: string, end: string, pdf: Buffer) {
+  async save(clientId: number, _start: string, _end: string, pdf: Buffer, clientName?: string) {
     await mkdir(generatedReportStorageRoot(), { recursive: true });
-    const name = `Relatorio_${clientId}_${start}_${end}_${randomUUID()}.pdf`;
-    await writeFile(path.join(generatedReportStorageRoot(), name), pdf, { flag: 'wx' });
-    return name;
+    const client = (clientName ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-zA-Z0-9]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 100).replace(/_+$/g, '') || String(clientId);
+    // Exclusive creation also preserves reports generated concurrently for the same client.
+    for (let suffix = 1; suffix <= 10000; suffix++) {
+      const name = `Relatorio_${client}_nivel3ti${suffix === 1 ? '' : `_${suffix}`}.pdf`;
+      try {
+        await writeFile(path.join(generatedReportStorageRoot(), name), pdf, { flag: 'wx' });
+        return name;
+      } catch (error) {
+        if ((error as NodeJS.ErrnoException).code !== 'EEXIST') throw error;
+      }
+    }
+    throw new BadRequestException('Limite de relatórios para este cliente atingido.');
   }
 }

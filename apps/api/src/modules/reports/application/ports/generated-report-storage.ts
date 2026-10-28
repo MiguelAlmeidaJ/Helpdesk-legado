@@ -4,5 +4,5 @@ export abstract class GeneratedReportStorage {
   abstract read(name: string): Promise<Buffer>;
   abstract remove(name: string): Promise<void>;
   abstract removeExpired(before: Date): Promise<number>;
-  abstract save(clientId: number, start: string, end: string, pdf: Buffer): Promise<string>;
+  abstract save(clientId: number, start: string, end: string, pdf: Buffer, clientName?: string): Promise<string>;
 }

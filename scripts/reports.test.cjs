@@ -14,6 +14,40 @@ const { reportZip } = require(base + 'infrastructure/archive/report-zip');
 const { LocalGeneratedReportStorage: ReportArchive, generatedReportStorageRoot: archiveRoot } = require(base + 'infrastructure/storage/local-generated-report-storage');
 const { CleanupExpiredReports } = require(base + 'application/cleanup-expired-reports');
 const { reportRetentionDays } = require(base + 'application/report-retention');
+const { ReportArchiveController } = require(base + 'presentation/http/report-archive.controller');
+
+test('client filenames are safe and concurrent generations never overwrite PDFs', async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), 'helpdesk-report-names-'));
+  const previous = process.env.REPORT_STORAGE_DIR;
+  process.env.REPORT_STORAGE_DIR = root;
+  try {
+    const archive = new ReportArchive({});
+    const names = await Promise.all(Array.from({ length: 5 }, (_, i) => archive.save(1, '', '', Buffer.from(`PDF-${i}`), 'João / Clínica ..\\Teste')));
+    assert.equal(new Set(names).size, 5);
+    assert.ok(names.includes('Relatorio_Joao_Clinica_Teste_nivel3ti.pdf'));
+    for (const [i, name] of names.entries()) assert.equal((await archive.read(name)).toString(), `PDF-${i}`);
+    assert.equal(await archive.save(7, '', '', Buffer.from('fallback'), '///'), 'Relatorio_7_nivel3ti.pdf');
+    const long = await archive.save(9, '', '', Buffer.from('long'), 'A'.repeat(300));
+    assert.ok(long.length < 150);
+  } finally {
+    if (previous === undefined) delete process.env.REPORT_STORAGE_DIR; else process.env.REPORT_STORAGE_DIR = previous;
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test('preview is inline and checks authorization before reading the archive', async () => {
+  const reads = [];
+  const controller = new ReportArchiveController({
+    authorize: async id => { if (id !== 1) throw new Error('denied'); },
+    read: async name => { reads.push(name); return Buffer.from('%PDF-1.4'); },
+  }, {});
+  await assert.rejects(controller.preview({ id: 2 }, 'private.pdf'), /denied/);
+  assert.deepEqual(reads, []);
+  const preview = await controller.preview({ id: 1 }, 'private.pdf');
+  assert.equal(preview.getHeaders().type, 'application/pdf');
+  assert.match(preview.getHeaders().disposition, /^inline;/);
+  assert.match((await controller.download({ id: 1 }, 'private.pdf')).getHeaders().disposition, /^attachment;/);
+});
 
 const filters = { startDate: '2026-09-01', endDate: '2026-09-09', clientId: 0, clientIds: [], locationId: 0, technicianId: 0, categoryId: 0, categorySector: 0, status: 0, level: 0, source: 'tickets' };
 
