@@ -1,4 +1,5 @@
 import type {
+  CnpjLookupResponse,
   CategoryChildWriteInput,
   CategoryItemRecord,
   CategorySubcategoryRecord,
@@ -14,6 +15,10 @@ import type {
   RegistrationWriteInput,
 } from '@helpdesk/contracts';
 import { apiRequest } from '../../../shared/api/api-client';
+
+export function lookupCnpj(cnpj: string, signal?: AbortSignal): Promise<CnpjLookupResponse> {
+  return apiRequest<CnpjLookupResponse>(`registrations/clients/cnpj-lookup?${new URLSearchParams({ cnpj })}`, { signal });
+}
 
 export function fetchRegistration(
   resource: RegistrationResourceKey,

@@ -57,6 +57,17 @@ export interface RegistrationWriteInput {
   values: Record<string, string | number | boolean | null>;
 }
 
+export interface CnpjLookupResponse {
+  cnpj: string;
+  legalName: string;
+  tradeName: string;
+  address: string;
+  city: string;
+  state: string;
+  email: string;
+  phone: string;
+}
+
 export interface ClientContactRecord {
   id: number;
   name: string;

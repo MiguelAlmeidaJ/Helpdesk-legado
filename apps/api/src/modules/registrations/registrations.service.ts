@@ -7,6 +7,9 @@ import {
 } from '@nestjs/common';
 import {
   AppPermission,
+  formatCnpj,
+  isValidCnpj,
+  normalizeCnpj,
   type CategoryChildWriteInput,
   type CategoryTreeResponse,
   type ClientContactRecord,
@@ -40,7 +43,7 @@ const DEFINITIONS: Record<RegistrationResourceKey, RegistrationResourceDefinitio
     fields: [
       { key: 'legalName', label: 'Razão Social', type: 'text', required: true, maxLength: 80 },
       { key: 'tradeName', label: 'Nome Comercial', type: 'text', required: true, maxLength: 80 },
-      { key: 'cnpj', label: 'CNPJ', type: 'text', maxLength: 22 },
+      { key: 'cnpj', label: 'CNPJ', type: 'text', maxLength: 18, placeholder: 'AA.AAA.AAA/AAAA-00' },
       { key: 'address', label: 'Endereço', type: 'text', maxLength: 100 },
       { key: 'city', label: 'Cidade', type: 'text', required: true, maxLength: 50 },
       { key: 'state', label: 'UF', type: 'select', required: true, options: STATES },
@@ -537,12 +540,14 @@ export class RegistrationsService {
       `SELECT clt_id, clt_nomer, clt_nomef, clt_cnpj, clt_end, clt_city,
               clt_uf, clt_mail, clt_tel, clt_sts, clt_ti, clt_adm, clt_mkt
        FROM clientes
-       WHERE (? = '' OR clt_nomer LIKE ? OR clt_nomef LIKE ? OR clt_cnpj LIKE ?)
+       WHERE (? = '' OR clt_nomer LIKE ? OR clt_nomef LIKE ? OR clt_cnpj LIKE ?
+         OR REPLACE(REPLACE(REPLACE(UPPER(clt_cnpj), '.', ''), '/', ''), '-', '') LIKE ?)
        ORDER BY clt_sts DESC, clt_nomef ASC, clt_id ASC`,
       search,
       like,
       like,
       like,
+      `%${normalizeCnpj(search)}%`,
     );
 
     return rows.map((row) => ({
@@ -662,6 +667,11 @@ export class RegistrationsService {
       devops: booleanValue(source, 'devops') ? 1 : 0,
       marketing: booleanValue(source, 'marketing') ? 1 : 0,
     };
+
+    if (data.cnpj) {
+      if (!isValidCnpj(data.cnpj)) throw new BadRequestException('CNPJ inválido. Informe 12 letras ou números e dois dígitos verificadores válidos.');
+      data.cnpj = formatCnpj(data.cnpj);
+    }
 
     if (id === null) {
       id = await this.insertWithId(

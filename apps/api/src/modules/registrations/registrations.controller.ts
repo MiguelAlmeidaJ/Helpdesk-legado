@@ -30,6 +30,7 @@ import type { AuthenticatedUser } from '../access/domain/authenticated-user';
 import { CurrentUser } from '../access/presentation/http/current-user.decorator';
 import { LegacySessionGuard } from '../access/presentation/http/legacy-session.guard';
 import { RegistrationsService } from './registrations.service';
+import { CnpjLookupService } from './cnpj-lookup.service';
 
 function authenticated(user: AuthenticatedUser | undefined): AuthenticatedUser {
   if (!user) throw new UnauthorizedException('Usuário não autenticado.');
@@ -50,7 +51,13 @@ function id(value: string): number {
 @UseGuards(LegacySessionGuard)
 @ApiSecurity(LEGACY_SESSION_SECURITY)
 export class RegistrationsController {
-  constructor(private readonly registrations: RegistrationsService) {}
+  constructor(private readonly registrations: RegistrationsService, private readonly cnpjLookup: CnpjLookupService) {}
+
+  @Get('clients/cnpj-lookup')
+  @ApiOperation({ summary: 'Consultar dados públicos de um CNPJ para preencher o cadastro' })
+  lookupCnpj(@CurrentUser() user: AuthenticatedUser | undefined, @Query('cnpj') cnpj?: string) {
+    return this.cnpjLookup.lookup(authenticated(user), typeof cnpj === 'string' ? cnpj : '');
+  }
 
   @Get('clients/:clientId/relations')
   @ApiOperation({ summary: 'Lista contatos e locais de um cliente' })

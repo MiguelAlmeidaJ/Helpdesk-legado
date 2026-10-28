@@ -1,5 +1,6 @@
 "use client";
 
+import { normalizeCnpj, type CnpjLookupResponse } from '@helpdesk/contracts';
 import type {
   CurrentUserResponse,
   RegistrationFieldDefinition,
@@ -19,6 +20,7 @@ import {
 } from '../api/registrations-api';
 import { CategoryTreePanel } from './category-tree-panel';
 import { ClientRelationsPanel } from './client-relations-panel';
+import { CnpjField } from './cnpj-field';
 
 const BUTTON =
   'inline-flex min-h-10 items-center justify-center rounded-lg border border-app-border-strong bg-app-surface px-4 text-sm font-bold text-app-text-soft transition hover:bg-app-surface-hover disabled:cursor-not-allowed disabled:opacity-50';
@@ -251,6 +253,18 @@ export function RegistrationScreen({
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
               {fields.map((field) => {
                 const value = values[field.key] ?? (field.type === 'boolean' ? false : '');
+                if (resource === 'clients' && field.key === 'cnpj') {
+                  return <CnpjField key={`${editing?.id ?? 'new'}-cnpj`} value={String(value)} disabled={saving || mainReadOnly}
+                    onChange={cnpj => setValues(current => ({ ...current, cnpj }))}
+                    onFound={(data: CnpjLookupResponse) => setValues(current => {
+                      if (normalizeCnpj(String(current.cnpj ?? '')) !== normalizeCnpj(data.cnpj)) return current;
+                      const next = { ...current };
+                      for (const [key, found] of Object.entries(data)) {
+                        if (found && current[key] === values[key]) next[key] = found;
+                      }
+                      return next;
+                    })} />;
+                }
                 if (field.type === 'boolean') {
                   return (
                     <label className="grid gap-1.5 text-sm font-semibold" key={field.key}>
