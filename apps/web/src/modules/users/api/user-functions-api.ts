@@ -3,11 +3,16 @@ import type {
   UserFunctionInput,
   UserFunctionMutationResponse,
   UserFunctionSummary,
+  UserFunctionActiveMembersResponse,
 } from '@helpdesk/contracts';
 import { apiRequest } from '../../../shared/api/api-client';
 
 export function fetchUserFunctions(signal?: AbortSignal) {
   return apiRequest<UserFunctionSummary[]>('user-functions', { signal });
+}
+
+export function fetchUserFunctionActiveUsers(signal?: AbortSignal) {
+  return apiRequest<UserFunctionActiveMembersResponse>('user-functions/active-users', { signal });
 }
 
 export function fetchUserFunctionPermissions(signal?: AbortSignal) {

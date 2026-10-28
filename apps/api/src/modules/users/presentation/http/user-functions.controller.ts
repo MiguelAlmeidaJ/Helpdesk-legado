@@ -4,6 +4,7 @@ import {
   Controller,
   Delete,
   Get,
+  Header,
   HttpCode,
   HttpStatus,
   Param,
@@ -19,6 +20,7 @@ import {
   type UserFunctionInput,
   type UserFunctionMutationResponse,
   type UserFunctionSummary,
+  type UserFunctionActiveMembersResponse,
 } from '@helpdesk/contracts';
 import { LEGACY_SESSION_SECURITY } from '../../../../core/openapi/openapi.constants';
 import { UserFunctionManagement } from '../../application/user-function-management';
@@ -59,6 +61,13 @@ export class UserFunctionsController {
   @ApiOperation({ summary: 'Listar funções de usuários' })
   list(): Promise<UserFunctionSummary[]> {
     return this.management.list();
+  }
+
+  @Get('active-users')
+  @Header('Cache-Control', 'private, no-store')
+  @ApiOperation({ summary: 'Consultar usuários ativos por função e sem função válida' })
+  activeUsers(): Promise<UserFunctionActiveMembersResponse> {
+    return this.management.activeUsers();
   }
 
   @Get('permissions')

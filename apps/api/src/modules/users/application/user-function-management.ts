@@ -4,6 +4,7 @@ import type {
   UserFunctionInput,
   UserFunctionMutationResponse,
   UserFunctionSummary,
+  UserFunctionActiveMembersResponse,
 } from '@helpdesk/contracts';
 import { UserFunctionsRepository } from '../infrastructure/user-functions.repository';
 
@@ -13,6 +14,10 @@ export class UserFunctionManagement {
 
   list(): Promise<UserFunctionSummary[]> {
     return this.functions.list();
+  }
+
+  activeUsers(): Promise<UserFunctionActiveMembersResponse> {
+    return this.functions.activeUsers();
   }
 
   permissions(): Promise<AccessPermissionItem[]> {
