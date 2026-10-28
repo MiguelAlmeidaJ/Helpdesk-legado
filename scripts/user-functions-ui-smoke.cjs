@@ -27,9 +27,10 @@ function fixture(url,method,body){
  if(pathname.endsWith('/auth/me'))return user;
  if(pathname.endsWith('/notifications'))return {items:[],unreadCount:0,total:0};
  if(pathname.endsWith('/navigation'))return {sections:[]};
- if(pathname.endsWith('/users/catalogs'))return {functions:[{id:6,name:'Administrador global'}],functionPermissionIds:{},companies:[],pixKeyTypes:[],permissions:[]};
- if(pathname.endsWith('/users'))return {data:[{id:99,name:'Fixture account',login:'fixture.account',email:'fixture@example.test',status:1}],meta:{page:1,limit:50,total:1,totalPages:1}};
- if(pathname.endsWith('/users/99'))return {id:99,name:'Fixture account',login:'fixture.account',email:'fixture@example.test',phone:'11999999999',status:1,type:1,function:{id:6,name:'Administrador global'},companies:[],extraPermissionIds:[],link:'',pixKeyType:null,pixKey:'',observation:''};
+ if(pathname.endsWith('/users/catalogs'))return {functions:[{id:1,name:'Suporte técnico',isGlobalAdmin:false},{id:6,name:'Administrador global',isGlobalAdmin:true}],functionPermissionIds:{},companies:[],pixKeyTypes:[],permissions:[]};
+ if(pathname.endsWith('/users'))return {data:[{id:99,name:'Fixture account',login:'fixture.account',email:'fixture@example.test',status:1,isGlobalAdmin:false},{id:98,name:'Global account',login:'global.account',email:'global@example.test',status:1,isGlobalAdmin:true},{id:100,name:'Own account',login:'own.account',email:'own@example.test',status:1,isGlobalAdmin:false}],meta:{page:1,limit:50,total:3,totalPages:1}};
+ const account=pathname.match(/\/users\/(98|99|100)$/);
+ if(account){const id=Number(account[1]),global=id===98;return {id,isGlobalAdmin:global,name:id===99?'Fixture account':global?'Global account':'Own account',login:'fixture.account',email:'fixture@example.test',phone:'11999999999',status:1,type:1,function:{id:global?6:1,name:global?'Administrador global':'Suporte técnico'},companies:[],extraPermissionIds:[],link:'',pixKeyType:null,pixKey:'',observation:''};}
  if(pathname.endsWith('/user-functions/active-users'))return{users:state.users,activeUserCount:state.users.length,assignedActiveUserCount:state.users.filter(u=>u.functionId!==null).length,unassignedActiveUserCount:state.users.filter(u=>u.functionId===null).length};
  if(pathname.endsWith('/user-functions/permissions'))return[
   {id:1,name:'Visualizar atendimentos',slug:'atendimentos.visualizar',module:'Atendimentos',description:'Consultar os atendimentos disponíveis.'},
@@ -99,10 +100,25 @@ async function main(){
   await cdp.send('Page.navigate',{url:'http://localhost:'+webPort+'/users'});
   await wait("[...document.querySelectorAll('button')].some(b=>b.textContent==='Novo usuário') && [...document.querySelectorAll('option')].some(o=>o.textContent==='Administrador global')");
   assert.equal(await cdp.evaluate("[...document.querySelectorAll('option')].some(o=>o.textContent==='Administrador global')"),true);
+  await cdp.evaluate("[...document.querySelectorAll('button')].find(b=>b.textContent.includes('Global account')).click()");
+  await wait("document.querySelector('h2').textContent==='Editar usuário #98'");
+  assert.equal(await cdp.evaluate("document.querySelector('h2').parentElement.querySelector('select').disabled"),false);
+  assert.equal(await cdp.evaluate("[...document.querySelector('h2').parentElement.querySelector('select').options].find(o=>o.textContent==='Administrador global').disabled"),false);
+  user.id=100;user.functionId=1;
   user.grants=['users.read','users.create','users.edit','users.manage-overrides'].map(permission=>({permission,scope:'all'}));
   await cdp.send('Page.navigate',{url:'http://localhost:'+webPort+'/users'});
   await wait("document.querySelector('h2').textContent==='Novo usuário' && [...document.querySelectorAll('button')].some(b=>b.textContent.includes('Fixture account'))");
   assert.equal(await cdp.evaluate("document.body.innerText.includes('Você não tem permissão')"),false);
+  assert.equal(await cdp.evaluate("[...document.querySelector('h2').parentElement.querySelector('select').options].some(o=>o.textContent==='Administrador global')"),false);
+  await cdp.evaluate("[...document.querySelectorAll('button')].find(b=>b.textContent.includes('Global account')).click()");
+  await wait("document.querySelector('h2').textContent==='Consultar usuário #98'");
+  assert.equal(await cdp.evaluate("[...document.querySelector('h2').parentElement.querySelectorAll('input,select,textarea')].every(input=>input.disabled)"),true);
+  assert.equal(await cdp.evaluate("[...document.querySelectorAll('button')].some(b=>b.textContent==='Salvar usuário')"),false);
+  assert.equal(await cdp.evaluate("[...document.querySelector('h2').parentElement.querySelector('select').options].find(o=>o.textContent==='Administrador global').disabled"),true);
+  await cdp.evaluate("[...document.querySelectorAll('button')].find(b=>b.textContent.includes('Own account')).click()");
+  await wait("document.querySelector('h2').textContent==='Editar usuário #100'");
+  assert.equal(await cdp.evaluate("document.querySelector('h2').parentElement.querySelector('select').disabled"),true);
+  assert.equal(await cdp.evaluate("document.querySelector('h2').parentElement.querySelector('input').disabled"),false);
   await cdp.evaluate("[...document.querySelectorAll('button')].find(b=>b.textContent.includes('Fixture account')).click()");
   await wait("document.querySelector('h2').textContent==='Editar usuário #99'");
   assert.equal(await cdp.evaluate("[...document.querySelectorAll('button')].some(b=>b.textContent==='Salvar usuário')"),true);

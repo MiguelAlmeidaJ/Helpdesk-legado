@@ -14,6 +14,7 @@ import { NIVEL3_DATABASE } from '../../../core/database/database.constants';
 
 interface UserRow {
   user_id: number;
+  is_global_admin: boolean | number;
   user_sts: number | null;
   user_nome: string | null;
   user_mail: string | null;
@@ -40,6 +41,7 @@ interface UserRow {
 interface CountRow { total: bigint | number }
 interface CompanyLinkRow { usuario_id: number; id: number; name: string | null }
 interface OptionRow { id: number; name: string | null }
+interface FunctionOptionRow extends OptionRow { is_global_admin: boolean }
 interface ConflictRow { user_id: number; user_login: string | null; user_mail: string | null }
 interface InsertIdRow { id: bigint | number }
 interface UserPermissionLinkRow {
@@ -99,7 +101,11 @@ export class UsersRepository {
     const filter = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
     const [rows, totals] = await Promise.all([
       this.database.$queryRawUnsafe<UserRow[]>(
-        `SELECT u.*, c.cargo_nome
+        `SELECT u.*, c.cargo_nome,
+         CASE WHEN c.is_global_admin=1 OR EXISTS (
+           SELECT 1 FROM dbo.user_roles ur JOIN dbo.roles r ON r.id=ur.role_id
+           WHERE ur.user_id=u.user_id AND r.slug='system-admin'
+         ) THEN 1 ELSE 0 END AS is_global_admin
          FROM usuarios u
          LEFT JOIN cargos_n3 c ON c.cargo_id = u.user_funcao
          ${filter}
@@ -135,7 +141,11 @@ export class UsersRepository {
 
   async findById(id: number): Promise<ManagedUserDetail | null> {
     const rows = await this.database.$queryRawUnsafe<UserRow[]>(
-      `SELECT u.*, c.cargo_nome
+      `SELECT u.*, c.cargo_nome,
+       CASE WHEN c.is_global_admin=1 OR EXISTS (
+         SELECT 1 FROM dbo.user_roles ur JOIN dbo.roles r ON r.id=ur.role_id
+         WHERE ur.user_id=u.user_id AND r.slug='system-admin'
+       ) THEN 1 ELSE 0 END AS is_global_admin
        FROM usuarios u
        LEFT JOIN cargos_n3 c ON c.cargo_id = u.user_funcao
        WHERE u.user_id = ? LIMIT 1`,
@@ -158,8 +168,8 @@ export class UsersRepository {
 
   async catalogs(includePermissions = false): Promise<UserManagementCatalogs> {
     const [functions, companies, pixKeyTypes, permissions, functionLinks] = await Promise.all([
-      this.database.$queryRaw<OptionRow[]>`
-        SELECT cargo_id AS id, cargo_nome AS name
+      this.database.$queryRaw<FunctionOptionRow[]>`
+        SELECT cargo_id AS id, cargo_nome AS name, is_global_admin
         FROM cargos_n3 WHERE cargo_sts = 1 ORDER BY cargo_nome`,
       this.database.$queryRaw<OptionRow[]>`
         SELECT clt_id AS id, COALESCE(NULLIF(clt_nomer, ''), clt_nomef) AS name
@@ -176,7 +186,7 @@ export class UsersRepository {
     const map = (rows: OptionRow[]): UserOption[] =>
       rows.map((row) => ({ id: row.id, name: row.name ?? `#${row.id}` }));
     return {
-      functions: map(functions),
+      functions: functions.map(row => ({ id: row.id, name: row.name ?? `#${row.id}`, isGlobalAdmin: Boolean(row.is_global_admin) })),
       functionPermissionIds: functionLinks.reduce<Record<number, number[]>>((result, link) => {
         (result[Number(link.function_id)] ??= []).push(Number(link.permission_id));
         return result;
@@ -310,6 +320,14 @@ export class UsersRepository {
       await this.assertFunctionExists(transaction, input.functionId);
       const isGlobalAdmin = await this.lockGlobalAdministration(transaction, assignedBy);
       await this.assertGlobalUserAccess(transaction, isGlobalAdmin, input.functionId, id);
+      if (!isGlobalAdmin && id === assignedBy) {
+        const current = await transaction.$queryRawUnsafe<Array<{ user_funcao: number | null }>>(
+          'SELECT user_funcao FROM dbo.usuarios WITH (UPDLOCK, HOLDLOCK) WHERE user_id=@P1', id,
+        );
+        if (current[0] && Number(current[0].user_funcao) !== input.functionId) {
+          throw new ForbiddenException('Somente um administrador global pode alterar a sua função.');
+        }
+      }
       const globalFunction = await this.isGlobalFunction(transaction, input.functionId);
       if (input.status !== 1 || !globalFunction) await this.assertAnotherGlobalAdmin(transaction, id);
       const changed = await transaction.$executeRawUnsafe(
@@ -528,6 +546,7 @@ export class UsersRepository {
   ): ManagedUserSummary {
     return {
       id: row.user_id,
+      isGlobalAdmin: Boolean(row.is_global_admin),
       status: status(row.user_sts),
       name: row.user_nome ?? '',
       email: row.user_mail ?? '',

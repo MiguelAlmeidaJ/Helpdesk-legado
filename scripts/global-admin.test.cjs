@@ -45,7 +45,7 @@ test('SQL Server: global assignment, demotion, last administrator and failure ro
   await tx.$executeRawUnsafe('CREATE TABLE dbo.user_roles(user_id int,role_id int,assigned_by int,PRIMARY KEY(user_id,role_id));');
   await tx.$executeRawUnsafe('CREATE TABLE dbo.clientes_usuarios(cliente_id int,usuario_id int);');
   await tx.$executeRawUnsafe(`CREATE TABLE dbo.usuarios(user_id int IDENTITY(10,1) PRIMARY KEY,user_sts int,user_nome nvarchar(60),user_mail nvarchar(60),user_cel nvarchar(20),user_funcao int,user_login nvarchar(15),user_pass nvarchar(100),tipo_usuario int,link nvarchar(50),pix_type int,chavepix nvarchar(255),user_observacao nvarchar(2000));`);
-  await tx.$executeRawUnsafe('INSERT INTO dbo.cargos_n3 VALUES(1,1,0),(2,1,1);');
+  await tx.$executeRawUnsafe('INSERT INTO dbo.cargos_n3 VALUES(1,1,0),(2,1,1),(3,1,0);');
   await tx.$executeRawUnsafe("INSERT INTO dbo.roles VALUES(1,'system-admin'),(2,'function-1');");
   await tx.$executeRawUnsafe("INSERT INTO dbo.permissions VALUES(1,'usuarios.criar');");
   await tx.$executeRawUnsafe('INSERT INTO dbo.role_permissions VALUES(2,1);');
@@ -59,6 +59,10 @@ test('SQL Server: global assignment, demotion, last administrator and failure ro
   await assert.rejects(users.create(input,'fixture-hash',12,false),e=>e.getStatus()===403);
   const delegated=await users.create({...input,functionId:1},'fixture-hash',12,false);
   assert.equal(await users.update(delegated,{...input,functionId:1,name:'Delegated edit'},false,12),true);
+  assert.equal(await users.update(delegated,{...input,functionId:3},false,12),true);
+  await assert.rejects(users.update(12,{...input,functionId:3},false,12),e=>e.getStatus()===403);
+  assert.equal((await tx.$queryRawUnsafe('SELECT user_funcao FROM dbo.usuarios WHERE user_id=12'))[0].user_funcao,1);
+  assert.equal(await users.update(12,{...input,functionId:1,name:'Own profile'},false,12),true);
   await assert.rejects(users.update(10,{...input,functionId:1},false,12),e=>e.getStatus()===403);
   await assert.rejects(users.deactivate(10,12),e=>e.getStatus()===403);
   await tx.$executeRawUnsafe("INSERT INTO dbo.user_permissions VALUES(12,1,'deny');");

@@ -125,15 +125,18 @@ export function UsersScreen({ currentUser }: { currentUser: CurrentUserResponse 
   const [result, setResult] = useState<ManagedUserListResponse | null>(null);
   const [catalogs, setCatalogs] = useState<UserManagementCatalogs | null>(null);
   const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [selectedUser, setSelectedUser] = useState<ManagedUserDetail | null>(null);
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [companyQuery, setCompanyQuery] = useState('');
+  const isGlobalAdmin = can(currentUser, AppPermission.SystemAdmin);
   const canCreate = can(currentUser, AppPermission.UsersCreate);
-  const canEdit = can(currentUser, AppPermission.UsersEdit);
+  const canEdit = can(currentUser, AppPermission.UsersEdit) && (isGlobalAdmin || !selectedUser?.isGlobalAdmin);
   const canSetExtras = can(currentUser, AppPermission.UsersManageOverrides);
+  const ownFunctionLocked = !isGlobalAdmin && selectedId === currentUser.id;
 
   async function load(signal?: AbortSignal) {
     setLoading(true);
@@ -185,6 +188,7 @@ export function UsersScreen({ currentUser }: { currentUser: CurrentUserResponse 
       const user = await fetchUser(id);
       const next = fromUser(user);
       setSelectedId(id);
+      setSelectedUser(user);
       setForm(next);
       setCompanyQuery('');
     }
@@ -192,7 +196,7 @@ export function UsersScreen({ currentUser }: { currentUser: CurrentUserResponse 
     finally { setLoading(false); }
   }
 
-  function newUser() { setSelectedId(null); setForm({ ...EMPTY_FORM, companyIds: [], extraPermissionIds: [] }); setCompanyQuery(''); setError(null); setSuccess(null); }
+  function newUser() { setSelectedId(null); setSelectedUser(null); setForm({ ...EMPTY_FORM, companyIds: [], extraPermissionIds: [] }); setCompanyQuery(''); setError(null); setSuccess(null); }
 
   function changeUserType(type: 1 | 2) {
     setForm((current) => ({
@@ -226,7 +230,7 @@ export function UsersScreen({ currentUser }: { currentUser: CurrentUserResponse 
       const saved = selectedId
         ? await updateUser(selectedId, base)
         : await createUser({ ...base, password: form.password });
-      setSelectedId(saved.id); setForm(fromUser(saved)); setSuccess('Usuário salvo com sucesso.'); await load();
+      setSelectedId(saved.id); setSelectedUser(saved); setForm(fromUser(saved)); setSuccess('Usuário salvo com sucesso.'); await load();
     } catch (reason) { setError(message(reason)); }
     finally { setSaving(false); }
   }
@@ -277,7 +281,7 @@ export function UsersScreen({ currentUser }: { currentUser: CurrentUserResponse 
 
           <section className={styles.editor}>
             <h2>{title}</h2>
-            {(selectedId ? !canEdit : !canCreate) ? <p>{selectedId ? 'Você não tem permissão para editar este usuário.' : 'Você não tem permissão para criar usuários.'}</p> : null}
+            {(selectedId ? !canEdit : !canCreate) ? <p>{selectedUser?.isGlobalAdmin && !isGlobalAdmin ? 'Somente administradores globais podem alterar este usuário.' : selectedId ? 'Você não tem permissão para editar este usuário.' : 'Você não tem permissão para criar usuários.'}</p> : null}
             {!selectedId && !canCreate ? <p>Selecione um usuário para consultar.</p> : (
               <form onSubmit={save}>
                 <div className={styles.grid}>
@@ -286,7 +290,7 @@ export function UsersScreen({ currentUser }: { currentUser: CurrentUserResponse 
                   <label><span>Celular</span><input disabled={saving || (!!selectedId && !canEdit)} maxLength={20} onChange={(event) => setForm({ ...form, phone: event.target.value })} required value={form.phone} /></label>
                   <label><span>Login</span><input disabled={saving || (!!selectedId && !canEdit)} maxLength={15} onChange={(event) => setForm({ ...form, login: event.target.value })} required value={form.login} /></label>
                   {!selectedId ? <label><span>Senha inicial</span><input disabled={saving} maxLength={100} minLength={12} onChange={(event) => setForm({ ...form, password: event.target.value })} required type="password" value={form.password} /></label> : null}
-                  <label><span>Função</span><select disabled={saving || (!!selectedId && !canEdit)} onChange={(event) => setForm({ ...form, functionId: event.target.value })} required value={form.functionId}><option value="">Selecione</option>{catalogs?.functions.map((option) => <option key={option.id} value={option.id}>{option.name}</option>)}</select></label>
+                  <label><span>Função</span><select disabled={saving || (!!selectedId && !canEdit) || ownFunctionLocked} onChange={(event) => setForm({ ...form, functionId: event.target.value })} required value={form.functionId}><option value="">Selecione</option>{catalogs?.functions.filter(option => isGlobalAdmin || !option.isGlobalAdmin || String(option.id) === form.functionId).map((option) => <option key={option.id} value={option.id} disabled={option.isGlobalAdmin && !isGlobalAdmin}>{option.name}</option>)}</select>{ownFunctionLocked ? <small>Somente um administrador global pode alterar a sua função.</small> : null}</label>
                   <label><span>Tipo</span><select disabled={saving || (!!selectedId && !canEdit)} onChange={(event) => changeUserType(Number(event.target.value) as 1 | 2)} value={form.type}><option value={1}>Interno</option><option value={2}>Cliente</option></select></label>
                   <label><span>Situação</span><select disabled={saving || !selectedId || !canEdit} onChange={(event) => setForm({ ...form, status: Number(event.target.value) as 1 | 2 })} value={form.status}><option value={1}>Ativo</option><option value={2}>Inativo</option></select></label>
                   <label><span>Link</span><input disabled={saving || (!!selectedId && !canEdit)} maxLength={50} onChange={(event) => setForm({ ...form, link: event.target.value })} value={form.link} /></label>

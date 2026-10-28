@@ -6,8 +6,13 @@ export interface UserOption {
   name: string;
 }
 
+export interface UserFunctionOption extends UserOption {
+  isGlobalAdmin: boolean;
+}
+
 export interface ManagedUserSummary {
   id: number;
+  isGlobalAdmin: boolean;
   status: 1 | 2;
   name: string;
   email: string;
@@ -27,7 +32,7 @@ export interface ManagedUserDetail extends ManagedUserSummary {
 }
 
 export interface UserManagementCatalogs {
-  functions: UserOption[];
+  functions: UserFunctionOption[];
   functionPermissionIds: Record<number, number[]>;
   companies: UserOption[];
   pixKeyTypes: UserOption[];

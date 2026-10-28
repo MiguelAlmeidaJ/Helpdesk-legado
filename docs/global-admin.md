@@ -15,6 +15,8 @@ Para conceder acesso global, um administrador global edita o usuário e selecion
 
 A função reservada não pode ser renomeada, desativada, excluída nem ter suas permissões editadas. Não é possível conceder acesso global apenas criando uma função com nome parecido ou enviando campos adicionais ao cadastro comum de funções.
 
+Na página de usuários, a opção global fica oculta para quem não é administrador global. Ao consultar uma conta global, sua função aparece apenas como valor selecionado desabilitado, e o cadastro inteiro fica em consulta. Usuários com permissão de cadastro podem editar contas comuns, mas não podem alterar a própria função: o campo fica desabilitado e a API rejeita alterações forjadas. Um administrador global pode fazer essa alteração, preservando a regra do último administrador ativo.
+
 O comando existente `pnpm access:grant-system-admin -- <id>` continua disponível como recuperação operacional e sincroniza a função visível quando provisionada. Seu uso concede acesso global explicitamente ao usuário informado; não faz parte de rotinas automáticas.
 
 Os testes SQL utilizam exclusivamente tabelas temporárias com nomes únicos e transações revertidas. O teste de navegador intercepta todas as chamadas à API e não altera contas reais.
