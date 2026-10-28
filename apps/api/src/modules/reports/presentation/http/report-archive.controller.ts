@@ -39,6 +39,15 @@ export class ReportArchiveController {
   @ApiOperation({ summary: 'Listar PDFs arquivados' })
   async list(@CurrentUser() user: AuthenticatedUser | undefined) { await this.archive.authorize(reportUser(user)); return this.archive.list(); }
 
+  @Get('archive/catalog')
+  @Header('Cache-Control', 'no-store')
+  @ApiOperation({ summary: 'Listar clientes ativos de TI ou DevOps para geração de PDFs' })
+  async catalog(@CurrentUser() user: AuthenticatedUser | undefined) {
+    const userId = reportUser(user);
+    await this.archive.authorize(userId);
+    return this.reports.catalog(userId, 0, true);
+  }
+
   @Get('archive/:name')
   @Header('Cache-Control', 'no-store')
   @ApiOperation({ summary: 'Baixar PDF arquivado' })
@@ -80,9 +89,9 @@ export class ReportArchiveController {
     await this.archive.authorize(userId);
     if (!body || !Array.isArray(body.clientIds) || !body.clientIds.length || body.clientIds.length > 50 || body.clientIds.some(id => typeof id !== 'number' || !Number.isSafeInteger(id) || id < 1)) throw new BadRequestException('Selecione entre 1 e 50 clientes.');
     const filters = analyticsFilters({ startDate: body.startDate, endDate: body.endDate, source: 'unified' });
-    const allowed = new Set((await this.reports.catalog(userId, 0)).clients.map(row => row.id));
+    const allowed = new Set((await this.reports.catalog(userId, 0, true)).clients.map(row => row.id));
     const clientIds = [...new Set(body.clientIds as number[])];
-    if (clientIds.some(id => !allowed.has(id))) throw new BadRequestException('Cliente inválido ou inativo.');
+    if (clientIds.some(id => !allowed.has(id))) throw new BadRequestException('Selecione apenas clientes ativos com TI ou DevOps habilitado.');
     const files = [];
     const errors: Array<{ clientId: number; message: string }> = [];
     for (const clientId of clientIds) {

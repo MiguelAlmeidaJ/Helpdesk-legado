@@ -83,9 +83,10 @@ export class PrismaTicketAnalyticsRepository extends TicketAnalyticsRepository {
     return { filters, generatedAt: new Date().toISOString(), total: rows.length, rows };
   }
 
-  async catalog(userId: number, clientId: number): Promise<TicketReportCatalog> {
+  async catalog(userId: number, clientId: number, technicalClientsOnly = false): Promise<TicketReportCatalog> {
     const visibility = await resolveTicketReportVisibility(this.database, userId);
     const where = ['c.clt_sts = 1'];
+    if (technicalClientsOnly) where.push('(c.clt_ti = 1 OR c.clt_adm = 1)');
     const params: unknown[] = [];
     scope(where, params, visibility, 'c.clt_id');
     const clients = await this.database.$queryRawUnsafe<ReportOption[]>(

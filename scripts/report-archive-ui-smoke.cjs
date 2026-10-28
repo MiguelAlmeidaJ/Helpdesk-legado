@@ -22,7 +22,7 @@ function fixture(url,method,body){
  if(pathname.endsWith('/auth/me'))return user;
  if(pathname.endsWith('/navigation'))return{sections:[]};
  if(pathname.endsWith('/notifications'))return{items:[],unreadCount:0,total:0};
- if(pathname.endsWith('/reports/tickets/catalog'))return{clients,locations:[],technicians:[],categories:[]};
+ if(pathname.endsWith('/reports/archive/catalog'))return{clients,locations:[],technicians:[],categories:[]};
  if(pathname.endsWith('/archive/generate')){
   const ids=state.partial?body.clientIds.slice(0,1):body.clientIds;
   state.files=ids.map(id=>({name:`cliente-${id}-2026-10-relatorio-de-atendimentos.pdf`,size:20480,modifiedAt:'2026-10-28T14:00:00Z',expiresAt:'2026-11-12T14:00:00Z'}));

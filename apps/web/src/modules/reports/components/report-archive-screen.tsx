@@ -42,7 +42,7 @@ export function ReportArchiveScreen({ currentUser }: { currentUser: CurrentUserR
   async function refresh(signal?: AbortSignal) {
     const [archive, catalog] = await Promise.all([
       apiRequest<ArchivedReport[]>('reports/archive', { signal }),
-      apiRequest<TicketReportCatalog>('reports/tickets/catalog', { signal }),
+      apiRequest<TicketReportCatalog>('reports/archive/catalog', { signal }),
     ]);
     if (signal?.aborted) return;
     setFiles(archive); setClients(catalog.clients); setNames([]);
@@ -129,7 +129,7 @@ export function ReportArchiveScreen({ currentUser }: { currentUser: CurrentUserR
                 {!visibleClients.length ? <p className="m-0 p-6 text-center text-sm text-app-muted">{busy ? 'Carregando clientes…' : clients.length ? 'Nenhum cliente encontrado para esta busca.' : 'Nenhum cliente disponível.'}</p> : null}
               </div>
             </div>
-            <p className="mb-0 mt-2 text-xs text-app-muted">{clientIds.length === 50 ? 'Limite do lote atingido. Desmarque um cliente para escolher outro.' : `${visibleClients.length} cliente(s) na lista. A busca mantém suas seleções.`}</p>
+            <p className="mb-0 mt-2 text-xs text-app-muted">{clientIds.length === 50 ? 'Limite do lote atingido. Desmarque um cliente para escolher outro.' : `${visibleClients.length} cliente(s) de TI ou DevOps. A busca mantém suas seleções.`}</p>
           </fieldset>
         </div>
       </form>
