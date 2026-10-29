@@ -23,7 +23,7 @@ export interface ReportOption { id: number; name: string }
 export interface TicketReportCatalog {
   clients: ReportOption[];
   locations: ReportOption[];
-  technicians: Array<ReportOption & { sector?: Exclude<ReportSector, 'all'> | null }>;
+  technicians: Array<ReportOption & { sector?: Exclude<ReportSector, 'all'> | null; functionName?: string; isGlobalAdmin?: boolean }>;
   categories: ReportOption[];
   projects?: ReportOption[];
 }

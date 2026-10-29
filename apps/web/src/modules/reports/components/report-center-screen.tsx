@@ -28,6 +28,14 @@ const GROUPS: Array<{ value: ReportGrouping; label: string }> = [
   { value: 'client-daily', label: 'Diário por cliente' }, { value: 'technician-daily', label: 'Diário por técnico' },
   { value: 'project', label: 'Por projeto' }, { value: 'status', label: 'Por situação' },
 ];
+const ATTENDANCE_VIEWS: Array<{ value: ReportGrouping; label: string }> = [
+  { value: 'client', label: 'Atd. total por cliente' },
+  { value: 'client-daily', label: 'Atd. diário por cliente' },
+  { value: 'requester', label: 'Atd. total por solicitante' },
+  { value: 'technician', label: 'Atd. total por técnico' },
+  { value: 'technician-daily', label: 'Atd. diário por técnico' },
+  { value: 'category', label: 'Atd. total por categoria' },
+];
 
 function initialFilters(projects: boolean): Filters {
   return { startDate: '', endDate: '', source: projects ? 'tasks' : 'tickets', sector: 'all', clientIds: [], technicianId: '0', categoryId: '0', locationId: '0', categorySector: '0', projectId: '0', level: '0', status: '0' };
@@ -59,6 +67,7 @@ export function ReportCenterScreen({ currentUser, area }: { currentUser: Current
   const printedDetails = useRef(new Map<HTMLDetailsElement, boolean>());
   const catalogClient = filters.clientIds.length === 1 ? filters.clientIds[0] ?? '0' : '0';
   const canPdf = currentUser.grants.some(grant => grant.permission === 'system.admin' || grant.permission === 'reports.pdf');
+  const groupLabel = (value: ReportGrouping) => (!projects ? ATTENDANCE_VIEWS.find(view => view.value === value)?.label : undefined) ?? GROUPS.find(view => view.value === value)?.label;
 
   useEffect(() => {
     const beforePrint = () => {
@@ -175,11 +184,20 @@ export function ReportCenterScreen({ currentUser, area }: { currentUser: Current
         <section className={`${CARD} p-5`} aria-label="Explorar resultados">
           <div className="mb-4 grid grid-cols-[minmax(0,1fr)_minmax(180px,280px)] gap-3 max-sm:grid-cols-1 print:hidden"><input className={INPUT} aria-label="Buscar nos resultados" placeholder="Buscar nome, projeto, função ou descrição…" value={search} onChange={event => { setSearch(event.target.value); setPage(1); setGroupPage(1); }} type="search" /><select aria-label="Menção ao Zabbix" className={INPUT} value={zabbix} onChange={event => { setZabbix(event.target.value); setPage(1); setGroupPage(1); }}><option value="all">Todas as menções</option><option value="yes">Com menção ao Zabbix</option><option value="no">Sem menção ao Zabbix</option></select></div>
           <ReportSectorSummary value={report.filters.sector} coverage={coverage} />
+          <details className="mb-4 rounded-lg border border-app-border p-3 print:hidden" data-recognized-technicians>
+            <summary className="cursor-pointer text-sm font-semibold text-app-brand">Técnicos ativos reconhecidos ({sectorTechnicians(catalog, report.filters.sector ?? 'all').length})</summary>
+            <p className="text-xs text-app-muted">A classificação usa a função cadastrada. Administradores globais são classificados em DevOps. A função antiga “Técnico” não equivale automaticamente a “Tecnico TI”.</p>
+            <ul className="m-0 grid list-none gap-2 p-0 sm:grid-cols-2">{sectorTechnicians(catalog, report.filters.sector ?? 'all').map(technician => <li key={technician.id} className="rounded-lg bg-app-surface-muted p-3 text-sm"><strong>{technician.name}</strong><span className="mt-1 block text-xs text-app-muted">{technician.sector === 'ti' ? 'TI' : 'DevOps'} · {technician.functionName || 'Função reconhecida'}</span></li>)}</ul>
+            {!sectorTechnicians(catalog, report.filters.sector ?? 'all').length ? <p className="text-sm text-app-muted">Nenhum técnico ativo reconhecido neste setor.</p> : null}
+          </details>
           <p className="mb-4 mt-0 text-xs text-app-muted">A menção ao Zabbix é identificada no texto das descrições; registros sem técnico não são classificados automaticamente como Zabbix.</p>
+          {!projects ? <div className="mb-5 grid gap-2 sm:grid-cols-2 lg:grid-cols-3 print:hidden" role="group" aria-label="Relatórios de atendimentos">
+            {ATTENDANCE_VIEWS.map(view => <button type="button" key={view.value} aria-pressed={grouping === view.value} onClick={() => { setGrouping(view.value); setGroupPage(1); }} className={`min-h-12 rounded-lg border px-3 py-3 text-left text-sm font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-app-brand ${grouping === view.value ? 'border-app-brand bg-app-brand text-white' : 'border-app-border bg-app-surface hover:bg-app-surface-hover'}`}>{view.label}</button>)}
+          </div> : null}
           <div className="flex flex-wrap items-end justify-between gap-3 print:hidden"><label className="grid gap-1.5 text-xs font-semibold text-app-muted">Visualização<select aria-label="Visualização" className={INPUT} value={grouping} onChange={event => { setGrouping(event.target.value as ReportGrouping); setGroupPage(1); }}>{GROUPS.filter(group => projects || group.value !== 'project').map(group => <option key={group.value} value={group.value}>{group.label}</option>)}</select></label><ReportChartTypePicker value={chartType} onChange={setChartType} /><div className="flex flex-wrap gap-2"><button className={SECONDARY} disabled={!rows.length} onClick={exportRows} type="button">Exportar registros</button><button className={SECONDARY} onClick={() => window.print()} type="button">Imprimir / PDF</button>{canPdf ? <button className={SECONDARY} disabled={exporting || Boolean(search.trim()) || zabbix !== 'all'} onClick={() => void exportPdf()} type="button" title="PDF do período e dos filtros aplicados. Limpe a busca e o filtro de menção para baixar.">{exporting ? 'Preparando…' : 'Baixar PDF analítico'}</button> : null}</div></div>
-          <h2 className="mb-1 mt-5 text-lg font-bold">{GROUPS.find(group => group.value === grouping)?.label}</h2>
+          <h2 className="mb-1 mt-5 text-lg font-bold">{groupLabel(grouping)}</h2>
           {groups.length > 20 ? <p className="text-xs text-app-muted">O gráfico reúne os 20 maiores grupos e os demais. O resumo e a exportação incluem todos os grupos.</p> : null}
-          <ReportChartView rows={chartRows} type={chartType} />
+          <ReportChartView key={`${report.filters.source}:${grouping}`} rows={chartRows} type={chartType} />
           <div className="mb-3 mt-6 flex flex-wrap items-center justify-between gap-3"><h3 className="m-0 text-sm font-bold">Resumo por grupo ({groups.length})</h3><button type="button" className={`${SECONDARY} print:hidden`} disabled={!groups.length} onClick={() => downloadCsv(`resumo-${grouping}.csv`, [['Data', 'Grupo', 'Nível 1', 'Nível 2', 'Nível 3', 'Outros níveis', 'Total'], ...groups.map(row => [row.date ?? '', row.label, row.level1, row.level2, row.level3, row.other ?? 0, row.total])])}>Exportar resumo</button></div>
           <div className="overflow-x-auto"><table className="w-full min-w-[650px] border-collapse text-left text-sm"><thead className="bg-app-surface-muted text-xs text-app-muted"><tr>{['Data', 'Grupo', 'Nível 1', 'Nível 2', 'Nível 3', 'Outros níveis', 'Total'].map(label => <th className="p-3" key={label}>{label}</th>)}</tr></thead><tbody>{(printing ? groups : groups.slice((activeGroupPage - 1) * PAGE_SIZE, activeGroupPage * PAGE_SIZE)).map(row => <tr key={row.key} className="border-t border-app-border"><td className="whitespace-nowrap p-3">{row.date?.split('-').reverse().join('/') ?? '—'}</td><td className="p-3">{row.label}</td><td className="p-3">{row.level1}</td><td className="p-3">{row.level2}</td><td className="p-3">{row.level3}</td><td className="p-3">{row.other ?? 0}</td><td className="p-3 font-bold">{row.total}</td></tr>)}</tbody></table></div>
           <Pagination page={activeGroupPage} pages={groupPages} onChange={setGroupPage} label="grupos" />

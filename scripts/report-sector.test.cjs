@@ -10,11 +10,11 @@ const {analyticsPdf}=require(base+'infrastructure/pdf/analytics-pdf');
 const {ReportsController}=require(base+'presentation/http/reports.controller');
 const {ReportArchiveController}=require(base+'presentation/http/report-archive.controller');
 const fixtures=`WITH fixture_roles AS (
- SELECT cargo_id,cargo_nome FROM (VALUES
+ SELECT cargo_id,cargo_nome,CASE WHEN cargo_id IN (8,14) THEN 1 ELSE 0 END AS is_global_admin FROM (VALUES
  (1,N'Gestor TI'),(2,N'Analista TI'),(3,N'Técnico TI'),
  (4,N'Gestor DevOps'),(5,N'Analista DevOps'),(6,N'Tecnico DevOps'),
  (7,N'Marketing'),(8,N'Administrador global'),(9,N'Técnico'),
- (10,N'  TÉCNICO TI  '),(11,N'Gestor TI externo')
+ (10,N'  TÉCNICO TI  '),(11,N'Gestor TI externo'),(14,N'Diretoria protegida')
  ) r(cargo_id,cargo_nome)
 ), fixture_users AS (
  SELECT cargo_id AS user_id,cargo_id AS user_funcao,CONCAT('Pessoa ',cargo_id) AS user_nome,
@@ -35,9 +35,9 @@ test('sector validates an exact enum and defaults to all',()=>{
  assert.throws(()=>analyticsFilters({sector:['ti','devops']}));
 });
 
-test('SQL Server fixtures: sectors match the six roles, accents and spaces; all preserves unassigned and other roles',async()=>{
+test('SQL Server fixtures: sectors match functions and global administration, including renamed protected roles',async()=>{
  const db=createNivel3Client();try{
-  for(const [sector,expected]of [['ti',[1,2,3,10]],['devops',[4,5,6]],['all',[1,2,3,4,5,6,7,8,9,10,11,12,13]]]){
+  for(const [sector,expected]of [['ti',[1,2,3,10]],['devops',[4,5,6,8,14]],['all',[1,2,3,4,5,6,7,8,9,10,11,12,13,14]]]){
    const where=[],params=[];appendReportSector(where,params,sector);
    const query=fixtures+`SELECT a.id FROM fixture_tickets a WHERE ${where.join(' AND ')||'1=1'} ORDER BY a.id`;
    const rows=await db.$queryRawUnsafe(query.replaceAll('FROM usuarios rs_user','FROM fixture_users rs_user').replaceAll('JOIN cargos_n3 rs_role','JOIN fixture_roles rs_role'),...params);
@@ -49,8 +49,12 @@ test('SQL Server fixtures: sectors match the six roles, accents and spaces; all 
    return[];
   }});
   const technicians=(await repo.catalog(1,0)).technicians;
-  assert.deepEqual(technicians.map(r=>r.id).sort((a,b)=>a-b),[1,2,3,4,5,6]);
+  assert.deepEqual(technicians.map(r=>r.id).sort((a,b)=>a-b),[1,2,3,4,5,6,8,14]);
   assert.ok(technicians.every(r=>r.sector===(r.id<=3?'ti':'devops')));
+  assert.equal(technicians.find(r=>r.id===8).isGlobalAdmin,true);
+  assert.equal(technicians.find(r=>r.id===14).isGlobalAdmin,true);
+  assert.equal(technicians.find(r=>r.id===14).functionName,'Diretoria protegida');
+  assert.equal(technicians.find(r=>r.id===1).isGlobalAdmin,false);
  }finally{await db.$disconnect();}
 });
 
@@ -88,7 +92,7 @@ test('SQL Server executes workload aggregation for all sectors without counting 
    if(sql.includes('SELECT tipo_usuario'))return[{tipo_usuario:1}];
    return db.$queryRawUnsafe(fixtures+sql.replaceAll('FROM usuarios u','FROM fixture_users u').replaceAll('FROM usuarios rs_user','FROM fixture_users rs_user').replaceAll('JOIN cargos_n3 rs_role','JOIN fixture_roles rs_role').replaceAll('FROM atendimentos a','FROM fixture_tickets a').replaceAll('FROM espera','FROM fixture_espera'),...params);
   }});
-  for(const [sector,expected]of [['all',6],['ti',3],['devops',3]]){
+  for(const [sector,expected]of [['all',8],['ti',3],['devops',5]]){
    const report=await repo.workload(1,sector);
    assert.equal(report.rows.length,expected);
    assert.ok(report.rows.every(row=>row.open===1&&row.waiting===0));

@@ -20,7 +20,7 @@ const FIXTURES=`WITH fixture_atendimentos AS (
 ), fixture_usuarios AS (
  SELECT user_id,user_nome,user_funcao FROM (VALUES (1,N'Pessoa TI',1),(2,N'Pessoa DevOps',2),(3,N'Pessoa Legada',3)) v(user_id,user_nome,user_funcao)
 ), fixture_cargos_n3 AS (
- SELECT cargo_id,cargo_nome FROM (VALUES (1,N'Analista TI'),(2,N'Analista DevOps'),(3,N'Técnico')) v(cargo_id,cargo_nome)
+ SELECT cargo_id,cargo_nome,0 AS is_global_admin FROM (VALUES (1,N'Analista TI'),(2,N'Analista DevOps'),(3,N'Técnico')) v(cargo_id,cargo_nome)
 ), fixture_pessoas AS (
  SELECT pessoa_id,pessoa_nom FROM (VALUES (1,N'Solicitante A'),(2,N'Solicitante B')) v(pessoa_id,pessoa_nom)
 ), fixture_locais AS (SELECT 0 AS local_id,'' AS local_nom,'' AS local_end,'' AS local_city,'' AS local_uf WHERE 1=0),

@@ -1,5 +1,5 @@
 import type { ReportSector } from '@helpdesk/contracts';
-import { appendReportSector, NORMALIZED_REPORT_FUNCTION, sectorFunctionNames } from './report-sector';
+import { appendReportSector, sectorRoleCondition, sectorFunctionNames } from './report-sector';
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import type { Nivel3DatabaseClient } from '@helpdesk/database';
 import type { TicketAnalyticsFilters, TicketAnalyticsResponse, TicketAnalyticsRow, TicketReportCatalog, TicketTechnicianTimingDetail, TicketTechnicianTimingFilters, TicketTechnicianTimingResponse, TechnicianWorkloadResponse, ReportOption } from '@helpdesk/contracts';
@@ -65,8 +65,8 @@ export class PrismaTicketAnalyticsRepository extends TicketAnalyticsRepository {
           COALESCE(p.pessoa_nom, '') AS requesterName, COALESCE(u.user_nome, 'Sem técnico') AS technicianName,
           COALESCE(p.pessoa_id, 0) AS requesterId, COALESCE(cat.cat_id, 0) AS categoryId,
           COALESCE(u.user_id, 0) AS technicianId, COALESCE(rs_role.cargo_nome, '') AS technicianFunction,
-          CASE WHEN ${NORMALIZED_REPORT_FUNCTION} IN (${sectorFunctionNames('ti').map(() => '?').join(', ')}) THEN 'ti'
-            WHEN ${NORMALIZED_REPORT_FUNCTION} IN (${sectorFunctionNames('devops').map(() => '?').join(', ')}) THEN 'devops'
+          CASE WHEN ${sectorRoleCondition('ti')} THEN 'ti'
+            WHEN ${sectorRoleCondition('devops')} THEN 'devops'
             ELSE NULL END AS technicianSector,
           COALESCE(cat.cat_nome, '') AS categoryName, COALESCE(sub.scat_nome, '') AS subcategoryName,
           COALESCE(i.itens_nome, '') AS itemName,
@@ -120,7 +120,7 @@ export class PrismaTicketAnalyticsRepository extends TicketAnalyticsRepository {
       ? await this.database.$queryRawUnsafe<ReportOption[]>(`SELECT local_id AS id, local_nom AS name FROM locais WHERE local_clt = ? ORDER BY local_nom`, clientId) : [];
     const names = sectorFunctionNames('all');
     const technicians = visibility.restrictClients && !visibility.clientIds.length ? [] : await this.database.$queryRawUnsafe<TicketReportCatalog['technicians']>(
-      `SELECT u.user_id AS id, u.user_nome AS name, CASE WHEN ${NORMALIZED_REPORT_FUNCTION} IN (?, ?, ?) THEN 'ti' ELSE 'devops' END AS sector FROM usuarios u INNER JOIN cargos_n3 rs_role ON rs_role.cargo_id = u.user_funcao WHERE u.user_sts = 1 AND ${NORMALIZED_REPORT_FUNCTION} IN (${names.map(() => '?').join(', ')}) ORDER BY u.user_nome`, ...sectorFunctionNames('ti'), ...names);
+      `SELECT u.user_id AS id, u.user_nome AS name, rs_role.cargo_nome AS functionName, COALESCE(rs_role.is_global_admin, 0) AS isGlobalAdmin, CASE WHEN ${sectorRoleCondition('ti')} THEN 'ti' ELSE 'devops' END AS sector FROM usuarios u INNER JOIN cargos_n3 rs_role ON rs_role.cargo_id = u.user_funcao WHERE u.user_sts = 1 AND ${sectorRoleCondition('all')} ORDER BY u.user_nome`, ...sectorFunctionNames('ti'), ...names);
     const categories = visibility.restrictClients && !visibility.clientIds.length
       ? []
       : await this.database.$queryRawUnsafe<ReportOption[]>(
@@ -135,7 +135,7 @@ export class PrismaTicketAnalyticsRepository extends TicketAnalyticsRepository {
     if (clientId) { projectWhere.push('a.cliente = ?'); projectParams.push(clientId); }
     const projects = includeProjects ? await this.database.$queryRawUnsafe<ReportOption[]>(
       `SELECT a.id AS id, COALESCE(NULLIF(a.nome_proj, ''), CONCAT('Projeto #', a.id)) AS name FROM projetos a WHERE ${projectWhere.join(' AND ')} ORDER BY a.nome_proj, a.id`, ...projectParams) : undefined;
-    return { clients, locations, technicians, categories, ...(projects ? { projects } : {}) };
+    return { clients, locations, technicians: technicians.map(technician => ({ ...technician, isGlobalAdmin: Boolean(technician.isGlobalAdmin) })), categories, ...(projects ? { projects } : {}) };
   }
 
   async technicianTiming(

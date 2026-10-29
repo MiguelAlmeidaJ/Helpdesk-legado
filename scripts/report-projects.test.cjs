@@ -17,7 +17,7 @@ const fixtures=`WITH fixture_records AS (
 ), fixture_tarefas AS (SELECT *,nome AS nome_tarefa FROM fixture_common WHERE kind='t'),
  fixture_projetos AS (SELECT *,nome AS nome_proj FROM fixture_common WHERE kind='p'),
  fixture_usuarios AS (SELECT user_id,user_nome,user_funcao FROM (VALUES (1,N'Pessoa A',1),(2,N'Pessoa B',1)) v(user_id,user_nome,user_funcao)),
- fixture_cargos_n3 AS (SELECT 1 AS cargo_id,N'Analista DevOps' AS cargo_nome),
+ fixture_cargos_n3 AS (SELECT 1 AS cargo_id,N'Analista DevOps' AS cargo_nome,0 AS is_global_admin),
  fixture_clientes AS (SELECT clt_id,clt_nomef,clt_nomer,1 AS clt_sts FROM (VALUES (1,N'Cliente A',N'Cliente A'),(2,N'Cliente privado',N'Cliente privado')) v(clt_id,clt_nomef,clt_nomer)),
  fixture_pessoas AS (SELECT 0 AS pessoa_id,'' AS pessoa_nom WHERE 1=0),
  fixture_locais AS (SELECT 0 AS local_id,'' AS local_nom,'' AS local_end,'' AS local_city,'' AS local_uf WHERE 1=0),

@@ -24,7 +24,7 @@ function fixture(url,method){
  if(pathname.endsWith('/auth/me'))return state.user;
  if(pathname.endsWith('/navigation'))return{sections:[]};
  if(pathname.endsWith('/notifications'))return{items:[],unreadCount:0,total:0};
- if(pathname.endsWith('/catalog'))return{clients:[{id:1,name:'Cliente 1'},{id:2,name:'Cliente 2'}],locations:[],technicians:[{id:1,name:'Pessoa 1',sector:'ti'},{id:2,name:'Pessoa 2',sector:'devops'}],categories:[{id:1,name:'Categoria 1'}],projects:[{id:101,name:'Projeto 101'},{id:102,name:'Projeto 102'}]};
+ if(pathname.endsWith('/catalog'))return{clients:[{id:1,name:'Cliente 1'},{id:2,name:'Cliente 2'}],locations:[],technicians:[{id:1,name:'Pessoa 1',sector:'ti'},{id:2,name:'Pessoa 2',sector:'devops',functionName:'Analista DevOps'},{id:3,name:'Admin global teste',sector:'devops',functionName:'Administrador global',isGlobalAdmin:true}],categories:[{id:1,name:'Categoria 1'}],projects:[{id:101,name:'Projeto 101'},{id:102,name:'Projeto 102'}]};
  const filters={startDate:'2026-10-01',endDate:'2026-10-28',source:'tickets',sector:'all',clientIds:[],clientId:0,technicianId:0,categoryId:0,projectId:0,categorySector:0,locationId:0,level:0,status:0,...Object.fromEntries(u.searchParams)};
  for(const key of ['clientId','technicianId','categoryId','projectId','level','status'])filters[key]=Number(filters[key]);
  filters.clientIds=String(filters.clientIds).split(',').filter(Boolean).map(Number);
@@ -68,6 +68,16 @@ async function main(){
   assert.equal(await cdp.evaluate("document.querySelectorAll('[aria-label=\"Grupos de relat\u00f3rios\"] a').length"),4);
   assert.equal(await cdp.evaluate("document.body.innerText.includes('Situa\u00e7\u00e3o: Todas as situa\u00e7\u00f5es ativas')"),true);
   const initialCalls=state.calls.filter(c=>c.path.endsWith('/analytics')).length;
+  const labels=['Atd. total por cliente','Atd. di\u00e1rio por cliente','Atd. total por solicitante','Atd. total por t\u00e9cnico','Atd. di\u00e1rio por t\u00e9cnico','Atd. total por categoria'];
+  assert.equal(await cdp.evaluate("document.querySelectorAll('[aria-label=\"Relat\u00f3rios de atendimentos\"] button').length"),6);
+  for(const label of labels){
+   await click(label);await wait(`[...document.querySelectorAll('h2')].some(h=>h.textContent===${JSON.stringify(label)})`);
+   assert.equal(await cdp.evaluate("document.querySelector('[data-sector-coverage]').textContent.includes('Total: 55')"),true);
+  }
+  await cdp.evaluate("document.querySelector('[data-recognized-technicians] summary').click()");
+  assert.equal(await cdp.evaluate("document.querySelector('[data-recognized-technicians]').textContent.includes('Admin global teste')"),true);
+  assert.equal(await cdp.evaluate("document.querySelector('[data-recognized-technicians]').textContent.includes('DevOps \u00b7 Administrador global')"),true);
+
   for(const view of ['technician','category','requester','client-daily','technician-daily','status','client']){
    await choose('select[aria-label=Visualiza\u00e7\u00e3o]',view);
    await wait(`document.querySelector('select[aria-label=Visualiza\u00e7\u00e3o]').value===${JSON.stringify(view)}`);
@@ -113,7 +123,7 @@ async function main(){
   assert.equal(await cdp.evaluate("document.querySelectorAll('[aria-label=\"Grupos de relat\u00f3rios\"] a').length"),3);
   assert.equal(await cdp.evaluate("[...document.querySelectorAll('button')].some(b=>b.textContent==='Baixar PDF anal\u00edtico')"),false);
   assert.deepEqual(state.errors,[]);
-  console.log(JSON.stringify({groups:4,views:7,sharedFilters:true,groupingRequests:0,csvAllRows:true,printAllRows:true,zabbixTextFilter:true,projects:true,timingViews:3,pdfPermission:true,mobile:true,consoleExceptions:0}));
+  console.log(JSON.stringify({groups:4,explicitViews:6,globalAdminCatalog:true,views:7,sharedFilters:true,groupingRequests:0,csvAllRows:true,printAllRows:true,zabbixTextFilter:true,projects:true,timingViews:3,pdfPermission:true,mobile:true,consoleExceptions:0}));
 
  }catch(error){
   console.error(JSON.stringify({page:cdp?await cdp.evaluate('document.body.innerText.slice(0,1600)'):null,errors:state.errors,calls:state.calls.map(c=>c.path)}));

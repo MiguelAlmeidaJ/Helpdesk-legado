@@ -3,7 +3,7 @@ import type { ReportSector } from '@helpdesk/contracts';
 
 const FUNCTIONS = {
   ti: ['gestor ti', 'analista ti', 'tecnico ti'],
-  devops: ['gestor devops', 'analista devops', 'tecnico devops'],
+  devops: ['gestor devops', 'analista devops', 'tecnico devops', 'administrador global'],
 } as const;
 
 export function reportSector(value: unknown): ReportSector {
@@ -19,10 +19,19 @@ export function sectorFunctionNames(sector: ReportSector): readonly string[] {
 // Fixed identifiers only; names remain bound parameters. Ignore accents in Técnico.
 export const NORMALIZED_REPORT_FUNCTION = "REPLACE(LOWER(TRIM(rs_role.cargo_nome)), 'é', 'e')";
 
+export function sectorRoleCondition(sector: ReportSector): string {
+  const names = sectorFunctionNames(sector);
+  const named = `${NORMALIZED_REPORT_FUNCTION} IN (${names.map(() => '?').join(', ')})`;
+  // Global administration remains DevOps even if its protected role is renamed.
+  return sector === 'ti'
+    ? `(COALESCE(rs_role.is_global_admin, 0) = 0 AND ${named})`
+    : `(COALESCE(rs_role.is_global_admin, 0) = 1 OR ${named})`;
+}
+
 export function appendReportSector(where: string[], params: unknown[], value: ReportSector | undefined, technicianColumn = 'a.tecnico', onlyTechnicians = false) {
   const sector = reportSector(value);
   if (sector === 'all' && !onlyTechnicians) return;
   const names = sectorFunctionNames(sector);
-  where.push(`EXISTS (SELECT 1 FROM usuarios rs_user INNER JOIN cargos_n3 rs_role ON rs_role.cargo_id = rs_user.user_funcao WHERE rs_user.user_id = ${technicianColumn} AND ${NORMALIZED_REPORT_FUNCTION} IN (${names.map(() => '?').join(', ')}))`);
+  where.push(`EXISTS (SELECT 1 FROM usuarios rs_user INNER JOIN cargos_n3 rs_role ON rs_role.cargo_id = rs_user.user_funcao WHERE rs_user.user_id = ${technicianColumn} AND ${sectorRoleCondition(sector)} )`);
   params.push(...names);
 }
