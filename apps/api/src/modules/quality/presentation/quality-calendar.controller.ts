@@ -7,6 +7,7 @@ import {
   Param,
   ParseIntPipe,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import {
@@ -29,6 +30,9 @@ function input(body: unknown): SaveCommemorativeDateRequest {
   return {
     date: typeof value.date === 'string' ? value.date.trim() : '',
     name: typeof value.name === 'string' ? value.name.trim() : '',
+    scope: value.scope as SaveCommemorativeDateRequest['scope'],
+    state: typeof value.state === 'string' ? value.state.trim().toUpperCase() : '',
+    municipalityId: typeof value.municipalityId === 'number' ? value.municipalityId : undefined,
   };
 }
 
@@ -39,14 +43,27 @@ export class QualityCalendarController {
 
   @Get()
   @RequirePermissions(AppPermission.QualityDatesRead)
-  list(): Promise<CommemorativeDatesResponse> {
-    return this.calendar.list();
+  list(@Query('year') year?: string): Promise<CommemorativeDatesResponse> {
+    return this.calendar.list(year === undefined ? undefined : Number(year));
+  }
+
+  @Get('locations')
+  @RequirePermissions(AppPermission.QualityDatesRead)
+  locations(@Query('state') state?: string) {
+    return this.calendar.locations(state?.trim().toUpperCase());
   }
 
   @Post()
   @RequirePermissions(AppPermission.QualityDatesManage)
   create(@Body() body: unknown): Promise<CommemorativeDate> {
     return this.calendar.create(input(body));
+  }
+
+  @Delete('regional/:id')
+  @RequirePermissions(AppPermission.QualityDatesManage)
+  async deleteRegional(@Param('id', ParseIntPipe) id: number): Promise<void> {
+    if (id < 1) throw new BadRequestException('id inválido.');
+    await this.calendar.delete(id, true);
   }
 
   @Delete(':id')

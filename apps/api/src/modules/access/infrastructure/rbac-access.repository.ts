@@ -126,7 +126,7 @@ export class RbacAccessRepository {
            AND s.week_start = (
              CASE
                WHEN WEEKDAY(DATE(${BRAZIL_NOW_SQL})) = 0
-                 AND TIME(${BRAZIL_NOW_SQL}) < cfg.business_start
+                 AND CAST(${BRAZIL_NOW_SQL} AS time) < cfg.business_start
                THEN DATE_SUB(DATE(${BRAZIL_NOW_SQL}), INTERVAL 7 DAY)
                ELSE DATE_SUB(
                  DATE(${BRAZIL_NOW_SQL}),
@@ -148,8 +148,13 @@ export class RbacAccessRepository {
                  )
                )
              )
-             OR TIME(${BRAZIL_NOW_SQL}) >= cfg.business_end
-             OR TIME(${BRAZIL_NOW_SQL}) < cfg.business_start
+             OR EXISTS (
+               SELECT 1 FROM business_regional_holidays rh
+               WHERE rh.holiday_month = MONTH(DATE(${BRAZIL_NOW_SQL}))
+                 AND rh.holiday_day = DAY(DATE(${BRAZIL_NOW_SQL}))
+             )
+             OR CAST(${BRAZIL_NOW_SQL} AS time) >= cfg.business_end
+             OR CAST(${BRAZIL_NOW_SQL} AS time) < cfg.business_start
            )`,
         userId,
       );

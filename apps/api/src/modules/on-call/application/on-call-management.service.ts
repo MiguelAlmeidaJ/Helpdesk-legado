@@ -269,8 +269,8 @@ export class OnCallManagementService {
     }
 
     const holidayRows = await this.database.$queryRawUnsafe<Array<{ name: string }>>(
-      `SELECT name
-       FROM business_holidays
+      `SELECT TOP (1) name FROM (
+       SELECT name, is_national, id FROM business_holidays
        WHERE (
          holiday_date = DATE(${BRAZIL_NOW_SQL})
          OR (
@@ -279,8 +279,12 @@ export class OnCallManagementService {
            AND DAY(holiday_date) = DAY(DATE(${BRAZIL_NOW_SQL}))
          )
        )
-       ORDER BY is_national DESC, id ASC
-       LIMIT 1`,
+       UNION ALL
+       SELECT name, 0 AS is_national, id FROM business_regional_holidays
+       WHERE holiday_month = MONTH(DATE(${BRAZIL_NOW_SQL}))
+         AND holiday_day = DAY(DATE(${BRAZIL_NOW_SQL}))
+       ) calendar_holidays
+       ORDER BY is_national DESC, id ASC`,
     );
     const holidayName = holidayRows[0]?.name ?? null;
     const weekend = weekday >= 5;

@@ -4,6 +4,7 @@ import {
   AppPermission,
   type CommemorativeDatesResponse,
   type CurrentUserResponse,
+  type HolidayLocationsResponse,
 } from '@helpdesk/contracts';
 import type { FormEvent } from 'react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -14,6 +15,7 @@ import {
   createCommemorativeDate,
   deleteCommemorativeDate,
   fetchCommemorativeDates,
+  fetchHolidayLocations,
 } from '../api/quality-calendar-api';
 
 const PRIMARY = appButtonClass('primary');
@@ -58,16 +60,23 @@ export function CommemorativeDatesScreen({
   const [year, setYear] = useState<number | null>(null);
   const [date, setDate] = useState('');
   const [name, setName] = useState('');
+  const [scope, setScope] = useState<'state' | 'municipal'>('state');
+  const [state, setState] = useState('');
+  const [municipalityId, setMunicipalityId] = useState('');
+  const [locations, setLocations] = useState<HolidayLocationsResponse>({ states: [], municipalities: [] });
+  const [locationsLoading, setLocationsLoading] = useState(false);
+  const [locationsError, setLocationsError] = useState('');
+  const [locationsRetry, setLocationsRetry] = useState(0);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  const load = useCallback(async (signal?: AbortSignal) => {
+  const load = useCallback(async (signal?: AbortSignal, selectedYear?: number) => {
     setLoading(true);
     setError('');
     try {
-      const response = await fetchCommemorativeDates(signal);
+      const response = await fetchCommemorativeDates(signal, selectedYear);
       setData(response);
       setYear((current) => current ?? response.currentYear);
     } catch (reason) {
@@ -84,11 +93,23 @@ export function CommemorativeDatesScreen({
     return () => controller.abort();
   }, [load]);
 
+  useEffect(() => {
+    if (!manage) return;
+    const controller = new AbortController();
+    setLocationsLoading(true); setLocationsError('');
+    fetchHolidayLocations(scope === 'municipal' && state ? state : undefined, controller.signal)
+      .then(value => { if (!controller.signal.aborted) setLocations(value); })
+      .catch(reason => { if (!controller.signal.aborted) setLocationsError(message(reason)); })
+      .finally(() => { if (!controller.signal.aborted) setLocationsLoading(false); });
+    return () => controller.abort();
+  }, [manage, scope, state, locationsRetry]);
+
   const years = useMemo(() => {
     const values = new Set<number>();
     if (data) {
       values.add(data.currentYear);
       values.add(data.nextYear);
+      for (let offset = 2; offset <= 10; offset++) values.add(data.currentYear + offset);
       for (const item of data.items) {
         values.add(Number(item.date.slice(0, 4)));
       }
@@ -113,11 +134,11 @@ export function CommemorativeDatesScreen({
     setError('');
     setSuccess('');
     try {
-      await createCommemorativeDate({ date, name });
+      await createCommemorativeDate({ date, name, scope, state, municipalityId: scope === 'municipal' ? Number(municipalityId) : undefined });
       setDate('');
       setName('');
-      setSuccess('Data especial cadastrada. Ela passa a valer todos os anos no calendário do Plantão.');
-      await load();
+      setSuccess('Feriado cadastrado com repetição anual.');
+      await load(undefined, year ?? undefined);
     } catch (reason) {
       setError(message(reason));
     } finally {
@@ -125,14 +146,14 @@ export function CommemorativeDatesScreen({
     }
   }
 
-  async function remove(id: number) {
+  async function remove(id: number, regional: boolean) {
     if (!window.confirm('Excluir esta data especial do calendário corporativo?')) return;
     setError('');
     setSuccess('');
     try {
-      await deleteCommemorativeDate(id);
+      await deleteCommemorativeDate(id, regional);
       setSuccess('Data especial removida.');
-      await load();
+      await load(undefined, year ?? undefined);
     } catch (reason) {
       setError(message(reason));
     }
@@ -190,7 +211,8 @@ export function CommemorativeDatesScreen({
               Ano
               <select
                 className={INPUT}
-                onChange={(event) => setYear(Number(event.target.value))}
+                disabled={loading || saving}
+                onChange={(event) => { const value = Number(event.target.value); setYear(value); void load(undefined, value); }}
                 value={year ?? ''}
               >
                 {years.map((value) => (
@@ -201,20 +223,41 @@ export function CommemorativeDatesScreen({
           </div>
 
           {manage ? (
-            <form className="mt-4 grid gap-3 rounded-xl border border-app-border bg-app-surface-muted p-3 md:grid-cols-[190px_minmax(0,1fr)_auto]" onSubmit={submit}>
+            <form className="mt-4 grid items-end gap-3 rounded-xl border border-app-border bg-app-surface-muted p-3 md:grid-cols-2 lg:grid-cols-3" onSubmit={submit}>
               <label className="grid gap-1.5 text-xs font-bold text-app-text-soft">
-                Data
-                <input className={INPUT} onChange={(event) => setDate(event.target.value)} required type="date" value={date} />
+                Data (dia/mês)
+                <input className={INPUT} disabled={saving} inputMode="numeric" maxLength={5} pattern="[0-9]{2}/[0-9]{2}" placeholder="DD/MM" title="Informe dia e mês: DD/MM" onChange={(event) => { const digits = event.target.value.replace(/\D/g, '').slice(0, 4); setDate(digits.length > 2 ? `${digits.slice(0, 2)}/${digits.slice(2)}` : digits); }} required type="text" value={date} />
               </label>
               <label className="grid gap-1.5 text-xs font-bold text-app-text-soft">
-                Nome da data
-                <input className={INPUT} maxLength={120} onChange={(event) => setName(event.target.value)} placeholder="Ex.: Recesso interno" required value={name} />
+                Nome
+                <input className={INPUT} disabled={saving} maxLength={120} onChange={(event) => setName(event.target.value)} placeholder="Ex.: Aniversário da cidade" required value={name} />
               </label>
+              <label className="grid gap-1.5 text-xs font-bold text-app-text-soft">
+                Abrangência
+                <select className={INPUT} disabled={saving} value={scope} onChange={event => { setScope(event.target.value as 'state' | 'municipal'); setMunicipalityId(''); }}>
+                  <option value="state">Estadual</option><option value="municipal">Municipal</option>
+                </select>
+              </label>
+              <label className="grid gap-1.5 text-xs font-bold text-app-text-soft">
+                Estado
+                <select className={INPUT} disabled={saving || locationsLoading} required value={state} onChange={event => { setState(event.target.value); setMunicipalityId(''); }}>
+                  <option value="">Selecione o estado</option>
+                  {locations.states.map(item => <option key={item.code} value={item.code}>{item.name} ({item.code})</option>)}
+                </select>
+              </label>
+              {scope === 'municipal' ? <label className="grid gap-1.5 text-xs font-bold text-app-text-soft">
+                Município
+                <select className={INPUT} disabled={saving || locationsLoading || !state || Boolean(locationsError)} required value={municipalityId} onChange={event => setMunicipalityId(event.target.value)}>
+                  <option value="">{locationsLoading ? 'Carregando municípios…' : state ? 'Selecione o município' : 'Selecione primeiro o estado'}</option>
+                  {locations.municipalities.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}
+                </select>
+              </label> : null}
               <div className="flex items-end">
-                <button className={PRIMARY} disabled={saving} type="submit">
-                  {saving ? 'Adicionando…' : 'Adicionar data'}
+                <button className={PRIMARY} disabled={saving || locationsLoading || Boolean(locationsError) || !state || (scope === 'municipal' && !municipalityId)} type="submit">
+                  {saving ? 'Adicionando…' : 'Adicionar feriado'}
                 </button>
               </div>
+              {locationsError ? <p className="col-span-full m-0 text-sm text-app-danger" role="alert">Não foi possível carregar as localidades. <button className="underline" onClick={() => setLocationsRetry(value => value + 1)} type="button">Tentar novamente</button></p> : null}
             </form>
           ) : null}
 
@@ -224,17 +267,17 @@ export function CommemorativeDatesScreen({
             ) : items.length ? (
               <div className="divide-y divide-app-border-soft">
                 {items.map((item) => (
-                  <div className="grid grid-cols-[120px_minmax(0,1fr)_auto] items-center gap-3 px-4 py-3 max-sm:grid-cols-[1fr_auto]" key={item.id}>
+                  <div className="grid grid-cols-[120px_minmax(0,1fr)_auto] items-center gap-3 px-4 py-3 max-sm:grid-cols-[1fr_auto]" key={`${item.origin ?? 'legacy'}:${item.id}:${item.date}`}>
                     <strong className="text-sm max-sm:col-span-1">{formatDate(item.date)}</strong>
                     <div className="min-w-0 max-sm:col-span-2 max-sm:row-start-2">
                       <span className="block truncate text-sm font-bold text-app-text">{item.name}</span>
                       <span className="mt-1 inline-flex rounded-full bg-app-surface-muted px-2 py-0.5 text-[10px] font-extrabold text-app-muted">
-                        {item.national ? 'Feriado nacional' : 'Data adicional anual'}
+                        {item.national ? 'Feriado nacional' : item.scope === 'municipal' ? `Municipal · ${item.municipalityName} / ${item.state} · Anual` : item.scope === 'state' ? `Estadual · ${item.state} · Anual` : 'Data adicional anual'}
                       </span>
                     </div>
                     <div className="flex justify-end">
                       {manage && !item.national ? (
-                        <button className={DANGER} onClick={() => void remove(item.id)} type="button">Excluir</button>
+                        <button className={DANGER} onClick={() => void remove(item.id, item.origin === 'regional')} type="button">Excluir</button>
                       ) : item.national ? (
                         <span className="text-[10px] font-bold text-app-subtle">Automático</span>
                       ) : null}
