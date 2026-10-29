@@ -37,6 +37,27 @@ const ATTENDANCE_VIEWS: Array<{ value: ReportGrouping; label: string }> = [
   { value: 'category', label: 'Atd. total por categoria' },
 ];
 
+type FilterField = 'period' | 'level' | 'client' | 'sector' | 'technician' | 'category' | 'status';
+const ATTENDANCE_FILTERS: Partial<Record<ReportGrouping, readonly FilterField[]>> = {
+  client: ['period', 'level', 'client', 'sector'],
+  'client-daily': ['period', 'client'],
+  requester: ['period', 'client', 'level', 'status'],
+  technician: ['period', 'sector', 'technician', 'level'],
+  'technician-daily': ['period', 'sector', 'technician', 'level'],
+  category: ['period', 'client', 'category', 'sector', 'technician', 'level'],
+};
+function attendanceFilters(values: Filters, view: ReportGrouping): Filters {
+  const fields = ATTENDANCE_FILTERS[view] ?? ATTENDANCE_FILTERS.client!;
+  return { ...values, source: 'tickets', locationId: '0', categorySector: '0', projectId: '0',
+    clientIds: fields.includes('client') ? values.clientIds : [],
+    sector: fields.includes('sector') ? values.sector : 'all',
+    technicianId: fields.includes('technician') ? values.technicianId : '0',
+    categoryId: fields.includes('category') ? values.categoryId : '0',
+    level: fields.includes('level') ? values.level : '0',
+    status: fields.includes('status') ? values.status : '0',
+  };
+}
+
 function initialFilters(projects: boolean): Filters {
   return { startDate: '', endDate: '', source: projects ? 'tasks' : 'tickets', sector: 'all', clientIds: [], technicianId: '0', categoryId: '0', locationId: '0', categorySector: '0', projectId: '0', level: '0', status: '0' };
 }
@@ -64,6 +85,7 @@ export function ReportCenterScreen({ currentUser, area }: { currentUser: Current
   const [page, setPage] = useState(1);
   const [groupPage, setGroupPage] = useState(1);
   const request = useRef<AbortController | null>(null);
+  const appliedFilters = useRef<Filters | null>(null);
   const printedDetails = useRef(new Map<HTMLDetailsElement, boolean>());
   const catalogClient = filters.clientIds.length === 1 ? filters.clientIds[0] ?? '0' : '0';
   const canPdf = currentUser.grants.some(grant => grant.permission === 'system.admin' || grant.permission === 'reports.pdf');
@@ -92,7 +114,7 @@ export function ReportCenterScreen({ currentUser, area }: { currentUser: Current
     setLoading(true); setError('');
     try {
       const response = await apiRequest<TicketAnalyticsResponse>(`reports/tickets/analytics?${queryFor(values)}`, { signal: controller.signal });
-      if (!controller.signal.aborted) { setReport(response); setPage(1); setGroupPage(1); }
+      if (!controller.signal.aborted) { appliedFilters.current = values; setReport(response); setPage(1); setGroupPage(1); }
     } catch (reason) {
       if (!controller.signal.aborted) { setReport(null); setError(reportError(reason)); }
     } finally { if (!controller.signal.aborted) setLoading(false); }
@@ -138,6 +160,17 @@ export function ReportCenterScreen({ currentUser, area }: { currentUser: Current
   const activePage = Math.min(page, pages), activeGroupPage = Math.min(groupPage, groupPages);
   const mentions = rows.filter(row => `${row.openingDescription} ${row.closingDescription}`.toLowerCase().includes('zabbix')).length;
 
+  function changeGrouping(view: ReportGrouping) {
+    setGrouping(view); setGroupPage(1);
+    if (projects) return;
+    setFilters(current => attendanceFilters(current, view));
+    const applied = appliedFilters.current;
+    if (applied) {
+      const next = attendanceFilters(applied, view);
+      if (queryFor(next) !== queryFor(applied)) { setSearch(''); setZabbix('all'); void load(next); }
+    }
+  }
+
   function apply(event: FormEvent) { event.preventDefault(); setSearch(''); setZabbix('all'); void load(filters); }
   function exportRows() {
     downloadCsv(`registros-${area}.csv`, [['Origem', 'ID', 'Título', 'Projeto', 'Cliente', 'Local', 'Solicitante', 'Técnico', 'Função', 'Categoria', 'Subcategoria', 'Item', 'Tipo', 'Nível', 'Forma', 'Situação', 'Abertura', 'Fechamento', 'Descrição abertura', 'Descrição fechamento', 'Tempo decorrido'],
@@ -152,15 +185,26 @@ export function ReportCenterScreen({ currentUser, area }: { currentUser: Current
     } catch (reason) { setError(reportError(reason)); } finally { setExporting(false); }
   }
 
+  const attendanceControls = {
+    period: (<div className="min-w-0"><span className="mb-1.5 block text-xs font-semibold text-app-muted">Período</span><DateRangePicker startDate={filters.startDate} endDate={filters.endDate} disabled={loading} onChange={range => setFilters(current => ({ ...current, ...range }))} /></div>),
+    sector: (<ReportSectorFilter value={filters.sector} disabled={loading} onChange={sector => setFilters(current => ({ ...current, sector, technicianId: '0' }))} />),
+    client: (<label className="grid min-w-0 gap-1.5 text-xs font-semibold text-app-muted">Clientes<SearchSelect disabled={loading} multiple multipleLabel="clientes" options={catalog.clients.map(row => ({ value: String(row.id), label: row.name }))} value={filters.clientIds} onChange={clientIds => setFilters(current => ({ ...current, clientIds, locationId: '0', projectId: '0' }))} placeholder="Todos os clientes" /></label>),
+    technician: (<label className="grid min-w-0 gap-1.5 text-xs font-semibold text-app-muted">Técnico<SearchSelect disabled={loading} options={sectorTechnicians(catalog, filters.sector).map(row => ({ value: String(row.id), label: row.name }))} value={filters.technicianId === '0' ? [] : [filters.technicianId]} onChange={value => setFilters(current => ({ ...current, technicianId: value[0] ?? '0' }))} placeholder="Todos os técnicos" /></label>),
+    category: (<label className="grid min-w-0 gap-1.5 text-xs font-semibold text-app-muted">Categoria<SearchSelect disabled={loading} options={catalog.categories.map(row => ({ value: String(row.id), label: row.name }))} value={filters.categoryId === '0' ? [] : [filters.categoryId]} onChange={value => setFilters(current => ({ ...current, categoryId: value[0] ?? '0' }))} placeholder="Todas as categorias" /></label>),
+    level: (<label className="grid min-w-0 gap-1.5 text-xs font-semibold text-app-muted">Nível<select aria-label="Nível" className={INPUT} disabled={loading} value={filters.level} onChange={event => setFilters(current => ({ ...current, level: event.target.value }))}><option value="0">Todos os níveis</option>{[1, 2, 3, 4, 5].map(value => <option key={value} value={value}>{value}</option>)}</select></label>),
+    status: (<label className="grid min-w-0 gap-1.5 text-xs font-semibold text-app-muted">Situação<select aria-label="Situação" className={INPUT} disabled={loading} value={filters.status} onChange={event => setFilters(current => ({ ...current, status: event.target.value }))}><option value="0">Todas as situações ativas</option>{Object.entries(STATUS).filter(([value]) => value !== '0').map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>),
+  };
+
   return <main className="min-h-screen bg-app-bg text-app-text print:bg-white [print-color-adjust:exact] max-sm:[&>header]:flex-wrap max-sm:[&>header]:gap-2 max-sm:[&>header>div:last-child]:w-full" data-report-center={area}>
     <AppPageHeader title={projects ? 'Relatórios Tarefas/Projetos' : 'Relatórios Atendimentos'} subtitle="Filtros, gráficos, resumos e registros detalhados em uma única página." user={currentUser} />
     <div className="mx-auto grid w-full max-w-[1600px] gap-5 px-5 py-6 max-sm:px-3 print:max-w-none print:p-0">
       <ReportSections active={area} user={currentUser} />
       {!projects ? <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 print:hidden" role="group" aria-label="Relatórios de atendimentos">
-        {ATTENDANCE_VIEWS.map(view => <button type="button" key={view.value} aria-pressed={grouping === view.value} onClick={() => { setGrouping(view.value); setGroupPage(1); }} className={`min-h-12 rounded-lg border px-3 py-3 text-left text-sm font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-app-brand ${grouping === view.value ? 'border-app-brand bg-app-brand text-white' : 'border-app-border bg-app-surface hover:bg-app-surface-hover'}`}>{view.label}</button>)}
+        {ATTENDANCE_VIEWS.map(view => <button type="button" key={view.value} aria-pressed={grouping === view.value} disabled={loading} onClick={() => changeGrouping(view.value)} className={`min-h-12 rounded-lg border px-3 py-3 text-left text-sm font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-app-brand ${grouping === view.value ? 'border-app-brand bg-app-brand text-white' : 'border-app-border bg-app-surface hover:bg-app-surface-hover'}`}>{view.label}</button>)}
       </div> : null}
       {error ? <p role="alert" className="m-0 rounded-xl border border-app-danger-border bg-app-danger-soft p-4 text-sm text-app-danger">{error}</p> : null}
       <form onSubmit={apply} className={`${CARD} grid grid-cols-4 items-end gap-4 p-5 max-xl:grid-cols-2 max-sm:grid-cols-1 print:hidden`}>
+        {projects ? <>
         <label className="grid min-w-0 gap-1.5 text-xs font-semibold text-app-muted">Consulta<select aria-label="Consulta" className={INPUT} disabled={loading} value={filters.source} onChange={event => setFilters(current => ({ ...current, source: event.target.value as TicketReportSource, projectId: '0' }))}>
           {(projects ? ['tasks', 'projects'] as const : ['tickets', 'improvements', 'unified'] as const).map(source => <option key={source} value={source}>{SOURCES[source]}</option>)}
         </select></label>
@@ -176,6 +220,7 @@ export function ReportCenterScreen({ currentUser, area }: { currentUser: Current
           <label className="grid min-w-0 gap-1.5 text-xs font-semibold text-app-muted">Local<SearchSelect disabled={loading || filters.clientIds.length !== 1} options={catalog.locations.map(row => ({ value: String(row.id), label: row.name }))} value={filters.locationId === '0' ? [] : [filters.locationId]} onChange={value => setFilters(current => ({ ...current, locationId: value[0] ?? '0' }))} placeholder="Todos os locais" /><span>Selecione um cliente para filtrar por local.</span></label>
           <label className="grid min-w-0 gap-1.5 text-xs font-semibold text-app-muted">Área da categoria<select aria-label="Área da categoria" className={INPUT} disabled={loading} value={filters.categorySector} onChange={event => setFilters(current => ({ ...current, categorySector: event.target.value }))}><option value="0">Todas as áreas</option><option value="1">TI</option><option value="3">DevOps / Administrativo</option><option value="2">Marketing</option></select></label>
         </div></details>
+        </> : (ATTENDANCE_FILTERS[grouping] ?? ATTENDANCE_FILTERS.client!).map(field => <div key={field} className="min-w-0" data-report-filter={field}>{attendanceControls[field]}</div>)}
         <div className="col-span-full flex flex-wrap justify-end gap-2"><button className={SECONDARY} type="button" disabled={loading} onClick={() => { const next = { ...initialFilters(projects), startDate: filters.startDate, endDate: filters.endDate }; setFilters(next); setSearch(''); setZabbix('all'); void load(next); }}>Limpar filtros</button><button type="submit" className={appButtonClass('primary')} disabled={loading}>{loading ? 'Carregando…' : 'Aplicar filtros'}</button></div>
       </form>
       {report ? <>
@@ -186,7 +231,7 @@ export function ReportCenterScreen({ currentUser, area }: { currentUser: Current
         ] as const).map(([label, count]) => <div className={`${CARD} p-4`} key={label}><p className="mb-2 mt-0 text-xs font-semibold text-app-muted">{label}</p><strong className="text-2xl">{count.toLocaleString('pt-BR')}</strong></div>)}</div>
         <section className={`${CARD} p-5`} aria-label="Explorar resultados">
           <div className="mb-4 grid grid-cols-[minmax(0,1fr)_minmax(180px,280px)] gap-3 max-sm:grid-cols-1 print:hidden"><input className={INPUT} aria-label="Buscar nos resultados" placeholder="Buscar nome, projeto, função ou descrição…" value={search} onChange={event => { setSearch(event.target.value); setPage(1); setGroupPage(1); }} type="search" /><select aria-label="Menção ao Zabbix" className={INPUT} value={zabbix} onChange={event => { setZabbix(event.target.value); setPage(1); setGroupPage(1); }}><option value="all">Todas as menções</option><option value="yes">Com menção ao Zabbix</option><option value="no">Sem menção ao Zabbix</option></select></div>
-          <div className="flex flex-wrap items-end justify-between gap-3 print:hidden"><label className="grid gap-1.5 text-xs font-semibold text-app-muted">Visualização<select aria-label="Visualização" className={INPUT} value={grouping} onChange={event => { setGrouping(event.target.value as ReportGrouping); setGroupPage(1); }}>{GROUPS.filter(group => projects || group.value !== 'project').map(group => <option key={group.value} value={group.value}>{group.label}</option>)}</select></label><ReportChartTypePicker value={chartType} onChange={setChartType} /><div className="flex flex-wrap gap-2"><button className={SECONDARY} disabled={!rows.length} onClick={exportRows} type="button">Exportar registros</button><button className={SECONDARY} onClick={() => window.print()} type="button">Imprimir / PDF</button>{canPdf ? <button className={SECONDARY} disabled={exporting || Boolean(search.trim()) || zabbix !== 'all'} onClick={() => void exportPdf()} type="button" title="PDF do período e dos filtros aplicados. Limpe a busca e o filtro de menção para baixar.">{exporting ? 'Preparando…' : 'Baixar PDF analítico'}</button> : null}</div></div>
+          <div className="flex flex-wrap items-end justify-between gap-3 print:hidden"><label className="grid gap-1.5 text-xs font-semibold text-app-muted">Visualização<select aria-label="Visualização" className={INPUT} value={grouping} disabled={loading} onChange={event => changeGrouping(event.target.value as ReportGrouping)}>{(projects ? GROUPS : ATTENDANCE_VIEWS).map(group => <option key={group.value} value={group.value}>{group.label}</option>)}</select></label><ReportChartTypePicker value={chartType} onChange={setChartType} /><div className="flex flex-wrap gap-2"><button className={SECONDARY} disabled={!rows.length} onClick={exportRows} type="button">Exportar registros</button><button className={SECONDARY} onClick={() => window.print()} type="button">Imprimir / PDF</button>{canPdf ? <button className={SECONDARY} disabled={exporting || Boolean(search.trim()) || zabbix !== 'all'} onClick={() => void exportPdf()} type="button" title="PDF do período e dos filtros aplicados. Limpe a busca e o filtro de menção para baixar.">{exporting ? 'Preparando…' : 'Baixar PDF analítico'}</button> : null}</div></div>
           <h2 className="mb-1 mt-5 text-lg font-bold">{groupLabel(grouping)}</h2>
           {groups.length > 20 ? <p className="text-xs text-app-muted">O gráfico reúne os 20 maiores grupos e os demais. O resumo e a exportação incluem todos os grupos.</p> : null}
           <ReportChartView key={`${report.filters.source}:${grouping}`} rows={chartRows} type={chartType} />

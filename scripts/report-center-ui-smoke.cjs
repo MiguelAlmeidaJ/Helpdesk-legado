@@ -70,20 +70,30 @@ async function main(){
   const initialCalls=state.calls.filter(c=>c.path.endsWith('/analytics')).length;
   const labels=['Atd. total por cliente','Atd. di\u00e1rio por cliente','Atd. total por solicitante','Atd. total por t\u00e9cnico','Atd. di\u00e1rio por t\u00e9cnico','Atd. total por categoria'];
   assert.equal(await cdp.evaluate("document.querySelectorAll('[aria-label=\"Relat\u00f3rios de atendimentos\"] button').length"),6);
-  for(const label of labels){
+  const fieldsByView=[['period','level','client','sector'],['period','client'],['period','client','level','status'],['period','sector','technician','level'],['period','sector','technician','level'],['period','client','category','sector','technician','level']];
+  for(const [index,label] of labels.entries()){
    await click(label);await wait(`[...document.querySelectorAll('h2')].some(h=>h.textContent===${JSON.stringify(label)})`);
    assert.equal(await cdp.evaluate("document.querySelector('#report-records-title').textContent==='Registros detalhados (55)'"),true);
+   assert.deepEqual(await cdp.evaluate("[...document.querySelectorAll('form [data-report-filter]')].map(e=>e.dataset.reportFilter)"),fieldsByView[index]);
   }
   assert.equal(await cdp.evaluate("document.querySelector('[data-sector-coverage], [data-recognized-technicians]')===null"),true);
   const buttonsBeforeFilters=()=>cdp.evaluate("document.querySelector('[role=group][aria-label=\"Relat\\u00f3rios de atendimentos\"]').getBoundingClientRect().bottom<=document.querySelector('form').getBoundingClientRect().top");
   assert.equal(await buttonsBeforeFilters(),true);
 
-  for(const view of ['technician','category','requester','client-daily','technician-daily','status','client']){
+  for(const view of ['technician','category','requester','client-daily','technician-daily','client']){
    await choose('select[aria-label=Visualiza\u00e7\u00e3o]',view);
    await wait(`document.querySelector('select[aria-label=Visualiza\u00e7\u00e3o]').value===${JSON.stringify(view)}`);
    assert.equal(await cdp.evaluate("document.querySelector('#report-records-title').textContent==='Registros detalhados (55)'"),true);
   }
   assert.equal(state.calls.filter(c=>c.path.endsWith('/analytics')).length,initialCalls);
+  await choose('select[aria-label=Setor]','ti');await choose('select[aria-label=N\u00edvel]','2');await click('Aplicar filtros');
+  await wait("document.querySelector('button[type=submit]')?.textContent==='Aplicar filtros'");
+  await click(labels[1]);
+  await wait("document.querySelector('#report-records-title').textContent==='Registros detalhados (55)'");
+  const cleared=state.calls.filter(c=>c.path.endsWith('/analytics')).at(-1).query;
+  assert.equal(cleared.sector,'all');assert.equal(cleared.level,'0');
+  await click(labels[0]);
+  assert.equal(await cdp.evaluate("document.querySelector('select[aria-label=Setor]').value"),'all');
   await cdp.evaluate("window.__csvBlobs=[];const create=URL.createObjectURL;URL.createObjectURL=blob=>{window.__csvBlobs.push(blob);return create(blob)};HTMLAnchorElement.prototype.click=function(){};");
   await click('Exportar registros');assert.equal((await cdp.evaluate('window.__csvBlobs.at(-1).text()')).split(String.fromCharCode(13,10)).length,56);
   assert.equal(await cdp.evaluate("document.querySelectorAll('section[aria-labelledby=report-records-title] tbody tr').length"),50);
@@ -124,7 +134,7 @@ async function main(){
   assert.equal(await cdp.evaluate("document.querySelectorAll('[aria-label=\"Grupos de relat\u00f3rios\"] a').length"),3);
   assert.equal(await cdp.evaluate("[...document.querySelectorAll('button')].some(b=>b.textContent==='Baixar PDF anal\u00edtico')"),false);
   assert.deepEqual(state.errors,[]);
-  console.log(JSON.stringify({groups:4,explicitViews:6,diagnosticsRemoved:true,buttonsBeforeFilters:true,views:7,sharedFilters:true,groupingRequests:0,csvAllRows:true,printAllRows:true,zabbixTextFilter:true,projects:true,timingViews:3,pdfPermission:true,mobile:true,consoleExceptions:0}));
+  console.log(JSON.stringify({groups:4,explicitViews:6,diagnosticsRemoved:true,buttonsBeforeFilters:true,views:6,dynamicFilters:true,hiddenFiltersCleared:true,sharedFilters:true,groupingRequests:0,csvAllRows:true,printAllRows:true,zabbixTextFilter:true,projects:true,timingViews:3,pdfPermission:true,mobile:true,consoleExceptions:0}));
 
  }catch(error){
   console.error(JSON.stringify({page:cdp?await cdp.evaluate('document.body.innerText.slice(0,1600)'):null,errors:state.errors,calls:state.calls.map(c=>c.path)}));
