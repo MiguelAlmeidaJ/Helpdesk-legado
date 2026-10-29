@@ -51,7 +51,7 @@ export async function GET(
   return new Response(upstream.body, {
     status: 200,
     headers: {
-      'Cache-Control': 'private, max-age=3600',
+      'Cache-Control': 'private, no-store',
       'Content-Type':
         upstream.headers.get('content-type') ?? 'application/octet-stream',
       'Content-Disposition':

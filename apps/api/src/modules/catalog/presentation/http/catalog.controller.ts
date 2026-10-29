@@ -4,6 +4,7 @@ import {
   Controller,
   ForbiddenException,
   Get,
+  Header,
   HttpCode,
   HttpStatus,
   Param,
@@ -266,6 +267,8 @@ export class CatalogController {
   }
 
   @Get('images/:imageId/content')
+  @Header('Cache-Control', 'private, no-store')
+  @Header('X-Content-Type-Options', 'nosniff')
   @ApiOperation({ summary: 'Abre imagem armazenada de catálogo' })
   async imageContent(
     @CurrentUser() user: AuthenticatedUser | undefined,

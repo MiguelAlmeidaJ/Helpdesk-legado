@@ -8,6 +8,7 @@ import {
   useState,
 } from 'react';
 import { uploadCatalogImage } from '../api/catalog-api';
+import { ApiError } from '../../../shared/api/api-client';
 
 type CatalogHtmlEditorProps = {
   value: string;
@@ -34,6 +35,7 @@ export function CatalogHtmlEditor({
   const [mode, setMode] = useState<'visual' | 'html'>('visual');
   const [expanded, setExpanded] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [imageError, setImageError] = useState('');
 
   useEffect(() => {
     if (mode !== 'visual' || !editorRef.current) return;
@@ -134,14 +136,15 @@ export function CatalogHtmlEditor({
     const file = event.target.files?.[0];
     event.target.value = '';
     if (!file || disabled || mode !== 'visual') return;
+    setImageError('');
 
     if (!file.type.startsWith('image/')) {
-      window.alert('Selecione um arquivo de imagem.');
+      setImageError('Selecione um arquivo de imagem.');
       return;
     }
 
     if (file.size > 12 * 1024 * 1024) {
-      window.alert('A imagem original deve ter no máximo 12 MB.');
+      setImageError('A imagem original deve ter no máximo 12 MB.');
       return;
     }
 
@@ -164,9 +167,11 @@ export function CatalogHtmlEditor({
       );
       syncVisual();
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : 'Não foi possível enviar a imagem.';
-      window.alert(message);
+      const body = error instanceof ApiError && error.body && typeof error.body === 'object'
+        ? (error.body as Record<string, unknown>).message : undefined;
+      setImageError(typeof body === 'string' ? body : error instanceof ApiError
+        ? `Não foi possível enviar a imagem (erro ${error.status}). Tente novamente.`
+        : error instanceof Error ? error.message : 'Não foi possível enviar a imagem.');
     } finally {
       setUploadingImage(false);
     }
@@ -329,6 +334,7 @@ export function CatalogHtmlEditor({
         />
       )}
 
+      {imageError ? <p role="alert" className="m-0 border-t border-app-danger-border bg-app-danger-soft px-3 py-2 text-sm text-app-danger">{imageError}</p> : null}
       <div className="flex flex-wrap items-center justify-between gap-2 border-t border-app-border-soft bg-app-surface-muted px-3 py-2 text-[11px] text-app-muted">
         <span>
           {uploadingImage

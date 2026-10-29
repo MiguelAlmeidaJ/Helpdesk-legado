@@ -89,8 +89,7 @@ export class CatalogImageStorageService implements OnModuleInit {
       Array<{ found: number | bigint | string }>
     >(
       `SELECT COUNT(*) AS found
-       FROM information_schema.TABLES
-       WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'catalogos'`,
+       FROM sys.tables WHERE object_id = OBJECT_ID(N'dbo.catalogos', N'U')`,
     );
 
     if (Number(parent[0]?.found ?? 0) === 0) {
@@ -103,26 +102,27 @@ export class CatalogImageStorageService implements OnModuleInit {
     }
 
     await this.database.$executeRawUnsafe(
-      `CREATE TABLE IF NOT EXISTS catalog_images (
-         id INT UNSIGNED NOT NULL AUTO_INCREMENT,
-         catalog_id INT NULL,
-         original_name VARCHAR(255) NOT NULL,
-         stored_name VARCHAR(255) NOT NULL,
-         storage_path VARCHAR(500) NOT NULL,
-         mime_type VARCHAR(100) NOT NULL,
-         size_bytes INT UNSIGNED NOT NULL,
-         width INT UNSIGNED NULL,
-         height INT UNSIGNED NULL,
-         sha256 CHAR(64) NOT NULL,
-         created_by INT NOT NULL,
-         created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-         PRIMARY KEY (id),
-         KEY idx_catalog_images_catalog (catalog_id),
-         KEY idx_catalog_images_creator (created_by, created_at),
-         CONSTRAINT fk_catalog_images_catalog
-           FOREIGN KEY (catalog_id) REFERENCES catalogos(id)
-           ON DELETE SET NULL ON UPDATE RESTRICT
-       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
+      `IF OBJECT_ID(N'dbo.catalog_images', N'U') IS NULL
+       BEGIN
+         CREATE TABLE dbo.catalog_images (
+           id bigint IDENTITY(1,1) NOT NULL CONSTRAINT PK_catalog_images_id PRIMARY KEY,
+           catalog_id int NULL,
+           original_name nvarchar(255) NOT NULL,
+           stored_name nvarchar(255) NOT NULL,
+           storage_path nvarchar(500) NOT NULL,
+           mime_type nvarchar(100) NOT NULL,
+           size_bytes bigint NOT NULL,
+           width bigint NULL,
+           height bigint NULL,
+           sha256 nchar(64) NOT NULL,
+           created_by int NOT NULL,
+           created_at datetime2 NOT NULL DEFAULT SYSDATETIME(),
+           CONSTRAINT [catalog_images$fk_catalog_images_catalog] FOREIGN KEY (catalog_id) REFERENCES dbo.catalogos(id)
+             ON DELETE SET NULL
+         );
+         CREATE INDEX idx_catalog_images_catalog ON dbo.catalog_images(catalog_id);
+         CREATE INDEX idx_catalog_images_creator ON dbo.catalog_images(created_by, created_at);
+       END`,
     );
 
     await mkdir(this.uploadRoot(), { recursive: true });
@@ -194,15 +194,15 @@ export class CatalogImageStorageService implements OnModuleInit {
     const physical = this.safePath(relativePath);
 
     await mkdir(path.dirname(physical), { recursive: true });
-    await writeFile(physical, input.data);
+    await writeFile(physical, input.data, { flag: 'wx' });
 
     try {
-      await this.database.$executeRawUnsafe(
+      const ids = await this.database.$queryRawUnsafe<InsertIdRow[]>(
         `INSERT INTO catalog_images (
            catalog_id, original_name, stored_name, storage_path,
            mime_type, size_bytes, width, height, sha256, created_by, created_at
-         ) VALUES (
-           ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW()
+         ) OUTPUT INSERTED.id VALUES (
+           ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, SYSDATETIME()
          )`,
         input.catalogId ?? null,
         safeName,
@@ -216,9 +216,6 @@ export class CatalogImageStorageService implements OnModuleInit {
         input.actorUserId,
       );
 
-      const ids = await this.database.$queryRawUnsafe<InsertIdRow[]>(
-        'SELECT LAST_INSERT_ID() AS id',
-      );
       const id = Number(ids[0]?.id);
       if (!Number.isSafeInteger(id) || id < 1) {
         throw new Error('Falha ao identificar imagem criada.');

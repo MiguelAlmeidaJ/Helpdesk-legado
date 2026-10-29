@@ -11,7 +11,7 @@ import {
 } from '@helpdesk/contracts';
 import Link from 'next/link';
 import type { FormEvent } from 'react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ApiError } from '../../../shared/api/api-client';
 import { AppPageHeader } from '../../../shared/navigation/app-page-header';
 import { CatalogHtmlEditor } from './catalog-html-editor';
@@ -53,7 +53,7 @@ const styles = {
   layout:
     'grid items-start gap-[18px] xl:grid-cols-[minmax(300px,0.85fr)_minmax(0,1.65fr)]',
   listCard:
-    'min-h-[520px] overflow-hidden rounded-[14px] border border-app-border bg-app-surface shadow-sm shadow-slate-950/5 dark:shadow-black/10',
+    'overflow-hidden rounded-[14px] border border-app-border bg-app-surface shadow-sm shadow-slate-950/5 dark:shadow-black/10',
   detailCard:
     'min-h-[520px] overflow-hidden rounded-[14px] border border-app-border bg-app-surface shadow-sm shadow-slate-950/5 dark:shadow-black/10',
   cardHeader:
@@ -188,6 +188,13 @@ export function CatalogScreen({ currentUser }: { currentUser: CurrentUserRespons
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [fullscreen, setFullscreen] = useState(false);
+  const [listExpanded, setListExpanded] = useState(true);
+  const detailCardRef = useRef<HTMLElement>(null);
+
+  function collapseList() {
+    setListExpanded(false);
+    requestAnimationFrame(() => detailCardRef.current?.focus());
+  }
 
   useEffect(() => {
     if (!fullscreen) return;
@@ -256,6 +263,7 @@ export function CatalogScreen({ currentUser }: { currentUser: CurrentUserRespons
     setForm(null);
     try {
       setDetail(await fetchCatalog(id));
+      collapseList();
     } catch (reason) {
       setError(apiMessage(reason));
     } finally {
@@ -273,6 +281,7 @@ export function CatalogScreen({ currentUser }: { currentUser: CurrentUserRespons
     setSuccess(null);
     setError(null);
     setForm({ id: null, sector, categoryId: '', clientId: '', title: '', content: '' });
+    collapseList();
   }
 
   function startEdit() {
@@ -281,10 +290,12 @@ export function CatalogScreen({ currentUser }: { currentUser: CurrentUserRespons
     setError(null);
     setSuccess(null);
     setForm(formFromDetail(detail));
+    collapseList();
   }
 
   function closeEditor() {
     setForm(null);
+    if (!detail) setListExpanded(true);
   }
 
   async function save(event: FormEvent<HTMLFormElement>) {
@@ -359,6 +370,7 @@ export function CatalogScreen({ currentUser }: { currentUser: CurrentUserRespons
 
   function applyFilters(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    setListExpanded(true);
     setFullscreen(false);
     setOffset(0);
     setAppliedFilters({ ...draftFilters, search: draftFilters.search.trim() });
@@ -367,6 +379,7 @@ export function CatalogScreen({ currentUser }: { currentUser: CurrentUserRespons
   }
 
   function clearFilters() {
+    setListExpanded(true);
     setFullscreen(false);
     setDraftFilters(EMPTY_FILTERS);
     setAppliedFilters(EMPTY_FILTERS);
@@ -459,16 +472,22 @@ export function CatalogScreen({ currentUser }: { currentUser: CurrentUserRespons
           </div>
         </form>
 
-        <div className={styles.layout}>
-          <section className={styles.listCard}>
+        <div className={listExpanded ? styles.layout : 'grid gap-[18px]'}>
+          <section className={`${styles.listCard} ${listExpanded ? 'min-h-[520px]' : ''}`} aria-label="Catálogos disponíveis">
             <div className={styles.cardHeader}>
               <div>
                 <span className={styles.eyebrow}>Resultados</span>
                 <h2>Catálogos disponíveis</h2>
               </div>
-              {loadingList ? <span className={styles.loading}>Carregando…</span> : null}
+              <div className="flex items-center gap-3">
+                {loadingList ? <span className={styles.loading}>Carregando…</span> : null}
+                <button className={styles.button} type="button" aria-expanded={listExpanded} aria-controls="catalog-list-content" onClick={() => setListExpanded(value => !value)}>
+                  <span aria-hidden="true">{listExpanded ? '▴' : '▾'}</span>
+                  {listExpanded ? 'Recolher lista' : 'Mostrar lista'}
+                </button>
+              </div>
             </div>
-
+            <div id="catalog-list-content" hidden={!listExpanded}>
             <div className={styles.list}>
               {!loadingList && result?.items.length === 0 ? (
                 <p className={styles.empty}>Nenhum catálogo encontrado com os filtros atuais.</p>
@@ -512,9 +531,10 @@ export function CatalogScreen({ currentUser }: { currentUser: CurrentUserRespons
                 Próxima
               </button>
             </div>
+            </div>
           </section>
 
-          <section className={styles.detailCard}>
+          <section className={styles.detailCard} ref={detailCardRef} tabIndex={-1} aria-label="Detalhes do catálogo">
             {form ? (
               <form className={styles.editor} onSubmit={save}>
                 <div className={styles.cardHeader}>
