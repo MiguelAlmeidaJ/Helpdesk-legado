@@ -72,16 +72,16 @@ async function main(){
   assert.equal(await cdp.evaluate("document.querySelectorAll('[aria-label=\"Relat\u00f3rios de atendimentos\"] button').length"),6);
   for(const label of labels){
    await click(label);await wait(`[...document.querySelectorAll('h2')].some(h=>h.textContent===${JSON.stringify(label)})`);
-   assert.equal(await cdp.evaluate("document.querySelector('[data-sector-coverage]').textContent.includes('Total: 55')"),true);
+   assert.equal(await cdp.evaluate("document.querySelector('#report-records-title').textContent==='Registros detalhados (55)'"),true);
   }
-  await cdp.evaluate("document.querySelector('[data-recognized-technicians] summary').click()");
-  assert.equal(await cdp.evaluate("document.querySelector('[data-recognized-technicians]').textContent.includes('Admin global teste')"),true);
-  assert.equal(await cdp.evaluate("document.querySelector('[data-recognized-technicians]').textContent.includes('DevOps \u00b7 Administrador global')"),true);
+  assert.equal(await cdp.evaluate("document.querySelector('[data-sector-coverage], [data-recognized-technicians]')===null"),true);
+  const buttonsBeforeFilters=()=>cdp.evaluate("document.querySelector('[role=group][aria-label=\"Relat\\u00f3rios de atendimentos\"]').getBoundingClientRect().bottom<=document.querySelector('form').getBoundingClientRect().top");
+  assert.equal(await buttonsBeforeFilters(),true);
 
   for(const view of ['technician','category','requester','client-daily','technician-daily','status','client']){
    await choose('select[aria-label=Visualiza\u00e7\u00e3o]',view);
    await wait(`document.querySelector('select[aria-label=Visualiza\u00e7\u00e3o]').value===${JSON.stringify(view)}`);
-   assert.equal(await cdp.evaluate("document.querySelector('[data-sector-coverage]').textContent.includes('Total: 55')"),true);
+   assert.equal(await cdp.evaluate("document.querySelector('#report-records-title').textContent==='Registros detalhados (55)'"),true);
   }
   assert.equal(state.calls.filter(c=>c.path.endsWith('/analytics')).length,initialCalls);
   await cdp.evaluate("window.__csvBlobs=[];const create=URL.createObjectURL;URL.createObjectURL=blob=>{window.__csvBlobs.push(blob);return create(blob)};HTMLAnchorElement.prototype.click=function(){};");
@@ -92,10 +92,10 @@ async function main(){
   assert.equal(await cdp.evaluate("[...document.querySelectorAll('section[aria-labelledby=report-records-title] details')].every(d=>d.open)"),true);
   await cdp.evaluate("window.dispatchEvent(new Event('afterprint'))");
   await setInput('input[aria-label=\"Buscar nos resultados\"]','Zabbix');
-  await wait("document.querySelector('[data-sector-coverage]').textContent.includes('Total: 11')");
+  await wait("document.querySelector('#report-records-title').textContent==='Registros detalhados (11)'");
   await setInput('input[aria-label=\"Buscar nos resultados\"]','');
   await choose('select[aria-label=\"Men\u00e7\u00e3o ao Zabbix\"]','yes');
-  await wait("document.querySelector('[data-sector-coverage]').textContent.includes('Total: 11')");
+  await wait("document.querySelector('#report-records-title').textContent==='Registros detalhados (11)'");
   await choose('select[aria-label=\"Men\u00e7\u00e3o ao Zabbix\"]','all');
   await choose('select[aria-label=Setor]','ti');await click('Aplicar filtros');
   await wait("document.querySelector('button[type=submit]')?.textContent==='Aplicar filtros'");
@@ -103,13 +103,14 @@ async function main(){
   await fs.writeFile(path.join(root,'docs/reports/report-center-desktop.png'),Buffer.from((await cdp.send('Page.captureScreenshot',{format:'png',captureBeyondViewport:true,clip:{x:0,y:0,width:1440,height:1750,scale:1}})).data,'base64'));
   await cdp.send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:true});
   assert.equal(await cdp.evaluate('document.documentElement.scrollWidth<=window.innerWidth+1'),true);
+  assert.equal(await buttonsBeforeFilters(),true);
   await fs.writeFile(path.join(root,'docs/reports/report-center-mobile.png'),Buffer.from((await cdp.send('Page.captureScreenshot',{format:'png',captureBeyondViewport:true,clip:{x:0,y:0,width:390,height:1600,scale:1}})).data,'base64'));
   await cdp.send('Page.navigate',{url:'http://localhost:'+webPort+'/reports/projects'});
   await wait("document.querySelector('button[type=submit]')?.textContent==='Aplicar filtros'");
   assert.equal(state.calls.filter(c=>c.path.endsWith('/analytics')).at(-1).query.source,'tasks');
   await choose('select[aria-label=Visualiza\u00e7\u00e3o]','project');
   await choose('select[aria-label=Consulta]','projects');await click('Aplicar filtros');
-  await wait("document.querySelector('[data-sector-coverage]').textContent.includes('Total: 2')");
+  await wait("document.querySelector('#report-records-title').textContent==='Registros detalhados (2)'");
   await click('Baixar PDF anal\u00edtico');
   await until(()=>state.calls.some(c=>c.path.endsWith('/analytics.pdf')&&c.query.source==='projects'));
   await cdp.send('Page.navigate',{url:'http://localhost:'+webPort+'/reports/tickets/technician-timing'});
@@ -123,7 +124,7 @@ async function main(){
   assert.equal(await cdp.evaluate("document.querySelectorAll('[aria-label=\"Grupos de relat\u00f3rios\"] a').length"),3);
   assert.equal(await cdp.evaluate("[...document.querySelectorAll('button')].some(b=>b.textContent==='Baixar PDF anal\u00edtico')"),false);
   assert.deepEqual(state.errors,[]);
-  console.log(JSON.stringify({groups:4,explicitViews:6,globalAdminCatalog:true,views:7,sharedFilters:true,groupingRequests:0,csvAllRows:true,printAllRows:true,zabbixTextFilter:true,projects:true,timingViews:3,pdfPermission:true,mobile:true,consoleExceptions:0}));
+  console.log(JSON.stringify({groups:4,explicitViews:6,diagnosticsRemoved:true,buttonsBeforeFilters:true,views:7,sharedFilters:true,groupingRequests:0,csvAllRows:true,printAllRows:true,zabbixTextFilter:true,projects:true,timingViews:3,pdfPermission:true,mobile:true,consoleExceptions:0}));
 
  }catch(error){
   console.error(JSON.stringify({page:cdp?await cdp.evaluate('document.body.innerText.slice(0,1600)'):null,errors:state.errors,calls:state.calls.map(c=>c.path)}));

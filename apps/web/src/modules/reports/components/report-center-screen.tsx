@@ -11,7 +11,7 @@ import { SearchSelect } from '../../../shared/ui/search-select';
 import { downloadCsv, duration, reportError } from '../lib/report-export';
 import { groupReportRows, reportChartGroups, type ReportGrouping } from '../lib/report-center';
 import { ReportChartTypePicker, ReportChartView, type ReportChartType } from './report-chart-view';
-import { ReportSectorFilter, ReportSectorSummary, sectorTechnicians } from './report-sector-filter';
+import { ReportSectorFilter, sectorTechnicians } from './report-sector-filter';
 import { ReportSections } from './report-sections';
 
 type Filters = { startDate: string; endDate: string; source: TicketReportSource; sector: ReportSector; clientIds: string[]; technicianId: string; categoryId: string; locationId: string; categorySector: string; projectId: string; level: string; status: string };
@@ -156,6 +156,9 @@ export function ReportCenterScreen({ currentUser, area }: { currentUser: Current
     <AppPageHeader title={projects ? 'Relatórios Tarefas/Projetos' : 'Relatórios Atendimentos'} subtitle="Filtros, gráficos, resumos e registros detalhados em uma única página." user={currentUser} />
     <div className="mx-auto grid w-full max-w-[1600px] gap-5 px-5 py-6 max-sm:px-3 print:max-w-none print:p-0">
       <ReportSections active={area} user={currentUser} />
+      {!projects ? <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 print:hidden" role="group" aria-label="Relatórios de atendimentos">
+        {ATTENDANCE_VIEWS.map(view => <button type="button" key={view.value} aria-pressed={grouping === view.value} onClick={() => { setGrouping(view.value); setGroupPage(1); }} className={`min-h-12 rounded-lg border px-3 py-3 text-left text-sm font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-app-brand ${grouping === view.value ? 'border-app-brand bg-app-brand text-white' : 'border-app-border bg-app-surface hover:bg-app-surface-hover'}`}>{view.label}</button>)}
+      </div> : null}
       {error ? <p role="alert" className="m-0 rounded-xl border border-app-danger-border bg-app-danger-soft p-4 text-sm text-app-danger">{error}</p> : null}
       <form onSubmit={apply} className={`${CARD} grid grid-cols-4 items-end gap-4 p-5 max-xl:grid-cols-2 max-sm:grid-cols-1 print:hidden`}>
         <label className="grid min-w-0 gap-1.5 text-xs font-semibold text-app-muted">Consulta<select aria-label="Consulta" className={INPUT} disabled={loading} value={filters.source} onChange={event => setFilters(current => ({ ...current, source: event.target.value as TicketReportSource, projectId: '0' }))}>
@@ -183,17 +186,6 @@ export function ReportCenterScreen({ currentUser, area }: { currentUser: Current
         ] as const).map(([label, count]) => <div className={`${CARD} p-4`} key={label}><p className="mb-2 mt-0 text-xs font-semibold text-app-muted">{label}</p><strong className="text-2xl">{count.toLocaleString('pt-BR')}</strong></div>)}</div>
         <section className={`${CARD} p-5`} aria-label="Explorar resultados">
           <div className="mb-4 grid grid-cols-[minmax(0,1fr)_minmax(180px,280px)] gap-3 max-sm:grid-cols-1 print:hidden"><input className={INPUT} aria-label="Buscar nos resultados" placeholder="Buscar nome, projeto, função ou descrição…" value={search} onChange={event => { setSearch(event.target.value); setPage(1); setGroupPage(1); }} type="search" /><select aria-label="Menção ao Zabbix" className={INPUT} value={zabbix} onChange={event => { setZabbix(event.target.value); setPage(1); setGroupPage(1); }}><option value="all">Todas as menções</option><option value="yes">Com menção ao Zabbix</option><option value="no">Sem menção ao Zabbix</option></select></div>
-          <ReportSectorSummary value={report.filters.sector} coverage={coverage} />
-          <details className="mb-4 rounded-lg border border-app-border p-3 print:hidden" data-recognized-technicians>
-            <summary className="cursor-pointer text-sm font-semibold text-app-brand">Técnicos ativos reconhecidos ({sectorTechnicians(catalog, report.filters.sector ?? 'all').length})</summary>
-            <p className="text-xs text-app-muted">A classificação usa a função cadastrada. Administradores globais são classificados em DevOps. A função antiga “Técnico” não equivale automaticamente a “Tecnico TI”.</p>
-            <ul className="m-0 grid list-none gap-2 p-0 sm:grid-cols-2">{sectorTechnicians(catalog, report.filters.sector ?? 'all').map(technician => <li key={technician.id} className="rounded-lg bg-app-surface-muted p-3 text-sm"><strong>{technician.name}</strong><span className="mt-1 block text-xs text-app-muted">{technician.sector === 'ti' ? 'TI' : 'DevOps'} · {technician.functionName || 'Função reconhecida'}</span></li>)}</ul>
-            {!sectorTechnicians(catalog, report.filters.sector ?? 'all').length ? <p className="text-sm text-app-muted">Nenhum técnico ativo reconhecido neste setor.</p> : null}
-          </details>
-          <p className="mb-4 mt-0 text-xs text-app-muted">A menção ao Zabbix é identificada no texto das descrições; registros sem técnico não são classificados automaticamente como Zabbix.</p>
-          {!projects ? <div className="mb-5 grid gap-2 sm:grid-cols-2 lg:grid-cols-3 print:hidden" role="group" aria-label="Relatórios de atendimentos">
-            {ATTENDANCE_VIEWS.map(view => <button type="button" key={view.value} aria-pressed={grouping === view.value} onClick={() => { setGrouping(view.value); setGroupPage(1); }} className={`min-h-12 rounded-lg border px-3 py-3 text-left text-sm font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-app-brand ${grouping === view.value ? 'border-app-brand bg-app-brand text-white' : 'border-app-border bg-app-surface hover:bg-app-surface-hover'}`}>{view.label}</button>)}
-          </div> : null}
           <div className="flex flex-wrap items-end justify-between gap-3 print:hidden"><label className="grid gap-1.5 text-xs font-semibold text-app-muted">Visualização<select aria-label="Visualização" className={INPUT} value={grouping} onChange={event => { setGrouping(event.target.value as ReportGrouping); setGroupPage(1); }}>{GROUPS.filter(group => projects || group.value !== 'project').map(group => <option key={group.value} value={group.value}>{group.label}</option>)}</select></label><ReportChartTypePicker value={chartType} onChange={setChartType} /><div className="flex flex-wrap gap-2"><button className={SECONDARY} disabled={!rows.length} onClick={exportRows} type="button">Exportar registros</button><button className={SECONDARY} onClick={() => window.print()} type="button">Imprimir / PDF</button>{canPdf ? <button className={SECONDARY} disabled={exporting || Boolean(search.trim()) || zabbix !== 'all'} onClick={() => void exportPdf()} type="button" title="PDF do período e dos filtros aplicados. Limpe a busca e o filtro de menção para baixar.">{exporting ? 'Preparando…' : 'Baixar PDF analítico'}</button> : null}</div></div>
           <h2 className="mb-1 mt-5 text-lg font-bold">{groupLabel(grouping)}</h2>
           {groups.length > 20 ? <p className="text-xs text-app-muted">O gráfico reúne os 20 maiores grupos e os demais. O resumo e a exportação incluem todos os grupos.</p> : null}

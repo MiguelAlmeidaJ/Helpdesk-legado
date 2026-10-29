@@ -13,7 +13,7 @@ As duas primeiras centrais compartilham filtros por período, cliente, setor, t�
 
 Na mesma página, o usuário alterna entre cliente, técnico, categoria, solicitante, diário por cliente, diário por técnico e situação. Em Tarefas/Projetos existe também agrupamento por projeto. A troca de visualização é local: utiliza os mesmos registros e mantém filtros, totais e busca. Cada registro conta uma vez por agrupamento. Níveis fora de 1, 2 e 3 são apresentados em Outros níveis. Gráficos com muitos grupos reúnem os 20 maiores e os demais; resumo e CSV preservam todos os grupos.
 
-Em Atendimentos há seis botões explícitos: Atd. total por cliente, Atd. diário por cliente, Atd. total por solicitante, Atd. total por técnico, Atd. diário por técnico e Atd. total por categoria. O título, gráfico e resumo acompanham a opção escolhida sem recarregar os registros. O painel Técnicos ativos reconhecidos lista nomes, funções e setores do catálogo. Administradores globais entram em DevOps; a função antiga Técnico continua distinta de Tecnico TI.
+Em Atendimentos há seis botões antes dos filtros: Atd. total por cliente, Atd. diário por cliente, Atd. total por solicitante, Atd. total por técnico, Atd. diário por técnico e Atd. total por categoria. O título, gráfico e resumo acompanham a opção escolhida sem recarregar os registros. Administradores globais entram em DevOps; a função antiga Técnico continua distinta de Tecnico TI.
 
 Os registros detalhados incluem títulos, projetos, cliente, local, técnico e função, solicitante, classificação, datas, situação, descrições e tempo decorrido. As tabelas usam páginas de 50 registros para navegação. CSV inclui todo o resultado filtrado; imprimir renderiza todas as páginas e abre as descrições temporariamente, restaurando a visualização depois. O PDF analítico usa os filtros aplicados no servidor. Seu botão fica desabilitado com busca textual ou filtro de menção ativos, para evitar gerar um PDF diferente da seleção local; nesse caso continuam disponíveis CSV e impressão do resultado exibido.
 
@@ -23,7 +23,7 @@ Tempo de Atendimento reúne aceite/conclusão, tempo decorrido e carga atual em 
 
 Não se presume que todo chamado sem técnico venha do Zabbix. Na consulta somente leitura de 01 a 28/10/2026, havia 185 registros sem usuário técnico correspondente; 47 mencionavam Zabbix na descrição de abertura. A presença desse texto não prova a origem dos demais registros. Os números variam conforme novos chamados entram.
 
-A central mostra a quantidade de registros com menção ao Zabbix e permite filtrar com ou sem menção no texto de abertura/fechamento. A classificação aparece como menção textual, sem alterar registros nem reclassificar técnicos ou setores. A divisão TI, DevOps, outras funções e sem técnico acompanha o resultado efetivamente exibido.
+A central mostra a quantidade de registros com menção ao Zabbix e permite filtrar com ou sem menção no texto de abertura/fechamento. A classificação aparece como menção textual, sem alterar registros nem reclassificar técnicos ou setores.
 
 ## API e segurança
 
@@ -37,4 +37,4 @@ Capturas com dados simulados: [desktop](report-center-desktop.png) e [celular](r
 
 Validação concluída em 28/10/2026: build completo aprovado, 34 testes de navegação, agrupamento, SQL Server, escopo, projetos e relatórios aprovados. Os testes de navegador da central e do arquivo de PDFs passaram, incluindo impressão de todas as páginas/descrições e permissões. A conferência somente leitura no banco real executou consultas de atendimentos, tarefas e projetos e carregou 44 projetos no catálogo do usuário interno de conferência. Nenhum registro real foi modificado e nenhum PDF real foi gerado pelos testes.
 
-Em 29/10/2026, a separação de Atendimentos foi explicitada nos seis botões e no título da visualização. O painel de técnicos reconhecidos mostra a função e o setor de cada usuário ativo. O teste de navegador valida os seis botões, a preservação dos totais sem novas consultas e a presença de administradores globais na lista DevOps. Os 27 testes de relatórios, SQL Server, agrupamentos e projetos passaram após a alteração.
+Em 29/10/2026, os seis botões de Atendimentos foram posicionados acima dos filtros. O bloco de diagnóstico de setores, a lista de técnicos reconhecidos e a explicação sobre Zabbix foram removidos da área de resultados. O teste de navegador verifica a posição dos botões no computador e no celular, a ausência do bloco removido e a preservação dos totais sem novas consultas.
